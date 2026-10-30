@@ -177,3 +177,22 @@ describe('the all-failed reply is translated, not "All providers failed"', () =>
     ).toBe('⚠️ localized:pickedModel.failedMessage');
   });
 });
+
+describe('chooseRecoverySuggestions and the plan', () => {
+  it('never suggests a model the plan does not include', () => {
+    const groups: ModelPickerGroup[] = [
+      {
+        key: 'g',
+        label: 'g',
+        options: [
+          { value: encodeModelValue('GROK', 'grok-4.7'), label: 'Grok 4.7', isLocked: true },
+          { value: encodeModelValue('OPENAI', 'gpt-5.4-mini'), label: 'GPT 5.4 Mini' },
+        ],
+      },
+    ];
+
+    const choices = chooseRecoverySuggestions([], groups, null);
+
+    expect(choices.map((choice) => choice.model)).toEqual(['gpt-5.4-mini']);
+  });
+});

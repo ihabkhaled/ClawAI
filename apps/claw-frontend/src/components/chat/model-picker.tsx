@@ -13,6 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useModelPicker } from '@/hooks/chat/use-model-picker';
 import type { ModelPickerProps } from '@/types';
 import { cn } from '@/utilities';
+import { isLockedOption } from '@/utilities/model-plan-access.utility';
 
 export function ModelPicker({
   id,
@@ -54,6 +55,10 @@ export function ModelPicker({
   });
 
   const handleSelect = (optionValue: string): void => {
+    // The list already ignores clicks on a locked row; this also stops Enter on a highlighted one.
+    if (isLockedOption(groups, optionValue)) {
+      return;
+    }
     onChange(optionValue);
     close();
   };

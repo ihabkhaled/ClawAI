@@ -8,6 +8,11 @@ import type { ConnectorModel } from '@/types';
 const mockUseAllModels = vi.fn();
 const mockUseLocalModels = vi.fn();
 const mockUseFrontierCatalog = vi.fn();
+const mockIsLocked = vi.fn((_provider: string, _model: string) => false);
+
+vi.mock('@/hooks/chat/use-model-plan-access', () => ({
+  useModelPlanAccess: () => ({ isLocked: mockIsLocked }),
+}));
 
 vi.mock('@/hooks/chat/use-available-connector-models', () => ({
   useAvailableConnectorModels: () => mockUseAllModels(),
@@ -314,5 +319,28 @@ describe('useAvailableModels capability badges', () => {
     // Image-generation entries say they output images.
     const image = result.current.groupedModels.find((group) => group.provider === 'IMAGE_GEMINI');
     expect(image?.models[0]?.capabilities).toEqual([ModelCapabilityBadge.ImageOutput]);
+  });
+
+  it('marks a cloud model the plan does not include, and never a local one', () => {
+    mockUseAllModels.mockReturnValue({
+      models: [
+        { provider: 'OPENAI', modelKey: 'gpt-4o', displayName: 'GPT-4o' },
+        { provider: 'OLLAMA', modelKey: 'glm-5.1:cloud', displayName: 'glm-5.1:cloud' },
+      ] as unknown as ConnectorModel[],
+      isLoading: false,
+    });
+    mockUseLocalModels.mockReturnValue({ models: [], isLoading: false });
+    mockIsLocked.mockImplementation(
+      (provider, model) => provider === 'OPENAI' && model === 'gpt-4o',
+    );
+
+    const { result } = renderHook(() => useAvailableModels());
+
+    const all = result.current.groupedModels.flatMap((group) => group.models);
+    expect(all.find((model) => model.model === 'gpt-4o')?.isLocked).toBe(true);
+    expect(all.find((model) => model.model === 'glm-5.1:cloud')?.isLocked).toBe(false);
+    expect(
+      all.filter((model) => model.provider.startsWith('local-')).every((model) => !model.isLocked),
+    ).toBe(true);
   });
 });

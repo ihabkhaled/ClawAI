@@ -448,6 +448,7 @@ export const ru: TranslationDictionary = {
       empty: 'Нет доступных моделей',
       search: 'Поиск',
       noResults: 'Ничего не найдено',
+      notOnPlan: 'Нет в вашем тарифе',
     },
     threadListDrawer: 'Беседы',
     export: {

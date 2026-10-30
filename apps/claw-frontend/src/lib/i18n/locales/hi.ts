@@ -444,6 +444,7 @@ export const hi: TranslationDictionary = {
       empty: 'कोई मॉडल उपलब्ध नहीं',
       search: 'खोजें',
       noResults: 'कोई परिणाम नहीं मिला',
+      notOnPlan: 'आपके प्लान में नहीं',
     },
     threadListDrawer: 'बातचीत',
     export: {

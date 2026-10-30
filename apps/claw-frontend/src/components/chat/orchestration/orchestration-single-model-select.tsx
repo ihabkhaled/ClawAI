@@ -36,7 +36,11 @@ export function OrchestrationSingleModelSelect({
   t,
 }: OrchestrationSingleModelSelectProps): React.ReactElement {
   const { groupedModels, isLoading } = useAvailableModels();
-  const groups = groupedModelsToPickerGroups(groupedModels);
+  const groups = groupedModelsToPickerGroups(
+    groupedModels,
+    undefined,
+    t('chat.modelSelector.notOnPlan'),
+  );
   const totalModelCount = groupedModels.reduce((sum, group) => sum + group.models.length, 0);
   const isEmpty = !isLoading && totalModelCount === 0;
 

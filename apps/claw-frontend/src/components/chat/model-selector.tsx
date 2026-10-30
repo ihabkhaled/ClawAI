@@ -22,9 +22,10 @@ export function ModelSelector({
   //   2. the available-models query is still loading
   //   3. the query has settled with zero options to choose
   // It is NEVER disabled by plan-feature flags (compare/judge/critic/
-  // research) — those gate workflows, not model selection. Model SELECTION is
-  // always open to every plan tier; admin-only PlanModelAccess restrictions (if
-  // any rows exist) are enforced server-side at execution time, not in the UI.
+  // research) — those gate workflows, not model selection. A single MODEL the
+  // plan excludes is shown dimmed and cannot be chosen (ADR-198): the server
+  // answers which, with the same function the send gate uses, and the send is
+  // still gated server-side.
   //
   // Pay-as-you-go credit does NOT change that. A metered model carries a cost
   // BADGE and stays selectable: whether a provider is billable is a runtime

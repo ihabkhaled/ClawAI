@@ -129,3 +129,28 @@ describe('judgeModelOptionsToPickerGroups', () => {
     expect(judgeModelOptionsToPickerGroups([{ value: null, label: 'Auto' }])).toEqual([]);
   });
 });
+
+describe('plan lock on picker options', () => {
+  it('carries the isLocked flag and its label onto the picker option', () => {
+    const groups = groupedModelsToPickerGroups(
+      [
+        {
+          provider: 'GROK',
+          label: 'xAI',
+          models: [
+            { provider: 'GROK', model: 'grok-4.7', displayName: 'Grok 4.7', isLocked: true },
+            { provider: 'GROK', model: 'grok-mini', displayName: 'Grok Mini' },
+          ],
+        },
+      ],
+      undefined,
+      'Not on your plan',
+    );
+
+    expect(groups[0]?.options.map((option) => option.isLocked)).toEqual([true, undefined]);
+    expect(groups[0]?.options.map((option) => option.lockedLabel)).toEqual([
+      'Not on your plan',
+      undefined,
+    ]);
+  });
+});

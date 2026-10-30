@@ -436,6 +436,7 @@ export const th: TranslationDictionary = {
       empty: 'ไม่มีโมเดลที่ใช้งานได้',
       search: 'ค้นหา',
       noResults: 'ไม่พบผลลัพธ์',
+      notOnPlan: 'ไม่อยู่ในแพ็กเกจของคุณ',
     },
     threadListDrawer: 'บทสนทนา',
     export: {

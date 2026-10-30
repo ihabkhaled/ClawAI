@@ -266,6 +266,10 @@ export const queryKeys = {
     all: ['chat'] as const,
     fileDelivery: (messageId: string) =>
       [...queryKeys.chat.all, 'file-delivery', messageId] as const,
+    // Which models the user's plan lets them pick. Changes with the plan and the catalogue.
+    modelAccess: (catalogueKey: string) =>
+      [...queryKeys.chat.all, 'model-access', catalogueKey] as const,
+    modelAccessAll: () => [...queryKeys.chat.all, 'model-access'] as const,
   },
   // Read aloud (text-to-speech, multimodal batch 9). `availability` is ONE
   // query for the whole page — every bubble reads the same entry. `synthesize`

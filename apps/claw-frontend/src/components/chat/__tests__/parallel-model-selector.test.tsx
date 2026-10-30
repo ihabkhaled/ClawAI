@@ -17,7 +17,10 @@ vi.mock('@/hooks/chat/use-available-models', () => ({
       {
         provider: 'OPENAI',
         label: 'OpenAI',
-        models: [{ provider: 'OPENAI', model: 'gpt-4.1', displayName: 'GPT-4.1' }],
+        models: [
+          { provider: 'OPENAI', model: 'gpt-4.1', displayName: 'GPT-4.1' },
+          { provider: 'OPENAI', model: 'gpt-5.5', displayName: 'GPT-5.5', isLocked: true },
+        ],
       },
       {
         provider: 'IMAGE_OPENAI',
@@ -90,5 +93,23 @@ describe('ParallelModelSelector — search', () => {
     expect(screen.getByText('qwen3:1.7b')).toBeInTheDocument();
     expect(screen.getByText('gemma3:4b')).toBeInTheDocument();
     expect(screen.getByText('GPT-4.1')).toBeInTheDocument();
+  });
+});
+
+describe('ParallelModelSelector — plan lock', () => {
+  it('shows a model outside the plan dimmed and does not let it be ticked', () => {
+    const onToggleModel = vi.fn();
+    render(<ParallelModelSelector {...baseProps} onToggleModel={onToggleModel} />);
+
+    const locked = screen.getByText('GPT-5.5').closest('button') as HTMLButtonElement;
+    expect(locked).toBeDisabled();
+    expect(locked.className).toContain('opacity-50');
+    expect(locked).toHaveTextContent('chat.modelSelector.notOnPlan');
+
+    fireEvent.click(locked);
+    expect(onToggleModel).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByText('GPT-4.1'));
+    expect(onToggleModel).toHaveBeenCalledWith('OPENAI', 'gpt-4.1', true);
   });
 });

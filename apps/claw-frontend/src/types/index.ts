@@ -1344,3 +1344,4 @@ export type {
   UseContextSaveProposalHostParams,
   UseContextSaveProposalHostReturn,
 } from './context-save.types';
+export type { ModelAccessEntry, ModelAccessRequestEntry } from './model-access.types';

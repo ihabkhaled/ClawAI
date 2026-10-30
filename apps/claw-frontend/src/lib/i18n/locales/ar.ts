@@ -440,6 +440,7 @@ export const ar: TranslationDictionary = {
       empty: 'لا توجد نماذج متاحة',
       search: 'بحث',
       noResults: 'لا توجد نتائج',
+      notOnPlan: 'ليس ضمن خطتك',
     },
     threadListDrawer: 'المحادثات',
     export: {

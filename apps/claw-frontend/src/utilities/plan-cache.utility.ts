@@ -10,5 +10,7 @@ export async function invalidateUserPlanQueries(queryClient: QueryClient): Promi
     // A plan change re-grants the monthly connector credit, so the wallet and
     // its ledger are stale the moment the subscription moves.
     queryClient.invalidateQueries({ queryKey: queryKeys.credit.all }),
+    // Which models the plan lets the user pick (dimmed in the pickers) moves with the plan.
+    queryClient.invalidateQueries({ queryKey: queryKeys.chat.modelAccessAll() }),
   ]);
 }

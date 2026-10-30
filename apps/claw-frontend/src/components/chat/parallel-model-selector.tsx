@@ -16,7 +16,12 @@ export function ParallelModelSelector({
   t,
 }: ParallelModelSelectorProps) {
   const { groupedModels, isLoading } = useAvailableModels();
-  const list = useParallelModelList({ groupedModels, selectedModels, onToggleModel });
+  const list = useParallelModelList({
+    groupedModels,
+    selectedModels,
+    onToggleModel,
+    lockedLabel: t('chat.modelSelector.notOnPlan'),
+  });
 
   if (isLoading) {
     return <p className="text-muted-foreground text-sm">{t('common.loading')}</p>;

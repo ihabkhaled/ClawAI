@@ -448,6 +448,7 @@ export const ja: TranslationDictionary = {
       empty: '利用できるモデルがありません',
       search: '検索',
       noResults: '結果が見つかりません',
+      notOnPlan: 'ご利用のプランに含まれません',
     },
     threadListDrawer: '会話',
     export: {

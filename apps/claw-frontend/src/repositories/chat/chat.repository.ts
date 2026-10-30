@@ -1,6 +1,9 @@
+import { MODEL_ACCESS_CHUNK_SIZE } from '@/constants/model-picker.constants';
 import { BranchCut, type MessageFeedback } from '@/enums';
 import { apiClient } from '@/services/shared/api-client';
 import type {
+  ModelAccessEntry,
+  ModelAccessRequestEntry,
   InThreadSearchMatch,
   BestOfNRequest,
   BestOfNResponse,
@@ -284,6 +287,24 @@ export const chatRepository = {
       payload,
     );
     return res.data;
+  },
+
+  // Which of these models the signed-in user's plan lets them pick. Chunked so each request stays
+  // far below the API's 100 KB body limit however long the catalogue grows.
+  async getModelAccess(models: readonly ModelAccessRequestEntry[]): Promise<ModelAccessEntry[]> {
+    const chunks: ModelAccessRequestEntry[][] = [];
+    for (let start = 0; start < models.length; start += MODEL_ACCESS_CHUNK_SIZE) {
+      chunks.push(models.slice(start, start + MODEL_ACCESS_CHUNK_SIZE));
+    }
+    const answers = await Promise.all(
+      chunks.map(async (chunk) => {
+        const res = await apiClient.post<ModelAccessEntry[]>('/chat-messages/model-access', {
+          models: chunk,
+        });
+        return res.data;
+      }),
+    );
+    return answers.flat();
   },
 
   async sendRolePack(payload: SendRolePackPayload): Promise<SendRolePackResult> {

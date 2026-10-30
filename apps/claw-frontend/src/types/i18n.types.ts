@@ -386,6 +386,7 @@ export type TranslationDictionary = {
       empty: string;
       search: string;
       noResults: string;
+      notOnPlan: string;
     };
     threadListDrawer: string;
     export: {

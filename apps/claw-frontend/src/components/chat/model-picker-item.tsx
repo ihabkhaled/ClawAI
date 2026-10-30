@@ -12,6 +12,8 @@ export function ModelPickerItem({
   onSelect,
   onHover,
 }: ModelPickerItemProps): React.ReactElement {
+  // Not on the user's plan: visible so they can see what an upgrade adds, but dimmed and inert.
+  const isLocked = option.isLocked === true;
   return (
     // A listbox option, not a cmdk item: the list is virtualised, so only the
     // rows near the viewport are mounted and the picker owns the highlight.
@@ -19,15 +21,20 @@ export function ModelPickerItem({
       id={id}
       role="option"
       aria-selected={isSelected}
+      aria-disabled={isLocked || undefined}
       tabIndex={-1}
       onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
+        if (!isLocked && (event.key === 'Enter' || event.key === ' ')) {
           event.preventDefault();
           onSelect(option.value);
         }
       }}
       data-active={isActive}
-      onClick={() => onSelect(option.value)}
+      onClick={() => {
+        if (!isLocked) {
+          onSelect(option.value);
+        }
+      }}
       onMouseMove={() => {
         if (!isActive) {
           onHover(option.value);
@@ -36,10 +43,16 @@ export function ModelPickerItem({
       className={cn(
         'touch:min-h-11 touch:text-base relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none select-none',
         isActive && 'bg-accent text-accent-foreground',
+        isLocked && 'cursor-not-allowed opacity-50',
       )}
     >
       <Check className={cn('h-3.5 w-3.5 shrink-0', isSelected ? 'opacity-100' : 'opacity-0')} />
       <span className="min-w-0 flex-1 truncate">{option.label}</span>
+      {isLocked ? (
+        <span className="border-border bg-muted text-muted-foreground shrink-0 rounded border px-1.5 py-0.5 text-[10px] leading-none">
+          {option.lockedLabel}
+        </span>
+      ) : null}
       {option.capabilities !== undefined ? (
         <ModelCapabilityBadges capabilities={option.capabilities} />
       ) : null}

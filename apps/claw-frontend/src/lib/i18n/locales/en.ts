@@ -445,6 +445,7 @@ export const en: TranslationDictionary = {
       empty: 'No models available',
       search: 'Search',
       noResults: 'No results found',
+      notOnPlan: 'Not on your plan',
     },
     threadListDrawer: 'Conversations',
     export: {

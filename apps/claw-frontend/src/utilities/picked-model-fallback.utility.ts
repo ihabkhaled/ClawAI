@@ -109,7 +109,10 @@ export function chooseRecoverySuggestions(
       : groups.flatMap((group) =>
           group.options.flatMap((option) => {
             const decoded = decodeModelValue(option.value);
-            return decoded === null || PICKED_MODEL_NON_CHAT_ID_PATTERN.test(decoded.model)
+            // Never suggest a model the user's plan does not include.
+            return option.isLocked === true ||
+              decoded === null ||
+              PICKED_MODEL_NON_CHAT_ID_PATTERN.test(decoded.model)
               ? []
               : [decoded];
           }),

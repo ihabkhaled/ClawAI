@@ -4,6 +4,7 @@ import { IMAGE_CAPABILITIES } from '@/constants/image.constants';
 import { FrontierDownloadStatus } from '@/enums/local-frontier.enum';
 import { ModelCapabilityBadge } from '@/enums/model-capability-badge.enum';
 import { useAvailableConnectorModels } from '@/hooks/chat/use-available-connector-models';
+import { useModelPlanAccess } from '@/hooks/chat/use-model-plan-access';
 import { useFrontierCatalog } from '@/hooks/local-frontier/use-frontier-catalog';
 import { useLocalModels } from '@/hooks/ollama/use-local-models';
 import type { GroupedModels, ModelSelection } from '@/types';
@@ -31,6 +32,7 @@ export function useAvailableModels(): {
 } {
   const { models, isLoading: isLoadingCloud } = useAvailableConnectorModels();
   const { models: localModels, isLoading: isLoadingLocal } = useLocalModels();
+  const { isLocked } = useModelPlanAccess(models);
   const frontierQuery = useFrontierCatalog({ limit: 100 });
   const frontierEntries = useMemo(() => frontierQuery.data?.data ?? [], [frontierQuery.data?.data]);
 
@@ -88,6 +90,8 @@ export function useAvailableModels(): {
         displayName: model.displayName || model.modelKey,
         // This row's own flags — never the provider's. See ModelCapabilityBadge.
         capabilities: getConnectorModelCapabilityBadges(model),
+        // Not on the user's plan: the pickers dim it and refuse the click. The send is still gated server-side.
+        isLocked: isLocked(provider, model.modelKey),
       });
       groups.set(provider, existing);
     }
@@ -151,7 +155,7 @@ export function useAvailableModels(): {
     });
 
     return result;
-  }, [models, localModels, frontierEntries]);
+  }, [models, localModels, frontierEntries, isLocked]);
 
   return {
     groupedModels,

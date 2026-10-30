@@ -424,6 +424,7 @@ export const zh: TranslationDictionary = {
       empty: '没有可用的模型',
       search: '搜索',
       noResults: '未找到结果',
+      notOnPlan: '不在您的套餐内',
     },
     threadListDrawer: '对话',
     export: {

@@ -804,6 +804,8 @@ export type ModelSelection = {
   specifications?: string[];
   /** From this row's own catalog flags only — see ModelCapabilityBadge. */
   capabilities?: ModelCapabilityBadge[];
+  /** The user's plan does not include this model. Shown dimmed and not selectable. */
+  isLocked?: boolean;
 };
 
 // Normalized shape the shared searchable ModelPicker renders — every one of
@@ -820,6 +822,10 @@ export type ModelPickerOption = {
   shortLabel?: string;
   specifications?: string[];
   capabilities?: ModelCapabilityBadge[];
+  /** Not on the user's plan: dimmed, labelled, and refused on select. */
+  isLocked?: boolean;
+  /** The translated "not on your plan" tag shown on a locked option. */
+  lockedLabel?: string;
 };
 
 export type ModelCapabilityBadgesProps = {
@@ -855,10 +861,13 @@ export type ParallelModelRowViewProps = {
   isChecked: boolean;
   isDisabled: boolean;
   onToggle: (provider: string, model: string, checked: boolean) => void;
+  /** The translated "not on your plan" tag for a locked model. */
+  lockedLabel: string;
 };
 
 export type UseParallelModelListParams = {
   groupedModels: GroupedModels[];
+  lockedLabel: string;
   selectedModels: ParallelModelTarget[];
   onToggleModel: (provider: string, model: string, checked: boolean) => void;
 };

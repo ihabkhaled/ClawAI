@@ -741,6 +741,8 @@ export type UseVirtualizedMessagesReturn = {
 export type JudgeModelOption = {
   value: string | null;
   label: string;
+  /** Not on the user's plan: dimmed and refused in the picker. */
+  isLocked?: boolean;
 };
 
 export type MessageRenderItem =

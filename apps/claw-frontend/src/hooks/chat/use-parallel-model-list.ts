@@ -15,6 +15,7 @@ export function useParallelModelList({
   groupedModels,
   selectedModels,
   onToggleModel,
+  lockedLabel,
 }: UseParallelModelListParams): UseParallelModelListResult {
   const [query, setQuery] = useState('');
   const rows = useMemo(() => buildParallelModelRows(groupedModels, query), [groupedModels, query]);
@@ -33,6 +34,7 @@ export function useParallelModelList({
       isChecked,
       isDisabled: !isChecked && isMaxReached,
       onToggle: onToggleModel,
+      lockedLabel,
     });
   };
 

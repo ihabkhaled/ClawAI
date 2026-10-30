@@ -18,7 +18,12 @@ export function useModelSelector(): UseModelSelectorResult {
   const { groupedModels, isLoading } = useAvailableModels();
 
   const groups = useMemo(
-    () => groupedModelsToPickerGroups(groupedModels, t('chat.credit.modelBadge')),
+    () =>
+      groupedModelsToPickerGroups(
+        groupedModels,
+        t('chat.credit.modelBadge'),
+        t('chat.modelSelector.notOnPlan'),
+      ),
     [groupedModels, t],
   );
 

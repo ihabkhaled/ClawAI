@@ -454,6 +454,7 @@ export const de: TranslationDictionary = {
       empty: 'Keine Modelle verfügbar',
       search: 'Suchen',
       noResults: 'Keine Ergebnisse gefunden',
+      notOnPlan: 'Nicht in deinem Tarif',
     },
     threadListDrawer: 'Unterhaltungen',
     export: {

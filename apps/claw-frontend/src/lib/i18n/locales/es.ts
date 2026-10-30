@@ -449,6 +449,7 @@ export const es: TranslationDictionary = {
       empty: 'No hay modelos disponibles',
       search: 'Buscar',
       noResults: 'No se encontraron resultados',
+      notOnPlan: 'No incluido en tu plan',
     },
     threadListDrawer: 'Conversaciones',
     export: {

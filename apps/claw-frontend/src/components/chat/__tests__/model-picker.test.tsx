@@ -76,6 +76,51 @@ describe('ModelPicker', () => {
     expect(screen.queryByText('qwen3:1.7b')).not.toBeInTheDocument();
   });
 
+  describe('a model outside the plan', () => {
+    const lockedGroups: ModelPickerGroup[] = [
+      {
+        key: 'OPENAI',
+        label: 'OpenAI',
+        options: [
+          { value: 'OPENAI::gpt-4.1', label: 'GPT-4.1' },
+          {
+            value: 'GROK::grok-4.7',
+            label: 'Grok 4.7',
+            isLocked: true,
+            lockedLabel: 'Not on your plan',
+          },
+        ],
+      },
+    ];
+
+    it('is shown dimmed, labelled, and marked disabled', () => {
+      render(<ModelPicker {...baseProps} groups={lockedGroups} />);
+      fireEvent.click(screen.getByRole('combobox'));
+
+      const locked = screen.getByText('Grok 4.7').closest('[role="option"]');
+      expect(locked).toHaveAttribute('aria-disabled', 'true');
+      expect(locked?.className).toContain('opacity-50');
+      expect(locked).toHaveTextContent(/not on your plan/i);
+      expect(screen.getByText('GPT-4.1').closest('[role="option"]')).not.toHaveAttribute(
+        'aria-disabled',
+      );
+    });
+
+    it('cannot be chosen by click or by Enter, while an allowed model still can', () => {
+      const onChange = vi.fn();
+      render(<ModelPicker {...baseProps} groups={lockedGroups} onChange={onChange} />);
+      fireEvent.click(screen.getByRole('combobox'));
+
+      const locked = screen.getByText('Grok 4.7').closest('[role="option"]') as HTMLElement;
+      fireEvent.click(locked);
+      fireEvent.keyDown(locked, { key: 'Enter' });
+      expect(onChange).not.toHaveBeenCalled();
+
+      fireEvent.click(screen.getByText('GPT-4.1'));
+      expect(onChange).toHaveBeenCalledWith('OPENAI::gpt-4.1');
+    });
+  });
+
   it('filters options by the search input', () => {
     render(<ModelPicker {...baseProps} />);
     fireEvent.click(screen.getByRole('combobox'));

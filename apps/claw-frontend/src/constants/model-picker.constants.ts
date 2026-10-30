@@ -25,3 +25,8 @@ export const MODEL_PICKER_LISTBOX_ID = 'model-picker-listbox';
 
 /** Height of the Compare model list; a definite value so Virtuoso can window it. */
 export const PARALLEL_MODEL_LIST_HEIGHT = 'min(16rem, 42dvh)';
+
+/** Models per request to the plan-access check; the API accepts 300 and its body limit is 100 KB. */
+export const MODEL_ACCESS_CHUNK_SIZE = 300;
+/** How long a plan-access answer is reused before the picker asks again. */
+export const MODEL_ACCESS_STALE_MS = 60_000;

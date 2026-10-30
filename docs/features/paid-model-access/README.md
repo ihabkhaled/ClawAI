@@ -12,7 +12,9 @@ The shared entitlements package defines the class-aware access contract.
 Auth admission checks selected primary models, chat checks model roles, and
 routing filters automatic selections and fallback candidates. The UI and
 marketing pricing cards show configured class grants, but backend admission is
-authoritative.
+authoritative. The model pickers dim a model the plan excludes and tag it "Not on
+your plan" ([ADR-198](../../13-adr/adr-198-model-pickers-show-the-plan-decision-and-dim-what-it-excludes.md));
+the server answers which, with the function the send uses.
 
 Pricing behavior and frontend surfaces are documented in
 [admin model billing and exposure](../../05-frontend/admin-model-billing-and-exposure.md).

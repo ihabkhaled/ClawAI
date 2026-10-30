@@ -14,7 +14,11 @@ export function AdvancedModuleModelSelector({
   disabled,
 }: AdvancedModuleModelSelectorProps): React.ReactElement {
   const { groupedModels, isLoading } = useAvailableModels();
-  const groups = groupedModelsToPickerGroups(groupedModels);
+  const groups = groupedModelsToPickerGroups(
+    groupedModels,
+    undefined,
+    t('chat.modelSelector.notOnPlan'),
+  );
   const totalModelCount = groupedModels.reduce((sum, group) => sum + group.models.length, 0);
   const selectedValue = value ? encodeModelValue(value.provider, value.model) : MODEL_AUTO_VALUE;
 

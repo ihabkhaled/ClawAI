@@ -450,6 +450,7 @@ export const it: TranslationDictionary = {
       empty: 'Nessun modello disponibile',
       search: 'Cerca',
       noResults: 'Nessun risultato',
+      notOnPlan: 'Non incluso nel tuo piano',
     },
     threadListDrawer: 'Conversazioni',
     export: {

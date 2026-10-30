@@ -78,8 +78,11 @@ export function AiActionDialog({
                       <SelectItem
                         key={`${entry.provider}::${entry.model}`}
                         value={`${entry.provider}::${entry.model}`}
+                        disabled={entry.isLocked === true}
+                        className={entry.isLocked === true ? 'opacity-50' : undefined}
                       >
                         {entry.displayName}
+                        {entry.isLocked === true ? ` · ${t('chat.modelSelector.notOnPlan')}` : ''}
                       </SelectItem>
                     ))}
                   </SelectGroup>

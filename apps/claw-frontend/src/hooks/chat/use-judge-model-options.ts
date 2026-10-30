@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { useAvailableConnectorModels } from '@/hooks/chat/use-available-connector-models';
+import { useModelPlanAccess } from '@/hooks/chat/use-model-plan-access';
 import { useLocalModels } from '@/hooks/ollama/use-local-models';
 import type { JudgeModelOption } from '@/types';
 import { compareModelsByRecency } from '@/utilities/model-recency.utility';
@@ -19,6 +20,7 @@ export function useJudgeModelOptions(): {
   // the admin connectors list — otherwise normal users get only local models
   // in the judge picker even though the backend now accepts any cloud judge.
   const { models: cloudModels, isLoading: isLoadingCloud } = useAvailableConnectorModels();
+  const { isLocked } = useModelPlanAccess(cloudModels);
 
   const options = useMemo((): JudgeModelOption[] => {
     const local = localModels
@@ -35,6 +37,8 @@ export function useJudgeModelOptions(): {
       option: {
         value: `${m.provider}:${m.modelKey}`,
         label: `${m.provider} · ${m.displayName || m.modelKey}`,
+        // Only a locked model carries the flag; an allowed one keeps its plain shape.
+        ...(isLocked(m.provider, m.modelKey) ? { isLocked: true } : {}),
       },
       sortable: {
         provider: m.provider,
@@ -50,7 +54,7 @@ export function useJudgeModelOptions(): {
     return [...local, ...cloud]
       .sort((a, b) => compareModelsByRecency(a.sortable, b.sortable))
       .map((entry) => entry.option);
-  }, [localModels, cloudModels]);
+  }, [localModels, cloudModels, isLocked]);
 
   return { options, isLoading: isLoadingLocal || isLoadingCloud };
 }

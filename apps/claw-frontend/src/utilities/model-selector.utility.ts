@@ -31,6 +31,7 @@ export function encodeModelValue(provider: string, model: string): string {
 export function groupedModelsToPickerGroups(
   groupedModels: GroupedModels[],
   paygBadgeLabel?: string,
+  lockedLabel?: string,
 ): ModelPickerGroup[] {
   return groupedModels.map((group) => ({
     key: group.provider,
@@ -39,6 +40,8 @@ export function groupedModelsToPickerGroups(
       value: encodeModelValue(model.provider, model.model),
       label: model.displayName,
       capabilities: model.capabilities,
+      isLocked: model.isLocked,
+      lockedLabel: model.isLocked === true ? lockedLabel : undefined,
       specifications: buildModelSpecifications(
         model.provider,
         model.specifications,
@@ -72,14 +75,26 @@ export function decodeModelValue(value: string): { provider: string; model: stri
 // rather than useAvailableModels()'s grouped catalog. The null-value "auto"
 // entry (if present) is dropped here — ModelPicker's own `autoOption` prop is
 // the single canonical "Auto" row for these two callers.
-export function judgeModelOptionsToPickerGroups(options: JudgeModelOption[]): ModelPickerGroup[] {
+export function judgeModelOptionsToPickerGroups(
+  options: JudgeModelOption[],
+  lockedLabel?: string,
+): ModelPickerGroup[] {
   const concreteOptions = options.filter(
-    (option): option is { value: string; label: string } => option.value !== null,
+    (option): option is { value: string; label: string; isLocked?: boolean } =>
+      option.value !== null,
   );
   if (concreteOptions.length === 0) {
     return [];
   }
-  return [{ key: 'judge-models', label: '', options: concreteOptions }];
+  return [
+    {
+      key: 'judge-models',
+      label: '',
+      options: concreteOptions.map((option) =>
+        option.isLocked === true ? { ...option, lockedLabel } : option,
+      ),
+    },
+  ];
 }
 
 export function getLocalModelSpecificationLabels(model: LocalModel): string[] {

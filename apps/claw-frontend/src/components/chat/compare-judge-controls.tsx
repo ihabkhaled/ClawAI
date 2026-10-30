@@ -13,7 +13,10 @@ export function CompareJudgeControls({
   judgeModelOptionsLoading,
   t,
 }: CompareJudgeControlsProps): React.ReactElement {
-  const groups = judgeModelOptionsToPickerGroups(judgeModelOptions);
+  const groups = judgeModelOptionsToPickerGroups(
+    judgeModelOptions,
+    t('chat.modelSelector.notOnPlan'),
+  );
   return (
     <div className="border-border/60 bg-muted/20 space-y-4 rounded-lg border p-4">
       <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3">

@@ -446,6 +446,7 @@ export const fa: TranslationDictionary = {
       empty: 'هیچ مدلی در دسترس نیست',
       search: 'جستجو',
       noResults: 'نتیجه‌ای یافت نشد',
+      notOnPlan: 'در طرح شما نیست',
     },
     threadListDrawer: 'گفت‌وگوها',
     export: {

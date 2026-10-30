@@ -18,7 +18,10 @@ export function CompareCriticControls({
   criticEnablementDisabled = false,
   t,
 }: CompareCriticControlsProps): React.ReactElement {
-  const groups = judgeModelOptionsToPickerGroups(criticModelOptions);
+  const groups = judgeModelOptionsToPickerGroups(
+    criticModelOptions,
+    t('chat.modelSelector.notOnPlan'),
+  );
   return (
     <div className="border-border/60 bg-muted/10 space-y-4 rounded-lg border p-4 sm:ms-4">
       <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
