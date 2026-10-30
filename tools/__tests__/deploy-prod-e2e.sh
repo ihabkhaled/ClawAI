@@ -263,10 +263,12 @@ assert_equals "first deployment records the SHA" "$(deployed_sha)" "$SHA_BASE"
 assert_contains "first deployment records completed status" "$(cat "$PROD/.deploy/status.json")" '"state":"completed"'
 assert_contains "deployment status records the target version" "$(cat "$PROD/.deploy/status.json")" '"version":"9.8.7"'
 assert_equals "first deployment checks out the exact SHA" "$(git -C "$PROD" rev-parse HEAD)" "$SHA_BASE"
-build_log="$(grep ' build ' "$CLAW_STUB_LOG" || true)"
+build_log="$(grep ' build ' "$CLAW_STUB_LOG" | sed 's/ build --pull / build /' || true)"
+every_build_pulls="$(grep ' build ' "$CLAW_STUB_LOG" | grep -vc ' build --pull ' || true)"
+assert_equals "every build asks for a fresh base image (--pull)" "${every_build_pulls:-0}" "0"
 assert_contains "first deployment builds auth-service" "$build_log" "build auth-service"
 assert_contains "first deployment builds the frontend" "$build_log" "build frontend"
-builds_are_single_target="$(awk '/ build / { split($0, command, " build "); if (split(command[2], targets, " ") != 1) failed = 1; count++ } END { print (count > 0 && !failed) ? "yes" : "no" }' "$CLAW_STUB_LOG")"
+builds_are_single_target="$(sed 's/ build --pull / build /' "$CLAW_STUB_LOG" | awk '/ build / { split($0, command, " build "); if (split(command[2], targets, " ") != 1) failed = 1; count++ } END { print (count > 0 && !failed) ? "yes" : "no" }')"
 assert_equals "builds one service per Compose invocation" "$builds_are_single_target" "yes"
 assert_not_contains "first deployment never runs compose down" "$(cat "$CLAW_STUB_LOG")" "compose down"
 assert_not_contains "first deployment never removes volumes" "$(cat "$CLAW_STUB_LOG")" "volume rm"
@@ -289,7 +291,7 @@ out="$(deploy "$SHA_PAYMENT")"
 assert_contains "selective deployment succeeds" "$out" "Deployment successful"
 assert_contains "selective deployment names payment-service" "$out" "- payment-service"
 assert_not_contains "selective deployment leaves the frontend alone" "$out" "- frontend"
-build_line="$(grep -m1 ' build ' "$CLAW_STUB_LOG" || true)"
+build_line="$(grep -m1 ' build ' "$CLAW_STUB_LOG" | sed 's/ build --pull / build /' || true)"
 assert_equals "only payment-service is built" "${build_line##* build }" "payment-service"
 assert_equals "selective deployment records the SHA" "$(deployed_sha)" "$SHA_PAYMENT"
 
@@ -297,7 +299,7 @@ assert_equals "selective deployment records the SHA" "$(deployed_sha)" "$SHA_PAY
 reset_docker_log
 out="$(deploy "$SHA_SHARED")"
 assert_contains "shared-package deployment succeeds" "$out" "Deployment successful"
-build_log="$(grep ' build ' "$CLAW_STUB_LOG" || true)"
+build_log="$(grep ' build ' "$CLAW_STUB_LOG" | sed 's/ build --pull / build /' || true)"
 for consumer in payment-service workspace-service agent-service research-service chat-service health-service; do
   assert_contains "shared-auth change rebuilds $consumer" "$build_log" "$consumer"
 done
@@ -530,7 +532,7 @@ if command -v python3 >/dev/null 2>&1 && python3 -c 'import json' >/dev/null 2>&
     assert_contains "$manifest is recognised as version-only" "$out" "  $manifest"
   done
   assert_not_contains "a release-only commit is not broad impact" "$out" "broad-impact change"
-  build_line="$(grep -m1 ' build ' "$CLAW_STUB_LOG" || true)"
+  build_line="$(grep -m1 ' build ' "$CLAW_STUB_LOG" | sed 's/ build --pull / build /' || true)"
   assert_equals "a release-only commit rebuilds only the frontend (baked APP_VERSION)" "${build_line##* build }" "frontend"
   assert_contains "the deployment status carries the new version" "$(cat "$PROD/.deploy/status.json")" '"version":"9.8.8"'
   assert_equals "the release-only deployment is recorded" "$(deployed_sha)" "$SHA_RELEASE"
@@ -541,7 +543,7 @@ if command -v python3 >/dev/null 2>&1 && python3 -c 'import json' >/dev/null 2>&
   reset_docker_log
   out="$(deploy "$SHA_DEP")"
   assert_contains "a real lockfile change is broad impact" "$out" "broad-impact change: package-lock.json"
-  build_log="$(grep ' build ' "$CLAW_STUB_LOG" || true)"
+  build_log="$(grep ' build ' "$CLAW_STUB_LOG" | sed 's/ build --pull / build /' || true)"
   assert_contains "a real lockfile change rebuilds auth-service" "$build_log" "auth-service"
   assert_contains "a real lockfile change rebuilds payment-service" "$build_log" "payment-service"
 else
