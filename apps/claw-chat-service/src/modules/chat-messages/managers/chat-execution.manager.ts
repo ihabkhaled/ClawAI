@@ -111,6 +111,7 @@ import {
   ANTHROPIC_TOOL_DEFAULT_MAX_TOKENS,
   OPENAI_TOOL_CALLS_FINISH_REASON,
 } from '../constants/provider-tool.constants';
+import { ANTHROPIC_PAUSED_FINISH_REASON } from '../constants/anthropic-native-transport.constants';
 import type { JudgeRefereeConfig, JudgeRefereeResult } from '../types/judge-referee.types';
 import type {
   InternalGenerateArgs,
@@ -1729,6 +1730,27 @@ export class ChatExecutionManager implements OnModuleInit {
     }
   }
 
+  // Bug-hunt 2026-05-31, Fix 2 — when the model stopped because it hit the
+  // ctx/length cap, leave a loud trail in the logs so an operator can correlate
+  // a mid-sentence reply with ctx exhaustion (the FE banner is driven by
+  // metadata.truncatedAtContextLimit). A `pause_turn` is the provider pausing a
+  // server-tool turn: the reply is not a finished answer and nothing resumes it yet.
+  private logUnfinishedStream(
+    finishReason: string,
+    base: Omit<StreamExecutionInput, 'abortSignal'>,
+    outputLength: number,
+  ): void {
+    if (finishReason === 'length') {
+      this.logger.warn(
+        `runExecutor: finish_reason=length — likely ctx_size exhausted; provider=${base.provider} model=${base.model} promptTokens=${String(base.promptTokensEstimate)} outputLen=${String(outputLength)}`,
+      );
+    } else if (finishReason === ANTHROPIC_PAUSED_FINISH_REASON) {
+      this.logger.warn(
+        `runExecutor: finish_reason=pause_turn — the provider paused the turn, the reply may be incomplete; provider=${base.provider} model=${base.model} outputLen=${String(outputLength)}`,
+      );
+    }
+  }
+
   private buildExecutorResponse(
     base: Omit<StreamExecutionInput, 'abortSignal'>,
     result: StreamExecutionResult,
@@ -1748,16 +1770,7 @@ export class ChatExecutionManager implements OnModuleInit {
       );
     }
     const finishReason = result.cancelled ? 'cancelled' : (result.finishReason ?? 'stop');
-    // Bug-hunt 2026-05-31, Fix 2 — when the model stopped because it
-    // hit the ctx/length cap, leave a loud trail in the logs so an
-    // operator scrolling through chat-service output can correlate a
-    // mid-sentence reply with ctx exhaustion. The FE banner (driven by
-    // metadata.truncatedAtContextLimit) is the user-visible signal.
-    if (finishReason === 'length') {
-      this.logger.warn(
-        `runExecutor: finish_reason=length — likely ctx_size exhausted; provider=${base.provider} model=${base.model} promptTokens=${String(base.promptTokensEstimate)} outputLen=${String(result.content.length)}`,
-      );
-    }
+    this.logUnfinishedStream(finishReason, base, result.content.length);
     return {
       content: result.content,
       provider: base.provider,

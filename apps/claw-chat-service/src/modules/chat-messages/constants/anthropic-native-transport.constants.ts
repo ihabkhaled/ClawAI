@@ -25,10 +25,12 @@ export const ANTHROPIC_EVENT_MESSAGE_STOP = 'message_stop';
 
 // Anthropic `stop_reason` -> the OpenAI-style finish reason the rest of the
 // pipeline already understands ('length' drives the truncation banner).
+// `pause_turn` is deliberately absent: a paused server-tool turn is not a
+// finished answer, so it passes through under its own name instead of being
+// reported as a clean `stop`.
 export const ANTHROPIC_STOP_REASON_MAP: ReadonlyMap<string, string> = new Map([
   ['end_turn', 'stop'],
   ['stop_sequence', 'stop'],
-  ['pause_turn', 'stop'],
   ['max_tokens', 'length'],
   ['tool_use', 'tool_calls'],
 ]);
@@ -42,3 +44,4 @@ export const ANTHROPIC_USAGE_FIELDS = [
   'output_tokens',
 ] as const;
 export const ANTHROPIC_DEFAULT_FINISH_REASON = 'stop';
+export const ANTHROPIC_PAUSED_FINISH_REASON = 'pause_turn';

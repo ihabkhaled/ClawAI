@@ -292,6 +292,14 @@ Not cached, on purpose: a tool-carrying turn (no `tool_use` reader), a compare l
 cache usage). Tests: `__tests__/payg-credit-anthropic-cache.spec.ts`,
 `__tests__/anthropic-stream-protocol.spec.ts`, `utilities/__tests__/anthropic-*.spec.ts`.
 
+**Stop reasons (2026-10-30).** `ANTHROPIC_STOP_REASON_MAP` turns `end_turn` and `stop_sequence`
+into `stop`, `max_tokens` into `length` and `tool_use` into `tool_calls`. `pause_turn` (a paused
+server-tool turn) is **not** mapped: it passes through as `pause_turn`, so it is no longer reported
+as a finished answer, and `runExecutor` logs a warning. Nothing resumes a paused turn yet, and the
+product sends no Anthropic server tools today, so the case is latent. The continuation (resend the
+paused content as a new turn under the parent budget) is the planned follow-up
+([plan](../03-architecture/three-workstreams-plan-2026-10-30.md)).
+
 **Gateway headers.** `resolveProviderConfig` returns the connector's
 `gatewayHeaders`; `withConnectorGatewayHeaders` merges them under the provider
 auth header on the streaming (`runExecutor`) and buffered

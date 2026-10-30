@@ -43,22 +43,22 @@ harness). Rule 26 intake: pack read whole, repo audited against code, verdicts b
 
 ## Workstream 3: execution harness
 
-| Deliverable                                    | Verdict                                                  |
-| ---------------------------------------------- | -------------------------------------------------------- |
-| Raw provider stop reason kept                  | Missing (`pause_turn` and `stop_sequence` become `stop`) |
-| Typed model-turn outcome                       | Missing                                                  |
-| `length` truncation                            | Partial: banner and fast-path escalation only            |
-| Thinking-only / empty                          | Partial: Runtime V2 retries, the stream path throws      |
-| Run identity on `DONE` (stale-DONE)            | Partial: timing only, no `runId`                         |
-| Durable replay and gap detection               | Missing: 100 events, 1 hour, no gap marker               |
-| Reconnect observes, does not re-call the model | Done (`Last-Event-ID`)                                   |
-| Multi-segment messages and bubbles             | Missing (no run or segment field on `ChatMessage`)       |
-| Run-level state machine                        | Partial (Runtime V2 only)                                |
+| Deliverable                                    | Verdict                                                                                                                 |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Raw provider stop reason kept                  | Partial: `pause_turn` passes through; `end_turn` and `stop_sequence` stay `stop` on purpose (both are finished answers) |
+| Typed model-turn outcome                       | Missing                                                                                                                 |
+| `length` truncation                            | Partial: banner and fast-path escalation only                                                                           |
+| Thinking-only / empty                          | Partial: Runtime V2 retries, the stream path throws                                                                     |
+| Run identity on `DONE` (stale-DONE)            | Partial: timing only, no `runId`                                                                                        |
+| Durable replay and gap detection               | Missing: 100 events, 1 hour, no gap marker                                                                              |
+| Reconnect observes, does not re-call the model | Done (`Last-Event-ID`)                                                                                                  |
+| Multi-segment messages and bubbles             | Missing (no run or segment field on `ChatMessage`)                                                                      |
+| Run-level state machine                        | Partial (Runtime V2 only)                                                                                               |
 
 ## Batch sequence (one gated commit each)
 
 1. **WS1** Node floor: guard, `--pull`, engines, test, ADR-196, runbook. (this commit)
-2. **WS3** keep `providerStopReason`; map `pause_turn` to a distinct finish reason with tests.
+2. **WS3** `pause_turn` passes through as its own finish reason, with tests (done). A separate `providerStopReason` field was dropped: nothing needs the other two raw values. No Anthropic server tool is sent today, so continuing a paused turn is latent work.
 3. **WS3** pure `classifyModelTurn` and use it in the plugin loop and Runtime V2.
 4. **WS3** `runId` on stream events; the frontend ignores a `DONE` from another run.
 5. **WS3** `replay.truncated` gap marker.

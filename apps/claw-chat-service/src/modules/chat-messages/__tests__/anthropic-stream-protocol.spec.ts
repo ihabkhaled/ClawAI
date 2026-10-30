@@ -1,4 +1,5 @@
 import { AiReasoningVisibility, AiStreamProtocol } from '../../../common/enums';
+import { mapAnthropicStopReason } from '../utilities/anthropic-messages-response.utility';
 import { ProviderStreamReader } from '../utilities/provider-stream-reader.utility';
 import type { NormalizedStreamFragment } from '../types/provider-stream.types';
 
@@ -241,6 +242,35 @@ describe('ProviderStreamReader - Anthropic SSE', () => {
       messageStop(),
     ]);
     expect(odd.at(-1)).toEqual({ kind: 'done', finishReason: 'refusal' });
+  });
+
+  it('keeps pause_turn as its own finish reason instead of a clean stop', () => {
+    const paused = readAll([
+      startFrame({ input_tokens: 1, output_tokens: 1 }),
+      textDelta('Partial'),
+      messageDelta('pause_turn', { output_tokens: 5 }),
+      messageStop(),
+    ]);
+    expect(paused.at(-1)).toEqual({ kind: 'done', finishReason: 'pause_turn' });
+  });
+
+  it('still reports end_turn and stop_sequence as a finished answer', () => {
+    for (const reason of ['end_turn', 'stop_sequence']) {
+      const done = readAll([
+        startFrame({ input_tokens: 1, output_tokens: 1 }),
+        messageDelta(reason, { output_tokens: 5 }),
+        messageStop(),
+      ]);
+      expect(done.at(-1)).toEqual({ kind: 'done', finishReason: 'stop' });
+    }
+  });
+
+  it('maps the buffered stop_reason the same way as the stream', () => {
+    expect(mapAnthropicStopReason('pause_turn')).toBe('pause_turn');
+    expect(mapAnthropicStopReason('end_turn')).toBe('stop');
+    expect(mapAnthropicStopReason('max_tokens')).toBe('length');
+    expect(mapAnthropicStopReason('tool_use')).toBe('tool_calls');
+    expect(mapAnthropicStopReason(null)).toBe('stop');
   });
 
   it('survives a frame split across network chunks', () => {
