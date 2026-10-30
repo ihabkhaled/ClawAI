@@ -21,6 +21,7 @@ const planPaygAllowanceSeeder = require('./seeders/plan-payg-allowance.seeder.cj
 const planTeamDescriptionSeeder = require('./seeders/plan-team-description.seeder.cjs');
 const creditPackagesSeeder = require('./seeders/credit-packages.seeder.cjs');
 const planPaygPercentSeeder = require('./seeders/plan-payg-percent.seeder.cjs');
+const planCallLimitsSeeder = require('./seeders/plan-call-limits.seeder.cjs');
 const creditPackageRepricingSeeder = require('./seeders/credit-package-repricing.seeder.cjs');
 const planQuarterlySemiannualPricingSeeder = require('./seeders/plan-quarterly-semiannual-pricing.seeder.cjs');
 const planIntervalDiscountsSeeder = require('./seeders/plan-interval-discounts.seeder.cjs');
@@ -449,6 +450,7 @@ async function seed() {
   // Order matters: the percent seeder needs the plans, and the repricing
   // seeder needs the packages the one above creates.
   await runVersionedSeeder(prisma, planPaygPercentSeeder);
+  await runVersionedSeeder(prisma, planCallLimitsSeeder);
   await runVersionedSeeder(prisma, creditPackageRepricingSeeder);
 
   const freePlanId = planBySlug['free'].id;

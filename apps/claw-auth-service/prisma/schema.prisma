@@ -203,6 +203,12 @@ model Plan {
   yearlyDiscountBps                   Int                 @default(2000) @map("yearly_discount_bps")
   // NULL = unlimited, 0 = disabled. The three are never interchangeable.
   maxConcurrentRequests               Int?                @map("max_concurrent_requests")
+  // Per-CALL ceilings for a request the platform pays for (ADR-197). NULL = no cap,
+  // 0 = refuse every call; never interchangeable. `maxCostPerCallMicroUsd` is the
+  // worst case of ONE call (prompt plus the output ceiling) at the model's list price.
+  maxInputTokensPerCall               Int?                @map("max_input_tokens_per_call")
+  maxOutputTokensPerCall              Int?                @map("max_output_tokens_per_call")
+  maxCostPerCallMicroUsd              BigInt?             @map("max_cost_per_call_micro_usd")
   maxChatsPerDay                      Int?                @map("max_chats_per_day")
   maxMessagesPerDay                   Int?                @map("max_messages_per_day")
   maxWorkspaceConnections             Int?                @map("max_workspace_connections")

@@ -31,6 +31,15 @@ Baseline rules for every backend service (commands, absolute rules, declarations
 - The entitlements payload carries `hasPaygCredit` (metering on and wallet available > 0, fail closed); it unlocks `allowImageGeneration` only (ADR-139, rule 37 item 21).
 - Plan model access uses `allowedCostClasses`; Free defaults to `FREE`, `CHEAP`, and `STANDARD`, while every paid catalog plan includes all five classes. Class access is an upper bound: explicit model rows cannot grant a class excluded by the plan. The versioned catalog migration preserves plans with explicit access rows. See [plan and quota specification](../../docs/06-data/plan-and-quota-specification.md#5-model-access).
 
+## Per-plan call limits (ADR-197, 2026-10-30)
+
+`plans.max_input_tokens_per_call`, `max_output_tokens_per_call` and `max_cost_per_call_micro_usd` (NULL = no
+cap, 0 = refuse). `CreditReservationManager.reserve` applies them to a request the PLATFORM pays for (the
+`NOT_PAYG` and `METERING_DISABLED` branches) through `applyPlanCallLimits`: output clamped, request refused with
+`PLAN_CALL_LIMIT_EXCEEDED` (HTTP 402, no figure) when the prompt is too long or the prompt alone costs more than
+the cap. Not applied to a credit-wallet call, an administrator or a local provider. Values come from the
+`plan-call-limits` seeder (fills NULL only); the admin plan editor does not show them yet.
+
 ## PAYG connector credit — this service owns it (ADR-078)
 
 `modules/credit/` holds the wallet, the ledger, the reservation and the PAYG
