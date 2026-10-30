@@ -14,16 +14,16 @@ Starter plan could reach models that cost $30 per million output tokens.
 
 1. **Price every aggregator model** with seed v14. Source order: the provider's published price for that exact
    id (OpenRouter's public list), the provider's official list price (Cohere, MiniMax, AI21, Mistral), the same
-   model on OpenRouter, then a size tier marked ESTIMATE. Class follows the output price: 0 FREE, under $1
+   model on OpenRouter, then a size tier marked ESTIMATE. Class follows the dearer of the input and output rate: both 0 FREE, under $1
    CHEAP, under $6 STANDARD, under $40 PREMIUM, else ULTRA. A model free to the platform is priced 0/0 and
-   classed FREE. Variable-price routers and non-chat models stay unpriced on purpose.
+   classed FREE. Variable-price routers, floating `~...-latest` aliases, implausible published prices (input under 1/40 of output) and non-chat models stay unpriced on purpose.
 2. **Low plans stop short**: Free and Starter allow FREE, CHEAP, STANDARD; Plus adds PREMIUM; Pro, Team, Scale and
    Unlimited keep all five. A guarded migration moves only a plan still on the shipped all-five list, so an
    administrator's edit is never overwritten.
 
 ## Consequences
 
-- Production gains 495 callable models on its next deploy; Free sees only those under $6 output.
+- Production gains 474 callable models on its next deploy; Free sees only those under $6 output.
 - Estimates can be wrong: they are labelled in the ledger and a synced or admin price replaces them.
 - Starter users lose PREMIUM and ULTRA models they could pick before; the picker shows them dimmed.
 

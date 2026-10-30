@@ -12,7 +12,7 @@ import {
 } from '../constants/model-cost-seed.constants';
 import { AGGREGATOR_COST_ROWS } from '../constants/model-cost-seed-aggregators.constants';
 import { LOCAL_COST_PROVIDERS } from '../constants/model-cost.constants';
-import { costClassForOutputRate } from '../utilities/aggregator-cost-seed.utility';
+import { costClassForRates } from '../utilities/aggregator-cost-seed.utility';
 import type { ModelCostSeedEntry, ModelCostSeedInput } from '../types/model-cost-seed.types';
 
 const seedInput = (overrides: Partial<ModelCostSeedInput> = {}): ModelCostSeedInput => ({
@@ -388,20 +388,22 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
       expect(entry?.outputPerMillionMicroUsd).toBeGreaterThan(0);
     });
 
-    it('classes a price by its output rate: 0 FREE, under $1 CHEAP, under $6 STANDARD, under $40 PREMIUM', () => {
-      expect(costClassForOutputRate(0)).toBe(CostClass.FREE);
-      expect(costClassForOutputRate(999_999)).toBe(CostClass.CHEAP);
-      expect(costClassForOutputRate(1_000_000)).toBe(CostClass.STANDARD);
-      expect(costClassForOutputRate(5_999_999)).toBe(CostClass.STANDARD);
-      expect(costClassForOutputRate(6_000_000)).toBe(CostClass.PREMIUM);
-      expect(costClassForOutputRate(39_999_999)).toBe(CostClass.PREMIUM);
-      expect(costClassForOutputRate(40_000_000)).toBe(CostClass.ULTRA);
+    it('classes a price by the dearer of its input and output rate', () => {
+      expect(costClassForRates(0, 0)).toBe(CostClass.FREE);
+      expect(costClassForRates(0, 999_999)).toBe(CostClass.CHEAP);
+      expect(costClassForRates(0, 1_000_000)).toBe(CostClass.STANDARD);
+      expect(costClassForRates(0, 5_999_999)).toBe(CostClass.STANDARD);
+      expect(costClassForRates(0, 6_000_000)).toBe(CostClass.PREMIUM);
+      expect(costClassForRates(0, 39_999_999)).toBe(CostClass.PREMIUM);
+      expect(costClassForRates(0, 40_000_000)).toBe(CostClass.ULTRA);
+      // an input-heavy model cannot fall into a cheaper class than its input rate
+      expect(costClassForRates(7_000_000, 100_000)).toBe(CostClass.PREMIUM);
     });
 
-    it('derives every aggregator class from its own output price', () => {
-      for (const [provider, modelKey, , output] of AGGREGATOR_COST_ROWS) {
+    it('derives every aggregator class from its own rates', () => {
+      for (const [provider, modelKey, input, output] of AGGREGATOR_COST_ROWS) {
         expect(entryFor(provider, modelKey)?.costClass, `${provider}/${modelKey}`).toBe(
-          costClassForOutputRate(output),
+          costClassForRates(input, output),
         );
       }
     });
@@ -411,6 +413,15 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
       expect(horde.length).toBeGreaterThan(0);
       for (const [provider, modelKey] of horde) {
         expect(entryFor(provider, modelKey)?.costClass).toBe(CostClass.FREE);
+      }
+    });
+
+    it('prices no floating alias and no implausible published price', () => {
+      for (const [provider, modelKey, input, output] of AGGREGATOR_COST_ROWS) {
+        expect(modelKey.startsWith('~'), `${provider}/${modelKey}`).toBe(false);
+        if (input > 0 && output > 0) {
+          expect(output / input, `${provider}/${modelKey}`).toBeLessThanOrEqual(40);
+        }
       }
     });
 

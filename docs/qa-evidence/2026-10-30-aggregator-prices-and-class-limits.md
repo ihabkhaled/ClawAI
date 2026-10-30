@@ -9,7 +9,7 @@ Every lane is filled in. PASS needs the command and its real output (or a path, 
 screenshot name). NOT_RUN and NOT_APPLICABLE need a reason. Verdict DONE is allowed only when no
 lane is NOT_RUN or FAIL. A fabricated or assumed PASS is a prohibited sentence (rules/60, rules/49).
 
-Scope: routing-service seed v14 (495 aggregator prices), auth-service plan catalog + migration (Starter FREE..STANDARD,
+Scope: routing-service seed v14 (474 aggregator prices), auth-service plan catalog + migration (Starter FREE..STANDARD,
 Plus adds PREMIUM), threads-service and workspace-service cost-class resolution, plan-editor call-limit fields.
 
 | Lane | What                                                                    | Status  | Evidence or reason                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
@@ -33,7 +33,7 @@ Plus adds PREMIUM), threads-service and workspace-service cost-class resolution,
 ## Findings
 
 - Production Free test account (ihab.khaled94+3) has an expired trial since 2026-09-07; 46 of 137 active Free assignments are expired and get 403 on every call. Product decision, not changed here.
-- Unpriced on purpose (16): openrouter/auto, auto-beta, bodybuilder, fusion, pareto-code (variable price) and 11 non-chat NIM models.
+- Unpriced on purpose (37): variable-price routers, floating `~...-latest` aliases, implausible published prices, non-chat NIM models. A security review of the first push caught the aliases and the output-only class rule; both fixed before the push.
 - Estimates (ESTIMATE rows) are approximations; a synced or admin price replaces them.
 
 - Local workspace-service is unhealthy: its container compiles with a stale baked `shared-entitlements` (TS2554 at model-catalog-resolver.manager.ts:180, a 5th argument). Source typechecks; the container needs its shared build refreshed. Not a production issue (images build from source).

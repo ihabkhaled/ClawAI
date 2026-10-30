@@ -1,9 +1,10 @@
 import { type AggregatorCostRow } from '../types/model-cost-seed.types';
 
-/// Output-price class edges for the rows below, micro-USD per million tokens ($1, $6, $40).
-export const AGGREGATOR_CHEAP_BELOW_OUTPUT_MICRO_USD = 1_000_000;
-export const AGGREGATOR_STANDARD_BELOW_OUTPUT_MICRO_USD = 6_000_000;
-export const AGGREGATOR_PREMIUM_BELOW_OUTPUT_MICRO_USD = 40_000_000;
+/// Class edges for the rows below, micro-USD per million tokens ($1, $6, $40). A row's class is
+/// decided by the DEARER of its input and output rate.
+export const AGGREGATOR_CHEAP_BELOW_RATE_MICRO_USD = 1_000_000;
+export const AGGREGATOR_STANDARD_BELOW_RATE_MICRO_USD = 6_000_000;
+export const AGGREGATOR_PREMIUM_BELOW_RATE_MICRO_USD = 40_000_000;
 
 /// Seed v14 (2026-10-31): list prices for the models OpenRouter, NVIDIA NIM, Hugging Face, Groq
 /// and AI Horde expose and that carried no price, so a send of them was refused on every plan.
@@ -24,7 +25,6 @@ export const AGGREGATOR_COST_ROWS: readonly AggregatorCostRow[] = Object.freeze(
   ['OPENROUTER', 'amazon/nova-premier-v1', 2_500_000, 12_500_000, 625_000, null],
   ['OPENROUTER', 'amazon/nova-pro-v1', 800_000, 3_200_000, null, null],
   ['OPENROUTER', 'anthropic/claude-haiku-4.5', 1_000_000, 5_000_000, 100_000, 1_250_000],
-  ['OPENROUTER', '~anthropic/claude-haiku-latest', 100_000, 500_000, 10_000, 125_000],
   ['OPENROUTER', 'anthropic/claude-opus-4.1', 15_000_000, 75_000_000, 1_500_000, 18_750_000],
   ['OPENROUTER', 'anthropic/claude-opus-4.5', 5_000_000, 25_000_000, 500_000, 6_250_000],
   ['OPENROUTER', 'anthropic/claude-opus-4.6', 5_000_000, 25_000_000, 500_000, 6_250_000],
@@ -34,11 +34,9 @@ export const AGGREGATOR_COST_ROWS: readonly AggregatorCostRow[] = Object.freeze(
   ['OPENROUTER', 'anthropic/claude-opus-5.5', 4_000_000, 20_000_000, 200_000, 5_000_000],
   ['OPENROUTER', 'anthropic/claude-opus-5.5:batch', 2_000_000, 10_000_000, 100_000, 2_500_000],
   ['OPENROUTER', 'anthropic/claude-opus-5:batch', 2_500_000, 12_500_000, 250_000, 3_125_000],
-  ['OPENROUTER', '~anthropic/claude-opus-latest', 4_000_000, 20_000_000, 200_000, 5_000_000],
   ['OPENROUTER', 'anthropic/claude-sonnet-4.5', 3_000_000, 15_000_000, 300_000, 3_750_000],
   ['OPENROUTER', 'anthropic/claude-sonnet-4.6', 3_000_000, 15_000_000, 300_000, 3_750_000],
   ['OPENROUTER', 'anthropic/claude-sonnet-5', 2_000_000, 10_000_000, 200_000, 2_500_000],
-  ['OPENROUTER', '~anthropic/claude-sonnet-latest', 2_000_000, 10_000_000, 100_000, 2_500_000],
   ['OPENROUTER', 'bytedance-seed/seed-1.6', 250_000, 2_000_000, null, null],
   ['OPENROUTER', 'bytedance-seed/seed-1.6-flash', 75_000, 300_000, null, null],
   ['OPENROUTER', 'bytedance-seed/seed-2.0-code', 500_000, 3_000_000, null, null],
@@ -52,8 +50,6 @@ export const AGGREGATOR_COST_ROWS: readonly AggregatorCostRow[] = Object.freeze(
   ['OPENROUTER', 'cohere/command-r-plus-08-2024', 2_500_000, 10_000_000, null, null],
   ['OPENROUTER', 'cohere/command-r7b-12-2024', 37_500, 150_000, null, null],
   ['OPENROUTER', 'cohere/north-mini-code:free', 0, 0, null, null],
-  ['OPENROUTER', '~deepseek/deepseek-flash-latest', 22_000, 192_000, 4_000, null],
-  ['OPENROUTER', '~deepseek/deepseek-pro-latest', 103_500, 4_000_000, 100_000, null],
   ['OPENROUTER', 'deepseek/deepseek-chat', 257_400, 1_028_700, null, null],
   ['OPENROUTER', 'deepseek/deepseek-chat-v3-0324', 290_000, 1_140_000, 110_000, null],
   ['OPENROUTER', 'deepseek/deepseek-chat-v3.1', 250_000, 950_000, 130_000, null],
@@ -64,7 +60,6 @@ export const AGGREGATOR_COST_ROWS: readonly AggregatorCostRow[] = Object.freeze(
   ['OPENROUTER', 'deepseek/deepseek-v4.1-flash:batch', 50_000, 150_000, 4_000, null],
   ['OPENROUTER', 'deepseek/deepseek-v4-flash', 91_000, 182_000, 18_200, null],
   ['OPENROUTER', 'deepseek/deepseek-v4-flash-0731', 119_000, 238_000, 23_800, null],
-  ['OPENROUTER', '~deepseek/deepseek-v4-flash-latest', 34_100, 159_900, 28_000, null],
   ['OPENROUTER', 'deepseek/deepseek-v4-flash-vision-exp', 215_600, 646_800, 6_860, null],
   ['OPENROUTER', 'deepseek/deepseek-v4-pro', 1_600_000, 3_200_000, 135_000, null],
   ['OPENROUTER', 'deepseek/deepseek-v4-pro-0813', 660_000, 1_980_000, 22_000, null],
@@ -101,8 +96,6 @@ export const AGGREGATOR_COST_ROWS: readonly AggregatorCostRow[] = Object.freeze(
   ['OPENROUTER', 'google/gemini-3.8-flash:batch', 375_000, 1_875_000, 37_500, 41_667],
   ['OPENROUTER', 'google/gemini-3-flash-preview', 500_000, 3_000_000, 50_000, 83_333],
   ['OPENROUTER', 'google/gemini-3-flash-preview:batch', 250_000, 1_500_000, null, null],
-  ['OPENROUTER', '~google/gemini-flash-latest', 750_000, 3_750_000, 75_000, 41_667],
-  ['OPENROUTER', '~google/gemini-pro-latest', 2_000_000, 10_000_000, 100_000, 187_500],
   ['OPENROUTER', 'google/gemma-2-27b-it', 650_000, 650_000, null, null],
   ['OPENROUTER', 'google/gemma-3-12b-it', 50_000, 150_000, null, null],
   ['OPENROUTER', 'google/gemma-3-27b-it', 80_000, 350_000, 40_000, null],
@@ -166,9 +159,7 @@ export const AGGREGATOR_COST_ROWS: readonly AggregatorCostRow[] = Object.freeze(
   ['OPENROUTER', 'moonshotai/kimi-k2.6', 650_000, 3_410_000, 150_000, null],
   ['OPENROUTER', 'moonshotai/kimi-k2.7-code', 600_000, 3_500_000, 150_000, null],
   ['OPENROUTER', 'moonshotai/kimi-k2-thinking', 600_000, 2_500_000, 150_000, null],
-  ['OPENROUTER', 'moonshotai/kimi-k3', 192_000, 15_000_000, 182_000, null],
   ['OPENROUTER', 'moonshotai/kimi-k3:batch', 2_280_000, 11_400_000, 228_000, null],
-  ['OPENROUTER', '~moonshotai/kimi-latest', 152_900, 10_557_200, 150_000, null],
   ['OPENROUTER', 'morph/morph-v3-fast', 800_000, 1_200_000, null, null],
   ['OPENROUTER', 'morph/morph-v3-large', 900_000, 1_900_000, null, null],
   ['OPENROUTER', 'gryphe/mythomax-l2-13b', 80_000, 110_000, null, null],
@@ -238,14 +229,10 @@ export const AGGREGATOR_COST_ROWS: readonly AggregatorCostRow[] = Object.freeze(
   ['OPENROUTER', 'openai/gpt-audio', 2_500_000, 10_000_000, null, null],
   ['OPENROUTER', 'openai/gpt-audio-mini', 600_000, 2_400_000, null, null],
   ['OPENROUTER', 'openai/gpt-chat-latest', 5_000_000, 30_000_000, 500_000, null],
-  ['OPENROUTER', '~openai/gpt-luna-latest', 100_000, 500_000, 10_000, 125_000],
-  ['OPENROUTER', '~openai/gpt-mini-latest', 750_000, 4_500_000, 75_000, null],
   ['OPENROUTER', 'openai/gpt-oss-120b', 150_000, 600_000, 75_000, null],
   ['OPENROUTER', 'openai/gpt-oss-120b:batch', 29_600, 136_000, null, null],
   ['OPENROUTER', 'openai/gpt-oss-20b', 18_000, 90_000, 9_000, null],
   ['OPENROUTER', 'openai/gpt-oss-20b:batch', 24_000, 112_000, null, null],
-  ['OPENROUTER', '~openai/gpt-sol-latest', 2_000_000, 10_000_000, 100_000, 2_500_000],
-  ['OPENROUTER', '~openai/gpt-terra-latest', 1_000_000, 5_000_000, 50_000, 1_250_000],
   ['OPENROUTER', 'openai/o3', 2_000_000, 8_000_000, 500_000, null],
   ['OPENROUTER', 'openai/o3-pro', 20_000_000, 80_000_000, null, null],
   ['OPENROUTER', 'perceptron/perceptron-mk1', 150_000, 1_500_000, null, null],
@@ -343,7 +330,6 @@ export const AGGREGATOR_COST_ROWS: readonly AggregatorCostRow[] = Object.freeze(
     null,
   ],
   ['OPENROUTER', 'writer/palmyra-x5', 600_000, 6_000_000, null, null],
-  ['OPENROUTER', '~x-ai/grok-latest', 2_000_000, 6_000_000, 500_000, null],
   ['OPENROUTER', 'xiaomi/mimo-v2.5', 400_000, 2_000_000, 80_000, null],
   ['OPENROUTER', 'xiaomi/mimo-v2.5-pro', 480_000, 1_800_000, 96_000, null],
   ['OPENROUTER', 'xiaomi/mimo-v2.6-flash', 140_000, 280_000, 2_800, null],
@@ -358,7 +344,6 @@ export const AGGREGATOR_COST_ROWS: readonly AggregatorCostRow[] = Object.freeze(
   ['OPENROUTER', 'z-ai/glm-4.7-flash', 60_500, 400_000, null, null],
   ['OPENROUTER', 'z-ai/glm-5', 1_000_000, 3_200_000, 200_000, null],
   ['OPENROUTER', 'z-ai/glm-5.1', 1_400_000, 4_400_000, 260_000, null],
-  ['OPENROUTER', 'z-ai/glm-5.2', 6_000, 7_000_000, 5_000, null],
   ['OPENROUTER', 'z-ai/glm-5.3', 104_000, 2_769_000, 99_000, null],
   ['OPENROUTER', 'z-ai/glm-5.3:batch', 450_000, 2_000_000, 100_000, null],
   ['OPENROUTER', 'z-ai/glm-5.3-flash', 19_700, 132_400, 19_700, null],
@@ -367,8 +352,6 @@ export const AGGREGATOR_COST_ROWS: readonly AggregatorCostRow[] = Object.freeze(
   ['OPENROUTER', 'z-ai/glm-5.3-prime', 2_800_000, 8_800_000, 560_000, null],
   ['OPENROUTER', 'z-ai/glm-5-turbo', 1_200_000, 4_000_000, 240_000, null],
   ['OPENROUTER', 'z-ai/glm-5v-turbo', 1_200_000, 4_000_000, 240_000, null],
-  ['OPENROUTER', '~z-ai/glm-flash-latest', 19_700, 132_400, 19_700, null],
-  ['OPENROUTER', '~z-ai/glm-latest', 69_900, 1_400_000, 68_900, null],
   ['GROQ', 'allam-2-7b', 100_000, 200_000, null, null],
   ['GROQ', 'openai/gpt-oss-120b', 150_000, 600_000, 75_000, null],
   ['GROQ', 'openai/gpt-oss-20b', 18_000, 90_000, 9_000, null],
@@ -418,8 +401,6 @@ export const AGGREGATOR_COST_ROWS: readonly AggregatorCostRow[] = Object.freeze(
   ['HUGGINGFACE', 'zai-org/GLM-4.7', 540_000, 1_980_000, 99_000, null],
   ['HUGGINGFACE', 'zai-org/GLM-4.7-Flash', 60_500, 400_000, null, null],
   ['HUGGINGFACE', 'zai-org/GLM-5', 1_000_000, 3_200_000, 200_000, null],
-  ['HUGGINGFACE', 'zai-org/GLM-5.2', 6_000, 7_000_000, 5_000, null],
-  ['HUGGINGFACE', 'zai-org/GLM-5.2-FP8', 6_000, 7_000_000, 5_000, null],
   ['HUGGINGFACE', 'zai-org/GLM-5.3', 104_000, 2_769_000, 99_000, null],
   ['HUGGINGFACE', 'zai-org/GLM-5.3-BF16', 104_000, 2_769_000, 99_000, null],
   ['NVIDIANIM', 'z-ai/glm-5.3-flash', 19_700, 132_400, 19_700, null],
@@ -446,7 +427,6 @@ export const AGGREGATOR_COST_ROWS: readonly AggregatorCostRow[] = Object.freeze(
   ['HUGGINGFACE', 'moonshotai/Kimi-K2.6', 650_000, 3_410_000, 150_000, null],
   ['HUGGINGFACE', 'moonshotai/Kimi-K2.7-Code', 600_000, 3_500_000, 150_000, null],
   ['HUGGINGFACE', 'moonshotai/Kimi-K2-Instruct-0905', 600_000, 2_500_000, null, null],
-  ['HUGGINGFACE', 'moonshotai/Kimi-K3', 192_000, 15_000_000, 182_000, null],
   ['AI_HORDE', 'koboldcpp/Gemma-4-E4B-it-Ultra-Uncensored-Heretic', 0, 0, null, null],
   ['AI_HORDE', 'koboldcpp/Gemma-4-E4B-Uncensored-HauhauCS-Aggressive-Q4_K_M', 0, 0, null, null],
   ['AI_HORDE', 'koboldcpp/L3-8B-Stheno-v3.2', 0, 0, null, null],

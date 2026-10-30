@@ -10,7 +10,7 @@ asked that high-priced models stay off Starter and the low plans.
 
 ## What changed
 
-- Before: 511 exposed models unpriced and refused. Now: 495 priced by seed v14 (16 left unpriced on purpose).
+- Before: 511 exposed models unpriced and refused. Now: 474 priced by seed v14 (37 left unpriced on purpose).
 - Before: every paid plan allowed all five cost classes. Now: Starter FREE..STANDARD, Plus adds PREMIUM.
 - A free model is priced 0/0 and classed FREE.
 

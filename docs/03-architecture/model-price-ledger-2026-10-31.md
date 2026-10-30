@@ -6,14 +6,15 @@ Read on 2026-10-31 from production. Stored as `source: SEED`, `confidence: ESTIM
 
 ## How each model was priced
 
-- **OpenRouter (343):** OpenRouter's own published price for that exact id (`https://openrouter.ai/api/v1/models`). A `:free` model is priced 0 and is class FREE.
+- **OpenRouter (325):** OpenRouter's own published price for that exact id (`https://openrouter.ai/api/v1/models`). A `:free` model is priced 0 and is class FREE.
 - **Groq, NVIDIA NIM, Hugging Face:** neither NIM nor HF Inference publishes a per-token price for these routes, and Groq's pricing page was not readable. Each model takes, in order: the provider's official list price where it has one (Cohere, MiniMax, AI21, Mistral), else the same model's OpenRouter price, else a size tier (below). Rows marked ESTIMATE are approximations and should be replaced by a synced price when one exists.
 - **AI Horde (4):** volunteer GPUs, no platform cost: priced 0, class FREE.
 - Size tiers, $ per million in / out: up to 4B 0.05/0.10, 5-14B 0.10/0.20, 15-40B 0.20/0.40, 41-100B 0.50/0.75, 101-300B 0.80/2.40, over 300B 1.00/3.00.
-- **Cost class** follows the output price, as in the v13 ledger: 0 FREE, under $1 CHEAP, under $6 STANDARD, under $40 PREMIUM, above that ULTRA.
+- **Cost class** follows the dearer of the input and output rate: both 0 FREE, under $1 CHEAP, under $6 STANDARD, under $40 PREMIUM, above that ULTRA.
 - Long-context price tiers are not expressible; the base rate is stored.
+- A floating `~...-latest` alias is never priced (the model behind it changes), and a published price whose input rate is under 1/40 of its output rate is treated as implausible and left unpriced.
 
-## Left unpriced on purpose (16)
+## Left unpriced on purpose (37)
 
 - OPENROUTER `openrouter/auto`: OpenRouter reports a variable price
 - OPENROUTER `openrouter/auto-beta`: OpenRouter reports a variable price
@@ -31,6 +32,27 @@ Read on 2026-10-31 from production. Stored as `source: SEED`, `confidence: ESTIM
 - NVIDIANIM `nvidia/neva-22b`: not a chat model
 - NVIDIANIM `nvidia/nvclip`: not a chat model
 - NVIDIANIM `nvidia/vila`: not a chat model
+- HUGGINGFACE `moonshotai/Kimi-K3`: published input rate is implausibly low against its output rate
+- HUGGINGFACE `zai-org/GLM-5.2-FP8`: published input rate is implausibly low against its output rate
+- HUGGINGFACE `zai-org/GLM-5.2`: published input rate is implausibly low against its output rate
+- OPENROUTER `~z-ai/glm-latest`: floating alias: the model it points to changes
+- OPENROUTER `~z-ai/glm-flash-latest`: floating alias: the model it points to changes
+- OPENROUTER `z-ai/glm-5.2`: published input rate is implausibly low against its output rate
+- OPENROUTER `~x-ai/grok-latest`: floating alias: the model it points to changes
+- OPENROUTER `~openai/gpt-terra-latest`: floating alias: the model it points to changes
+- OPENROUTER `~openai/gpt-sol-latest`: floating alias: the model it points to changes
+- OPENROUTER `~openai/gpt-mini-latest`: floating alias: the model it points to changes
+- OPENROUTER `~openai/gpt-luna-latest`: floating alias: the model it points to changes
+- OPENROUTER `~moonshotai/kimi-latest`: floating alias: the model it points to changes
+- OPENROUTER `moonshotai/kimi-k3`: published input rate is implausibly low against its output rate
+- OPENROUTER `~google/gemini-pro-latest`: floating alias: the model it points to changes
+- OPENROUTER `~google/gemini-flash-latest`: floating alias: the model it points to changes
+- OPENROUTER `~deepseek/deepseek-v4-flash-latest`: floating alias: the model it points to changes
+- OPENROUTER `~deepseek/deepseek-pro-latest`: floating alias: the model it points to changes
+- OPENROUTER `~deepseek/deepseek-flash-latest`: floating alias: the model it points to changes
+- OPENROUTER `~anthropic/claude-sonnet-latest`: floating alias: the model it points to changes
+- OPENROUTER `~anthropic/claude-opus-latest`: floating alias: the model it points to changes
+- OPENROUTER `~anthropic/claude-haiku-latest`: floating alias: the model it points to changes
 
 ## Every price
 
@@ -48,7 +70,6 @@ Read on 2026-10-31 from production. Stored as `source: SEED`, `confidence: ESTIM
 | OPENROUTER  | amazon/nova-premier-v1                                      | 2.5       | 12.5       | OpenRouter published price                                                    |
 | OPENROUTER  | amazon/nova-pro-v1                                          | 0.8       | 3.2        | OpenRouter published price                                                    |
 | OPENROUTER  | anthropic/claude-haiku-4.5                                  | 1         | 5          | OpenRouter published price                                                    |
-| OPENROUTER  | ~anthropic/claude-haiku-latest                              | 0.1       | 0.5        | OpenRouter published price                                                    |
 | OPENROUTER  | anthropic/claude-opus-4.1                                   | 15        | 75         | OpenRouter published price                                                    |
 | OPENROUTER  | anthropic/claude-opus-4.5                                   | 5         | 25         | OpenRouter published price                                                    |
 | OPENROUTER  | anthropic/claude-opus-4.6                                   | 5         | 25         | OpenRouter published price                                                    |
@@ -58,11 +79,9 @@ Read on 2026-10-31 from production. Stored as `source: SEED`, `confidence: ESTIM
 | OPENROUTER  | anthropic/claude-opus-5.5                                   | 4         | 20         | OpenRouter published price                                                    |
 | OPENROUTER  | anthropic/claude-opus-5.5:batch                             | 2         | 10         | OpenRouter published price                                                    |
 | OPENROUTER  | anthropic/claude-opus-5:batch                               | 2.5       | 12.5       | OpenRouter published price                                                    |
-| OPENROUTER  | ~anthropic/claude-opus-latest                               | 4         | 20         | OpenRouter published price                                                    |
 | OPENROUTER  | anthropic/claude-sonnet-4.5                                 | 3         | 15         | OpenRouter published price                                                    |
 | OPENROUTER  | anthropic/claude-sonnet-4.6                                 | 3         | 15         | OpenRouter published price                                                    |
 | OPENROUTER  | anthropic/claude-sonnet-5                                   | 2         | 10         | OpenRouter published price                                                    |
-| OPENROUTER  | ~anthropic/claude-sonnet-latest                             | 2         | 10         | OpenRouter published price                                                    |
 | OPENROUTER  | bytedance-seed/seed-1.6                                     | 0.25      | 2          | OpenRouter published price                                                    |
 | OPENROUTER  | bytedance-seed/seed-1.6-flash                               | 0.075     | 0.3        | OpenRouter published price                                                    |
 | OPENROUTER  | bytedance-seed/seed-2.0-code                                | 0.5       | 3          | OpenRouter published price                                                    |
@@ -76,8 +95,6 @@ Read on 2026-10-31 from production. Stored as `source: SEED`, `confidence: ESTIM
 | OPENROUTER  | cohere/command-r-plus-08-2024                               | 2.5       | 10         | OpenRouter published price                                                    |
 | OPENROUTER  | cohere/command-r7b-12-2024                                  | 0.0375    | 0.15       | OpenRouter published price                                                    |
 | OPENROUTER  | cohere/north-mini-code:free                                 | 0         | 0          | OpenRouter published price                                                    |
-| OPENROUTER  | ~deepseek/deepseek-flash-latest                             | 0.022     | 0.192      | OpenRouter published price                                                    |
-| OPENROUTER  | ~deepseek/deepseek-pro-latest                               | 0.1035    | 4          | OpenRouter published price                                                    |
 | OPENROUTER  | deepseek/deepseek-chat                                      | 0.2574    | 1.0287     | OpenRouter published price                                                    |
 | OPENROUTER  | deepseek/deepseek-chat-v3-0324                              | 0.29      | 1.14       | OpenRouter published price                                                    |
 | OPENROUTER  | deepseek/deepseek-chat-v3.1                                 | 0.25      | 0.95       | OpenRouter published price                                                    |
@@ -88,7 +105,6 @@ Read on 2026-10-31 from production. Stored as `source: SEED`, `confidence: ESTIM
 | OPENROUTER  | deepseek/deepseek-v4.1-flash:batch                          | 0.05      | 0.15       | OpenRouter published price                                                    |
 | OPENROUTER  | deepseek/deepseek-v4-flash                                  | 0.091     | 0.182      | OpenRouter published price                                                    |
 | OPENROUTER  | deepseek/deepseek-v4-flash-0731                             | 0.119     | 0.238      | OpenRouter published price                                                    |
-| OPENROUTER  | ~deepseek/deepseek-v4-flash-latest                          | 0.0341    | 0.1599     | OpenRouter published price                                                    |
 | OPENROUTER  | deepseek/deepseek-v4-flash-vision-exp                       | 0.2156    | 0.6468     | OpenRouter published price                                                    |
 | OPENROUTER  | deepseek/deepseek-v4-pro                                    | 1.6       | 3.2        | OpenRouter published price                                                    |
 | OPENROUTER  | deepseek/deepseek-v4-pro-0813                               | 0.66      | 1.98       | OpenRouter published price                                                    |
@@ -118,8 +134,6 @@ Read on 2026-10-31 from production. Stored as `source: SEED`, `confidence: ESTIM
 | OPENROUTER  | google/gemini-3.8-flash:batch                               | 0.375     | 1.875      | OpenRouter published price                                                    |
 | OPENROUTER  | google/gemini-3-flash-preview                               | 0.5       | 3          | OpenRouter published price                                                    |
 | OPENROUTER  | google/gemini-3-flash-preview:batch                         | 0.25      | 1.5        | OpenRouter published price                                                    |
-| OPENROUTER  | ~google/gemini-flash-latest                                 | 0.75      | 3.75       | OpenRouter published price                                                    |
-| OPENROUTER  | ~google/gemini-pro-latest                                   | 2         | 10         | OpenRouter published price                                                    |
 | OPENROUTER  | google/gemma-2-27b-it                                       | 0.65      | 0.65       | OpenRouter published price                                                    |
 | OPENROUTER  | google/gemma-3-12b-it                                       | 0.05      | 0.15       | OpenRouter published price                                                    |
 | OPENROUTER  | google/gemma-3-27b-it                                       | 0.08      | 0.35       | OpenRouter published price                                                    |
@@ -183,9 +197,7 @@ Read on 2026-10-31 from production. Stored as `source: SEED`, `confidence: ESTIM
 | OPENROUTER  | moonshotai/kimi-k2.6                                        | 0.65      | 3.41       | OpenRouter published price                                                    |
 | OPENROUTER  | moonshotai/kimi-k2.7-code                                   | 0.6       | 3.5        | OpenRouter published price                                                    |
 | OPENROUTER  | moonshotai/kimi-k2-thinking                                 | 0.6       | 2.5        | OpenRouter published price                                                    |
-| OPENROUTER  | moonshotai/kimi-k3                                          | 0.192     | 15         | OpenRouter published price                                                    |
 | OPENROUTER  | moonshotai/kimi-k3:batch                                    | 2.28      | 11.4       | OpenRouter published price                                                    |
-| OPENROUTER  | ~moonshotai/kimi-latest                                     | 0.1529    | 10.5572    | OpenRouter published price                                                    |
 | OPENROUTER  | morph/morph-v3-fast                                         | 0.8       | 1.2        | OpenRouter published price                                                    |
 | OPENROUTER  | morph/morph-v3-large                                        | 0.9       | 1.9        | OpenRouter published price                                                    |
 | OPENROUTER  | gryphe/mythomax-l2-13b                                      | 0.08      | 0.11       | OpenRouter published price                                                    |
@@ -255,14 +267,10 @@ Read on 2026-10-31 from production. Stored as `source: SEED`, `confidence: ESTIM
 | OPENROUTER  | openai/gpt-audio                                            | 2.5       | 10         | OpenRouter published price                                                    |
 | OPENROUTER  | openai/gpt-audio-mini                                       | 0.6       | 2.4        | OpenRouter published price                                                    |
 | OPENROUTER  | openai/gpt-chat-latest                                      | 5         | 30         | OpenRouter published price                                                    |
-| OPENROUTER  | ~openai/gpt-luna-latest                                     | 0.1       | 0.5        | OpenRouter published price                                                    |
-| OPENROUTER  | ~openai/gpt-mini-latest                                     | 0.75      | 4.5        | OpenRouter published price                                                    |
 | OPENROUTER  | openai/gpt-oss-120b                                         | 0.15      | 0.6        | OpenRouter published price                                                    |
 | OPENROUTER  | openai/gpt-oss-120b:batch                                   | 0.0296    | 0.136      | OpenRouter published price                                                    |
 | OPENROUTER  | openai/gpt-oss-20b                                          | 0.018     | 0.09       | OpenRouter published price                                                    |
 | OPENROUTER  | openai/gpt-oss-20b:batch                                    | 0.024     | 0.112      | OpenRouter published price                                                    |
-| OPENROUTER  | ~openai/gpt-sol-latest                                      | 2         | 10         | OpenRouter published price                                                    |
-| OPENROUTER  | ~openai/gpt-terra-latest                                    | 1         | 5          | OpenRouter published price                                                    |
 | OPENROUTER  | openai/o3                                                   | 2         | 8          | OpenRouter published price                                                    |
 | OPENROUTER  | openai/o3-pro                                               | 20        | 80         | OpenRouter published price                                                    |
 | OPENROUTER  | perceptron/perceptron-mk1                                   | 0.15      | 1.5        | OpenRouter published price                                                    |
@@ -353,7 +361,6 @@ Read on 2026-10-31 from production. Stored as `source: SEED`, `confidence: ESTIM
 | OPENROUTER  | upstage/solar-pro4                                          | 0.15      | 0.6        | OpenRouter published price                                                    |
 | OPENROUTER  | cognitivecomputations/dolphin-mistral-24b-venice-edition    | 0.2       | 0.9        | OpenRouter published price                                                    |
 | OPENROUTER  | writer/palmyra-x5                                           | 0.6       | 6          | OpenRouter published price                                                    |
-| OPENROUTER  | ~x-ai/grok-latest                                           | 2         | 6          | OpenRouter published price                                                    |
 | OPENROUTER  | xiaomi/mimo-v2.5                                            | 0.4       | 2          | OpenRouter published price                                                    |
 | OPENROUTER  | xiaomi/mimo-v2.5-pro                                        | 0.48      | 1.8        | OpenRouter published price                                                    |
 | OPENROUTER  | xiaomi/mimo-v2.6-flash                                      | 0.14      | 0.28       | OpenRouter published price                                                    |
@@ -368,7 +375,6 @@ Read on 2026-10-31 from production. Stored as `source: SEED`, `confidence: ESTIM
 | OPENROUTER  | z-ai/glm-4.7-flash                                          | 0.0605    | 0.4        | OpenRouter published price                                                    |
 | OPENROUTER  | z-ai/glm-5                                                  | 1         | 3.2        | OpenRouter published price                                                    |
 | OPENROUTER  | z-ai/glm-5.1                                                | 1.4       | 4.4        | OpenRouter published price                                                    |
-| OPENROUTER  | z-ai/glm-5.2                                                | 0.006     | 7          | OpenRouter published price                                                    |
 | OPENROUTER  | z-ai/glm-5.3                                                | 0.104     | 2.769      | OpenRouter published price                                                    |
 | OPENROUTER  | z-ai/glm-5.3:batch                                          | 0.45      | 2          | OpenRouter published price                                                    |
 | OPENROUTER  | z-ai/glm-5.3-flash                                          | 0.0197    | 0.1324     | OpenRouter published price                                                    |
@@ -377,8 +383,6 @@ Read on 2026-10-31 from production. Stored as `source: SEED`, `confidence: ESTIM
 | OPENROUTER  | z-ai/glm-5.3-prime                                          | 2.8       | 8.8        | OpenRouter published price                                                    |
 | OPENROUTER  | z-ai/glm-5-turbo                                            | 1.2       | 4          | OpenRouter published price                                                    |
 | OPENROUTER  | z-ai/glm-5v-turbo                                           | 1.2       | 4          | OpenRouter published price                                                    |
-| OPENROUTER  | ~z-ai/glm-flash-latest                                      | 0.0197    | 0.1324     | OpenRouter published price                                                    |
-| OPENROUTER  | ~z-ai/glm-latest                                            | 0.0699    | 1.4        | OpenRouter published price                                                    |
 | GROQ        | allam-2-7b                                                  | 0.1       | 0.2        | ESTIMATE: size tier 5-14B                                                     |
 | GROQ        | openai/gpt-oss-120b                                         | 0.15      | 0.6        | same model on OpenRouter (openai/gpt-oss-120b)                                |
 | GROQ        | openai/gpt-oss-20b                                          | 0.018     | 0.09       | same model on OpenRouter (openai/gpt-oss-20b)                                 |
@@ -428,8 +432,6 @@ Read on 2026-10-31 from production. Stored as `source: SEED`, `confidence: ESTIM
 | HUGGINGFACE | zai-org/GLM-4.7                                             | 0.54      | 1.98       | same model on OpenRouter (z-ai/glm-4.7)                                       |
 | HUGGINGFACE | zai-org/GLM-4.7-Flash                                       | 0.0605    | 0.4        | same model on OpenRouter (z-ai/glm-4.7-flash)                                 |
 | HUGGINGFACE | zai-org/GLM-5                                               | 1         | 3.2        | same model on OpenRouter (z-ai/glm-5)                                         |
-| HUGGINGFACE | zai-org/GLM-5.2                                             | 0.006     | 7          | same model on OpenRouter (z-ai/glm-5.2)                                       |
-| HUGGINGFACE | zai-org/GLM-5.2-FP8                                         | 0.006     | 7          | same model on OpenRouter (z-ai/glm-5.2)                                       |
 | HUGGINGFACE | zai-org/GLM-5.3                                             | 0.104     | 2.769      | same model on OpenRouter (z-ai/glm-5.3)                                       |
 | HUGGINGFACE | zai-org/GLM-5.3-BF16                                        | 0.104     | 2.769      | same model on OpenRouter (z-ai/glm-5.3)                                       |
 | NVIDIANIM   | z-ai/glm-5.3-flash                                          | 0.0197    | 0.1324     | same model on OpenRouter (z-ai/glm-5.3-flash)                                 |
@@ -456,7 +458,6 @@ Read on 2026-10-31 from production. Stored as `source: SEED`, `confidence: ESTIM
 | HUGGINGFACE | moonshotai/Kimi-K2.6                                        | 0.65      | 3.41       | same model on OpenRouter (moonshotai/kimi-k2.6)                               |
 | HUGGINGFACE | moonshotai/Kimi-K2.7-Code                                   | 0.6       | 3.5        | same model on OpenRouter (moonshotai/kimi-k2.7-code)                          |
 | HUGGINGFACE | moonshotai/Kimi-K2-Instruct-0905                            | 0.6       | 2.5        | same model on OpenRouter (moonshotai/kimi-k2-0905)                            |
-| HUGGINGFACE | moonshotai/Kimi-K3                                          | 0.192     | 15         | same model on OpenRouter (moonshotai/kimi-k3)                                 |
 | AI_HORDE    | koboldcpp/Gemma-4-E4B-it-Ultra-Uncensored-Heretic           | 0         | 0          | free volunteer GPUs, no platform cost                                         |
 | AI_HORDE    | koboldcpp/Gemma-4-E4B-Uncensored-HauhauCS-Aggressive-Q4_K_M | 0         | 0          | free volunteer GPUs, no platform cost                                         |
 | AI_HORDE    | koboldcpp/L3-8B-Stheno-v3.2                                 | 0         | 0          | free volunteer GPUs, no platform cost                                         |

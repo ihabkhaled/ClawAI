@@ -184,7 +184,7 @@ Controllers never contain try/catch or throw statements. Repositories never thro
 - **Every new function needs a test.** No exceptions.
 - **Test files are exempt** from the no-`any` rule and inline restrictions.
 - **Pre-commit hook runs all tests** -- they must pass before commit.
-- **<!-- count:specFiles -->2758<!-- /count --> test files** across the monorepo (`.ai/manifests/tests.json`).
+- **<!-- count:specFiles -->2766<!-- /count --> test files** across the monorepo (`.ai/manifests/tests.json`).
 
 ---
 

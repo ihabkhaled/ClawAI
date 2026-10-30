@@ -63,8 +63,8 @@ import { AGGREGATOR_COST_ROWS } from './model-cost-seed-aggregators.constants';
 /// New keys fill gaps and are flagged `replacesFallbackRate`; the three Gemini 2.5
 /// cache-hit rates are corrected in place with `supersedesSeededPrice`. Sources and
 /// the rows left unpriced on purpose: docs/03-architecture/model-price-ledger-2026-10-30.md.
-/// v14 (2026-10-31): prices for the 495 OpenRouter, NVIDIA NIM, Hugging Face, Groq and AI Horde models that were
-/// unpriced and so refused on every plan. Sources, estimates and the 16 left unpriced on purpose:
+/// v14 (2026-10-31): prices for the 474 OpenRouter, NVIDIA NIM, Hugging Face, Groq and AI Horde models that were
+/// unpriced and so refused on every plan. Sources, estimates and the 37 left unpriced on purpose:
 /// docs/03-architecture/model-price-ledger-2026-10-31.md. New keys fill gaps; nothing is repriced.
 export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v14';
 export const MODEL_COST_SEED_VERSION = 14;

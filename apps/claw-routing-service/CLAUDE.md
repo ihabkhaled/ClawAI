@@ -137,12 +137,12 @@ in routing-service's `740_040_00N` block) → `SeedExecution` ledger row keyed o
   $2/$10). All fill gaps with `replacesFallbackRate`; the Gemini 2.5 cache-hit rates
   are corrected in place with `supersedesSeededPrice`. Sources, the rows left unpriced
   and the long-context gap: `docs/03-architecture/model-price-ledger-2026-10-30.md`.
-- **Aggregator prices** (seed **v14**, `model-cost-list-prices-2026-v14`, 2026-10-31): 495 NEW keys for
+- **Aggregator prices** (seed **v14**, `model-cost-list-prices-2026-v14`, 2026-10-31): 474 NEW keys for
   OpenRouter, NVIDIA NIM, Hugging Face, Groq and AI Horde models that were unpriced and so refused on
   every plan. Compact rows in `constants/model-cost-seed-aggregators.constants.ts`, expanded and classed by
-  output price in `utilities/aggregator-cost-seed.utility.ts`. A genuinely free model (an OpenRouter `:free`
-  route, AI Horde) is priced 0/0 AND classed FREE; any other zero is a missing price. 16 models are left
-  unpriced on purpose (variable-price routers, non-chat models). Sources, estimates and every price:
+  the dearer of input and output rate in `utilities/aggregator-cost-seed.utility.ts`. A genuinely free model (an OpenRouter `:free`
+  route, AI Horde) is priced 0/0 AND classed FREE; any other zero is a missing price. 37 models are left
+  unpriced on purpose (variable-price routers, floating `~...-latest` aliases, implausible published prices, non-chat models). Sources, estimates and every price:
   `docs/03-architecture/model-price-ledger-2026-10-31.md`.
 - **Correcting a seeded price**: set `supersedesSeededPrice: true` on the entry
   and bump the seed version. A model whose ACTIVE row is still `source: SEED`
