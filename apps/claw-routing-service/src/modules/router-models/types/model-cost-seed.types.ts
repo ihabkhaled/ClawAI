@@ -99,3 +99,18 @@ export interface ModelCostSeedResult {
    */
   repriced: readonly ModelCostSeedRepricedModel[];
 }
+
+/**
+ * One aggregator model's price as a compact row: provider, model key, input,
+ * output, cache-hit input, cache write. Integer micro-USD per million tokens,
+ * null when the source publishes none. Expanded to a `ModelCostSeedEntry` by
+ * `buildAggregatorCostSeedEntries`.
+ */
+export type AggregatorCostRow = readonly [
+  provider: string,
+  modelKey: string,
+  inputPerMillionMicroUsd: number,
+  outputPerMillionMicroUsd: number,
+  cachedInputPerMillionMicroUsd: number | null,
+  cacheWritePerMillionMicroUsd: number | null,
+];

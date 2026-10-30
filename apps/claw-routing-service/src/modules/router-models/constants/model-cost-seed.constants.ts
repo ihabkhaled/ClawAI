@@ -1,5 +1,7 @@
 import { CostClass } from '../../../generated/prisma';
 import { type ModelCostSeedEntry } from '../types/model-cost-seed.types';
+import { buildAggregatorCostSeedEntries } from '../utilities/aggregator-cost-seed.utility';
+import { AGGREGATOR_COST_ROWS } from './model-cost-seed-aggregators.constants';
 
 /// Identity of the first-install price bootstrap. Bumping the version re-runs
 /// the seed; changing the payload without bumping it is a checksum mismatch,
@@ -61,8 +63,11 @@ import { type ModelCostSeedEntry } from '../types/model-cost-seed.types';
 /// New keys fill gaps and are flagged `replacesFallbackRate`; the three Gemini 2.5
 /// cache-hit rates are corrected in place with `supersedesSeededPrice`. Sources and
 /// the rows left unpriced on purpose: docs/03-architecture/model-price-ledger-2026-10-30.md.
-export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v13';
-export const MODEL_COST_SEED_VERSION = 13;
+/// v14 (2026-10-31): prices for the 495 OpenRouter, NVIDIA NIM, Hugging Face, Groq and AI Horde models that were
+/// unpriced and so refused on every plan. Sources, estimates and the 16 left unpriced on purpose:
+/// docs/03-architecture/model-price-ledger-2026-10-31.md. New keys fill gaps; nothing is repriced.
+export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v14';
+export const MODEL_COST_SEED_VERSION = 14;
 
 /// Next in routing-service's 740_040_00N advisory-lock block (001 = deployment
 /// backfill, 002 = router chain). Distinct from payment-service's 740_018_001
@@ -126,7 +131,7 @@ export const MODEL_COST_SEED_NOTES =
 // null means "not published", 0 would mean "free".
 // ═══════════════════════════════════════════════════════════════════════════
 
-export const MODEL_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.freeze([
+const LISTED_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.freeze([
   // ── OpenAI ───────────────────────────────────────────────────────────────
   Object.freeze({
     provider: 'OPENAI',
@@ -1451,4 +1456,9 @@ export const MODEL_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.fre
     costClass: CostClass.STANDARD,
     replacesFallbackRate: true,
   }),
+]);
+
+export const MODEL_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.freeze([
+  ...LISTED_COST_SEED_ENTRIES,
+  ...buildAggregatorCostSeedEntries(AGGREGATOR_COST_ROWS),
 ]);

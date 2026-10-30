@@ -10,7 +10,9 @@ import {
   MODEL_COST_SEED_NAME,
   MODEL_COST_SEED_VERSION,
 } from '../constants/model-cost-seed.constants';
+import { AGGREGATOR_COST_ROWS } from '../constants/model-cost-seed-aggregators.constants';
 import { LOCAL_COST_PROVIDERS } from '../constants/model-cost.constants';
+import { costClassForOutputRate } from '../utilities/aggregator-cost-seed.utility';
 import type { ModelCostSeedEntry, ModelCostSeedInput } from '../types/model-cost-seed.types';
 
 const seedInput = (overrides: Partial<ModelCostSeedInput> = {}): ModelCostSeedInput => ({
@@ -171,7 +173,7 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
       ]),
     );
 
-    for (const unverified of ['GROQ', 'CEREBRAS', 'QWEN', 'OPENROUTER', 'VERCEL_AI_GATEWAY']) {
+    for (const unverified of ['CEREBRAS', 'QWEN', 'VERCEL_AI_GATEWAY']) {
       expect(MODEL_COST_SEED_ENTRIES.some((entry) => entry.provider === unverified)).toBe(false);
     }
   });
@@ -194,6 +196,13 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
         (entry.videoPerUnitMicroUsd ?? 0) > 0;
       if (perUnit) {
         expect(entry.inputPerMillionMicroUsd).toBeGreaterThanOrEqual(0);
+        expect(entry.outputPerMillionMicroUsd).toBe(0);
+        continue;
+      }
+      // A model that is genuinely free to the platform (an OpenRouter :free route, AI Horde's
+      // volunteer GPUs) is priced 0/0 AND classed FREE; any other zero is a missing price.
+      if (entry.costClass === CostClass.FREE) {
+        expect(entry.inputPerMillionMicroUsd).toBe(0);
         expect(entry.outputPerMillionMicroUsd).toBe(0);
         continue;
       }
@@ -363,9 +372,60 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
     expect(Number.isInteger(find('gpt-4o-mini-transcribe')?.audioPerUnitMicroUsd)).toBe(true);
   });
 
-  it('is version 13, so installs that ran v12 pick up the official text-model prices', () => {
-    expect(MODEL_COST_SEED_VERSION).toBe(13);
-    expect(MODEL_COST_SEED_NAME).toBe('model-cost-list-prices-2026-v13');
+  it('is version 14, so installs that ran v13 pick up the aggregator prices', () => {
+    expect(MODEL_COST_SEED_VERSION).toBe(14);
+    expect(MODEL_COST_SEED_NAME).toBe('model-cost-list-prices-2026-v14');
+  });
+
+  describe('aggregator prices (v14)', () => {
+    const entryFor = (provider: string, modelKey: string): ModelCostSeedEntry | undefined =>
+      MODEL_COST_SEED_ENTRIES.find((e) => e.provider === provider && e.modelKey === modelKey);
+
+    it('prices OpenRouter at its own published rate, as integer micro-USD per million', () => {
+      const entry = entryFor('OPENROUTER', 'amazon/nova-lite-v1');
+      expect(entry).toBeDefined();
+      expect(Number.isInteger(entry?.inputPerMillionMicroUsd)).toBe(true);
+      expect(entry?.outputPerMillionMicroUsd).toBeGreaterThan(0);
+    });
+
+    it('classes a price by its output rate: 0 FREE, under $1 CHEAP, under $6 STANDARD, under $40 PREMIUM', () => {
+      expect(costClassForOutputRate(0)).toBe(CostClass.FREE);
+      expect(costClassForOutputRate(999_999)).toBe(CostClass.CHEAP);
+      expect(costClassForOutputRate(1_000_000)).toBe(CostClass.STANDARD);
+      expect(costClassForOutputRate(5_999_999)).toBe(CostClass.STANDARD);
+      expect(costClassForOutputRate(6_000_000)).toBe(CostClass.PREMIUM);
+      expect(costClassForOutputRate(39_999_999)).toBe(CostClass.PREMIUM);
+      expect(costClassForOutputRate(40_000_000)).toBe(CostClass.ULTRA);
+    });
+
+    it('derives every aggregator class from its own output price', () => {
+      for (const [provider, modelKey, , output] of AGGREGATOR_COST_ROWS) {
+        expect(entryFor(provider, modelKey)?.costClass, `${provider}/${modelKey}`).toBe(
+          costClassForOutputRate(output),
+        );
+      }
+    });
+
+    it('prices AI Horde at zero and class FREE, never as a fee', () => {
+      const horde = AGGREGATOR_COST_ROWS.filter(([provider]) => provider === 'AI_HORDE');
+      expect(horde.length).toBeGreaterThan(0);
+      for (const [provider, modelKey] of horde) {
+        expect(entryFor(provider, modelKey)?.costClass).toBe(CostClass.FREE);
+      }
+    });
+
+    it('leaves a variable-price router and a non-chat model unpriced on purpose', () => {
+      expect(entryFor('OPENROUTER', 'openrouter/auto')).toBeUndefined();
+      expect(entryFor('NVIDIANIM', 'nvidia/nvclip')).toBeUndefined();
+    });
+
+    it('never prices a model above its provider cached-input rule: cache hit never dearer than input', () => {
+      for (const [provider, modelKey, input, , cached] of AGGREGATOR_COST_ROWS) {
+        if (cached !== null) {
+          expect(cached, `${provider}/${modelKey}`).toBeLessThanOrEqual(input);
+        }
+      }
+    });
   });
 
   // v13: figures are each provider's own price page, read 2026-10-30. Before it these

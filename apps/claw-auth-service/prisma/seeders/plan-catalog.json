@@ -173,7 +173,7 @@
       "contextPacks": 5,
       "memoryItems": 50,
       "modelAccessMode": "ALLOW_COST_CLASSES",
-      "allowedCostClasses": ["FREE", "CHEAP", "STANDARD", "PREMIUM", "ULTRA"],
+      "allowedCostClasses": ["FREE", "CHEAP", "STANDARD"],
       "features": {
         "COMPARE_MODE": {
           "accessMode": "LIMITED",
@@ -284,7 +284,7 @@
       "contextPacks": 15,
       "memoryItems": 200,
       "modelAccessMode": "ALLOW_COST_CLASSES",
-      "allowedCostClasses": ["FREE", "CHEAP", "STANDARD", "PREMIUM", "ULTRA"],
+      "allowedCostClasses": ["FREE", "CHEAP", "STANDARD", "PREMIUM"],
       "features": {
         "COMPARE_MODE": {
           "accessMode": "LIMITED",

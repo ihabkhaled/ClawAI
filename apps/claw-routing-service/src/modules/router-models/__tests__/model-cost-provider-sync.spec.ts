@@ -3,7 +3,7 @@ import { type RabbitMQService } from '@claw/shared-rabbitmq';
 import { ModelCostClass } from '@claw/shared-types';
 import { AppConfig } from '../../../app/config/app.config';
 import { ModelPriceBasis, ModelPricingSource } from '../../../common/enums';
-import { type ModelCostVersion } from '../../../generated/prisma';
+import { CostClass, type ModelCostVersion } from '../../../generated/prisma';
 import { MODEL_COST_SEED_ENTRIES } from '../constants/model-cost-seed.constants';
 import { LOCAL_COST_PROVIDERS } from '../constants/model-cost.constants';
 import { type ModelCostRepository } from '../repositories/model-cost.repository';
@@ -415,7 +415,12 @@ describe('model-cost seed coverage', () => {
         entry.ttsPerCharacterMicroUsd,
       ].some((value) => (value ?? 0) > 0);
       const local = LOCAL_COST_PROVIDERS.includes(entry.provider.toUpperCase());
-      return !tokenPriced && !unitPriced && !local;
+      // A model that costs the platform nothing (an OpenRouter :free route, AI Horde) is priced 0/0 and classed FREE.
+      const freeOfCharge =
+        entry.costClass === CostClass.FREE &&
+        entry.inputPerMillionMicroUsd === 0 &&
+        entry.outputPerMillionMicroUsd === 0;
+      return !tokenPriced && !unitPriced && !local && !freeOfCharge;
     }).map((entry) => `${entry.provider}/${entry.modelKey}`);
 
     expect(holes).toEqual([]);

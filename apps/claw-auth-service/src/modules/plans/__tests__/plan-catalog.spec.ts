@@ -170,12 +170,17 @@ describe('plan catalog', () => {
     expect(bySlug('free').features['WORKSPACES']?.accessMode).toBe('ENABLED');
   });
 
-  it('limits Free to standard and below while paid plans include premium classes', () => {
-    expect(bySlug('free').modelAccessMode).toBe('ALLOW_COST_CLASSES');
-    expect(bySlug('free').allowedCostClasses).toEqual(['FREE', 'CHEAP', 'STANDARD']);
-    for (const plan of catalog.filter((entry) => entry.slug !== 'free')) {
-      expect(plan.modelAccessMode).toBe('ALLOW_COST_CLASSES');
-      expect(plan.allowedCostClasses).toEqual(['FREE', 'CHEAP', 'STANDARD', 'PREMIUM', 'ULTRA']);
+  it('keeps the dearest models off the low plans: Free and Starter stop at standard, Plus at premium', () => {
+    const standardAndBelow = ['FREE', 'CHEAP', 'STANDARD'];
+    for (const slug of ['free', 'starter']) {
+      expect(bySlug(slug).modelAccessMode).toBe('ALLOW_COST_CLASSES');
+      expect(bySlug(slug).allowedCostClasses).toEqual(standardAndBelow);
+    }
+    expect(bySlug('plus').modelAccessMode).toBe('ALLOW_COST_CLASSES');
+    expect(bySlug('plus').allowedCostClasses).toEqual([...standardAndBelow, 'PREMIUM']);
+    for (const slug of ['pro', 'team', 'scale', 'unlimited']) {
+      expect(bySlug(slug).modelAccessMode).toBe('ALLOW_COST_CLASSES');
+      expect(bySlug(slug).allowedCostClasses).toEqual([...standardAndBelow, 'PREMIUM', 'ULTRA']);
     }
   });
 
