@@ -5389,6 +5389,7 @@ export type TranslationDictionary = {
     errors: {
       PAYG_CREDIT_EXHAUSTED: string;
       PAYG_PROMPT_TOO_EXPENSIVE: string;
+      PLAN_CALL_LIMIT_EXCEEDED: string;
       PAYG_MODEL_UNPRICED: string;
       PAYG_PRICING_UNAVAILABLE: string;
       PAYG_FREE_ALLOWANCE_EXHAUSTED: string;

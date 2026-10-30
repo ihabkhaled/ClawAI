@@ -51,6 +51,7 @@ export const MESSAGE_SPEECH_ERROR_KEYS: Readonly<Partial<Record<ApiErrorCode, st
   [ApiErrorCode.TTS_CANCEL_PENDING]: 'chat.speech.errors.cancelPending',
   [ApiErrorCode.PAYG_CREDIT_EXHAUSTED]: 'billing.errors.PAYG_CREDIT_EXHAUSTED',
   [ApiErrorCode.PAYG_PROMPT_TOO_EXPENSIVE]: 'billing.errors.PAYG_PROMPT_TOO_EXPENSIVE',
+  [ApiErrorCode.PLAN_CALL_LIMIT_EXCEEDED]: 'billing.errors.PLAN_CALL_LIMIT_EXCEEDED',
   [ApiErrorCode.PAYG_MODEL_UNPRICED]: 'billing.errors.PAYG_MODEL_UNPRICED',
   [ApiErrorCode.PAYG_PRICING_UNAVAILABLE]: 'billing.errors.PAYG_PRICING_UNAVAILABLE',
   [ApiErrorCode.PAYG_MODEL_NOT_IN_FREE_ALLOWANCE]:

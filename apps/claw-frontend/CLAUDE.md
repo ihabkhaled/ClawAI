@@ -1095,3 +1095,5 @@ Every Thread date (public/marketing/in-app byline, Board cards, suggestion rows,
 failed the CI frontend build at random (`Cannot read properties of null (reading '1')`, Google answered with a
 font URL the loader could not parse). Guarded by `src/app/__tests__/self-hosted-fonts.test.ts`. To add a weight,
 copy the file from the matching `@fontsource/<family>` package and add it to `fonts.ts`.
+
+`PLAN_CALL_LIMIT_EXCEEDED` (ADR-197, 2026-10-30) is a 402 refusal: one request is larger than the plan allows for a single message. It is mapped in `chat-stream-error.constants.ts`, `message-speech.constants.ts`, `api-error-code.enum.ts` and `billing-error.utility.ts`, and `billing.errors.PLAN_CALL_LIMIT_EXCEEDED` has a translation in all 13 locales. The text names no price or cap.

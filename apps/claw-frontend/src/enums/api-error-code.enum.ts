@@ -27,6 +27,7 @@ export enum ApiErrorCode {
   // Collapsing them would sell a top-up to somebody whose balance was fine.
   PAYG_CREDIT_EXHAUSTED = 'PAYG_CREDIT_EXHAUSTED',
   PAYG_PROMPT_TOO_EXPENSIVE = 'PAYG_PROMPT_TOO_EXPENSIVE',
+  PLAN_CALL_LIMIT_EXCEEDED = 'PLAN_CALL_LIMIT_EXCEEDED',
   PAYG_MODEL_UNPRICED = 'PAYG_MODEL_UNPRICED',
   PAYG_PRICING_UNAVAILABLE = 'PAYG_PRICING_UNAVAILABLE',
   // The plan's monthly free requests on credit models are spent (ADR-142 update).

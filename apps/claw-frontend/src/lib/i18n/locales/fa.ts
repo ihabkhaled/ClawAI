@@ -5538,6 +5538,8 @@ export const fa: TranslationDictionary = {
       PAYG_CREDIT_EXHAUSTED:
         'اعتبار رابط‌های شما تمام شده است. برای ادامهٔ استفاده از مدل‌های ابری اعتبار اضافه کنید.',
       PAYG_PROMPT_TOO_EXPENSIVE: 'هزینهٔ این گفت‌وگو از اعتبار باقی‌ماندهٔ رابط‌های شما بیشتر است.',
+      PLAN_CALL_LIMIT_EXCEEDED:
+        'این درخواست از حد مجاز طرح شما برای یک پیام بزرگ‌تر است. آن را کوتاه کنید یا مدل ارزان‌تری انتخاب کنید.',
       PAYG_MODEL_UNPRICED: 'هنوز قیمتی برای این مدل منتشر نشده و قابل محاسبه نیست.',
       PAYG_PRICING_UNAVAILABLE: 'اطلاعات قیمت موقتاً در دسترس نیست. مبلغی از شما کسر نشد.',
       PAYG_MODEL_NOT_IN_FREE_ALLOWANCE:

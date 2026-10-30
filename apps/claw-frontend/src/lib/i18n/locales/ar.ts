@@ -5443,6 +5443,8 @@ export const ar: TranslationDictionary = {
       PAYG_CREDIT_EXHAUSTED:
         'نفد رصيد الموصّلات لديك. أضف رصيدًا لمواصلة استخدام النماذج السحابية.',
       PAYG_PROMPT_TOO_EXPENSIVE: 'تكلفة هذه المحادثة أعلى من رصيد الموصّلات المتبقّي لديك.',
+      PLAN_CALL_LIMIT_EXCEEDED:
+        'هذا الطلب أكبر مما تسمح به خطتك للرسالة الواحدة. اختصره أو اختر نموذجًا أقل تكلفة.',
       PAYG_MODEL_UNPRICED: 'لا يوجد سعر منشور لهذا النموذج بعد، لذا لا يمكن احتسابه.',
       PAYG_PRICING_UNAVAILABLE: 'تعذّر الوصول إلى بيانات التسعير مؤقتًا. لم يُخصم منك شيء.',
       PAYG_MODEL_NOT_IN_FREE_ALLOWANCE:

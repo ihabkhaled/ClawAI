@@ -5649,6 +5649,8 @@ export const fr: TranslationDictionary = {
         'Votre crédit connecteurs est épuisé. Ajoutez du crédit pour continuer à utiliser les modèles cloud.',
       PAYG_PROMPT_TOO_EXPENSIVE:
         'Cette conversation coûte plus que votre crédit connecteurs restant.',
+      PLAN_CALL_LIMIT_EXCEEDED:
+        'Cette demande dépasse ce que votre forfait autorise pour un seul message. Raccourcissez-la ou choisissez un modèle moins cher.',
       PAYG_MODEL_UNPRICED: 'Ce modèle n’a pas encore de tarif publié et ne peut pas être facturé.',
       PAYG_PRICING_UNAVAILABLE:
         'Les tarifs sont temporairement inaccessibles. Rien ne vous a été facturé.',

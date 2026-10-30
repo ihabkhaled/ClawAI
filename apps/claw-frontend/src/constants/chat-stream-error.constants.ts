@@ -12,6 +12,7 @@ export const CHAT_STREAM_ERROR_KEY_BY_CODE: ReadonlyMap<string, string> = new Ma
   // so without these a spent allowance read "All providers failed".
   ['PAYG_CREDIT_EXHAUSTED', 'billing.errors.PAYG_CREDIT_EXHAUSTED'],
   ['PAYG_PROMPT_TOO_EXPENSIVE', 'billing.errors.PAYG_PROMPT_TOO_EXPENSIVE'],
+  ['PLAN_CALL_LIMIT_EXCEEDED', 'billing.errors.PLAN_CALL_LIMIT_EXCEEDED'],
   ['PAYG_MODEL_UNPRICED', 'billing.errors.PAYG_MODEL_UNPRICED'],
   ['PAYG_PRICING_UNAVAILABLE', 'billing.errors.PAYG_PRICING_UNAVAILABLE'],
   ['PAYG_FREE_ALLOWANCE_EXHAUSTED', 'billing.errors.PAYG_FREE_ALLOWANCE_EXHAUSTED'],

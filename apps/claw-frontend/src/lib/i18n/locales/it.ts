@@ -5625,6 +5625,8 @@ export const it: TranslationDictionary = {
         'Il tuo credito connettori è esaurito. Aggiungi credito per continuare a usare i modelli cloud.',
       PAYG_PROMPT_TOO_EXPENSIVE:
         'Questa conversazione costa più del tuo credito connettori residuo.',
+      PLAN_CALL_LIMIT_EXCEEDED:
+        'Questa richiesta supera ciò che il tuo piano consente per un singolo messaggio. Accorciala o scegli un modello più economico.',
       PAYG_MODEL_UNPRICED:
         'Questo modello non ha ancora un prezzo pubblicato e non può essere addebitato.',
       PAYG_PRICING_UNAVAILABLE:

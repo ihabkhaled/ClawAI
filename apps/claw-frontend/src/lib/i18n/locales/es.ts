@@ -5619,6 +5619,8 @@ export const es: TranslationDictionary = {
         'Tu crédito de conectores se ha agotado. Añade crédito para seguir usando modelos en la nube.',
       PAYG_PROMPT_TOO_EXPENSIVE:
         'Esta conversación cuesta más que tu crédito de conectores restante.',
+      PLAN_CALL_LIMIT_EXCEEDED:
+        'Esta solicitud es mayor de lo que tu plan permite para un solo mensaje. Acórtala o elige un modelo más económico.',
       PAYG_MODEL_UNPRICED: 'Este modelo aún no tiene un precio publicado y no se puede cobrar.',
       PAYG_PRICING_UNAVAILABLE:
         'Los precios no están disponibles temporalmente. No se te ha cobrado nada.',

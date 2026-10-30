@@ -5506,6 +5506,8 @@ export const en: TranslationDictionary = {
         'Your connector credit is used up. Add credit to keep using cloud models.',
       PAYG_PROMPT_TOO_EXPENSIVE:
         'This conversation costs more than your remaining connector credit.',
+      PLAN_CALL_LIMIT_EXCEEDED:
+        'This request is larger than your plan allows for one message. Shorten it or choose a cheaper model.',
       PAYG_MODEL_UNPRICED: 'This model has no published price yet and cannot be billed.',
       PAYG_PRICING_UNAVAILABLE: 'Pricing is temporarily unreachable. You were not charged.',
       PAYG_MODEL_NOT_IN_FREE_ALLOWANCE:

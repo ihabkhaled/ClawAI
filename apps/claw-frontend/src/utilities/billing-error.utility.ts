@@ -29,6 +29,8 @@ export function resolveBillingErrorMessage(
       return t('billing.errors.PAYG_PROMPT_TOO_EXPENSIVE');
     case 'PAYG_MODEL_UNPRICED':
       return t('billing.errors.PAYG_MODEL_UNPRICED');
+    case 'PLAN_CALL_LIMIT_EXCEEDED':
+      return t('billing.errors.PLAN_CALL_LIMIT_EXCEEDED');
     case 'PAYG_PRICING_UNAVAILABLE':
       return t('billing.errors.PAYG_PRICING_UNAVAILABLE');
     case 'PAYG_FREE_ALLOWANCE_EXHAUSTED':

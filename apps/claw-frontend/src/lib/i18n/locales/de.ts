@@ -5652,6 +5652,8 @@ export const de: TranslationDictionary = {
         'Ihr Connector-Guthaben ist aufgebraucht. Laden Sie Guthaben auf, um Cloud-Modelle weiter zu nutzen.',
       PAYG_PROMPT_TOO_EXPENSIVE:
         'Diese Unterhaltung kostet mehr als Ihr verbleibendes Connector-Guthaben.',
+      PLAN_CALL_LIMIT_EXCEEDED:
+        'Diese Anfrage ist größer, als Ihr Tarif für eine einzelne Nachricht erlaubt. Kürzen Sie sie oder wählen Sie ein günstigeres Modell.',
       PAYG_MODEL_UNPRICED:
         'Für dieses Modell ist noch kein Preis veröffentlicht, daher kann es nicht abgerechnet werden.',
       PAYG_PRICING_UNAVAILABLE:

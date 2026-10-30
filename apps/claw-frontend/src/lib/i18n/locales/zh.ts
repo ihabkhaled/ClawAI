@@ -5313,6 +5313,8 @@ export const zh: TranslationDictionary = {
     errors: {
       PAYG_CREDIT_EXHAUSTED: '您的连接器额度已用尽。请充值后继续使用云端模型。',
       PAYG_PROMPT_TOO_EXPENSIVE: '本次对话的费用超过了您剩余的连接器额度。',
+      PLAN_CALL_LIMIT_EXCEEDED:
+        '此请求超出了您的套餐对单条消息的限制。请缩短内容，或选择成本更低的模型。',
       PAYG_MODEL_UNPRICED: '该模型尚未发布价格，无法计费。',
       PAYG_PRICING_UNAVAILABLE: '暂时无法获取价格信息。未向您收取任何费用。',
       PAYG_MODEL_NOT_IN_FREE_ALLOWANCE:

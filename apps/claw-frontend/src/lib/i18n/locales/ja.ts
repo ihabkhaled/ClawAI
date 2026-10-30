@@ -5545,6 +5545,8 @@ export const ja: TranslationDictionary = {
       PAYG_CREDIT_EXHAUSTED:
         'コネクタークレジットを使い切りました。クラウドモデルを続けて使うにはクレジットを追加してください。',
       PAYG_PROMPT_TOO_EXPENSIVE: 'この会話の費用は残りのコネクタークレジットを超えています。',
+      PLAN_CALL_LIMIT_EXCEEDED:
+        'このリクエストは、お使いのプランで1メッセージあたりに許可されている上限を超えています。短くするか、より低コストのモデルを選んでください。',
       PAYG_MODEL_UNPRICED: 'このモデルはまだ価格が公開されておらず、課金できません。',
       PAYG_PRICING_UNAVAILABLE: '価格情報に一時的に接続できません。課金は発生していません。',
       PAYG_MODEL_NOT_IN_FREE_ALLOWANCE:
