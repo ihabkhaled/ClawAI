@@ -87,9 +87,23 @@ Reading it: cheap and standard models are never constrained. Without a cap, one 
 Unlimited can cost $17.52, 35% of that plan's whole month. The Free plan cannot reach the starred models
 anyway (its cost classes are FREE, CHEAP, STANDARD).
 
-### Not yet enforced. What enforcement touches
+### Not yet enforced. What the code audit found (2026-10-30)
 
-Nullable `maxInputTokens`, `maxOutputTokens`, `maxCostPerCallMicroUsd` on the plan (null means no cap),
-a migration, the seeder path that moves existing installs without rewriting an admin's value, the quota
-admission and the PAYG credit hold, a coded refusal with a message in 13 locales, and tests. It changes
-who is refused, so it waits for the owner's yes on the table above.
+The owner approved the table. Enforcement was started and stopped at the audit, because the seam is not
+where the proposal assumed:
+
+- `CreditReservationManager.reserve` (auth-service) is the one chokepoint every chat provider call reaches.
+  For a **credit (PAYG) connector** it already clamps the output to what the wallet and a Threads job cap
+  allow (`takeHold`, `spendCeilingMicroUsd`, `clampOutputTokensToBalance`). A wallet already bounds that spend.
+- For a **platform-paid** provider (the plan's own key, for example Gemini) it answers `metered: false` and
+  echoes the requested output size. There is no per-call dollar check on that branch, and that branch is the
+  one where the platform pays. This is where the caps must go.
+- `RuntimeAdmissionService` covers Runtime V2 only, and the legacy `/quota/reserve` is token-only.
+- A refusal needs a new coded error. The existing `PAYG_CAP_TOO_LOW` and `PAYG_PROMPT_TOO_EXPENSIVE` give
+  wrong advice here (raise a Threads cap, add credit). A new code touches shared-types, chat-service
+  `payg.constants`, `credit-fallback.utility`, four frontend enum/constant files and 13 locales.
+
+Work to do, in order: nullable `maxInputTokens`, `maxOutputTokens`, `maxCostPerCallMicroUsd` on the plan with a
+migration (rule 52) and a seeder that only fills nulls; the cap check in the unmetered branch of `reserve`
+(clamp output first, refuse when the prompt alone is over); the new code with its 13 locales; tests and a live
+run on a platform-paid model. It changes who is refused, so it is its own batch with its own ADR.
