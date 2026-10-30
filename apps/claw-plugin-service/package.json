@@ -1,6 +1,6 @@
 {
   "name": "claw-plugin-service",
-  "version": "1.221.0",
+  "version": "1.221.1",
   "private": true,
   "description": "ClawAI plugin catalog service",
   "license": "UNLICENSED",
