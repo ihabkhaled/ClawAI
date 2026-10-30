@@ -170,6 +170,11 @@ The chat service uses SSE for real-time message delivery. Key implementation det
 - SSE routes are excluded from pino-http `autoLogging` in `app.module.ts`
 - Frontend uses `fetch()` with `ReadableStream` (not EventSource) to set Authorization headers
 - Nginx must have `proxy_buffering off` for SSE routes
+- A replay never crosses a run boundary: `ChatStreamBusService.replay` cuts the buffer at the
+  latest `request_accepted` frame (`scopeToLatestRun`), so a client that attaches while the
+  fire-and-forget buffer reset is still in flight cannot read the previous run's `done` and stop
+  listening (2026-10-30). The buffer is still capped at 100 frames and 1 hour with no gap marker;
+  that is open work in the [three-workstreams plan](../03-architecture/three-workstreams-plan-2026-10-30.md).
 
 ## Error Handling
 

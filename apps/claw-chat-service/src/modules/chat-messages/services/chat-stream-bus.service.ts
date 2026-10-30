@@ -18,7 +18,11 @@ import {
   CHAT_STREAM_THREAD_ID_PATTERN,
 } from '../constants/chat-stream-bus.constants';
 import type { StreamEvent } from '../types/stream.types';
-import { describeStreamError, parseStreamFrame } from '../utilities/chat-stream-frame.utility';
+import {
+  describeStreamError,
+  parseStreamFrame,
+  scopeToLatestRun,
+} from '../utilities/chat-stream-frame.utility';
 
 /**
  * Carries chat stream frames between replicas.
@@ -132,14 +136,13 @@ export class ChatStreamBusService implements OnModuleInit {
   async replay(threadId: string, afterSequence?: number): Promise<StreamEvent[]> {
     try {
       const raw = await this.redis.lrange(`${CHAT_STREAM_REPLAY_KEY_PREFIX}${threadId}`, 0, -1);
-      const frames = raw.flatMap((entry) => {
-        const parsed = parseStreamFrame(entry);
-        return parsed === null ? [] : [parsed];
-      });
-      if (afterSequence === undefined) {
-        return frames;
-      }
-      return frames.filter((frame) => (frame.sequence ?? 0) > afterSequence);
+      const frames = scopeToLatestRun(
+        raw.flatMap((entry) => {
+          const parsed = parseStreamFrame(entry);
+          return parsed === null ? [] : [parsed];
+        }),
+      );
+      return afterSequence === undefined ? frames : frames.filter((frame) => (frame.sequence ?? 0) > afterSequence);
     } catch (error: unknown) {
       this.logger.error(
         `replay: could not read buffer for ${threadId} — ${describeStreamError(error)}`,

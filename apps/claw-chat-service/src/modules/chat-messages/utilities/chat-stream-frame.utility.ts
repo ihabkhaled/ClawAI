@@ -1,3 +1,4 @@
+import { StreamEventType } from '../../../common/enums';
 import type { StreamEvent } from '../types/stream.types';
 
 /**
@@ -42,8 +43,25 @@ export function parseEventSequence(eventId: string | undefined): number | undefi
     return undefined;
   }
   const sequencePart = eventId.slice(separatorIndex + 1);
-  if (!/^\d+$/u.test(sequencePart)) {
-    return undefined;
-  }
-  return Number.parseInt(sequencePart, 10);
+  return !/^\d+$/u.test(sequencePart) ? undefined : Number.parseInt(sequencePart, 10);
+}
+
+/**
+ * Keeps only the frames of the run that started last.
+ *
+ * A run opens with REQUEST_ACCEPTED and ends with DONE or ERROR. The replay
+ * buffer is cleared when a run starts, but that delete is fire-and-forget, so a
+ * client attaching in that window used to read the PREVIOUS run's terminal DONE
+ * first and stop listening. Cutting everything before the latest
+ * REQUEST_ACCEPTED makes the run boundary a property of the frames themselves,
+ * not of the delete winning a race. A buffer with no REQUEST_ACCEPTED (an older
+ * run that rolled past the cap, or a frame source that never sent one) is
+ * returned unchanged.
+ */
+export function scopeToLatestRun(frames: StreamEvent[]): StreamEvent[] {
+  const runStarts = frames.flatMap((frame, index) =>
+    frame.type === StreamEventType.REQUEST_ACCEPTED ? [index] : [],
+  );
+  const latestStart = runStarts.at(-1);
+  return latestStart === undefined ? frames : frames.slice(latestStart);
 }

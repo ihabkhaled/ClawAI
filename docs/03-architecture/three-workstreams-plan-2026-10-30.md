@@ -49,7 +49,7 @@ harness). Rule 26 intake: pack read whole, repo audited against code, verdicts b
 | Typed model-turn outcome                       | Missing                                                                                                                 |
 | `length` truncation                            | Partial: banner and fast-path escalation only                                                                           |
 | Thinking-only / empty                          | Partial: Runtime V2 retries, the stream path throws                                                                     |
-| Run identity on `DONE` (stale-DONE)            | Partial: timing only, no `runId`                                                                                        |
+| Stale `DONE` replayed into the next run        | Done: a replay is cut at the latest `request_accepted`. No `runId` on events yet                                        |
 | Durable replay and gap detection               | Missing: 100 events, 1 hour, no gap marker                                                                              |
 | Reconnect observes, does not re-call the model | Done (`Last-Event-ID`)                                                                                                  |
 | Multi-segment messages and bubbles             | Missing (no run or segment field on `ChatMessage`)                                                                      |
@@ -60,7 +60,7 @@ harness). Rule 26 intake: pack read whole, repo audited against code, verdicts b
 1. **WS1** Node floor: guard, `--pull`, engines, test, ADR-196, runbook. (this commit)
 2. **WS3** `pause_turn` passes through as its own finish reason, with tests (done). A separate `providerStopReason` field was dropped: nothing needs the other two raw values. No Anthropic server tool is sent today, so continuing a paused turn is latent work.
 3. **WS3** pure `classifyModelTurn` and use it in the plugin loop and Runtime V2.
-4. **WS3** `runId` on stream events; the frontend ignores a `DONE` from another run.
+4. **WS3** a replay is cut at the latest `request_accepted`, so a stale `DONE` cannot be replayed (done, server side only). A `runId` on every event and the frontend check were dropped: the cut closes the race without a protocol change.
 5. **WS3** `replay.truncated` gap marker.
 6. **WS2** nullable per-plan caps (schema, seed, admission check); numbers stay an owner decision.
 7. **WS2** parent budget for Compare, Judge and the fallback chain.

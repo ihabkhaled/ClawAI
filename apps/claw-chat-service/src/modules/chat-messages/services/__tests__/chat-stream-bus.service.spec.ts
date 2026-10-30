@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import { StreamEventType } from '../../../../common/enums';
 import { CHAT_STREAM_CHANNEL } from '../../constants/chat-stream-bus.constants';
 import { ChatStreamBusService } from '../chat-stream-bus.service';
 import type { StreamEvent } from '../../types/stream.types';
@@ -185,6 +186,74 @@ describe('ChatStreamBusService', () => {
       redis.lrange.mockResolvedValueOnce([JSON.stringify(frame)]);
       const wholeBuffer = await service.replay('thread-1');
       expect(wholeBuffer).toHaveLength(1);
+    });
+  });
+
+  describe('a replay never crosses a run boundary', () => {
+    // Clearing the buffer at the start of a run is fire-and-forget, so a client
+    // attaching in that window used to read the previous run's DONE first and
+    // stop listening. The boundary is now read from the frames themselves.
+    function typed(type: StreamEventType, sequence: number): string {
+      return JSON.stringify({ ...frame, type, sequence });
+    }
+
+    it('drops the previous run terminal DONE when the next run has started', async () => {
+      const { service, redis } = build();
+      redis.lrange.mockResolvedValueOnce([
+        typed(StreamEventType.REQUEST_ACCEPTED, 1),
+        typed(StreamEventType.CONTENT_DELTA, 2),
+        typed(StreamEventType.DONE, 3),
+        typed(StreamEventType.REQUEST_ACCEPTED, 4),
+        typed(StreamEventType.CONTENT_DELTA, 5),
+      ]);
+
+      const result = await service.replay('thread-1');
+
+      expect(result.map((f) => f.sequence)).toEqual([4, 5]);
+      expect(result.some((f) => f.type === StreamEventType.DONE)).toBe(false);
+    });
+
+    it('keeps a finished run whole when no newer run follows it', async () => {
+      const { service, redis } = build();
+      redis.lrange.mockResolvedValueOnce([
+        typed(StreamEventType.REQUEST_ACCEPTED, 1),
+        typed(StreamEventType.CONTENT_DELTA, 2),
+        typed(StreamEventType.DONE, 3),
+      ]);
+
+      const result = await service.replay('thread-1');
+
+      expect(result.map((f) => f.type)).toEqual([
+        StreamEventType.REQUEST_ACCEPTED,
+        StreamEventType.CONTENT_DELTA,
+        StreamEventType.DONE,
+      ]);
+    });
+
+    it('returns a buffer with no run start unchanged', async () => {
+      const { service, redis } = build();
+      redis.lrange.mockResolvedValueOnce([
+        typed(StreamEventType.CONTENT_DELTA, 7),
+        typed(StreamEventType.DONE, 8),
+      ]);
+
+      const result = await service.replay('thread-1');
+
+      expect(result.map((f) => f.sequence)).toEqual([7, 8]);
+    });
+
+    it('still resumes after a sequence inside the latest run', async () => {
+      const { service, redis } = build();
+      redis.lrange.mockResolvedValueOnce([
+        typed(StreamEventType.DONE, 3),
+        typed(StreamEventType.REQUEST_ACCEPTED, 4),
+        typed(StreamEventType.CONTENT_DELTA, 5),
+        typed(StreamEventType.CONTENT_DELTA, 6),
+      ]);
+
+      const result = await service.replay('thread-1', 4);
+
+      expect(result.map((f) => f.sequence)).toEqual([5, 6]);
     });
   });
 
