@@ -131,6 +131,12 @@ in routing-service's `740_040_00N` block) → `SeedExecution` ledger row keyed o
   token rates 0 because file-service settles on duration. Fills gaps.
   file-service still calls only `whisper-1` (`OPENAI_TRANSCRIPTION_MODEL` is a
   constant, not data-driven) — using these needs a caller change.
+- **Official text-model prices** (seed **v13**, `model-cost-list-prices-2026-v13`,
+  2026-10-30): 50 NEW keys for the Anthropic, OpenAI, Gemini and xAI models that were
+  still billed at their provider's dearest row (`claude-sonnet-5` at $15/$75 instead of
+  $2/$10). All fill gaps with `replacesFallbackRate`; the Gemini 2.5 cache-hit rates
+  are corrected in place with `supersedesSeededPrice`. Sources, the rows left unpriced
+  and the long-context gap: `docs/03-architecture/model-price-ledger-2026-10-30.md`.
 - **Correcting a seeded price**: set `supersedesSeededPrice: true` on the entry
   and bump the seed version. A model whose ACTIVE row is still `source: SEED`
   (never an override, never a synced row) and whose rates differ gets that row

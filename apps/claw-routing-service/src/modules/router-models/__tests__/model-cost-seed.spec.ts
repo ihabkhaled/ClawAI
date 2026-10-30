@@ -363,9 +363,88 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
     expect(Number.isInteger(find('gpt-4o-mini-transcribe')?.audioPerUnitMicroUsd)).toBe(true);
   });
 
-  it('is version 12, so installs that ran v11 pick up the nano-banana price', () => {
-    expect(MODEL_COST_SEED_VERSION).toBe(12);
-    expect(MODEL_COST_SEED_NAME).toBe('model-cost-list-prices-2026-v12');
+  it('is version 13, so installs that ran v12 pick up the official text-model prices', () => {
+    expect(MODEL_COST_SEED_VERSION).toBe(13);
+    expect(MODEL_COST_SEED_NAME).toBe('model-cost-list-prices-2026-v13');
+  });
+
+  // v13: figures are each provider's own price page, read 2026-10-30. Before it these
+  // models were billed at their provider's dearest row (claude-sonnet-5 at $15/$75).
+  describe('official text-model prices (v13)', () => {
+    const find = (provider: string, modelKey: string): ModelCostSeedEntry | undefined =>
+      MODEL_COST_SEED_ENTRIES.find((e) => e.provider === provider && e.modelKey === modelKey);
+    const perMillion = (e: ModelCostSeedEntry | undefined): number[] => [
+      (e?.inputPerMillionMicroUsd ?? -1) / 1_000_000,
+      (e?.outputPerMillionMicroUsd ?? -1) / 1_000_000,
+    ];
+
+    it.each([
+      ['ANTHROPIC', 'claude-fable-5', [10, 50]],
+      ['ANTHROPIC', 'claude-opus-5-5', [4, 20]],
+      ['ANTHROPIC', 'claude-sonnet-5', [2, 10]],
+      ['ANTHROPIC', 'claude-sonnet-4-6', [3, 15]],
+      ['OPENAI', 'gpt-5.5', [5, 30]],
+      ['OPENAI', 'gpt-5.6-luna', [0.2, 1.2]],
+      ['OPENAI', 'gpt-5.5-pro', [30, 180]],
+      ['OPENAI', 'gpt-4.1', [2, 8]],
+      ['GEMINI', 'gemini-3.1-pro-preview', [2, 12]],
+      ['GEMINI', 'gemini-3.5-flash-lite', [0.3, 2.5]],
+      ['GROK', 'grok-4.7', [2, 6]],
+      ['GROK', 'grok-4.3', [1.25, 2.5]],
+    ])('%s %s is %j per million tokens', (provider, modelKey, expected) => {
+      expect(perMillion(find(provider, modelKey))).toEqual(expected);
+    });
+
+    it('keeps Fable 5.1 cache hits at 0.025x input and Opus 5.5 at 0.05x', () => {
+      expect(find('ANTHROPIC', 'claude-fable-5-1')?.cachedInputPerMillionMicroUsd).toBe(250_000);
+      expect(find('ANTHROPIC', 'claude-fable-5')?.cachedInputPerMillionMicroUsd).toBe(1_000_000);
+      expect(find('ANTHROPIC', 'claude-opus-5-5')?.cachedInputPerMillionMicroUsd).toBe(200_000);
+    });
+
+    it('writes the Anthropic 5-minute cache premium at 1.25x input', () => {
+      for (const e of MODEL_COST_SEED_ENTRIES.filter(
+        (x) =>
+          x.provider === 'ANTHROPIC' &&
+          x.modelKey.startsWith('claude-') &&
+          x.modelKey !== 'claude-opus-4',
+      )) {
+        expect(e.cacheWritePerMillionMicroUsd).toBe(e.inputPerMillionMicroUsd * 1.25);
+      }
+    });
+
+    it('seeds the 2027 price for the half-price Gemini Flash models', () => {
+      expect(perMillion(find('GEMINI', 'gemini-3.6-flash'))).toEqual([1.5, 7.5]);
+      expect(perMillion(find('GEMINI', 'gemini-3.8-flash'))).toEqual([1.5, 7.5]);
+    });
+
+    it('marks every new row as replacing the provider fallback rate', () => {
+      for (const key of ['claude-sonnet-5', 'gpt-5.5', 'grok-4.7', 'gemini-3.1-pro-preview']) {
+        const entry = MODEL_COST_SEED_ENTRIES.find((e) => e.modelKey === key);
+        expect(entry?.replacesFallbackRate).toBe(true);
+      }
+    });
+
+    it('corrects the Gemini 2.5 cache-hit rates in place, without a second row', () => {
+      expect(find('GEMINI', 'gemini-2.5-pro')).toMatchObject({
+        cachedInputPerMillionMicroUsd: 125_000,
+        supersedesSeededPrice: true,
+      });
+      expect(find('GEMINI', 'gemini-2.5-flash')).toMatchObject({
+        cachedInputPerMillionMicroUsd: 30_000,
+        supersedesSeededPrice: true,
+      });
+      expect(find('GEMINI', 'gemini-2.5-flash-lite')).toMatchObject({
+        cachedInputPerMillionMicroUsd: 10_000,
+        supersedesSeededPrice: true,
+      });
+    });
+
+    it('never prices a pro or o-series model without an output rate', () => {
+      for (const key of ['gpt-5-pro', 'gpt-5.2-pro', 'gpt-5.4-pro', 'o1-pro', 'o3-pro']) {
+        expect(find('OPENAI', key)?.outputPerMillionMicroUsd).toBeGreaterThan(0);
+        expect(find('OPENAI', key)?.cachedInputPerMillionMicroUsd).toBeNull();
+      }
+    });
   });
 
   it('prices nano-banana-pro-preview like gemini-3-pro-image-preview (v12)', () => {

@@ -62,11 +62,11 @@ harness). Rule 26 intake: pack read whole, repo audited against code, verdicts b
 3. **WS3** pure `classifyModelTurn` and use it in the plugin loop and Runtime V2.
 4. **WS3** a replay is cut at the latest `request_accepted`, so a stale `DONE` cannot be replayed (done, server side only). A `runId` on every event and the frontend check were dropped: the cut closes the race without a protocol change.
 5. **WS3** `replay.truncated` gap marker.
-6. **WS2** nullable per-plan caps (schema, seed, admission check); numbers stay an owner decision.
+6. **WS2** official text-model prices as seed v13 (done, [ledger](model-price-ledger-2026-10-30.md)). Per-plan call caps: numbers derived from the plan economics and these prices, enforcement waits for the owner's yes.
 7. **WS2** parent budget for Compare, Judge and the fallback chain.
 8. **WS2** coverage numbers and cache hit telemetry; remove or align the duplicate price table.
 
-Batches 6 and 7 touch money. They stop for the owner's numbers before any non-null value is set.
+Cap enforcement and the parent budget change who is refused, so they wait for the owner's approval of the ledger's table.
 
 ## Unknowns that need the owner or production
 
