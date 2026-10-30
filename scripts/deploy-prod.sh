@@ -1306,7 +1306,7 @@ compose_build_bounded() {
   local timeout_seconds="$1"
   shift
   timeout --foreground --kill-after=60 "$timeout_seconds" \
-    docker compose --parallel "$BUILD_PARALLEL_LIMIT" "${COMPOSE_ARGS[@]}" build "$@" 200>&-
+    docker compose --parallel "$BUILD_PARALLEL_LIMIT" "${COMPOSE_ARGS[@]}" build --pull "$@" 200>&-
 }
 
 container_state() {

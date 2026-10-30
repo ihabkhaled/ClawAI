@@ -117,6 +117,12 @@ A new **service** adds more than a workspace (compose, nginx, TLS, installers, t
 production `.env` manifest, health): the whole list is
 [skills/add-a-new-service.md](../../skills/add-a-new-service.md).
 
+## Node.js runtime floor (2026-10-30)
+
+`tools/__tests__/node-runtime-floor.test.mjs` runs with the tools tests. It finds every Dockerfile in
+git and fails when a node stage has no floor guard, when `engines` differs from the generated range,
+or when the production build drops `--pull` (ADR-196). A new service is covered without editing the test.
+
 ## Lighthouse report artifacts (2026-10-27)
 
 The Lighthouse audit job uploads `apps/claw-frontend/.lighthouseci` with `include-hidden-files: true`

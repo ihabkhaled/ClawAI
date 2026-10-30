@@ -1,4 +1,5 @@
 FROM node:26-bookworm-slim AS base
+RUN node -e "const[a,b,c]=process.versions.node.split('.').map(Number),f={22:[23,4],24:[22,1],26:[12,1]}[a];if(!(a>26||f&&(b>f[0]||b===f[0]&&c>=f[1]))){console.error('Node '+process.version+' is below the CVE-2026-111497 floor');process.exit(1)}"
 # Debian base (not Alpine) — the TypeScript 7 npm compiler ships glibc-linked
 # binaries with no musl variant. The builder runs the TypeScript 7 compiler, so every stage
 # (and the runner, for native-module ABI compatibility) must be glibc.
@@ -38,6 +39,7 @@ RUN mkdir -p dist/generated && cp -r src/generated/prisma dist/generated/prisma
 RUN cp -r src/generated dist/generated 2>/dev/null || true
 
 FROM node:26-bookworm-slim AS runner
+RUN node -e "const[a,b,c]=process.versions.node.split('.').map(Number),f={22:[23,4],24:[22,1],26:[12,1]}[a];if(!(a>26||f&&(b>f[0]||b===f[0]&&c>=f[1]))){console.error('Node '+process.version+' is below the CVE-2026-111497 floor');process.exit(1)}"
 # Noto fonts: PDFs are typeset by Typst, which needs a font for every script
 # the 13 app locales use (Arabic, Persian, Hindi, Thai, Chinese, Japanese…).
 # Without them it falls back to a Latin font and prints empty boxes (ADR-107).

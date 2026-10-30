@@ -5,6 +5,7 @@
 # and every service Dockerfile do. Build context is `..` (see
 # docker/docker-compose.prod.services.yml).
 FROM node:26-bookworm-slim AS base
+RUN node -e "const[a,b,c]=process.versions.node.split('.').map(Number),f={22:[23,4],24:[22,1],26:[12,1]}[a];if(!(a>26||f&&(b>f[0]||b===f[0]&&c>=f[1]))){console.error('Node '+process.version+' is below the CVE-2026-111497 floor');process.exit(1)}"
 WORKDIR /app
 
 # Install dependencies from the monorepo root so npm resolves @claw/* to the

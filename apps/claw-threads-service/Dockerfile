@@ -1,4 +1,5 @@
 FROM node:26-bookworm-slim AS base
+RUN node -e "const[a,b,c]=process.versions.node.split('.').map(Number),f={22:[23,4],24:[22,1],26:[12,1]}[a];if(!(a>26||f&&(b>f[0]||b===f[0]&&c>=f[1]))){console.error('Node '+process.version+' is below the CVE-2026-111497 floor');process.exit(1)}"
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
@@ -26,6 +27,7 @@ WORKDIR /app/apps/claw-threads-service
 RUN npm run build
 
 FROM node:26-bookworm-slim AS runner
+RUN node -e "const[a,b,c]=process.versions.node.split('.').map(Number),f={22:[23,4],24:[22,1],26:[12,1]}[a];if(!(a>26||f&&(b>f[0]||b===f[0]&&c>=f[1]))){console.error('Node '+process.version+' is below the CVE-2026-111497 floor');process.exit(1)}"
 ENV NODE_ENV=production
 WORKDIR /app
 RUN addgroup --system --gid 1001 nestjs && adduser --system --uid 1001 nestjs

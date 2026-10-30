@@ -139,7 +139,7 @@ test('deploy-prod.sh never lets a child process inherit the deploy lock', () => 
   assert.match(script, /docker compose "\$\{COMPOSE_ARGS\[@\]\}" "\$@" 200>&-/u);
   assert.match(
     script,
-    /docker compose --parallel "\$BUILD_PARALLEL_LIMIT" "\$\{COMPOSE_ARGS\[@\]\}" build "\$@" 200>&-/u,
+    /docker compose --parallel "\$BUILD_PARALLEL_LIMIT" "\$\{COMPOSE_ARGS\[@\]\}" build --pull "\$@" 200>&-/u,
   );
   assert.match(script, /docker inspect[\s\S]{0,240}?2>\/dev\/null 200>&-/u);
   assert.match(script, /docker builder prune[^\n]*200>&-/u);

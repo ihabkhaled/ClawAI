@@ -1,4 +1,5 @@
 FROM node:26-bookworm-slim AS base
+RUN node -e "const[a,b,c]=process.versions.node.split('.').map(Number),f={22:[23,4],24:[22,1],26:[12,1]}[a];if(!(a>26||f&&(b>f[0]||b===f[0]&&c>=f[1]))){console.error('Node '+process.version+' is below the CVE-2026-111497 floor');process.exit(1)}"
 # Debian base (not Alpine) — the TypeScript 7 npm compiler ships glibc-linked
 # binaries with no musl variant. The builder runs the TypeScript 7 compiler, so every stage
 # (and the runner, for native-module ABI compatibility) must be glibc.
@@ -36,6 +37,7 @@ RUN cd /app/packages/shared-constants && npm run build \
 RUN npm run build
 
 FROM node:26-bookworm-slim AS runner
+RUN node -e "const[a,b,c]=process.versions.node.split('.').map(Number),f={22:[23,4],24:[22,1],26:[12,1]}[a];if(!(a>26||f&&(b>f[0]||b===f[0]&&c>=f[1]))){console.error('Node '+process.version+' is below the CVE-2026-111497 floor');process.exit(1)}"
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates wget \
   && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production

@@ -1,0 +1,45 @@
+# QA evidence - node-runtime-floor
+
+Batch: node-runtime-floor
+Date: 2026-10-30
+Commits: ADR-196 Node runtime floor (batch 1 of the three-workstreams program)
+Verdict: PARTIAL
+
+Every lane is filled in. PASS needs the command and its real output (or a path, a count, a
+screenshot name). NOT_RUN and NOT_APPLICABLE need a reason. Verdict DONE is allowed only when no
+lane is NOT_RUN or FAIL. A fabricated or assumed PASS is a prohibited sentence (rules/60, rules/49).
+
+Scope: build and deploy tooling only. A guard line after every `FROM node:` stage in 44 Dockerfiles,
+`tools/security/node-runtime-floor.mjs`, `build --pull` in `scripts/deploy-prod.sh`, root `engines`.
+No service source, API, UI, schema or price is changed.
+
+| Lane | What                                                                    | Status         | Evidence or reason                                                                                                                                                                                                                                                                                                                                                    |
+| ---- | ----------------------------------------------------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L01  | Unit and integration tests (only the changed files)                     | PASS           | `node --test tools/__tests__/node-runtime-floor.test.mjs`: 6 tests pass (floors, meetsFloor on 13 versions, guard script agrees with meetsFloor on 8 versions, engines equals generated range, every git-tracked Dockerfile guarded, deploy uses --pull). `deploy-prod.test.mjs` (rehearsal skipped) 43 pass; with `deploy-workflow` and `dockerfile-*` tests 75 run. |
+| L02  | Typecheck, lint and build (touched workspaces)                          | PASS           | No workspace source changed. Prettier applied to the new .mjs files. Real image build: `docker build --pull -f apps/claw-health-service/Dockerfile .` exit 0 in 1m52s, image reports Node v26.13.0. `docker build --target base` of auth-service exit 0.                                                                                                              |
+| L03  | Manual API test (curl) with the log line proving the branch ran         | NOT_APPLICABLE | No HTTP surface changed. The equivalent manual proof is the guard run against real images: stale local node:26-bookworm-slim (26.7.0) printed `Node v26.7.0 is below the CVE-2026-111497 floor`, exit 1; after `docker pull`, v26.13.0 exit 0; node:26-alpine v26.13.0 exit 0.                                                                                        |
+| L04  | Manual browser test (Playwright against the real UI) with screenshots   | NOT_APPLICABLE | No UI changed. Playwright for the chat and billing batches follows in their own records.                                                                                                                                                                                                                                                                              |
+| L05  | Automation e2e (a committed or existing spec was run)                   | PASS           | The deploy-prod plan tests (43) cover the changed build line; the Dockerfile discovery test is the automated guard for new services. The deploy rehearsal (`knowledge:test:rehearsal`) was not run here.                                                                                                                                                              |
+| L06  | RBAC across roles and plan tiers (admin, paid, FREE)                    | NOT_APPLICABLE | No permission or plan rule changed.                                                                                                                                                                                                                                                                                                                                   |
+| L07  | Device matrix (3+ widths, both orientations, RTL)                       | NOT_APPLICABLE | No UI or layout was changed by this batch, so there is nothing to measure at any width or direction.                                                                                                                                                                                                                                                                  |
+| L08  | UAT (acceptance criteria walked as the user would)                      | NOT_RUN        | Acceptance is "every running service contains a fixed runtime". Needs a real deploy and `--running` on production. Locally the running containers are still on 26.7.0, 26.10.0 and 22.23.x because nothing was recreated.                                                                                                                                             |
+| L09  | Product verification (it does what the owner asked, edge cases decided) | PASS           | Advisory read on nodejs.org (fixed 22.23.4, 24.22.1, 26.12.1). Edge cases decided in ADR-196: 25.x and 20.x rejected, 27+ accepted, CRLF Dockerfiles keep their endings, third-party images reported not patched.                                                                                                                                                     |
+| L10  | Business verification (money, limits, copy and claims match the code)   | NOT_APPLICABLE | No money, limit or user copy changed.                                                                                                                                                                                                                                                                                                                                 |
+| L11  | Regression (neighbouring features still work)                           | PASS           | `deploy-workflow.test.mjs` and `dockerfile-*` tests still pass (they pin `FROM node:26-bookworm-slim AS base`, wget, shared packages). One test pinned the old build line and was updated to expect `--pull`.                                                                                                                                                         |
+| L12  | Security (authz and IDOR, secrets, injection)                           | PASS           | Live evidence of the problem: 21 containers on 26.7.0, frontend 26.10.0, claw-firecrawl-api 22.23.3, claw-firecrawl-playwright 22.23.2, all below the floor. The guard fails a build on a stale base. Not verified: production versions and digests.                                                                                                                  |
+| L13  | Performance and accessibility                                           | NOT_APPLICABLE | One cheap RUN per node stage; the next deploy rebuilds every service once (stated in ADR-196).                                                                                                                                                                                                                                                                        |
+| L14  | i18n (13 locales, RTL)                                                  | NOT_APPLICABLE | No user-visible string was added or changed in any locale.                                                                                                                                                                                                                                                                                                            |
+| L15  | Docs, knowledge delta and GitHub gates read                             | NOT_RUN        | Docs written: ADR-196, adr-index, runbook and its index row, the program plan. `npm run knowledge:build` ran. GitHub gates are read after the push.                                                                                                                                                                                                                   |
+
+## Findings
+
+- A global `sed` on package-lock.json also changed five third-party engines entries; reverted with git
+  checkout and only the root entry edited. Lesson: edit the lockfile by line number.
+- The first sync wrote LF lines into CRLF working-tree Dockerfiles (mixed endings); the sync now keeps
+  each file's endings.
+
+## Open gaps
+
+- L08 and runtime attestation: run `--running` on production after the deploy (owner).
+- Third-party Firecrawl images stay below the floor until upstream ships a fixed tag.
+- L15: read the GitHub gates after the push.

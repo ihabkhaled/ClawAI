@@ -6,6 +6,7 @@
 # __wmemcpy_chk) that musl + gcompat cannot satisfy. See
 # .claude/Integrations/llamacpp__QA_output.md for the diagnosis.
 FROM node:26-bookworm-slim AS base
+RUN node -e "const[a,b,c]=process.versions.node.split('.').map(Number),f={22:[23,4],24:[22,1],26:[12,1]}[a];if(!(a>26||f&&(b>f[0]||b===f[0]&&c>=f[1]))){console.error('Node '+process.version+' is below the CVE-2026-111497 floor');process.exit(1)}"
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /app/apps/claw-llamacpp-service
 
@@ -45,6 +46,7 @@ RUN cp -r src/generated dist/generated 2>/dev/null || true
 # Runtime apt deps are the same set the dev image needs to extract release
 # archives + dlopen the OpenMP runtime.
 FROM node:26-bookworm-slim AS runner
+RUN node -e "const[a,b,c]=process.versions.node.split('.').map(Number),f={22:[23,4],24:[22,1],26:[12,1]}[a];if(!(a>26||f&&(b>f[0]||b===f[0]&&c>=f[1]))){console.error('Node '+process.version+' is below the CVE-2026-111497 floor');process.exit(1)}"
 # util-linux gives us `runuser` which the entrypoint uses to drop privileges
 # from root to nestjs after fixing volume ownership. Pre-installed on
 # bookworm-slim base; explicit `apt-get install util-linux` is belt-and-

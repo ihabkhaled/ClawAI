@@ -138,6 +138,14 @@ run over the **affected** matrix only and restore that artifact through
 
 ---
 
+### Node.js runtime floor (ADR-196)
+
+Every `FROM node:` stage in every Dockerfile is followed by one guard `RUN` that fails the build when
+the base image is older than the fixed Node versions of the 2026-10-21 security release (22.23.4,
+24.22.1, 26.12.1). The floors live in `tools/security/node-runtime-floor.mjs`; root `package.json`
+`engines` is the same range. `deploy-prod.sh` builds with `--pull`. To raise a floor, follow
+[runbook-node-runtime-floor](../11-runbooks/runbook-node-runtime-floor.md).
+
 ## 7. Gotchas & troubleshooting
 
 | Symptom                                                                                           | Cause / fix                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
