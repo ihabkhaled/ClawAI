@@ -135,6 +135,45 @@ describe('AccessControlService', () => {
     ).rejects.toMatchObject({ code: 'MODEL_NOT_ALLOWED_FOR_PLAN' });
   });
 
+  it.each([
+    [ModelCostClass.FREE, [ModelCostClass.FREE, ModelCostClass.CHEAP, ModelCostClass.STANDARD]],
+    [ModelCostClass.CHEAP, [ModelCostClass.FREE, ModelCostClass.CHEAP, ModelCostClass.STANDARD]],
+    [ModelCostClass.STANDARD, [ModelCostClass.FREE, ModelCostClass.CHEAP, ModelCostClass.STANDARD]],
+    [ModelCostClass.PREMIUM, Object.values(ModelCostClass)],
+    [ModelCostClass.ULTRA, Object.values(ModelCostClass)],
+  ])(
+    'lets an explicit %s pick through when the plan allows that class',
+    async (costClass, allowed) => {
+      getEntitlements.mockResolvedValue(
+        ent({
+          modelAccessMode: PlanModelAccessMode.ALLOW_COST_CLASSES,
+          allowedCostClasses: allowed,
+        }),
+      );
+      getCostClass.mockResolvedValue(costClass);
+      isExposed.mockResolvedValue(true);
+
+      await expect(
+        service.assertCanSendMessage('u1', { provider: 'OPENAI', model: 'any-model' }),
+      ).resolves.toBeDefined();
+    },
+  );
+
+  it('refuses a model whose cost class is unknown on a cost-class plan', async () => {
+    getEntitlements.mockResolvedValue(
+      ent({
+        modelAccessMode: PlanModelAccessMode.ALLOW_COST_CLASSES,
+        allowedCostClasses: Object.values(ModelCostClass),
+      }),
+    );
+    getCostClass.mockResolvedValue(null);
+    isExposed.mockResolvedValue(true);
+
+    await expect(
+      service.assertCanSendMessage('u1', { provider: 'OPENAI', model: 'unpriced' }),
+    ).rejects.toMatchObject({ code: 'MODEL_NOT_ALLOWED_FOR_PLAN' });
+  });
+
   it('rejects when quota exhausted (429)', async () => {
     getEntitlements.mockResolvedValue(
       ent({ quota: { dailyLimit: 100, used: 100, remaining: 0, unlimited: false } }),

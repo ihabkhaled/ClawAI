@@ -474,8 +474,11 @@ export class AccessControlService {
       (costClass !== null &&
         costClass !== undefined &&
         (ent.allowedCostClasses ?? []).includes(costClass));
+    // The cost class must reach the helper: on a cost-class plan it answers "no" when none is
+    // given, which refused every explicit model pick on every such plan (Auto passed it).
     const allowed =
-      hasAllowedCostClass && isModelAllowedForUsage(ent, provider, model, ModelUsageType.PRIMARY);
+      hasAllowedCostClass &&
+      isModelAllowedForUsage(ent, provider, model, ModelUsageType.PRIMARY, costClass ?? undefined);
     if (allowed) {
       return;
     }
