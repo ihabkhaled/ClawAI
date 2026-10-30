@@ -1569,6 +1569,11 @@
       },
       {
         "method": "POST",
+        "route": "/chat-messages/model-access",
+        "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/model-access.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/chat-messages/parallel",
         "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
       },
@@ -3554,6 +3559,11 @@
         "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost-internal.controller.ts"
       },
       {
+        "method": "POST",
+        "route": "/internal/router-models/costs/classes",
+        "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost-internal.controller.ts"
+      },
+      {
         "method": "GET",
         "route": "/router-models/costs",
         "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost.controller.ts"
@@ -4784,5 +4794,5 @@
     ]
   },
   "generated": true,
-  "total": 948
+  "total": 950
 }

@@ -176,6 +176,43 @@ describe('ModelCostService', () => {
     });
   });
 
+  describe('resolveCostClasses', () => {
+    it('returns the class a send would resolve for each model', async () => {
+      const rows = new Map([
+        ['OPENAI/gpt-4o', baseRecord()],
+        ['OPENAI/gpt-5.4-mini', baseRecord({ modelKey: 'gpt-5.4-mini', costClass: 'STANDARD' })],
+      ]);
+      repository.findActive.mockImplementation((provider: string, model: string) =>
+        Promise.resolve(rows.get(`${provider}/${model}`) ?? null),
+      );
+
+      const result = await service.resolveCostClasses([
+        { provider: 'OPENAI', model: 'gpt-4o' },
+        { provider: 'OPENAI', model: 'gpt-5.4-mini' },
+        { provider: 'ANTHROPIC', model: 'claude-unknown' },
+      ]);
+
+      expect(result).toEqual([
+        { provider: 'OPENAI', model: 'gpt-4o', costClass: 'PREMIUM' },
+        { provider: 'OPENAI', model: 'gpt-5.4-mini', costClass: 'STANDARD' },
+        { provider: 'ANTHROPIC', model: 'claude-unknown', costClass: null },
+      ]);
+    });
+
+    it('resolves a list longer than one batch without dropping or reordering a model', async () => {
+      repository.findActive.mockResolvedValue(baseRecord({ costClass: 'CHEAP' }));
+      const models = Array.from({ length: 40 }, (_, index) => ({
+        provider: 'OPENAI',
+        model: `m-${String(index)}`,
+      }));
+
+      const result = await service.resolveCostClasses(models);
+
+      expect(result.map((entry) => entry.model)).toEqual(models.map((entry) => entry.model));
+      expect(result.every((entry) => entry.costClass === 'CHEAP')).toBe(true);
+    });
+  });
+
   describe('applySyncedRates', () => {
     it('refuses to overwrite an active administrator override', async () => {
       // A nightly scrape must never replace a hand-negotiated enterprise rate.

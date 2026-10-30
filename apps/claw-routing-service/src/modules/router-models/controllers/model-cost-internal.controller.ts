@@ -1,8 +1,14 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 
 import { Public } from '../../../app/decorators/public.decorator';
 import { ServiceTokenGuard } from '../../../app/guards/service-token.guard';
+import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
+import {
+  type ResolveCostClassesDto,
+  resolveCostClassesSchema,
+} from '../dto/resolve-cost-classes.dto';
 import { ModelCostService } from '../services/model-cost.service';
+import { type ResolvedCostClass } from '../types/model-cost-quote.types';
 import { type ModelCostSnapshot } from '../types/model-cost.types';
 
 /**
@@ -24,6 +30,15 @@ import { type ModelCostSnapshot } from '../types/model-cost.types';
 @Controller('internal/router-models/costs')
 export class ModelCostInternalController {
   constructor(private readonly service: ModelCostService) {}
+
+  // Many models' cost classes in one call, for the model picker's plan check. Returns the class
+  // band only, never a rate, so the rate card stays private (rule 37).
+  @Post('classes')
+  async resolveClasses(
+    @Body(new ZodValidationPipe(resolveCostClassesSchema)) dto: ResolveCostClassesDto,
+  ): Promise<ResolvedCostClass[]> {
+    return this.service.resolveCostClasses(dto.models);
+  }
 
   @Get(':provider/:model')
   async get(

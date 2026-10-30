@@ -6,6 +6,8 @@ import { z } from 'zod';
 import { AppConfig } from '../../../app/config/app.config';
 import { buildInterServiceAuthHeader } from '../../../common/utilities';
 import {
+  MODEL_COST_CLASSES_BATCH_SIZE,
+  MODEL_COST_CLASSES_PATH,
   MODEL_EXPOSURE_CACHE_TTL_MS,
   MODEL_EXPOSURE_TIMEOUT_MS,
   MODEL_EXPOSURE_VALIDATION_PATH,
@@ -14,6 +16,13 @@ import {
 const validateExposedResponseSchema = z.object({
   valid: z.array(z.object({ provider: z.string(), model: z.string() })),
 });
+const resolvedCostClassesSchema = z.array(
+  z.object({
+    provider: z.string(),
+    model: z.string(),
+    costClass: z.nativeEnum(ModelCostClass).nullable(),
+  }),
+);
 const modelCostClassSchema = z.object({
   costClass: z.nativeEnum(ModelCostClass),
   isPriced: z.boolean(),
@@ -54,6 +63,56 @@ export class ModelExposureClient {
     } catch {
       return null;
     }
+  }
+
+  // Many classes in one round trip, for the model picker. Answers the same question as
+  // getCostClass (null = no price, so no class plan allows it) and fills the same cache.
+  // A routing outage leaves the model out of the result rather than guessing a class.
+  async getCostClasses(
+    pairs: ReadonlyArray<{ provider: string; model: string }>,
+  ): Promise<Map<string, ModelCostClass | null>> {
+    const now = Date.now();
+    const known = new Map<string, ModelCostClass | null>();
+    const missing: Array<{ provider: string; model: string }> = [];
+    for (const pair of pairs) {
+      const key = `${pair.provider}/${pair.model}`;
+      const hit = ModelExposureClient.costClassCache.get(key);
+      if (hit && hit.expiresAt > now) {
+        known.set(key, hit.costClass);
+      } else {
+        missing.push(pair);
+      }
+    }
+    for (let start = 0; start < missing.length; start += MODEL_COST_CLASSES_BATCH_SIZE) {
+      const batch = missing.slice(start, start + MODEL_COST_CLASSES_BATCH_SIZE);
+      try {
+        const response = await httpRequest<unknown>({
+          url: `${AppConfig.get().ROUTING_SERVICE_URL}${MODEL_COST_CLASSES_PATH}`,
+          method: HttpMethod.POST,
+          headers: { Authorization: buildInterServiceAuthHeader() },
+          body: { models: batch },
+          timeoutMs: MODEL_EXPOSURE_TIMEOUT_MS,
+        });
+        const parsed = response.ok ? resolvedCostClassesSchema.safeParse(response.data) : null;
+        if (!parsed?.success) {
+          this.logger.warn(
+            `getCostClasses: routing answered badly for ${String(batch.length)} models`,
+          );
+          continue;
+        }
+        for (const entry of parsed.data) {
+          const key = `${entry.provider}/${entry.model}`;
+          ModelExposureClient.costClassCache.set(key, {
+            costClass: entry.costClass,
+            expiresAt: now + MODEL_EXPOSURE_CACHE_TTL_MS,
+          });
+          known.set(key, entry.costClass);
+        }
+      } catch {
+        this.logger.warn(`getCostClasses: routing unreachable for ${String(batch.length)} models`);
+      }
+    }
+    return known;
   }
 
   // Drops every cached answer. Called when connector-service reports an

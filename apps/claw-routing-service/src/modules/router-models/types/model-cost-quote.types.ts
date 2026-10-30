@@ -8,3 +8,11 @@ export type ModelCostQuote = {
   costMicroUsd: number;
   isPriced: boolean;
 };
+
+// One model's cost class as the plan gate sees it. `costClass: null` means no
+// price could be resolved, which the gate treats as "not on any class plan".
+export type ResolvedCostClass = {
+  provider: string;
+  model: string;
+  costClass: string | null;
+};

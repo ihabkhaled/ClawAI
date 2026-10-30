@@ -6,3 +6,8 @@
 export const MODEL_EXPOSURE_CACHE_TTL_MS = 60_000;
 export const MODEL_EXPOSURE_VALIDATION_PATH = '/api/v1/internal/connectors/models/validate-exposed';
 export const MODEL_EXPOSURE_TIMEOUT_MS = 3_000;
+
+// One bulk lookup of cost classes (routing-service). The caller sends at most this many per request.
+export const MODEL_COST_CLASSES_PATH = '/api/v1/internal/router-models/costs/classes';
+export const MODEL_COST_CLASSES_BATCH_SIZE = 300;
+export const MODEL_ACCESS_MAX_MODELS = 300;

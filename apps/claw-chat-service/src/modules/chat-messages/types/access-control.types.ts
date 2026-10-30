@@ -22,3 +22,10 @@ export type SendMessageAccessOptions = {
   // entitlements' PermissionGuard). ADMIN bypasses via hasPermission.
   requirePermission?: Permission;
 };
+
+// One model's answer for the picker: may this user choose it as the primary?
+export type ModelAccessEntry = {
+  provider: string;
+  model: string;
+  allowed: boolean;
+};

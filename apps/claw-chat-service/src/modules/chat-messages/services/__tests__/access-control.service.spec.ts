@@ -12,12 +12,14 @@ const settleFeatureUsage = vi.fn();
 // suite tests the gate's decision, not connectivity. Default: exposed.
 const isExposed = vi.fn().mockResolvedValue(true);
 const getCostClass = vi.fn();
+const getCostClasses = vi.fn();
 
 vi.mock('../../clients/model-exposure.client', () => ({
   ModelExposureClient: vi.fn(function () {
     return {
       isExposed: (...args: unknown[]) => isExposed(...args),
       getCostClass: (...args: unknown[]) => getCostClass(...args),
+      getCostClasses: (...args: unknown[]) => getCostClasses(...args),
     };
   }),
 }));
@@ -172,6 +174,111 @@ describe('AccessControlService', () => {
     await expect(
       service.assertCanSendMessage('u1', { provider: 'OPENAI', model: 'unpriced' }),
     ).rejects.toMatchObject({ code: 'MODEL_NOT_ALLOWED_FOR_PLAN' });
+  });
+
+  describe('listModelAccess (the picker list)', () => {
+    const freeClasses = [ModelCostClass.FREE, ModelCostClass.CHEAP, ModelCostClass.STANDARD];
+    const models = [
+      { provider: 'OLLAMA', model: 'kimi-k3' },
+      { provider: 'OPENAI', model: 'gpt-5.4-mini' },
+      { provider: 'GROK', model: 'grok-4.7' },
+      { provider: 'GROK', model: 'unpriced' },
+    ];
+    const classes = new Map<string, ModelCostClass | null>([
+      ['OLLAMA/kimi-k3', ModelCostClass.FREE],
+      ['OPENAI/gpt-5.4-mini', ModelCostClass.STANDARD],
+      ['GROK/grok-4.7', ModelCostClass.PREMIUM],
+      ['GROK/unpriced', null],
+    ]);
+
+    it('a Free plan allows its classes and refuses the dearer and the unpriced', async () => {
+      getEntitlements.mockResolvedValue(
+        ent({
+          modelAccessMode: PlanModelAccessMode.ALLOW_COST_CLASSES,
+          allowedCostClasses: freeClasses,
+        }),
+      );
+      getCostClasses.mockResolvedValue(classes);
+
+      const result = await service.listModelAccess('u1', models);
+
+      expect(result.map((entry) => entry.allowed)).toEqual([true, true, false, false]);
+    });
+
+    it('a paid plan with every class allows every priced model', async () => {
+      getEntitlements.mockResolvedValue(
+        ent({
+          modelAccessMode: PlanModelAccessMode.ALLOW_COST_CLASSES,
+          allowedCostClasses: Object.values(ModelCostClass),
+        }),
+      );
+      getCostClasses.mockResolvedValue(classes);
+
+      const result = await service.listModelAccess('u1', models);
+
+      expect(result.map((entry) => entry.allowed)).toEqual([true, true, true, false]);
+    });
+
+    it('answers exactly as the send gate does for the same model', async () => {
+      getEntitlements.mockResolvedValue(
+        ent({
+          modelAccessMode: PlanModelAccessMode.ALLOW_COST_CLASSES,
+          allowedCostClasses: freeClasses,
+        }),
+      );
+      getCostClasses.mockResolvedValue(classes);
+      isExposed.mockResolvedValue(true);
+      getCostClass.mockImplementation((provider: string, model: string) =>
+        Promise.resolve(classes.get(`${provider}/${model}`) ?? null),
+      );
+
+      const listed = await service.listModelAccess('u1', models);
+      for (const entry of listed) {
+        const sent = service.assertCanSendMessage('u1', {
+          provider: entry.provider,
+          model: entry.model,
+        });
+        if (entry.allowed) {
+          await expect(sent).resolves.toBeDefined();
+        } else {
+          await expect(sent).rejects.toMatchObject({ code: 'MODEL_NOT_ALLOWED_FOR_PLAN' });
+        }
+      }
+    });
+
+    it('an administrator is allowed everything without a class lookup', async () => {
+      getEntitlements.mockResolvedValue(ent({ isAdmin: true }));
+      getCostClasses.mockClear();
+
+      const result = await service.listModelAccess('u1', models);
+
+      expect(result.every((entry) => entry.allowed)).toBe(true);
+      expect(getCostClasses).not.toHaveBeenCalled();
+    });
+
+    it('an allow-all plan needs no class lookup', async () => {
+      getEntitlements.mockResolvedValue(ent({ modelAccessMode: PlanModelAccessMode.ALLOW_ALL }));
+      getCostClasses.mockClear();
+
+      const result = await service.listModelAccess('u1', models);
+
+      expect(result.every((entry) => entry.allowed)).toBe(true);
+      expect(getCostClasses).not.toHaveBeenCalled();
+    });
+
+    it('a model routing could not answer for is refused, like a send would be', async () => {
+      getEntitlements.mockResolvedValue(
+        ent({
+          modelAccessMode: PlanModelAccessMode.ALLOW_COST_CLASSES,
+          allowedCostClasses: freeClasses,
+        }),
+      );
+      getCostClasses.mockResolvedValue(new Map());
+
+      const result = await service.listModelAccess('u1', models);
+
+      expect(result.every((entry) => !entry.allowed)).toBe(true);
+    });
   });
 
   it('rejects when quota exhausted (429)', async () => {

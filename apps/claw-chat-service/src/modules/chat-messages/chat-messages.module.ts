@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ChatMessagesController } from './controllers/chat-messages.controller';
+import { ModelAccessController } from './controllers/model-access.controller';
 import { ChatStreamController } from './controllers/chat-stream.controller';
 import { ChatInternalController } from './controllers/chat-internal.controller';
 import { ChatMessagesService } from './services/chat-messages.service';
@@ -109,6 +110,7 @@ import { RuntimeV2ThreadActivityService } from './services/runtime-v2-thread-act
   controllers: [
     ContextSaveController,
     ChatMessagesController,
+    ModelAccessController,
     ChatStreamController,
     ChatInternalController,
     ChatSpeechController,

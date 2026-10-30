@@ -1596,6 +1596,11 @@
         },
         {
           "method": "POST",
+          "route": "/chat-messages/model-access",
+          "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/model-access.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/chat-messages/parallel",
           "source": "apps/claw-chat-service/src/modules/chat-messages/controllers/chat-messages.controller.ts"
         },
@@ -3578,6 +3583,11 @@
         {
           "method": "GET",
           "route": "/internal/router-models/costs/:provider/:model",
+          "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost-internal.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/router-models/costs/classes",
           "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost-internal.controller.ts"
         },
         {
@@ -12298,7 +12308,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 348
+        "testFiles": 349
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -13213,7 +13223,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 58,
-    "endpointCount": 948,
+    "endpointCount": 950,
     "envVarCount": 386,
     "eventCount": 190,
     "frontendRouteCount": 182,
@@ -13225,7 +13235,7 @@
     "serviceCount": 21,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2755,
+    "totalTestFiles": 2756,
     "workspaceCount": 28
   }
 }

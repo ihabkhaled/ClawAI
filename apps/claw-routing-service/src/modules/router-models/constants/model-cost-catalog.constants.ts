@@ -12,3 +12,9 @@ export const MODEL_COST_CATALOG_BATCH_SIZE = 16;
 
 export const UNPRICED_LIST_DEFAULT_PAGE_SIZE = 50;
 export const UNPRICED_LIST_MAX_PAGE_SIZE = 200;
+
+/**
+ * Most models one cost-class lookup may carry. The caller chunks its list, so a
+ * request stays a few tens of kilobytes, far under the API's 100 KB body limit.
+ */
+export const COST_CLASS_LOOKUP_MAX_MODELS = 300;

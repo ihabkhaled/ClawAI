@@ -28,6 +28,7 @@ import {
   type UserEntitlements,
 } from '@claw/shared-entitlements';
 import {
+  type ModelCostClass,
   type PaygFinalizeOutcome,
   PaygSurface,
   Permission,
@@ -48,7 +49,10 @@ import {
   PAYG_CREDIT_ERROR_MESSAGES,
   PAYG_CREDIT_FALLBACK_ERROR_MESSAGE,
 } from '../constants/payg.constants';
-import { type SendMessageAccessOptions } from '../types/access-control.types';
+import {
+  type ModelAccessEntry,
+  type SendMessageAccessOptions,
+} from '../types/access-control.types';
 import { computeDefaultMaxTokensForProvider } from '../constants/output-token-bounds.constants';
 import type { PaygOrchestrationCall, PaygOrchestrationUsage } from '../types/payg.types';
 import { normalizePaygProvider } from '../utilities/payg-metering.utility';
@@ -459,6 +463,55 @@ export class AccessControlService {
     );
   }
 
+  // The one plan decision for choosing a model as the primary, shared by the send gate and the
+  // picker's availability list so the two can never disagree.
+  //
+  // The cost class must reach the helper: on a cost-class plan it answers "no" when none is
+  // given, which refused every explicit model pick on every such plan (Auto passed it).
+  private isPrimaryModelAllowed(
+    ent: UserEntitlements,
+    provider: string,
+    model: string,
+    costClass: ModelCostClass | null | undefined,
+  ): boolean {
+    const hasAllowedCostClass =
+      ent.modelAccessMode !== PlanModelAccessMode.ALLOW_COST_CLASSES ||
+      (costClass !== null &&
+        costClass !== undefined &&
+        (ent.allowedCostClasses ?? []).includes(costClass));
+    return (
+      hasAllowedCostClass &&
+      isModelAllowedForUsage(ent, provider, model, ModelUsageType.PRIMARY, costClass ?? undefined)
+    );
+  }
+
+  /**
+   * Which of these models the user may pick, for the model picker to dim the rest.
+   *
+   * Answers from the same decision as the send gate. A model whose class cannot be
+   * resolved counts as not allowed, exactly as it would when sent.
+   */
+  async listModelAccess(
+    userId: string,
+    models: ReadonlyArray<{ provider: string; model: string }>,
+  ): Promise<ModelAccessEntry[]> {
+    const ent = await this.resolve(userId);
+    const classes =
+      ent.modelAccessMode === PlanModelAccessMode.ALLOW_COST_CLASSES && !ent.isAdmin
+        ? await this.exposure.getCostClasses(models)
+        : new Map<string, ModelCostClass | null>();
+    return models.map(({ provider, model }) => ({
+      provider,
+      model,
+      allowed: this.isPrimaryModelAllowed(
+        ent,
+        provider,
+        model,
+        classes.get(`${provider}/${model}`),
+      ),
+    }));
+  }
+
   private async assertModelAllowed(
     ent: UserEntitlements,
     provider: string,
@@ -469,17 +522,7 @@ export class AccessControlService {
       ent.modelAccessMode === PlanModelAccessMode.ALLOW_COST_CLASSES
         ? await this.exposure.getCostClass(provider, model)
         : undefined;
-    const hasAllowedCostClass =
-      ent.modelAccessMode !== PlanModelAccessMode.ALLOW_COST_CLASSES ||
-      (costClass !== null &&
-        costClass !== undefined &&
-        (ent.allowedCostClasses ?? []).includes(costClass));
-    // The cost class must reach the helper: on a cost-class plan it answers "no" when none is
-    // given, which refused every explicit model pick on every such plan (Auto passed it).
-    const allowed =
-      hasAllowedCostClass &&
-      isModelAllowedForUsage(ent, provider, model, ModelUsageType.PRIMARY, costClass ?? undefined);
-    if (allowed) {
+    if (this.isPrimaryModelAllowed(ent, provider, model, costClass)) {
       return;
     }
     this.logger.warn(`assertCanSendMessage: forbidden model user=${userId} ${provider}/${model}`);

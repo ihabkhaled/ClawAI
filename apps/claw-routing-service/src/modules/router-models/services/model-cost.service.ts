@@ -29,7 +29,8 @@ import {
   toBigInt,
   toModelCostSnapshot,
 } from '../utilities/model-cost-record.utility';
-import { type ModelCostQuote } from '../types/model-cost-quote.types';
+import { MODEL_COST_CATALOG_BATCH_SIZE } from '../constants/model-cost-catalog.constants';
+import { type ModelCostQuote, type ResolvedCostClass } from '../types/model-cost-quote.types';
 import {
   type ApplySyncedCostResult,
   type ModelCostRateDto,
@@ -100,6 +101,28 @@ export class ModelCostService {
   async getKnownCostClass(provider: string, modelKey: string): Promise<string | undefined> {
     const snapshot = await this.getSnapshot(provider, modelKey);
     return snapshot.isPriced ? snapshot.costClass : undefined;
+  }
+
+  // The class every model would be gated by, resolved through getSnapshot so a
+  // decorated id, a dated snapshot and the provider fallback behave exactly as
+  // they do when a message is sent. Batched: each lookup is up to three queries.
+  async resolveCostClasses(
+    models: ReadonlyArray<{ provider: string; model: string }>,
+  ): Promise<ResolvedCostClass[]> {
+    const resolved: ResolvedCostClass[] = [];
+    for (let start = 0; start < models.length; start += MODEL_COST_CATALOG_BATCH_SIZE) {
+      const batch = models.slice(start, start + MODEL_COST_CATALOG_BATCH_SIZE);
+      resolved.push(
+        ...(await Promise.all(
+          batch.map(async ({ provider, model }) => ({
+            provider,
+            model,
+            costClass: (await this.getKnownCostClass(provider, model)) ?? null,
+          })),
+        )),
+      );
+    }
+    return resolved;
   }
 
   /**
