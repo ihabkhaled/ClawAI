@@ -87,7 +87,14 @@ Reading it: cheap and standard models are never constrained. Without a cap, one 
 Unlimited can cost $17.52, 35% of that plan's whole month. The Free plan cannot reach the starred models
 anyway (its cost classes are FREE, CHEAP, STANDARD).
 
-### Not yet enforced. What the code audit found (2026-10-30)
+### Enforced (ADR-197)
+
+Approved by the owner on 2026-10-30 and applied by [ADR-197](../13-adr/adr-197-a-plan-limits-the-size-and-cost-of-one-platform-paid-call.md):
+three nullable plan columns, a fill-NULL seeder, and the limits in the unmetered branch of
+`CreditReservationManager.reserve`, with the refusal code `PLAN_CALL_LIMIT_EXCEEDED` in 13 locales.
+A call paid from the credit wallet is not limited by the plan. The audit that found the seam follows.
+
+### What the code audit found (2026-10-30)
 
 The owner approved the table. Enforcement was started and stopped at the audit, because the seam is not
 where the proposal assumed:

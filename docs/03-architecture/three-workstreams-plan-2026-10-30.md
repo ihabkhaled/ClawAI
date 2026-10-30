@@ -28,18 +28,18 @@ harness). Rule 26 intake: pack read whole, repo audited against code, verdicts b
 
 ## Workstream 2: pricing, caching, fair usage
 
-| Deliverable                                                            | Verdict                                                           |
-| ---------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| Chat, Compare, Judge, TTS, vision, plugins, Threads reserve and settle | Done (per-call holds)                                             |
-| Unknown price blocks a paid model                                      | Partial: dearest-rate fallback is on by default                   |
-| Cache read and write accounting, no double count                       | Done for text (OpenAI-style, Gemini, Anthropic)                   |
-| Cache requests                                                         | Partial: Anthropic only                                           |
-| Per-plan call caps (input, output, dollars)                            | Missing                                                           |
-| Parent budget over Compare, Judge, fallback                            | Missing (Threads only)                                            |
-| Price ledger, drift check, coverage dashboard                          | Missing                                                           |
-| Reconciliation with provider invoices                                  | Missing                                                           |
-| Duplicate UI price table                                               | Open: `ai-model-pricing.constants.ts` can disagree with the quote |
-| Coding-agent and research LLM metering path                            | Unverified                                                        |
+| Deliverable                                                            | Verdict                                                                             |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Chat, Compare, Judge, TTS, vision, plugins, Threads reserve and settle | Done (per-call holds)                                                               |
+| Unknown price blocks a paid model                                      | Partial: dearest-rate fallback is on by default                                     |
+| Cache read and write accounting, no double count                       | Done for text (OpenAI-style, Gemini, Anthropic)                                     |
+| Cache requests                                                         | Partial: Anthropic only                                                             |
+| Per-plan call caps (input, output, dollars)                            | Done for platform-paid calls (ADR-197); credit-wallet calls and parent budgets open |
+| Parent budget over Compare, Judge, fallback                            | Missing (Threads only)                                                              |
+| Price ledger, drift check, coverage dashboard                          | Missing                                                                             |
+| Reconciliation with provider invoices                                  | Missing                                                                             |
+| Duplicate UI price table                                               | Open: `ai-model-pricing.constants.ts` can disagree with the quote                   |
+| Coding-agent and research LLM metering path                            | Unverified                                                                          |
 
 ## Workstream 3: execution harness
 
@@ -62,7 +62,7 @@ harness). Rule 26 intake: pack read whole, repo audited against code, verdicts b
 3. **WS3** pure `classifyModelTurn` and use it in the plugin loop and Runtime V2.
 4. **WS3** a replay is cut at the latest `request_accepted`, so a stale `DONE` cannot be replayed (done, server side only). A `runId` on every event and the frontend check were dropped: the cut closes the race without a protocol change.
 5. **WS3** `replay.truncated` gap marker.
-6. **WS2** official text-model prices as seed v13 (done, [ledger](model-price-ledger-2026-10-30.md)). Per-plan call caps: numbers derived from the plan economics and these prices, the owner approved them; enforcement is its own batch (seam found in the unmetered branch of `CreditReservationManager.reserve`, see the ledger).
+6. **WS2** official text-model prices as seed v13 (done, [ledger](model-price-ledger-2026-10-30.md)). Per-plan call caps: derived from the plan economics, approved by the owner and enforced in the unmetered branch of `CreditReservationManager.reserve` (ADR-197, done).
 7. **WS2** parent budget for Compare, Judge and the fallback chain.
 8. **WS2** coverage numbers and cache hit telemetry; remove or align the duplicate price table.
 
