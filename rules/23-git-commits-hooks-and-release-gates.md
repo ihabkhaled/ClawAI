@@ -37,7 +37,10 @@ Before release: `npm run release:preflight` runs the all-workspace gate.
 
 1. `lint-staged` — `eslint --fix --max-warnings 0` (content cache) and
    `prettier --write` on the staged files. Touching a file means leaving it with
-   zero warnings.
+   zero warnings. The two run in sequence on each file, Prettier last, because
+   lint-staged runs separate globs concurrently and a late `eslint --fix` once
+   re-wrote a formatted file (CI's formatting ratchet then failed). The CI
+   `Policy` job is advisory: it never blocks Release.
 2. Secret scan — `gitleaks git --staged` with `.gitleaks.toml`. Without gitleaks
    installed it warns loudly and continues; CI scans every commit.
 3. Knowledge layer — regenerate `.ai/**`, workspace `AGENTS.md` and the

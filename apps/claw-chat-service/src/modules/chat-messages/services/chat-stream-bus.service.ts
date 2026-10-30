@@ -142,7 +142,9 @@ export class ChatStreamBusService implements OnModuleInit {
           return parsed === null ? [] : [parsed];
         }),
       );
-      return afterSequence === undefined ? frames : frames.filter((frame) => (frame.sequence ?? 0) > afterSequence);
+      return afterSequence === undefined
+        ? frames
+        : frames.filter((frame) => (frame.sequence ?? 0) > afterSequence);
     } catch (error: unknown) {
       this.logger.error(
         `replay: could not read buffer for ${threadId} — ${describeStreamError(error)}`,

@@ -90,16 +90,21 @@ const isGenerated = (f) => {
 };
 
 // lint-staged (v15+) stages whatever its tasks modify, so no `git add` here.
+//
+// ONE glob, so ESLint and Prettier run strictly in sequence. Two globs matching
+// the same file run CONCURRENTLY, and an `eslint --fix` that finishes after
+// `prettier --write` re-writes the file from its stale read: the commit then
+// carries unformatted bytes and CI's formatting ratchet fails (chat-stream-bus
+// 2026-10-30). Prettier goes last so it always has the final word.
 module.exports = {
-  '*.{ts,tsx,js,jsx}': (files) => {
-    // agent-cli is a standalone Node.js script — exclude from monorepo ESLint
-    const filtered = files.filter((f) => !toForwardSlash(f).includes('agent-cli/') && !isGenerated(f));
-    if (!filtered.length) return [];
-    return buildEslintFixCommands(filtered);
-  },
   '*.{ts,tsx,js,jsx,json,css,md,yml,yaml}': (files) => {
-    const filtered = files.filter((f) => !isGenerated(f));
-    if (!filtered.length) return [];
-    return buildPrettierCommands(filtered);
+    const formattable = files.filter((f) => !isGenerated(f));
+    if (!formattable.length) return [];
+    // agent-cli is a standalone Node.js script — exclude from monorepo ESLint
+    const lintable = formattable.filter(
+      (f) => /\.(?:ts|tsx|js|jsx)$/u.test(f) && !toForwardSlash(f).includes('agent-cli/'),
+    );
+    const eslintCommands = lintable.length ? buildEslintFixCommands(lintable) : [];
+    return [...eslintCommands, ...buildPrettierCommands(formattable)];
   },
 };
