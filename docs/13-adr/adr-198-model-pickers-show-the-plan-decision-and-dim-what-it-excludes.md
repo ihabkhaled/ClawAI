@@ -40,4 +40,11 @@ plan check is `isModelAllowedForUsage` in shared-entitlements.
   the same class gate. A per-model role switch can still refuse a judge on send.
 - OpenRouter, NVIDIA NIM, Hugging Face and AI Horde models have no price, so they are dimmed on every plan,
   paid included, because a send would be refused. Giving them prices unlocks them.
-- Threads and Workspace still call the shared helper without a cost class and are not covered by this.
+- Threads and Workspace (2026-10-31): both called the shared helper without a class, so a Free or Starter
+  user was refused every model there. They now read the class from routing-service
+  (`POST /internal/router-models/costs/classes`, service token) the way chat does: threads-service
+  `ModelCostClassClient` for the recommended team, the healing pool and the start/retry preflight;
+  workspace-service `ModelCostClassResolverManager` for AUTO model choice. Cache key
+  `JSON.stringify([provider, model])`, 60 s, a failed lookup is never cached, and no answer means no
+  model (the preflight answers 503, the picker shows the model as needing a plan and is not kept in the
+  60 s team cache). Only a cost-class plan makes the call.

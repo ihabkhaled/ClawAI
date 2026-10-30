@@ -53,3 +53,17 @@ export const AI_ACTION_WORKFLOW_RUN = 'workspace-ai-action';
 export const AI_ACTION_WORKFLOW_REVIEW = 'workspace-multi-review';
 export const AI_ACTION_WORKFLOW_REVIEW_JUDGE = 'workspace-multi-review-judge';
 export const AI_ACTION_WORKFLOW_CHAIN_DRAFT = 'workspace-chain-draft';
+
+/** routing-service route that answers many models cost classes in one call (service token). */
+export const MODEL_COST_CLASSES_PATH = '/api/v1/internal/router-models/costs/classes';
+
+/** The most pairs routing-service accepts in one request. */
+export const MODEL_COST_CLASSES_BATCH_SIZE = 300;
+
+/** How long one answer is reused. A failed lookup is never kept. */
+export const MODEL_COST_CLASS_CACHE_TTL_MS = 60_000;
+
+/** Most answers kept; the cache is cleared when it would grow past this. */
+export const MODEL_COST_CLASS_CACHE_MAX_ENTRIES = 2_000;
+
+export const MODEL_COST_CLASS_TIMEOUT_MS = 5_000;

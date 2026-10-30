@@ -57,6 +57,7 @@ const validBaseConfig = {
   AUTH_SERVICE_URL: 'http://auth-service:4001',
   CHAT_SERVICE_URL: 'http://chat-service:4002',
   CONNECTOR_SERVICE_URL: 'http://connector-service:4003',
+  ROUTING_SERVICE_URL: 'https://routing-service:4004',
   MEMORY_SERVICE_URL: 'http://memory-service:4005',
   FILE_SERVICE_URL: 'http://file-service:4006',
   INTER_SERVICE_AUTH_TOKEN: 'test-inter-service-token-32chars-min-aaaa',

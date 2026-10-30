@@ -13,6 +13,7 @@ import { AiActionRiskScorerManager } from './managers/ai-action-risk-scorer.mana
 import { AiActionUserRateLimiterManager } from './managers/ai-action-user-rate-limiter.manager';
 import { AutoRouterManager } from './managers/auto-router.manager';
 import { ModelCatalogResolverManager } from './managers/model-catalog-resolver.manager';
+import { ModelCostClassResolverManager } from './managers/model-cost-class-resolver.manager';
 import { MultiModelReviewOrchestratorManager } from './managers/multi-model-review-orchestrator.manager';
 import { AiActionApprovalQueueRepository } from './repositories/ai-action-approval-queue.repository';
 import { AiActionPolicyRepository } from './repositories/ai-action-policy.repository';
@@ -29,6 +30,7 @@ import { AutomationPreferenceService } from './services/automation-preference.se
     AutomationPreferenceController,
   ],
   providers: [
+    ModelCostClassResolverManager,
     ModelCatalogResolverManager,
     AutoRouterManager,
     AiActionExecutionManager,

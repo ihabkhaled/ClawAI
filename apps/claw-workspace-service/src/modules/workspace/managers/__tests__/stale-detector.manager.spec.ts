@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { AppConfig } from '../../../../app/config/app.config';
 import { WorkspaceProvider } from '../../../../common/enums/workspace-provider.enum';
 import { StaleDetectorManager } from '../stale-detector.manager';
@@ -57,6 +57,7 @@ vi.spyOn(AppConfig, 'get').mockReturnValue({
   AUTH_SERVICE_URL: 'http://auth-service:4001',
   CHAT_SERVICE_URL: 'http://chat-service:4002',
   CONNECTOR_SERVICE_URL: 'http://connector-service:4003',
+  ROUTING_SERVICE_URL: 'https://routing-service:4004',
   MEMORY_SERVICE_URL: 'http://memory-service:4005',
   FILE_SERVICE_URL: 'http://file-service:4006',
   INTER_SERVICE_AUTH_TOKEN: 'test-inter-service-token-32chars-min-aaaa',
@@ -84,8 +85,7 @@ describe('StaleDetectorManager', () => {
   const scheduler = {
     getCadenceForProvider: vi.fn().mockImplementation((p: WorkspaceProvider) => {
       if (p === WorkspaceProvider.GMAIL) return 120;
-      if (p === WorkspaceProvider.JIRA) return 300;
-      return 600;
+      return p === WorkspaceProvider.JIRA ? 300 : 600;
     }),
   } as unknown as WorkspaceSyncSchedulerManager;
   const rabbitmq = {

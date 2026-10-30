@@ -22,6 +22,7 @@ describe('HealingPoolService', () => {
             { provider: 'GEMINI', model: 'flash', windowTokens: 1_000_000, usageTier: 'LOW' },
           ]),
       } as never,
+      { forPlan: vi.fn().mockResolvedValue(new Map()) } as never,
     );
 
     const pool = await service.forOwner('owner-1');
@@ -34,6 +35,7 @@ describe('HealingPoolService', () => {
     const service = new HealingPoolService(
       { getEntitlements: vi.fn().mockRejectedValue(new Error('auth down')) } as never,
       { listModels: vi.fn().mockResolvedValue([]) } as never,
+      { forPlan: vi.fn().mockResolvedValue(new Map()) } as never,
     );
     await expect(service.forOwner('owner-1')).resolves.toBeUndefined();
   });
@@ -42,6 +44,7 @@ describe('HealingPoolService', () => {
     const service = new HealingPoolService(
       { getEntitlements: vi.fn().mockResolvedValue(entitlements) } as never,
       { listModels: vi.fn().mockRejectedValue(new Error('connector down')) } as never,
+      { forPlan: vi.fn().mockResolvedValue(new Map()) } as never,
     );
     await expect(service.forOwner('owner-1')).resolves.toBeUndefined();
   });

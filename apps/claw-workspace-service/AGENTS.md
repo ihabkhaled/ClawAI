@@ -24,7 +24,7 @@ change type needs (`rules/23-git-commits-hooks-and-release-gates.md`, gate matri
 - Database: postgresql
 - Prisma models: AiActionApprovalQueue, AiActionPolicy, AutoSuggestRun, DigestSnapshot, ImplPromptHandoff, SuggestionDeduplication, SuggestionTriggerRule, SyncCadenceDefault, UserAutomationPreference, UserDigestPreference, UserEmailSignature, UserEmailTemplate, WebhookDelivery, WorkspaceAction, WorkspaceChain, WorkspaceChainRun, WorkspaceChainRunStep, WorkspaceChainTemplate, WorkspaceConnector, WorkspaceConnectorGrant, WorkspaceConnectorGrantAuditLog, WorkspaceEvent, WorkspaceHealthEvent, WorkspaceObject, WorkspaceObjectLink, WorkspaceProviderAppConfig, WorkspaceProviderDefinition, WorkspaceSyncRun
 - API endpoints: 108 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 107 (vitest)
+- Test files: 108 (vitest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

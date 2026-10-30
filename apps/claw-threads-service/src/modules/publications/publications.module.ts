@@ -33,6 +33,7 @@ import { PublicationGenerationStartService } from './services/publication-genera
 import { GenerationPreflightService } from './services/generation-preflight.service';
 import { HealingPoolService } from './services/healing-pool.service';
 import { ModelCatalogClient } from './services/model-catalog.client';
+import { ModelCostClassClient } from './services/model-cost-class.client';
 import { ModelHealthService } from './services/model-health.service';
 import { ThreadNotificationService } from './services/thread-notification.service';
 import { GenerationActiveCapService } from './services/generation-active-cap.service';
@@ -74,6 +75,7 @@ import { PublicationGenerationRepairController } from './controllers/publication
     GenerationOrphanRepairService,
     GenerationStartGate,
     ModelCatalogClient,
+    ModelCostClassClient,
     ModelHealthService,
     RecommendedTeamService,
     PublicationCommunityService,

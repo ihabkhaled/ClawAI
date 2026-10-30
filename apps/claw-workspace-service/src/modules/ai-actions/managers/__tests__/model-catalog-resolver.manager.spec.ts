@@ -13,6 +13,7 @@ type CatalogModel = {
 };
 
 const fetchMock = vi.fn();
+const noClasses = { resolve: vi.fn().mockResolvedValue(new Map()) } as never;
 
 function catalogResponse(providers: { provider: string; models: CatalogModel[] }[]): unknown {
   return { ok: true, status: 200, json: () => Promise.resolve({ providers }) };
@@ -32,7 +33,7 @@ function route(handlers: { catalog: () => unknown; installed?: () => unknown }):
 }
 
 function makeResolver(entitlements: { getEntitlements: Mock }): ModelCatalogResolverManager {
-  return new ModelCatalogResolverManager(entitlements as never);
+  return new ModelCatalogResolverManager(entitlements as never, noClasses);
 }
 
 const allowAll = { isAdmin: false, modelAccessMode: 'ALLOW_ALL', allowedModels: [] };

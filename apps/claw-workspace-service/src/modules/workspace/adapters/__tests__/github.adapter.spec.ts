@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { GitHubAdapter } from '../github.adapter';
 import { GitHubWriteActionsHelper } from '../github-write-actions.helper';
 import { WorkspaceConnectorStatus } from '../../../../common/enums/workspace-connector-status.enum';
@@ -55,6 +55,7 @@ vi.spyOn(AppConfig, 'get').mockReturnValue({
   AUTH_SERVICE_URL: 'http://auth-service:4001',
   CHAT_SERVICE_URL: 'http://chat-service:4002',
   CONNECTOR_SERVICE_URL: 'http://connector-service:4003',
+  ROUTING_SERVICE_URL: 'https://routing-service:4004',
   MEMORY_SERVICE_URL: 'http://memory-service:4005',
   FILE_SERVICE_URL: 'http://file-service:4006',
   INTER_SERVICE_AUTH_TOKEN: 'test-inter-service-token-32chars-min-aaaa',

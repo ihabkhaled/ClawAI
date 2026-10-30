@@ -31,13 +31,22 @@ import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 import { buildAuthHeader } from '../../../common/utilities/file-service-client.utility';
 import { publicModelCatalogSchema } from '../dto/public-model-catalog.dto';
 import { bareModelId, rankCloudModels } from '../utilities/cloud-model-ranking.utility';
+import {
+  costClassOf,
+  needsCostClasses,
+  NO_COST_CLASSES,
+} from '../utilities/model-cost-class-key.utility';
+import { ModelCostClassResolverManager } from './model-cost-class-resolver.manager';
 
 @Injectable()
 export class ModelCatalogResolverManager {
   private readonly logger = new Logger(ModelCatalogResolverManager.name);
   private cache: ModelCatalogCache | null = null;
 
-  constructor(@Inject(ENTITLEMENTS_ADAPTER) private readonly entitlements: EntitlementsAdapter) {}
+  constructor(
+    @Inject(ENTITLEMENTS_ADAPTER) private readonly entitlements: EntitlementsAdapter,
+    private readonly costClasses: ModelCostClassResolverManager,
+  ) {}
 
   async resolveDefaults(input: ResolveDefaultsInput = {}): Promise<ResolvedDefaults> {
     const catalog = await this.getCatalog();
@@ -148,8 +157,28 @@ export class ModelCatalogResolverManager {
     userId: string,
   ): Promise<ConnectedProvider[]> {
     const entitlements = await this.loadEntitlements(userId);
+    // A cost-class plan decides by each model's price band (ADR-198). Both spellings of an id are
+    // asked about; a model routing did not answer for has no class and is refused (fail closed).
+    const classes = needsCostClasses(entitlements)
+      ? await this.costClasses.resolve(
+          providers.flatMap((entry) =>
+            entry.models.flatMap((model) =>
+              [...new Set([model.modelKey, bareModelId(model.modelKey)])].map((id) => ({
+                provider: entry.provider,
+                model: id,
+              })),
+            ),
+          ),
+        )
+      : NO_COST_CLASSES;
     const allowed = (provider: string, model: string): boolean =>
-      isModelAllowedForUsage(entitlements, provider, model, ModelUsageType.PRIMARY);
+      isModelAllowedForUsage(
+        entitlements,
+        provider,
+        model,
+        ModelUsageType.PRIMARY,
+        costClassOf(classes, provider, model),
+      );
     return providers
       .map((entry) => ({
         provider: entry.provider,

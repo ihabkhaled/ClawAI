@@ -181,3 +181,7 @@ Start and retry bodies go through `ZodValidationPipe(schema, ThreadGenerationErr
 ## Verified accepted gaps (ADR-195, 2026-10-27)
 
 `retryThreadGenerationSchema` also accepts `acceptedEvidenceGapIndexes` (at most 8 integers, 0 to 7, indexes into `failure.review.evidenceGapBlockers`). The generation service checks texts and indexes against the failed job's stored verdict; `ThreadsGenerationClient` passes its coded 400 `ACCEPTED_GAP_NOT_A_BLOCKER` through (`ThreadGenerationErrorCode`) and keeps the generic message for every other upstream 400. `generationProgressSchema` keeps the optional `failure.review.reviewerModel` (a zod object drops unknown keys, so it must be listed). Decision: [ADR-195](../../docs/13-adr/adr-195-research-uses-short-targeted-queries-accepted-gaps-are-verified-and-reviewers-stay-independent.md).
+
+## Cost-class plans (ADR-198, 2026-10-31)
+
+A plan with `ALLOW_COST_CLASSES` refuses every model when `isModelAllowedForUsage` gets no class. `ModelCostClassClient` (`services/model-cost-class.client.ts`) reads the classes from routing-service `POST /internal/router-models/costs/classes` (service token, 300 pairs per call, key `JSON.stringify([provider, model])`, 60 s cache, failures never cached). The recommended team, the healing pool and the start/retry preflight pass the class into the plan checks. Only a cost-class plan calls routing. A model with no answer is refused: the preflight answers 503, the picker shows it as needing a plan and the 60 s team cache is skipped. Any new caller of the helper must pass a class.

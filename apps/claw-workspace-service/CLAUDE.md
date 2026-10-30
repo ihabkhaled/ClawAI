@@ -287,3 +287,7 @@ One-shot AI actions (`buildAiActionPrompt`, the reviewer calls and the judge) ap
 hidden identity block to the SYSTEM prompt only. It is a workspace-local copy of the chat-service
 text (`ai-actions/constants/platform-identity.constants.ts`, no shared package holds it): change
 both together. Never store it, never put it in the user prompt, never echo it.
+
+## Cost-class plans (ADR-198, 2026-10-31)
+
+AUTO model choice (`ModelCatalogResolverManager.filterToPlan`) passes each model class to `isModelAllowedForUsage`; without it a cost-class plan (Free, Starter, ...) is refused every model. `ModelCostClassResolverManager` reads the classes from routing-service `POST /internal/router-models/costs/classes` (service token, `ROUTING_SERVICE_URL`, 300 pairs per call, key `JSON.stringify([provider, model])`, both `models/x` and `x` asked, 60 s cache, failures never cached). No answer means no model (fail closed). Only a cost-class plan calls routing.

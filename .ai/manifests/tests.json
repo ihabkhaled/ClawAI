@@ -106,13 +106,13 @@
     },
     "claw-threads-service": {
       "runner": "vitest",
-      "testFiles": 121
+      "testFiles": 125
     },
     "claw-workspace-service": {
       "runner": "vitest",
-      "testFiles": 107
+      "testFiles": 108
     }
   },
   "generated": true,
-  "total": 2758
+  "total": 2763
 }

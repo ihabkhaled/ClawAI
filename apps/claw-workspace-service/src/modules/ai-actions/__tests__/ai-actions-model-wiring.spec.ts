@@ -8,6 +8,7 @@ import { AiActionsModule } from '../ai-actions.module';
 import { AiActionExecutionManager } from '../managers/ai-action-execution.manager';
 import { AutoRouterManager } from '../managers/auto-router.manager';
 import { ModelCatalogResolverManager } from '../managers/model-catalog-resolver.manager';
+import { ModelCostClassResolverManager } from '../managers/model-cost-class-resolver.manager';
 
 // Module metadata reads AppConfig while the module files load (cron expressions), so the
 // environment has to exist first: vi.hoisted runs before the imports above are evaluated.
@@ -51,7 +52,7 @@ describe('AI action model selection wiring', () => {
           interServiceToken: 'x'.repeat(32),
         }),
       ],
-      providers: [ModelCatalogResolverManager, AutoRouterManager],
+      providers: [ModelCostClassResolverManager, ModelCatalogResolverManager, AutoRouterManager],
     }).compile();
 
     expect(moduleRef.get(ModelCatalogResolverManager)).toBeInstanceOf(ModelCatalogResolverManager);

@@ -18,7 +18,9 @@ import {
   classifyCatalog,
   listExcludedModels,
 } from '../utilities/recommended-team.utility';
+import { costClassKey, needsCostClasses } from '../utilities/model-cost-class.utility';
 import { ModelCatalogClient } from './model-catalog.client';
+import { ModelCostClassClient } from './model-cost-class.client';
 import { ModelHealthService } from './model-health.service';
 
 /**
@@ -35,6 +37,7 @@ export class RecommendedTeamService {
   constructor(
     @Inject(ENTITLEMENTS_ADAPTER) private readonly entitlements: EntitlementsAdapter,
     private readonly catalog: ModelCatalogClient,
+    private readonly costClasses: ModelCostClassClient,
     @Optional() private readonly health?: ModelHealthService,
   ) {}
 
@@ -47,13 +50,18 @@ export class RecommendedTeamService {
       this.catalog.listModels(),
       this.health?.current() ?? Promise.resolve(new Map()),
     ]);
+    const classes = await this.costClasses.forPlan(entitlements, models);
     const value: RecommendedTeamResponse = {
       planName: entitlements.plan?.name ?? 'current',
-      team: buildRecommendedTeam(entitlements, models, health),
-      models: classifyCatalog(entitlements, models, health),
-      excluded: listExcludedModels(entitlements, models),
+      team: buildRecommendedTeam(entitlements, models, health, classes),
+      models: classifyCatalog(entitlements, models, health, classes),
+      excluded: listExcludedModels(entitlements, models, classes),
     };
-    this.remember(ownerId, value, now);
+    // A price lookup that came back short (routing down) is shown but never kept for the 60 s.
+    const complete =
+      !needsCostClasses(entitlements) ||
+      models.every(({ provider, model }) => classes.has(costClassKey(provider, model)));
+    if (complete) this.remember(ownerId, value, now);
     return value;
   }
 

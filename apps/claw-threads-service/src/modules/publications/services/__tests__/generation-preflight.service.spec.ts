@@ -72,7 +72,11 @@ function setup(options: { known?: boolean; entitlements?: UserEntitlements } = {
     getEntitlements: vi.fn().mockResolvedValue(options.entitlements ?? freeEntitlements()),
   };
   const catalog = { isKnown: vi.fn().mockResolvedValue(options.known ?? true) };
-  const service = new GenerationPreflightService(adapter as never, catalog as never);
+  const service = new GenerationPreflightService(
+    adapter as never,
+    catalog as never,
+    { forPlan: vi.fn().mockResolvedValue(new Map()) } as never,
+  );
   return { service, adapter, catalog };
 }
 

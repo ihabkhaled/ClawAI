@@ -39,6 +39,7 @@ const appConfigSchema = z.object({
   OLLAMA_SERVICE_URL: z.string().min(1).default('http://ollama-service:4008'),
   CHAT_SERVICE_URL: z.string().min(1).default('http://chat-service:4002'),
   CONNECTOR_SERVICE_URL: z.string().min(1).default('http://connector-service:4003'),
+  ROUTING_SERVICE_URL: z.string().min(1).default('https://routing-service:4004'),
   AI_ACTION_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(300_000),
   AI_ACTION_MODEL_RESOLVER_TTL_SECONDS: z.coerce.number().int().positive().default(300),
   // Stream 10 — AI action approval engine

@@ -620,7 +620,7 @@
         "ThreadPublicationSearchDoc",
         "ThreadPublicationView"
       ],
-      "testFiles": 121,
+      "testFiles": 125,
       "testRunner": "vitest"
     },
     {
@@ -669,7 +669,7 @@
         "WorkspaceProviderDefinition",
         "WorkspaceSyncRun"
       ],
-      "testFiles": 107,
+      "testFiles": 108,
       "testRunner": "vitest"
     }
   ]

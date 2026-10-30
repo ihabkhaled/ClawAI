@@ -14,7 +14,9 @@ import {
   THREAD_ASSUMED_WINDOW_TOKENS,
   USAGE_TIER_RANK,
 } from '../constants/recommended-team.constants';
+import type { CostClassIndex } from '../types/model-cost-class.types';
 import { type CatalogModel, ThreadModelAvailability } from '../types/recommended-team.types';
+import { costClassOf, NO_COST_CLASSES } from './model-cost-class.utility';
 import { classifyModel } from './recommended-team.utility';
 
 function costRank(model: CatalogModel): number {
@@ -41,12 +43,19 @@ function toCandidate(model: CatalogModel): ThreadHealingCandidate {
 export function buildHealingPool(
   entitlements: UserEntitlements,
   catalog: readonly CatalogModel[],
+  costClasses: CostClassIndex = NO_COST_CLASSES,
 ): ThreadHealingPool | undefined {
   const usable = catalog
     .filter(
       (model) =>
-        classifyModel(entitlements, model) === ThreadModelAvailability.AVAILABLE &&
-        isModelAllowedForUsage(entitlements, model.provider, model.model, ModelUsageType.FALLBACK),
+        classifyModel(entitlements, model, costClasses) === ThreadModelAvailability.AVAILABLE &&
+        isModelAllowedForUsage(
+          entitlements,
+          model.provider,
+          model.model,
+          ModelUsageType.FALLBACK,
+          costClassOf(costClasses, model.provider, model.model),
+        ),
     )
     .sort(
       (a, b) =>

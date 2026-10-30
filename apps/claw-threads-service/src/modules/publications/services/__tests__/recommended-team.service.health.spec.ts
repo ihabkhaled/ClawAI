@@ -24,7 +24,12 @@ describe('RecommendedTeamService with model health', () => {
     const health = {
       current: vi.fn().mockResolvedValue(new Map([['GEMINI/flash', { ok: 0, failed: 8 }]])),
     };
-    const service = new RecommendedTeamService(adapter as never, catalog as never, health as never);
+    const service = new RecommendedTeamService(
+      adapter as never,
+      catalog as never,
+      { forPlan: vi.fn().mockResolvedValue(new Map()) } as never,
+      health as never,
+    );
 
     const result = await service.get('owner-1');
 

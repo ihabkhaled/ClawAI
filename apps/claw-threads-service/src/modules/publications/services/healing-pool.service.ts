@@ -4,6 +4,7 @@ import type { ThreadHealingPool } from '@claw/shared-types';
 
 import { buildHealingPool } from '../utilities/healing-pool.utility';
 import { ModelCatalogClient } from './model-catalog.client';
+import { ModelCostClassClient } from './model-cost-class.client';
 
 /**
  * Picks the models a Thread job may heal with after its seats' own backups (ADR-181), from the
@@ -18,6 +19,7 @@ export class HealingPoolService {
   constructor(
     @Inject(ENTITLEMENTS_ADAPTER) private readonly entitlements: EntitlementsAdapter,
     private readonly catalog: ModelCatalogClient,
+    private readonly costClasses: ModelCostClassClient,
   ) {}
 
   async forOwner(ownerId: string): Promise<ThreadHealingPool | undefined> {
@@ -26,7 +28,8 @@ export class HealingPoolService {
         this.entitlements.getEntitlements(ownerId, { enforceTrial: false }),
         this.catalog.listModels(),
       ]);
-      return buildHealingPool(entitlements, models);
+      const classes = await this.costClasses.forPlan(entitlements, models);
+      return buildHealingPool(entitlements, models, classes);
     } catch {
       this.logger.warn('Healing pool could not be built; the job runs with its own backups only');
       return undefined;

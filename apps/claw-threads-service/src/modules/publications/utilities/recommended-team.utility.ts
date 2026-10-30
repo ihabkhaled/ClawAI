@@ -13,7 +13,9 @@ import {
   THREAD_MODEL_DENY_LIST,
   USAGE_TIER_RANK,
 } from '../constants/recommended-team.constants';
+import type { CostClassIndex } from '../types/model-cost-class.types';
 import type { ModelRef } from '../types/generation-preflight.types';
+import { costClassOf, NO_COST_CLASSES } from './model-cost-class.utility';
 import { healthRank, isDegraded, recentHealthOf } from './model-health.utility';
 import {
   type CatalogModel,
@@ -39,9 +41,18 @@ function isDenied({ provider, model }: ModelRef): boolean {
 export function classifyModel(
   entitlements: UserEntitlements,
   model: CatalogModel,
+  costClasses: CostClassIndex = NO_COST_CLASSES,
 ): ThreadModelAvailability {
   if (isDenied(model)) return ThreadModelAvailability.UNAVAILABLE;
-  if (!isModelAllowedForUsage(entitlements, model.provider, model.model, ModelUsageType.PRIMARY)) {
+  if (
+    !isModelAllowedForUsage(
+      entitlements,
+      model.provider,
+      model.model,
+      ModelUsageType.PRIMARY,
+      costClassOf(costClasses, model.provider, model.model),
+    )
+  ) {
     return ThreadModelAvailability.NEEDS_PLAN;
   }
   const window = model.windowTokens ?? THREAD_ASSUMED_WINDOW_TOKENS;
@@ -102,6 +113,7 @@ function fallbacksFor(
   entitlements: UserEntitlements,
   seat: CatalogModel,
   ranked: readonly CatalogModel[],
+  costClasses: CostClassIndex,
 ): ModelRef[] {
   return ranked
     .filter(
@@ -112,6 +124,7 @@ function fallbacksFor(
           candidate.provider,
           candidate.model,
           ModelUsageType.FALLBACK,
+          costClassOf(costClasses, candidate.provider, candidate.model),
         ),
     )
     .slice(0, RECOMMENDED_FALLBACKS_PER_SEAT)
@@ -123,9 +136,10 @@ export function classifyCatalog(
   entitlements: UserEntitlements,
   catalog: readonly CatalogModel[],
   health: ModelHealthIndex = NO_HEALTH,
+  costClasses: CostClassIndex = NO_COST_CLASSES,
 ): RecommendedModelStatus[] {
   return catalog.map((model) => {
-    const status = classifyModelWithHealth(entitlements, model, health);
+    const status = classifyModelWithHealth(entitlements, model, health, costClasses);
     const recent = recentHealthOf(health, model);
     return {
       ...toRef(model),
@@ -140,8 +154,9 @@ export function classifyModelWithHealth(
   entitlements: UserEntitlements,
   model: CatalogModel,
   health: ModelHealthIndex,
+  costClasses: CostClassIndex = NO_COST_CLASSES,
 ): ThreadModelAvailability {
-  const status = classifyModel(entitlements, model);
+  const status = classifyModel(entitlements, model, costClasses);
   return status === ThreadModelAvailability.AVAILABLE && isDegraded(health, model)
     ? ThreadModelAvailability.DEGRADED
     : status;
@@ -151,9 +166,10 @@ export function classifyModelWithHealth(
 export function listExcludedModels(
   entitlements: UserEntitlements,
   catalog: readonly CatalogModel[],
+  costClasses: CostClassIndex = NO_COST_CLASSES,
 ): ExcludedModel[] {
   return catalog.flatMap((model): ExcludedModel[] => {
-    const status = classifyModel(entitlements, model);
+    const status = classifyModel(entitlements, model, costClasses);
     // A degraded model is still usable (the health demotion lives in `classifyCatalog`).
     return status === ThreadModelAvailability.AVAILABLE ||
       status === ThreadModelAvailability.DEGRADED
@@ -173,9 +189,11 @@ export function buildRecommendedTeam(
   entitlements: UserEntitlements,
   catalog: readonly CatalogModel[],
   health: ModelHealthIndex = NO_HEALTH,
+  costClasses: CostClassIndex = NO_COST_CLASSES,
 ): RecommendedTeam | null {
   const usableByPlan = catalog.filter(
-    (model) => classifyModel(entitlements, model) === ThreadModelAvailability.AVAILABLE,
+    (model) =>
+      classifyModel(entitlements, model, costClasses) === ThreadModelAvailability.AVAILABLE,
   );
   // Healthy models first; a degraded one is only used when nothing healthy is left.
   const healthy = usableByPlan.filter((model) => !isDegraded(health, model));
@@ -187,7 +205,7 @@ export function buildRecommendedTeam(
   const seat = (index: number): RecommendedSeat => {
     const chosen = spread[index % spread.length] ?? usable[0];
     if (!chosen) throw new Error('unreachable: usable is not empty');
-    return { ...toRef(chosen), fallbacks: fallbacksFor(entitlements, chosen, spread) };
+    return { ...toRef(chosen), fallbacks: fallbacksFor(entitlements, chosen, spread, costClasses) };
   };
   return {
     authors: Array.from({ length: RECOMMENDED_AUTHOR_COUNT }, (_, index) => seat(index)),

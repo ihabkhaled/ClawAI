@@ -90,7 +90,11 @@ function setup(
       ),
   };
   return {
-    service: new GenerationPreflightService(adapter as never, catalog as never),
+    service: new GenerationPreflightService(
+      adapter as never,
+      catalog as never,
+      { forPlan: vi.fn().mockResolvedValue(new Map()) } as never,
+    ),
     adapter,
     catalog,
   };

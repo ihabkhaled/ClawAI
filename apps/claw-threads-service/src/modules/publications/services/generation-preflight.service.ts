@@ -32,7 +32,9 @@ import {
   modelKey,
   retrySpendCapMicroUsd,
 } from '../utilities/generation-preflight.utility';
+import { costClassKey, needsCostClasses } from '../utilities/model-cost-class.utility';
 import { ModelCatalogClient } from './model-catalog.client';
+import { ModelCostClassClient } from './model-cost-class.client';
 
 /**
  * Refuses a generation that cannot succeed before any job, budget or model call exists:
@@ -45,6 +47,7 @@ export class GenerationPreflightService {
   constructor(
     @Inject(ENTITLEMENTS_ADAPTER) private readonly entitlements: EntitlementsAdapter,
     private readonly catalog: ModelCatalogClient,
+    private readonly costClasses: ModelCostClassClient,
   ) {}
 
   async assertCanStart(ownerId: string, input: StartThreadGenerationDto): Promise<void> {
@@ -103,7 +106,18 @@ export class GenerationPreflightService {
     assertGenerationPermitted(entitlements);
     // A name the catalog has never heard of is reported as that, not as "not on your plan".
     assertModelsKnown(roles, knownKeys);
-    assertModelsOnPlan(entitlements, roles);
+    // A cost-class plan decides by each model's price band, so the band is read from routing-service
+    // (ADR-198). Only models the catalog knows are asked about. No answer means no decision: the
+    // start is refused with a 503 rather than guessed at (fail closed).
+    const refs = distinctModelRefs(roles);
+    const classes = await this.costClasses.forPlan(entitlements, refs);
+    if (
+      needsCostClasses(entitlements) &&
+      refs.some(({ provider, model }) => !classes.has(costClassKey(provider, model)))
+    ) {
+      throw new ServiceUnavailableException('Model prices are unavailable');
+    }
+    assertModelsOnPlan(entitlements, roles, classes);
   }
 
   /** The plan the account has fallen back to counts: an ended trial is the budget step's call. */

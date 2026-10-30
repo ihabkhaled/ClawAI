@@ -15,6 +15,8 @@ import {
   MIN_THREAD_SPEND_CAP_MICRO_USD,
 } from '../constants/generation-preflight.constants';
 import type { StartThreadGenerationDto } from '../dto/start-thread-generation.dto';
+import { costClassOf, NO_COST_CLASSES } from './model-cost-class.utility';
+import type { CostClassIndex } from '../types/model-cost-class.types';
 import type {
   ModelRef,
   PreflightRole,
@@ -128,6 +130,7 @@ export function assertModelsKnown(
 export function assertModelsOnPlan(
   entitlements: UserEntitlements,
   roles: readonly PreflightRole[],
+  costClasses: CostClassIndex = NO_COST_CLASSES,
 ): void {
   const denied = roles.find(
     (role) =>
@@ -136,6 +139,7 @@ export function assertModelsOnPlan(
         role.provider,
         role.model,
         role.isFallback ? ModelUsageType.FALLBACK : ModelUsageType.PRIMARY,
+        costClassOf(costClasses, role.provider, role.model),
       ),
   );
   if (!denied) return;

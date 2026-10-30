@@ -21,7 +21,11 @@ function setup() {
         { provider: 'GEMINI', model: 'flash', windowTokens: null, usageTier: 'LOW' },
       ]),
   };
-  const service = new RecommendedTeamService(adapter as never, catalog as never);
+  const service = new RecommendedTeamService(
+    adapter as never,
+    catalog as never,
+    { forPlan: vi.fn().mockResolvedValue(new Map()) } as never,
+  );
   return { service, adapter, catalog };
 }
 

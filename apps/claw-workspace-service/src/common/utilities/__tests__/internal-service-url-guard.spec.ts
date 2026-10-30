@@ -141,7 +141,10 @@ describe('internal service calls go through the outbound URL guard', () => {
       json: () => Promise.resolve({ models: [] }),
     });
 
-    await new ModelCatalogResolverManager(entitlementsStub as never).resolveDefaults();
+    await new ModelCatalogResolverManager(
+      entitlementsStub as never,
+      { resolve: vi.fn() } as never,
+    ).resolveDefaults();
 
     const installed = fetchMock.mock.calls.find(([target]) =>
       String(target).includes('/api/v1/internal/ollama/installed-models'),
@@ -172,7 +175,10 @@ describe('internal service calls go through the outbound URL guard', () => {
     vi.spyOn(Logger.prototype, 'debug').mockImplementation(capture);
     vi.spyOn(Logger.prototype, 'warn').mockImplementation(capture);
 
-    await new ModelCatalogResolverManager(entitlementsStub as never).resolveDefaults();
+    await new ModelCatalogResolverManager(
+      entitlementsStub as never,
+      { resolve: vi.fn() } as never,
+    ).resolveDefaults();
 
     const catalogCalls = fetchMock.mock.calls.filter(([target]) =>
       String(target).includes('/api/v1/internal/connectors/public-catalog'),
