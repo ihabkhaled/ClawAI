@@ -60,6 +60,10 @@ export enum BillingErrorCode {
   // The prompt alone costs more than the whole remaining balance, so no
   // shortening of the answer can make the request fit.
   PAYG_PROMPT_TOO_EXPENSIVE = 'PAYG_PROMPT_TOO_EXPENSIVE',
+  // The plan's per-call limit (ADR-197): this single request, even shortened, would cost
+  // more than the plan allows for one call, or the prompt is longer than the plan accepts.
+  // Its own code because the remedy is a shorter prompt or a cheaper model, never a top-up.
+  PLAN_CALL_LIMIT_EXCEEDED = 'PLAN_CALL_LIMIT_EXCEEDED',
   // The model has no published price. An unpriced model on a metered provider
   // is UNSAFE, not free — it is unbounded liability. Fails closed.
   PAYG_MODEL_UNPRICED = 'PAYG_MODEL_UNPRICED',

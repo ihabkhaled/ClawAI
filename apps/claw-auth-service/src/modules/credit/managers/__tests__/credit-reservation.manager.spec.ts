@@ -148,6 +148,7 @@ describe('CreditReservationManager', () => {
   let ledger: { findReservationAttribution: Mock; findFreeAllowanceCountsSlot: Mock };
   let billingModes: { resolve: Mock };
   let threadBudgets: { spendCeilingMicroUsd: Mock; settleForReservation: Mock };
+  let planLimits: { resolve: Mock };
   let manager: CreditReservationManager;
 
   const build = (): CreditReservationManager =>
@@ -165,6 +166,7 @@ describe('CreditReservationManager', () => {
       freeAllowance as unknown as CreditFreeAllowanceService,
       billingModes as unknown as CreditBillingModeService,
       threadBudgets as never,
+      planLimits as never,
     );
 
   beforeEach(() => {
@@ -227,6 +229,7 @@ describe('CreditReservationManager', () => {
       spendCeilingMicroUsd: vi.fn().mockResolvedValue(undefined),
       settleForReservation: vi.fn().mockResolvedValue(undefined),
     };
+    planLimits = { resolve: vi.fn().mockResolvedValue(null) };
     manager = build();
   });
 
@@ -288,6 +291,93 @@ describe('CreditReservationManager', () => {
         reason: 'NOT_PAYG',
         maxOutputTokens: DEFAULT_MAX_OUTPUT,
       });
+    });
+  });
+
+  // ADR-197: a request the platform pays for is held to the plan's per-call limits.
+  describe('plan per-call limits', () => {
+    const FREE_LIMITS = { maxInputTokens: 16_000, maxOutputTokens: 2_000, maxCostMicroUsd: 30_000 };
+
+    beforeEach(() => {
+      // PAYG off for OPENAI: the platform pays, so the call is unmetered.
+      policy['getPolicy'].mockResolvedValue({ OPENAI: false });
+      planLimits.resolve.mockResolvedValue(FREE_LIMITS);
+      manager = build();
+    });
+
+    it('clamps the output ceiling of a platform-paid call and stays unmetered', async () => {
+      const outcome = await manager.reserve(makeInput({ promptTokens: 500 }));
+      expect(outcome).toMatchObject({ metered: false, reason: 'NOT_PAYG' });
+      expect((outcome as { maxOutputTokens: number }).maxOutputTokens).toBeLessThanOrEqual(2_000);
+      expect(wallets['applyHold']).not.toHaveBeenCalled();
+    });
+
+    it('refuses a prompt longer than the plan accepts, with the plan-limit code and no figure', async () => {
+      const error = await manager
+        .reserve(makeInput({ promptTokens: 16_001 }))
+        .catch((e: unknown) => e);
+      expect(error).toMatchObject({ code: BillingErrorCode.PLAN_CALL_LIMIT_EXCEEDED });
+      const body = (error as { getResponse: () => { details: unknown } }).getResponse();
+      expect(body.details).toEqual({ availableMicroUsd: 0, requiredMicroUsd: null });
+    });
+
+    it('refuses when the prompt alone costs more than the per-call cap', async () => {
+      planLimits.resolve.mockResolvedValue({
+        ...FREE_LIMITS,
+        maxInputTokens: null,
+        maxCostMicroUsd: 1,
+      });
+      await expect(manager.reserve(makeInput({ promptTokens: 5_000 }))).rejects.toMatchObject({
+        code: BillingErrorCode.PLAN_CALL_LIMIT_EXCEEDED,
+      });
+    });
+
+    it('also limits a call while metering is switched off', async () => {
+      settings['isEnabled'].mockResolvedValue(false);
+      await expect(manager.reserve(makeInput({ promptTokens: 16_001 }))).rejects.toMatchObject({
+        code: BillingErrorCode.PLAN_CALL_LIMIT_EXCEEDED,
+      });
+    });
+
+    it('never limits an administrator', async () => {
+      users['findUserById'].mockResolvedValue({ id: 'admin-1', role: UserRole.ADMIN });
+      const outcome = await manager.reserve(makeInput({ promptTokens: 500_000 }));
+      expect(outcome).toMatchObject({
+        reason: 'ADMIN_BYPASS',
+        maxOutputTokens: DEFAULT_MAX_OUTPUT,
+      });
+      expect(planLimits.resolve).not.toHaveBeenCalled();
+    });
+
+    it('never limits a local provider, which costs nothing', async () => {
+      const outcome = await manager.reserve(
+        makeInput({ provider: 'OLLAMA', promptTokens: 500_000 }),
+      );
+      expect(outcome).toMatchObject({ reason: 'NOT_PAYG', maxOutputTokens: DEFAULT_MAX_OUTPUT });
+      expect(planLimits.resolve).not.toHaveBeenCalled();
+    });
+
+    it('changes nothing for a plan with no limits', async () => {
+      planLimits.resolve.mockResolvedValue({
+        maxInputTokens: null,
+        maxOutputTokens: null,
+        maxCostMicroUsd: null,
+      });
+      const outcome = await manager.reserve(makeInput({ promptTokens: 500_000 }));
+      expect(outcome).toMatchObject({ maxOutputTokens: DEFAULT_MAX_OUTPUT });
+    });
+
+    it('applies only the token limits to a model with no usable price', async () => {
+      rates['findRate'].mockResolvedValue(null);
+      const outcome = await manager.reserve(makeInput({ promptTokens: 500 }));
+      expect((outcome as { maxOutputTokens: number }).maxOutputTokens).toBe(2_000);
+    });
+
+    it('does not apply to a call paid from the credit wallet', async () => {
+      policy['getPolicy'].mockResolvedValue({ OPENAI: true });
+      manager = build();
+      await manager.reserve(makeInput({ promptTokens: 16_001 }));
+      expect(planLimits.resolve).not.toHaveBeenCalled();
     });
   });
 

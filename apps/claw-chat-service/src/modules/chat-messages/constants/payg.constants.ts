@@ -63,6 +63,8 @@ export const PAYG_CREDIT_ERROR_MESSAGES: Readonly<Record<string, string>> = Obje
     'This prompt costs more than the credit you have left. Add credit, shorten the prompt, or switch to a local model.',
   [BillingErrorCode.PAYG_CAP_TOO_LOW]:
     'The spend cap for this job is lower than this step costs. Raise the cap and try again.',
+  [BillingErrorCode.PLAN_CALL_LIMIT_EXCEEDED]:
+    'This request is larger than your plan allows for a single message. Shorten it or choose a cheaper model.',
   [BillingErrorCode.PAYG_MODEL_UNPRICED]:
     'This model has no published price yet, so it cannot be billed. Pick another model.',
   [BillingErrorCode.PAYG_FREE_ALLOWANCE_EXHAUSTED]:

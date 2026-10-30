@@ -173,6 +173,7 @@ describe('PAYG credit: prompt-cache writes (F093)', () => {
         spendCeilingMicroUsd: vi.fn().mockResolvedValue(undefined),
         settleForReservation: vi.fn().mockResolvedValue(undefined),
       } as never,
+      { resolve: vi.fn().mockResolvedValue(null) } as never,
     );
   }
 

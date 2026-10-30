@@ -706,3 +706,12 @@ Routes (service token, `/api/v1/internal/threads/budgets`): `reserve`, `calls/re
 | A platform-failed Free Thread (no draft) used up the meter and the one lifetime Thread           | `close` accepts `PLATFORM_FAILED`: the lifetime plan hold is released and `ThreadJobBudgetFreeMeterRepository.refundFinishedCalls` returns the finished free calls' cost to the month meter exactly once (marker `free_refunded_at`, same transaction). `summary` adds `freeAllowanceMicroUsd`. Migrations `20261014090000`, `20261014090100`. |
 
 Free plan: `THREADS` is allowance-eligible; its calls ride the monthly money meter and price limit (when the plan has them) but never the monthly request count, under every plan shape (ADR-162 addendum, D-P5-01). A refused plan feature answers 403 `THREAD_ALLOWANCE_UNAVAILABLE` with `feature`, `used`, `limit`, `window`. No new environment variable, table or migration.
+
+## Per-plan call limits (ADR-197, 2026-10-30)
+
+`plans.max_input_tokens_per_call`, `max_output_tokens_per_call` and `max_cost_per_call_micro_usd` bound ONE call the
+platform pays for. NULL means no cap and 0 means refuse. `CreditReservationManager.reserve` applies them in its
+unmetered branches (`NOT_PAYG`, `METERING_DISABLED`) through `applyPlanCallLimits`: the output ceiling is clamped, and a
+prompt that is too long, or that alone costs more than the cap, is refused with `PLAN_CALL_LIMIT_EXCEEDED` (HTTP 402,
+no figure). A credit-wallet call, an administrator and a local provider are not limited. The `plan-call-limits` seeder
+fills NULLs only, from the table in `docs/03-architecture/model-price-ledger-2026-10-30.md`.

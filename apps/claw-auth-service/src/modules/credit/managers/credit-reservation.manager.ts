@@ -43,6 +43,8 @@ import { CreditEventService } from '../services/credit-event.service';
 import { CreditFreeAllowanceService } from '../services/credit-free-allowance.service';
 import { CreditGrantService } from '../services/credit-grant.service';
 import { ThreadJobBudgetCreditLinkService } from '../services/thread-job-budget-credit-link.service';
+import { PlanCallLimitService } from '../services/plan-call-limit.service';
+import { applyPlanCallLimits } from '../utilities/plan-call-limits.utility';
 import { CreditWalletService } from '../services/credit-wallet.service';
 import {
   FREE_ALLOWANCE_LEDGER_REASON_RETURNED,
@@ -122,6 +124,7 @@ export class CreditReservationManager {
     private readonly freeAllowance: CreditFreeAllowanceService,
     private readonly billingModes: CreditBillingModeService,
     private readonly threadBudgets: ThreadJobBudgetCreditLinkService,
+    private readonly planLimits: PlanCallLimitService,
   ) {}
 
   async reserve(input: CreditReserveInput): Promise<PaygReservationOutcome> {
@@ -130,7 +133,7 @@ export class CreditReservationManager {
     );
     const classification = await this.classify(input.userId, input.provider, input.model);
     if (!classification.isPayg && classification.reason === 'METERING_DISABLED') {
-      return this.enforceCapWhileUnmetered(input);
+      return this.enforceCapWhileUnmetered(await this.withPlanCallLimits(input));
     }
     if (!classification.isPayg) {
       // Echo the ceiling the caller asked for. An unmetered request has no
@@ -140,10 +143,12 @@ export class CreditReservationManager {
       // whether it was metered. Omitting it here made every unmetered reply
       // look malformed to PaygMeter, which then failed closed and blocked every
       // paid model on any install with the kill switch off.
+      const limited =
+        classification.reason === 'ADMIN_BYPASS' ? input : await this.withPlanCallLimits(input);
       return {
         metered: false,
         reason: classification.reason,
-        maxOutputTokens: input.requestedMaxOutputTokens,
+        maxOutputTokens: limited.requestedMaxOutputTokens,
       };
     }
     const existing = await this.usage.findOpenPaygReservation(input.userId, input.requestId);
@@ -548,6 +553,46 @@ export class CreditReservationManager {
    * connector, a non-administrator and an eligible surface are counted;
    * everything else stays exactly as unmetered as before.
    */
+  /**
+   * Applies the plan's per-call limits to a request the platform pays for (ADR-197).
+   *
+   * Returns the request with its output ceiling clamped, or refuses it with
+   * `PLAN_CALL_LIMIT_EXCEEDED` when no answer can fit. A local or exempt provider costs
+   * nothing, so it is left alone. The refusal carries no figure: the plan's dollar cap is an
+   * internal control and is never shown to a user.
+   */
+  private async withPlanCallLimits(input: CreditReserveInput): Promise<CreditReserveInput> {
+    if (isExemptProvider(input.provider)) {
+      return input;
+    }
+    const limits = await this.planLimits.resolve(input.userId);
+    if (limits === null) {
+      return input;
+    }
+    const rate = await this.rates.findRate(input.provider, input.model);
+    const outcome = applyPlanCallLimits(
+      limits,
+      {
+        promptTokens: input.promptTokens,
+        cachedPromptTokens: input.cachedPromptTokens,
+        cacheWritePromptTokens: input.cacheWritePromptTokens,
+        requestedMaxOutputTokens: input.requestedMaxOutputTokens,
+        imageUnits: input.imageUnits,
+        audioSeconds: input.audioSeconds,
+        ttsCharacters: input.ttsCharacters,
+        videoSeconds: input.videoSeconds,
+      },
+      rate !== null && isUsablePaygRate(rate) ? rate.rates : null,
+    );
+    if (outcome.status === 'REFUSED') {
+      this.logger.warn(
+        `withPlanCallLimits: ${outcome.reason} user=${input.userId} ${input.provider}/${input.model} promptTokens=${String(input.promptTokens)}`,
+      );
+      throw new PaygRejectionException(BillingErrorCode.PLAN_CALL_LIMIT_EXCEEDED, 0, null);
+    }
+    return { ...input, requestedMaxOutputTokens: outcome.maxOutputTokens };
+  }
+
   private async enforceCapWhileUnmetered(
     input: CreditReserveInput,
   ): Promise<PaygReservationOutcome> {

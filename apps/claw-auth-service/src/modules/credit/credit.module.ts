@@ -23,6 +23,7 @@ import { CreditBillingModeService } from './services/credit-billing-mode.service
 import { CreditAccountService } from './services/credit-account.service';
 import { CreditEventService } from './services/credit-event.service';
 import { CreditFreeAllowanceService } from './services/credit-free-allowance.service';
+import { PlanCallLimitService } from './services/plan-call-limit.service';
 import { CreditGrantService } from './services/credit-grant.service';
 import { CreditPackageService } from './services/credit-package.service';
 import { CreditSweeperService } from './services/credit-sweeper.service';
@@ -60,6 +61,7 @@ import { ThreadJobBudgetCreditLinkService } from './services/thread-job-budget-c
     CreditPackageRepository,
     CreditWalletService,
     CreditFreeAllowanceService,
+    PlanCallLimitService,
     CreditGrantService,
     CreditBillingModeService,
     CreditAccountService,

@@ -96,3 +96,5 @@ sees the edge. See [stack-and-toolchain.md](stack-and-toolchain.md#ci).
 `@claw/shared-entitlements` also owns the PAYG meter's Threads budget-call verdict (`payg-thread-call-verdict.ts`): a reserve returns one of RESERVED, ALREADY_RESERVED, ALREADY_FINALIZED, ALREADY_RELEASED, CAP_EXCEEDED, BUDGET_CLOSED or BUDGET_NOT_FOUND, so a retried request id is idempotent and an exhausted cap is told apart from a transient failure (ADR-159 addendum).
 
 The PAYG error code set in `@claw/shared-types` (`billing-error-code.enum.ts`, `payg-credit.type.ts`) now also carries `PAYG_CAP_TOO_LOW` (a Threads spend cap smaller than a call's hold) and `PAYG_MODEL_UNPRICED` (a model with no price row): `@claw/shared-entitlements` returns them from the budget-call verdict so a caller can tell them from `PAYG_CREDIT_EXHAUSTED` (an empty wallet).
+
+The same set also carries `PLAN_CALL_LIMIT_EXCEEDED` (ADR-197): one platform-paid request is larger than the plan allows for a single call. It is a 402 with no figure, and the remedy is a shorter prompt or a cheaper model, never a top-up.

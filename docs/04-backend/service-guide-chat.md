@@ -201,6 +201,8 @@ with the frontend, not a translation key.** Use the enum
 (`BillingErrorCode`, `Permission`, and the module's own `*-error-code.enum.ts`),
 never a dotted message path.
 
+`PLAN_CALL_LIMIT_EXCEEDED` (ADR-197) is a 402 from the credit reserve: one platform-paid request is larger than the plan allows for a single call. `PAYG_CREDIT_ERROR_MESSAGES` carries its sentence and the frontend maps the code in 13 locales; a refusal ends the candidate chain like any other 402.
+
 Limit refusals are also not toasts any more. The frontend renders them as a line
 in the transcript, because a toast that fades leaves a composer that appears to
 have silently done nothing. The codes it recognises are the six quota/plan codes
