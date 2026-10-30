@@ -1,6 +1,7 @@
 import { ModelCostClass } from '@claw/shared-types';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { costClassKey } from '../../utilities/model-cost-class-key.utility';
 import { ModelExposureClient } from '../model-exposure.client';
 
 const { appConfigGet, httpRequest } = vi.hoisted(() => ({
@@ -43,21 +44,66 @@ describe('ModelExposureClient.getCostClasses', () => {
     const result = await client.getCostClasses([pair('a'), pair('b')]);
 
     expect(httpRequest).toHaveBeenCalledTimes(1);
-    expect(result.get('OPENAI/a')).toBe(ModelCostClass.FREE);
-    expect(result.get('OPENAI/b')).toBeNull();
+    expect(result.get(costClassKey('OPENAI', 'a'))).toBe(ModelCostClass.FREE);
+    expect(result.get(costClassKey('OPENAI', 'b'))).toBeNull();
   });
 
-  it('serves a repeat from the cache without calling routing again', async () => {
+  it('does not write what a caller asked about into the send gate cache', async () => {
     httpRequest.mockResolvedValue({
       ok: true,
       data: [{ provider: 'OPENAI', model: 'a', costClass: 'CHEAP' }],
     });
 
     await client.getCostClasses([pair('a')]);
-    const second = await client.getCostClasses([pair('a')]);
+    httpRequest.mockClear();
+    httpRequest.mockResolvedValue({ ok: true, data: { costClass: 'PREMIUM', isPriced: true } });
+    const gate = await client.getCostClass('OPENAI', 'a');
 
+    // The gate asked routing itself; it did not inherit the picker's answer.
     expect(httpRequest).toHaveBeenCalledTimes(1);
-    expect(second.get('OPENAI/a')).toBe(ModelCostClass.CHEAP);
+    expect(gate).toBe(ModelCostClass.PREMIUM);
+  });
+
+  it('reads what the gate already cached, without calling routing for it', async () => {
+    httpRequest.mockResolvedValue({ ok: true, data: { costClass: 'STANDARD', isPriced: true } });
+    await client.getCostClass('OPENAI', 'a');
+    httpRequest.mockClear();
+
+    const result = await client.getCostClasses([pair('a')]);
+
+    expect(httpRequest).not.toHaveBeenCalled();
+    expect(result.get(costClassKey('OPENAI', 'a'))).toBe(ModelCostClass.STANDARD);
+  });
+
+  it('cannot be made to answer for a different model by a crafted provider name', async () => {
+    // Provider `OPENROUTER/vendor` + model `x` must not look like provider `OPENROUTER` + model `vendor/x`.
+    httpRequest.mockResolvedValue({
+      ok: true,
+      data: [{ provider: 'OPENROUTER/vendor', model: 'x', costClass: null }],
+    });
+
+    const crafted = await client.getCostClasses([{ provider: 'OPENROUTER/vendor', model: 'x' }]);
+    expect(crafted.get(costClassKey('OPENROUTER/vendor', 'x'))).toBeNull();
+    expect(crafted.has(costClassKey('OPENROUTER', 'vendor/x'))).toBe(false);
+
+    httpRequest.mockClear();
+    httpRequest.mockResolvedValue({ ok: true, data: { costClass: 'CHEAP', isPriced: true } });
+    expect(await client.getCostClass('OPENROUTER', 'vendor/x')).toBe(ModelCostClass.CHEAP);
+    expect(httpRequest).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores a row in the answer that was not asked for', async () => {
+    httpRequest.mockResolvedValue({
+      ok: true,
+      data: [
+        { provider: 'OPENAI', model: 'a', costClass: 'FREE' },
+        { provider: 'OPENAI', model: 'planted', costClass: 'FREE' },
+      ],
+    });
+
+    const result = await client.getCostClasses([pair('a')]);
+
+    expect(result.has(costClassKey('OPENAI', 'planted'))).toBe(false);
   });
 
   it('splits a long list into requests of at most 300 models', async () => {
@@ -84,7 +130,7 @@ describe('ModelExposureClient.getCostClasses', () => {
 
     const result = await client.getCostClasses([pair('a')]);
 
-    expect(result.has('OPENAI/a')).toBe(false);
+    expect(result.has(costClassKey('OPENAI', 'a'))).toBe(false);
   });
 
   it('leaves a model out when routing answers with something unexpected', async () => {
@@ -92,6 +138,6 @@ describe('ModelExposureClient.getCostClasses', () => {
 
     const result = await client.getCostClasses([pair('a')]);
 
-    expect(result.has('OPENAI/a')).toBe(false);
+    expect(result.has(costClassKey('OPENAI', 'a'))).toBe(false);
   });
 });

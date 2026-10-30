@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { buildInterServiceAuthHeader } from '../../../common/utilities';
+import { costClassKey } from '../utilities/model-cost-class-key.utility';
 import {
   MODEL_COST_CLASSES_BATCH_SIZE,
   MODEL_COST_CLASSES_PATH,
@@ -42,7 +43,7 @@ export class ModelExposureClient {
   >();
 
   async getCostClass(provider: string, model: string): Promise<ModelCostClass | null> {
-    const key = `${provider}/${model}`;
+    const key = costClassKey(provider, model);
     const now = Date.now();
     const hit = ModelExposureClient.costClassCache.get(key);
     if (hit && hit.expiresAt > now) return hit.costClass;
@@ -66,8 +67,11 @@ export class ModelExposureClient {
   }
 
   // Many classes in one round trip, for the model picker. Answers the same question as
-  // getCostClass (null = no price, so no class plan allows it) and fills the same cache.
-  // A routing outage leaves the model out of the result rather than guessing a class.
+  // getCostClass (null = no price, so no class plan allows it) and READS the gate's cache.
+  //
+  // It never writes to it. The pairs come from the caller, so letting this fill the gate's cache
+  // would let any user plant entries, and grow it without bound with made-up names. A routing
+  // outage leaves the model out of the result rather than guessing a class.
   async getCostClasses(
     pairs: ReadonlyArray<{ provider: string; model: string }>,
   ): Promise<Map<string, ModelCostClass | null>> {
@@ -75,14 +79,14 @@ export class ModelExposureClient {
     const known = new Map<string, ModelCostClass | null>();
     const missing: Array<{ provider: string; model: string }> = [];
     for (const pair of pairs) {
-      const key = `${pair.provider}/${pair.model}`;
-      const hit = ModelExposureClient.costClassCache.get(key);
+      const hit = ModelExposureClient.costClassCache.get(costClassKey(pair.provider, pair.model));
       if (hit && hit.expiresAt > now) {
-        known.set(key, hit.costClass);
+        known.set(costClassKey(pair.provider, pair.model), hit.costClass);
       } else {
         missing.push(pair);
       }
     }
+    const wanted = new Set(missing.map((pair) => costClassKey(pair.provider, pair.model)));
     for (let start = 0; start < missing.length; start += MODEL_COST_CLASSES_BATCH_SIZE) {
       const batch = missing.slice(start, start + MODEL_COST_CLASSES_BATCH_SIZE);
       try {
@@ -101,12 +105,11 @@ export class ModelExposureClient {
           continue;
         }
         for (const entry of parsed.data) {
-          const key = `${entry.provider}/${entry.model}`;
-          ModelExposureClient.costClassCache.set(key, {
-            costClass: entry.costClass,
-            expiresAt: now + MODEL_EXPOSURE_CACHE_TTL_MS,
-          });
-          known.set(key, entry.costClass);
+          const key = costClassKey(entry.provider, entry.model);
+          // Only what was asked for: an extra row in the answer is ignored.
+          if (wanted.has(key)) {
+            known.set(key, entry.costClass);
+          }
         }
       } catch {
         this.logger.warn(`getCostClasses: routing unreachable for ${String(batch.length)} models`);

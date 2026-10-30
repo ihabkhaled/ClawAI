@@ -39,6 +39,10 @@ judge and critic lists, recovery suggestions). Request: in every model dropdown,
 - Threads and Workspace still call `isModelAllowedForUsage` with no cost class, so their own model lists treat every model
   as needing a plan on a cost-class plan. They are not covered by this change.
 - The judge and critic lists dim by the primary decision; a per-model "allow as judge" switch can still refuse on send.
+- Automated security review found the cost-class cache key ambiguous (`provider/model`, and model ids contain `/`) and the
+  picker's bulk lookup writing caller-supplied pairs into the send gate's cache. A crafted provider could have cached "no
+  class" for a real model for a minute, for everyone. Fixed: the key is a JSON pair, the bulk lookup only reads the gate's
+  cache, and rows not asked for are ignored; four regression tests. The live Free list is unchanged (259 ms cold).
 - The first request after routing-service restarts fails closed (all locked) until the next refresh; the one-minute cache
   keeps that from sticking.
 

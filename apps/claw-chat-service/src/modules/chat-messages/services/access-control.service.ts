@@ -37,6 +37,7 @@ import {
 } from '@claw/shared-types';
 import { estimateTextTokens } from '@claw/shared-utilities';
 import { ModelExposureClient } from '../clients/model-exposure.client';
+import { costClassKey } from '../utilities/model-cost-class-key.utility';
 import { ModelAuthorizationDenialReason } from '../enums/model-authorization-denial-reason.enum';
 import { ModelAuthorizationMetricsService } from './model-authorization-metrics.service';
 import { AppConfig } from '../../../app/config/app.config';
@@ -507,7 +508,7 @@ export class AccessControlService {
         ent,
         provider,
         model,
-        classes.get(`${provider}/${model}`),
+        classes.get(costClassKey(provider, model)),
       ),
     }));
   }

@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import { costClassKey } from '../../utilities/model-cost-class-key.utility';
 import type { PaygMeter } from '@claw/shared-entitlements';
 import { AccessControlService } from '../access-control.service';
 import { BillingErrorCode, ModelCostClass, PlanModelAccessMode } from '@claw/shared-types';
@@ -185,10 +186,10 @@ describe('AccessControlService', () => {
       { provider: 'GROK', model: 'unpriced' },
     ];
     const classes = new Map<string, ModelCostClass | null>([
-      ['OLLAMA/kimi-k3', ModelCostClass.FREE],
-      ['OPENAI/gpt-5.4-mini', ModelCostClass.STANDARD],
-      ['GROK/grok-4.7', ModelCostClass.PREMIUM],
-      ['GROK/unpriced', null],
+      [costClassKey('OLLAMA', 'kimi-k3'), ModelCostClass.FREE],
+      [costClassKey('OPENAI', 'gpt-5.4-mini'), ModelCostClass.STANDARD],
+      [costClassKey('GROK', 'grok-4.7'), ModelCostClass.PREMIUM],
+      [costClassKey('GROK', 'unpriced'), null],
     ]);
 
     it('a Free plan allows its classes and refuses the dearer and the unpriced', async () => {
@@ -229,7 +230,7 @@ describe('AccessControlService', () => {
       getCostClasses.mockResolvedValue(classes);
       isExposed.mockResolvedValue(true);
       getCostClass.mockImplementation((provider: string, model: string) =>
-        Promise.resolve(classes.get(`${provider}/${model}`) ?? null),
+        Promise.resolve(classes.get(costClassKey(provider, model)) ?? null),
       );
 
       const listed = await service.listModelAccess('u1', models);
