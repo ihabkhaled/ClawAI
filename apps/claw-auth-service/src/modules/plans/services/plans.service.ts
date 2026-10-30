@@ -626,6 +626,9 @@ export class PlansService {
       creditConnectorFreeMaxModelOutputMicroUsd: toNumberOrNull(
         plan.creditConnectorFreeMaxModelOutputMicroUsd,
       ),
+      maxInputTokensPerCall: plan.maxInputTokensPerCall,
+      maxOutputTokensPerCall: plan.maxOutputTokensPerCall,
+      maxCostPerCallMicroUsd: toNumberOrNull(plan.maxCostPerCallMicroUsd),
       // Both of these are ADMIN-form fields. Omitting them from the view meant
       // the edit form loaded `undefined`, rendered blank in a number input, and
       // then failed to save with "expected number, received NaN" — so an
@@ -634,10 +637,7 @@ export class PlansService {
       // BIGINT in Postgres, so Prisma hands back a bigint. It crosses JSON as a
       // number because the ceiling is micro-USD and stays far inside the safe
       // integer range; serialising a bigint would throw at the controller.
-      monthlyProviderCostCeilingMicroUsd:
-        plan.monthlyProviderCostCeilingMicroUsd === null
-          ? null
-          : Number(plan.monthlyProviderCostCeilingMicroUsd),
+      monthlyProviderCostCeilingMicroUsd: toNumberOrNull(plan.monthlyProviderCostCeilingMicroUsd),
       paygCreditPercentBps: plan.paygCreditPercentBps,
       ...this.toFeatureGates(plan),
       modelAccessMode: plan.modelAccessMode,

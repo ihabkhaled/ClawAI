@@ -68,6 +68,10 @@ export const updatePlanSchema = z
       .max(1_000_000_000)
       .nullable()
       .optional(),
+    // Per-call limits on a platform-paid call (ADR-197). null = no cap, 0 = refuse every call.
+    maxInputTokensPerCall: z.number().int().min(0).max(10_000_000).nullable().optional(),
+    maxOutputTokensPerCall: z.number().int().min(0).max(10_000_000).nullable().optional(),
+    maxCostPerCallMicroUsd: z.number().int().min(0).max(1_000_000_000).nullable().optional(),
   })
   .refine(
     (value) => {

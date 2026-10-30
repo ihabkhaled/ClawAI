@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import {
   PAYG_CREDIT_PERCENT_BPS_MAX,
+  PLAN_CALL_TOKEN_LIMIT,
   PLAN_CREDIT_FREE_REQUESTS_LIMIT,
   PLAN_MAX_INSTALLED_PLUGINS_LIMIT,
   PLAN_MAX_PLUGIN_CALLS_PER_DAY_LIMIT,
@@ -33,6 +34,25 @@ const optionalNonNegativeInt = z.preprocess(
 
 const CREDIT_FREE_REQUESTS_INVALID_KEY = 'adminPlans.form.creditConnectorFreeRequestsInvalid';
 const CREDIT_FREE_USD_INVALID_KEY = 'adminPlans.form.creditConnectorFreeUsdInvalid';
+const CALL_TOKENS_INVALID_KEY = 'adminPlans.form.callLimitTokensInvalid';
+const WHOLE_NUMBER_PATTERN = /^\d{1,8}$/;
+
+/** Typed tokens -> whole number; blank/null = no cap (null); anything else invalid (undefined). */
+const parseCallTokenCap = (value: unknown): number | null | undefined => {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  const text = typeof value === 'number' ? String(value) : value;
+  if (typeof text !== 'string') {
+    return undefined;
+  }
+  const trimmed = text.trim();
+  if (trimmed === '') {
+    return null;
+  }
+  const parsed = WHOLE_NUMBER_PATTERN.test(trimmed) ? Number(trimmed) : Number.NaN;
+  return parsed <= PLAN_CALL_TOKEN_LIMIT ? parsed : undefined;
+};
 
 // Blank / null is unlimited (null); otherwise a whole number 0..100000.
 function parseCreditFreeRequests(value: unknown): number | null | undefined {
@@ -153,6 +173,23 @@ export const createPlanSchema = z.object({
     })
     .transform((value): number | null => usdInputToMicroUsd(value) ?? null),
   creditConnectorFreeMaxModelOutputMicroUsd: z
+    .custom<unknown>((value) => usdInputToMicroUsd(value) !== undefined, {
+      message: CREDIT_FREE_USD_INVALID_KEY,
+    })
+    .transform((value): number | null => usdInputToMicroUsd(value) ?? null),
+  // Per-call limits on a platform-paid call (ADR-197). Blank is an explicit null (no cap) so an
+  // operator can lift a cap; 0 refuses every call.
+  maxInputTokensPerCall: z
+    .custom<unknown>((value) => parseCallTokenCap(value) !== undefined, {
+      message: CALL_TOKENS_INVALID_KEY,
+    })
+    .transform((value): number | null => parseCallTokenCap(value) ?? null),
+  maxOutputTokensPerCall: z
+    .custom<unknown>((value) => parseCallTokenCap(value) !== undefined, {
+      message: CALL_TOKENS_INVALID_KEY,
+    })
+    .transform((value): number | null => parseCallTokenCap(value) ?? null),
+  maxCostPerCallMicroUsd: z
     .custom<unknown>((value) => usdInputToMicroUsd(value) !== undefined, {
       message: CREDIT_FREE_USD_INVALID_KEY,
     })

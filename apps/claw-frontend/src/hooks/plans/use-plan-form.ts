@@ -45,6 +45,9 @@ const fromPlan = (plan: PlanView): PlanFormState => ({
   creditConnectorFreeMaxModelOutputUsd: microUsdToUsdInput(
     plan.creditConnectorFreeMaxModelOutputMicroUsd,
   ),
+  maxInputTokensPerCall: numToStr(plan.maxInputTokensPerCall ?? null),
+  maxOutputTokensPerCall: numToStr(plan.maxOutputTokensPerCall ?? null),
+  maxCostPerCallUsd: microUsdToUsdInput(plan.maxCostPerCallMicroUsd),
   allowCompareMode: plan.allowCompareMode,
   allowJudgeMode: plan.allowJudgeMode,
   allowResearchMode: plan.allowResearchMode,
@@ -93,6 +96,9 @@ const buildPayload = (state: PlanFormState): Record<string, unknown> => ({
   // Typed in dollars; the schema turns them into integer micro-USD under the API's own names.
   creditConnectorFreeBudgetMicroUsd: state.creditConnectorFreeBudgetUsd,
   creditConnectorFreeMaxModelOutputMicroUsd: state.creditConnectorFreeMaxModelOutputUsd,
+  maxInputTokensPerCall: state.maxInputTokensPerCall,
+  maxOutputTokensPerCall: state.maxOutputTokensPerCall,
+  maxCostPerCallMicroUsd: state.maxCostPerCallUsd,
   allowCompareMode: state.allowCompareMode,
   allowJudgeMode: state.allowJudgeMode,
   allowResearchMode: state.allowResearchMode,

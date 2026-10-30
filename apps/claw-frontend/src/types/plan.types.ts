@@ -86,6 +86,11 @@ export type PlanView = {
   creditConnectorFreeBudgetMicroUsd?: number | null;
   /** The dearest model the free allowance covers: output price, micro-USD per million tokens. null = no limit. */
   creditConnectorFreeMaxModelOutputMicroUsd?: number | null;
+  /** Most prompt tokens one platform-paid call may carry. null = no cap, 0 = refuse. Absent from an older auth-service. */
+  maxInputTokensPerCall?: number | null;
+  maxOutputTokensPerCall?: number | null;
+  /** Most one platform-paid call may cost, micro-USD. null = no cap, 0 = refuse. */
+  maxCostPerCallMicroUsd?: number | null;
   allowCompareMode: boolean;
   allowJudgeMode: boolean;
   allowResearchMode: boolean;
@@ -169,6 +174,10 @@ export type CreatePlanRequest = {
   creditConnectorFreeBudgetMicroUsd?: number | null;
   /** null clears the price limit; omitted leaves it untouched. */
   creditConnectorFreeMaxModelOutputMicroUsd?: number | null;
+  /** null clears the cap; omitted leaves it untouched. */
+  maxInputTokensPerCall?: number | null;
+  maxOutputTokensPerCall?: number | null;
+  maxCostPerCallMicroUsd?: number | null;
   allowCompareMode?: boolean;
   allowJudgeMode?: boolean;
   allowResearchMode?: boolean;
@@ -322,6 +331,11 @@ export type PlanFormState = {
   creditConnectorFreeBudgetUsd: string;
   /** Dollars per million output tokens, as typed. Blank = no limit. */
   creditConnectorFreeMaxModelOutputUsd: string;
+  /** Tokens, as typed. Blank = no cap, 0 = refuse every platform-paid call. */
+  maxInputTokensPerCall: string;
+  maxOutputTokensPerCall: string;
+  /** Dollars, as typed. Blank = no cap. */
+  maxCostPerCallUsd: string;
   allowCompareMode: boolean;
   allowJudgeMode: boolean;
   allowResearchMode: boolean;
@@ -351,6 +365,7 @@ export type PlanFormState = {
 export type PlanFormAliasFields = {
   creditConnectorFreeBudgetMicroUsd: string;
   creditConnectorFreeMaxModelOutputMicroUsd: string;
+  maxCostPerCallMicroUsd: string;
 };
 
 export type PlanFormFieldErrors = Partial<

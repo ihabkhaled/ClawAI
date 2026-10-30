@@ -5015,6 +5015,17 @@ export const en: TranslationDictionary = {
         'Models whose output price is above this are not covered by the free requests, and AUTO routing avoids them. Leave empty for no limit.',
       creditConnectorFreeUsdInvalid:
         'Enter an amount in USD with up to 6 decimals, or leave empty.',
+      callLimitInputTokens: 'Max input tokens per call',
+      callLimitInputTokensHelp:
+        'The most prompt tokens one platform-paid call may carry. Leave empty for no limit; 0 refuses every call.',
+      callLimitOutputTokens: 'Max output tokens per call',
+      callLimitOutputTokensHelp:
+        'The most tokens the model may write in one platform-paid call. Leave empty for no limit; 0 refuses every call.',
+      callLimitCost: 'Max cost per call (USD)',
+      callLimitCostHelp:
+        'The most one platform-paid call may cost, in USD with up to 6 decimals. Leave empty for no limit.',
+      callLimitTokensInvalid:
+        'Enter a whole number from 0 to 10000000, or leave empty for no limit.',
       isPublic: 'Publicly listed',
       isTrial: 'Free trial plan',
       trialHelp: 'Trial access can be used once per account. Set how long it lasts below.',

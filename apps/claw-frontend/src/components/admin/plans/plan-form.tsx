@@ -383,6 +383,75 @@ export function PlanForm({
           ) : null}
         </div>
         <div className="grid grid-cols-1 gap-2">
+          <label htmlFor="plan-call-limit-input" className="text-sm font-medium">
+            {t('adminPlans.form.callLimitInputTokens')}
+          </label>
+          <Input
+            id="plan-call-limit-input"
+            type="text"
+            inputMode="numeric"
+            value={state.maxInputTokensPerCall}
+            onChange={(e) => setField('maxInputTokensPerCall', e.target.value)}
+            placeholder={t('adminPlans.form.unlimitedPlaceholder')}
+            aria-invalid={fieldErrors.maxInputTokensPerCall !== undefined}
+            aria-describedby="plan-call-limit-input-help"
+          />
+          <p id="plan-call-limit-input-help" className="text-muted-foreground text-xs">
+            {t('adminPlans.form.callLimitInputTokensHelp')}
+          </p>
+          {fieldErrors.maxInputTokensPerCall !== undefined ? (
+            <p className="text-destructive text-xs" role="alert">
+              {t(fieldErrors.maxInputTokensPerCall)}
+            </p>
+          ) : null}
+        </div>
+        <div className="grid grid-cols-1 gap-2">
+          <label htmlFor="plan-call-limit-output" className="text-sm font-medium">
+            {t('adminPlans.form.callLimitOutputTokens')}
+          </label>
+          <Input
+            id="plan-call-limit-output"
+            type="text"
+            inputMode="numeric"
+            value={state.maxOutputTokensPerCall}
+            onChange={(e) => setField('maxOutputTokensPerCall', e.target.value)}
+            placeholder={t('adminPlans.form.unlimitedPlaceholder')}
+            aria-invalid={fieldErrors.maxOutputTokensPerCall !== undefined}
+            aria-describedby="plan-call-limit-output-help"
+          />
+          <p id="plan-call-limit-output-help" className="text-muted-foreground text-xs">
+            {t('adminPlans.form.callLimitOutputTokensHelp')}
+          </p>
+          {fieldErrors.maxOutputTokensPerCall !== undefined ? (
+            <p className="text-destructive text-xs" role="alert">
+              {t(fieldErrors.maxOutputTokensPerCall)}
+            </p>
+          ) : null}
+        </div>
+        <div className="grid grid-cols-1 gap-2">
+          <label htmlFor="plan-call-limit-cost" className="text-sm font-medium">
+            {t('adminPlans.form.callLimitCost')}
+          </label>
+          <Input
+            id="plan-call-limit-cost"
+            type="text"
+            inputMode="decimal"
+            value={state.maxCostPerCallUsd}
+            onChange={(e) => setField('maxCostPerCallUsd', e.target.value)}
+            placeholder={t('adminPlans.form.unlimitedPlaceholder')}
+            aria-invalid={fieldErrors.maxCostPerCallMicroUsd !== undefined}
+            aria-describedby="plan-call-limit-cost-help"
+          />
+          <p id="plan-call-limit-cost-help" className="text-muted-foreground text-xs">
+            {t('adminPlans.form.callLimitCostHelp')}
+          </p>
+          {fieldErrors.maxCostPerCallMicroUsd !== undefined ? (
+            <p className="text-destructive text-xs" role="alert">
+              {t(fieldErrors.maxCostPerCallMicroUsd)}
+            </p>
+          ) : null}
+        </div>
+        <div className="grid grid-cols-1 gap-2">
           <label htmlFor="plan-display-order" className="text-sm font-medium">
             {t('adminPlans.form.displayOrder')}
           </label>

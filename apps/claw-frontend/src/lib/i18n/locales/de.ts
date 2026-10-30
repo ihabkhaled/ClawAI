@@ -5156,6 +5156,17 @@ export const de: TranslationDictionary = {
         'Modelle, deren Ausgabepreis darüber liegt, werden von den kostenlosen Anfragen nicht abgedeckt, und AUTO-Routing meidet sie. Leer lassen für keine Grenze.',
       creditConnectorFreeUsdInvalid:
         'Gib einen USD-Betrag mit bis zu 6 Nachkommastellen ein oder lass das Feld leer.',
+      callLimitInputTokens: 'Max. Eingabe-Tokens pro Aufruf',
+      callLimitInputTokensHelp:
+        'Die meisten Prompt-Tokens, die ein von der Plattform bezahlter Aufruf enthalten darf. Leer lassen für kein Limit; 0 lehnt jeden Aufruf ab.',
+      callLimitOutputTokens: 'Max. Ausgabe-Tokens pro Aufruf',
+      callLimitOutputTokensHelp:
+        'Die meisten Tokens, die das Modell in einem von der Plattform bezahlten Aufruf schreiben darf. Leer lassen für kein Limit; 0 lehnt jeden Aufruf ab.',
+      callLimitCost: 'Max. Kosten pro Aufruf (USD)',
+      callLimitCostHelp:
+        'Das Maximum, das ein von der Plattform bezahlter Aufruf kosten darf, in USD mit bis zu 6 Dezimalstellen. Leer lassen für kein Limit.',
+      callLimitTokensInvalid:
+        'Gib eine ganze Zahl von 0 bis 10000000 ein oder lass das Feld leer für kein Limit.',
       isPublic: 'Öffentlich gelistet',
       isTrial: 'Plan mit kostenloser Testphase',
       trialHelp:

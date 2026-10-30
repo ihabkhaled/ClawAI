@@ -83,6 +83,10 @@ export type PlanView = {
   creditConnectorFreeRequestsPerMonth: number | null;
   creditConnectorFreeBudgetMicroUsd: number | null;
   creditConnectorFreeMaxModelOutputMicroUsd: number | null;
+  /** Per-call limits on a platform-paid call (ADR-197). Null = no cap, 0 = refuse every call. */
+  maxInputTokensPerCall: number | null;
+  maxOutputTokensPerCall: number | null;
+  maxCostPerCallMicroUsd: number | null;
   /** Monthly fair-use ceiling on weighted provider spend. Null = no ceiling. */
   monthlyProviderCostCeilingMicroUsd: number | null;
   /** Share of the monthly price granted as connector credit, in basis points. */
@@ -140,6 +144,9 @@ export type CreatePlanData = {
   creditConnectorFreeRequestsPerMonth?: number | null;
   creditConnectorFreeBudgetMicroUsd?: number | null;
   creditConnectorFreeMaxModelOutputMicroUsd?: number | null;
+  maxInputTokensPerCall?: number | null;
+  maxOutputTokensPerCall?: number | null;
+  maxCostPerCallMicroUsd?: number | null;
   allowCompareMode?: boolean;
   allowJudgeMode?: boolean;
   allowResearchMode?: boolean;

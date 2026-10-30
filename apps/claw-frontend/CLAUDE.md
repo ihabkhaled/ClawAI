@@ -68,7 +68,7 @@ Every third-party library MUST be wrapped in a dedicated module. Components, hoo
 - Each hook MUST do ONE thing. If a hook manages form state AND validation AND submission, split it.
 - Controller hooks orchestrate smaller hooks — they should not contain business logic themselves.
 - Pattern: `useConnectorFormState()` for form state, NOT one giant `useConnectorPage()` with everything.
-- Connector "credit connector" switch (`isPayAsYouGo`, `ConnectorCreditField`) lives on the create/edit form and shows as a Credit/Included badge on `ConnectorCard`; plan form carries `creditConnectorFreeRequestsPerMonth` (blank = unlimited, 0 = off, 0..100000).
+- Connector "credit connector" switch (`isPayAsYouGo`, `ConnectorCreditField`) lives on the create/edit form and shows as a Credit/Included badge on `ConnectorCard`; plan form carries `creditConnectorFreeRequestsPerMonth` (blank = unlimited, 0 = off, 0..100000). It also carries the ADR-197 per-call limits `maxInputTokensPerCall` / `maxOutputTokensPerCall` (whole tokens 0..10,000,000) and `maxCostPerCallUsd` (typed in dollars, stored as `maxCostPerCallMicroUsd`); blank = no cap (sent as explicit `null` so an edit can lift a cap), 0 = refuse every platform-paid call.
 
 ### Size Limits
 

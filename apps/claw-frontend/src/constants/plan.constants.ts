@@ -55,6 +55,10 @@ export const PLAN_FORM_DEFAULTS: PlanFormState = {
   // A new plan has no meter and no price limit, so it never gives provider spend away by omission.
   creditConnectorFreeBudgetUsd: '',
   creditConnectorFreeMaxModelOutputUsd: '',
+  // Blank = no per-call cap (ADR-197); the Free..Unlimited values are seeded, not defaulted here.
+  maxInputTokensPerCall: '',
+  maxOutputTokensPerCall: '',
+  maxCostPerCallUsd: '',
   allowCompareMode: true,
   allowJudgeMode: true,
   allowResearchMode: true,
@@ -147,4 +151,8 @@ export const PLAN_CREDIT_FREE_REQUESTS_LIMIT = 100_000;
 export const PLAN_FORM_ERROR_ALIASES: Readonly<Record<string, string>> = {
   creditConnectorFreeBudgetUsd: 'creditConnectorFreeBudgetMicroUsd',
   creditConnectorFreeMaxModelOutputUsd: 'creditConnectorFreeMaxModelOutputMicroUsd',
+  maxCostPerCallUsd: 'maxCostPerCallMicroUsd',
 };
+
+/** Upper bound on the per-call token caps, matching the auth-service DTOs. */
+export const PLAN_CALL_TOKEN_LIMIT = 10_000_000;

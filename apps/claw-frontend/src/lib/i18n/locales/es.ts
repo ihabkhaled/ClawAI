@@ -5126,6 +5126,17 @@ export const es: TranslationDictionary = {
         'Los modelos con un precio de salida superior no están cubiertos por las solicitudes gratuitas, y el enrutamiento AUTO los evita. Déjalo vacío para no poner límite.',
       creditConnectorFreeUsdInvalid:
         'Introduce un importe en USD con hasta 6 decimales, o déjalo vacío.',
+      callLimitInputTokens: 'Máx. tokens de entrada por llamada',
+      callLimitInputTokensHelp:
+        'Los tokens de prompt máximos que puede llevar una llamada pagada por la plataforma. Déjalo vacío para no poner límite; 0 rechaza toda llamada.',
+      callLimitOutputTokens: 'Máx. tokens de salida por llamada',
+      callLimitOutputTokensHelp:
+        'Los tokens máximos que el modelo puede escribir en una llamada pagada por la plataforma. Déjalo vacío para no poner límite; 0 rechaza toda llamada.',
+      callLimitCost: 'Costo máx. por llamada (USD)',
+      callLimitCostHelp:
+        'Lo máximo que puede costar una llamada pagada por la plataforma, en USD con hasta 6 decimales. Déjalo vacío para no poner límite.',
+      callLimitTokensInvalid:
+        'Introduce un número entero de 0 a 10000000, o déjalo vacío para no poner límite.',
       isPublic: 'Listado públicamente',
       isTrial: 'Plan con prueba gratuita',
       trialHelp: 'El acceso de prueba puede usarse una vez por cuenta. Define abajo cuánto dura.',

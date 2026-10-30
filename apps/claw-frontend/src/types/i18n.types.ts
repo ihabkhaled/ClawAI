@@ -4922,6 +4922,13 @@ export type TranslationDictionary = {
       creditConnectorFreeMaxModel: string;
       creditConnectorFreeMaxModelHelp: string;
       creditConnectorFreeUsdInvalid: string;
+      callLimitInputTokens: string;
+      callLimitInputTokensHelp: string;
+      callLimitOutputTokens: string;
+      callLimitOutputTokensHelp: string;
+      callLimitCost: string;
+      callLimitCostHelp: string;
+      callLimitTokensInvalid: string;
       isPublic: string;
       isTrial: string;
       trialHelp: string;

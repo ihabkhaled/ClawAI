@@ -5150,6 +5150,17 @@ export const fr: TranslationDictionary = {
         'Les modèles dont le prix de sortie dépasse cette valeur ne sont pas couverts par les requêtes gratuites, et le routage AUTO les évite. Laissez vide pour aucune limite.',
       creditConnectorFreeUsdInvalid:
         'Saisissez un montant en USD avec au plus 6 décimales, ou laissez vide.',
+      callLimitInputTokens: "Jetons d'entrée max. par appel",
+      callLimitInputTokensHelp:
+        "Le plus grand nombre de jetons de prompt qu'un appel payé par la plateforme peut contenir. Laissez vide pour aucune limite ; 0 refuse chaque appel.",
+      callLimitOutputTokens: 'Jetons de sortie max. par appel',
+      callLimitOutputTokensHelp:
+        'Le plus grand nombre de jetons que le modèle peut écrire dans un appel payé par la plateforme. Laissez vide pour aucune limite ; 0 refuse chaque appel.',
+      callLimitCost: 'Coût max. par appel (USD)',
+      callLimitCostHelp:
+        "Le maximum qu'un appel payé par la plateforme peut coûter, en USD avec jusqu'à 6 décimales. Laissez vide pour aucune limite.",
+      callLimitTokensInvalid:
+        'Saisissez un nombre entier de 0 à 10000000, ou laissez vide pour aucune limite.',
       isPublic: 'Répertorié publiquement',
       isTrial: 'Forfait avec essai gratuit',
       trialHelp:

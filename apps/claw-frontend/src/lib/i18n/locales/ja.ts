@@ -5054,6 +5054,17 @@ export const ja: TranslationDictionary = {
       creditConnectorFreeMaxModelHelp:
         '出力価格がこれを超えるモデルは無料利用の対象外で、AUTO ルーティングも避けます。上限を設けない場合は空欄にします。',
       creditConnectorFreeUsdInvalid: 'USD の金額を小数 6 桁まで入力するか、空欄にしてください。',
+      callLimitInputTokens: '1 回あたりの最大入力トークン',
+      callLimitInputTokensHelp:
+        'プラットフォームが支払う 1 回の呼び出しに含められるプロンプトトークンの上限。空欄で無制限、0 ですべての呼び出しを拒否します。',
+      callLimitOutputTokens: '1 回あたりの最大出力トークン',
+      callLimitOutputTokensHelp:
+        'プラットフォームが支払う 1 回の呼び出しでモデルが書き出せるトークンの上限。空欄で無制限、0 ですべての呼び出しを拒否します。',
+      callLimitCost: '1 回あたりの最大コスト (USD)',
+      callLimitCostHelp:
+        'プラットフォームが支払う 1 回の呼び出しにかかる費用の上限。USD で小数 6 桁まで。空欄で無制限です。',
+      callLimitTokensInvalid:
+        '0 から 10000000 までの整数を入力するか、無制限にするには空欄にしてください。',
       isPublic: '上場',
       isTrial: '無料トライアルのプラン',
       trialHelp: 'トライアルはアカウントごとに1回だけ利用できます。期間は下で設定してください。',

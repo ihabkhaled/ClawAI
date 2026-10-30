@@ -4839,6 +4839,16 @@ export const zh: TranslationDictionary = {
       creditConnectorFreeMaxModelHelp:
         '输出价格高于此值的模型不在免费请求覆盖范围内，AUTO 路由也会避开它们。留空表示不设上限。',
       creditConnectorFreeUsdInvalid: '请输入美元金额，最多 6 位小数，或留空。',
+      callLimitInputTokens: '每次调用的最大输入令牌数',
+      callLimitInputTokensHelp:
+        '平台付费的单次调用最多可携带的提示令牌数。留空表示不限制；0 表示拒绝所有调用。',
+      callLimitOutputTokens: '每次调用的最大输出令牌数',
+      callLimitOutputTokensHelp:
+        '平台付费的单次调用中模型最多可输出的令牌数。留空表示不限制；0 表示拒绝所有调用。',
+      callLimitCost: '每次调用的最大费用（美元）',
+      callLimitCostHelp:
+        '平台付费的单次调用最多可花费的金额，单位美元，最多 6 位小数。留空表示不限制。',
+      callLimitTokensInvalid: '请输入 0 到 10000000 的整数，或留空表示不限制。',
       isPublic: '公开上市',
       isTrial: '免费试用套餐',
       trialHelp: '每个账户只能使用一次试用。请在下方设置试用时长。',
