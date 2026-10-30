@@ -58,6 +58,16 @@ const toDefaultRow = (provider: string, model: string): ModelAccessRowState => (
   dailyTokenLimitOverride: '',
 });
 
+// A row that changes nothing. In cost-class mode a model without a row is already allowed, so
+// sending one per catalog model only inflates the request past the API's 100 KB body limit.
+const isUntouchedDefaultRow = (row: ModelAccessRowState): boolean =>
+  row.isAllowed &&
+  row.allowAsPrimary &&
+  row.allowAsFallback &&
+  row.allowAsJudge &&
+  row.allowInCompare &&
+  row.dailyTokenLimitOverride.trim().length === 0;
+
 const toInput = (row: ModelAccessRowState): PlanModelAccessInput => {
   const trimmed = row.dailyTokenLimitOverride.trim();
   const parsed = trimmed.length === 0 ? null : Number.parseInt(trimmed, 10);
@@ -141,11 +151,20 @@ export function useModelAccessPage(): UseModelAccessPageResult & {
       return;
     }
     seededForRef.current = seedKey;
-    setRows(
-      groupedModels.flatMap((group) =>
-        group.models.map((model) => toDefaultRow(model.provider, model.model)),
-      ),
+    // Saved overrides win over the catalogue default, and one for a model the catalogue no longer
+    // lists is kept so a save does not silently delete it.
+    const saved = new Map(
+      (query.data.modelAccess ?? []).map((entry) => [`${entry.provider}/${entry.model}`, entry]),
     );
+    const catalogRows = groupedModels.flatMap((group) =>
+      group.models.map((model) => {
+        const key = `${model.provider}/${model.model}`;
+        const override = saved.get(key);
+        saved.delete(key);
+        return override === undefined ? toDefaultRow(model.provider, model.model) : toRow(override);
+      }),
+    );
+    setRows([...catalogRows, ...Array.from(saved.values(), toRow)]);
   }, [groupedModels, isCatalogLoading, planId, query.data]);
 
   const addRow = useCallback((): void => {
@@ -197,8 +216,12 @@ export function useModelAccessPage(): UseModelAccessPageResult & {
       message: 'Saving model access',
       details: { planId, count: rows.length },
     });
+    const overrides =
+      modelAccessMode === PlanModelAccessMode.ALLOW_COST_CLASSES
+        ? rows.filter((row) => !isUntouchedDefaultRow(row))
+        : rows;
     saveMutation.mutate({
-      models: rows.map(toInput),
+      models: overrides.map(toInput),
       modelAccessMode,
       allowedCostClasses,
     });

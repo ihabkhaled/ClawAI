@@ -168,6 +168,9 @@ modes and non-empty administrator-edited class lists remain unchanged. An
 unknown or incomplete policy **fails closed** for non-admin users. ADMIN bypass stays
 explicit and audited.
 
+In `ALLOW_COST_CLASSES` the admin model-access page saves only per-model overrides: a model with no
+row is allowed whenever its class is.
+
 ---
 
 ## 6. Atomic enforcement

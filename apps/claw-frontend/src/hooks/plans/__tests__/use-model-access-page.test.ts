@@ -179,6 +179,79 @@ describe('useModelAccessPage', () => {
     expect(mockPush).toHaveBeenCalledWith('/admin/plans');
   });
 
+  it('cost-class save sends only the models that differ from the default', async () => {
+    mockGet.mockResolvedValue({
+      ...planWithAccess,
+      modelAccessMode: PlanModelAccessMode.ALLOW_COST_CLASSES,
+      allowedCostClasses: ['FREE', 'CHEAP'],
+      modelAccess: [],
+    });
+    mockUpdateModelAccess.mockResolvedValue(planWithAccess);
+    const { result } = renderHook(() => useModelAccessPage(), { wrapper: makeWrapper() });
+    await waitFor(() => {
+      expect(result.current.rows).toHaveLength(2);
+    });
+    const blocked = result.current.rows.find((row) => row.model === 'gpt-4.1')?.rowKey ?? '';
+    act(() => {
+      result.current.updateRow(blocked, 'isAllowed', false);
+    });
+    act(() => {
+      result.current.onSave();
+    });
+    await waitFor(() => {
+      expect(mockUpdateModelAccess).toHaveBeenCalled();
+    });
+    const payload = mockUpdateModelAccess.mock.calls[0]?.[1] as {
+      models: { model: string; isAllowed: boolean }[];
+      allowedCostClasses: string[];
+    };
+    expect(payload.models).toEqual([
+      expect.objectContaining({ model: 'gpt-4.1', isAllowed: false }),
+    ]);
+    expect(payload.allowedCostClasses).toEqual(['FREE', 'CHEAP']);
+  });
+
+  it('cost-class load keeps a saved override instead of resetting it to the default', async () => {
+    mockGet.mockResolvedValue({
+      ...planWithAccess,
+      modelAccessMode: PlanModelAccessMode.ALLOW_COST_CLASSES,
+      allowedCostClasses: ['FREE'],
+      modelAccess: [
+        { ...planWithAccess.modelAccess[0], provider: 'OPENAI', model: 'gpt-4o', isAllowed: false },
+        { ...planWithAccess.modelAccess[0], provider: 'OPENAI', model: 'retired-model' },
+      ],
+    });
+    const { result } = renderHook(() => useModelAccessPage(), { wrapper: makeWrapper() });
+    await waitFor(() => {
+      expect(result.current.rows).toHaveLength(3);
+    });
+    expect(result.current.rows.find((row) => row.model === 'gpt-4o')?.isAllowed).toBe(false);
+    expect(result.current.rows.find((row) => row.model === 'gpt-4.1')?.isAllowed).toBe(true);
+    expect(result.current.rows.some((row) => row.model === 'retired-model')).toBe(true);
+  });
+
+  it('cost-class save of an untouched catalog sends no model rows at all', async () => {
+    mockGet.mockResolvedValue({
+      ...planWithAccess,
+      modelAccessMode: PlanModelAccessMode.ALLOW_COST_CLASSES,
+      allowedCostClasses: ['FREE'],
+      modelAccess: [],
+    });
+    mockUpdateModelAccess.mockResolvedValue(planWithAccess);
+    const { result } = renderHook(() => useModelAccessPage(), { wrapper: makeWrapper() });
+    await waitFor(() => {
+      expect(result.current.rows).toHaveLength(2);
+    });
+    act(() => {
+      result.current.onSave();
+    });
+    await waitFor(() => {
+      expect(mockUpdateModelAccess).toHaveBeenCalled();
+    });
+    const payload = mockUpdateModelAccess.mock.calls[0]?.[1] as { models: unknown[] };
+    expect(payload.models).toEqual([]);
+  });
+
   it('surfaces save errors via saveError + apiError toast', async () => {
     mockGet.mockResolvedValue(planWithAccess);
     mockUpdateModelAccess.mockRejectedValue(new Error('save-failed'));
