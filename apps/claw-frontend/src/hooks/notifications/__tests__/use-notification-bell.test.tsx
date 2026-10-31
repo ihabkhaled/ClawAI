@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useNotificationBell } from '@/hooks/notifications/use-notification-bell';
+import { queryKeys } from '@/repositories/shared/query-keys';
 import { useAuthStore } from '@/stores/auth.store';
 import type { NotificationItem, NotificationPage } from '@/types/notifications.types';
 
@@ -36,14 +37,16 @@ function page(items: NotificationItem[], unreadCount: number): NotificationPage 
   return { items, nextCursor: null, unreadCount };
 }
 
+let client: QueryClient;
+
 function wrapper({ children }: { children: ReactNode }) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 
 describe('useNotificationBell list freshness', () => {
   beforeEach(() => {
     list.mockReset();
+    client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     useAuthStore.setState({ isAuthenticated: true });
   });
   afterEach(() => vi.useRealTimers());
@@ -63,7 +66,7 @@ describe('useNotificationBell list freshness', () => {
     await waitFor(() => expect(result.current.items.map((row) => row.id)).toEqual(['n2', 'n1']));
   });
 
-  it('refreshes the open list when the badge poll sees a new notification', async () => {
+  it('refreshes the open list when the window regains focus', async () => {
     list.mockResolvedValue(page([item('n1')], 1));
     const { result } = renderHook(() => useNotificationBell(), { wrapper });
     await waitFor(() => expect(result.current.unreadCount).toBe(1));
@@ -72,7 +75,22 @@ describe('useNotificationBell list freshness', () => {
 
     list.mockImplementation(() => Promise.resolve(page([item('n2'), item('n1')], 2)));
     await act(async () => {
-      window.dispatchEvent(new Event('focus'));
+      window.dispatchEvent(new Event('visibilitychange'));
+    });
+    await waitFor(() => expect(result.current.items.map((row) => row.id)).toEqual(['n2', 'n1']));
+  });
+
+  it('refreshes the open list at once when the badge poll sees a new notification', async () => {
+    list.mockResolvedValue(page([item('n1')], 1));
+    const { result } = renderHook(() => useNotificationBell(), { wrapper });
+    await waitFor(() => expect(result.current.unreadCount).toBe(1));
+    act(() => result.current.setOpen(true));
+    await waitFor(() => expect(result.current.items).toHaveLength(1));
+
+    // The badge poll (the unread query) now answers with a newer notification.
+    list.mockResolvedValue(page([item('n2'), item('n1')], 2));
+    await act(async () => {
+      await client.invalidateQueries({ queryKey: queryKeys.notifications.unread() });
     });
     await waitFor(() => expect(result.current.items.map((row) => row.id)).toEqual(['n2', 'n1']));
     expect(result.current.unreadCount).toBe(2);
