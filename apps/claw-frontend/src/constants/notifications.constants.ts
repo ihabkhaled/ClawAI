@@ -10,7 +10,10 @@ export const NOTIFICATIONS_PAGE_SIZE = 20;
  * The unread badge is refreshed this often while the tab is visible and on window focus. It is a
  * single small request; a hidden tab does not poll at all.
  */
-export const NOTIFICATIONS_UNREAD_POLL_MS = 60_000;
+export const NOTIFICATIONS_UNREAD_POLL_MS = 20_000;
+
+/** While the panel is open the list itself is refreshed this often (visible tab only). */
+export const NOTIFICATIONS_OPEN_LIST_POLL_MS = 10_000;
 
 export const NOTIFICATIONS_STALE_MS = 30_000;
 

@@ -1,8 +1,9 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
+  NOTIFICATIONS_OPEN_LIST_POLL_MS,
   NOTIFICATIONS_PAGE_SIZE,
   NOTIFICATIONS_STALE_MS,
   NOTIFICATIONS_UNREAD_POLL_MS,
@@ -48,8 +49,28 @@ export function useNotificationBell(): UseNotificationBellReturn {
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     enabled: isAuthenticated && isOpen,
+    // Opening the panel always shows fresh rows, and an open panel keeps itself current.
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchInterval: () =>
+      document.visibilityState === 'visible' ? NOTIFICATIONS_OPEN_LIST_POLL_MS : false,
     retry: 1,
   });
+
+  // The badge poll saw something new: refresh the open list now instead of waiting for its own poll.
+  const newestKey = `${String(unread.data?.unreadCount ?? 0)}|${unread.data?.items[0]?.id ?? ''}`;
+  const seenKey = useRef(newestKey);
+  const { refetch: refetchList } = list;
+  useEffect(() => {
+    if (seenKey.current === newestKey) {
+      return;
+    }
+    seenKey.current = newestKey;
+    if (isOpen) {
+      void refetchList();
+    }
+  }, [newestKey, isOpen, refetchList]);
 
   const refreshAll = useCallback((): void => {
     void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
