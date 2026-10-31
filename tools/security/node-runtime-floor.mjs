@@ -11,6 +11,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 
 import { isMain, repoPath } from '../lib/repo.mjs';
+import { GIT_MAX_BUFFER_BYTES } from '../lib/git.mjs';
 
 export const FLOORS = { 22: [23, 4], 24: [22, 1], 26: [12, 1] };
 
@@ -58,7 +59,11 @@ export function withGuard(dockerfile) {
 }
 
 function trackedDockerfiles() {
-  return execFileSync('git', ['ls-files'], { cwd: repoPath(), encoding: 'utf8' })
+  return execFileSync('git', ['ls-files'], {
+    cwd: repoPath(),
+    encoding: 'utf8',
+    maxBuffer: GIT_MAX_BUFFER_BYTES,
+  })
     .split('\n')
     .filter((file) => /(^|\/)Dockerfile[^/]*$/u.test(file));
 }

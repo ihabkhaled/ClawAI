@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 
 import { cmp } from '../lib/fact.mjs';
 import { REPO_ROOT } from '../lib/repo.mjs';
+import { GIT_MAX_BUFFER_BYTES } from '../lib/git.mjs';
 
 const MODE_LIMITS = Object.freeze({ FAST: 8, NORMAL: 16, DEEP: 32, AUDIT: 64 });
 const SOURCE_PATTERN = /\.(?:cjs|css|js|jsx|json|md|mjs|prisma|sh|ts|tsx|yml|yaml)$/u;
@@ -19,7 +20,11 @@ function taskTerms(task) {
 }
 
 export function trackedFiles() {
-  const output = execFileSync('git', ['ls-files'], { cwd: REPO_ROOT, encoding: 'utf8' });
+  const output = execFileSync('git', ['ls-files'], {
+    cwd: REPO_ROOT,
+    encoding: 'utf8',
+    maxBuffer: GIT_MAX_BUFFER_BYTES,
+  });
   return output.split(/\r?\n/u).filter((file) => SOURCE_PATTERN.test(file));
 }
 

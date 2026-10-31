@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import { repoPath } from '../lib/repo.mjs';
+import { GIT_MAX_BUFFER_BYTES } from '../lib/git.mjs';
 
 // CodeQL js/disabling-certificate-validation fails CI for any committed file that switches TLS
 // validation off. The local mkcert root is trusted with NODE_EXTRA_CA_CERTS instead.
@@ -13,7 +14,9 @@ const CODE_FILE = /\.(?:c|m)?(?:j|t)sx?$/u;
 const THIS_FILE = 'tools/__tests__/tls-validation-guard.test.mjs';
 
 function acceptedPaths() {
-  const document = JSON.parse(readFileSync(repoPath('tools', 'security', 'codeql-accepted.json'), 'utf8'));
+  const document = JSON.parse(
+    readFileSync(repoPath('tools', 'security', 'codeql-accepted.json'), 'utf8'),
+  );
   return new Set(
     document.accepted
       .filter((entry) => entry.rule === 'js/disabling-certificate-validation')
@@ -23,7 +26,11 @@ function acceptedPaths() {
 
 test('no committed file disables TLS certificate validation unless CodeQL acceptance names it', () => {
   const accepted = acceptedPaths();
-  const files = execFileSync('git', ['ls-files', '-z'], { cwd: repoPath(), encoding: 'utf8' })
+  const files = execFileSync('git', ['ls-files', '-z'], {
+    cwd: repoPath(),
+    encoding: 'utf8',
+    maxBuffer: GIT_MAX_BUFFER_BYTES,
+  })
     .split('\0')
     .filter((path) => CODE_FILE.test(path) && path !== THIS_FILE && !accepted.has(path));
   const offenders = files.filter((path) => FORBIDDEN.test(readFileSync(repoPath(path), 'utf8')));

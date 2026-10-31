@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { GIT_MAX_BUFFER_BYTES } from '../lib/git.mjs';
 
 // Two tracked paths that differ only by case are one file on Windows and
 // macOS. Git then compares both index entries to that single file and reports
@@ -9,7 +10,10 @@ import assert from 'node:assert/strict';
 // tree never looked clean, and the GitHub wiki would have had two pages for one
 // name.
 test('no two tracked paths differ only by case', () => {
-  const paths = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' })
+  const paths = execFileSync('git', ['ls-files', '-z'], {
+    encoding: 'utf8',
+    maxBuffer: GIT_MAX_BUFFER_BYTES,
+  })
     .split('\0')
     .filter((path) => path.length > 0);
   const byLower = new Map();

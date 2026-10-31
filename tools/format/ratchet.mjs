@@ -14,6 +14,7 @@ import prettier from 'prettier';
 
 import { cmp, normalizeEol, stableStringify } from '../lib/fact.mjs';
 import { isMain, readJson, repoPath } from '../lib/repo.mjs';
+import { GIT_MAX_BUFFER_BYTES } from '../lib/git.mjs';
 
 const BASELINE_PATH = repoPath('tools', 'format', 'baseline.json');
 const FORMAT_EXTENSIONS = /\.(?:css|json|md|ts|tsx)$/u;
@@ -60,7 +61,11 @@ export function buildFormattingBaseline(candidates, existing = {}, options = {})
 }
 
 function trackedFormattingFiles() {
-  return execFileSync('git', ['ls-files', '-z'], { cwd: repoPath(), encoding: 'utf8' })
+  return execFileSync('git', ['ls-files', '-z'], {
+    cwd: repoPath(),
+    encoding: 'utf8',
+    maxBuffer: GIT_MAX_BUFFER_BYTES,
+  })
     .split('\0')
     .filter((path) => FORMAT_EXTENSIONS.test(path))
     .sort(cmp);

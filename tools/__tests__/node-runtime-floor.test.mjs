@@ -12,8 +12,13 @@ import {
   meetsFloor,
   withGuard,
 } from '../security/node-runtime-floor.mjs';
+import { GIT_MAX_BUFFER_BYTES } from '../lib/git.mjs';
 
-const dockerfiles = execFileSync('git', ['ls-files'], { cwd: repoPath(), encoding: 'utf8' })
+const dockerfiles = execFileSync('git', ['ls-files'], {
+  cwd: repoPath(),
+  encoding: 'utf8',
+  maxBuffer: GIT_MAX_BUFFER_BYTES,
+})
   .split('\n')
   .filter((file) => /(^|\/)Dockerfile[^/]*$/u.test(file));
 
