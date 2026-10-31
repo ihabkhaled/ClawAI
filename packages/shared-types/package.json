@@ -1,6 +1,6 @@
 {
   "name": "@claw/shared-types",
-  "version": "1.224.3",
+  "version": "1.225.0",
   "private": true,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
