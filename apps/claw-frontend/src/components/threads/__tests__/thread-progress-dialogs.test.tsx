@@ -146,6 +146,18 @@ describe('ThreadGenerationDeleteDialog', () => {
     expect(remove.confirm).toHaveBeenCalledTimes(1);
   });
 
+  it('starts focus on Cancel, so Enter never deletes, and hands close-focus to the controller', async () => {
+    const user = userEvent.setup();
+    const onCloseAutoFocus = vi.fn();
+    const remove = makeDelete({ onCloseAutoFocus });
+    render(<ThreadGenerationDeleteDialog remove={remove} />);
+
+    expect(screen.getByRole('button', { name: 'common.cancel' })).toHaveFocus();
+    await user.keyboard('{Enter}');
+    expect(remove.confirm).not.toHaveBeenCalled();
+    expect(remove.setOpen).toHaveBeenCalledWith(false);
+  });
+
   it('cancels without deleting and shows a refusal', async () => {
     const user = userEvent.setup();
     const remove = makeDelete({ error: { key: 'chat.threadProgress.error.notFound' } });

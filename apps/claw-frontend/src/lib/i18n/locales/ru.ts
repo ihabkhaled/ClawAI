@@ -1,6 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
+import { ADMIN_SESSIONS_TRANSLATIONS } from './admin-sessions-translations';
 import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
@@ -277,6 +278,12 @@ export const ru: TranslationDictionary = {
     loginEmailNotVerifiedDescription:
       'Пароль верный, но учётная запись ещё не активирована. Откройте письмо с подтверждением, которое мы вам отправили, перейдите по ссылке из него и войдите снова.',
     loginEmailNotVerifiedAction: 'Письмо не пришло',
+    loginBannedTitle: 'Этот аккаунт заблокирован',
+    loginBannedDescription:
+      'Администратор заблокировал этот аккаунт до {date}. До этого времени войти нельзя.',
+    loginBannedPermanentDescription:
+      'Администратор заблокировал этот аккаунт навсегда. Войти нельзя.',
+    loginBannedGeneric: 'Этот аккаунт заблокирован.',
     loginSuspendedTitle: 'Учётная запись заблокирована',
     loginSuspendedDescription:
       'Пароль верный, но администратор отключил эту учётную запись. Если вы считаете это ошибкой, обратитесь в службу поддержки.',
@@ -422,6 +429,7 @@ export const ru: TranslationDictionary = {
     adminRoles: 'Роли',
     adminRuntimeProgress: 'Диагностика среды выполнения',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.ru.navigationLabel,
+    adminSecuritySessions: ADMIN_SESSIONS_TRANSLATIONS.ru.navigationLabel,
     adminPaymentGateways: 'Платёжные шлюзы',
     adminSmartRouter: 'Умный маршрутизатор',
     adminModelCosts: 'Цены моделей',
@@ -2297,6 +2305,9 @@ export const ru: TranslationDictionary = {
     // "you may never" and "you may, but not to yourself" are different
     // sentences. See rules/35-super-administrator-and-privilege-boundaries.md.
     errors: {
+      cannotBanSelf: 'Вы не можете заблокировать свой аккаунт.',
+      userNotBanned: 'Этот аккаунт не заблокирован.',
+      cannotSetOwnPassword: 'Смените свой пароль в настройках аккаунта.',
       superAdminImmutable:
         'Изменять учётную запись суперадминистратора может только суперадминистратор.',
       superAdminSelfLocked:
@@ -2396,6 +2407,75 @@ export const ru: TranslationDictionary = {
 
     editUserCancel: 'Отмена',
 
+    colRegistration: 'Регистрация с',
+    presenceOnline: 'Сейчас онлайн',
+    presenceRecent: 'Был активен за последние 24 часа',
+    presenceOffline: 'Не в сети',
+    presenceOnlineNow: 'Сейчас онлайн',
+    presenceActive24h: 'Активны за последние 24 часа',
+    presenceBannedNow: 'Заблокированы сейчас',
+    presenceActiveNow: 'Активен сейчас',
+    viewUserDetails: 'Показать подробности',
+    userDetailTitle: 'Сведения о пользователе',
+    userDetailDescription: 'Сведения об аккаунте. Видны только администраторам.',
+    detailName: 'Имя',
+    detailPhone: 'Телефон',
+    detailRegistrationIp: 'IP при регистрации',
+    detailRegistrationCountry: 'Страна регистрации',
+    detailRegisteredOn: 'Дата регистрации',
+    detailLastOnline: 'Последний визит',
+    detailActivity: 'Активность',
+    detailBanState: 'Блокировка',
+    detailNotBanned: 'Не заблокирован',
+    detailBannedPermanent: 'Заблокирован навсегда',
+    detailBannedUntil: 'Заблокирован до {date}',
+    detailBanReason: 'Причина блокировки',
+    detailMustChangePassword: 'Должен сменить пароль',
+    banAction: 'Заблокировать',
+    unbanAction: 'Разблокировать',
+    bannedBadge: 'Заблокирован',
+    banDialogTitle: 'Заблокировать {username}',
+    banDialogDescription:
+      'Пользователь сразу выйдет из аккаунта на всех устройствах и не сможет войти до конца блокировки.',
+    banUnit: 'Единица срока',
+    banAmount: 'Количество',
+    banUnitMinutes: 'Минуты',
+    banUnitHours: 'Часы',
+    banUnitDays: 'Дни',
+    banUnitLifetime: 'Навсегда',
+    banAmountInvalid: 'Введите целое число от 1.',
+    banReason: 'Причина',
+    banReasonPlaceholder: 'Почему блокируется этот аккаунт?',
+    banReasonRequired: 'Укажите причину.',
+    banConfirm: 'Заблокировать пользователя',
+    userBanned: 'Пользователь заблокирован',
+    userBanFailed: 'Не удалось заблокировать пользователя',
+    userUnbanned: 'Пользователь разблокирован',
+    userUnbanFailed: 'Не удалось разблокировать пользователя',
+    setPasswordAction: 'Задать пароль',
+    setPasswordTitle: 'Задать пароль для {username}',
+    setPasswordDescription:
+      'Пользователь выйдет из аккаунта везде и должен будет выбрать новый пароль при следующем входе.',
+    setPasswordMode: 'Как задать пароль',
+    setPasswordModeGenerate: 'Сгенерировать',
+    setPasswordModeManual: 'Ввести вручную',
+    setPasswordGenerateHint:
+      'Надёжный случайный пароль создаётся на сервере и показывается один раз.',
+    setPasswordGenerateConfirm: 'Сгенерировать и задать',
+    setPasswordManualLabel: 'Новый пароль',
+    setPasswordManualHint: 'Не менее 8 символов, с заглавной буквой, строчной буквой и цифрой.',
+    setPasswordConfirm: 'Задать пароль',
+    setPasswordGeneratedTitle: 'Пароль задан. Передайте его пользователю:',
+    setPasswordGeneratedWarning:
+      'Скопируйте его сейчас. Он показывается один раз и нигде не хранится.',
+    setPasswordCopy: 'Скопировать пароль',
+    setPasswordDone: 'Готово',
+    setPasswordFailed: 'Не удалось задать пароль',
+    setPasswordSucceeded: 'Пароль задан',
+    editUserPhone: 'Телефон',
+    editUserPhoneHint:
+      'Международный формат, например +201001234567. Оставьте пустым, чтобы удалить.',
+    editUserPhoneInvalid: 'Используйте международный формат, например +201001234567.',
     editUserRotatePassword: 'Сменить пароль',
     userUpdated: 'Пользователь обновлён',
     userUpdateFailed: 'Не удалось обновить пользователя',
@@ -4892,6 +4972,7 @@ export const ru: TranslationDictionary = {
     failed: 'Не удалось оформить возврат.',
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.ru.section,
+  adminSessions: ADMIN_SESSIONS_TRANSLATIONS.ru.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.ru,
   narration: NARRATION_TRANSLATIONS.ru,
   pickedModel: PICKED_MODEL_TRANSLATIONS.ru,

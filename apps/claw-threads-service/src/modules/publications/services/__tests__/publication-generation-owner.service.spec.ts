@@ -60,6 +60,15 @@ function setup(
 const draft = { status: 'DRAFT', generationJobId: 'job-1' };
 
 describe('PublicationGenerationOwnerService', () => {
+  describe('getOwnedJobId', () => {
+    it('returns the job of an owned publication and 404s for anyone else', async () => {
+      await expect(setup(draft).service.getOwnedJobId('pub-1', 'owner-1')).resolves.toBe('job-1');
+      await expect(setup(null).service.getOwnedJobId('pub-1', 'stranger')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+  });
+
   describe('getProgress', () => {
     it('returns the owner progress tagged with the publication id', async () => {
       const { service, generation } = setup(draft);

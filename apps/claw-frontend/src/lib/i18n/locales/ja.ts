@@ -1,6 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
+import { ADMIN_SESSIONS_TRANSLATIONS } from './admin-sessions-translations';
 import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
@@ -278,6 +279,12 @@ export const ja: TranslationDictionary = {
     loginEmailNotVerifiedDescription:
       'パスワードは正しく入力されていますが、このアカウントはまだ有効化されておりません。お送りした確認メールを開き、記載のリンクを選択したうえで、あらためてサインインしてください。',
     loginEmailNotVerifiedAction: 'メールが届かない場合',
+    loginBannedTitle: 'このアカウントは利用停止されています',
+    loginBannedDescription:
+      '管理者がこのアカウントを {date} まで利用停止にしました。それまでログインできません。',
+    loginBannedPermanentDescription:
+      '管理者がこのアカウントを無期限で利用停止にしました。ログインできません。',
+    loginBannedGeneric: 'このアカウントは利用停止されています。',
     loginSuspendedTitle: 'このアカウントは停止されています',
     loginSuspendedDescription:
       'パスワードは正しく入力されていますが、管理者によってこのアカウントは無効化されております。お心当たりがない場合は、サポートまでご連絡ください。',
@@ -422,6 +429,7 @@ export const ja: TranslationDictionary = {
     adminRoles: 'の役割',
     adminRuntimeProgress: 'ランタイム診断',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.ja.navigationLabel,
+    adminSecuritySessions: ADMIN_SESSIONS_TRANSLATIONS.ja.navigationLabel,
     adminPaymentGateways: '決済ゲートウェイ',
     adminSmartRouter: 'スマートルーター',
     adminModelCosts: 'モデル料金',
@@ -2267,6 +2275,9 @@ export const ja: TranslationDictionary = {
     // "you may never" and "you may, but not to yourself" are different
     // sentences. See rules/35-super-administrator-and-privilege-boundaries.md.
     errors: {
+      cannotBanSelf: '自分自身のアカウントは停止できません。',
+      userNotBanned: 'このアカウントは停止されていません。',
+      cannotSetOwnPassword: '自分のパスワードはアカウント設定から変更してください。',
       superAdminImmutable: 'スーパー管理者アカウントを変更できるのはスーパー管理者だけです。',
       superAdminSelfLocked: 'スーパー管理者は自分のアカウントにこの変更を適用できません。',
       superAdminRequired: 'この操作を実行できるのはスーパー管理者だけです。',
@@ -2364,6 +2375,73 @@ export const ja: TranslationDictionary = {
 
     editUserCancel: 'キャンセル',
 
+    colRegistration: '登録元',
+    presenceOnline: '現在オンライン',
+    presenceRecent: '過去24時間にアクティブ',
+    presenceOffline: 'オフライン',
+    presenceOnlineNow: '現在オンライン',
+    presenceActive24h: '過去24時間にアクティブ',
+    presenceBannedNow: '現在停止中',
+    presenceActiveNow: '現在アクティブ',
+    viewUserDetails: '詳細を表示',
+    userDetailTitle: 'ユーザーの詳細',
+    userDetailDescription: 'アカウント情報。管理者のみ閲覧できます。',
+    detailName: '名前',
+    detailPhone: '電話番号',
+    detailRegistrationIp: '登録時のIP',
+    detailRegistrationCountry: '登録時の国',
+    detailRegisteredOn: '登録日時',
+    detailLastOnline: '最終オンライン',
+    detailActivity: 'アクティビティ',
+    detailBanState: '利用停止',
+    detailNotBanned: '停止されていません',
+    detailBannedPermanent: '無期限で停止中',
+    detailBannedUntil: '{date} まで停止中',
+    detailBanReason: '停止の理由',
+    detailMustChangePassword: 'パスワード変更が必要',
+    banAction: '利用停止',
+    unbanAction: '停止を解除',
+    bannedBadge: '停止中',
+    banDialogTitle: '{username} を利用停止にする',
+    banDialogDescription:
+      'ユーザーはすべての場所で直ちにログアウトされ、停止期間が終わるまでログインできません。',
+    banUnit: '期間の単位',
+    banAmount: '数量',
+    banUnitMinutes: '分',
+    banUnitHours: '時間',
+    banUnitDays: '日',
+    banUnitLifetime: '無期限',
+    banAmountInvalid: '1以上の整数を入力してください。',
+    banReason: '理由',
+    banReasonPlaceholder: 'このアカウントを停止する理由は何ですか？',
+    banReasonRequired: '理由は必須です。',
+    banConfirm: 'ユーザーを停止',
+    userBanned: 'ユーザーを停止しました',
+    userBanFailed: 'ユーザーを停止できませんでした',
+    userUnbanned: 'ユーザーの停止を解除しました',
+    userUnbanFailed: 'ユーザーの停止を解除できませんでした',
+    setPasswordAction: 'パスワードを設定',
+    setPasswordTitle: '{username} のパスワードを設定',
+    setPasswordDescription:
+      'ユーザーはすべての場所でログアウトされ、次回ログイン時に新しいパスワードを設定する必要があります。',
+    setPasswordMode: 'パスワードの設定方法',
+    setPasswordModeGenerate: '生成',
+    setPasswordModeManual: '手入力',
+    setPasswordGenerateHint: '強力なランダムパスワードをサーバーで作成し、一度だけ表示します。',
+    setPasswordGenerateConfirm: '生成して設定',
+    setPasswordManualLabel: '新しいパスワード',
+    setPasswordManualHint: '8文字以上で、大文字・小文字・数字を含めてください。',
+    setPasswordConfirm: 'パスワードを設定',
+    setPasswordGeneratedTitle: 'パスワードを設定しました。ユーザーに伝えてください：',
+    setPasswordGeneratedWarning:
+      '今すぐコピーしてください。表示は一度だけで、どこにも保存されません。',
+    setPasswordCopy: 'パスワードをコピー',
+    setPasswordDone: '完了',
+    setPasswordFailed: 'パスワードを設定できませんでした',
+    setPasswordSucceeded: 'パスワードを設定しました',
+    editUserPhone: '電話番号',
+    editUserPhoneHint: '国際形式で入力してください（例：+201001234567）。空にすると削除されます。',
+    editUserPhoneInvalid: '国際形式で入力してください（例：+201001234567）。',
     editUserRotatePassword: 'パスワードを再発行',
     userUpdated: 'ユーザーを更新しました',
     userUpdateFailed: 'ユーザーを更新できませんでした',
@@ -4852,6 +4930,7 @@ export const ja: TranslationDictionary = {
     failed: '払い戻しを行うことができませんでした。',
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.ja.section,
+  adminSessions: ADMIN_SESSIONS_TRANSLATIONS.ja.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.ja,
   narration: NARRATION_TRANSLATIONS.ja,
   pickedModel: PICKED_MODEL_TRANSLATIONS.ja,

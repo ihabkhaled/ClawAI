@@ -411,6 +411,12 @@
     },
     {
       "location": "~",
+      "port": 4019,
+      "service": "threads-service",
+      "source": "infra/nginx/locations.conf"
+    },
+    {
+      "location": "~",
       "port": 4008,
       "service": "ollama-service",
       "source": "infra/nginx/locations.conf"

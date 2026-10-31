@@ -44,6 +44,12 @@ type SseConnection = {
 
 type SseRuntimeOptions = {
   reconnect?: boolean;
+  /** Reconnect attempts before giving up. Default `SSE_RECONNECT_MAX_ATTEMPTS`. */
+  maxAttempts?: number;
+  /** Random spread added to each back-off delay, as a fraction of it (0.3 = up to +30%). Default 0. */
+  jitterRatio?: number;
+  /** Start the back-off over once a connection has been live, so a long session never runs out of attempts. */
+  resetAttemptsAfterLive?: boolean;
 };
 
 export function connectSse(
@@ -54,7 +60,7 @@ export function connectSse(
   const controller = new AbortController();
   const reconnect = options.reconnect !== false;
 
-  void runWithReconnect(url, controller, callbacks, reconnect);
+  void runWithReconnect(url, controller, callbacks, reconnect, options);
 
   return {
     close: (): void => {
@@ -68,8 +74,20 @@ async function runWithReconnect(
   controller: AbortController,
   callbacks: SseCallbacks,
   reconnect: boolean,
+  options: SseRuntimeOptions,
 ): Promise<void> {
   let attempt = 0;
+  const maxAttempts = options.maxAttempts ?? SSE_RECONNECT_MAX_ATTEMPTS;
+  let wasLive = false;
+  const trackedCallbacks: SseCallbacks = {
+    ...callbacks,
+    onHealthChange: (health): void => {
+      if (health === SseConnectionHealth.LIVE) {
+        wasLive = true;
+      }
+      callbacks.onHealthChange?.(health);
+    },
+  };
   // Carries the last `id:` line across reconnect attempts, so the SECOND and
   // later attempts can tell the server what they already have. Read fresh on
   // every attempt via the mutable box (not a local variable captured once),
@@ -78,7 +96,11 @@ async function runWithReconnect(
   // wherever the previous attempt started.
   const lastEventId: { current: string | undefined } = { current: undefined };
   while (!controller.signal.aborted) {
-    const completed = await readSseStream(url, controller.signal, callbacks, lastEventId);
+    wasLive = false;
+    const completed = await readSseStream(url, controller.signal, trackedCallbacks, lastEventId);
+    if (wasLive && options.resetAttemptsAfterLive === true) {
+      attempt = 0;
+    }
     if (!reconnect || controller.signal.aborted) {
       return;
     }
@@ -87,16 +109,17 @@ async function runWithReconnect(
       return;
     }
     attempt++;
-    if (attempt > SSE_RECONNECT_MAX_ATTEMPTS) {
+    if (attempt > maxAttempts) {
       callbacks.onHealthChange?.(SseConnectionHealth.LOST);
       callbacks.onError(new Error('SSE reconnect attempts exhausted'));
       return;
     }
     callbacks.onHealthChange?.(SseConnectionHealth.RECONNECTING);
-    const delay = Math.min(
+    const baseDelay = Math.min(
       SSE_RECONNECT_BASE_MS * Math.pow(2, attempt - 1),
       SSE_RECONNECT_MAX_BACKOFF_MS,
     );
+    const delay = baseDelay + Math.random() * baseDelay * (options.jitterRatio ?? 0);
     callbacks.onReconnect?.(attempt);
     await sleep(delay, controller.signal);
   }

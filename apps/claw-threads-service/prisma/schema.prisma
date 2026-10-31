@@ -15,6 +15,15 @@ enum PublicationStatus {
   REVOKED
 }
 
+/// The job behind a DRAFT publication, as last read from the generation service (ADR-205).
+/// NULL on the row means "not read yet"; it is read lazily and healed on the next owner list.
+enum PublicationGenerationState {
+  GENERATING
+  FAILED
+  CANCELLED
+  DONE
+}
+
 enum RevisionReviewStatus {
   PENDING
   READY_FOR_REVIEW
@@ -60,35 +69,42 @@ enum PublicationReportStatus {
 }
 
 model ThreadPublication {
-  id               String                           @id @default(cuid())
-  ownerId          String?                          @map("owner_id")
-  slug             String                           @unique
-  status           PublicationStatus                @default(DRAFT)
-  generationJobId  String?                          @unique @map("generation_job_id")
-  contentLocale    String                           @default("en") @map("content_locale")
-  publicationType  String                           @default("article") @map("publication_type")
-  sourceSnapshot   Json?                            @map("source_snapshot")
-  sourceHash       String?                          @map("source_hash")
+  id                         String                           @id @default(cuid())
+  ownerId                    String?                          @map("owner_id")
+  slug                       String                           @unique
+  status                     PublicationStatus                @default(DRAFT)
+  generationJobId            String?                          @unique @map("generation_job_id")
+  contentLocale              String                           @default("en") @map("content_locale")
+  publicationType            String                           @default("article") @map("publication_type")
+  sourceSnapshot             Json?                            @map("source_snapshot")
+  sourceHash                 String?                          @map("source_hash")
   /// Hash of the owner's start idempotency key; with `ownerId` it makes a repeated start return this row (ADR-176).
-  startKeyHash     String?                          @map("start_key_hash")
+  startKeyHash               String?                          @map("start_key_hash")
   /// Hash of the start request body (without keys), so a reused key with another body is a 409.
-  startRequestHash String?                          @map("start_request_hash")
-  publishedAt      DateTime?                        @map("published_at")
+  startRequestHash           String?                          @map("start_request_hash")
+  publishedAt                DateTime?                        @map("published_at")
+  /// Last known state of the generation job (ADR-205). Lets the owner list filter and count in SQL.
+  generationState            PublicationGenerationState?      @default(GENERATING) @map("generation_state")
+  /// Stable machine code of the failure (never provider text); set with FAILED or CANCELLED.
+  generationFailureCode      String?                          @map("generation_failure_code") @db.VarChar(64)
+  generationFailureStep      String?                          @map("generation_failure_step") @db.VarChar(64)
+  generationFailureRetryable Boolean?                         @map("generation_failure_retryable")
+  generationStateCheckedAt   DateTime?                        @map("generation_state_checked_at")
   /// Human views (crawlers and repeats inside the dedupe window are not counted).
-  viewCount        Int                              @default(0) @map("view_count")
+  viewCount                  Int                              @default(0) @map("view_count")
   /// Distinct signed-in readers. A count only: who they are is never exposed.
-  readerCount      Int                              @default(0) @map("reader_count")
-  createdAt        DateTime                         @default(now()) @map("created_at")
-  updatedAt        DateTime                         @updatedAt @map("updated_at")
-  views            ThreadPublicationView[]
-  readers          ThreadPublicationReader[]
-  revisions        ThreadPublicationRevision[]
-  comments         ThreadPublicationComment[]
-  reactions        ThreadPublicationReaction[]
-  changeRequests   ThreadPublicationChangeRequest[]
-  reports          ThreadPublicationReport[]
-  formatPasses     ThreadFormatPass[]
-  searchDoc        ThreadPublicationSearchDoc?
+  readerCount                Int                              @default(0) @map("reader_count")
+  createdAt                  DateTime                         @default(now()) @map("created_at")
+  updatedAt                  DateTime                         @updatedAt @map("updated_at")
+  views                      ThreadPublicationView[]
+  readers                    ThreadPublicationReader[]
+  revisions                  ThreadPublicationRevision[]
+  comments                   ThreadPublicationComment[]
+  reactions                  ThreadPublicationReaction[]
+  changeRequests             ThreadPublicationChangeRequest[]
+  reports                    ThreadPublicationReport[]
+  formatPasses               ThreadFormatPass[]
+  searchDoc                  ThreadPublicationSearchDoc?
 
   @@unique([ownerId, startKeyHash])
   @@index([ownerId, createdAt])

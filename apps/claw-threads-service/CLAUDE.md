@@ -23,6 +23,18 @@ never public; repository tests prove it. `GET /thread-publications/public/sitema
 language, unchanged) or `scope=all` (no locale; every content language, same paging and
 `publishedAt desc, slug desc` order, same visibility filter); `locale` without `scope=all` is required (400).
 
+## Owner progress stream (ADR-201)
+
+`GET thread-publications/:publicationId/generation-progress/stream` (`PublicationGenerationStreamController` ->
+`GenerationProgressStreamService`) is the SSE twin of `generation-progress`: same owner-only rule (`getOwnedJobId`, then a
+404 before any byte), full `progress` snapshots with a content-hash `id:`, `terminal`, `heartbeat` (15 s), `reconnect`
+(10-minute lifetime), `gone`, `error`. One `GenerationProgressWatcher` per (owner, publication, job) per replica reads the
+generation service every 400 ms (1 s when idle) and fans out to all tabs; it emits only on change, never overlaps reads, backs
+off on errors and stops with its last stream. Caps per replica: 3 streams per publication, 6 per user (429). Backpressure keeps
+only the newest snapshot. Never read the publication row per tick, never add per-tab upstream work, never send another
+user's data. nginx must have the unbuffered regex location (RESTART nginx, do not reload). The generation service emits no
+step events yet; a per-step event would replace the polling read inside the watcher.
+
 ## Board search projection (ADR-177)
 
 `thread_publication_search_docs` is the only source for the Board list and suggest endpoints. A row exists only while the publication passes the public discovery predicate; every state change that can remove visibility (unpublish, revoke, safety change) must delete or update the row in the same transaction. Use the one shared visibility predicate, parameterised SQL only, and the one pure search normaliser for both index and query (never strip marks for Devanagari or Thai). Counters are denormalised: bump them in the existing write paths and let the reconcile job heal drift. Revoke is `POST thread-publications-moderation/publications/:id/revoke`. Board items carry `owner { username, displayName } | null` (named by auth-service, never an id or email; ADR-180). See [service guide](../../docs/04-backend/service-guide-threads.md) and ADR-177.
@@ -185,3 +197,7 @@ Start and retry bodies go through `ZodValidationPipe(schema, ThreadGenerationErr
 ## Cost-class plans (ADR-198, 2026-10-31)
 
 A plan with `ALLOW_COST_CLASSES` refuses every model when `isModelAllowedForUsage` gets no class. `ModelCostClassClient` (`services/model-cost-class.client.ts`) reads the classes from routing-service `POST /internal/router-models/costs/classes` (service token, 300 pairs per call, key `JSON.stringify([provider, model])`, 60 s cache, failures never cached). The recommended team, the healing pool and the start/retry preflight pass the class into the plan checks. Only a cost-class plan calls routing. A model with no answer is refused: the preflight answers 503, the picker shows it as needing a plan and the 60 s team cache is skipped. Any new caller of the helper must pass a class.
+
+## My Threads list (ADR-205)
+
+`GET thread-publications/mine/page` (`PublicationOwnerListService`, `PublicationOwnerPageRepository`, `owner-page-sql.utility.ts`) is the owner's paged, searchable, status-filtered list; `mine` stays as it was. The job state lives upstream, so the row stores `generation_state` and the failure code, step and retryable; the service reads unresolved DRAFT jobs (NULL, or GENERATING older than 30 s) from the generation service before each list, bounded and never fatal, and `attachRetryJob` resets them. Never add a second copy of the publish or delete rules: `canPublish` uses `PUBLISHABLE_REVISION_WHERE` and `canDelete` mirrors `OWNER_DELETABLE_PUBLICATION_STATUSES`; `owner-page-publish-delete.parity.spec.ts` runs the real code. Search is `ILIKE` on a bound, escaped pattern (never a regex, never string-built SQL), always `WHERE owner_id = caller`. `failure.code` is a machine code only (`^[A-Z][A-Z0-9_]{1,63}$`), never provider text.

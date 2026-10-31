@@ -16,6 +16,11 @@ import {
   useThreadGenerationProgress,
 } from '../use-thread-generation-progress';
 
+// The stream is covered in use-thread-progress-stream.test.tsx; here it never connects.
+vi.mock('@/utilities/sse.utility', () => ({
+  connectSse: vi.fn(() => ({ close: vi.fn() })),
+}));
+
 vi.mock('@/repositories/threads/thread-publications.repository', () => ({
   threadPublicationsRepository: { getGenerationProgress: vi.fn() },
 }));

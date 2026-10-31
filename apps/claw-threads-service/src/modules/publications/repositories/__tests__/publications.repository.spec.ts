@@ -374,7 +374,14 @@ describe('PublicationsRepository', () => {
     );
     expect(threadPublication.updateMany).toHaveBeenCalledWith({
       where: { id: 'pub-1', ownerId: 'owner-1', generationJobId: 'job-1', status: 'DRAFT' },
-      data: { generationJobId: 'job-2' },
+      data: {
+        generationJobId: 'job-2',
+        generationState: 'GENERATING',
+        generationFailureCode: null,
+        generationFailureStep: null,
+        generationFailureRetryable: null,
+        generationStateCheckedAt: null,
+      },
     });
   });
 

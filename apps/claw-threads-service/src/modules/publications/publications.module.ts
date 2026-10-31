@@ -5,8 +5,11 @@ import { BoardIndexModule } from '../board-index/board-index.module';
 import { PublicationModerationModule } from '../publication-moderation/publication-moderation.module';
 import { PublicationCommunityModule } from '../publication-community/publication-community.module';
 import { PrismaModule } from '../../infrastructure/database/prisma/prisma.module';
+import { PublicationGenerationStreamController } from './controllers/publication-generation-stream.controller';
+import { GenerationProgressStreamService } from './services/generation-progress-stream.service';
 import { PublicationOwnerController } from './controllers/publication-owner.controller';
 import { PublicationsRepository } from './repositories/publications.repository';
+import { PublicationOwnerPageRepository } from './repositories/publication-owner-page.repository';
 import { PublicationChangeRequestsRepository } from './repositories/publication-change-requests.repository';
 import { PublicationChangeRequestViewsService } from './services/publication-change-request-views.service';
 import { PublicationLifecycleService } from './services/publication-lifecycle.service';
@@ -29,6 +32,7 @@ import { PublicationViewsRepository } from './repositories/publication-views.rep
 import { PublicationViewsService } from './services/publication-views.service';
 import { ThreadGenerationEventsConsumer } from './consumers/thread-generation-events.consumer';
 import { PublicationGenerationOwnerService } from './services/publication-generation-owner.service';
+import { PublicationOwnerListService } from './services/publication-owner-list.service';
 import { PublicationGenerationStartService } from './services/publication-generation-start.service';
 import { GenerationPreflightService } from './services/generation-preflight.service';
 import { HealingPoolService } from './services/healing-pool.service';
@@ -53,6 +57,7 @@ import { PublicationGenerationRepairController } from './controllers/publication
   ],
   controllers: [
     PublicationOwnerController,
+    PublicationGenerationStreamController,
     PublicationGenerationController,
     PublicationDiscoveryController,
     PublicationPublicController,
@@ -68,6 +73,8 @@ import { PublicationGenerationRepairController } from './controllers/publication
     ThreadGenerationEventsConsumer,
     PublicationLifecycleService,
     PublicationGenerationOwnerService,
+    PublicationOwnerListService,
+    GenerationProgressStreamService,
     PublicationGenerationStartService,
     GenerationPreflightService,
     HealingPoolService,
@@ -85,6 +92,7 @@ import { PublicationGenerationRepairController } from './controllers/publication
     PublicationPublicReadService,
     PublicationReportModerationService,
     PublicationsRepository,
+    PublicationOwnerPageRepository,
     PublicationChangeRequestsRepository,
     PublicationChangeRequestViewsService,
     ThreadsGenerationClient,

@@ -12,6 +12,7 @@ import type {
 } from '@/types/thread-community.types';
 import type { ThreadServerExportFormat } from '@/types/thread-export.types';
 import type { ThreadRetryResponse } from '@/types/thread-generation-progress.types';
+import type { ThreadListPage, ThreadListQuery } from '@/types/thread-list.types';
 import type {
   OwnedThreadPublication,
   ThreadPublicationExport,
@@ -146,6 +147,16 @@ export const threadPublicationsRepository = {
   },
   async listMine(): Promise<OwnedThreadPublication[]> {
     const response = await apiClient.get<OwnedThreadPublication[]>('/thread-publications/mine');
+    return response.data;
+  },
+  /** One page of the owner's Threads with search and status filter (the Threads list page). */
+  async listMinePage(query: ThreadListQuery): Promise<ThreadListPage> {
+    const response = await apiClient.get<ThreadListPage>('/thread-publications/mine/page', {
+      page: String(query.page),
+      pageSize: String(query.pageSize),
+      status: query.status,
+      ...(query.q === '' ? {} : { q: query.q }),
+    });
     return response.data;
   },
   async startGeneration(request: ThreadGenerationRequest): Promise<StartGenerationResponse> {

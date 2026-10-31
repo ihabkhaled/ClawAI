@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import type { ReactElement } from 'react';
 
 import { ThreadErrorNotice } from '@/components/threads/thread-error-notice';
@@ -12,14 +13,24 @@ import {
 import { useTranslation } from '@/lib/i18n';
 import type { ThreadGenerationDeleteDialogProps } from '@/types/thread-generation-progress.types';
 
-/** Confirm before the owner removes a Thread and everything recorded for its job. */
+/**
+ * Confirm before the owner removes a Thread and everything recorded for its job. Focus starts on
+ * Cancel, so a stray Enter or Space never deletes.
+ */
 export function ThreadGenerationDeleteDialog({
   remove,
 }: ThreadGenerationDeleteDialogProps): ReactElement {
   const { t } = useTranslation();
+  const cancelRef = useRef<HTMLButtonElement>(null);
   return (
     <Dialog open={remove.isOpen} onOpenChange={remove.setOpen}>
-      <DialogContent>
+      <DialogContent
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          cancelRef.current?.focus();
+        }}
+        onCloseAutoFocus={remove.onCloseAutoFocus}
+      >
         <DialogHeader>
           <DialogTitle>{t('chat.threadProgress.deleteTitle')}</DialogTitle>
           <DialogDescription>{t('chat.threadProgress.deleteBody')}</DialogDescription>
@@ -35,7 +46,12 @@ export function ThreadGenerationDeleteDialog({
           >
             {t('chat.threadProgress.deleteConfirm')}
           </Button>
-          <Button type="button" variant="outline" onClick={() => remove.setOpen(false)}>
+          <Button
+            ref={cancelRef}
+            type="button"
+            variant="outline"
+            onClick={() => remove.setOpen(false)}
+          >
             {t('common.cancel')}
           </Button>
         </div>

@@ -1,6 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
+import { ADMIN_SESSIONS_TRANSLATIONS } from './admin-sessions-translations';
 import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
@@ -277,6 +278,12 @@ export const hi: TranslationDictionary = {
     loginEmailNotVerifiedDescription:
       'आपका पासवर्ड सही था, लेकिन यह खाता अभी सक्रिय नहीं हुआ है। हमारे भेजे गए पुष्टिकरण ईमेल को खोलें, उसमें दिए गए लिंक को चुनें और फिर से साइन इन करें।',
     loginEmailNotVerifiedAction: 'मुझे ईमेल नहीं मिला',
+    loginBannedTitle: 'यह खाता प्रतिबंधित है',
+    loginBannedDescription:
+      'एक व्यवस्थापक ने इस खाते को {date} तक प्रतिबंधित किया है। तब तक आप साइन इन नहीं कर सकते।',
+    loginBannedPermanentDescription:
+      'एक व्यवस्थापक ने इस खाते को स्थायी रूप से प्रतिबंधित किया है। आप साइन इन नहीं कर सकते।',
+    loginBannedGeneric: 'यह खाता प्रतिबंधित है।',
     loginSuspendedTitle: 'यह खाता निलंबित कर दिया गया है',
     loginSuspendedDescription:
       'आपका पासवर्ड सही था, लेकिन एक प्रशासक ने इस खाते को निष्क्रिय कर दिया है। यदि आपको लगता है कि यह भूल से हुआ है, तो कृपया सहायता टीम से संपर्क करें।',
@@ -418,6 +425,7 @@ export const hi: TranslationDictionary = {
     adminRoles: 'भूमिकाएँ',
     adminRuntimeProgress: 'रनटाइम डायग्नोस्टिक्स',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.hi.navigationLabel,
+    adminSecuritySessions: ADMIN_SESSIONS_TRANSLATIONS.hi.navigationLabel,
     adminPaymentGateways: 'भुगतान गेटवे',
     adminSmartRouter: 'स्मार्ट राउटर',
     adminModelCosts: 'मॉडल क़ीमतें',
@@ -2269,6 +2277,9 @@ export const hi: TranslationDictionary = {
     // "you may never" and "you may, but not to yourself" are different
     // sentences. See rules/35-super-administrator-and-privilege-boundaries.md.
     errors: {
+      cannotBanSelf: 'आप अपने ही खाते को प्रतिबंधित नहीं कर सकते।',
+      userNotBanned: 'यह खाता प्रतिबंधित नहीं है।',
+      cannotSetOwnPassword: 'अपना पासवर्ड खाता सेटिंग्स से बदलें।',
       superAdminImmutable: 'केवल सुपर एडमिन ही सुपर एडमिन खाता बदल सकता है।',
       superAdminSelfLocked: 'सुपर एडमिन अपने ही खाते में यह बदलाव नहीं कर सकता।',
       superAdminRequired: 'यह कार्य केवल सुपर एडमिन ही कर सकता है।',
@@ -2367,6 +2378,74 @@ export const hi: TranslationDictionary = {
 
     editUserCancel: 'रद्द करें',
 
+    colRegistration: 'पंजीकरण स्थान',
+    presenceOnline: 'अभी ऑनलाइन',
+    presenceRecent: 'पिछले 24 घंटों में सक्रिय',
+    presenceOffline: 'ऑफ़लाइन',
+    presenceOnlineNow: 'अभी ऑनलाइन',
+    presenceActive24h: 'पिछले 24 घंटों में सक्रिय',
+    presenceBannedNow: 'अभी प्रतिबंधित',
+    presenceActiveNow: 'अभी सक्रिय',
+    viewUserDetails: 'विवरण देखें',
+    userDetailTitle: 'उपयोगकर्ता विवरण',
+    userDetailDescription: 'खाते की जानकारी। केवल व्यवस्थापकों को दिखती है।',
+    detailName: 'नाम',
+    detailPhone: 'फ़ोन',
+    detailRegistrationIp: 'पंजीकरण IP',
+    detailRegistrationCountry: 'पंजीकरण देश',
+    detailRegisteredOn: 'पंजीकरण की तिथि',
+    detailLastOnline: 'आख़िरी बार ऑनलाइन',
+    detailActivity: 'गतिविधि',
+    detailBanState: 'प्रतिबंध',
+    detailNotBanned: 'प्रतिबंधित नहीं',
+    detailBannedPermanent: 'स्थायी रूप से प्रतिबंधित',
+    detailBannedUntil: '{date} तक प्रतिबंधित',
+    detailBanReason: 'प्रतिबंध का कारण',
+    detailMustChangePassword: 'पासवर्ड बदलना ज़रूरी',
+    banAction: 'प्रतिबंधित करें',
+    unbanAction: 'प्रतिबंध हटाएँ',
+    bannedBadge: 'प्रतिबंधित',
+    banDialogTitle: '{username} को प्रतिबंधित करें',
+    banDialogDescription:
+      'उपयोगकर्ता तुरंत हर जगह साइन आउट हो जाएगा और प्रतिबंध समाप्त होने तक साइन इन नहीं कर पाएगा।',
+    banUnit: 'अवधि की इकाई',
+    banAmount: 'मात्रा',
+    banUnitMinutes: 'मिनट',
+    banUnitHours: 'घंटे',
+    banUnitDays: 'दिन',
+    banUnitLifetime: 'आजीवन',
+    banAmountInvalid: '1 या उससे बड़ी पूर्ण संख्या दर्ज करें।',
+    banReason: 'कारण',
+    banReasonPlaceholder: 'इस खाते को प्रतिबंधित क्यों किया जा रहा है?',
+    banReasonRequired: 'कारण देना ज़रूरी है।',
+    banConfirm: 'उपयोगकर्ता को प्रतिबंधित करें',
+    userBanned: 'उपयोगकर्ता प्रतिबंधित हुआ',
+    userBanFailed: 'उपयोगकर्ता को प्रतिबंधित नहीं किया जा सका',
+    userUnbanned: 'उपयोगकर्ता का प्रतिबंध हटाया गया',
+    userUnbanFailed: 'उपयोगकर्ता का प्रतिबंध नहीं हटाया जा सका',
+    setPasswordAction: 'पासवर्ड सेट करें',
+    setPasswordTitle: '{username} के लिए पासवर्ड सेट करें',
+    setPasswordDescription:
+      'उपयोगकर्ता हर जगह साइन आउट हो जाएगा और अगली बार साइन इन करते समय नया पासवर्ड चुनना होगा।',
+    setPasswordMode: 'पासवर्ड कैसे सेट करें',
+    setPasswordModeGenerate: 'जनरेट करें',
+    setPasswordModeManual: 'स्वयं लिखें',
+    setPasswordGenerateHint:
+      'सर्वर पर एक मज़बूत यादृच्छिक पासवर्ड बनता है और केवल एक बार दिखाया जाता है।',
+    setPasswordGenerateConfirm: 'जनरेट करके सेट करें',
+    setPasswordManualLabel: 'नया पासवर्ड',
+    setPasswordManualHint: 'कम से कम 8 अक्षर, जिनमें एक बड़ा अक्षर, एक छोटा अक्षर और एक संख्या हो।',
+    setPasswordConfirm: 'पासवर्ड सेट करें',
+    setPasswordGeneratedTitle: 'पासवर्ड सेट हो गया। इसे उपयोगकर्ता को दें:',
+    setPasswordGeneratedWarning:
+      'इसे अभी कॉपी करें। यह केवल एक बार दिखता है और कहीं सहेजा नहीं जाता।',
+    setPasswordCopy: 'पासवर्ड कॉपी करें',
+    setPasswordDone: 'हो गया',
+    setPasswordFailed: 'पासवर्ड सेट नहीं किया जा सका',
+    setPasswordSucceeded: 'पासवर्ड सेट हो गया',
+    editUserPhone: 'फ़ोन',
+    editUserPhoneHint: 'अंतरराष्ट्रीय प्रारूप, जैसे +201001234567। हटाने के लिए खाली छोड़ें।',
+    editUserPhoneInvalid: 'अंतरराष्ट्रीय प्रारूप का उपयोग करें, जैसे +201001234567।',
     editUserRotatePassword: 'पासवर्ड बदलें',
     userUpdated: 'उपयोगकर्ता अपडेट हुआ',
     userUpdateFailed: 'उपयोगकर्ता अपडेट नहीं हुआ',
@@ -4843,6 +4922,7 @@ export const hi: TranslationDictionary = {
     failed: 'रिफ़ंड जारी नहीं किया जा सका।',
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.hi.section,
+  adminSessions: ADMIN_SESSIONS_TRANSLATIONS.hi.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.hi,
   narration: NARRATION_TRANSLATIONS.hi,
   pickedModel: PICKED_MODEL_TRANSLATIONS.hi,

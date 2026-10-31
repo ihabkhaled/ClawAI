@@ -17,3 +17,20 @@ test('publication gateway route stays separate from legacy chat threads', async 
   assert.match(configs[0], /set \$threads_backend https:\/\/threads-service:4019;/u);
   assert.match(configs[1], /set \$backend https:\/\/\$origin_threads;/u);
 });
+
+test('generation progress stream is unbuffered with a long read timeout in every nginx variant', async () => {
+  const configs = await Promise.all([
+    readFile(new URL('../../infra/nginx/locations.conf', import.meta.url), 'utf8'),
+    readFile(new URL('../../infra/nginx/nginx.distributed.conf.template', import.meta.url), 'utf8'),
+  ]);
+  const route = /location\s+~\s+\^\/api\/v1\/thread-publications\/\[\^\/\]\+\/generation-progress\/stream\$\s*\{([\s\S]*?)\n\s*\}/u;
+
+  for (const config of configs) {
+    const block = config.match(route);
+    assert.ok(block, 'stream location is declared');
+    assert.match(block[1], /proxy_buffering off;/u);
+    assert.match(block[1], /proxy_cache off;/u);
+    assert.match(block[1], /proxy_read_timeout 86400;/u);
+    assert.match(block[1], /proxy_set_header X-Real-IP/u);
+  }
+});

@@ -4173,6 +4173,11 @@
         },
         {
           "method": "GET",
+          "route": "/thread-publications/mine/page",
+          "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-list.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/thread-publications/public/:slug",
           "source": "apps/claw-threads-service/src/modules/publications/controllers/publication-public.controller.ts"
         },
@@ -10383,6 +10388,12 @@
       },
       {
         "location": "~",
+        "port": 4019,
+        "service": "threads-service",
+        "source": "infra/nginx/locations.conf"
+      },
+      {
+        "location": "~",
         "port": 4008,
         "service": "ollama-service",
         "source": "infra/nginx/locations.conf"
@@ -12348,7 +12359,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 1000
+        "testFiles": 1011
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -12396,7 +12407,7 @@
       },
       "claw-threads-service": {
         "runner": "vitest",
-        "testFiles": 125
+        "testFiles": 134
       },
       "claw-workspace-service": {
         "runner": "vitest",
@@ -13243,19 +13254,19 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 58,
-    "endpointCount": 950,
+    "endpointCount": 951,
     "envVarCount": 386,
     "eventCount": 190,
     "frontendRouteCount": 182,
     "localeCount": 13,
-    "nginxRouteCount": 71,
+    "nginxRouteCount": 72,
     "permissionCount": 94,
     "portCount": 19,
     "portCoverageGapCount": 2,
     "serviceCount": 21,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2778,
+    "totalTestFiles": 2798,
     "workspaceCount": 28
   }
 }

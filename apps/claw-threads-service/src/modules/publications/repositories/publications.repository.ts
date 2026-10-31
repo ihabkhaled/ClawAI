@@ -3,6 +3,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import {
   Prisma,
   PublicationCommentStatus,
+  PublicationGenerationState,
   PublicationReactionValue,
   PublicationReportStatus,
   PublicationSafetyStatus,
@@ -21,6 +22,7 @@ import {
 import { OWNER_DELETABLE_PUBLICATION_STATUSES } from '../constants/publication-generation-owner.constants';
 import {
   PUBLISH_RACE_PASSES,
+  PUBLISHABLE_REVISION_WHERE,
   REPUBLISHABLE_STATUSES,
 } from '../constants/publication-publish.constants';
 import {
@@ -349,13 +351,7 @@ export class PublicationsRepository {
             status: true,
             publishedAt: true,
             revisions: {
-              where: {
-                reviewStatus: {
-                  in: [RevisionReviewStatus.READY_FOR_REVIEW, RevisionReviewStatus.OWNER_APPROVED],
-                },
-                safetyStatus: PublicationSafetyStatus.APPROVED,
-                indexEligible: true,
-              },
+              where: PUBLISHABLE_REVISION_WHERE,
               orderBy: { revision: 'desc' },
               take: 1,
               select: { id: true, title: true, content: true, reviewStatus: true },
@@ -946,7 +942,15 @@ export class PublicationsRepository {
         generationJobId: previousJobId,
         status: PublicationStatus.DRAFT,
       },
-      data: { generationJobId: newJobId },
+      // A new job starts the state over; the failure of the previous one no longer applies.
+      data: {
+        generationJobId: newJobId,
+        generationState: PublicationGenerationState.GENERATING,
+        generationFailureCode: null,
+        generationFailureStep: null,
+        generationFailureRetryable: null,
+        generationStateCheckedAt: null,
+      },
     });
     return result.count === 1;
   }

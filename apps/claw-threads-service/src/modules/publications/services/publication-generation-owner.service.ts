@@ -47,6 +47,11 @@ export class PublicationGenerationOwnerService {
     }
   }
 
+  /** The job behind an owned publication; a stranger and an unknown id both get the same 404. */
+  async getOwnedJobId(publicationId: string, ownerId: string): Promise<string> {
+    return (await this.requireOwned(publicationId, ownerId)).generationJobId;
+  }
+
   /**
    * A retry is a new paid generation, so it passes the same checks as a start (models known, on
    * the plan with fallbacks, spend cap, permission, active cap) on the models it will really use,
@@ -129,11 +134,13 @@ export class PublicationGenerationOwnerService {
   }
 
   async delete(publicationId: string, ownerId: string): Promise<DeleteGenerationResult> {
-    const owned = await this.requireOwned(publicationId, ownerId);
+    // A publication without a job (older draft, import) has nothing upstream to remove.
+    const owned = await this.publications.findOwnedGeneration(publicationId, ownerId);
+    if (!owned) throw new NotFoundException(PUBLICATION_NOT_FOUND_MESSAGE);
     if (!OWNER_DELETABLE_PUBLICATION_STATUSES.includes(owned.status)) {
       throw new ConflictException('Unpublish the publication before deleting it');
     }
-    await this.removeUpstreamJob(owned.generationJobId, ownerId);
+    if (owned.generationJobId) await this.removeUpstreamJob(owned.generationJobId, ownerId);
     if (!(await this.publications.deleteOwnedUnpublished(publicationId, ownerId))) {
       throw new ConflictException('Publication changed during deletion');
     }

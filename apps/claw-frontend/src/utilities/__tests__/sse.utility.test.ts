@@ -227,4 +227,58 @@ describe('sse.utility', () => {
 
     connection.close();
   });
+  describe('reconnect options', () => {
+    afterEach(() => vi.useRealTimers());
+
+    it('gives up after maxAttempts reconnects and reports exhaustion', async () => {
+      vi.useFakeTimers();
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('offline'));
+      const onError = vi.fn();
+      const connection = connectSse(
+        'http://localhost/stream',
+        { onMessage: vi.fn(), onError },
+        { maxAttempts: 2 },
+      );
+      await vi.advanceTimersByTimeAsync(60_000);
+      expect(fetchSpy).toHaveBeenCalledTimes(3);
+      expect(onError).toHaveBeenLastCalledWith(
+        expect.objectContaining({ message: 'SSE reconnect attempts exhausted' }),
+      );
+      connection.close();
+    });
+
+    it('adds up to the jitter ratio to each back-off delay', async () => {
+      vi.useFakeTimers();
+      vi.spyOn(Math, 'random').mockReturnValue(1);
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('offline'));
+      const connection = connectSse(
+        'http://localhost/stream',
+        { onMessage: vi.fn(), onError: vi.fn() },
+        { maxAttempts: 3, jitterRatio: 0.5 },
+      );
+      await vi.advanceTimersByTimeAsync(1400);
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(200);
+      expect(fetchSpy).toHaveBeenCalledTimes(2);
+      connection.close();
+    });
+
+    it('starts the back-off over after a connection that was live', async () => {
+      vi.useFakeTimers();
+      const fetchSpy = vi
+        .spyOn(globalThis, 'fetch')
+        .mockImplementation(() =>
+          Promise.resolve(new Response(createMockStream(['data: {"a":1}\n\n']), { status: 200 })),
+        );
+      const connection = connectSse(
+        'http://localhost/stream',
+        { onMessage: vi.fn(), onError: vi.fn() },
+        { maxAttempts: 1, resetAttemptsAfterLive: true },
+      );
+      // Every connection is live and then closed cleanly: without the reset it would stop after one.
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(fetchSpy.mock.calls.length).toBeGreaterThan(3);
+      connection.close();
+    });
+  });
 });

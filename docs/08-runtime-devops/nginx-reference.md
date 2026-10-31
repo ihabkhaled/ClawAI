@@ -151,6 +151,22 @@ location /api/v1/chat-messages/stream {
 }
 ```
 
+### Thread generation progress stream (ADR-201)
+
+```nginx
+location ~ ^/api/v1/thread-publications/[^/]+/generation-progress/stream$ {
+    set $threads_stream_backend https://threads-service:4019;
+    proxy_pass $threads_stream_backend;
+    proxy_http_version 1.1;
+    proxy_set_header Connection "";
+    proxy_read_timeout 86400;
+    proxy_buffering off;
+    proxy_cache off;
+}
+```
+
+A regex location, so it beats the plain `/api/v1/thread-publications` prefix. It exists in `infra/nginx/locations.conf` and in `infra/nginx/nginx.distributed.conf.template` (restate the client-address headers as in the chat stream block). The dev and production nginx bind-mount single config files, so after editing either one RESTART the nginx container; a reload keeps serving the old inode.
+
 ### Image Generation SSE
 
 ```nginx

@@ -1,6 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
+import { ADMIN_SESSIONS_TRANSLATIONS } from './admin-sessions-translations';
 import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
@@ -270,6 +271,11 @@ export const th: TranslationDictionary = {
     loginEmailNotVerifiedDescription:
       'รหัสผ่านของท่านถูกต้อง แต่บัญชีนี้ยังไม่ได้เปิดใช้งาน กรุณาเปิดอีเมลยืนยันที่เราส่งให้ แล้วเลือกลิงก์ในอีเมลนั้น จากนั้นจึงเข้าสู่ระบบอีกครั้ง',
     loginEmailNotVerifiedAction: 'ไม่ได้รับอีเมล',
+    loginBannedTitle: 'บัญชีนี้ถูกระงับ',
+    loginBannedDescription:
+      'ผู้ดูแลระบบระงับบัญชีนี้จนถึง {date} คุณไม่สามารถเข้าสู่ระบบได้ก่อนหน้านั้น',
+    loginBannedPermanentDescription: 'ผู้ดูแลระบบระงับบัญชีนี้ถาวร คุณไม่สามารถเข้าสู่ระบบได้',
+    loginBannedGeneric: 'บัญชีนี้ถูกระงับ',
     loginSuspendedTitle: 'บัญชีนี้ถูกระงับการใช้งาน',
     loginSuspendedDescription:
       'รหัสผ่านของท่านถูกต้อง แต่ผู้ดูแลระบบได้ปิดการใช้งานบัญชีนี้ไว้ หากท่านเห็นว่าเป็นความผิดพลาด กรุณาติดต่อฝ่ายสนับสนุน',
@@ -410,6 +416,7 @@ export const th: TranslationDictionary = {
     adminRoles: 'บทบาท',
     adminRuntimeProgress: 'การวินิจฉัยรันไทม์',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.th.navigationLabel,
+    adminSecuritySessions: ADMIN_SESSIONS_TRANSLATIONS.th.navigationLabel,
     adminPaymentGateways: 'เกตเวย์การชำระเงิน',
     adminSmartRouter: 'สมาร์ทเราเตอร์',
     adminModelCosts: 'ราคาโมเดล',
@@ -2214,6 +2221,9 @@ export const th: TranslationDictionary = {
     // "you may never" and "you may, but not to yourself" are different
     // sentences. See rules/35-super-administrator-and-privilege-boundaries.md.
     errors: {
+      cannotBanSelf: 'คุณไม่สามารถระงับบัญชีของตัวเองได้',
+      userNotBanned: 'บัญชีนี้ไม่ได้ถูกระงับ',
+      cannotSetOwnPassword: 'เปลี่ยนรหัสผ่านของคุณเองได้ในการตั้งค่าบัญชี',
       superAdminImmutable: 'มีเพียงผู้ดูแลระบบสูงสุดเท่านั้นที่แก้ไขบัญชีผู้ดูแลระบบสูงสุดได้',
       superAdminSelfLocked: 'ผู้ดูแลระบบสูงสุดไม่สามารถทำการเปลี่ยนแปลงนี้กับบัญชีของตนเองได้',
       superAdminRequired: 'เฉพาะผู้ดูแลระบบสูงสุดเท่านั้นที่ทำสิ่งนี้ได้',
@@ -2310,6 +2320,72 @@ export const th: TranslationDictionary = {
 
     editUserCancel: 'ยกเลิก',
 
+    colRegistration: 'ลงทะเบียนจาก',
+    presenceOnline: 'ออนไลน์อยู่ตอนนี้',
+    presenceRecent: 'ใช้งานใน 24 ชั่วโมงที่ผ่านมา',
+    presenceOffline: 'ออฟไลน์',
+    presenceOnlineNow: 'ออนไลน์อยู่ตอนนี้',
+    presenceActive24h: 'ใช้งานใน 24 ชั่วโมงที่ผ่านมา',
+    presenceBannedNow: 'ถูกระงับอยู่ตอนนี้',
+    presenceActiveNow: 'ใช้งานอยู่ตอนนี้',
+    viewUserDetails: 'ดูรายละเอียด',
+    userDetailTitle: 'รายละเอียดผู้ใช้',
+    userDetailDescription: 'ข้อมูลบัญชี แสดงเฉพาะผู้ดูแลระบบ',
+    detailName: 'ชื่อ',
+    detailPhone: 'โทรศัพท์',
+    detailRegistrationIp: 'IP ที่ลงทะเบียน',
+    detailRegistrationCountry: 'ประเทศที่ลงทะเบียน',
+    detailRegisteredOn: 'วันที่ลงทะเบียน',
+    detailLastOnline: 'ออนไลน์ล่าสุด',
+    detailActivity: 'กิจกรรม',
+    detailBanState: 'การระงับ',
+    detailNotBanned: 'ไม่ถูกระงับ',
+    detailBannedPermanent: 'ถูกระงับถาวร',
+    detailBannedUntil: 'ถูกระงับจนถึง {date}',
+    detailBanReason: 'เหตุผลการระงับ',
+    detailMustChangePassword: 'ต้องเปลี่ยนรหัสผ่าน',
+    banAction: 'ระงับ',
+    unbanAction: 'ยกเลิกการระงับ',
+    bannedBadge: 'ถูกระงับ',
+    banDialogTitle: 'ระงับ {username}',
+    banDialogDescription:
+      'ผู้ใช้จะถูกออกจากระบบทุกที่ทันที และเข้าสู่ระบบไม่ได้จนกว่าการระงับจะสิ้นสุด',
+    banUnit: 'หน่วยระยะเวลา',
+    banAmount: 'จำนวน',
+    banUnitMinutes: 'นาที',
+    banUnitHours: 'ชั่วโมง',
+    banUnitDays: 'วัน',
+    banUnitLifetime: 'ตลอดชีพ',
+    banAmountInvalid: 'กรอกจำนวนเต็มตั้งแต่ 1 ขึ้นไป',
+    banReason: 'เหตุผล',
+    banReasonPlaceholder: 'ทำไมจึงระงับบัญชีนี้',
+    banReasonRequired: 'ต้องระบุเหตุผล',
+    banConfirm: 'ระงับผู้ใช้',
+    userBanned: 'ระงับผู้ใช้แล้ว',
+    userBanFailed: 'ไม่สามารถระงับผู้ใช้ได้',
+    userUnbanned: 'ยกเลิกการระงับผู้ใช้แล้ว',
+    userUnbanFailed: 'ไม่สามารถยกเลิกการระงับผู้ใช้ได้',
+    setPasswordAction: 'ตั้งรหัสผ่าน',
+    setPasswordTitle: 'ตั้งรหัสผ่านให้ {username}',
+    setPasswordDescription:
+      'ผู้ใช้จะถูกออกจากระบบทุกที่ และต้องเลือกรหัสผ่านใหม่เมื่อเข้าสู่ระบบครั้งถัดไป',
+    setPasswordMode: 'วิธีตั้งรหัสผ่าน',
+    setPasswordModeGenerate: 'สร้างอัตโนมัติ',
+    setPasswordModeManual: 'พิมพ์เอง',
+    setPasswordGenerateHint: 'เซิร์ฟเวอร์สร้างรหัสผ่านสุ่มที่รัดกุมและแสดงเพียงครั้งเดียว',
+    setPasswordGenerateConfirm: 'สร้างและตั้งค่า',
+    setPasswordManualLabel: 'รหัสผ่านใหม่',
+    setPasswordManualHint: 'อย่างน้อย 8 ตัวอักษร ประกอบด้วยตัวพิมพ์ใหญ่ ตัวพิมพ์เล็ก และตัวเลข',
+    setPasswordConfirm: 'ตั้งรหัสผ่าน',
+    setPasswordGeneratedTitle: 'ตั้งรหัสผ่านแล้ว ส่งให้ผู้ใช้:',
+    setPasswordGeneratedWarning: 'คัดลอกตอนนี้ รหัสผ่านแสดงเพียงครั้งเดียวและไม่ถูกเก็บไว้ที่ใด',
+    setPasswordCopy: 'คัดลอกรหัสผ่าน',
+    setPasswordDone: 'เสร็จสิ้น',
+    setPasswordFailed: 'ไม่สามารถตั้งรหัสผ่านได้',
+    setPasswordSucceeded: 'ตั้งรหัสผ่านแล้ว',
+    editUserPhone: 'โทรศัพท์',
+    editUserPhoneHint: 'รูปแบบสากล เช่น +201001234567 เว้นว่างไว้เพื่อลบ',
+    editUserPhoneInvalid: 'ใช้รูปแบบสากล เช่น +201001234567',
     editUserRotatePassword: 'เปลี่ยนรหัสผ่าน',
     userUpdated: 'อัปเดตผู้ใช้แล้ว',
     userUpdateFailed: 'อัปเดตผู้ใช้ไม่สำเร็จ',
@@ -4768,6 +4844,7 @@ export const th: TranslationDictionary = {
     failed: 'ไม่สามารถออกเงินคืนได้',
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.th.section,
+  adminSessions: ADMIN_SESSIONS_TRANSLATIONS.th.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.th,
   narration: NARRATION_TRANSLATIONS.th,
   pickedModel: PICKED_MODEL_TRANSLATIONS.th,

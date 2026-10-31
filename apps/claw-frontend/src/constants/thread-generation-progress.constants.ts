@@ -165,3 +165,30 @@ export const THREAD_FOLLOW_BOTTOM_THRESHOLD_PX = 24;
 
 /** Keys that mean the reader is scrolling up on purpose, so the page stops following. */
 export const THREAD_FOLLOW_STOP_KEYS: readonly string[] = ['PageUp', 'ArrowUp', 'Home'];
+
+/** Reconnect attempts of the progress stream before it falls back to polling for a while. */
+export const THREAD_PROGRESS_STREAM_MAX_RECONNECTS = 4;
+
+/** Random spread added to each stream back-off delay, as a fraction of the delay. */
+export const THREAD_PROGRESS_STREAM_JITTER_RATIO = 0.3;
+
+/** A tab hidden for longer than this closes its stream; showing it again opens a fresh one. */
+export const THREAD_PROGRESS_STREAM_HIDDEN_PAUSE_MS = 60_000;
+
+/** While polling because the stream failed, try the stream again after this long. */
+export const THREAD_PROGRESS_STREAM_RETRY_AFTER_FALLBACK_MS = 30_000;
+
+/** How many times a fallback tries the stream again before it stays on polling. */
+export const THREAD_PROGRESS_STREAM_MAX_FALLBACK_RETRIES = 3;
+
+/** Slowest allowed gap between two follow-scroll frames before the easing step is clamped, in ms. */
+export const THREAD_FOLLOW_MAX_FRAME_MS = 50;
+
+/** Time constant of the follow-scroll easing: about 95% of the distance is covered in three of these. */
+export const THREAD_FOLLOW_EASE_TIME_CONSTANT_MS = 110;
+
+/** Distance under which the follow-scroll snaps to the bottom instead of easing, in pixels. */
+export const THREAD_FOLLOW_SNAP_PX = 1;
+
+/** Assumed length of the first follow-scroll frame, which has no earlier frame to measure against, in ms. */
+export const THREAD_FOLLOW_FIRST_FRAME_MS = 16;

@@ -9,8 +9,13 @@ import type {
   ThreadGenerationStep,
   ThreadGenerationStepRoleKind,
 } from '@claw/shared-types';
+import type { QueryClient } from '@tanstack/react-query';
 import type { RefObject } from 'react';
 
+import type {
+  ThreadProgressStreamMessageType,
+  ThreadProgressStreamMode,
+} from '@/enums/thread-progress-stream.enum';
 import type { ModelSelection } from '@/types/component.types';
 import type {
   ThreadGenerationFormController,
@@ -131,6 +136,8 @@ export type ThreadDeleteController = {
   confirm: () => void;
   isDeleting: boolean;
   error: ThreadErrorMessage | null;
+  /** Where focus goes when the dialog closes; unset keeps the default (back to the trigger). */
+  onCloseAutoFocus?: (event: Event) => void;
 };
 
 export type ThreadProgressPanelController = {
@@ -174,6 +181,30 @@ export type BuildThreadRetryRequestInput = {
   refreshResearch?: boolean;
   /** Gap texts the owner ticked; only the ones the failed review listed are sent. */
   acceptedEvidenceGaps?: string[];
+};
+
+/** One decoded message of the progress stream (ADR-201). */
+export type ThreadProgressStreamMessage =
+  | { type: ThreadProgressStreamMessageType.Progress; progress: ThreadGenerationProgress }
+  | {
+      type:
+        | ThreadProgressStreamMessageType.Terminal
+        | ThreadProgressStreamMessageType.Heartbeat
+        | ThreadProgressStreamMessageType.Reconnect
+        | ThreadProgressStreamMessageType.Gone;
+    }
+  | { type: ThreadProgressStreamMessageType.Error; code: string };
+
+/** What the stream hook needs from the progress hook. */
+export type ThreadProgressStreamOptions = {
+  publicationId: string;
+  queryKey: readonly string[];
+  queryClient: QueryClient;
+  /** False once the job is terminal or the Thread is not the viewer's: no stream is open then. */
+  enabled: boolean;
+  onMode: (mode: ThreadProgressStreamMode) => void;
+  /** Called for every snapshot the stream wrote into the cache. */
+  onApplied: () => void;
 };
 
 export type UseThreadGenerationProgressResult = {
