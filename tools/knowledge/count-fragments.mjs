@@ -69,7 +69,7 @@ export function countFragmentProblems(values) {
   return problems;
 }
 
-function listFragmentDocs() {
+export function listFragmentDocs() {
   try {
     return docsWithFragments();
   } catch {

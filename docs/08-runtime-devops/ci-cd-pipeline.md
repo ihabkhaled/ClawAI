@@ -7,13 +7,14 @@ change type, is the gate matrix in
 
 ## Workflows
 
-| Workflow                                                                 | Trigger                                  | Role                                                         |
-| ------------------------------------------------------------------------ | ---------------------------------------- | ------------------------------------------------------------ |
-| [`ci.yml`](../../.github/workflows/ci.yml)                               | every pull request; push to main/develop | Required checks feed `CI success`; Policy is advisory.       |
-| [`ai-native-os.yml`](../../.github/workflows/ai-native-os.yml)           | push to main/develop; pull request       | Separate advisory checks for knowledge, docs, QA and tooling |
-| [`release.yml`](../../.github/workflows/release.yml)                     | `CI` completed successfully on main      | Version bump, tag, GitHub release, then deploy               |
-| [`deploy-production.yml`](../../.github/workflows/deploy-production.yml) | called by `release.yml`                  | Deploys the exact release commit                             |
-| [`lighthouse.yml`](../../.github/workflows/lighthouse.yml)               | frontend paths                           | Lighthouse CI budgets and accessibility                      |
+| Workflow                                                                           | Trigger                                  | Role                                                                                             |
+| ---------------------------------------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| [`ci.yml`](../../.github/workflows/ci.yml)                                         | every pull request; push to main/develop | Required checks feed `CI success`; Policy is advisory.                                           |
+| [`ai-native-os.yml`](../../.github/workflows/ai-native-os.yml)                     | push to main/develop; pull request       | Separate advisory checks for knowledge, docs, QA and tooling                                     |
+| [`release.yml`](../../.github/workflows/release.yml)                               | `CI` completed successfully on main      | Version bump, tag, GitHub release, then deploy                                                   |
+| [`deploy-production.yml`](../../.github/workflows/deploy-production.yml)           | called by `release.yml`                  | Deploys the exact release commit                                                                 |
+| [`dependency-remediation.yml`](../../.github/workflows/dependency-remediation.yml) | daily cron; manual                       | Pins patched releases of new production advisories and pushes one `chore(deps)` commit (ADR-202) |
+| [`lighthouse.yml`](../../.github/workflows/lighthouse.yml)                         | frontend paths                           | Lighthouse CI budgets and accessibility                                                          |
 
 Node comes from [`.nvmrc`](../../.nvmrc) in every workflow. Third-party actions are
 pinned to commit SHAs; downloaded tools (gitleaks, actionlint) are pinned to a
@@ -129,3 +130,7 @@ The Lighthouse audit job uploads `apps/claw-frontend/.lighthouseci` with `includ
 (a hidden directory is skipped by default, so a failed run used to keep no report). Download the
 `lighthouse-reports-<shard>` artifact of a failed run to read the failing audit; the diagnosis recipe is in
 [lighthouse-ci.md](../09-testing/lighthouse-ci.md).
+
+## Local and CI cannot drift (ADR-202)
+
+`tools/gates/registry.mjs` claims every job of every workflow (and every `policy` step) with its local enforcement point and its auto-fix, or the reason a human must decide. `tools/__tests__/gate-registry.test.mjs` fails when a job is added without an entry. Plain `git commit` / `git push` repair format, generated files, ratchet baselines and dependency pins; QA evidence, the `Docs:` trailer, secrets and failing tests stay human decisions.

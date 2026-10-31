@@ -122,3 +122,7 @@ regeneration is step 3.
 If a generated file is wrong, fix the **generator or its input**, then
 regenerate. Editing `.ai/manifests/*.json` or a workspace `AGENTS.md` by hand is
 overwritten on the next build and hides the real problem.
+
+### Count fragments are staged by the hook
+
+Docs that carry generated test/workspace counts (`context/testing-map.md`, `context/workspace-map.md`, `docs/15-ai-context/ai-context-pack.md`, the wiki pages) are rewritten by `knowledge:build`. The pre-commit knowledge step now stages them (ADR-202, `tools/knowledge/count-fragments.mjs` `listFragmentDocs`), so pre-push never finds a stale count; if one is still stale, `git push` regenerates and commits it as `chore(knowledge): refresh generated files`.

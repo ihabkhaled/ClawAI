@@ -1,0 +1,70 @@
+name: Dependency remediation
+
+# A new high/critical advisory in a production dependency is EXTERNAL state: no
+# commit caused it, so a gate that only reports it leaves main red until someone
+# notices (ADR-202). This daily job runs the same remediation the commit and push
+# hooks run (tools/security/audit-fix.mjs): pin the patched release with an
+# `overrides` entry, regenerate and verify the lockfile, then push ONE
+# `chore(deps)` commit to main with the built-in GITHUB_TOKEN - the same way
+# release.yml pushes its version commit. Like that commit, it does not start a
+# new push-triggered run (platform loop guard); the next normal push is gated as
+# usual, and the advisory `policy` job in ci.yml re-audits it.
+#
+# It never edits tools/security/audit-allowlist.json and never weakens the
+# audit: an advisory with no patched release fails this job with the exact
+# allowlist entry a reviewer must write (reason, reviewedBy, expiry).
+
+on:
+  schedule:
+    - cron: '41 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: dependency-remediation
+  cancel-in-progress: false
+
+jobs:
+  remediate:
+    name: Patch new production advisories
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: ./.github/actions/prepare
+        with:
+          build-outputs: 'false'
+      - name: Pin patched releases and verify the lockfile
+        run: node tools/security/audit-fix.mjs --ci
+      - name: Prove the result (audit, clean install)
+        run: |
+          node tools/security/npm-audit.mjs
+          npm ci --dry-run --ignore-scripts --no-audit --no-fund
+      - name: Push a chore(deps) commit when the manifests changed
+        run: |
+          if git diff --quiet -- package.json package-lock.json; then
+            echo "No unreviewed advisory; nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit --quiet \
+            -m "chore(deps): patch production dependency advisories" \
+            -m "Pinned by tools/security/audit-fix.mjs (daily dependency-remediation run); re-audited clean." \
+            -m "Docs: none - dependency pin applied by tools/security/audit-fix.mjs, no doc describes this version"
+          for attempt in 1 2 3; do
+            if git push origin HEAD:refs/heads/main; then
+              echo "Pushed $(git rev-parse --short HEAD)."
+              exit 0
+            fi
+            echo "::warning::push rejected on attempt $attempt (main moved) - rebasing"
+            git pull --rebase --quiet origin main
+            sleep $((attempt * 5))
+          done
+          echo "::error::could not push the remediation commit"
+          exit 1

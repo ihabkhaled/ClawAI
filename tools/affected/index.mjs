@@ -23,6 +23,7 @@ import { extractTests, extractWorkspaces } from '../lib/extractors.mjs';
 import { assertCommit, git, gitLines, resolveDefaultBase } from '../lib/git.mjs';
 import { npmInvocation } from '../lib/npm.mjs';
 import { isMain, repoPath } from '../lib/repo.mjs';
+import { listFragmentDocs } from '../knowledge/count-fragments.mjs';
 import { recordReceipt } from '../gates/receipt.mjs';
 import { formatSummary, gateJobs, runPool } from './pool.mjs';
 import { planRootChecks } from './root-checks.mjs';
@@ -220,7 +221,9 @@ export function touchesDeploy(files) {
 
 /** Production Dockerfiles among the changed files (the CI image scan builds and scans each). */
 export function changedDockerfiles(files) {
-  return files.filter((file) => PRODUCTION_DOCKERFILE.test(file) && existsSync(repoPath(file))).sort();
+  return files
+    .filter((file) => PRODUCTION_DOCKERFILE.test(file) && existsSync(repoPath(file)))
+    .sort();
 }
 
 const SOURCE_FILE = /\/src\/.+\.(?:ts|tsx|mts|js|jsx)$/u;
@@ -268,7 +271,12 @@ export function planGate(
   script,
   result,
   workspaces,
-  { expandRoot = false, related = false, kinds = defaultKinds(script), testWorkers = testConcurrency().workersPerSuite } = {},
+  {
+    expandRoot = false,
+    related = false,
+    kinds = defaultKinds(script),
+    testWorkers = testConcurrency().workersPerSuite,
+  } = {},
 ) {
   const byName = new Map(workspaces.map((ws) => [ws.name, ws]));
   const has = (name, s) => byName.get(name)?.scripts.includes(s) ?? false;
@@ -280,7 +288,9 @@ export function planGate(
 
   const tasks = scoped.map((entry) => {
     if (script !== 'test') return npmTask(entry.name, ['run', script, '--workspace', entry.name]);
-    const invocation = related ? testInvocation(entry, byName.get(entry.name)) : { script: 'test', args: [] };
+    const invocation = related
+      ? testInvocation(entry, byName.get(entry.name))
+      : { script: 'test', args: [] };
     const label = `${entry.name}${invocation.script === 'test:related' ? ' (related)' : ''}`;
     return npmTask(label, [
       'run',
@@ -329,7 +339,9 @@ function largestSuitesFirst(tasks, scope) {
  */
 export function poolableTasks(script, tasks, scope, workspaces) {
   if (script !== 'build') return { pooled: tasks, builtInOrder: [] };
-  const shared = new Set(workspaces.filter((ws) => ws.type === 'shared-package').map((ws) => ws.name));
+  const shared = new Set(
+    workspaces.filter((ws) => ws.type === 'shared-package').map((ws) => ws.name),
+  );
   return {
     pooled: tasks.filter((_, index) => !shared.has(scope[index])),
     builtInOrder: scope.filter((name) => shared.has(name)),
@@ -340,13 +352,18 @@ export function poolableTasks(script, tasks, scope, workspaces) {
 export async function runGate(script, result, options = {}) {
   const workspaces = loadWorkspaces();
   const { scope, tasks } = planGate(script, result, workspaces, options);
-  const label = result.rootInvariant && options.expandRoot ? '(root invariant — ALL workspaces)' : scope.join(', ');
+  const label =
+    result.rootInvariant && options.expandRoot
+      ? '(root invariant — ALL workspaces)'
+      : scope.join(', ');
   console.log(`affected:${script} → ${label || '(none)'}`);
   if (tasks.length === 0) return { ok: true, scope };
   if (BUILDS_ON_SHARED.has(script)) ensureSharedPackagesFresh(workspaces);
   const { pooled, builtInOrder } = poolableTasks(script, tasks, scope, workspaces);
   if (builtInOrder.length > 0) {
-    console.log(`affected:build → shared packages built in dependency order: ${builtInOrder.join(', ')}`);
+    console.log(
+      `affected:build → shared packages built in dependency order: ${builtInOrder.join(', ')}`,
+    );
   }
   const results =
     script === 'test'
@@ -393,8 +410,26 @@ function knowledgeStep(record) {
   // against, so a check right after the write would prove nothing new.
   runNode('tools/audit/index.mjs', []);
   git(['add', '--', '.ai', 'docs/features/ai-native-engineering-os/inventory.snapshot.json']);
-  const agents = gitLines(['ls-files', '--modified', '--others', '--exclude-standard', '--', '*/AGENTS.md', 'AGENTS.md']);
+  const agents = gitLines([
+    'ls-files',
+    '--modified',
+    '--others',
+    '--exclude-standard',
+    '--',
+    '*/AGENTS.md',
+    'AGENTS.md',
+  ]);
   if (agents.length > 0) git(['add', '--', ...agents]);
+  // Docs carrying `<!-- count:x -->` fragments are rewritten by the build too. Leaving them
+  // unstaged is what made pre-push fail with "stale count fragment" (ADR-202).
+  const fragmentDocs = new Set(listFragmentDocs());
+  const refreshed = gitLines(['ls-files', '--modified', '--', '*.md']).filter((rel) =>
+    fragmentDocs.has(rel),
+  );
+  if (refreshed.length > 0) {
+    git(['add', '--', ...refreshed]);
+    console.log(`knowledge: refreshed and staged count fragments in ${refreshed.length} doc(s)`);
+  }
   if (!record) return;
   if (!workingTreeMatchesIndex()) {
     console.log('knowledge: working tree differs from the index — no receipt recorded');
@@ -430,7 +465,9 @@ async function gatesAndRecord(base) {
     if (!ok) return false;
     recordReceipt(tree, script, scope);
   }
-  console.log(`gates:receipt recorded for tree ${tree.slice(0, 12)} (root, typecheck, test, build)`);
+  console.log(
+    `gates:receipt recorded for tree ${tree.slice(0, 12)} (root, typecheck, test, build)`,
+  );
   return true;
 }
 
@@ -445,7 +482,10 @@ async function main() {
   const staged = has('staged');
   const full = has('full');
   const head = flag('head');
-  const base = staged || (command === 'ci-matrix' && full) ? flag('base') : (flag('base') ?? resolveDefaultBase());
+  const base =
+    staged || (command === 'ci-matrix' && full)
+      ? flag('base')
+      : (flag('base') ?? resolveDefaultBase());
 
   if (command === 'ci-matrix') {
     const workspaces = loadWorkspaces();
@@ -453,7 +493,9 @@ async function main() {
       ? { affected: [], changedFileCount: 0, rootInvariant: true, files: [] }
       : computeAffected(base, { head });
     const matrix = createCiMatrix(result, workspaces, full);
-    const dockerfiles = full ? changedDockerfiles(gitLines(['ls-files'])) : changedDockerfiles(result.files);
+    const dockerfiles = full
+      ? changedDockerfiles(gitLines(['ls-files']))
+      : changedDockerfiles(result.files);
     process.stdout.write(
       JSON.stringify({
         deploy: full || touchesDeploy(result.files),

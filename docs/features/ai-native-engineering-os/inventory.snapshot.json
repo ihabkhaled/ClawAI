@@ -9262,11 +9262,11 @@
           "file": "rules/22-testing-and-coverage.md"
         },
         {
-          "bytes": 10970,
+          "bytes": 11704,
           "file": "rules/23-git-commits-hooks-and-release-gates.md"
         },
         {
-          "bytes": 5607,
+          "bytes": 6111,
           "file": "rules/24-generated-files-and-knowledge-freshness.md"
         },
         {

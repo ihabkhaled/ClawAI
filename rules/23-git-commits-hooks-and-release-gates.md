@@ -43,11 +43,16 @@ Before release: `npm run release:preflight` runs the all-workspace gate.
    `Policy` job is advisory: it never blocks Release.
 2. Secret scan — `gitleaks git --staged` with `.gitleaks.toml`. Without gitleaks
    installed it warns loudly and continues; CI scans every commit.
-3. Knowledge layer — regenerate `.ai/**`, workspace `AGENTS.md` and the
+3. Auto-sync (`tools/gates/autosync.mjs`, [ADR-202](../docs/13-adr/adr-202-every-gate-is-satisfied-by-plain-git-commit-and-push.md)) —
+   prunes format/lint baseline entries that can no longer apply, records declared
+   coverage thresholds, and pins a newly advisory'd production dependency
+   (`tools/security/audit-fix.mjs`, throttled to 6 h). Each fix is staged and
+   printed as an `autosync:` line. Baselines only shrink; nothing is weakened.
+4. Knowledge layer — regenerate `.ai/**`, workspace `AGENTS.md` and the
    inventory snapshot, stage them, verify links, docs and contradictions
    ([rules/24](24-generated-files-and-knowledge-freshness.md)); records a
    `knowledge` receipt for the staged tree.
-4. Root checks + typecheck — a lockfile change runs `npm ci --dry-run`; an ESLint
+5. Root checks + typecheck — a lockfile change runs `npm ci --dry-run`; an ESLint
    config change runs `architecture:check` and lints real files; a root tsconfig
    change typechecks the workspaces extending it. Then every workspace the staged
    change affects is typechecked, after any stale shared package is rebuilt in
@@ -57,7 +62,10 @@ Before release: `npm run release:preflight` runs the all-workspace gate.
 `docs:impact`: a `Docs:` trailer, and the docs of every mapped code area the
 commit touches ([rules/63](63-docs-move-with-code.md)).
 
-**pre-push** (`tools/gates/pre-push.mjs`, every pushed ref read from stdin; base
+**pre-push** (`tools/gates/pre-push.mjs`; before the gates, `tools/gates/self-heal.mjs`
+commits a stale generated tree as `chore(knowledge): refresh generated files` and a
+pending dependency pin as `chore(deps)` through the normal hooks, then stops once so
+you re-run `git push`; it scaffolds, never fills, a missing QA record; every pushed ref read from stdin; base
 resolved as `origin/HEAD` → `origin/main` → `main`, fetched if missing, never
 guessed; a stacked branch sets `CLAW_GATE_BASE=<parent branch>`):
 

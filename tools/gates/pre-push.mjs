@@ -15,10 +15,17 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
-import { computeAffected, loadWorkspaces, planGate, runGate, runRootChecks } from '../affected/index.mjs';
+import {
+  computeAffected,
+  loadWorkspaces,
+  planGate,
+  runGate,
+  runRootChecks,
+} from '../affected/index.mjs';
 import { parsePrePushRefs, resolveDefaultBase, treeOf } from '../lib/git.mjs';
 import { isMain } from '../lib/repo.mjs';
 import { receiptCovers } from './receipt.mjs';
+import { healDependencies, healGenerated, pushRanges, qaEvidenceProblem } from './self-heal.mjs';
 
 const GATES = [
   ['typecheck', { kinds: ['dependent'] }],
@@ -62,13 +69,16 @@ async function gateCheckedOutTree(tree, result) {
   const workspaces = loadWorkspaces();
   for (const { gate, scope, options } of requiredGates(result, workspaces)) {
     if (receiptCovers(tree, gate, scope)) {
-      console.log(`pre-push ${gate}: skipped — receipt covers tree ${tree.slice(0, 12)} (rules/34)`);
+      console.log(
+        `pre-push ${gate}: skipped — receipt covers tree ${tree.slice(0, 12)} (rules/34)`,
+      );
       continue;
     }
     console.log(`pre-push ${gate}:`);
     let ok;
     if (gate === 'knowledge') {
-      ok = runNode('tools/knowledge/verify.mjs', []) && runNode('tools/audit/index.mjs', ['--check']);
+      ok =
+        runNode('tools/knowledge/verify.mjs', []) && runNode('tools/audit/index.mjs', ['--check']);
     } else if (gate === 'root') {
       ok = await runRootChecks(result.files, { tooling: true });
     } else {
@@ -95,11 +105,35 @@ export async function prePush(stdinText) {
   const headTree = treeOf('HEAD');
   const gated = new Set();
 
+  // Deterministic fixes first (ADR-202): commit them through the hooks, then stop once.
+  if (targets.some((ref) => treeOf(ref.localSha) === headTree)) {
+    const healed = [];
+    if (!receiptCovers(headTree, 'knowledge', ['repo']))
+      healed.push(['generated files', healGenerated()]);
+    healed.push(['dependency pins', healDependencies()]);
+    const made = healed.filter(([, sha]) => sha);
+    if (made.length > 0) {
+      for (const [what, sha] of made)
+        console.error(`pre-push: AUTO-FIX committed ${sha} (${what}).`);
+      console.error(
+        'pre-push: run `git push` again - git cannot add a commit to a push already in flight.',
+      );
+      return false;
+    }
+  }
+  const qaProblem = qaEvidenceProblem(pushRanges(targets, base));
+  if (qaProblem) {
+    console.error(`✖ pre-push: ${qaProblem}`);
+    return false;
+  }
+
   for (const ref of targets) {
     const tree = treeOf(ref.localSha);
     if (gated.has(tree)) continue;
     const result = computeAffected(base, { head: ref.localSha });
-    console.log(`pre-push: ${ref.localRef} (${ref.localSha.slice(0, 12)}) vs ${base} — ${result.changedFileCount} changed file(s)`);
+    console.log(
+      `pre-push: ${ref.localRef} (${ref.localSha.slice(0, 12)}) vs ${base} — ${result.changedFileCount} changed file(s)`,
+    );
 
     if (tree !== headTree) {
       const missing = missingReceipts(tree, result);
@@ -110,7 +144,9 @@ export async function prePush(stdinText) {
         );
         return false;
       }
-      console.log(`pre-push: ${ref.localRef} fully covered by receipts for tree ${tree.slice(0, 12)}`);
+      console.log(
+        `pre-push: ${ref.localRef} fully covered by receipts for tree ${tree.slice(0, 12)}`,
+      );
     } else if (!(await gateCheckedOutTree(tree, result))) {
       return false;
     }

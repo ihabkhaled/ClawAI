@@ -43,6 +43,9 @@ export const TOOL_FILES = [
   'tools/gates/pre-commit.mjs',
   'tools/gates/pre-push.mjs',
   'tools/gates/receipt.mjs',
+  'tools/gates/autosync.mjs',
+  'tools/gates/self-heal.mjs',
+  'tools/gates/registry.mjs',
   'tools/lib/git.mjs',
   'tools/lib/npm.mjs',
 ];

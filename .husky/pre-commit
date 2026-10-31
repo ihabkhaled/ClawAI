@@ -3,13 +3,20 @@
 # real problem in something you staged. What each step proves, and what CI adds
 # on top, is the gate matrix in rules/23-git-commits-hooks-and-release-gates.md.
 
-echo "pre-commit 1/4: lint-staged (eslint --fix --max-warnings 0 + prettier on staged files)"
+echo "pre-commit 1/5: lint-staged (eslint --fix --max-warnings 0 + prettier on staged files)"
 npx lint-staged || exit 1
 
 # gitleaks over the staged diff with the committed .gitleaks.toml. Without the
 # binary installed it warns loudly and continues; CI scans every PR commit.
-echo "pre-commit 2/4: secret scan of the staged changes"
+echo "pre-commit 2/5: secret scan of the staged changes"
 node tools/gates/secret-scan.mjs || exit 1
+
+# Derived gates are satisfied here, not reported later (ADR-202): ratchet
+# baselines that may only shrink are pruned, the coverage table records declared
+# thresholds, and a new high/critical production advisory is pinned to its
+# patched release. Each auto-fix is staged and printed as one "autosync:" line.
+echo "pre-commit 3/5: auto-sync (ratchet baselines, coverage table, dependency advisories)"
+node tools/gates/autosync.mjs || exit 1
 
 # The committed .ai knowledge layer and the inventory snapshot are GENERATED
 # from the tree, so they are regenerated and staged here — after lint-staged has
@@ -19,7 +26,7 @@ node tools/gates/secret-scan.mjs || exit 1
 # committed. So everything not being committed is parked first, and restored by
 # the trap even if a generator fails or the shell is interrupted: losing a
 # developer's uncommitted work to a hook would be far worse than a failed check.
-echo "pre-commit 3/4: knowledge layer + inventory snapshot (regenerate, stage, verify)"
+echo "pre-commit 4/5: knowledge layer + inventory snapshot (regenerate, stage, verify)"
 STASH_MSG="pre-commit-knowledge-$$"
 STASHED=0
 STASH_REF=""
@@ -51,7 +58,7 @@ trap - EXIT INT TERM
 # Root-invariant checks (lockfile, ESLint config, tsconfig) and typecheck of the
 # workspaces the STAGED change affects, after rebuilding any stale shared
 # package. Skipped only where a receipt for this exact staged tree proves it.
-echo "pre-commit 4/4: root checks + typecheck of affected (staged) workspaces"
+echo "pre-commit 5/5: root checks + typecheck of affected (staged) workspaces"
 node tools/gates/pre-commit.mjs || exit 1
 
 echo "pre-commit OK"
