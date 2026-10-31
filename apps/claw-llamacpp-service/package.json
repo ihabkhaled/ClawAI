@@ -40,7 +40,7 @@
     "@prisma/client": "^7.10.0",
     "amqplib": "^2.2.0",
     "async-mutex": "^0.5.0",
-    "axios": "^1.20.0",
+    "axios": "^1.21.0",
     "helmet": "^8.3.0",
     "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
@@ -78,7 +78,7 @@
     "ts-node": "^10.9.2",
     "tsc-alias": "^1.9.9",
     "typescript": "6.0.3",
-    "typescript-eslint": "^8.72.0",
+    "typescript-eslint": "^8.72.1",
     "unplugin-swc": "^2.0.0",
     "vitest": "5.0.5"
   },
