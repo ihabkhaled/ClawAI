@@ -4,6 +4,9 @@
 // that genuinely accept an empty answer say so at the call site.
 import { execFileSync } from 'node:child_process';
 
+/** Node's default stdout limit is 1 MiB; `git ls-files` alone passed it (1,049,843 bytes) and failed every gate. */
+export const GIT_MAX_BUFFER_BYTES = 64 * 1024 * 1024;
+
 export const ZERO_SHA = '0000000000000000000000000000000000000000';
 
 /** Run git and return trimmed stdout; throws with git's own message on failure. */
@@ -12,6 +15,7 @@ export function git(args, options = {}) {
     return execFileSync('git', args, {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
+      maxBuffer: GIT_MAX_BUFFER_BYTES,
       ...options,
     }).trim();
   } catch (error) {
