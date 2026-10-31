@@ -41,5 +41,5 @@ Plus adds PREMIUM), threads-service and workspace-service cost-class resolution,
 
 ## Open gaps
 
-- Production verification after the deploy (Pro and a Free QA user).
+- A Free user probe on production (needs an account with a live Free plan).
 - L05 saved browser spec.
