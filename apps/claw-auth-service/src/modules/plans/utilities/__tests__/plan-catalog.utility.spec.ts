@@ -26,7 +26,7 @@ function plan(overrides: Partial<Plan> = {}): Plan {
     monthlyTokenQuota: 5_000_000,
     // The number that must never be published.
     monthlyProviderCostCeilingMicroUsd: 5_000_000n,
-    paygCreditPercentBps: 2500,
+    paygCreditPercentBps: 5000,
     maxConcurrentRequests: 5,
     maxChatsPerDay: 75,
     maxMessagesPerDay: 750,
@@ -62,7 +62,7 @@ describe('toCatalogEntry', () => {
   // the projection never emitted the ratio, so the frontend defaulted it to 0
   // and every plan advertised "0% becomes credit".
   it('publishes the PAYG credit ratio, which the pricing page needs', () => {
-    expect(toCatalogEntry(plan(), [], []).paygCreditPercentBps).toBe(2500);
+    expect(toCatalogEntry(plan(), [], []).paygCreditPercentBps).toBe(5000);
   });
 
   it('publishes the customer-facing plan facts', () => {

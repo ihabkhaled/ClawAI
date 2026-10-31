@@ -61,6 +61,8 @@ hand the cheapest plan an unbounded allowance.
 
 Longer terms are `monthly x months x (1 - discount)`: 10% quarterly, 15% semiannual, 20% yearly by default, editable per plan ([ADR-135](../13-adr/adr-135-term-discounts-derive-price-versions.md)).
 
+> **AMENDED 2026-10-31 ([ADR-209](../13-adr/adr-209-monthly-connector-credit-is-fifty-percent-of-plan-price.md)):** the connector credit is 50% of the plan price (`paygCreditPercentBps` 5000) and is no longer equal to the cost ceiling. The ceiling remains the fair-use bound for non-credit spend.
+
 **The cost ceiling is now the user-visible PAYG connector-credit allowance.**
 This reverses the previous rule that it was "an internal profitability control
 never returned to a normal user". A weighted token IS a micro-USD

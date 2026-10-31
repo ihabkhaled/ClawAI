@@ -414,7 +414,7 @@ The GRANT bucket is **a share of what the user pays**:
 monthlyGrant = activeMonthlyPrice.amountMinor x Plan.paygCreditPercentBps / 10000
 ```
 
-Pay $20 on a 30% plan and $6.00 of connector credit lands in the wallet. The
+Pay $20 on a 50% plan (every paid plan since ADR-209) and $10.00 of connector credit lands in the wallet. The
 rate is the only stored configuration; the amount is always derived, so a
 repricing carries the allowance with it and there is no second number to drift
 (ADR-078, amended).

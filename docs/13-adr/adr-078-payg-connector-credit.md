@@ -1,5 +1,7 @@
 # ADR-078: PAYG connector credit is the promoted provider-cost ceiling, not a new column
 
+> **AMENDED 2026-10-31 by [ADR-209](adr-209-monthly-connector-credit-is-fifty-percent-of-plan-price.md):** every paid plan now converts 50% of its price (5000 bps). The 30% / 25% rates in the tables below are the original derivation.
+
 **Status**: Accepted — **amended 2026-08-29, see "Amendment: credit is a share of
 the payment"**
 **Date**: 2026-08-29

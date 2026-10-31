@@ -1,12 +1,28 @@
 # Margin Model
 
-**Last reviewed**: 2026-08-29
+**Last reviewed**: 2026-10-31
 **Status**: **estimates, not measurements. No business owner has signed these
 figures off.** Every number below is arithmetic over a seeded allowance and a
 list-price rate card. None of it is derived from production usage, because
 production usage of a metered wallet does not exist yet.
 
 ---
+
+> **AMENDED 2026-10-31 (ADR-209, owner order).** The connector credit is now 50%
+> of the plan price on every paid plan. The tables below describe the provider-cost
+> CEILING (30% Starter/Plus, 25% above), which is no longer the credit. Worst case
+> with both fully drawn is credit + ceiling:
+>
+> | Term (customer pays) | Starter, Plus (credit + 30% ceiling) | Pro and up (credit + 25% ceiling) |
+> | -------------------- | -----------------------------------: | --------------------------------: |
+> | Monthly (100%)       |                                  80% |                               75% |
+> | Quarterly (90%)      |                                88.9% |                             83.3% |
+> | Semiannual (85%)     |                                94.1% |                             88.2% |
+> | Yearly (80%)         |                           **100.0%** |                            93.75% |
+>
+> Credit alone is 50% / 55.6% / 58.8% / 62.5%. **Starter and Plus yearly have zero
+> margin at full draw, before gateway fees.** Unsigned: needs an owner decision on
+> a term-discount floor.
 
 ## What the platform actually sells
 

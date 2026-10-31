@@ -36,7 +36,13 @@
     "credit. Free = 2, every paid plan = 0 (they pay with credit). null would mean",
     "unlimited; 0 means none. Fresh installs only: existing installs got it from",
     "migration 20261001150000_credit_connector_free_allowance, and the seeder never",
-    "rewrites a plan an administrator has edited."
+    "rewrites a plan an administrator has edited.",
+    "",
+    "paygCreditPercentBps (ADR-209): the monthly connector credit is 50% of the plan price,",
+    "so every PAID plan is 5000. Free stays 3000 and still grants $0 (a $0 price converts to",
+    "nothing). Existing installs are moved by migration",
+    "20261031150000_connector_credit_fifty_percent, which only rewrites rows still at the",
+    "old shipped value."
   ],
   "plans": [
     {
@@ -261,7 +267,7 @@
       },
       "creditConnectorFreeRequestsPerMonth": 0,
       "isPopular": false,
-      "paygCreditPercentBps": 3000
+      "paygCreditPercentBps": 5000
     },
     {
       "slug": "plus",
@@ -372,7 +378,7 @@
       },
       "creditConnectorFreeRequestsPerMonth": 0,
       "isPopular": false,
-      "paygCreditPercentBps": 3000
+      "paygCreditPercentBps": 5000
     },
     {
       "slug": "pro",
@@ -483,7 +489,7 @@
       },
       "creditConnectorFreeRequestsPerMonth": 0,
       "isPopular": true,
-      "paygCreditPercentBps": 2500
+      "paygCreditPercentBps": 5000
     },
     {
       "slug": "team",
@@ -594,7 +600,7 @@
       },
       "creditConnectorFreeRequestsPerMonth": 0,
       "isPopular": false,
-      "paygCreditPercentBps": 2500
+      "paygCreditPercentBps": 5000
     },
     {
       "slug": "scale",
@@ -705,7 +711,7 @@
       },
       "creditConnectorFreeRequestsPerMonth": 0,
       "isPopular": false,
-      "paygCreditPercentBps": 2500
+      "paygCreditPercentBps": 5000
     },
     {
       "slug": "unlimited",
@@ -816,7 +822,7 @@
       },
       "creditConnectorFreeRequestsPerMonth": 0,
       "isPopular": false,
-      "paygCreditPercentBps": 2500
+      "paygCreditPercentBps": 5000
     }
   ]
 }

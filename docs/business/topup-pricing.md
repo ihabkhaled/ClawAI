@@ -5,7 +5,7 @@
 > The reasoning below — that selling credit at par books negative gross margin —
 > is arithmetically correct and was still the wrong conclusion, because it looked
 > at the top-up in isolation. The margin already lives in the PLAN: only
-> `Plan.paygCreditPercentBps` (25–30%) of a subscription converts to credit and
+> `Plan.paygCreditPercentBps` (50% since ADR-209) of a subscription converts to credit and
 > the rest buys everything else the plan includes. Charging a second margin on a
 > top-up bills the same customer twice for the same thing.
 >

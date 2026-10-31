@@ -1,3 +1,10 @@
+> **AMENDED 2026-10-31 (ADR-209, owner order).** The monthly connector credit is
+> now **50% of the plan price on every paid plan** (`paygCreditPercentBps` = 5000;
+> it was 30% on Starter and Plus, 25% on Pro, Team, Scale and Unlimited). The
+> credit is therefore **no longer equal** to the cost ceiling in the tables
+> below: see "Monthly connector credit at 50%" right after the first table. Free
+> is unchanged (`3000` bps of a $0 price is still $0).
+>
 > **AMENDED 2026-08-29 (ADR-078 amendment).** The connector-credit allowance is
 > no longer an absolute per-plan figure. It is
 > `monthlyPrice × Plan.paygCreditPercentBps / 10000` — a share of what the user
@@ -15,7 +22,7 @@
 
 # Plan Allowances — the one authoritative dollar figure per plan
 
-**Last reviewed**: 2026-08-29
+**Last reviewed**: 2026-10-31
 **Ground truth**: `apps/claw-auth-service/prisma/seeders/plan-catalog.json` (fresh
 installs) and the `plans` table (a running install an operator may have tuned).
 
@@ -37,6 +44,42 @@ credit `GRANT`. It is **not** three numbers.
 | **Team**      |       $50 |            **$12.50** |          25% | $1.25 |  $5.00 |          10 |
 | **Scale**     |      $100 |            **$25.00** |          25% | $2.50 | $10.00 |          20 |
 | **Unlimited** |      $200 |            **$50.00** |          25% | $5.00 | $20.00 |          30 |
+
+The "Monthly allowance" and "% of revenue" columns above are the **provider-cost
+ceiling** (fair-use bound on non-credit spend and on the `MONTH` token window).
+Since ADR-209 they are not the connector credit.
+
+### Monthly connector credit at 50% (ADR-209, 2026-10-31)
+
+Credit = `monthly price x 5000 / 10000`. Worst case is a user who spends the
+whole credit AND the whole ceiling every month (an upper bound: the ceiling covers
+spend that does not draw the wallet).
+
+| Plan          | Price /mo | Credit before | **Credit now** | Ceiling | Credit + ceiling | % of price |
+| ------------- | --------: | ------------: | -------------: | ------: | ---------------: | ---------: |
+| **Free**      |        $0 |         $0.00 |      **$0.00** |   $0.30 |            $0.30 |          - |
+| **Starter**   |        $5 |         $1.50 |      **$2.50** |   $1.50 |            $4.00 |        80% |
+| **Plus**      |       $10 |         $3.00 |      **$5.00** |   $3.00 |            $8.00 |        80% |
+| **Pro**       |       $20 |         $5.00 |     **$10.00** |   $5.00 |           $15.00 |        75% |
+| **Team**      |       $50 |        $12.50 |     **$25.00** |  $12.50 |           $37.50 |        75% |
+| **Scale**     |      $100 |        $25.00 |     **$50.00** |  $25.00 |           $75.00 |        75% |
+| **Unlimited** |      $200 |        $50.00 |    **$100.00** |  $50.00 |          $150.00 |        75% |
+
+No plan exceeds its monthly price. **Flag: on longer terms the credit is granted
+from the MONTHLY price, so the customer pays less for the same credit.** Credit
+alone is 55.6% (quarterly), 58.8% (semiannual) and 62.5% (yearly) of what is paid.
+Adding the ceiling, **Starter and Plus on a yearly term reach 100% of revenue at
+full draw (zero margin before gateway fees, i.e. a loss)**, and Pro and above reach
+93.75%. Details in [margin-model.md](margin-model.md). Free: the catalog price is
+$0 so the credit is $0 (a local dev database that gives Free a non-zero test price
+shows 30% of that price).
+
+**When users see it.** The grant is derived from the live plan, but a wallet only
+takes a new grant when it rolls into a new UTC month (`CreditGrantService`,
+`currentGrantPeriodKey`). Wallets already issued keep their balance, nothing is
+topped up retroactively, and the plan cards show "50% of your plan price"
+immediately. Deploy on 2026-10-31 UTC or earlier means every wallet gets the new
+amount at its first roll on or after 2026-11-01 00:00 UTC.
 
 Longer terms are discounted (10% quarterly, 15% semiannual, 20% yearly by default; an admin can change them per plan — [ADR-135](../13-adr/adr-135-term-discounts-derive-price-versions.md)). The allowance does not
 change with the billing interval — it is granted per **period**, monthly either way.
@@ -264,13 +307,14 @@ an install that skipped a step still ends on the 10 / 15 / 20% figures.
 
 **These figures need a named business owner and do not have one.**
 
-| Figure                         | Status                                                                                                                                                                             |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 25–30% of revenue as allowance | **Unsigned.** Chosen during planning as a defensible band, not derived from measured usage. See [margin-model.md](margin-model.md).                                                |
-| Free at $0.30                  | **Unsigned**, but low-risk: it is the current live figure, unchanged.                                                                                                              |
-| The daily/weekly split         | **Unsigned.** Derived to satisfy the widening invariant, not from a pacing study.                                                                                                  |
-| 10% / 15% / 20% term discounts | **Owner direction 2026-09-30** (product owner; the individual's name is not recorded in the repository). Not derived from a margin floor — see [margin-model.md](margin-model.md). |
-| Lowering any of these later    | **Needs notice.** See [rollout-and-notice.md](rollout-and-notice.md) — the allowance is now customer-visible, so it is a commitment rather than an internal knob.                  |
+| Figure                                                 | Status                                                                                                                                                                             |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Connector credit = 50% of price                        | **Owner order 2026-10-31 (ADR-209).** Worst case incl. ceiling: see the table above.                                                                                               |
+| 25–30% of revenue as allowance (provider-cost ceiling) | **Unsigned.** Chosen during planning as a defensible band, not derived from measured usage. See [margin-model.md](margin-model.md).                                                |
+| Free at $0.30                                          | **Unsigned**, but low-risk: it is the current live figure, unchanged.                                                                                                              |
+| The daily/weekly split                                 | **Unsigned.** Derived to satisfy the widening invariant, not from a pacing study.                                                                                                  |
+| 10% / 15% / 20% term discounts                         | **Owner direction 2026-09-30** (product owner; the individual's name is not recorded in the repository). Not derived from a margin floor — see [margin-model.md](margin-model.md). |
+| Lowering any of these later                            | **Needs notice.** See [rollout-and-notice.md](rollout-and-notice.md) — the allowance is now customer-visible, so it is a commitment rather than an internal knob.                  |
 
 The right evidence is one full billing period of `credit_ledger_entries` data:
 median and p95 monthly spend per plan, and the fraction of users who hit each wall.

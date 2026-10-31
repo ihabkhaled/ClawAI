@@ -8,17 +8,16 @@ describe('creditFromPayment', () => {
     expect(creditFromPayment(2000, 3000)).toBe(6_000_000n);
   });
 
-  // These are the seeded rates, and they were chosen so that the derived grant
-  // equals what each plan granted before the change. If one of them moves, a
-  // real customer's allowance moved with it.
+  // The seeded rates since ADR-209: every PAID plan converts 50% of its monthly price. If one of
+  // them moves, a real customer's monthly connector credit moved with it.
   it.each([
-    ['starter', 500, 3000, 1_500_000n],
-    ['plus', 1000, 3000, 3_000_000n],
-    ['pro', 2000, 2500, 5_000_000n],
-    ['team', 5000, 2500, 12_500_000n],
-    ['scale', 10_000, 2500, 25_000_000n],
-    ['unlimited', 20_000, 2500, 50_000_000n],
-  ])('grants %s exactly what it granted before', (_slug, priceMinor, bps, expected) => {
+    ['starter', 500, 5000, 2_500_000n],
+    ['plus', 1000, 5000, 5_000_000n],
+    ['pro', 2000, 5000, 10_000_000n],
+    ['team', 5000, 5000, 25_000_000n],
+    ['scale', 10_000, 5000, 50_000_000n],
+    ['unlimited', 20_000, 5000, 100_000_000n],
+  ])('grants %s half of its monthly price', (_slug, priceMinor, bps, expected) => {
     expect(creditFromPayment(priceMinor, bps)).toBe(expected);
   });
 
@@ -87,6 +86,7 @@ describe('bpsToPercent', () => {
   it('renders a rate the way copy states it', () => {
     expect(bpsToPercent(3000)).toBe(30);
     expect(bpsToPercent(2500)).toBe(25);
+    expect(bpsToPercent(5000)).toBe(50);
     expect(bpsToPercent(10_000)).toBe(100);
   });
 });

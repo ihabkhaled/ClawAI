@@ -24,17 +24,21 @@
 // paid-connector spend. `plan-catalog.json` corrects Free's description in the
 // same change so the copy does not promise frontier access the plan cannot buy.
 //
+// UPDATE 2026-10-31 (ADR-209): the PERCENTS below are now 50% on every paid plan. The table above
+// is the historical v1 derivation; migration 20261031150000_connector_credit_fifty_percent moves
+// installs that already ran v1.
+//
 // Only rows still at the schema default are written, so an operator who has
 // already tuned a rate keeps it.
 
 const PERCENTS = [
   { slug: 'free', bps: 3000 },
-  { slug: 'starter', bps: 3000 },
-  { slug: 'plus', bps: 3000 },
-  { slug: 'pro', bps: 2500 },
-  { slug: 'team', bps: 2500 },
-  { slug: 'scale', bps: 2500 },
-  { slug: 'unlimited', bps: 2500 },
+  { slug: 'starter', bps: 5000 },
+  { slug: 'plus', bps: 5000 },
+  { slug: 'pro', bps: 5000 },
+  { slug: 'team', bps: 5000 },
+  { slug: 'scale', bps: 5000 },
+  { slug: 'unlimited', bps: 5000 },
 ];
 
 const SCHEMA_DEFAULT_BPS = 3000;
