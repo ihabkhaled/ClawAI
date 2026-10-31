@@ -196,9 +196,6 @@
     "apps/claw-auth-service/src/modules/auth/managers/password-reset.manager.ts": {
       "security/detect-possible-timing-attacks": 1
     },
-    "apps/claw-auth-service/src/modules/auth/managers/token-session.manager.ts": {
-      "unicorn/prefer-ternary": 2
-    },
     "apps/claw-auth-service/src/modules/auth/repositories/__tests__/device-authorization.repository.spec.ts": {
       "sort-imports": 1
     },
