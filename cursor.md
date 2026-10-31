@@ -7,6 +7,10 @@ where everything lives). This file adds only what is specific to Cursor
 
 > **Before you finish any change, update every doc it makes stale (rule 63). The hooks will reject it otherwise.**
 
+> **Akinator runs on every change, with no command ([rule 65](rules/65-akinator-runs-on-every-change.md)); read
+> [`skills/akinator/SKILL.md`](skills/akinator/SKILL.md).** A new flagship or big feature ships its public marketing page in the same change
+> ([rule 66](rules/66-every-flagship-feature-ships-a-public-marketing-page.md)).
+
 ## Cursor workflow
 
 1. Pin `AGENTS.md` and the touched workspace's `CLAUDE.md` in the tab bar; read
@@ -32,3 +36,7 @@ where everything lives). This file adds only what is specific to Cursor
 The rules win. Decline a suggestion that bypasses a hook, suppresses a finding,
 crosses a service database boundary, or skips the docs or the QA lanes, and say
 which rule it breaks.
+
+## Delegated agents and models
+
+Rule 64 applies in Cursor too: the smallest fast model for read-only audit and context agents, the strong model for code and QA, never a flagship or max effort, and ask the owner when unsure ([rules/64](rules/64-subagent-model-selection.md)).

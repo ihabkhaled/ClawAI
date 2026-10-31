@@ -11,6 +11,11 @@ and read .ai/local/current-context.md.
 Before you finish any change, update every doc it makes stale (rule 63). The
 hooks will reject it otherwise.
 
+Akinator runs on EVERY change with no command typed: ask, resolve, audit, plan, implement,
+document, skillify, rule, contextify, memoize, index+sync, verify. Read skills/akinator/SKILL.md
+(rules/65). A new flagship, core or big feature ships its public marketing page in the same
+change (rules/66, skills/ship-a-feature-marketing-page.md).
+
 Land a change through the hooks — never bypass them:
   git add <explicit paths>  ->  git commit (Docs: trailer)  ->  git push
 What each hook runs: rules/23-git-commits-hooks-and-release-gates.md (gate matrix).
@@ -18,3 +23,7 @@ What each hook runs: rules/23-git-commits-hooks-and-release-gates.md (gate matri
 Blockers: rules/00-non-negotiable-rules.md. Testing is 15 QA lanes with a
 docs/qa-evidence record (QA-WORKFLOW.md, rules/60). User-facing text needs i18n in
 all 13 locales (rules/20).
+
+Delegated agents and models (rule 64): smallest fast model only for read-only audit/context
+agents; strong model for code and QA; never a flagship or max effort; ask the owner when
+unsure. See rules/64-subagent-model-selection.md.

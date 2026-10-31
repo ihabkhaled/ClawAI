@@ -29,6 +29,7 @@ tests are the floor, not the finish line.
    `gh run list --branch main` and fix anything red ([rules/48](rules/48-lint-and-test-only-what-changed.md)).
 9. **Write the knowledge**: rules, skills, docs, context, memory, wiki in the SAME commit
    ([rules/33](rules/33-knowledge-compounding-and-context-velocity.md)).
+10. **Flagship or big feature?** Its public marketing page ships in the same change and the record carries the marketing checklist ([rule 66](rules/66-every-flagship-feature-ships-a-public-marketing-page.md)).
 
 ## What the machine checks
 
@@ -45,3 +46,7 @@ final message.
 Where everything else is: [CLAUDE.md](CLAUDE.md) - [rules/README.md](rules/README.md) -
 [skills/00-index.md](skills/00-index.md) - [docs/16-quality-engineering/](docs/16-quality-engineering/) -
 [docs/qa-evidence/README.md](docs/qa-evidence/README.md).
+
+## Which model runs QA
+
+QA agents (Playwright, manual, API, automation) use the main model or Sonnet/Opus, never Haiku ([rules/64](rules/64-subagent-model-selection.md)). Haiku 5.5 may read CI runs and logs to feed them.

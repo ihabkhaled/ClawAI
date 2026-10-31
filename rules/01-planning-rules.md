@@ -176,3 +176,4 @@ Format:
 - [ ] `knowledge:context` was run and `.ai/local/current-context.md` was read.
 - [ ] The blast radius (workspaces, events, permissions, locales) is named.
 - [ ] Large work is split into independently reviewable batches.
+- [ ] A new flagship, core or big feature, or product introduction ships its public marketing page in the same change ([rule 66](66-every-flagship-feature-ships-a-public-marketing-page.md)).

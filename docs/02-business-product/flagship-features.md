@@ -15,6 +15,8 @@
 > Prices, allowances and plan limits are not restated here; they live in
 > [`docs/business/`](../business/README.md) and the plan catalog.
 
+**A new flagship ships with its public marketing page, in the same change** ([rule 66](../../rules/66-every-flagship-feature-ships-a-public-marketing-page.md), [skill](../../skills/ship-a-feature-marketing-page.md)). A row is added here with its evidence when the page goes live.
+
 The older, broader list is the [feature catalog](feature-catalog.md) (last
 reviewed 2026-04-11) and the per-feature [feature inventory](feature-inventory.md).
 

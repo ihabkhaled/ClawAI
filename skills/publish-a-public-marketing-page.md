@@ -33,6 +33,8 @@ that list, in dependency order.
 Not the portal skill: `./add-app-route.md` covers `(portal)` pages, which are
 `noindex` by construction and need a sidebar entry instead of any of this.
 
+A new flagship, core feature or product introduction must ship its page with the feature: [rule 66](../rules/66-every-flagship-feature-ships-a-public-marketing-page.md) and [`ship-a-feature-marketing-page.md`](ship-a-feature-marketing-page.md) add the media, the 13 locales and the QA checklist to this chain.
+
 ## When to use
 
 - A new public page: a topic page, a guide, a comparison, a landing page.

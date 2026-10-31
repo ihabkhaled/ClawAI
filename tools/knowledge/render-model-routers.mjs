@@ -49,6 +49,9 @@ export const MODEL_ROUTERS = {
   },
 };
 
+const SUBAGENT_MODEL_EMPHASIS =
+  'Delegated runs follow [rule 64](rules/64-subagent-model-selection.md): the smallest fast model only for read-only audit and context, the strong model for code and QA, never a flagship or max effort, and ask the owner when unsure which model to use.';
+
 /** The AGENTS.md body without its own title line. */
 function routerBody() {
   const source = (readText(repoPath('AGENTS.md')) ?? '').replace(/\r\n/gu, '\n');
@@ -67,7 +70,7 @@ export function renderModelRouters() {
       '',
       `## ${model} emphasis`,
       '',
-      ...emphasis.map((line) => `- ${line}`),
+      ...[...emphasis, SUBAGENT_MODEL_EMPHASIS].map((line) => `- ${line}`),
       '',
       body,
       '',

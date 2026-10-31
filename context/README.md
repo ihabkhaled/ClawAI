@@ -38,6 +38,7 @@ sources and should be re-derived when they drift.
 | [generated-file-map.md](generated-file-map.md)                   | What under `.ai/` is generated vs local; never hand-edit.                                                                                      |
 | [glossary-connector-vs-local.md](glossary-connector-vs-local.md) | Owner vocabulary: "connector" = the cloud connector (`OLLAMA_CLOUD`), never local Ollama.                                                      |
 | [akinator-station-map.md](akinator-station-map.md)               | Ported Akinator method: station → what it asks → where its output lands in this repo.                                                          |
+| [akinator-always-on.md](akinator-always-on.md)                   | Where the always-on Akinator pass triggers (tool by tool), what the in-repo copy contains and what it deliberately does not.                   |
 
 ## Authority hierarchy (higher wins on conflict)
 

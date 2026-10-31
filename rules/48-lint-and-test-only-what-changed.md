@@ -94,10 +94,7 @@ Related: [`rules/34-gate-economy-and-machine-resources.md`](34-gate-economy-and-
 9. **Change a seed value, grep for the old number.** Free allowance 2 -> 10 left one spec
    asserting the catalog still said 2 and turned CI red. `rg` the old value across specs,
    docs and ADRs in the same change.
-10. **Agents are not free.** Delegate only work that is large and independent; at most two
-    agents at once, foreground, each with a stated scope and a "report in 15 lines" cap;
-    follow up any agent that has run past ~10 minutes. A 3-command job is done by hand.
-    Several agents editing one tree also contaminates each other's gates.
+10. **Agents are not free, and large work is split.** Small or serial work: at most two agents at once. Large work (owner order 2026-10-31): hire as many agents as the work has independent parts, break big parts into sub-agents, and give EVERY agent explicit file ownership. One owner per shared file (locale files and `i18n.types.ts`, `adr-index.md`, `package.json` and the lockfile, generated files): other agents never touch it, or wait until its owner finishes. Agents never run git, never run the real hooks on the shared tree, and report what they changed; the lead integrates, runs `knowledge:build` and the gates, and commits in batches. Pick each agent's model by the work ([rules/64](64-subagent-model-selection.md)): the smallest fast model to read, the strong model to write and to QA.
 11. **Prefer the cheap proof.** A headless probe that prints a time series (scrollTop vs
     height every 500 ms) found the streaming-scroll bug faster than four full e2e rounds.
     A live-model e2e asserts relative properties (moved up at least 40 px), not absolute

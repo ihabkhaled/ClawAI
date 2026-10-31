@@ -14,6 +14,10 @@ working in Claude Code, plus a compact index
 > [`QA-WORKFLOW.md`](QA-WORKFLOW.md) and
 > [rules/60](rules/60-qa-evidence-is-mandatory-and-machine-checked.md) first.
 
+> **Akinator runs on every change, with no command ([rule 65](rules/65-akinator-runs-on-every-change.md)).** The plugin is optional: the in-repo
+> [`skills/akinator/SKILL.md`](skills/akinator/SKILL.md) is the source. A new flagship or big feature ships its public marketing page in the
+> same change ([rule 66](rules/66-every-flagship-feature-ships-a-public-marketing-page.md)).
+
 ## Read order for a task
 
 1. `npm run knowledge:context -- --task="<task>"`, then `.ai/local/current-context.md`.
@@ -36,9 +40,21 @@ working in Claude Code, plus a compact index
   code and `git log origin/<branch>..HEAD`, never a summary.
 - **Background only long jobs**, announce them in one line, and read their real
   exit code. Never edit files that a running hook or test run is reading.
-- **Subagents**: foreground by default, at most two at once, each with a stated
-  scope ([rules/48](rules/48-lint-and-test-only-what-changed.md) item 10). Agents
-  editing one tree contaminate each other's gates.
+- **Subagents**: foreground by default, each with a stated scope and explicit file
+  ownership ([rules/48](rules/48-lint-and-test-only-what-changed.md) item 10). Small
+  work: at most two at once. Large work: hire as many as there are independent parts,
+  split big parts into sub-agents, one owner per shared file (locales, adr-index,
+  package.json and lockfile, generated files), agents never run git, and the lead
+  integrates, gates and commits in batches. Agents editing one tree without ownership
+  contaminate each other's gates.
+- **Subagent models, every agent and tool** ([rules/64](rules/64-subagent-model-selection.md),
+  [skill](skills/choose-the-subagent-model.md)): **Haiku 5.5** for read-only work
+  (audit, read, gain context); the main model (or `sonnet`/`opus`) for writing code
+  and for Playwright, manual, API and automation QA, never Haiku there; gates climb
+  Haiku 5.5 → Sonnet 5.5 → Sonnet 5.5 high effort → Opus 5.5 low/medium effort, only on
+  a real failure; never Fable-class models or `xhigh`/`max` effort as subagents;
+  unsure or confused: ask the owner (`<Model X> at <effort> failed on <gate>: <error>.
+Try <Model Y> at <effort Z>?`).
 - **Fresh worktree**: `npm ci`, then `npm run affected:shared-build` and
   `npm run prisma:generate --workspaces --if-present` before trusting a gate.
   Never commit while a background agent writes in the same tree.
@@ -57,10 +73,16 @@ for the workspace you touch.
 - **Blockers:** [rules/00-non-negotiable-rules.md](rules/00-non-negotiable-rules.md) ·
   rule index [rules/README.md](rules/README.md) ·
   [engineering mindsets](rules/27-engineering-mindsets.md)
+- **Subagent models:** [rules/64](rules/64-subagent-model-selection.md) ·
+  [skills/choose-the-subagent-model.md](skills/choose-the-subagent-model.md) ·
+  [context/subagent-model-ladder.md](context/subagent-model-ladder.md)
 - **Landing a change, hooks, CI:** [rules/23](rules/23-git-commits-hooks-and-release-gates.md) ·
   [rules/34](rules/34-gate-economy-and-machine-resources.md) ·
   [rules/48](rules/48-lint-and-test-only-what-changed.md) ·
   [CI pipeline](docs/08-runtime-devops/ci-cd-pipeline.md)
+- **Always-on passes:** [rules/65 Akinator](rules/65-akinator-runs-on-every-change.md) · [skills/akinator](skills/akinator/SKILL.md) ·
+  [where it triggers](context/akinator-always-on.md) · [rules/66 marketing page](rules/66-every-flagship-feature-ships-a-public-marketing-page.md) ·
+  [skill](skills/ship-a-feature-marketing-page.md)
 - **Docs and knowledge:** [rules/63](rules/63-docs-move-with-code.md) ·
   [rules/33](rules/33-knowledge-compounding-and-context-velocity.md) ·
   [rules/24](rules/24-generated-files-and-knowledge-freshness.md) ·

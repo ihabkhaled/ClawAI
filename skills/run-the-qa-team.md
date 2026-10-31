@@ -139,3 +139,7 @@ skill: L03 = section 1, L04 = section 3, L06 = section 2, L07 = section 4. A cha
 A script under `scripts/` is scanned by CodeQL like product code. Do not disable certificate validation (use
 `NODE_EXTRA_CA_CERTS` with the mkcert root), keep no default credentials, and run `node --test
 tools/__tests__/tls-validation-guard.test.mjs` before committing. See rules/21.
+
+## Model for QA agents
+
+A QA subagent that drives Playwright or writes evidence runs on the main model or `sonnet`/`opus`, never Haiku; reading-only helpers may use Haiku 5.5. See [rules/64](../rules/64-subagent-model-selection.md) and [skills/choose-the-subagent-model.md](choose-the-subagent-model.md).

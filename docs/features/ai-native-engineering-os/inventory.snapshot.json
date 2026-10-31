@@ -9074,23 +9074,23 @@
     "governance": {
       "aiEntrypoints": [
         {
-          "bytes": 9191,
+          "bytes": 11088,
           "file": "CLAUDE.md"
         },
         {
-          "bytes": 6003,
+          "bytes": 7793,
           "file": "CODEX.md"
         },
         {
-          "bytes": 1739,
+          "bytes": 2350,
           "file": "cursor.md"
         },
         {
-          "bytes": 5302,
+          "bytes": 6841,
           "file": "AGENTS.md"
         },
         {
-          "bytes": 848,
+          "bytes": 1421,
           "file": ".cursorrules"
         }
       ],
@@ -9130,7 +9130,7 @@
       "looseDocs": 23,
       "rules": [
         {
-          "bytes": 30616,
+          "bytes": 31115,
           "file": "rules/00-master-rules.md"
         },
         {
@@ -9138,7 +9138,7 @@
           "file": "rules/00-non-negotiable-rules.md"
         },
         {
-          "bytes": 4995,
+          "bytes": 5186,
           "file": "rules/01-planning-rules.md"
         },
         {
@@ -9290,7 +9290,7 @@
           "file": "rules/29-communication-style.md"
         },
         {
-          "bytes": 8035,
+          "bytes": 8348,
           "file": "rules/30-agent-self-regulation-and-loop-prevention.md"
         },
         {
@@ -9362,7 +9362,7 @@
           "file": "rules/47-client-bundle-weight-and-barrel-boundaries.md"
         },
         {
-          "bytes": 6569,
+          "bytes": 7025,
           "file": "rules/48-lint-and-test-only-what-changed.md"
         },
         {
@@ -9426,13 +9426,25 @@
           "file": "rules/63-docs-move-with-code.md"
         },
         {
-          "bytes": 8080,
+          "bytes": 4814,
+          "file": "rules/64-subagent-model-selection.md"
+        },
+        {
+          "bytes": 7195,
+          "file": "rules/65-akinator-runs-on-every-change.md"
+        },
+        {
+          "bytes": 8253,
+          "file": "rules/66-every-flagship-feature-ships-a-public-marketing-page.md"
+        },
+        {
+          "bytes": 9145,
           "file": "rules/README.md"
         }
       ],
       "skills": [
         {
-          "bytes": 37094,
+          "bytes": 38024,
           "file": "skills/00-index.md"
         },
         {
@@ -9444,7 +9456,7 @@
           "file": "skills/02-service-scaffold.md"
         },
         {
-          "bytes": 9328,
+          "bytes": 9595,
           "file": "skills/03-feature-scaffold.md"
         },
         {
@@ -9612,6 +9624,10 @@
           "file": "skills/change-the-product-positioning.md"
         },
         {
+          "bytes": 2267,
+          "file": "skills/choose-the-subagent-model.md"
+        },
+        {
           "bytes": 7654,
           "file": "skills/commit-and-push-each-change.md"
         },
@@ -9772,7 +9788,7 @@
           "file": "skills/propagate-account-deletion.md"
         },
         {
-          "bytes": 15169,
+          "bytes": 15480,
           "file": "skills/publish-a-public-marketing-page.md"
         },
         {
@@ -9812,7 +9828,7 @@
           "file": "skills/run-the-file-model-matrix.md"
         },
         {
-          "bytes": 6118,
+          "bytes": 6424,
           "file": "skills/run-the-qa-team.md"
         },
         {
@@ -9822,6 +9838,10 @@
         {
           "bytes": 4532,
           "file": "skills/security-review.md"
+        },
+        {
+          "bytes": 9375,
+          "file": "skills/ship-a-feature-marketing-page.md"
         },
         {
           "bytes": 4591,

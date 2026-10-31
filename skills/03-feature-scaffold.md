@@ -355,3 +355,7 @@ Verify DB writes:
 docker exec claw-db-<service> psql -U claw_user -d claw_<service> \
   -tAc 'SELECT COUNT(*) FROM "new_entities";'
 ```
+
+## Definition of done
+
+- [ ] A new flagship, core or big feature, or product introduction ships its public marketing page in the same change ([rule 66](../rules/66-every-flagship-feature-ships-a-public-marketing-page.md), [skill](ship-a-feature-marketing-page.md)).

@@ -102,7 +102,11 @@ infra/nginx/public-tls/*.conf
 *.tsbuildinfo
 .turbo/
 
-.claude/
+# Personal Claude Code state stays ignored; the shared project skill, hook and settings ship (rule 65).
+.claude/*
+!.claude/settings.json
+!.claude/skills/
+!.claude/hooks/
 plan-prompts/
 tmp/
 tmp/qa-run.log

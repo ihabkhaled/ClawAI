@@ -150,3 +150,7 @@ continue password reset.
 - [ ] No critic/review cycle exceeded 3 rounds on non-blocking findings.
 - [ ] The Primary Objective stated at task start is the one delivered — not
       silently redefined.
+
+## Climbing to a stronger model is a new approach, not a retry
+
+Re-running the same fix on a stronger subagent model is a loop. Each step of the gate ladder in [rules/64](64-subagent-model-selection.md) must try a different approach and name the failure that justified the climb; past the ladder, ask the owner.
