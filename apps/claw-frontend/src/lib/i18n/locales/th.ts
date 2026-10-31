@@ -3526,6 +3526,8 @@ export const th: TranslationDictionary = {
     },
   },
   research: {
+    searchTimedOut: 'การค้นหาบนเว็บใช้เวลานานเกินไป คำตอบนี้จึงอาจขาดแหล่งข้อมูลบางส่วน',
+    searchFailed: 'การค้นหาบนเว็บล้มเหลว คำตอบนี้จึงอาจขาดแหล่งข้อมูลบางส่วน',
     toggle: {
       modeLabel: 'โหมดค้นคว้าเว็บ',
       providerLabel: 'ผู้ให้บริการค้นหา',

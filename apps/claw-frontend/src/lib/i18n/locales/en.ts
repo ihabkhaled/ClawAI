@@ -3573,6 +3573,8 @@ export const en: TranslationDictionary = {
     },
   },
   research: {
+    searchTimedOut: 'The web search took too long, so this answer may be missing sources.',
+    searchFailed: 'The web search failed, so this answer may be missing sources.',
     toggle: {
       modeLabel: 'Web research mode',
       providerLabel: 'Search provider',

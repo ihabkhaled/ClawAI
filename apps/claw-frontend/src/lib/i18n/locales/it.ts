@@ -3677,6 +3677,10 @@ export const it: TranslationDictionary = {
     },
   },
   research: {
+    searchTimedOut:
+      'La ricerca sul web ha richiesto troppo tempo, quindi a questa risposta potrebbero mancare delle fonti.',
+    searchFailed:
+      'La ricerca sul web non è riuscita, quindi a questa risposta potrebbero mancare delle fonti.',
     toggle: {
       modeLabel: 'Modalità di ricerca web',
       providerLabel: 'Fornitore di ricerca',

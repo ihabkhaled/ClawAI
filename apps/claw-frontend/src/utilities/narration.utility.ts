@@ -2,6 +2,7 @@ import { FETCH_STRATEGY_KEYS } from '@/constants/research.constants';
 import { NarrationKind } from '@/enums/narration-kind.enum';
 import type { TranslateFunction } from '@/types/i18n.types';
 import type { NarrationEntry } from '@/types/narration.types';
+import { formatNarratedProviders } from '@/utilities/context-warning.utility';
 
 const KINDS = new Set<string>(Object.values(NarrationKind));
 
@@ -45,8 +46,14 @@ export function describeNarrationEntry(entry: NarrationEntry, t: TranslateFuncti
         ? t('narration.searchStartedWithQuery', { query })
         : t('narration.searchStarted');
     }
-    case NarrationKind.SEARCH_DONE:
-      return t('narration.searchDone', { count: Number(params['count'] ?? 0) });
+    case NarrationKind.SEARCH_DONE: {
+      const count = Number(params['count'] ?? 0);
+      // Older chat-service builds omit `providers`; they keep the plain line.
+      const providers = formatNarratedProviders(params['providers']);
+      return providers.length > 0
+        ? t('narration.searchDoneWithProviders', { providers, count })
+        : t('narration.searchDone', { count });
+    }
     case NarrationKind.RESEARCH_FAILED:
       return t('narration.researchFailed');
     case NarrationKind.PAGE_READ: {

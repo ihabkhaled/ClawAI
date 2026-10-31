@@ -3596,6 +3596,9 @@ export const fa: TranslationDictionary = {
     },
   },
   research: {
+    searchTimedOut:
+      'جست‌وجوی وب بیش از حد طول کشید، بنابراین ممکن است این پاسخ منابعی را کم داشته باشد.',
+    searchFailed: 'جست‌وجوی وب ناموفق بود، بنابراین ممکن است این پاسخ منابعی را کم داشته باشد.',
     toggle: {
       modeLabel: 'حالت پژوهش وب',
       providerLabel: 'ارائه‌دهنده جستجو',

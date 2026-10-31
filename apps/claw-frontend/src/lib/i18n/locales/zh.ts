@@ -3431,6 +3431,8 @@ export const zh: TranslationDictionary = {
     },
   },
   research: {
+    searchTimedOut: '网络搜索耗时过长，因此此回答可能缺少部分来源。',
+    searchFailed: '网络搜索失败，因此此回答可能缺少部分来源。',
     toggle: {
       modeLabel: '网络研究模式',
       providerLabel: '搜索提供方',

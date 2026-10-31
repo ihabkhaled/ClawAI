@@ -3636,6 +3636,8 @@ export type TranslationDictionary = {
     };
   };
   research: {
+    searchTimedOut: string;
+    searchFailed: string;
     toggle: {
       modeLabel: string;
       providerLabel: string;
@@ -6929,6 +6931,7 @@ export type NarrationLocaleTranslation = {
   searchStarted: string;
   searchStartedWithQuery: string;
   searchDone: string;
+  searchDoneWithProviders: string;
   researchFailed: string;
   aiThinking: string;
   aiThinkingWithModel: string;

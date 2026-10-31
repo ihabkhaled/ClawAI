@@ -3700,6 +3700,10 @@ export const de: TranslationDictionary = {
     },
   },
   research: {
+    searchTimedOut:
+      'Die Websuche hat zu lange gedauert, daher fehlen dieser Antwort möglicherweise Quellen.',
+    searchFailed:
+      'Die Websuche ist fehlgeschlagen, daher fehlen dieser Antwort möglicherweise Quellen.',
     toggle: {
       modeLabel: 'Web-Recherche-Modus',
       providerLabel: 'Suchanbieter',

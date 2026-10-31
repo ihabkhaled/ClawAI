@@ -3690,6 +3690,10 @@ export const fr: TranslationDictionary = {
     },
   },
   research: {
+    searchTimedOut:
+      'La recherche sur le web a pris trop de temps ; il se peut donc que cette réponse manque de sources.',
+    searchFailed:
+      'La recherche sur le web a échoué ; il se peut donc que cette réponse manque de sources.',
     toggle: {
       modeLabel: 'Mode de recherche web',
       providerLabel: 'Fournisseur de recherche',

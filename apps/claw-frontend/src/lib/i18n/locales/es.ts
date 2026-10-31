@@ -3669,6 +3669,9 @@ export const es: TranslationDictionary = {
     },
   },
   research: {
+    searchTimedOut:
+      'La búsqueda web tardó demasiado, por lo que a esta respuesta pueden faltarle fuentes.',
+    searchFailed: 'La búsqueda web falló, por lo que a esta respuesta pueden faltarle fuentes.',
     toggle: {
       modeLabel: 'Modo de investigación web',
       providerLabel: 'Proveedor de búsqueda',

@@ -3597,6 +3597,9 @@ export const ja: TranslationDictionary = {
     },
   },
   research: {
+    searchTimedOut:
+      'ウェブ検索に時間がかかりすぎたため、この回答には情報源が不足している可能性があります。',
+    searchFailed: 'ウェブ検索に失敗したため、この回答には情報源が不足している可能性があります。',
     toggle: {
       modeLabel: 'ウェブ調査モード',
       providerLabel: '検索プロバイダー',

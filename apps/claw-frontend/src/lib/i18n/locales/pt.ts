@@ -3649,6 +3649,9 @@ export const pt: TranslationDictionary = {
     },
   },
   research: {
+    searchTimedOut:
+      'A pesquisa na web demorou demais, então esta resposta pode estar sem algumas fontes.',
+    searchFailed: 'A pesquisa na web falhou, então esta resposta pode estar sem algumas fontes.',
     toggle: {
       modeLabel: 'Modo de pesquisa web',
       providerLabel: 'Fornecedor de pesquisa',

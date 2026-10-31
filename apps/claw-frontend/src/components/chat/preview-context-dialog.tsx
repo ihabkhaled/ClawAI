@@ -11,6 +11,7 @@ import {
 import { usePreviewContextDialog } from '@/hooks/chat/use-preview-context-dialog';
 import { useTranslation } from '@/lib/i18n';
 import type { PreviewContextDialogProps } from '@/types/composer-plus-menu.types';
+import { describeContextWarnings } from '@/utilities/context-warning.utility';
 
 /**
  * The "what would be sent" dry-run, controlled from outside so both the standalone
@@ -55,7 +56,7 @@ export function PreviewContextDialog({
             </div>
             {bundle.warnings.length > 0 && (
               <p className="text-xs text-amber-600 dark:text-amber-400">
-                {bundle.warnings.join('; ')}
+                {describeContextWarnings(bundle.warnings, t)}
               </p>
             )}
             {bundle.memories.length === 0 && bundle.packItems.length === 0 && (

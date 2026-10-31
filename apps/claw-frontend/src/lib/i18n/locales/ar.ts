@@ -3522,6 +3522,8 @@ export const ar: TranslationDictionary = {
     },
   },
   research: {
+    searchTimedOut: 'استغرق البحث على الويب وقتًا طويلًا، لذا قد تنقص هذه الإجابة بعض المصادر.',
+    searchFailed: 'فشل البحث على الويب، لذا قد تنقص هذه الإجابة بعض المصادر.',
     toggle: {
       modeLabel: 'وضع البحث على الويب',
       providerLabel: 'مزود البحث',

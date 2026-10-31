@@ -3599,6 +3599,9 @@ export const hi: TranslationDictionary = {
     },
   },
   research: {
+    searchTimedOut:
+      'वेब खोज में बहुत समय लग गया, इसलिए हो सकता है इस उत्तर में कुछ स्रोत छूट गए हों।',
+    searchFailed: 'वेब खोज विफल रही, इसलिए हो सकता है इस उत्तर में कुछ स्रोत छूट गए हों।',
     toggle: {
       modeLabel: 'वेब रिसर्च मोड',
       providerLabel: 'खोज प्रदाता',
