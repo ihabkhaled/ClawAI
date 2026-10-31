@@ -2,6 +2,7 @@ import {
   buildOwnerPageCountQuery,
   buildOwnerPageIdsQuery,
   escapeLikePattern,
+  matchesUntitledPlaceholder,
 } from '../owner-page-sql.utility';
 
 describe('escapeLikePattern', () => {
@@ -50,7 +51,7 @@ describe('owner page SQL', () => {
     const query = buildOwnerPageIdsQuery({ ownerId: owner, status: 'ALL', q: `50%_o'x` }, 10, 0);
     expect(query.text).toContain(`ILIKE $2 ESCAPE '\\'`);
     expect(query.values[1]).toBe(`%50\\%\\_o'x%`);
-    expect(query.text).not.toMatch(/~|SIMILAR TO|regexp/i);
+    expect(query.text).not.toMatch(/ ~\*? \$|SIMILAR TO/i);
     expect(query.text).toContain('LATERAL');
     expect(query.text).not.toContain(`o'x`);
   });
@@ -60,5 +61,45 @@ describe('owner page SQL', () => {
     const ids = buildOwnerPageIdsQuery(filter, 10, 0);
     const count = buildOwnerPageCountQuery(filter);
     expect(ids.values.slice(0, 3)).toEqual(count.values);
+  });
+});
+
+describe('owner page search covers every source of the displayed title', () => {
+  const search = (q: string) => buildOwnerPageIdsQuery({ ownerId: 'o', status: 'ALL', q }, 10, 0);
+
+  it('matches the stored (picked) title, the approved one while a newer revision is held back', () => {
+    const { text } = search('solar');
+    expect(text).toContain(`newest."review_status" IN ('STALE', 'PENDING')`);
+    expect(text).toContain('approved."title"');
+  });
+
+  it('matches the title derived from the article for the "Untitled draft" placeholder', () => {
+    const { text } = search('photosynthesis');
+    expect(text).toContain(`r."title" = 'Untitled draft'`);
+    expect(text).toContain(`placeholder."markdown"`);
+    expect(text).toContain('#{1,6}');
+    expect(text).toContain('```');
+    expect(text).toContain('left(');
+  });
+
+  it('matches a row with no title at all when the text is the word untitled or part of it', () => {
+    expect(search('Untitled').text).toContain('IS NULL)');
+    expect(search('untit').text).toContain('IS NULL)');
+    expect(search('photosynthesis').text).not.toContain('IS NULL)');
+    expect(matchesUntitledPlaceholder('UNTITLED')).toBe(true);
+    expect(matchesUntitledPlaceholder('untitled draft')).toBe(false);
+    expect(matchesUntitledPlaceholder('x')).toBe(false);
+  });
+
+  it('keeps escaping, binding and the owner scope with the derived title in play', () => {
+    const query = search('100%_');
+    expect(query.values).toEqual(['o', String.raw`%100\%\_%`, 10, 0]);
+    expect(query.text).toContain('p."owner_id" = $1');
+    expect(query.text).not.toContain('100%_');
+  });
+
+  it('no search adds none of the revision or article reads', () => {
+    const { text } = buildOwnerPageIdsQuery({ ownerId: 'o', status: 'ALL' }, 10, 0);
+    expect(text).not.toContain('placeholder');
   });
 });

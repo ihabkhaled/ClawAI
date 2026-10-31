@@ -11,6 +11,11 @@ export function escapeLikePattern(text: string): string {
   return text.replaceAll(/[\\%_]/g, String.raw`\$&`);
 }
 
+/** True when the search text is the word "untitled" or a part of it, in any letter case. */
+export function matchesUntitledPlaceholder(q: string): boolean {
+  return 'untitled'.includes(q.toLowerCase());
+}
+
 function whereClause(filter: OwnerPageFilter): Prisma.Sql {
   const conditions: Prisma.Sql[] = [Prisma.sql`p."owner_id" = ${filter.ownerId}`];
   if (filter.status !== 'ALL')
@@ -18,7 +23,13 @@ function whereClause(filter: OwnerPageFilter): Prisma.Sql {
   if (filter.q) {
     // ILIKE on an escaped literal: no regex, so no ReDoS. A scan bounded to this owner's rows.
     const pattern = `%${escapeLikePattern(filter.q)}%`;
-    conditions.push(Prisma.sql`${OWNER_PAGE_SHOWN_TITLE_SQL} ILIKE ${pattern} ESCAPE '\\'`);
+    const match = Prisma.sql`${OWNER_PAGE_SHOWN_TITLE_SQL} ILIKE ${pattern} ESCAPE '\\'`;
+    // A row with no title at all is shown as "Untitled", so the word (or a part of it) finds it.
+    conditions.push(
+      matchesUntitledPlaceholder(filter.q)
+        ? Prisma.sql`(${match} OR ${OWNER_PAGE_SHOWN_TITLE_SQL} IS NULL)`
+        : match,
+    );
   }
   return Prisma.join(conditions, ' AND ');
 }
