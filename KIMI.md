@@ -55,17 +55,9 @@ protocol before any code:
 [`skills/execute-prompt-pack.md`](skills/execute-prompt-pack.md). Policy outranks
 the pack; state every deviation.
 
-## Akinator runs on every change
+## Akinator and marketing pages
 
-Every prompt that can change the repository runs the full Akinator pass (ask, resolve, audit, plan, implement, document, skillify, rule,
-contextify, memoize, index and sync, verify) without being asked. No command, no plugin and no slash command is needed, and forgetting one
-is never a reason to skip it. Read [`skills/akinator/SKILL.md`](skills/akinator/SKILL.md) yourself when nothing loaded it for you.
-A typo records `knowledge delta: none, because <reason>`. Rule: [`rules/65`](rules/65-akinator-runs-on-every-change.md) ·
-where it triggers: [`context/akinator-always-on.md`](context/akinator-always-on.md).
-
-A new flagship, core or big feature, or product introduction ships its public marketing page in the same change:
-[`rules/66`](rules/66-every-flagship-feature-ships-a-public-marketing-page.md) ·
-[`skills/ship-a-feature-marketing-page.md`](skills/ship-a-feature-marketing-page.md).
+Every change runs the full Akinator pass with no command ([`rules/65`](rules/65-akinator-runs-on-every-change.md), [`skills/akinator/SKILL.md`](skills/akinator/SKILL.md)). A new flagship or big feature ships its public marketing page in the same change ([`rules/66`](rules/66-every-flagship-feature-ships-a-public-marketing-page.md)).
 
 ## Landing a change
 
@@ -89,10 +81,9 @@ Full list and reasons: [`rules/00-non-negotiable-rules.md`](rules/00-non-negotia
 - **NEVER** declare a type/enum/const inline in a logic file ([rules/12](rules/12-types-enums-constants-and-declaration-ownership.md)).
 - **NEVER** ship code without its docs: every doc the change makes stale is updated in the same commit ([rules/63](rules/63-docs-move-with-code.md)).
 - **NEVER** change normal chat alone — Compare, Consensus, Escalation, the labs and the judge share it ([rules/59](rules/59-chat-surfaces-are-one-pipeline.md)).
-- **NEVER** skip the Akinator pass because no command was typed ([rules/65](rules/65-akinator-runs-on-every-change.md)), or ship a flagship feature without its public marketing page ([rules/66](rules/66-every-flagship-feature-ships-a-public-marketing-page.md)).
 - **NEVER** call a change done on unit tests alone ([rules/60](rules/60-qa-evidence-is-mandatory-and-machine-checked.md)).
 - **NEVER** invent a repository fact — derive it from `.ai/manifests/` or the code.
-- Delegated agents (any tool: Claude Code, Codex, Cursor, Kimi, Gemini, ...): the smallest fast model (Claude: Haiku 5.5) only for read-only audit and context work, the strong model for code and QA, never a flagship (Fable-class) or max effort, and when unsure which model to use, ask the owner ([rules/64](rules/64-subagent-model-selection.md)).
+- Delegated agents, any tool: smallest fast model only to read, strong model to code and QA, never a flagship; unsure, ask the owner ([rules/64](rules/64-subagent-model-selection.md)).
 
 ## Where things live
 
