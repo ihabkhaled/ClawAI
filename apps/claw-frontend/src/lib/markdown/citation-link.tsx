@@ -14,7 +14,7 @@ export function CitationLink({ citation, children }: CitationLinkProps): React.J
   const host = citationHost(citation.url);
   const label = `${citation.title ?? host} — ${host}`;
   const chipClass =
-    'bg-muted text-muted-foreground ms-0.5 inline-flex min-w-4 items-center justify-center rounded px-1 align-super text-[10px] leading-none font-medium no-underline';
+    'bg-muted text-muted-foreground mx-0.5 inline-flex min-w-4 items-center justify-center rounded px-1 align-super text-[10px] leading-none font-medium no-underline';
   if (url === null) {
     return (
       <span className={chipClass} title={label} aria-label={label}>

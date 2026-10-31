@@ -22,6 +22,18 @@ describe('inline citations', () => {
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
+  it('spaces every chip on both sides so adjacent citations never read as one number', () => {
+    const many: MessageCitation[] = [
+      { index: 1, title: 'One', url: 'https://one.example/a', snippet: '' },
+      { index: 2, title: 'Two', url: 'https://two.example/b', snippet: '' },
+    ];
+    render(<MarkdownRenderer content="The latest release [1][2]." citations={many} />);
+
+    for (const link of screen.getAllByRole('link')) {
+      expect(link.className).toContain('mx-0.5');
+    }
+  });
+
   it('leaves a number the answer never stored as plain text — no fabricated link', () => {
     render(<MarkdownRenderer content="As shown in [7]." citations={citations} />);
 
