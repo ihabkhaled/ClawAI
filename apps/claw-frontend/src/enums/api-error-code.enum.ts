@@ -52,6 +52,13 @@ export enum ApiErrorCode {
   INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
   EMAIL_NOT_VERIFIED = 'EMAIL_NOT_VERIFIED',
   ACCOUNT_SUSPENDED = 'ACCOUNT_SUSPENDED',
+  // An administrator banned the account (ADR-200). Only returned after the password verified
+  // or on a refresh token the caller already holds; carries bannedUntil / banPermanent.
+  ACCOUNT_BANNED = 'ACCOUNT_BANNED',
+  // Admin user-management refusals (ADR-200).
+  CANNOT_BAN_SELF = 'CANNOT_BAN_SELF',
+  USER_NOT_BANNED = 'USER_NOT_BANNED',
+  CANNOT_SET_OWN_PASSWORD = 'CANNOT_SET_OWN_PASSWORD',
   // Sign-up refusals (auth-service POST /auth/register). DUPLICATE_ENTITY for a
   // taken address is the one enumeration surface ADR-096 deliberately keeps.
   // VALIDATION_FAILED carries a per-field `errors` map of RegisterValidationIssue
@@ -86,4 +93,14 @@ export enum ApiErrorCode {
   CONTEXT_SAVE_NOT_PENDING = 'CONTEXT_SAVE_NOT_PENDING',
   CONTEXT_SAVE_UNKNOWN_PACK = 'CONTEXT_SAVE_UNKNOWN_PACK',
   CONTEXT_SAVE_UNAVAILABLE = 'CONTEXT_SAVE_UNAVAILABLE',
+  // Admin sessions (ADR-204).
+  SESSION_NOT_FOUND = 'SESSION_NOT_FOUND',
+  // The refresh token belongs to a login that was ended on purpose; the sign-in flow runs as usual.
+  SESSION_TERMINATED = 'SESSION_TERMINATED',
+  CURRENT_SESSION_CONFIRM_REQUIRED = 'CURRENT_SESSION_CONFIRM_REQUIRED',
+  SESSION_ACTIVE_CANNOT_CLEAR = 'SESSION_ACTIVE_CANNOT_CLEAR',
+  GLOBAL_PASSWORD_INVALID = 'GLOBAL_PASSWORD_INVALID',
+  GLOBAL_PASSWORD_LOCKED = 'GLOBAL_PASSWORD_LOCKED',
+  GLOBAL_TOKEN_INVALID = 'GLOBAL_TOKEN_INVALID',
+  GLOBAL_PHRASE_INVALID = 'GLOBAL_PHRASE_INVALID',
 }

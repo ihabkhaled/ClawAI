@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import type { PresenceFilter } from '@/enums/presence-filter.enum';
 import { usePagination } from '@/hooks/use-pagination';
 import type { UseAdminUserFiltersReturn } from '@/types';
 
@@ -12,6 +13,7 @@ export function useAdminUserFilters(): UseAdminUserFiltersReturn {
   const [statusFilter, setStatusFilter] = useState('');
   const [planFilter, setPlanFilter] = useState('');
   const [verificationFilter, setVerificationFilter] = useState('');
+  const [presenceFilter, setPresenceFilter] = useState<PresenceFilter | null>(null);
 
   const updateSearch = (value: string) => {
     setSearch(value);
@@ -34,6 +36,11 @@ export function useAdminUserFilters(): UseAdminUserFiltersReturn {
     reset();
   };
 
+  const updatePresence = (value: PresenceFilter | null) => {
+    setPresenceFilter(value);
+    reset();
+  };
+
   return {
     page,
     pageSize,
@@ -49,5 +56,7 @@ export function useAdminUserFilters(): UseAdminUserFiltersReturn {
     setPlanFilter: updatePlan,
     verificationFilter,
     setVerificationFilter: updateVerification,
+    presenceFilter,
+    setPresenceFilter: updatePresence,
   };
 }

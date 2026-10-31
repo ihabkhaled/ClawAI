@@ -69,6 +69,7 @@
     "lint:frontend": "npm run lint --workspace=claw-frontend",
     "lint:ratchet": "node tools/lint/ratchet.mjs check",
     "security:audit": "node tools/security/npm-audit.mjs",
+    "security:fix": "node tools/security/audit-fix.mjs",
     "security:secrets": "node tools/gates/secret-scan.mjs",
     "migrate:all": "node tools/release/migrate-all.mjs",
     "prepare": "node .husky/install.mjs || exit 0",
@@ -143,7 +144,8 @@
     "hono": "^4.12.31",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
-    "image-size": "^2.0.4"
+    "image-size": "^2.0.4",
+    "ip-address": "^10.7.5"
   },
   "allowScripts": {
     "argon2@0.45.1": true,

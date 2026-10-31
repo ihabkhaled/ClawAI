@@ -362,6 +362,11 @@
       "route": "/admin/runtime-progress"
     },
     {
+      "file": "apps/claw-frontend/src/app/(portal)/admin/security/sessions/page.tsx",
+      "kind": "page",
+      "route": "/admin/security/sessions"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(portal)/admin/smart-router/model-costs/page.tsx",
       "kind": "page",
       "route": "/admin/smart-router/model-costs"
@@ -375,6 +380,11 @@
       "file": "apps/claw-frontend/src/app/(portal)/admin/suggestion-rules/page.tsx",
       "kind": "page",
       "route": "/admin/suggestion-rules"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/admin/users/[id]/sessions/page.tsx",
+      "kind": "page",
+      "route": "/admin/users/[id]/sessions"
     },
     {
       "file": "apps/claw-frontend/src/app/(portal)/admin/users/page.tsx",

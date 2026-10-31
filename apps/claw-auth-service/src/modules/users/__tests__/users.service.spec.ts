@@ -29,6 +29,13 @@ const mockUser = {
   firstName: null,
   lastName: null,
   phone: null,
+  registrationIp: null,
+  registrationCountryCode: null,
+  lastSeenAt: null,
+  bannedAt: null,
+  bannedUntil: null,
+  banReason: null,
+  bannedByUserId: null,
   mustChangePassword: false,
   roleId: null,
   activePlanId: null,
@@ -57,6 +64,10 @@ const mockRepository = (): Record<keyof UsersRepository, Mock> => ({
   updatePreferences: vi.fn(),
   revokeSessionsByUserId: vi.fn(),
   revokeOtherSessionsByUserId: vi.fn(),
+  revokeSessionsReturningIds: vi.fn(),
+  clearBan: vi.fn(),
+  touchLastSeen: vi.fn(),
+  countPresence: vi.fn(),
 });
 
 const mockRabbitMQ = (): Partial<Record<keyof RabbitMQService, Mock>> => ({
@@ -298,7 +309,10 @@ describe('UsersService', () => {
       expect(repository.updateById).toHaveBeenCalledWith('user-1', {
         status: UserStatus.SUSPENDED,
       });
-      expect(repository.revokeSessionsByUserId).toHaveBeenCalledWith('user-1');
+      expect(repository.revokeSessionsByUserId).toHaveBeenCalledWith(
+        'user-1',
+        'ACCOUNT_DEACTIVATED',
+      );
       expect(rabbitMQ.publish).toHaveBeenCalledWith(
         EventPattern.USER_DEACTIVATED,
         expect.objectContaining({
@@ -567,6 +581,73 @@ describe('UsersService', () => {
       await expect(service.assertSuperAdminActor('admin-1')).rejects.toMatchObject({
         code: 'SUPER_ADMIN_REQUIRED',
       });
+    });
+  });
+
+  describe('sessions screens (ADR-204)', () => {
+    it('getSessionTarget returns id, role and username, and 404s for an unknown user', async () => {
+      repository.findById.mockResolvedValue(mockUser);
+      await expect(service.getSessionTarget('user-1')).resolves.toEqual({
+        id: mockUser.id,
+        role: mockUser.role,
+        username: mockUser.username,
+      });
+
+      repository.findById.mockResolvedValue(null);
+      await expect(service.getSessionTarget('nope')).rejects.toThrow(EntityNotFoundException);
+    });
+
+    it('lets an administrator manage an ordinary user sessions? only the super administrator may touch another administrator', async () => {
+      actorIsSuperAdmin(repository, adminRow);
+      await expect(
+        service.assertSessionsManageable('admin-2', SUPER_ADMIN_ID),
+      ).resolves.toBeUndefined();
+
+      repository.findById.mockImplementation((id: string) =>
+        Promise.resolve(
+          id === 'admin-9' ? { ...mockUser, id: 'admin-9', role: UserRole.ADMIN } : adminRow,
+        ),
+      );
+      await expect(service.assertSessionsManageable('admin-2', 'admin-9')).rejects.toMatchObject({
+        code: 'SUPER_ADMIN_REQUIRED',
+      });
+    });
+
+    it('an ordinary administrator may manage an ordinary user', async () => {
+      repository.findById.mockImplementation((id: string) =>
+        Promise.resolve(
+          id === 'admin-9' ? { ...mockUser, id: 'admin-9', role: UserRole.ADMIN } : mockUser,
+        ),
+      );
+
+      await expect(service.assertSessionsManageable('user-1', 'admin-9')).resolves.toBeUndefined();
+    });
+
+    it('nobody but the super administrator himself can manage the super administrator sessions', async () => {
+      repository.findById.mockImplementation((id: string) =>
+        Promise.resolve(
+          id === SUPER_ADMIN_ID
+            ? superAdminRow
+            : { ...mockUser, id: 'admin-9', role: UserRole.ADMIN },
+        ),
+      );
+
+      await expect(
+        service.assertSessionsManageable(SUPER_ADMIN_ID, 'admin-9'),
+      ).rejects.toMatchObject({
+        code: 'SUPER_ADMIN_IMMUTABLE',
+      });
+      // Their own logins are theirs to manage.
+      await expect(
+        service.assertSessionsManageable(SUPER_ADMIN_ID, SUPER_ADMIN_ID),
+      ).resolves.toBeUndefined();
+    });
+
+    it('404s for an unknown target', async () => {
+      repository.findById.mockResolvedValue(null);
+      await expect(service.assertSessionsManageable('nope', 'admin-9')).rejects.toThrow(
+        EntityNotFoundException,
+      );
     });
   });
 

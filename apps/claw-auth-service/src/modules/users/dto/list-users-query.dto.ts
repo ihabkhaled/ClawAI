@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { SortOrder, UserRole, UserStatus } from '../../../common/enums';
+import { PresenceFilter, SortOrder, UserRole, UserStatus } from '../../../common/enums';
 
 export const listUsersQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -9,7 +9,14 @@ export const listUsersQuerySchema = z.object({
   status: z.nativeEnum(UserStatus).optional(),
   planId: z.string().min(1).max(255).optional(),
   verification: z.enum(['VERIFIED', 'UNVERIFIED']).optional(),
-  sortBy: z.enum(['createdAt', 'email', 'username', 'role', 'status']).default('createdAt'),
+  presence: z.nativeEnum(PresenceFilter).optional(),
+  banned: z
+    .enum(['true', 'false'])
+    .transform((value) => value === 'true')
+    .optional(),
+  sortBy: z
+    .enum(['createdAt', 'email', 'username', 'role', 'status', 'lastSeenAt'])
+    .default('createdAt'),
   sortOrder: z.nativeEnum(SortOrder).default(SortOrder.DESC),
 });
 

@@ -80,4 +80,20 @@ describe('useAdminUserFilters', () => {
 
     expect(result.current.page).toBe(3);
   });
+
+  it('starts without a presence filter, sets it, clears it, and resets the page', () => {
+    const { result } = renderHook(() => useAdminUserFilters());
+    expect(result.current.presenceFilter).toBeNull();
+
+    act(() => {
+      result.current.setPresenceFilter('ONLINE' as never);
+    });
+    expect(result.current.presenceFilter).toBe('ONLINE');
+    expect(result.current.page).toBe(1);
+
+    act(() => {
+      result.current.setPresenceFilter(null);
+    });
+    expect(result.current.presenceFilter).toBeNull();
+  });
 });

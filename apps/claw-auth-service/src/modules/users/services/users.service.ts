@@ -32,6 +32,8 @@ import {
 } from '../../../common/constants/super-admin.constants';
 import { CurrencyPreferenceMode, type User } from '../../../generated/prisma';
 import {
+  type AdminUser,
+  type PresenceSummary,
   type PublicProfile,
   type SafeUser,
   type UserIdentity,
@@ -40,10 +42,12 @@ import {
 import { toPublicProfile } from '../service.utilities/public-profile.utility';
 import { publicProfileUsernameSchema } from '../dto/public-profiles.dto';
 import { toSafeUser } from '../service.utilities/to-safe-user.utility';
+import { toAdminUser } from '../service.utilities/to-admin-user.utility';
 import { validatePasswordStrength } from '../service.utilities/password-policy.utility';
 import { resolveSuperAdminMutability } from '../service.utilities/super-admin-mutability.utility';
 import { randomBytes } from 'node:crypto';
 import { AuthEmailAdapter } from '../../auth/adapters/auth-email.adapter';
+import { SessionTerminationReason } from '../../sessions/enums/session-termination-reason.enum';
 import { RolesService } from '../../roles/services/roles.service';
 import { PlansRepository } from '../../plans/repositories/plans.repository';
 
@@ -61,7 +65,7 @@ export class UsersService {
     private readonly userDeletionOutbox: Pick<UserDeletionOutboxRepository, 'deleteAccount'>,
   ) {}
 
-  async create(dto: CreateUserDto, actorId: string): Promise<SafeUser> {
+  async create(dto: CreateUserDto, actorId: string): Promise<AdminUser> {
     this.logger.log(
       `create: creating user email=${dto.email} role=${dto.role} by actor ${actorId}`,
     );
@@ -122,7 +126,7 @@ export class UsersService {
       timestamp: new Date().toISOString(),
     });
 
-    return toSafeUser(user);
+    return toAdminUser(user);
   }
 
   async findById(id: string): Promise<SafeUser> {
@@ -133,7 +137,22 @@ export class UsersService {
     return toSafeUser(user);
   }
 
-  async findAll(query: ListUsersQueryDto): Promise<PaginatedResult<SafeUser>> {
+  /** Admin read of one account: the SafeUser plus registration origin, presence and ban state. */
+  async findAdminById(id: string): Promise<AdminUser> {
+    const user = await this.usersRepository.findById(id);
+    if (!user) {
+      throw new EntityNotFoundException('User', id);
+    }
+    return toAdminUser(user);
+  }
+
+  /** Online-now, active-in-24h and banned-now counts for the admin users page. */
+  async getPresenceSummary(): Promise<PresenceSummary> {
+    return this.usersRepository.countPresence(new Date());
+  }
+
+  async findAll(query: ListUsersQueryDto): Promise<PaginatedResult<AdminUser>> {
+    const now = new Date();
     const skip = (query.page - 1) * query.limit;
     const { users, total } = await this.usersRepository.findAll({
       skip,
@@ -144,13 +163,15 @@ export class UsersService {
         status: query.status,
         planId: query.planId,
         verification: query.verification,
+        presence: query.presence,
+        banned: query.banned,
       },
       sortBy: query.sortBy,
       sortOrder: query.sortOrder,
     });
 
     return {
-      data: users.map(toSafeUser),
+      data: users.map((user) => toAdminUser(user, now)),
       meta: {
         total,
         page: query.page,
@@ -160,7 +181,7 @@ export class UsersService {
     };
   }
 
-  async updateUser(id: string, dto: UpdateUserDto, actorId: string): Promise<SafeUser> {
+  async updateUser(id: string, dto: UpdateUserDto, actorId: string): Promise<AdminUser> {
     this.logger.log(`updateUser: updating user ${id} by actor ${actorId}`);
     const user = await this.usersRepository.findById(id);
     if (!user) {
@@ -196,6 +217,7 @@ export class UsersService {
       username: dto.username,
       firstName: dto.firstName,
       lastName: dto.lastName,
+      phone: dto.phone,
       role: dto.role,
       status: dto.status,
     });
@@ -208,7 +230,7 @@ export class UsersService {
       timestamp: new Date().toISOString(),
     });
 
-    return toSafeUser(updated);
+    return toAdminUser(updated);
   }
 
   async updateOwnProfile(
@@ -249,7 +271,7 @@ export class UsersService {
     this.logger.log('deleteOwnAccount: account deletion committed with propagation event');
   }
 
-  async deactivateUser(id: string, actorId: string): Promise<SafeUser> {
+  async deactivateUser(id: string, actorId: string): Promise<AdminUser> {
     this.logger.log(`deactivateUser: deactivating user ${id} by actor ${actorId}`);
     const user = await this.usersRepository.findById(id);
     if (!user) {
@@ -262,7 +284,10 @@ export class UsersService {
       status: UserStatus.SUSPENDED,
     });
 
-    await this.usersRepository.revokeSessionsByUserId(id);
+    await this.usersRepository.revokeSessionsByUserId(
+      id,
+      SessionTerminationReason.ACCOUNT_DEACTIVATED,
+    );
 
     await this.rabbitMQService.publish(EventPattern.USER_DEACTIVATED, {
       userId: id,
@@ -270,10 +295,10 @@ export class UsersService {
       timestamp: new Date().toISOString(),
     });
 
-    return toSafeUser(updated);
+    return toAdminUser(updated);
   }
 
-  async reactivateUser(id: string, actorId: string): Promise<SafeUser> {
+  async reactivateUser(id: string, actorId: string): Promise<AdminUser> {
     this.logger.log(`reactivateUser: reactivating user ${id} by actor ${actorId}`);
     const user = await this.usersRepository.findById(id);
     if (!user) {
@@ -292,7 +317,7 @@ export class UsersService {
       timestamp: new Date().toISOString(),
     });
 
-    return toSafeUser(updated);
+    return toAdminUser(updated);
   }
 
   /**
@@ -306,7 +331,7 @@ export class UsersService {
    * did — left the account ACTIVE but unverified, with its emailed link still
    * live.
    */
-  async activatePendingUser(id: string, actorId: string): Promise<SafeUser> {
+  async activatePendingUser(id: string, actorId: string): Promise<AdminUser> {
     this.logger.log(`activatePendingUser: activating user ${id} by actor ${actorId}`);
     const user = await this.usersRepository.findById(id);
     if (!user) {
@@ -332,7 +357,7 @@ export class UsersService {
       timestamp: new Date().toISOString(),
     });
 
-    return toSafeUser(updated);
+    return toAdminUser(updated);
   }
 
   async updatePreferences(userId: string, dto: UpdatePreferencesDto): Promise<SafeUser> {
@@ -455,7 +480,7 @@ export class UsersService {
     );
   }
 
-  async changeRole(id: string, role: UserRole, actorId: string): Promise<SafeUser> {
+  async changeRole(id: string, role: UserRole, actorId: string): Promise<AdminUser> {
     this.logger.log(`changeRole: changing role for user ${id} to ${role} by actor ${actorId}`);
     const user = await this.usersRepository.findById(id);
     if (!user) {
@@ -479,7 +504,7 @@ export class UsersService {
       timestamp: new Date().toISOString(),
     });
 
-    return toSafeUser(updated);
+    return toAdminUser(updated);
   }
 
   async issueTemporaryPassword(id: string, actorId: string): Promise<void> {
@@ -497,7 +522,10 @@ export class UsersService {
     // the emailed temporary password will not work, but the user's existing password
     // still works, so they are not locked out.
     await this.usersRepository.updateById(id, { passwordHash, mustChangePassword: true });
-    await this.usersRepository.revokeSessionsByUserId(id);
+    await this.usersRepository.revokeSessionsByUserId(
+      id,
+      SessionTerminationReason.PASSWORD_CHANGED,
+    );
     await this.rabbitMQService.publish(EventPattern.USER_TEMPORARY_PASSWORD_ISSUED, {
       userId: id,
       issuedBy: actorId,
@@ -520,13 +548,37 @@ export class UsersService {
     return user;
   }
 
+  /** The target of a sessions screen: must exist. Reading is allowed to any administrator. */
+  async getSessionTarget(
+    targetId: string,
+  ): Promise<{ id: string; role: string; username: string }> {
+    const user = await this.usersRepository.findById(targetId);
+    if (!user) throw new EntityNotFoundException('User', targetId);
+    return { id: user.id, role: user.role, username: user.username };
+  }
+
+  /**
+   * Ending or clearing another account's sessions follows the ban rules (ADR-204): the super
+   * administrator is shielded from everyone else, and only the super administrator may act on
+   * another administrator. Your own sessions are always yours to manage.
+   */
+  async assertSessionsManageable(targetId: string, actorId: string): Promise<void> {
+    const user = await this.usersRepository.findById(targetId);
+    if (!user) throw new EntityNotFoundException('User', targetId);
+    this.assertMutable(user, actorId, SuperAdminMutationScope.SESSIONS);
+    await this.assertSuperAdminActorForAdminMutation(
+      actorId,
+      user.role === UserRole.ADMIN && user.id !== actorId,
+    );
+  }
+
   /**
    * Refuses a mutation whose TARGET is shielded from this actor.
    *
    * Repeated refusals are a security signal, so each one is logged with the
    * actor, the target and the scope rather than vanishing into a bare throw.
    */
-  private assertMutable(user: User, actorId: string, scope: SuperAdminMutationScope): void {
+  assertMutable(user: User, actorId: string, scope: SuperAdminMutationScope): void {
     const outcome = resolveSuperAdminMutability({
       target: { id: user.id, isSuperAdmin: user.isSuperAdmin },
       actorId,
@@ -561,7 +613,7 @@ export class UsersService {
    * The other half of the invariant. Target protection alone is decorative: an
    * administrator who can promote themselves simply does that first, then acts.
    */
-  private async assertSuperAdminActorForAdminMutation(
+  async assertSuperAdminActorForAdminMutation(
     actorId: string,
     adminMutation: boolean,
   ): Promise<void> {

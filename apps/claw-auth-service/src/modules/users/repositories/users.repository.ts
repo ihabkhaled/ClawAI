@@ -8,7 +8,10 @@ import {
   UserLanguagePreference,
   UserStatus,
 } from '../../../generated/prisma';
-import { SortOrder } from '../../../common/enums';
+import { PresenceFilter, SortOrder } from '../../../common/enums';
+import { SessionTerminationReason } from '../../sessions/enums/session-termination-reason.enum';
+import { buildTerminationData } from '../../sessions/utilities/termination-data.utility';
+import { presenceCutoff } from '../service.utilities/presence.utility';
 import {
   type PublicProfileSource,
   type UpdateUserData,
@@ -114,10 +117,14 @@ export class UsersRepository {
     return this.prisma.user.delete({ where: { id } });
   }
 
-  async revokeSessionsByUserId(userId: string, revokedAt = new Date()): Promise<number> {
+  async revokeSessionsByUserId(
+    userId: string,
+    reason: SessionTerminationReason,
+    revokedAt = new Date(),
+  ): Promise<number> {
     const result = await this.prisma.session.updateMany({
       where: { userId, revokedAt: null },
-      data: { revokedAt },
+      data: buildTerminationData(reason, revokedAt),
     });
     return result.count;
   }
@@ -132,9 +139,60 @@ export class UsersRepository {
   ): Promise<number> {
     const result = await this.prisma.session.updateMany({
       where: { userId, revokedAt: null, id: { not: keepSessionId } },
-      data: { revokedAt },
+      data: buildTerminationData(SessionTerminationReason.ACCOUNT_CHANGED, revokedAt),
     });
     return result.count;
+  }
+
+  /** Revokes every open session of a user and returns the ids, so the caller can publish them (ADR-112). */
+  async revokeSessionsReturningIds(
+    userId: string,
+    reason: SessionTerminationReason,
+    revokedAt = new Date(),
+  ): Promise<string[]> {
+    const open = await this.prisma.session.findMany({
+      where: { userId, revokedAt: null },
+      select: { id: true },
+    });
+    if (open.length === 0) return [];
+    await this.prisma.session.updateMany({
+      where: { userId, revokedAt: null },
+      data: buildTerminationData(reason, revokedAt),
+    });
+    return open.map((session) => session.id);
+  }
+
+  /** Clears every ban column. Used by unban and by the lazy lift of an expired timed ban. */
+  async clearBan(id: string): Promise<User> {
+    return this.prisma.user.update({
+      where: { id },
+      data: { bannedAt: null, bannedUntil: null, banReason: null, bannedByUserId: null },
+    });
+  }
+
+  /**
+   * Writes lastSeenAt only when it is older than `staleBefore`. A raw statement on
+   * purpose: Prisma's update would also bump `updated_at`, which means "profile
+   * changed", and presence is not a profile change. Returns the rows touched.
+   */
+  async touchLastSeen(id: string, now: Date, staleBefore: Date): Promise<number> {
+    return this.prisma
+      .$executeRaw`UPDATE "users" SET "last_seen_at" = ${now} WHERE "id" = ${id} AND ("last_seen_at" IS NULL OR "last_seen_at" < ${staleBefore})`;
+  }
+
+  async countPresence(
+    now: Date,
+  ): Promise<{ onlineNow: number; active24h: number; bannedNow: number }> {
+    const [onlineNow, active24h, bannedNow] = await this.prisma.$transaction([
+      this.prisma.user.count({
+        where: { lastSeenAt: { gte: presenceCutoff(PresenceFilter.ONLINE, now) } },
+      }),
+      this.prisma.user.count({
+        where: { lastSeenAt: { gte: presenceCutoff(PresenceFilter.ACTIVE_24H, now) } },
+      }),
+      this.prisma.user.count({ where: this.activeBanWhere(now) }),
+    ]);
+    return { onlineNow, active24h, bannedNow };
   }
 
   async countAll(filters?: UserFilters): Promise<number> {
@@ -159,6 +217,14 @@ export class UsersRepository {
     });
   }
 
+  /** Banned right now: lifetime, or a timed ban whose end is still ahead. */
+  private activeBanWhere(now: Date): Prisma.UserWhereInput {
+    return {
+      bannedAt: { not: null },
+      OR: [{ bannedUntil: null }, { bannedUntil: { gt: now } }],
+    };
+  }
+
   private buildWhereClause(filters?: UserFilters): Prisma.UserWhereInput {
     const where: Prisma.UserWhereInput = {};
 
@@ -176,6 +242,14 @@ export class UsersRepository {
 
     if (filters?.verification) {
       where.emailVerifiedAt = filters.verification === 'VERIFIED' ? { not: null } : null;
+    }
+
+    if (filters?.presence) {
+      where.lastSeenAt = { gte: presenceCutoff(filters.presence, new Date()) };
+    }
+
+    if (filters?.banned) {
+      where.AND = [this.activeBanWhere(new Date())];
     }
 
     if (filters?.search) {

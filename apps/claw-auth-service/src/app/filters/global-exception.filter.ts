@@ -83,6 +83,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     if (details) {
       body.availableMicroUsd = details.availableMicroUsd;
       body.requiredMicroUsd = details.requiredMicroUsd;
+      if (details.banPermanent !== undefined) {
+        body.banPermanent = details.banPermanent;
+        body.bannedUntil = details.bannedUntil ?? null;
+      }
     }
 
     response.status(status).json(body);

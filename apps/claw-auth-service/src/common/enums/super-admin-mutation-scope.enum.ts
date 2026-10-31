@@ -28,4 +28,11 @@ export enum SuperAdminMutationScope {
    * `/users/me/password` route, which proves knowledge of the current one.
    */
   TEMPORARY_PASSWORD = 'TEMPORARY_PASSWORD',
+  /** Ban and unban (ADR-200). Never self-permitted: the super administrator cannot be banned, by anyone. */
+  BAN = 'BAN',
+  /**
+   * Viewing, ending and clearing sessions (ADR-204). Another administrator can never end the
+   * super administrator's sessions; the super administrator may manage their own.
+   */
+  SESSIONS = 'SESSIONS',
 }

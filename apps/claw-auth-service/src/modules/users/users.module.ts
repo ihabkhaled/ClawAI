@@ -8,6 +8,7 @@ import { RolesModule } from '../roles/roles.module';
 import { PlansModule } from '../plans/plans.module';
 import { UserDeletionOutboxRepository } from './repositories/user-deletion-outbox.repository';
 import { UserDeletionOutboxPublisher } from './services/user-deletion-outbox.publisher';
+import { UserAdminActionsService } from './services/user-admin-actions.service';
 
 @Module({
   // Roles and plans are imported for one reason each: an administrator-created
@@ -19,6 +20,7 @@ import { UserDeletionOutboxPublisher } from './services/user-deletion-outbox.pub
   controllers: [UsersController, UsersInternalController],
   providers: [
     UsersService,
+    UserAdminActionsService,
     UsersRepository,
     UserDeletionOutboxRepository,
     UserDeletionOutboxPublisher,

@@ -13,4 +13,6 @@
 export const ROUTINE_SUCCESS_PATHS: ReadonlyArray<string> = [
   '/api/v1/health',
   '/api/v1/auth/grafana-access/verify',
+  // The 60-second presence ping (ADR-200): one per open tab per minute, never worth a line.
+  '/api/v1/users/me/heartbeat',
 ];

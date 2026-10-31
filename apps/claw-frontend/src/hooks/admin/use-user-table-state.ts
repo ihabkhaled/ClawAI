@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 
 import { useAssignPlanDialogState } from '@/hooks/admin/use-assign-plan-dialog-state';
+import { useUserSecurityDialogState } from '@/hooks/admin/use-user-security-dialog-state';
 import { useUserStatisticsDialogState } from '@/hooks/admin/use-user-statistics-dialog-state';
 import type { AdminUser, AdminUserUpdateRequest, UseUserTableStateReturn } from '@/types';
 
@@ -10,6 +11,7 @@ export function useUserTableState(): UseUserTableStateReturn {
   const [temporaryPasswordUserId, setTemporaryPasswordUserId] = useState<string | null>(null);
   const assignPlan = useAssignPlanDialogState();
   const statistics = useUserStatisticsDialogState();
+  const security = useUserSecurityDialogState();
 
   const handleRoleSelect = useCallback(
     (userId: string, role: string, onChangeRole: (userId: string, role: string) => void): void => {
@@ -72,5 +74,6 @@ export function useUserTableState(): UseUserTableStateReturn {
     confirmTemporaryPassword,
     ...assignPlan,
     ...statistics,
+    ...security,
   };
 }

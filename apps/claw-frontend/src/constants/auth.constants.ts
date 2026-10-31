@@ -26,3 +26,6 @@ export const AUTH_REFRESH_LOCK = 'claw-auth-refresh';
  * and logging out on it signed people out for a dropped connection.
  */
 export const SESSION_ENDING_REFRESH_STATUSES: readonly number[] = [400, 401, 403];
+
+/** sessionStorage key for the one-shot "you were banned" notice shown on the next sign-in page (ADR-200). */
+export const BAN_NOTICE_STORAGE_KEY = 'claw.ban-notice';

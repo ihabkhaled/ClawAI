@@ -1149,6 +1149,21 @@
         },
         {
           "method": "POST",
+          "route": "/auth/session-security/challenge",
+          "source": "apps/claw-auth-service/src/modules/sessions/controllers/session-global.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/auth/session-security/clear-logs",
+          "source": "apps/claw-auth-service/src/modules/sessions/controllers/session-global.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/auth/session-security/terminate-all",
+          "source": "apps/claw-auth-service/src/modules/sessions/controllers/session-global.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/auth/vscode/authorize/approve",
           "source": "apps/claw-auth-service/src/modules/auth/controllers/vscode-authorization.controller.ts"
         },
@@ -1423,6 +1438,16 @@
           "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
         },
         {
+          "method": "POST",
+          "route": "/users/:id/ban",
+          "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/users/:id/password",
+          "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+        },
+        {
           "method": "PATCH",
           "route": "/users/:id/reactivate",
           "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
@@ -1433,8 +1458,38 @@
           "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
         },
         {
+          "method": "GET",
+          "route": "/users/:id/sessions",
+          "source": "apps/claw-auth-service/src/modules/sessions/controllers/session-admin.controller.ts"
+        },
+        {
+          "method": "DELETE",
+          "route": "/users/:id/sessions/:familyId/log",
+          "source": "apps/claw-auth-service/src/modules/sessions/controllers/session-admin.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/users/:id/sessions/:familyId/terminate",
+          "source": "apps/claw-auth-service/src/modules/sessions/controllers/session-admin.controller.ts"
+        },
+        {
+          "method": "DELETE",
+          "route": "/users/:id/sessions/logs",
+          "source": "apps/claw-auth-service/src/modules/sessions/controllers/session-admin.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/users/:id/sessions/terminate-all",
+          "source": "apps/claw-auth-service/src/modules/sessions/controllers/session-admin.controller.ts"
+        },
+        {
           "method": "POST",
           "route": "/users/:id/temporary-password",
+          "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/users/:id/unban",
           "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
         },
         {
@@ -1473,6 +1528,11 @@
           "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
         },
         {
+          "method": "POST",
+          "route": "/users/me/heartbeat",
+          "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+        },
+        {
           "method": "PATCH",
           "route": "/users/me/password",
           "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
@@ -1480,6 +1540,11 @@
         {
           "method": "PATCH",
           "route": "/users/me/preferences",
+          "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/users/presence-summary",
           "source": "apps/claw-auth-service/src/modules/users/controllers/users.controller.ts"
         }
       ],
@@ -8501,6 +8566,11 @@
         "route": "/admin/runtime-progress"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/admin/security/sessions/page.tsx",
+        "kind": "page",
+        "route": "/admin/security/sessions"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/admin/smart-router/model-costs/page.tsx",
         "kind": "page",
         "route": "/admin/smart-router/model-costs"
@@ -8514,6 +8584,11 @@
         "file": "apps/claw-frontend/src/app/(portal)/admin/suggestion-rules/page.tsx",
         "kind": "page",
         "route": "/admin/suggestion-rules"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(portal)/admin/users/[id]/sessions/page.tsx",
+        "kind": "page",
+        "route": "/admin/users/[id]/sessions"
       },
       {
         "file": "apps/claw-frontend/src/app/(portal)/admin/users/page.tsx",
@@ -9919,7 +9994,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 6244
+        "value": 6317
       },
       "localeCount": 13,
       "locales": [
@@ -11225,6 +11300,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "SessionAdminAudit"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
             "value": "SystemSetting"
           },
           {
@@ -12335,7 +12415,7 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 204
+        "testFiles": 227
       },
       "claw-chat-service": {
         "runner": "vitest",
@@ -12359,7 +12439,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 1012
+        "testFiles": 1028
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -13254,10 +13334,10 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 58,
-    "endpointCount": 951,
+    "endpointCount": 964,
     "envVarCount": 386,
     "eventCount": 190,
-    "frontendRouteCount": 182,
+    "frontendRouteCount": 184,
     "localeCount": 13,
     "nginxRouteCount": 72,
     "permissionCount": 94,
@@ -13266,7 +13346,7 @@
     "serviceCount": 21,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2799,
+    "totalTestFiles": 2838,
     "workspaceCount": 28
   }
 }

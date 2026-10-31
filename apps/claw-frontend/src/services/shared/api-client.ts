@@ -23,6 +23,9 @@ export class ApiClientError extends Error {
   // sign-in / sign-up limiter sends it, so the UI can say "try again in N
   // minutes" instead of guessing (rules/58).
   retryAfterSeconds?: number;
+  // ACCOUNT_BANNED only (ADR-200): when a timed ban ends (ISO-8601), and whether it never does.
+  bannedUntil?: string | null;
+  banPermanent?: boolean;
 
   constructor(params: {
     message: string;
@@ -31,6 +34,8 @@ export class ApiClientError extends Error {
     code?: string;
     requestId?: string;
     retryAfterSeconds?: number;
+    bannedUntil?: string | null;
+    banPermanent?: boolean;
   }) {
     super(params.message);
     this.name = 'ApiClientError';
@@ -39,6 +44,8 @@ export class ApiClientError extends Error {
     this.code = params.code;
     this.requestId = params.requestId;
     this.retryAfterSeconds = params.retryAfterSeconds;
+    this.bannedUntil = params.bannedUntil;
+    this.banPermanent = params.banPermanent;
   }
 }
 
@@ -142,6 +149,8 @@ function toApiClientError(error: unknown): ApiClientError {
           code?: string;
           errorCode?: string;
           errors?: Record<string, string[]>;
+          bannedUntil?: string | null;
+          banPermanent?: boolean;
         };
       };
     };
@@ -166,6 +175,8 @@ function toApiClientError(error: unknown): ApiClientError {
       requestId:
         typeof rawRequestId === 'string' && rawRequestId.length > 0 ? rawRequestId : undefined,
       retryAfterSeconds: parseRetryAfterSeconds(axiosError.response?.headers?.[RETRY_AFTER_HEADER]),
+      bannedUntil: isServerError ? undefined : axiosError.response?.data?.bannedUntil,
+      banPermanent: isServerError ? undefined : axiosError.response?.data?.banPermanent,
     });
   }
   return new ApiClientError({ message: 'Network error', status: 0 });

@@ -1,6 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
+import { ADMIN_SESSIONS_TRANSLATIONS } from './admin-sessions-translations';
 import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
@@ -280,6 +281,12 @@ export const es: TranslationDictionary = {
     loginEmailNotVerifiedDescription:
       'Su contraseña era correcta, pero esta cuenta aún no se ha activado. Abra el correo de confirmación que le enviamos, pulse el enlace que contiene y vuelva a iniciar sesión.',
     loginEmailNotVerifiedAction: 'No he recibido el correo',
+    loginBannedTitle: 'Esta cuenta está bloqueada',
+    loginBannedDescription:
+      'Un administrador bloqueó esta cuenta hasta el {date}. No puedes iniciar sesión antes.',
+    loginBannedPermanentDescription:
+      'Un administrador bloqueó esta cuenta de forma permanente. No puedes iniciar sesión.',
+    loginBannedGeneric: 'Esta cuenta está bloqueada.',
     loginSuspendedTitle: 'Esta cuenta está suspendida',
     loginSuspendedDescription:
       'Su contraseña era correcta, pero un administrador ha desactivado esta cuenta. Póngase en contacto con el soporte si cree que se trata de un error.',
@@ -423,6 +430,7 @@ export const es: TranslationDictionary = {
     adminRoles: 'Roles',
     adminRuntimeProgress: 'Diagnóstico de runtime',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.es.navigationLabel,
+    adminSecuritySessions: ADMIN_SESSIONS_TRANSLATIONS.es.navigationLabel,
     adminPaymentGateways: 'Pasarelas de pago',
     adminSmartRouter: 'Enrutador inteligente',
     adminModelCosts: 'Precios de modelos',
@@ -2313,6 +2321,9 @@ export const es: TranslationDictionary = {
     // "you may never" and "you may, but not to yourself" are different
     // sentences. See rules/35-super-administrator-and-privilege-boundaries.md.
     errors: {
+      cannotBanSelf: 'No puedes bloquear tu propia cuenta.',
+      userNotBanned: 'Esta cuenta no está bloqueada.',
+      cannotSetOwnPassword: 'Cambia tu propia contraseña desde los ajustes de tu cuenta.',
       superAdminImmutable:
         'Solo el superadministrador puede modificar la cuenta de superadministrador.',
       superAdminSelfLocked:
@@ -2413,6 +2424,75 @@ export const es: TranslationDictionary = {
 
     editUserCancel: 'Cancelar',
 
+    colRegistration: 'Registrado desde',
+    presenceOnline: 'En línea ahora',
+    presenceRecent: 'Activo en las últimas 24 horas',
+    presenceOffline: 'Desconectado',
+    presenceOnlineNow: 'En línea ahora',
+    presenceActive24h: 'Activo en las últimas 24 horas',
+    presenceBannedNow: 'Bloqueados ahora',
+    presenceActiveNow: 'Activo ahora',
+    viewUserDetails: 'Ver detalles',
+    userDetailTitle: 'Detalles del usuario',
+    userDetailDescription: 'Información de la cuenta. Visible solo para administradores.',
+    detailName: 'Nombre',
+    detailPhone: 'Teléfono',
+    detailRegistrationIp: 'IP de registro',
+    detailRegistrationCountry: 'País de registro',
+    detailRegisteredOn: 'Registrado el',
+    detailLastOnline: 'Última conexión',
+    detailActivity: 'Actividad',
+    detailBanState: 'Bloqueo',
+    detailNotBanned: 'Sin bloqueo',
+    detailBannedPermanent: 'Bloqueado de forma permanente',
+    detailBannedUntil: 'Bloqueado hasta el {date}',
+    detailBanReason: 'Motivo del bloqueo',
+    detailMustChangePassword: 'Debe cambiar la contraseña',
+    banAction: 'Bloquear',
+    unbanAction: 'Desbloquear',
+    bannedBadge: 'Bloqueado',
+    banDialogTitle: 'Bloquear a {username}',
+    banDialogDescription:
+      'Se cierra la sesión del usuario en todas partes al instante y no podrá iniciar sesión hasta que termine el bloqueo.',
+    banUnit: 'Unidad de duración',
+    banAmount: 'Cantidad',
+    banUnitMinutes: 'Minutos',
+    banUnitHours: 'Horas',
+    banUnitDays: 'Días',
+    banUnitLifetime: 'De por vida',
+    banAmountInvalid: 'Introduce un número entero de 1 o más.',
+    banReason: 'Motivo',
+    banReasonPlaceholder: '¿Por qué se bloquea esta cuenta?',
+    banReasonRequired: 'El motivo es obligatorio.',
+    banConfirm: 'Bloquear usuario',
+    userBanned: 'Usuario bloqueado',
+    userBanFailed: 'No se pudo bloquear al usuario',
+    userUnbanned: 'Usuario desbloqueado',
+    userUnbanFailed: 'No se pudo desbloquear al usuario',
+    setPasswordAction: 'Establecer contraseña',
+    setPasswordTitle: 'Establecer una contraseña para {username}',
+    setPasswordDescription:
+      'Se cierra la sesión del usuario en todas partes y deberá elegir una contraseña nueva en el próximo inicio de sesión.',
+    setPasswordMode: 'Cómo establecer la contraseña',
+    setPasswordModeGenerate: 'Generar',
+    setPasswordModeManual: 'Escribirla',
+    setPasswordGenerateHint:
+      'El servidor crea una contraseña aleatoria segura y se muestra una sola vez.',
+    setPasswordGenerateConfirm: 'Generar y establecer',
+    setPasswordManualLabel: 'Contraseña nueva',
+    setPasswordManualHint: 'Al menos 8 caracteres, con una mayúscula, una minúscula y un número.',
+    setPasswordConfirm: 'Establecer contraseña',
+    setPasswordGeneratedTitle: 'Contraseña establecida. Entrégasela al usuario:',
+    setPasswordGeneratedWarning:
+      'Cópiala ahora. Se muestra una sola vez y no se guarda en ningún sitio.',
+    setPasswordCopy: 'Copiar contraseña',
+    setPasswordDone: 'Listo',
+    setPasswordFailed: 'No se pudo establecer la contraseña',
+    setPasswordSucceeded: 'Contraseña establecida',
+    editUserPhone: 'Teléfono',
+    editUserPhoneHint:
+      'Formato internacional, por ejemplo +201001234567. Déjalo vacío para quitarlo.',
+    editUserPhoneInvalid: 'Usa el formato internacional, por ejemplo +201001234567.',
     editUserRotatePassword: 'Rotar contraseña',
     userUpdated: 'Usuario actualizado',
     userUpdateFailed: 'No se pudo actualizar el usuario',
@@ -4922,6 +5002,7 @@ export const es: TranslationDictionary = {
     failed: 'No se pudo emitir el reembolso.',
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.es.section,
+  adminSessions: ADMIN_SESSIONS_TRANSLATIONS.es.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.es,
   narration: NARRATION_TRANSLATIONS.es,
   pickedModel: PICKED_MODEL_TRANSLATIONS.es,

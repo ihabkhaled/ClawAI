@@ -19,6 +19,8 @@ export enum LoginFailureReason {
   EMAIL_NOT_VERIFIED = 'EMAIL_NOT_VERIFIED',
   /** Correct password, account disabled by an administrator. */
   ACCOUNT_SUSPENDED = 'ACCOUNT_SUSPENDED',
+  /** Correct password, account banned by an administrator (timed or lifetime). */
+  ACCOUNT_BANNED = 'ACCOUNT_BANNED',
   /**
    * Too many attempts from this address or for this account (429). Says
    * nothing about whether the account exists: the limit is applied to every

@@ -6,6 +6,7 @@ import type { EmailVerificationOutcome } from '@/enums/email-verification-outcom
 import type { FloatingClearanceEdge } from '@/enums/floating-clearance-edge.enum';
 import type { PasswordInputType } from '@/enums/password-input-type.enum';
 import type { PlanGrantDurationUnit } from '@/enums/plan-grant-duration-unit.enum';
+import type { PresenceFilter } from '@/enums/presence-filter.enum';
 import type { ScrollDirection } from '@/enums/scroll-direction.enum';
 import type { AdminCreateUserFormValues } from '@/lib/validation/admin-create-user.schema';
 import type { AdminPlanGrantFormValues } from '@/lib/validation/admin-plan-grant.schema';
@@ -23,6 +24,11 @@ import type {
 import type { ProfileIdentityFormValues } from '@/lib/validation/profile.schema';
 import type { RegisterFormValues } from '@/lib/validation/register.schema';
 import type { FollowOutputCallback, VirtuosoHandle } from '@/lib/virtuoso';
+import type {
+  PresenceSummary,
+  UseUserSecurityDialogStateReturn,
+  UserSecurityHandlers,
+} from '@/types/admin-user-management.types';
 import type { LoginFailureCopy, PasswordRuleState, SignupFailureCopy } from '@/types/auth.types';
 import type {
   ComposerUploadEntry,
@@ -402,6 +408,9 @@ export type UseAdminUserFiltersReturn = {
   setPlanFilter: (value: string) => void;
   verificationFilter: string;
   setVerificationFilter: (value: string) => void;
+  /** null = no presence filter. */
+  presenceFilter: PresenceFilter | null;
+  setPresenceFilter: (value: PresenceFilter | null) => void;
 };
 
 export type UseAdminUserMutationsReturn = {
@@ -444,6 +453,10 @@ export type UseAdminUsersPageReturn = UseAdminUserFiltersReturn &
     activeCount: number;
     usersQuery: { isLoading: boolean; isError: boolean };
     onRetry: () => void;
+    /** Online-now / active-24h / banned-now counters; undefined until loaded. */
+    presenceSummary: PresenceSummary | undefined;
+    /** Ban, unban and set-password handlers for the table dialogs. */
+    security: UserSecurityHandlers;
   };
 
 export type UseAdminPageReturn = {
@@ -490,7 +503,7 @@ export type UseUserTableStateReturn = {
   subscriptionUser: AdminUser | null;
   openSubscription: (user: AdminUser) => void;
   closeSubscription: () => void;
-};
+} & UseUserSecurityDialogStateReturn;
 
 /**
  * Sub-hook composed FROM `useUserTableState`, not called directly from

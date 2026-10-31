@@ -1,4 +1,7 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, UsePipes } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UsePipes } from '@nestjs/common';
+import type { Request } from 'express';
+import { resolveSessionOrigin } from '../utilities/session-origin.utility';
+import { resolveRegistrationOrigin } from '../../users/service.utilities/registration-origin.utility';
 import { AuthService } from '../services/auth.service';
 import { ConfirmEmailChangeDto, confirmEmailChangeSchema } from '../dto/email-change.dto';
 import { EmailChangeService } from '../services/email-change.service';
@@ -43,8 +46,9 @@ export class AuthController {
   @AuthRateLimit(AuthRateLimitPolicy.REGISTER)
   @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ZodValidationPipe(registerSchema))
-  async register(@Body() dto: RegisterDto): Promise<RegisterResult> {
-    return this.authService.register(dto);
+  async register(@Body() dto: RegisterDto, @Req() request: Request): Promise<RegisterResult> {
+    const origin = await resolveRegistrationOrigin(request.headers, request.socket.remoteAddress);
+    return this.authService.register(dto, origin);
   }
 
   @Public()
@@ -52,8 +56,12 @@ export class AuthController {
   @AuthRateLimit(AuthRateLimitPolicy.LOGIN)
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(loginSchema))
-  async login(@Body() dto: LoginDto): Promise<LoginResult> {
-    return this.authService.login(dto.email, dto.password, loginSessionClient(dto));
+  async login(@Body() dto: LoginDto, @Req() request: Request): Promise<LoginResult> {
+    const origin = await resolveSessionOrigin(request.headers, request.socket.remoteAddress);
+    return this.authService.login(dto.email, dto.password, {
+      ...loginSessionClient(dto),
+      origin,
+    });
   }
 
   @Public()

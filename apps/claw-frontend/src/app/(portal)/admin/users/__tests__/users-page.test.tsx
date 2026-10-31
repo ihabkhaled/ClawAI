@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { UserRole } from '@/enums';
+import { PresenceState, UserRole } from '@/enums';
 import { useAdminUsersPage } from '@/hooks/admin/use-admin-users-page';
 import type { UseAdminUsersPageReturn } from '@/types';
 
@@ -69,6 +69,17 @@ const baseReturn = {
   isUpdateUserPending: false,
   isTemporaryPasswordPending: false,
   activeCount: 0,
+  presenceFilter: null,
+  setPresenceFilter: noop,
+  presenceSummary: undefined,
+  security: {
+    onBan: vi.fn().mockResolvedValue(true),
+    onUnban: noop,
+    onSetPassword: vi.fn().mockResolvedValue({}),
+    isBanPending: false,
+    isUnbanPending: false,
+    isSetPasswordPending: false,
+  },
 } satisfies UseAdminUsersPageReturn;
 
 describe('AdminUsersPage', () => {
@@ -122,6 +133,18 @@ describe('AdminUsersPage', () => {
           emailVerifiedAt: null,
           firstName: null,
           lastName: null,
+          phone: null,
+          registrationIp: null,
+          registrationCountryCode: null,
+          lastSeenAt: null,
+          presence: PresenceState.OFFLINE,
+          isBanned: false,
+          banPermanent: false,
+          bannedAt: null,
+          bannedUntil: null,
+          banReason: null,
+          bannedByUserId: null,
+          mustChangePassword: false,
         },
       ],
       usersMeta: { ...baseReturn.usersMeta, total: 1 },

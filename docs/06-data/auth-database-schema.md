@@ -21,19 +21,26 @@ Prisma schema: apps/claw-auth-service/prisma/schema.prisma
 
 Stores all user accounts.
 
-| Column                | Type                     | Nullable | Default   | Constraints | Description                    |
-| --------------------- | ------------------------ | -------- | --------- | ----------- | ------------------------------ |
-| id                    | String (CUID)            | NO       | `cuid()`  | PK          | Unique user identifier         |
-| email                 | String                   | NO       | -         | UNIQUE      | User email address             |
-| username              | String                   | NO       | -         | UNIQUE      | Display username               |
-| password_hash         | String                   | NO       | -         | -           | Argon2 hashed password         |
-| role                  | UserRole enum            | NO       | `VIEWER`  | -           | ADMIN, OPERATOR, VIEWER        |
-| status                | UserStatus enum          | NO       | `PENDING` | -           | ACTIVE, SUSPENDED, PENDING     |
-| must_change_password  | Boolean                  | NO       | `false`   | -           | Force password change on login |
-| language_preference   | UserLanguagePreference   | NO       | `EN`      | -           | EN, AR, FR, IT, DE, ES, RU, PT |
-| appearance_preference | UserAppearancePreference | NO       | `SYSTEM`  | -           | SYSTEM, LIGHT, DARK            |
-| created_at            | DateTime                 | NO       | `now()`   | -           | Account creation timestamp     |
-| updated_at            | DateTime                 | NO       | auto      | -           | Last update timestamp          |
+| Column                    | Type                     | Nullable | Default   | Constraints | Description                                         |
+| ------------------------- | ------------------------ | -------- | --------- | ----------- | --------------------------------------------------- |
+| id                        | String (CUID)            | NO       | `cuid()`  | PK          | Unique user identifier                              |
+| email                     | String                   | NO       | -         | UNIQUE      | User email address                                  |
+| username                  | String                   | NO       | -         | UNIQUE      | Display username                                    |
+| password_hash             | String                   | NO       | -         | -           | Argon2 hashed password                              |
+| role                      | UserRole enum            | NO       | `VIEWER`  | -           | ADMIN, OPERATOR, VIEWER                             |
+| status                    | UserStatus enum          | NO       | `PENDING` | -           | ACTIVE, SUSPENDED, PENDING                          |
+| must_change_password      | Boolean                  | NO       | `false`   | -           | Force password change on login                      |
+| language_preference       | UserLanguagePreference   | NO       | `EN`      | -           | EN, AR, FR, IT, DE, ES, RU, PT                      |
+| appearance_preference     | UserAppearancePreference | NO       | `SYSTEM`  | -           | SYSTEM, LIGHT, DARK                                 |
+| registration_ip           | VarChar(45)              | YES      | -         | -           | Sign-up IP, admin-only personal data (ADR-200)      |
+| registration_country_code | VarChar(2)               | YES      | -         | -           | Offline country of that IP                          |
+| last_seen_at              | DateTime                 | YES      | -         | idx         | Presence, written at most once a minute             |
+| banned_at                 | DateTime                 | YES      | -         | -           | Set while banned; with banned_until NULL = lifetime |
+| banned_until              | DateTime                 | YES      | -         | idx         | End of a timed ban                                  |
+| ban_reason                | VarChar(500)             | YES      | -         | -           | Admin note, never sent to the user                  |
+| banned_by_user_id         | String                   | YES      | -         | -           | Acting administrator                                |
+| created_at                | DateTime                 | NO       | `now()`   | -           | Account creation timestamp                          |
+| updated_at                | DateTime                 | NO       | auto      | -           | Last update timestamp                               |
 
 **Indexes**:
 
@@ -186,3 +193,29 @@ One row per user, created on first change: `in_app_enabled` (default true), `ema
 ### push_subscriptions
 
 One row per browser that agreed to Web Push (ADR-166). `endpoint` unique (varchar 1000, treated as a credential), `p256dh` and `auth` are the browser's public keys, `last_used_at` set on a successful send. FK `user_id` to `users`, cascade delete. Max 10 per user, enforced in the service.
+
+### sessions: origin and termination columns (ADR-204)
+
+All nullable, no backfill (old rows read as unknown). A login is a `family_id`; every row of a family carries the
+**login's** origin, copied on each rotation.
+
+| Column                  | Type         | Meaning                                                                                                                                                      |
+| ----------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ip_address`            | VarChar(45)  | Client address of the login (trusted-proxy rule). Personal data, admin-only                                                                                  |
+| `country_code`          | VarChar(2)   | Offline GeoIP country of that address                                                                                                                        |
+| `user_agent`            | VarChar(512) | Raw agent, control characters removed                                                                                                                        |
+| `os`, `browser`         | VarChar(64)  | Parsed labels, e.g. `Windows`, `Chrome 130`                                                                                                                  |
+| `device_kind`           | VarChar(16)  | DESKTOP, MOBILE, TABLET, TOOL, UNKNOWN                                                                                                                       |
+| `terminated_at`         | DateTime     | Set with `revoked_at` when closed on purpose                                                                                                                 |
+| `terminated_by_user_id` | String       | The administrator, null for self-service or automatic closes                                                                                                 |
+| `termination_reason`    | VarChar(32)  | USER_LOGOUT, ADMIN_TERMINATED, ADMIN_TERMINATED_ALL, GLOBAL_TERMINATION, TOKEN_REUSE, ACCOUNT_BANNED, PASSWORD_CHANGED, ACCOUNT_DEACTIVATED, ACCOUNT_CHANGED |
+
+Indexes added: `(user_id, family_id, created_at DESC)`, `(revoked_at, expires_at)`. State shown to admins is derived:
+revoked => TERMINATED, past `expires_at` => EXPIRED, else ACTIVE.
+
+### session_admin_audit
+
+One row per admin session action: `actor_user_id`, `action` (SESSION_TERMINATE_ONE, SESSION_TERMINATE_ALL_FOR_USER,
+SESSION_CLEAR_ONE_LOG, SESSION_CLEAR_USER_LOGS, SESSION_GLOBAL_TERMINATE_ALL, SESSION_GLOBAL_CLEAR_LOGS,
+SESSION_GLOBAL_PASSWORD_FAILED), `target_user_id` (null for system-wide), `family_count`, `row_count`, `created_at`.
+Counts only: never a token, hash, password or address.

@@ -7,6 +7,8 @@ import { VscodeAuthorizationService } from './services/vscode-authorization.serv
 import { AuthManager } from './managers/auth.manager';
 import { TokenSessionManager } from './managers/token-session.manager';
 import { SessionRevocationCacheService } from './services/session-revocation-cache.service';
+import { AccountBanGateService } from './services/account-ban-gate.service';
+import { UserPresenceService } from './services/user-presence.service';
 import { AuthRepository } from './repositories/auth.repository';
 import { PasswordResetService } from './services/password-reset.service';
 import { PasswordResetManager } from './managers/password-reset.manager';
@@ -36,6 +38,8 @@ import { AuthRateLimitSuccessInterceptor } from './interceptors/auth-rate-limit-
     AuthManager,
     TokenSessionManager,
     SessionRevocationCacheService,
+    AccountBanGateService,
+    UserPresenceService,
     AuthRepository,
     PasswordResetService,
     PasswordResetManager,
@@ -54,6 +58,12 @@ import { AuthRateLimitSuccessInterceptor } from './interceptors/auth-rate-limit-
     AuthRateLimitGuard,
     AuthRateLimitSuccessInterceptor,
   ],
-  exports: [AuthService, AuthEmailAdapter, EmailChangeService],
+  exports: [
+    AuthService,
+    AuthEmailAdapter,
+    EmailChangeService,
+    SessionRevocationCacheService,
+    UserPresenceService,
+  ],
 })
 export class AuthModule {}

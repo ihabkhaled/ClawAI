@@ -3,6 +3,7 @@ import axios from 'axios';
 import { API_BASE_URL, AUTH_REFRESH_LOCK, SESSION_ENDING_REFRESH_STATUSES } from '@/constants';
 import type { RefreshResponse } from '@/types';
 import { getAccessToken, getRefreshToken, setTokens } from '@/utilities';
+import { banNoticeFromResponse, storeBanNotice } from '@/utilities/ban-notice.utility';
 
 let inFlight: Promise<string | null> | null = null;
 
@@ -58,6 +59,11 @@ async function refreshUnderLock(staleAccessToken: string | null): Promise<string
   } catch (error) {
     if (!endsSession(error)) {
       throw error;
+    }
+    // A ban ends the session with a coded reply; keep it so the sign-in page can explain (ADR-200).
+    const ban = axios.isAxiosError(error) ? banNoticeFromResponse(error.response?.data) : null;
+    if (ban !== null) {
+      storeBanNotice(ban);
     }
     // Another tab signed in again while this refresh was failing: use its session.
     const latest = getRefreshToken();

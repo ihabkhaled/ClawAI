@@ -101,6 +101,19 @@ model User {
   // @claw/shared-constants TTS_VOICES_BY_PROVIDER; null = each provider's
   // default voice. Presentation state, like the display currency.
   ttsVoice               String?                  @map("tts_voice") @db.VarChar(32)
+  // Where the account registered from (ADR-200). PERSONAL DATA, ADMIN-ONLY: never
+  // in a public profile, a token or a self-service response. Country is resolved
+  // offline from the address (geoip-country) and is null for a private address.
+  registrationIp          String?                  @map("registration_ip") @db.VarChar(45)
+  registrationCountryCode String?                  @map("registration_country_code") @db.VarChar(2)
+  // Presence: touched at most once per 60 s (heartbeat, login, refresh).
+  lastSeenAt              DateTime?                @map("last_seen_at")
+  // Ban (ADR-200). bannedAt set with bannedUntil null = LIFETIME. A timed ban is
+  // lifted by the clock, not by a job: readers compare bannedUntil with now.
+  bannedAt                DateTime?                @map("banned_at")
+  bannedUntil             DateTime?                @map("banned_until")
+  banReason               String?                  @map("ban_reason") @db.VarChar(500)
+  bannedByUserId          String?                  @map("banned_by_user_id")
   createdAt              DateTime                 @default(now()) @map("created_at")
   updatedAt              DateTime                 @updatedAt @map("updated_at")
 
@@ -121,6 +134,8 @@ model User {
   @@index([status])
   @@index([roleId])
   @@index([activePlanId])
+  @@index([lastSeenAt])
+  @@index([bannedUntil])
   @@map("users")
 }
 
@@ -452,6 +467,17 @@ model Session {
   revokedAt           DateTime?         @map("revoked_at")
   replacedBySessionId String?           @map("replaced_by_session_id")
   expiresAt           DateTime          @map("expires_at")
+  /// Where the LOGIN came from (ADR-204). Every row of a family copies the login's values; a refresh never overwrites them.
+  ipAddress           String?           @map("ip_address") @db.VarChar(45)
+  countryCode         String?           @map("country_code") @db.VarChar(2)
+  userAgent           String?           @map("user_agent") @db.VarChar(512)
+  os                  String?           @db.VarChar(64)
+  browser             String?           @db.VarChar(64)
+  deviceKind          String?           @map("device_kind") @db.VarChar(16)
+  /// Set together with revokedAt when the session was closed on purpose (ADR-204).
+  terminatedAt        DateTime?         @map("terminated_at")
+  terminatedByUserId  String?           @map("terminated_by_user_id")
+  terminationReason   String?           @map("termination_reason") @db.VarChar(32)
   createdAt           DateTime          @default(now()) @map("created_at")
   updatedAt           DateTime          @updatedAt @map("updated_at")
 
@@ -460,7 +486,24 @@ model Session {
   @@index([userId])
   @@index([familyId])
   @@index([expiresAt])
+  @@index([userId, familyId, createdAt(sort: Desc)])
+  @@index([revokedAt, expiresAt])
   @@map("sessions")
+}
+
+/// Who closed or cleared sessions, when and how many (ADR-204). Counts only: never a token, hash or password.
+model SessionAdminAudit {
+  id           String   @id @default(cuid())
+  actorUserId  String   @map("actor_user_id")
+  action       String   @db.VarChar(40)
+  targetUserId String?  @map("target_user_id")
+  familyCount  Int      @default(0) @map("family_count")
+  rowCount     Int      @default(0) @map("row_count")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([actorUserId, createdAt])
+  @@index([targetUserId, createdAt])
+  @@map("session_admin_audit")
 }
 
 model DeviceAuthorizationGrant {

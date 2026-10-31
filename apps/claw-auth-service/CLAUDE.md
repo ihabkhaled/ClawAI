@@ -701,3 +701,35 @@ settled vs released holds, NOT an HTTP success rate. Only the health queries rea
 - **Free refund cap can overshoot (known, by design).** `THREAD_FREE_REFUNDS_PER_DAY` (5) is checked by counting recent refunds and then writing the refund; the count and the write are not atomic across concurrent closes. Several `PLATFORM_FAILED` closes of the same user that run at the same moment can all read a count below the cap, so the cap can be exceeded by at most `MAX_ACTIVE_GENERATIONS_PER_OWNER - 1` (active-generations cap 3 minus 1 = 2) refunds. Each refund is still exactly-once per job (`free_refunded_at` claim) and bounded by the Free meter, so the overshoot is capped and harmless; do not "fix" it with a global lock without a decision.
 
 - **Per-call plan limits are admin-editable (ADR-197).** `maxInputTokensPerCall`, `maxOutputTokensPerCall` (int 0..10,000,000) and `maxCostPerCallMicroUsd` (int 0..1,000,000,000, BigInt column, returned as a number) are accepted by the create/update plan DTOs and returned in `PlanView`. `null` = no cap, `0` = refuse every call; an update that omits a field leaves it untouched, `null` clears it.
+
+## Admin ban, password set, registration origin, presence (ADR-200, 2026-10-31)
+
+- **Ban** is columns on `users` (`banned_at`, `banned_until`, `ban_reason`, `banned_by_user_id`), not a
+  status; `NULL` `banned_until` with `banned_at` set is lifetime. Always decide through
+  `resolveBanState` (clock based, a timed ban lifts itself). `AccountBanGateService` is called by
+  `TokenSessionManager.issue` and `rotate`; do not add a sign-in path that skips it. Ban and admin password
+  set revoke sessions AND publish the ids (`SessionRevocationCacheService`), or other services keep
+  accepting the token.
+- `toAdminUser` (IP, country, presence, ban notes) is for admin endpoints only. Never put those fields in
+  `toSafeUser`, `/auth/me`, a token or a public profile. The registration IP is personal data.
+- Client address: `resolveRegistrationOrigin` (shared trusted-proxy rule). Country: offline `geoip-country`
+  through `common/utilities/geoip.utility.ts`; importing it loads 8 MB, so it is not in the utilities barrel.
+- Presence: `UserPresenceService.touch` (60 s throttle). `/users/me/heartbeat` is a routine route.
+- Generated passwords exist only in the `POST /users/:id/password` reply; never log or store one.
+
+## Admin sessions and the system-wide kill (ADR-204, 2026-10-31)
+
+- `modules/sessions/` owns the admin view (`SessionAdminRepository` raw SQL, one row per refresh **family**),
+  per-user end/clear (`SessionAdminService`) and the super-administrator-only system-wide actions
+  (`SessionGlobalService` + `SessionGlobalGuardService`: own password -> one-time token in Redis, then token +
+  typed phrase). Routes: `/users/:id/sessions...` and `/auth/session-security/...`.
+- A session row's origin (`ip_address`, `country_code`, `user_agent`, `os`, `browser`, `device_kind`) is written
+  at login and **copied** on rotate/sibling (`originOf`); never read it from the refresh request. Parse agents
+  only with `common/utilities/user-agent.utility.ts` (no AGPL `ua-parser-js`).
+- Every closer of a session must write the termination record: use `buildTerminationData(reason, at, actor)`;
+  `revokeSessionFamily`, `revokeSessionsByUserId` and `revokeSessionsReturningIds` now require a
+  `SessionTerminationReason`. A revoked row with a reason makes a refresh answer `SESSION_TERMINATED`.
+- Anything that ends sessions must also publish the ids (`SessionRevocationCacheService.revoke`, or
+  `revokeBatch` for large sets) or the old access token lives until expiry.
+- "Clear logs" deletes inactive families inside one `DELETE` (never active ones). `session_admin_audit` holds
+  counts only; never put a token, hash, password or address in it or in a log line.

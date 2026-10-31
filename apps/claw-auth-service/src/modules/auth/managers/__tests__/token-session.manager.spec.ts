@@ -5,6 +5,8 @@ import { SessionClientKind } from '../../enums/session-client-kind.enum';
 import { type AuthRepository } from '../../repositories/auth.repository';
 import { TokenSessionManager } from '../token-session.manager';
 import { type SessionRevocationCacheService } from '../../services/session-revocation-cache.service';
+import { type AccountBanGateService } from '../../services/account-ban-gate.service';
+import { type UserPresenceService } from '../../services/user-presence.service';
 
 vi.mock('@common/utilities', () => ({
   signAccessToken: vi.fn().mockReturnValue('access-token'),
@@ -60,6 +62,8 @@ describe('TokenSessionManager', () => {
   };
   let manager: TokenSessionManager;
   let revocationCache: { revoke: ReturnType<typeof vi.fn> };
+  let banGate: { assertNotBanned: Mock };
+  let presence: { touch: Mock };
 
   beforeEach(() => {
     repository = {
@@ -75,9 +79,13 @@ describe('TokenSessionManager', () => {
       revokeSessionForUser: vi.fn().mockResolvedValue(true),
     };
     revocationCache = { revoke: vi.fn().mockResolvedValue(undefined) };
+    banGate = { assertNotBanned: vi.fn().mockResolvedValue(undefined) };
+    presence = { touch: vi.fn().mockResolvedValue(true) };
     manager = new TokenSessionManager(
       repository as unknown as AuthRepository,
       revocationCache as unknown as SessionRevocationCacheService,
+      banGate as unknown as AccountBanGateService,
+      presence as unknown as UserPresenceService,
     );
   });
 
@@ -130,7 +138,10 @@ describe('TokenSessionManager', () => {
     });
 
     await expect(manager.rotate('raw-refresh-token')).rejects.toThrow(InvalidRefreshTokenException);
-    expect(repository.revokeSessionFamily).toHaveBeenCalledWith(sessionFixture.familyId);
+    expect(repository.revokeSessionFamily).toHaveBeenCalledWith(
+      sessionFixture.familyId,
+      'TOKEN_REUSE',
+    );
   });
 
   it('revokes the token family when the refresh token is expired', async () => {
@@ -140,7 +151,10 @@ describe('TokenSessionManager', () => {
     });
 
     await expect(manager.rotate('raw-refresh-token')).rejects.toThrow(InvalidRefreshTokenException);
-    expect(repository.revokeSessionFamily).toHaveBeenCalledWith(sessionFixture.familyId);
+    expect(repository.revokeSessionFamily).toHaveBeenCalledWith(
+      sessionFixture.familyId,
+      'TOKEN_REUSE',
+    );
   });
 
   // Two tabs (or VS Code windows) refreshing together, or a client whose
@@ -182,7 +196,10 @@ describe('TokenSessionManager', () => {
     repository.findSessionById.mockResolvedValue({ ...sessionFixture, revokedAt: new Date() });
 
     await expect(manager.rotate('raw-refresh-token')).rejects.toThrow(InvalidRefreshTokenException);
-    expect(repository.revokeSessionFamily).toHaveBeenCalledWith(sessionFixture.familyId);
+    expect(repository.revokeSessionFamily).toHaveBeenCalledWith(
+      sessionFixture.familyId,
+      'TOKEN_REUSE',
+    );
     expect(repository.createSession).not.toHaveBeenCalled();
   });
 
@@ -259,7 +276,10 @@ describe('TokenSessionManager', () => {
     });
 
     await expect(manager.rotate('raw-refresh-token')).rejects.toThrow(InvalidRefreshTokenException);
-    expect(repository.revokeSessionFamily).toHaveBeenCalledWith(sessionFixture.familyId);
+    expect(repository.revokeSessionFamily).toHaveBeenCalledWith(
+      sessionFixture.familyId,
+      'ACCOUNT_DEACTIVATED',
+    );
     expect(repository.rotateSession).not.toHaveBeenCalled();
   });
 
@@ -285,6 +305,10 @@ describe('TokenSessionManager', () => {
   it('revokes only the authenticated user session on logout', async () => {
     await manager.revokeCurrent(userFixture.id, sessionFixture.id);
 
-    expect(repository.revokeSessionForUser).toHaveBeenCalledWith(sessionFixture.id, userFixture.id);
+    expect(repository.revokeSessionForUser).toHaveBeenCalledWith(
+      sessionFixture.id,
+      userFixture.id,
+      'USER_LOGOUT',
+    );
   });
 });

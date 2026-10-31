@@ -172,3 +172,9 @@ the base image is older than the fixed Node versions of the 2026-10-21 security 
 - [ci-cd-pipeline.md](ci-cd-pipeline.md) — full CI pipeline
 - [../04-backend/shared-packages.md](../04-backend/shared-packages.md) — the shared packages
 - [port-service-map.md](port-service-map.md) — service ↔ port ↔ database map
+
+## Root scripts and dependency overrides (2026-10-31)
+
+- `npm run security:fix` runs `tools/security/audit-fix.mjs`: it pins the patched release of any production dependency flagged by `npm audit`, regenerates the lockfile, verifies, and rolls back on failure. Pre-commit and a daily workflow call it (ADR-202).
+- Root `overrides` pin transitive packages that carry an advisory (for example `ip-address` ^10.7.5, pulled in by `geoip-country`, and `follow-redirects`). Remove an override once the parent package ships the fix.
+- `geoip-country` (apps/claw-auth-service) is the offline country lookup for the admin Users page (ADR-200): 8 MB, pure JavaScript, no install script.

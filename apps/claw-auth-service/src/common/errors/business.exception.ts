@@ -80,6 +80,22 @@ export class AccountSuspendedException extends BusinessException {
 }
 
 /**
+ * An administrator banned this account (ADR-200). Like ACCOUNT_SUSPENDED it is only
+ * ever thrown after the password has verified (login) or on a refresh token the
+ * caller already holds, so naming it reveals nothing to a stranger. Carries the end
+ * of a timed ban, or `banPermanent: true`, so the client can say "until X". The
+ * admin's free-text reason is deliberately NOT on the wire.
+ */
+export class AccountBannedException extends BusinessException {
+  constructor(until: Date | null) {
+    super('Account is banned', 'ACCOUNT_BANNED', HttpStatus.FORBIDDEN, {
+      bannedUntil: until === null ? null : until.toISOString(),
+      banPermanent: until === null,
+    });
+  }
+}
+
+/**
  * Sign-up created the account but could not give it its default plan.
  *
  * The account row is deleted before this is thrown, so "try again" is honest:
@@ -94,6 +110,18 @@ export class SignupPlanAssignmentFailedException extends BusinessException {
       'SIGNUP_PLAN_ASSIGNMENT_FAILED',
       HttpStatus.SERVICE_UNAVAILABLE,
     );
+  }
+}
+
+/**
+ * The login this refresh token belongs to was closed on purpose (an administrator, a
+ * ban, a password change, a sign-out elsewhere). Coded so the client can show the
+ * ordinary signed-out flow instead of a generic failure. 401: the web client treats it
+ * as "sign in again". The reason is never on the wire (ADR-204).
+ */
+export class SessionTerminatedException extends BusinessException {
+  constructor() {
+    super('This session was ended', 'SESSION_TERMINATED', HttpStatus.UNAUTHORIZED);
   }
 }
 

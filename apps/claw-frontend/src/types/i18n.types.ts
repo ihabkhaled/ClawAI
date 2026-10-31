@@ -1,11 +1,14 @@
 import type { Direction } from '@/enums/direction.enum';
 import type { Locale } from '@/enums/locale.enum';
 import type { CostClass } from '@/enums/router-models.enum';
+import type { AdminSessionsSectionTranslation } from '@/types/admin-sessions-i18n.types';
 import type { FeedbackTranslation } from '@/types/i18n-feedback.types';
 import type { PluginImportLocaleTranslation } from '@/types/plugin-import-i18n.types';
 import type { PluginQaFixesLocaleTranslation } from '@/types/plugin-qa-fixes-i18n.types';
 
 export type TranslationDictionary = {
+  /** Admin sessions page, system-wide session actions and their errors (ADR-204). */
+  adminSessions: AdminSessionsSectionTranslation;
   /** Plugins and MCP access: sidebar, plan editor and upgrade label. */
   pluginsAccess: PluginsAccessLocaleTranslation;
   /** Plugins inside a conversation: the @ picker, call timeline and notices. */
@@ -236,6 +239,10 @@ export type TranslationDictionary = {
     loginEmailNotVerifiedTitle: string;
     loginEmailNotVerifiedDescription: string;
     loginEmailNotVerifiedAction: string;
+    loginBannedTitle: string;
+    loginBannedDescription: string;
+    loginBannedPermanentDescription: string;
+    loginBannedGeneric: string;
     loginSuspendedTitle: string;
     loginSuspendedDescription: string;
     loginUnknownDescription: string;
@@ -360,6 +367,7 @@ export type TranslationDictionary = {
     adminRoles: string;
     adminRuntimeProgress: string;
     adminDeployment: string;
+    adminSecuritySessions: string;
     adminPaymentGateways: string;
     adminSmartRouter: string;
     adminModelCosts: string;
@@ -2124,6 +2132,9 @@ export type TranslationDictionary = {
   };
   admin: {
     errors: {
+      cannotBanSelf: string;
+      userNotBanned: string;
+      cannotSetOwnPassword: string;
       superAdminImmutable: string;
       superAdminSelfLocked: string;
       superAdminRequired: string;
@@ -2215,6 +2226,70 @@ export type TranslationDictionary = {
 
     editUserCancel: string;
 
+    colRegistration: string;
+    presenceOnline: string;
+    presenceRecent: string;
+    presenceOffline: string;
+    presenceOnlineNow: string;
+    presenceActive24h: string;
+    presenceBannedNow: string;
+    presenceActiveNow: string;
+    viewUserDetails: string;
+    userDetailTitle: string;
+    userDetailDescription: string;
+    detailName: string;
+    detailPhone: string;
+    detailRegistrationIp: string;
+    detailRegistrationCountry: string;
+    detailRegisteredOn: string;
+    detailLastOnline: string;
+    detailActivity: string;
+    detailBanState: string;
+    detailNotBanned: string;
+    detailBannedPermanent: string;
+    detailBannedUntil: string;
+    detailBanReason: string;
+    detailMustChangePassword: string;
+    banAction: string;
+    unbanAction: string;
+    bannedBadge: string;
+    banDialogTitle: string;
+    banDialogDescription: string;
+    banUnit: string;
+    banAmount: string;
+    banUnitMinutes: string;
+    banUnitHours: string;
+    banUnitDays: string;
+    banUnitLifetime: string;
+    banAmountInvalid: string;
+    banReason: string;
+    banReasonPlaceholder: string;
+    banReasonRequired: string;
+    banConfirm: string;
+    userBanned: string;
+    userBanFailed: string;
+    userUnbanned: string;
+    userUnbanFailed: string;
+    setPasswordAction: string;
+    setPasswordTitle: string;
+    setPasswordDescription: string;
+    setPasswordMode: string;
+    setPasswordModeGenerate: string;
+    setPasswordModeManual: string;
+    setPasswordGenerateHint: string;
+    setPasswordGenerateConfirm: string;
+    setPasswordManualLabel: string;
+    setPasswordManualHint: string;
+    setPasswordConfirm: string;
+    setPasswordGeneratedTitle: string;
+    setPasswordGeneratedWarning: string;
+    setPasswordCopy: string;
+    setPasswordDone: string;
+    setPasswordFailed: string;
+    setPasswordSucceeded: string;
+    editUserPhone: string;
+    editUserPhoneHint: string;
+    editUserPhoneInvalid: string;
     editUserRotatePassword: string;
     userUpdated: string;
     userUpdateFailed: string;

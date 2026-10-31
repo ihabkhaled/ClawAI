@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   HttpCode,
   HttpStatus,
   Param,
@@ -24,7 +25,11 @@ import {
 import { EmailChangeService } from '../../auth/services/email-change.service';
 import type { PendingEmailChangeState } from '../../auth/types/email-change.types';
 import { UsersService } from '../services/users.service';
-import { type SafeUser } from '../types/users.types';
+import { UserAdminActionsService } from '../services/user-admin-actions.service';
+import { UserPresenceService } from '../../auth/services/user-presence.service';
+import { BanUserDto, banUserSchema } from '../dto/ban-user.dto';
+import { SetUserPasswordDto, setUserPasswordSchema } from '../dto/set-user-password.dto';
+import { type AdminUser, type PresenceSummary, type SafeUser } from '../types/users.types';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { CreateUserDto, createUserSchema } from '../dto/create-user.dto';
 import { UpdateUserDto, updateUserSchema } from '../dto/update-user.dto';
@@ -50,6 +55,8 @@ export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly emailChangeService: EmailChangeService,
+    private readonly adminActions: UserAdminActionsService,
+    private readonly presence: UserPresenceService,
   ) {}
 
   @Post()
@@ -58,7 +65,7 @@ export class UsersController {
   async create(
     @Body(new ZodValidationPipe(createUserSchema)) dto: CreateUserDto,
     @CurrentUser() actor: AuthenticatedUser,
-  ): Promise<SafeUser> {
+  ): Promise<AdminUser> {
     return this.usersService.create(dto, actor.id);
   }
 
@@ -67,8 +74,25 @@ export class UsersController {
   @RequirePermissions(Permission.ADMIN_USERS_MANAGE)
   async findAll(
     @Query(new ZodValidationPipe(listUsersQuerySchema)) query: ListUsersQueryDto,
-  ): Promise<PaginatedResult<SafeUser>> {
+  ): Promise<PaginatedResult<AdminUser>> {
     return this.usersService.findAll(query);
+  }
+
+  // Declared before ':id' routes so "presence-summary" is never read as an id.
+  @Get('presence-summary')
+  @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_USERS_MANAGE)
+  async presenceSummary(): Promise<PresenceSummary> {
+    return this.usersService.getPresenceSummary();
+  }
+
+  // The frontend pings this every 60 s while the tab is visible. Writes lastSeenAt at
+  // most once a minute (UserPresenceService). Authenticated like every other route, so a
+  // logged-out client gets a 401 it ignores; it is not plan usage and is not logged.
+  @Post('me/heartbeat')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async heartbeat(@CurrentUser() user: AuthenticatedUser): Promise<void> {
+    await this.presence.touch(user.id);
   }
 
   @Patch('me/preferences')
@@ -156,8 +180,8 @@ export class UsersController {
   @Get(':id')
   @Roles(UserRole.ADMIN)
   @RequirePermissions(Permission.ADMIN_USERS_MANAGE)
-  async findOne(@Param('id') id: string): Promise<SafeUser> {
-    return this.usersService.findById(id);
+  async findOne(@Param('id') id: string): Promise<AdminUser> {
+    return this.usersService.findAdminById(id);
   }
 
   @Patch(':id')
@@ -167,7 +191,7 @@ export class UsersController {
     @Param('id') id: string,
     @Body(new ZodValidationPipe(updateUserSchema)) dto: UpdateUserDto,
     @CurrentUser() user: AuthenticatedUser,
-  ): Promise<SafeUser> {
+  ): Promise<AdminUser> {
     return this.usersService.updateUser(id, dto, user.id);
   }
 
@@ -177,7 +201,7 @@ export class UsersController {
   async deactivate(
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
-  ): Promise<SafeUser> {
+  ): Promise<AdminUser> {
     return this.usersService.deactivateUser(id, user.id);
   }
 
@@ -187,7 +211,7 @@ export class UsersController {
   async reactivate(
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
-  ): Promise<SafeUser> {
+  ): Promise<AdminUser> {
     return this.usersService.reactivateUser(id, user.id);
   }
 
@@ -197,7 +221,7 @@ export class UsersController {
   async activate(
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
-  ): Promise<SafeUser> {
+  ): Promise<AdminUser> {
     return this.usersService.activatePendingUser(id, user.id);
   }
 
@@ -208,8 +232,42 @@ export class UsersController {
     @Param('id') id: string,
     @Body(new ZodValidationPipe(changeRoleSchema)) dto: ChangeRoleDto,
     @CurrentUser() user: AuthenticatedUser,
-  ): Promise<SafeUser> {
+  ): Promise<AdminUser> {
     return this.usersService.changeRole(id, dto.role, user.id);
+  }
+
+  @Post(':id/ban')
+  @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_USERS_MANAGE)
+  @HttpCode(HttpStatus.OK)
+  async ban(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(banUserSchema)) dto: BanUserDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<AdminUser> {
+    return this.adminActions.ban(id, dto, user.id);
+  }
+
+  @Post(':id/unban')
+  @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_USERS_MANAGE)
+  @HttpCode(HttpStatus.OK)
+  async unban(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser): Promise<AdminUser> {
+    return this.adminActions.unban(id, user.id);
+  }
+
+  // The generated password is in this response body ONCE; never cache it.
+  @Post(':id/password')
+  @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_USERS_MANAGE)
+  @HttpCode(HttpStatus.OK)
+  @Header('Cache-Control', 'no-store')
+  async setPassword(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(setUserPasswordSchema)) dto: SetUserPasswordDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<{ generatedPassword?: string }> {
+    return this.adminActions.setPassword(id, dto, user.id);
   }
 
   @Post(':id/temporary-password')

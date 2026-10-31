@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { UserTable } from '@/components/admin/user-table';
-import { Permission, PlanLifecycleStatus } from '@/enums';
+import { Permission, PlanLifecycleStatus, PresenceState } from '@/enums';
 import type { AdminUser } from '@/types/audit.types';
 import type { PlanView } from '@/types/plan.types';
 
@@ -47,6 +47,18 @@ function makeUser(overrides: Partial<AdminUser> = {}): AdminUser {
     emailVerifiedAt: '2026-05-01T00:00:00.000Z',
     firstName: null,
     lastName: null,
+    phone: null,
+    registrationIp: null,
+    registrationCountryCode: null,
+    lastSeenAt: null,
+    presence: PresenceState.OFFLINE,
+    isBanned: false,
+    banPermanent: false,
+    bannedAt: null,
+    bannedUntil: null,
+    banReason: null,
+    bannedByUserId: null,
+    mustChangePassword: false,
     ...overrides,
   };
 }
@@ -131,6 +143,14 @@ const baseProps = {
   isAssignPlanPending: false,
   isUpdateUserPending: false,
   isTemporaryPasswordPending: false,
+  security: {
+    onBan: vi.fn().mockResolvedValue(true),
+    onUnban: vi.fn(),
+    onSetPassword: vi.fn().mockResolvedValue({}),
+    isBanPending: false,
+    isUnbanPending: false,
+    isSetPasswordPending: false,
+  },
 };
 
 // UserTable now uses the responsive DataTable wrapper which mounts BOTH

@@ -5,6 +5,7 @@ import type { ReactElement } from 'react';
 
 import { AccessDenied } from '@/components/admin/access-denied';
 import { CreateUserDialog } from '@/components/admin/create-user-dialog';
+import { PresenceSummaryCards } from '@/components/admin/presence-summary-cards';
 import { UserFilters } from '@/components/admin/user-filters';
 import { UsersContent } from '@/components/admin/users-content';
 import { PageHeader } from '@/components/common/page-header';
@@ -57,6 +58,7 @@ export default function AdminUsersPage(): ReactElement {
           isAssignPlanPending={admin.isAssignPlanPending}
           isUpdateUserPending={admin.isUpdateUserPending}
           isTemporaryPasswordPending={admin.isTemporaryPasswordPending}
+          security={admin.security}
           t={admin.t}
         />
         <Pagination
@@ -89,6 +91,12 @@ export default function AdminUsersPage(): ReactElement {
         canCreateAdmin={admin.actor?.isSuperAdmin === true}
         onClose={admin.createDialog.close}
         onCreate={admin.handleCreateUser}
+        t={admin.t}
+      />
+      <PresenceSummaryCards
+        summary={admin.presenceSummary}
+        activeFilter={admin.presenceFilter}
+        onSelectFilter={admin.setPresenceFilter}
         t={admin.t}
       />
       <UserFilters

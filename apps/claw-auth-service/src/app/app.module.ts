@@ -22,6 +22,7 @@ import { PlansModule } from '../modules/plans/plans.module';
 import { QuotaModule } from '../modules/quota/quota.module';
 import { EntitlementsModule } from '../modules/entitlements/entitlements.module';
 import { UsersModule } from '../modules/users/users.module';
+import { SessionsModule } from '../modules/sessions/sessions.module';
 import { HealthModule } from '../modules/health/health.module';
 import { DeploymentModule } from '../modules/deployment/deployment.module';
 import { SystemSettingsModule } from '../modules/system-settings/system-settings.module';
@@ -86,6 +87,7 @@ import { UsageAttributionModule } from '../modules/usage-attribution/usage-attri
     QuotaModule,
     EntitlementsModule,
     UsersModule,
+    SessionsModule,
     HealthModule,
     DeploymentModule,
     SystemSettingsModule,

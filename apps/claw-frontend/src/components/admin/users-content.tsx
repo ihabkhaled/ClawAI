@@ -26,6 +26,7 @@ export function UsersContent({
   isAssignPlanPending,
   isUpdateUserPending,
   isTemporaryPasswordPending,
+  security,
   t,
 }: UsersContentProps): React.ReactElement {
   if (isLoading) {
@@ -62,6 +63,7 @@ export function UsersContent({
       isAssignPlanPending={isAssignPlanPending}
       isUpdateUserPending={isUpdateUserPending}
       isTemporaryPasswordPending={isTemporaryPasswordPending}
+      security={security}
     />
   );
 }

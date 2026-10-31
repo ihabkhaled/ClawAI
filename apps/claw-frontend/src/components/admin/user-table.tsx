@@ -1,8 +1,14 @@
 'use client';
 
+import { Eye } from 'lucide-react';
+
 import { AssignPlanDialog } from '@/components/admin/assign-plan-dialog';
+import { BanUserDialog } from '@/components/admin/ban-user-dialog';
 import { EditUserDialog } from '@/components/admin/edit-user-dialog';
+import { SetPasswordDialog } from '@/components/admin/set-password-dialog';
 import { TemporaryPasswordDialog } from '@/components/admin/temporary-password-dialog';
+import { UserDetailDialog } from '@/components/admin/user-detail-dialog';
+import { UserPresenceDot } from '@/components/admin/user-presence-dot';
 import { UserSubscriptionDialog } from '@/components/admin/user-statistics/user-subscription-dialog';
 import { UserUsageDialog } from '@/components/admin/user-statistics/user-usage-dialog';
 import { DataTable } from '@/components/common/data-table';
@@ -22,6 +28,13 @@ import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { AdminUser, DataTableColumn, UserTableProps } from '@/types';
 import { resolveAdminUserCapability } from '@/utilities/admin-user-capability.utility';
+import {
+  countryFlagEmoji,
+  formatAdminTimestamp,
+  formatCountryLabel,
+  formatRegistrationIp,
+  resolvePresenceState,
+} from '@/utilities/admin-user-management.utility';
 import { resolveRoleBadgeVariant, resolveUserInitial } from '@/utilities/admin-user.utility';
 
 export function UserTable({
@@ -43,6 +56,7 @@ export function UserTable({
   isAssignPlanPending,
   isUpdateUserPending,
   isTemporaryPasswordPending,
+  security,
 }: UserTableProps): React.ReactElement {
   const {
     editingUserId,
@@ -68,8 +82,17 @@ export function UserTable({
     subscriptionUser,
     openSubscription,
     closeSubscription,
+    detailUser,
+    openDetail,
+    closeDetail,
+    banUser,
+    openBan,
+    closeBan,
+    passwordUser,
+    openPassword,
+    closePassword,
   } = useUserTableState();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const activePlans = plans.filter((plan) => plan.isActive);
 
   const columns: DataTableColumn<AdminUser>[] = [
@@ -78,6 +101,7 @@ export function UserTable({
       header: t('admin.colUsername'),
       render: (user) => (
         <div className="flex items-center gap-3">
+          <UserPresenceDot state={resolvePresenceState(user.lastSeenAt)} t={t} />
           <Avatar className="h-9 w-9">
             <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
               {resolveUserInitial(user)}
@@ -88,6 +112,7 @@ export function UserTable({
       ),
       renderMobileTitle: (user) => (
         <div className="flex items-center gap-3">
+          <UserPresenceDot state={resolvePresenceState(user.lastSeenAt)} t={t} />
           <Avatar className="h-9 w-9">
             <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
               {resolveUserInitial(user)}
@@ -104,6 +129,19 @@ export function UserTable({
       key: 'email',
       header: t('admin.colEmail'),
       render: (user) => <span className="text-muted-foreground text-sm">{user.email}</span>,
+    },
+    {
+      key: 'registration',
+      header: t('admin.colRegistration'),
+      render: (user) => (
+        <div className="flex flex-col text-sm" data-testid={`registration-${user.id}`}>
+          <span className="font-mono text-xs">{formatRegistrationIp(user.registrationIp)}</span>
+          <span className="text-muted-foreground text-xs">
+            {countryFlagEmoji(user.registrationCountryCode)}{' '}
+            {formatCountryLabel(user.registrationCountryCode, locale)}
+          </span>
+        </div>
+      ),
     },
     {
       key: 'role',
@@ -161,6 +199,20 @@ export function UserTable({
             >
               {user.status}
             </span>
+            {user.isBanned ? (
+              <Badge
+                variant="destructive"
+                title={
+                  user.banPermanent || user.bannedUntil === null
+                    ? t('admin.detailBannedPermanent')
+                    : t('admin.detailBannedUntil', {
+                        date: formatAdminTimestamp(user.bannedUntil, locale),
+                      })
+                }
+              >
+                {t('admin.bannedBadge')}
+              </Badge>
+            ) : null}
           </div>
         );
       },
@@ -215,6 +267,16 @@ export function UserTable({
       // labelled "reactivate".
       render: (user) => (
         <div className="touch:grid touch:w-full touch:grid-cols-2 flex min-w-0 flex-wrap justify-end gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-auto py-1.5"
+            aria-label={t('admin.viewUserDetails')}
+            title={t('admin.viewUserDetails')}
+            onClick={() => openDetail(user)}
+          >
+            <Eye className="h-4 w-4" aria-hidden="true" />
+          </Button>
           {/*
             Each statistics button is gated on the permission ITS OWN endpoint
             enforces, not on the ADMIN_USERS_MANAGE that gates this page. The
@@ -272,6 +334,27 @@ export function UserTable({
               {t('admin.editUser')}
             </span>
           </Button>
+          {user.isBanned ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-auto py-1.5"
+              disabled={!resolveAdminUserCapability(user, actor).canBan || security.isUnbanPending}
+              onClick={() => security.onUnban(user.id)}
+            >
+              {t('admin.unbanAction')}
+            </Button>
+          ) : (
+            <Button
+              variant="destructive"
+              size="sm"
+              className="h-auto py-1.5"
+              disabled={!resolveAdminUserCapability(user, actor).canBan}
+              onClick={() => openBan(user)}
+            >
+              {t('admin.banAction')}
+            </Button>
+          )}
           {user.status === UserStatus.PENDING ? (
             <Button
               variant="outline"
@@ -336,6 +419,48 @@ export function UserTable({
         onClose={closeEditUser}
         onSave={(userId, data) => submitEditUser(userId, data, onUpdateUser)}
         onRotatePassword={requestTemporaryPassword}
+        onSetPassword={openPassword}
+        onBan={openBan}
+        onUnban={security.onUnban}
+        isUnbanning={security.isUnbanPending}
+        locale={locale}
+        t={t}
+      />
+      <UserDetailDialog
+        open={detailUser !== null}
+        user={detailUser}
+        planName={plans.find((plan) => plan.id === detailUser?.activePlanId)?.name ?? null}
+        locale={locale}
+        actor={actor}
+        onClose={closeDetail}
+        onEdit={(user) => {
+          closeDetail();
+          openEditUser(user);
+        }}
+        onBan={(user) => {
+          closeDetail();
+          openBan(user);
+        }}
+        onUnban={(userId) => {
+          closeDetail();
+          security.onUnban(userId);
+        }}
+        t={t}
+      />
+      <BanUserDialog
+        open={banUser !== null}
+        user={banUser}
+        isSaving={security.isBanPending}
+        onClose={closeBan}
+        onConfirm={security.onBan}
+        t={t}
+      />
+      <SetPasswordDialog
+        open={passwordUser !== null}
+        user={passwordUser}
+        isSaving={security.isSetPasswordPending}
+        onClose={closePassword}
+        onConfirm={security.onSetPassword}
         t={t}
       />
       <TemporaryPasswordDialog

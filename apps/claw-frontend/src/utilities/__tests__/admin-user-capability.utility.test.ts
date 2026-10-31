@@ -16,8 +16,22 @@ describe('resolveAdminUserCapability', () => {
       canAssignPlan: true,
       canChangeStatus: true,
       canRotatePassword: true,
+      canBan: true,
+      canSetPassword: true,
       reason: null,
     });
+  });
+
+  it('never offers ban or set-password on your own row, super admin or not (ADR-200)', () => {
+    const ownRow = { id: 'admin-2', isSuperAdmin: false };
+    const capability = resolveAdminUserCapability(ownRow, otherAdminActor);
+
+    expect(capability.canBan).toBe(false);
+    expect(capability.canSetPassword).toBe(false);
+    expect(capability.canEditProfile).toBe(true);
+    const superSelf = resolveAdminUserCapability(superAdminRow, superAdminActor);
+    expect(superSelf.canBan).toBe(false);
+    expect(superSelf.canSetPassword).toBe(false);
   });
 
   it('locks every control when another administrator views the super admin row', () => {
@@ -29,6 +43,8 @@ describe('resolveAdminUserCapability', () => {
       canAssignPlan: false,
       canChangeStatus: false,
       canRotatePassword: false,
+      canBan: false,
+      canSetPassword: false,
       reason: AdminUserCapabilityReason.SuperAdminOther,
     });
   });

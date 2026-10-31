@@ -58,7 +58,12 @@ export {
   parseModelVersion,
   rankModelRecency,
 } from './model-recency.utility';
-export { classifyLoginFailure, resolveLoginFailureCopy } from './login-failure.utility';
+export {
+  classifyLoginFailure,
+  readLoginBanInfo,
+  resolveLoginFailureCopy,
+  resolveLoginFormFailureCopy,
+} from './login-failure.utility';
 export { getHealthStatusColor, untimedServiceLabelKey } from './health-status.utility';
 export {
   getDashboardGreetingKey,
@@ -249,6 +254,15 @@ export type { ParsedCombo } from './keyboard-shortcut.utility';
 // edge middleware (proxy.ts), which imports it directly.
 export { resolveApiErrorMessage } from './api-error-message.utility';
 export { resolveAdminUserCapability } from './admin-user-capability.utility';
+export {
+  countryFlagEmoji,
+  formatAdminTimestamp,
+  formatAdminUserFullName,
+  formatCountryLabel,
+  formatRegistrationIp,
+  isValidAdminPhone,
+  resolvePresenceState,
+} from './admin-user-management.utility';
 export { resolveFloatingClearance } from './floating-obstacle-clearance.utility';
 export { buildTranscriptSignature } from './transcript-signature.utility';
 export {

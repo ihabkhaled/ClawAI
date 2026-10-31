@@ -49,6 +49,7 @@
       "RolePermission",
       "SeedExecution",
       "Session",
+      "SessionAdminAudit",
       "SystemSetting",
       "ThreadJobBudget",
       "ThreadJobBudgetCall",

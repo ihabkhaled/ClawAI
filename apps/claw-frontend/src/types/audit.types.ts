@@ -1,5 +1,7 @@
 import type { AuditAction, AuditSeverity } from '@/enums';
 import type { EmailVerificationFilter } from '@/enums/email-verification-filter.enum';
+import type { PresenceFilter } from '@/enums/presence-filter.enum';
+import type { PresenceState } from '@/enums/presence-state.enum';
 
 export interface AuditLog {
   _id: string;
@@ -118,6 +120,20 @@ export interface AdminUser {
   emailVerifiedAt: string | null;
   firstName: string | null;
   lastName: string | null;
+  phone: string | null;
+  // Personal data the server sends to administrators only (ADR-200).
+  registrationIp: string | null;
+  registrationCountryCode: string | null;
+  lastSeenAt: string | null;
+  presence: PresenceState;
+  // Effective ban state: an expired timed ban reads as not banned.
+  isBanned: boolean;
+  banPermanent: boolean;
+  bannedAt: string | null;
+  bannedUntil: string | null;
+  banReason: string | null;
+  bannedByUserId: string | null;
+  mustChangePassword: boolean;
 }
 
 export interface AdminUserQuery {
@@ -128,6 +144,7 @@ export interface AdminUserQuery {
   status?: string;
   planId?: string;
   verification?: EmailVerificationFilter;
+  presence?: PresenceFilter;
 }
 
 export interface AdminUsersResponse {

@@ -69,6 +69,7 @@ import type {
   ProviderInsight,
 } from './adaptive-learning.types';
 import type { AdminUserActor } from './admin-user-capability.types';
+import type { UserSecurityHandlers } from './admin-user-management.types';
 import type { RepairResultState } from './answer-repair.types';
 import type { AdminUser, AuditLog } from './audit.types';
 import type {
@@ -630,6 +631,7 @@ export type UserTableProps = {
   isAssignPlanPending: boolean;
   isUpdateUserPending: boolean;
   isTemporaryPasswordPending: boolean;
+  security: UserSecurityHandlers;
 };
 
 export type TemporaryPasswordDialogProps = {
@@ -1801,6 +1803,7 @@ export type UsersContentProps = {
   isAssignPlanPending: boolean;
   isUpdateUserPending: boolean;
   isTemporaryPasswordPending: boolean;
+  security: UserSecurityHandlers;
   t: TranslateFunction;
 };
 
@@ -2994,6 +2997,11 @@ export type EditUserDialogProps = {
   onClose: () => void;
   onSave: (userId: string, data: AdminUserUpdateRequest) => void;
   onRotatePassword: (userId: string) => void;
+  onSetPassword: (user: AdminUser) => void;
+  onBan: (user: AdminUser) => void;
+  onUnban: (userId: string) => void;
+  isUnbanning: boolean;
+  locale: string;
   t: TranslateFunction;
 };
 

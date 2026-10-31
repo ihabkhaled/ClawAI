@@ -1,8 +1,12 @@
 import { RATE_LIMIT_COPY_KEYS } from '@/constants/rate-limit.constants';
 import { ApiErrorCode, LoginFailureReason } from '@/enums';
-import type { LoginFailureCopy } from '@/types';
+import type { LoginBanInfo, LoginFailureCopy } from '@/types';
 
-import { isRateLimitedError, resolveRateLimitMessage } from './rate-limit.utility';
+import {
+  isRateLimitedError,
+  readRetryAfterSeconds,
+  resolveRateLimitMessage,
+} from './rate-limit.utility';
 
 function errorCode(error: unknown): string | null {
   if (error === null || typeof error !== 'object' || !('code' in error)) {
@@ -10,6 +14,17 @@ function errorCode(error: unknown): string | null {
   }
   const code = (error as { code: unknown }).code;
   return typeof code === 'string' ? code : null;
+}
+
+/** The end of a timed ban, or `permanent`, read off an ACCOUNT_BANNED error; null for any other error. */
+export function readLoginBanInfo(error: unknown): LoginBanInfo | null {
+  if (errorCode(error) !== ApiErrorCode.ACCOUNT_BANNED) {
+    return null;
+  }
+  const { bannedUntil, banPermanent } = error as { bannedUntil?: unknown; banPermanent?: unknown };
+  const until =
+    typeof bannedUntil === 'string' && !Number.isNaN(Date.parse(bannedUntil)) ? bannedUntil : null;
+  return { permanent: banPermanent === true || until === null, until };
 }
 
 /**
@@ -28,6 +43,8 @@ export function classifyLoginFailure(error: unknown): LoginFailureReason {
       return LoginFailureReason.EMAIL_NOT_VERIFIED;
     case ApiErrorCode.ACCOUNT_SUSPENDED:
       return LoginFailureReason.ACCOUNT_SUSPENDED;
+    case ApiErrorCode.ACCOUNT_BANNED:
+      return LoginFailureReason.ACCOUNT_BANNED;
     case ApiErrorCode.INVALID_CREDENTIALS:
       return LoginFailureReason.INVALID_CREDENTIALS;
     default:
@@ -46,6 +63,7 @@ export function classifyLoginFailure(error: unknown): LoginFailureReason {
 export function resolveLoginFailureCopy(
   reason: LoginFailureReason,
   retryAfterSeconds: number | null = null,
+  ban: LoginBanInfo | null = null,
 ): LoginFailureCopy {
   switch (reason) {
     case LoginFailureReason.RATE_LIMITED: {
@@ -75,6 +93,22 @@ export function resolveLoginFailureCopy(
         actionKey: null,
         isRecoverable: false,
       };
+    case LoginFailureReason.ACCOUNT_BANNED:
+      // Only ever reached after the password verified, so naming it is safe. A timed ban says
+      // when it ends; a lifetime one (or a reply with no usable date) says it is permanent.
+      return {
+        titleKey: 'auth.loginBannedTitle',
+        descriptionKey:
+          ban === null || ban.permanent || ban.until === null
+            ? 'auth.loginBannedPermanentDescription'
+            : 'auth.loginBannedDescription',
+        descriptionParams:
+          ban === null || ban.permanent || ban.until === null
+            ? undefined
+            : { date: new Date(ban.until).toLocaleString() },
+        actionKey: null,
+        isRecoverable: false,
+      };
     case LoginFailureReason.INVALID_CREDENTIALS:
       return {
         titleKey: 'auth.loginInvalidCredentialsTitle',
@@ -90,4 +124,26 @@ export function resolveLoginFailureCopy(
         isRecoverable: false,
       };
   }
+}
+
+/**
+ * The copy the login form shows: the live sign-in error wins, then a ban notice
+ * left by the server ending this very session, else nothing.
+ */
+export function resolveLoginFormFailureCopy(
+  isError: boolean,
+  error: unknown,
+  banNotice: LoginBanInfo | null,
+): LoginFailureCopy | null {
+  if (isError) {
+    return resolveLoginFailureCopy(
+      classifyLoginFailure(error),
+      readRetryAfterSeconds(error),
+      readLoginBanInfo(error),
+    );
+  }
+  if (banNotice === null) {
+    return null;
+  }
+  return resolveLoginFailureCopy(LoginFailureReason.ACCOUNT_BANNED, null, banNotice);
 }

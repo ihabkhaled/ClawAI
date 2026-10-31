@@ -1,6 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
+import { ADMIN_SESSIONS_TRANSLATIONS } from './admin-sessions-translations';
 import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
@@ -281,6 +282,12 @@ export const it: TranslationDictionary = {
     loginEmailNotVerifiedDescription:
       "La password è corretta, ma questo account non è ancora stato attivato. Apra l'email di conferma che Le abbiamo inviato, selezioni il link al suo interno e acceda di nuovo.",
     loginEmailNotVerifiedAction: "Non ho ricevuto l'email",
+    loginBannedTitle: 'Questo account è bannato',
+    loginBannedDescription:
+      'Un amministratore ha bannato questo account fino al {date}. Non puoi accedere prima di allora.',
+    loginBannedPermanentDescription:
+      'Un amministratore ha bannato questo account in modo permanente. Non puoi accedere.',
+    loginBannedGeneric: 'Questo account è bannato.',
     loginSuspendedTitle: 'Questo account è stato sospeso',
     loginSuspendedDescription:
       "La password è corretta, ma un amministratore ha disattivato questo account. Contatti l'assistenza se ritiene che si tratti di un errore.",
@@ -423,6 +430,7 @@ export const it: TranslationDictionary = {
     adminRoles: 'Ruoli',
     adminRuntimeProgress: 'Diagnostica runtime',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.it.navigationLabel,
+    adminSecuritySessions: ADMIN_SESSIONS_TRANSLATIONS.it.navigationLabel,
     adminPaymentGateways: 'Gateway di pagamento',
     adminSmartRouter: 'Smart Router',
     adminModelCosts: 'Prezzi dei modelli',
@@ -2321,6 +2329,9 @@ export const it: TranslationDictionary = {
     // "you may never" and "you may, but not to yourself" are different
     // sentences. See rules/35-super-administrator-and-privilege-boundaries.md.
     errors: {
+      cannotBanSelf: 'Non puoi bannare il tuo account.',
+      userNotBanned: 'Questo account non è bannato.',
+      cannotSetOwnPassword: 'Cambia la tua password dalle impostazioni dell’account.',
       superAdminImmutable: 'Solo il super amministratore può modificare questo account.',
       superAdminSelfLocked:
         'Il super amministratore non può applicare questa modifica al proprio account.',
@@ -2420,6 +2431,75 @@ export const it: TranslationDictionary = {
 
     editUserCancel: 'Annulla',
 
+    colRegistration: 'Registrato da',
+    presenceOnline: 'Online ora',
+    presenceRecent: 'Attivo nelle ultime 24 ore',
+    presenceOffline: 'Offline',
+    presenceOnlineNow: 'Online ora',
+    presenceActive24h: 'Attivi nelle ultime 24 ore',
+    presenceBannedNow: 'Bannati ora',
+    presenceActiveNow: 'Attivo ora',
+    viewUserDetails: 'Mostra dettagli',
+    userDetailTitle: 'Dettagli utente',
+    userDetailDescription: 'Informazioni sull’account. Visibili solo agli amministratori.',
+    detailName: 'Nome',
+    detailPhone: 'Telefono',
+    detailRegistrationIp: 'IP di registrazione',
+    detailRegistrationCountry: 'Paese di registrazione',
+    detailRegisteredOn: 'Registrato il',
+    detailLastOnline: 'Ultimo accesso',
+    detailActivity: 'Attività',
+    detailBanState: 'Ban',
+    detailNotBanned: 'Non bannato',
+    detailBannedPermanent: 'Bannato in modo permanente',
+    detailBannedUntil: 'Bannato fino al {date}',
+    detailBanReason: 'Motivo del ban',
+    detailMustChangePassword: 'Deve cambiare la password',
+    banAction: 'Banna',
+    unbanAction: 'Rimuovi ban',
+    bannedBadge: 'Bannato',
+    banDialogTitle: 'Banna {username}',
+    banDialogDescription:
+      'L’utente viene disconnesso subito ovunque e non può accedere fino alla fine del ban.',
+    banUnit: 'Unità di durata',
+    banAmount: 'Quantità',
+    banUnitMinutes: 'Minuti',
+    banUnitHours: 'Ore',
+    banUnitDays: 'Giorni',
+    banUnitLifetime: 'Permanente',
+    banAmountInvalid: 'Inserisci un numero intero pari o superiore a 1.',
+    banReason: 'Motivo',
+    banReasonPlaceholder: 'Perché viene bannato questo account?',
+    banReasonRequired: 'Il motivo è obbligatorio.',
+    banConfirm: 'Banna utente',
+    userBanned: 'Utente bannato',
+    userBanFailed: 'Impossibile bannare l’utente',
+    userUnbanned: 'Ban rimosso',
+    userUnbanFailed: 'Impossibile rimuovere il ban',
+    setPasswordAction: 'Imposta password',
+    setPasswordTitle: 'Imposta una password per {username}',
+    setPasswordDescription:
+      'L’utente viene disconnesso ovunque e dovrà scegliere una nuova password al prossimo accesso.',
+    setPasswordMode: 'Come impostare la password',
+    setPasswordModeGenerate: 'Genera',
+    setPasswordModeManual: 'Digitala',
+    setPasswordGenerateHint:
+      'Il server crea una password casuale sicura e la mostra una sola volta.',
+    setPasswordGenerateConfirm: 'Genera e imposta',
+    setPasswordManualLabel: 'Nuova password',
+    setPasswordManualHint: 'Almeno 8 caratteri, con una maiuscola, una minuscola e un numero.',
+    setPasswordConfirm: 'Imposta password',
+    setPasswordGeneratedTitle: 'Password impostata. Consegnala all’utente:',
+    setPasswordGeneratedWarning:
+      'Copiala ora. Viene mostrata una sola volta e non è salvata da nessuna parte.',
+    setPasswordCopy: 'Copia password',
+    setPasswordDone: 'Fatto',
+    setPasswordFailed: 'Impossibile impostare la password',
+    setPasswordSucceeded: 'Password impostata',
+    editUserPhone: 'Telefono',
+    editUserPhoneHint:
+      'Formato internazionale, ad esempio +201001234567. Lascia vuoto per rimuoverlo.',
+    editUserPhoneInvalid: 'Usa il formato internazionale, ad esempio +201001234567.',
     editUserRotatePassword: 'Rigenera password',
     userUpdated: 'Utente aggiornato',
     userUpdateFailed: 'Impossibile aggiornare l’utente',
@@ -4922,6 +5002,7 @@ export const it: TranslationDictionary = {
     failed: 'Impossibile emettere il rimborso.',
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.it.section,
+  adminSessions: ADMIN_SESSIONS_TRANSLATIONS.it.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.it,
   narration: NARRATION_TRANSLATIONS.it,
   pickedModel: PICKED_MODEL_TRANSLATIONS.it,

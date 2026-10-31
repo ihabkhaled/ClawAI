@@ -10,7 +10,12 @@ import {
 } from '@/lib/validation/admin-user.schema';
 import type { AdminUser, AdminUserUpdateRequest, UseEditUserFormReturn } from '@/types';
 
-const EMPTY_VALUES: AdminUserEditFormValues = { username: '', firstName: '', lastName: '' };
+const EMPTY_VALUES: AdminUserEditFormValues = {
+  username: '',
+  firstName: '',
+  lastName: '',
+  phone: '',
+};
 
 export function useEditUserForm(
   user: AdminUser | null,
@@ -31,6 +36,7 @@ export function useEditUserForm(
             username: user.username,
             firstName: user.firstName ?? '',
             lastName: user.lastName ?? '',
+            phone: user.phone ?? '',
           }
         : EMPTY_VALUES,
     );
@@ -42,10 +48,13 @@ export function useEditUserForm(
       if (!user) {
         return;
       }
+      const nextPhone = values.phone === '' ? null : values.phone;
       onSave(user.id, {
         username: values.username,
         firstName: values.firstName === '' ? null : values.firstName,
         lastName: values.lastName === '' ? null : values.lastName,
+        // Only a changed phone is sent: re-sending the stored one would be a write for nothing.
+        ...(nextPhone === (user.phone ?? null) ? {} : { phone: nextPhone }),
       });
     }),
   };

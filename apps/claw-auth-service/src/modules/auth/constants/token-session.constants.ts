@@ -1,4 +1,5 @@
 import { SessionClientKind } from '../enums/session-client-kind.enum';
+import type { SessionOrigin } from '../types/session.types';
 
 export const DEFAULT_ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 export const DEFAULT_REFRESH_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60;
@@ -32,3 +33,13 @@ export const VSCODE_SESSION_CLIENT = {
   kind: SessionClientKind.VSCODE,
   name: 'ClawAI for VS Code',
 } as const;
+
+/** What a session records when its login had no HTTP request to read (ADR-204). */
+export const UNKNOWN_SESSION_ORIGIN: SessionOrigin = {
+  ipAddress: null,
+  countryCode: null,
+  userAgent: null,
+  os: null,
+  browser: null,
+  deviceKind: null,
+};

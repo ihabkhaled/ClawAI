@@ -1,5 +1,6 @@
 import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
+import { SessionTerminationReason } from '../../../sessions/enums/session-termination-reason.enum';
 import { UsersRepository } from '../users.repository';
 import { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
 import { SortOrder, UserRole, UserStatus } from '../../../../common/enums';
@@ -138,10 +139,19 @@ describe('UsersRepository', () => {
 
   it('revokeSessionsByUserId revokes only active sessions for the user', async () => {
     const revokedAt = new Date('2026-08-09T00:00:00.000Z');
-    await repository.revokeSessionsByUserId('u1', revokedAt);
+    await repository.revokeSessionsByUserId(
+      'u1',
+      SessionTerminationReason.PASSWORD_CHANGED,
+      revokedAt,
+    );
     expect(prismaMock.session.updateMany).toHaveBeenCalledWith({
       where: { userId: 'u1', revokedAt: null },
-      data: { revokedAt },
+      data: {
+        revokedAt,
+        terminatedAt: revokedAt,
+        terminationReason: 'PASSWORD_CHANGED',
+        terminatedByUserId: null,
+      },
     });
   });
 
@@ -150,7 +160,12 @@ describe('UsersRepository', () => {
     await repository.revokeOtherSessionsByUserId('u1', 'session-1', revokedAt);
     expect(prismaMock.session.updateMany).toHaveBeenCalledWith({
       where: { userId: 'u1', revokedAt: null, id: { not: 'session-1' } },
-      data: { revokedAt },
+      data: {
+        revokedAt,
+        terminatedAt: revokedAt,
+        terminationReason: 'ACCOUNT_CHANGED',
+        terminatedByUserId: null,
+      },
     });
   });
 

@@ -14,6 +14,7 @@ import { TourHost } from '@/components/tour/tour-host';
 import { TourOffer } from '@/components/tour/tour-offer';
 import { ComponentSize } from '@/enums';
 import { useAuthGuard } from '@/hooks/auth/use-auth-guard';
+import { usePresenceHeartbeat } from '@/hooks/auth/use-presence-heartbeat';
 import { useLayoutShortcuts } from '@/hooks/layout/use-layout-shortcuts';
 import { usePreferenceBootstrap } from '@/hooks/settings/use-preference-bootstrap';
 import { useTourProgressSync } from '@/hooks/tour/use-tour-progress-sync';
@@ -30,6 +31,7 @@ export function PortalShell({ children }: { children: React.ReactNode }): React.
   usePreferenceBootstrap();
   useLayoutShortcuts();
   useTourProgressSync();
+  usePresenceHeartbeat();
 
   if (!isReady) {
     return (

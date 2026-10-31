@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { UserUsageDialog } from '@/components/admin/user-statistics/user-usage-dialog';
+import { PresenceState } from '@/enums';
 import { useAdminUserUsage } from '@/hooks/admin/use-admin-user-usage';
 import type { AdminUser } from '@/types/audit.types';
 
@@ -31,6 +32,18 @@ function makeUser(overrides: Partial<AdminUser> = {}): AdminUser {
     emailVerifiedAt: null,
     firstName: null,
     lastName: null,
+    phone: null,
+    registrationIp: null,
+    registrationCountryCode: null,
+    lastSeenAt: null,
+    presence: PresenceState.OFFLINE,
+    isBanned: false,
+    banPermanent: false,
+    bannedAt: null,
+    bannedUntil: null,
+    banReason: null,
+    bannedByUserId: null,
+    mustChangePassword: false,
     ...overrides,
   };
 }

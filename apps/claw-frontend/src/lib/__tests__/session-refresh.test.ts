@@ -121,6 +121,33 @@ describe('refreshSession', () => {
     await expect(refreshSession('stale-access')).resolves.toBe('new-login-access');
   });
 
+  it('keeps a ban notice for the sign-in page when the refresh is answered ACCOUNT_BANNED', async () => {
+    sessionStorage.clear();
+    const headers = new AxiosHeaders();
+    post.mockRejectedValue(
+      new AxiosError('banned', '403', { headers }, null, {
+        status: 403,
+        statusText: '',
+        headers,
+        config: { headers },
+        data: { code: 'ACCOUNT_BANNED', banPermanent: true, bannedUntil: null },
+      }),
+    );
+
+    await expect(refreshSession('stale-access')).resolves.toBeNull();
+    expect(JSON.parse(sessionStorage.getItem('claw.ban-notice') ?? 'null')).toEqual({
+      permanent: true,
+      until: null,
+    });
+  });
+
+  it('stores no notice when the refresh is refused for any other reason', async () => {
+    sessionStorage.clear();
+    post.mockRejectedValue(httpError(401));
+    await expect(refreshSession('stale-access')).resolves.toBeNull();
+    expect(sessionStorage.getItem('claw.ban-notice')).toBeNull();
+  });
+
   it('reports an ended session when there is no refresh token at all', async () => {
     storage.refresh = null;
 

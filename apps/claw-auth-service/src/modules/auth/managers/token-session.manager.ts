@@ -4,7 +4,8 @@ import { USER_TOKEN_KIND } from '@claw/shared-constants';
 import { hashBearerToken } from '@claw/shared-utilities';
 import { signAccessToken, signRefreshToken } from '@common/utilities';
 import { AppConfig } from '../../../app/config/app.config';
-import { InvalidRefreshTokenException } from '../../../common/errors';
+import { InvalidRefreshTokenException, SessionTerminatedException } from '../../../common/errors';
+import { SessionTerminationReason } from '../../sessions/enums/session-termination-reason.enum';
 import { UserRole, UserStatus } from '../../../common/enums';
 import {
   DEFAULT_ACCESS_TOKEN_TTL_SECONDS,
@@ -12,9 +13,12 @@ import {
   REFRESH_REUSE_GRACE_MS,
   SESSION_ONLY_REFRESH_TTL_SECONDS,
   TOKEN_TYPE,
+  UNKNOWN_SESSION_ORIGIN,
 } from '../constants/token-session.constants';
 import { AuthRepository } from '../repositories/auth.repository';
+import { AccountBanGateService } from '../services/account-ban-gate.service';
 import { SessionRevocationCacheService } from '../services/session-revocation-cache.service';
+import { UserPresenceService } from '../services/user-presence.service';
 import type {
   SessionClient,
   SessionSeed,
@@ -22,6 +26,7 @@ import type {
   TokenSessionUser,
 } from '../types/token-session.types';
 import { expirySeconds } from '../utilities/expiry-seconds.utility';
+import { originOf } from '../utilities/session-origin.utility';
 import { isWithinReuseGrace } from '../utilities/refresh-reuse.utility';
 import type { Session } from '../../../generated/prisma';
 
@@ -32,23 +37,32 @@ export class TokenSessionManager {
   constructor(
     private readonly authRepository: AuthRepository,
     private readonly revocationCache: SessionRevocationCacheService,
+    private readonly banGate: AccountBanGateService,
+    private readonly presence: UserPresenceService,
   ) {}
 
   /**
    * Revokes a family and tells every service, so an access token signed a
    * moment ago stops working now instead of at its expiry (TD-033).
    */
-  private async revokeFamily(familyId: string): Promise<void> {
-    await this.revocationCache.revoke(await this.authRepository.revokeSessionFamily(familyId));
+  private async revokeFamily(familyId: string, reason: SessionTerminationReason): Promise<void> {
+    await this.revocationCache.revoke(
+      await this.authRepository.revokeSessionFamily(familyId, reason),
+    );
   }
 
   async issue(user: TokenSessionUser, client: SessionClient): Promise<TokenPair> {
-    return this.createSessionTokens(user, {
+    // Every sign-in path (password, VS Code, device) ends here, so a ban cannot be bypassed by choosing another one.
+    await this.banGate.assertNotBanned(user);
+    const tokens = await this.createSessionTokens(user, {
       familyId: randomUUID(),
       clientKind: client.kind,
       ...(client.name ? { clientName: client.name } : {}),
       persistent: client.persistent ?? true,
+      origin: client.origin ?? UNKNOWN_SESSION_ORIGIN,
     });
+    await this.presence.touch(user.id);
+    return tokens;
   }
 
   async rotate(rawRefreshToken: string): Promise<TokenPair> {
@@ -63,21 +77,44 @@ export class TokenSessionManager {
 
     const now = new Date();
     if (currentSession.revokedAt || currentSession.expiresAt <= now) {
-      await this.revokeFamily(currentSession.familyId);
+      // A refresh token of a login someone already closed keeps its reason; anything else presented
+      // dead (an expired token replayed while a newer one lives) is treated as reuse.
+      await this.revokeFamily(
+        currentSession.familyId,
+        this.reasonOf(currentSession) ?? SessionTerminationReason.TOKEN_REUSE,
+      );
+      // A ban closes the family first, so a banned user's refresh lands here. Say so with the
+      // coded error (ADR-200) instead of the generic one; every other case stays generic.
+      await this.rejectIfBanned(currentSession.userId);
+      if (this.reasonOf(currentSession) !== null) {
+        throw new SessionTerminatedException();
+      }
       throw new InvalidRefreshTokenException();
     }
 
     // A replay after the grace window is treated as theft.
     if (currentSession.usedAt && !isWithinReuseGrace(currentSession.usedAt, now)) {
-      await this.revokeFamily(currentSession.familyId);
+      await this.revokeFamily(currentSession.familyId, SessionTerminationReason.TOKEN_REUSE);
       throw new InvalidRefreshTokenException();
     }
 
     const user = await this.authRepository.findUserById(currentSession.userId);
     if (user?.status !== UserStatus.ACTIVE) {
-      await this.revokeFamily(currentSession.familyId);
+      await this.revokeFamily(
+        currentSession.familyId,
+        SessionTerminationReason.ACCOUNT_DEACTIVATED,
+      );
       throw new InvalidRefreshTokenException();
     }
+
+    // A banned account is refused here with the coded error and its whole family is closed (ADR-200).
+    try {
+      await this.banGate.assertNotBanned(user);
+    } catch (error: unknown) {
+      await this.revokeFamily(currentSession.familyId, SessionTerminationReason.ACCOUNT_BANNED);
+      throw error;
+    }
+    await this.presence.touch(user.id);
 
     if (currentSession.usedAt) {
       return this.issueSibling(user, currentSession);
@@ -97,23 +134,30 @@ export class TokenSessionManager {
         clientKind: currentSession.clientKind,
         ...(currentSession.clientName ? { clientName: currentSession.clientName } : {}),
         persistent: currentSession.persistent,
+        // The login's origin belongs to the family: a refresh never overwrites it (ADR-204).
+        ...originOf(currentSession),
         expiresAt: new Date(now.getTime() + refreshExpiresIn * 1000),
       },
     });
-    if (!replacementSession) {
-      return this.recoverLostRace(user, currentSession.id, currentSession.familyId);
-    }
+    return replacementSession
+      ? this.createTokenPair(user, replacementSession.id, replacementRefreshToken, refreshExpiresIn)
+      : this.recoverLostRace(user, currentSession.id, currentSession.familyId);
+  }
 
-    return this.createTokenPair(
-      user,
-      replacementSession.id,
-      replacementRefreshToken,
-      refreshExpiresIn,
-    );
+  /** Throws ACCOUNT_BANNED when the account is banned right now; any other state returns quietly. */
+  private async rejectIfBanned(userId: string): Promise<void> {
+    const user = await this.authRepository.findUserById(userId);
+    if (user) {
+      await this.banGate.assertNotBanned(user);
+    }
   }
 
   async revokeCurrent(userId: string, sessionId: string): Promise<void> {
-    const revoked = await this.authRepository.revokeSessionForUser(sessionId, userId);
+    const revoked = await this.authRepository.revokeSessionForUser(
+      sessionId,
+      userId,
+      SessionTerminationReason.USER_LOGOUT,
+    );
     if (revoked) {
       await this.revocationCache.revoke([sessionId]);
     }
@@ -132,7 +176,7 @@ export class TokenSessionManager {
     if (latest?.usedAt && !latest.revokedAt && isWithinReuseGrace(latest.usedAt, new Date())) {
       return this.issueSibling(user, latest);
     }
-    await this.revokeFamily(familyId);
+    await this.revokeFamily(familyId, SessionTerminationReason.TOKEN_REUSE);
     throw new InvalidRefreshTokenException();
   }
 
@@ -146,6 +190,7 @@ export class TokenSessionManager {
       clientKind: session.clientKind,
       ...(session.clientName ? { clientName: session.clientName } : {}),
       persistent: session.persistent,
+      origin: originOf(session),
     });
   }
 
@@ -160,17 +205,24 @@ export class TokenSessionManager {
       clientKind: seed.clientKind,
       ...(seed.clientName ? { clientName: seed.clientName } : {}),
       persistent: seed.persistent,
+      ...seed.origin,
       expiresAt: new Date(Date.now() + refreshExpiresIn * 1000),
     });
 
     return this.createTokenPair(user, session.id, refreshToken, refreshExpiresIn);
   }
 
+  /** The reason a session row was closed on purpose, or null when it was not (or is a legacy row). */
+  private reasonOf(session: Session): SessionTerminationReason | null {
+    return (
+      Object.values(SessionTerminationReason).find((r) => r === session.terminationReason) ?? null
+    );
+  }
+
   private refreshTtlSeconds(persistent: boolean): number {
-    if (!persistent) {
-      return SESSION_ONLY_REFRESH_TTL_SECONDS;
-    }
-    return expirySeconds(AppConfig.get().JWT_REFRESH_EXPIRY, DEFAULT_REFRESH_TOKEN_TTL_SECONDS);
+    return persistent
+      ? expirySeconds(AppConfig.get().JWT_REFRESH_EXPIRY, DEFAULT_REFRESH_TOKEN_TTL_SECONDS)
+      : SESSION_ONLY_REFRESH_TTL_SECONDS;
   }
 
   private createTokenPair(

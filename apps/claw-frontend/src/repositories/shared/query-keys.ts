@@ -147,8 +147,17 @@ export const queryKeys = {
     cost: ['usage', 'cost'] as const,
     latency: ['usage', 'latency'] as const,
   },
+  // Admin sessions (ADR-204): one user's logins, keyed by user, state filter and page.
+  adminSessions: {
+    all: ['admin', 'sessions'] as const,
+    user: (userId: string) => ['admin', 'sessions', userId] as const,
+    list: (userId: string, state: string, page: number, pageSize: number) =>
+      ['admin', 'sessions', userId, state, page, pageSize] as const,
+  },
   admin: {
     users: ['admin', 'users'] as const,
+    // Online-now / active-24h / banned-now counters on the admin users page.
+    presenceSummary: ['admin', 'users', 'presence-summary'] as const,
     // Per-user detail panels opened from a users-table row. Keyed by user id so
     // opening the modal on a second user cannot serve the first user's cache.
     userUsageStatistics: (userId: string) =>

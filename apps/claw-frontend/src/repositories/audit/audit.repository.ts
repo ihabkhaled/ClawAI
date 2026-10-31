@@ -12,6 +12,10 @@ import type {
   AdminCreateUserRequest,
   AdminUserUpdateRequest,
   AdminUserQuery,
+  BanUserRequest,
+  PresenceSummary,
+  SetUserPasswordRequest,
+  SetUserPasswordResponse,
 } from '@/types';
 
 function toStringParams(params: Record<string, unknown>): Record<string, string> {
@@ -100,6 +104,35 @@ export const auditRepository = {
    */
   async activatePendingUser(userId: string): Promise<void> {
     await apiClient.patch(`/users/${userId}/activate`);
+  },
+
+  /** Bans an account for a duration or for life, revoking its sessions on the server. */
+  async banUser(userId: string, data: BanUserRequest): Promise<void> {
+    await apiClient.post(`/users/${userId}/ban`, data);
+  },
+
+  async unbanUser(userId: string): Promise<void> {
+    await apiClient.post(`/users/${userId}/unban`);
+  },
+
+  /**
+   * Sets a password by hand or asks the server to generate one. The generated
+   * password is in the response exactly once; the caller must not store it.
+   */
+  async setUserPassword(
+    userId: string,
+    data: SetUserPasswordRequest,
+  ): Promise<SetUserPasswordResponse> {
+    const response = await apiClient.post<SetUserPasswordResponse>(
+      `/users/${userId}/password`,
+      data,
+    );
+    return response.data;
+  },
+
+  async getPresenceSummary(): Promise<PresenceSummary> {
+    const response = await apiClient.get<PresenceSummary>('/users/presence-summary');
+    return response.data;
   },
 
   async deactivateUser(userId: string): Promise<void> {

@@ -26,6 +26,8 @@ import {
 } from '../types/auth.types';
 import type { SessionClient } from '../types/token-session.types';
 import type { RegisterDto } from '../dto/register.dto';
+import { EMPTY_REGISTRATION_ORIGIN } from '../../users/constants/user-admin.constants';
+import { type RegistrationOrigin } from '../../users/types/user-admin.types';
 
 @Injectable()
 export class AuthManager {
@@ -46,7 +48,10 @@ export class AuthManager {
   // table in apps/claw-auth-service/CLAUDE.md): WEAK_PASSWORD, DUPLICATE_ENTITY
   // (the one enumeration surface ADR-096 deliberately keeps), and
   // SIGNUP_PLAN_ASSIGNMENT_FAILED. Only a genuinely unexpected fault is a 500.
-  async register(dto: RegisterDto): Promise<RegisteredAccount> {
+  async register(
+    dto: RegisterDto,
+    origin: RegistrationOrigin = EMPTY_REGISTRATION_ORIGIN,
+  ): Promise<RegisteredAccount> {
     this.logger.log(`register: attempting registration for email=${dto.email}`);
     const strength = validatePasswordStrength(dto.password);
     if (!strength.valid) {
@@ -58,7 +63,7 @@ export class AuthManager {
       throw new DuplicateEntityException('User', 'email');
     }
 
-    const user = await this.createPendingUser(dto);
+    const user = await this.createPendingUser(dto, origin);
     const planSlug = await this.assignDefaultPlanOrUndo(user);
 
     this.logger.log(`register: created user ${user.id} role=USER plan=${planSlug ?? 'none'}`);
@@ -67,7 +72,7 @@ export class AuthManager {
 
   // Two sign-ups for the same address can both pass the lookup above; the
   // loser hits the unique index. That is still "address taken", not a 500.
-  private async createPendingUser(dto: RegisterDto): Promise<User> {
+  private async createPendingUser(dto: RegisterDto, origin: RegistrationOrigin): Promise<User> {
     const username = await this.deriveUniqueUsername(dto.email);
     const passwordHash = await hashPassword(dto.password);
     const roleId = await this.rolesService.getDefaultUserRoleId();
@@ -79,6 +84,9 @@ export class AuthManager {
         firstName: dto.firstName,
         lastName: dto.lastName,
         ...(dto.phone ? { phone: dto.phone } : {}),
+        // Personal data, admin-only (ADR-200). Null when the address is unknown.
+        registrationIp: origin.ip,
+        registrationCountryCode: origin.countryCode,
         role: UserRole.USER,
         ...(roleId ? { roleRef: { connect: { id: roleId } } } : {}),
         status: UserStatus.PENDING,

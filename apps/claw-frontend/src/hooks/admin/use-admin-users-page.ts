@@ -11,7 +11,9 @@ import type { UseAdminUsersPageReturn } from '@/types';
 
 import { useAdminUserFilters } from './use-admin-user-filters';
 import { useAdminUserMutations } from './use-admin-user-mutations';
+import { useAdminUserSecurityMutations } from './use-admin-user-security-mutations';
 import { useCreateUserDialog } from './use-create-user-dialog';
+import { usePresenceSummary } from './use-presence-summary';
 
 export function useAdminUsersPage(): UseAdminUsersPageReturn {
   const { t } = useTranslation();
@@ -30,6 +32,7 @@ export function useAdminUsersPage(): UseAdminUsersPageReturn {
     status: filters.statusFilter || undefined,
     planId: filters.planFilter || undefined,
     verification: filters.verificationFilter as EmailVerificationFilter | undefined,
+    presence: filters.presenceFilter ?? undefined,
   };
 
   const usersQuery = useQuery({
@@ -43,6 +46,9 @@ export function useAdminUsersPage(): UseAdminUsersPageReturn {
     queryFn: () => plansRepository.list(),
     enabled: user?.role === UserRole.ADMIN,
   });
+
+  const presenceSummary = usePresenceSummary(user?.role === UserRole.ADMIN);
+  const security = useAdminUserSecurityMutations();
 
   const users = usersQuery.data?.data ?? [];
   const activeCount = users.filter((u) => u.status === UserStatus.ACTIVE).length;
@@ -66,5 +72,7 @@ export function useAdminUsersPage(): UseAdminUsersPageReturn {
     onRetry: () => {
       void usersQuery.refetch();
     },
+    presenceSummary,
+    security,
   };
 }

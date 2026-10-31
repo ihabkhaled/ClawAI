@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { Prisma, Session, User } from '../../../generated/prisma';
+import { SessionTerminationReason } from '../../sessions/enums/session-termination-reason.enum';
+import { buildTerminationData } from '../../sessions/utilities/termination-data.utility';
 import type { CreateSessionInput, RotateSessionInput } from '../types/session.types';
 
 @Injectable()
@@ -73,7 +75,11 @@ export class AuthRepository {
    * token in a browser, and those are what the revocation cache holds until
    * they expire (TD-033). `updateMany` alone only counts them.
    */
-  async revokeSessionFamily(familyId: string, revokedAt = new Date()): Promise<string[]> {
+  async revokeSessionFamily(
+    familyId: string,
+    reason: SessionTerminationReason,
+    revokedAt = new Date(),
+  ): Promise<string[]> {
     const open = await this.prisma.session.findMany({
       where: { familyId, revokedAt: null },
       select: { id: true },
@@ -83,7 +89,7 @@ export class AuthRepository {
     }
     await this.prisma.session.updateMany({
       where: { familyId, revokedAt: null },
-      data: { revokedAt },
+      data: buildTerminationData(reason, revokedAt),
     });
 
     return open.map((session) => session.id);
@@ -93,6 +99,7 @@ export class AuthRepository {
   async revokeSessionForUser(
     sessionId: string,
     userId: string,
+    reason: SessionTerminationReason = SessionTerminationReason.USER_LOGOUT,
     revokedAt = new Date(),
   ): Promise<boolean> {
     const result = await this.prisma.session.updateMany({
@@ -101,7 +108,7 @@ export class AuthRepository {
         userId,
         revokedAt: null,
       },
-      data: { revokedAt },
+      data: buildTerminationData(reason, revokedAt),
     });
 
     return result.count > 0;

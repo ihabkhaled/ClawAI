@@ -22,6 +22,7 @@ import {
   vscodeAuthorizationCodeRecordSchema,
   vscodeAuthorizationInitSchema,
 } from '../dto/vscode-authorization.dto';
+import type { SessionOrigin } from '../types/session.types';
 import { TokenSessionManager } from '../managers/token-session.manager';
 import { AuthRepository } from '../repositories/auth.repository';
 import type {
@@ -96,7 +97,11 @@ export class VscodeAuthorizationService {
     return { redirectUri: redirect.toString() };
   }
 
-  async exchange(code: string, verifier: string): Promise<VscodeAuthorizationExchangeResult> {
+  async exchange(
+    code: string,
+    verifier: string,
+    origin?: SessionOrigin,
+  ): Promise<VscodeAuthorizationExchangeResult> {
     const serialized = await this.redis
       .getClient()
       .getdel(`${VSCODE_AUTHORIZATION_CODE_PREFIX}${code}`);
@@ -114,6 +119,7 @@ export class VscodeAuthorizationService {
     const tokens = await this.tokenSessionManager.issue(user, {
       kind: VSCODE_AUTHORIZATION_CLIENT_KIND,
       name: record.clientName,
+      ...(origin ? { origin } : {}),
     });
     // The account travels with the tokens so the extension can tell a second
     // window of the SAME user from a different account taking over the shared

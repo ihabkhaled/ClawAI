@@ -72,7 +72,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-auth-service",
-      "endpointCount": 149,
+      "endpointCount": 162,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -108,6 +108,7 @@
         "RolePermission",
         "SeedExecution",
         "Session",
+        "SessionAdminAudit",
         "SystemSetting",
         "ThreadJobBudget",
         "ThreadJobBudgetCall",
@@ -120,7 +121,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 204,
+      "testFiles": 227,
       "testRunner": "vitest"
     },
     {

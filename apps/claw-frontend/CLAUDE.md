@@ -1104,10 +1104,52 @@ Model pickers dim what the plan excludes (ADR-198). `useModelPlanAccess` asks `P
 
 ### Thread progress follows the newest update
 
-`useThreadFollowBottom` (`hooks/threads/use-thread-follow-bottom.ts`) keeps the owner progress panel scrolled to its
-end marker while a job runs. The signature is `threadProgressSignature(progress)` (status, stage, round, step count,
-last step, failure code). It stops when the reader scrolls up on purpose (wheel up, touch drag, PageUp, ArrowUp, Home)
-and resumes once the scrolling element is within `THREAD_FOLLOW_BOTTOM_THRESHOLD_PX` (24) of its own bottom. The page
-scrolls inside `<main>`, not the window, so the check reads `event.target` (capture listener), never `window.innerHeight`:
-measuring against the window re-enabled following on a small scroll up. Reduced motion scrolls instantly. The panel polls
-every 3 s; there is no token streaming on this page.
+`useThreadFollowBottom` (`hooks/threads/use-thread-follow-bottom.ts`) keeps the owner progress panel scrolled to the bottom
+while a job runs, continuously (ADR-201). A `ResizeObserver` on the panel, its content and the scroller wakes a
+`requestAnimationFrame` loop that eases `scrollTop` toward `scrollHeight - clientHeight` (`easedScrollStep`,
+`utilities/scroll-follow.utility.ts`; frame-rate independent, one read and one write per frame, idle on arrival), so text
+growing inside a step is followed too, not only a new step. `threadProgressSignature` still wakes it. The real scroller is
+`<main>` (`findScrollContainer`). It stops when the reader scrolls up on purpose (wheel up, touch drag, PageUp, ArrowUp,
+Home) and resumes once the scrolling element is within `THREAD_FOLLOW_BOTTOM_THRESHOLD_PX` (24) of its own bottom; the check
+reads `event.target` (capture listener), never `window.innerHeight`. Reduced motion jumps instantly; a settled job never
+scrolls.
+
+The progress itself is pushed: `useThreadProgressStream` opens `GET .../generation-progress/stream` with `connectSse` (fetch
+streaming with the Authorization header) and writes each snapshot into the `threadProgressQueryKey` cache entry, so no
+component changed. While the stream is live the 3 s poll is off; while it connects, reconnects (4 attempts, jittered
+back-off, `Last-Event-ID`) or has failed, the poll runs as before and the stream is retried up to 3 times, 30 s apart. A
+403/404 is never retried; a tab hidden for 60 s closes its stream and reopens it (fresh snapshot) when shown; snapshots
+older than the cache are dropped (`isStaleThreadProgress`); streamed snapshots never spend the 400-poll budget. No UI string
+shows the stream state (no new i18n key). See [ADR-201](../../docs/13-adr/adr-201-thread-progress-is-pushed-over-sse-with-polling-fallback.md).
+
+## Admin users: presence, ban, set password, registration origin (ADR-200, 2026-10-31)
+
+- `usePresenceHeartbeat` (mounted in `PortalShell`) pings `POST /users/me/heartbeat` every 60 s while the tab
+  is visible and signed in; failures are ignored on purpose.
+- The users page gets ban / unban / set-password handlers as one `security` prop
+  (`useAdminUserSecurityMutations`). A generated password lives only in the dialog's React state and is
+  dropped on close; never log it or put it in a query cache.
+- `resolveAdminUserCapability` now has `canBan` and `canSetPassword` (false on your own row and on the
+  super administrator).
+- A refresh answered `ACCOUNT_BANNED` stores a one-shot notice (`ban-notice.utility.ts`, sessionStorage) so
+  the sign-in page can explain. The login page message comes from the error code, never the server text.
+
+## Threads list page (ADR-206, 2026-10-31)
+
+- `/threads` is a paged, searchable list: `useThreadList` composes URL state (`?q=&status=&page=`), `useThreadListQuery` (keepPreviousData, key under `['thread-publications','mine']`), debounced search, publish and delete.
+- Strings are in `src/lib/i18n/locales/thread-list-translations.ts`, read with `useThreadListText` (not yet spread into the locale files). Failure reasons come from `resolveThreadFailureKeys`; never render provider text.
+- Row states and actions follow the service flags `canPublish` / `canDelete`; types live in `types/thread-list.types.ts`. See `docs/05-frontend/threads-my-list.md`.
+
+## Admin sessions (ADR-204, 2026-10-31)
+
+- `/admin/users/[id]/sessions` (link in the user detail dialog) lists one user's logins with a state filter and
+  paging; `/admin/security/sessions` (super administrator only, `superAdminOnly` sidebar item) holds the
+  system-wide buttons. Both pages are composed from `components/admin/sessions/*`; hooks in
+  `hooks/admin/use-user-sessions-*.ts` and `use-global-session-*.ts`; calls in
+  `repositories/admin/user-sessions.repository.ts`; strings in `locales/admin-sessions-translations.ts`
+  (typed by `types/admin-sessions-i18n.types.ts`, key set pinned by a test).
+- The two-step guard keeps the one-time token **only in a ref** (not state, cache or storage), clears the
+  password field as soon as the call returns, and drops the token on cancel, use or after 55 s. The typed
+  phrases live in `SESSION_GLOBAL_PHRASES` and must equal the server's.
+- Ending your own current login sends `confirmCurrent: true` and the dialog shows the warning first; the next
+  request then follows the normal signed-out flow (refresh answers `SESSION_TERMINATED`).

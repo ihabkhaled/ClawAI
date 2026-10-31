@@ -1,6 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
+import { ADMIN_SESSIONS_TRANSLATIONS } from './admin-sessions-translations';
 import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
@@ -279,6 +280,12 @@ export const fr: TranslationDictionary = {
     loginEmailNotVerifiedDescription:
       "Votre mot de passe est correct, mais ce compte n'a pas encore été activé. Ouvrez l'e-mail de confirmation que nous vous avons envoyé, cliquez sur le lien qu'il contient, puis reconnectez-vous.",
     loginEmailNotVerifiedAction: "Je n'ai pas reçu l'e-mail",
+    loginBannedTitle: 'Ce compte est banni',
+    loginBannedDescription:
+      'Un administrateur a banni ce compte jusqu’au {date}. Vous ne pouvez pas vous connecter avant.',
+    loginBannedPermanentDescription:
+      'Un administrateur a banni ce compte définitivement. Vous ne pouvez pas vous connecter.',
+    loginBannedGeneric: 'Ce compte est banni.',
     loginSuspendedTitle: 'Ce compte a été suspendu',
     loginSuspendedDescription:
       "Votre mot de passe est correct, mais un administrateur a désactivé ce compte. Contactez l'assistance si vous pensez qu'il s'agit d'une erreur.",
@@ -422,6 +429,7 @@ export const fr: TranslationDictionary = {
     adminRoles: 'Rôles',
     adminRuntimeProgress: 'Diagnostic du runtime',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.fr.navigationLabel,
+    adminSecuritySessions: ADMIN_SESSIONS_TRANSLATIONS.fr.navigationLabel,
     adminPaymentGateways: 'Passerelles de paiement',
     adminSmartRouter: 'Routeur intelligent',
     adminModelCosts: 'Prix des modèles',
@@ -2327,6 +2335,10 @@ export const fr: TranslationDictionary = {
     // "you may never" and "you may, but not to yourself" are different
     // sentences. See rules/35-super-administrator-and-privilege-boundaries.md.
     errors: {
+      cannotBanSelf: 'Vous ne pouvez pas bannir votre propre compte.',
+      userNotBanned: 'Ce compte n’est pas banni.',
+      cannotSetOwnPassword:
+        'Modifiez votre propre mot de passe depuis les paramètres de votre compte.',
       superAdminImmutable:
         'Seul le super administrateur peut modifier le compte super administrateur.',
       superAdminSelfLocked:
@@ -2428,6 +2440,76 @@ export const fr: TranslationDictionary = {
 
     editUserCancel: 'Annuler',
 
+    colRegistration: 'Inscrit depuis',
+    presenceOnline: 'En ligne maintenant',
+    presenceRecent: 'Actif au cours des dernières 24 heures',
+    presenceOffline: 'Hors ligne',
+    presenceOnlineNow: 'En ligne maintenant',
+    presenceActive24h: 'Actifs au cours des dernières 24 heures',
+    presenceBannedNow: 'Bannis actuellement',
+    presenceActiveNow: 'Actif maintenant',
+    viewUserDetails: 'Voir les détails',
+    userDetailTitle: 'Détails de l’utilisateur',
+    userDetailDescription: 'Informations du compte. Visibles uniquement par les administrateurs.',
+    detailName: 'Nom',
+    detailPhone: 'Téléphone',
+    detailRegistrationIp: 'IP d’inscription',
+    detailRegistrationCountry: 'Pays d’inscription',
+    detailRegisteredOn: 'Inscrit le',
+    detailLastOnline: 'Dernière connexion',
+    detailActivity: 'Activité',
+    detailBanState: 'Bannissement',
+    detailNotBanned: 'Non banni',
+    detailBannedPermanent: 'Banni définitivement',
+    detailBannedUntil: 'Banni jusqu’au {date}',
+    detailBanReason: 'Motif du bannissement',
+    detailMustChangePassword: 'Doit changer son mot de passe',
+    banAction: 'Bannir',
+    unbanAction: 'Débannir',
+    bannedBadge: 'Banni',
+    banDialogTitle: 'Bannir {username}',
+    banDialogDescription:
+      'L’utilisateur est déconnecté partout immédiatement et ne peut pas se connecter avant la fin du bannissement.',
+    banUnit: 'Unité de durée',
+    banAmount: 'Quantité',
+    banUnitMinutes: 'Minutes',
+    banUnitHours: 'Heures',
+    banUnitDays: 'Jours',
+    banUnitLifetime: 'À vie',
+    banAmountInvalid: 'Saisissez un nombre entier supérieur ou égal à 1.',
+    banReason: 'Motif',
+    banReasonPlaceholder: 'Pourquoi ce compte est-il banni ?',
+    banReasonRequired: 'Un motif est obligatoire.',
+    banConfirm: 'Bannir l’utilisateur',
+    userBanned: 'Utilisateur banni',
+    userBanFailed: 'Impossible de bannir l’utilisateur',
+    userUnbanned: 'Utilisateur débanni',
+    userUnbanFailed: 'Impossible de débannir l’utilisateur',
+    setPasswordAction: 'Définir le mot de passe',
+    setPasswordTitle: 'Définir un mot de passe pour {username}',
+    setPasswordDescription:
+      'L’utilisateur est déconnecté partout et devra choisir un nouveau mot de passe à la prochaine connexion.',
+    setPasswordMode: 'Comment définir le mot de passe',
+    setPasswordModeGenerate: 'Générer',
+    setPasswordModeManual: 'En saisir un',
+    setPasswordGenerateHint:
+      'Un mot de passe aléatoire robuste est créé sur le serveur et affiché une seule fois.',
+    setPasswordGenerateConfirm: 'Générer et définir',
+    setPasswordManualLabel: 'Nouveau mot de passe',
+    setPasswordManualHint:
+      'Au moins 8 caractères, avec une majuscule, une minuscule et un chiffre.',
+    setPasswordConfirm: 'Définir le mot de passe',
+    setPasswordGeneratedTitle: 'Mot de passe défini. Transmettez-le à l’utilisateur :',
+    setPasswordGeneratedWarning:
+      'Copiez-le maintenant. Il n’est affiché qu’une fois et n’est enregistré nulle part.',
+    setPasswordCopy: 'Copier le mot de passe',
+    setPasswordDone: 'Terminé',
+    setPasswordFailed: 'Impossible de définir le mot de passe',
+    setPasswordSucceeded: 'Mot de passe défini',
+    editUserPhone: 'Téléphone',
+    editUserPhoneHint:
+      'Format international, par exemple +201001234567. Laissez vide pour le supprimer.',
+    editUserPhoneInvalid: 'Utilisez le format international, par exemple +201001234567.',
     editUserRotatePassword: 'Renouveler le mot de passe',
     userUpdated: 'Utilisateur mis à jour',
     userUpdateFailed: 'Échec de la mise à jour de l’utilisateur',
@@ -4945,6 +5027,7 @@ export const fr: TranslationDictionary = {
     failed: 'Impossible d’émettre le remboursement.',
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.fr.section,
+  adminSessions: ADMIN_SESSIONS_TRANSLATIONS.fr.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.fr,
   narration: NARRATION_TRANSLATIONS.fr,
   pickedModel: PICKED_MODEL_TRANSLATIONS.fr,

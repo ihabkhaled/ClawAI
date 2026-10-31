@@ -48,6 +48,7 @@ import {
   CreditCard,
   Gauge,
   UserCog,
+  LockKeyhole,
   Rocket,
   Code2,
   Zap,
@@ -265,6 +266,12 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
         labelKey: 'nav.adminDeployment',
         href: ROUTES.ADMIN_DEPLOYMENT,
         icon: Rocket,
+        superAdminOnly: true,
+      },
+      {
+        labelKey: 'nav.adminSecuritySessions',
+        href: ROUTES.ADMIN_SECURITY_SESSIONS,
+        icon: LockKeyhole,
         superAdminOnly: true,
       },
       {

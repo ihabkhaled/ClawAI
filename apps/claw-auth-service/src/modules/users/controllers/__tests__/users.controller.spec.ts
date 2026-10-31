@@ -2,11 +2,13 @@ import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { UsersController } from '../users.controller';
 import { UsersService } from '../../services/users.service';
-import { UserRole } from '../../../../common/enums';
+import { BanDurationUnit, UserRole } from '../../../../common/enums';
 import { Permission } from '@claw/shared-types';
 import { PERMISSIONS_KEY } from '../../../../app/decorators/permissions.decorator';
 import { IS_PUBLIC_KEY } from '../../../../app/decorators/public.decorator';
 import { EmailChangeService } from '../../../auth/services/email-change.service';
+import { UserPresenceService } from '../../../auth/services/user-presence.service';
+import { UserAdminActionsService } from '../../services/user-admin-actions.service';
 
 describe('UsersController', () => {
   let controller: UsersController;
@@ -14,6 +16,8 @@ describe('UsersController', () => {
     create: Mock;
     findAll: Mock;
     findById: Mock;
+    findAdminById: Mock;
+    getPresenceSummary: Mock;
     updateUser: Mock;
     deactivateUser: Mock;
     reactivateUser: Mock;
@@ -31,11 +35,18 @@ describe('UsersController', () => {
     cancelEmailChange: Mock;
   };
 
+  let adminActionsMock: { ban: Mock; unban: Mock; setPassword: Mock };
+  let presenceMock: { touch: Mock };
+
   beforeEach(async () => {
+    adminActionsMock = { ban: vi.fn(), unban: vi.fn(), setPassword: vi.fn() };
+    presenceMock = { touch: vi.fn().mockResolvedValue(true) };
     usersMock = {
       create: vi.fn(),
       findAll: vi.fn(),
       findById: vi.fn(),
+      findAdminById: vi.fn(),
+      getPresenceSummary: vi.fn(),
       updateUser: vi.fn(),
       deactivateUser: vi.fn(),
       reactivateUser: vi.fn(),
@@ -57,6 +68,8 @@ describe('UsersController', () => {
       providers: [
         { provide: UsersService, useValue: usersMock },
         { provide: EmailChangeService, useValue: emailChangeMock },
+        { provide: UserAdminActionsService, useValue: adminActionsMock },
+        { provide: UserPresenceService, useValue: presenceMock },
       ],
     }).compile();
     controller = module.get<UsersController>(UsersController);
@@ -168,9 +181,9 @@ describe('UsersController', () => {
   );
 
   it('findOne forwards id', async () => {
-    usersMock.findById.mockResolvedValue({ id: 'u1' });
+    usersMock.findAdminById.mockResolvedValue({ id: 'u1' });
     await controller.findOne('u1');
-    expect(usersMock.findById).toHaveBeenCalledWith('u1');
+    expect(usersMock.findAdminById).toHaveBeenCalledWith('u1');
   });
 
   it('update forwards id, body, and acting user id', async () => {
@@ -187,6 +200,53 @@ describe('UsersController', () => {
   it('reactivate forwards id and acting user id', async () => {
     await controller.reactivate('u1', adminUser as never);
     expect(usersMock.reactivateUser).toHaveBeenCalledWith('u1', 'admin-1');
+  });
+
+  it('ban, unban and setPassword forward the target and the acting admin', async () => {
+    const dto = { unit: BanDurationUnit.LIFETIME, reason: 'abuse' };
+    await controller.ban('u1', dto, adminUser as never);
+    expect(adminActionsMock.ban).toHaveBeenCalledWith('u1', dto, 'admin-1');
+    await controller.unban('u1', adminUser as never);
+    expect(adminActionsMock.unban).toHaveBeenCalledWith('u1', 'admin-1');
+    adminActionsMock.setPassword.mockResolvedValue({ generatedPassword: 'x' });
+    const result = await controller.setPassword('u1', { mode: 'GENERATE' }, adminUser as never);
+    expect(adminActionsMock.setPassword).toHaveBeenCalledWith(
+      'u1',
+      { mode: 'GENERATE' },
+      'admin-1',
+    );
+    expect(result).toEqual({ generatedPassword: 'x' });
+  });
+
+  it('presenceSummary returns the counts', async () => {
+    usersMock.getPresenceSummary.mockResolvedValue({ onlineNow: 1, active24h: 2, bannedNow: 0 });
+    await expect(controller.presenceSummary()).resolves.toEqual({
+      onlineNow: 1,
+      active24h: 2,
+      bannedNow: 0,
+    });
+  });
+
+  it('heartbeat touches the caller only and returns nothing', async () => {
+    await expect(controller.heartbeat(adminUser as never)).resolves.toBeUndefined();
+    expect(presenceMock.touch).toHaveBeenCalledWith('admin-1');
+  });
+
+  it.each(['ban', 'unban', 'setPassword', 'presenceSummary'])(
+    '%s is ADMIN-only and needs ADMIN_USERS_MANAGE',
+    (method) => {
+      const handler = UsersController.prototype[method as 'ban'];
+      expect(Reflect.getMetadata('roles', handler)).toEqual([UserRole.ADMIN]);
+      expect(Reflect.getMetadata(PERMISSIONS_KEY, handler)).toContain(
+        Permission.ADMIN_USERS_MANAGE,
+      );
+    },
+  );
+
+  it('heartbeat is not public and not admin-only (any signed-in user)', () => {
+    const handler = UsersController.prototype.heartbeat;
+    expect(Reflect.getMetadata(IS_PUBLIC_KEY, handler)).toBeUndefined();
+    expect(Reflect.getMetadata('roles', handler)).toBeUndefined();
   });
 
   it('changeRole forwards id, role, and acting user id', async () => {

@@ -10,5 +10,8 @@ export interface ErrorResponseBody {
   // here, instead of wherever the exception happened to be constructed.
   availableMicroUsd?: number;
   requiredMicroUsd?: number | null;
+  // ACCOUNT_BANNED: the end of a timed ban (ISO-8601) or null, and whether it is a lifetime ban.
+  bannedUntil?: string | null;
+  banPermanent?: boolean;
   timestamp: string;
 }

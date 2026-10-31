@@ -1,3 +1,4 @@
+import type { Request } from 'express';
 import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { AuthController } from '../auth.controller';
@@ -11,6 +12,22 @@ import { IS_PUBLIC_KEY } from '../../../../app/decorators/public.decorator';
 import { AuthRateLimitService } from '../../services/auth-rate-limit.service';
 import { AUTH_RATE_LIMIT_METADATA_KEY } from '../../constants/auth-rate-limit.constants';
 import { AuthRateLimitPolicy } from '../../enums/auth-rate-limit-policy.enum';
+
+const LOGIN_ORIGIN = {
+  ipAddress: null,
+  countryCode: null,
+  userAgent: 'curl/8.4.0',
+  os: null,
+  browser: 'curl 8',
+  deviceKind: 'TOOL',
+};
+
+function loginRequest(): Request {
+  return {
+    headers: { 'user-agent': 'curl/8.4.0' },
+    socket: { remoteAddress: undefined },
+  } as unknown as Request;
+}
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -66,9 +83,12 @@ describe('AuthController', () => {
     };
     serviceMock.register.mockResolvedValue({ userId: 'u1', message: 'created' });
 
-    await controller.register(dto);
+    await controller.register(dto, {
+      headers: {},
+      socket: { remoteAddress: undefined },
+    } as unknown as Request);
 
-    expect(serviceMock.register).toHaveBeenCalledWith(dto);
+    expect(serviceMock.register).toHaveBeenCalledWith(dto, { ip: null, countryCode: null });
   });
 
   it('login forwards email + password', async () => {
@@ -77,11 +97,12 @@ describe('AuthController', () => {
       user: { id: 'u1', email: 'a@b' },
     };
     serviceMock.login.mockResolvedValue(expected);
-    const result = await controller.login({ email: 'a@b', password: 'p' });
+    const result = await controller.login({ email: 'a@b', password: 'p' }, loginRequest());
     expect(serviceMock.login).toHaveBeenCalledWith('a@b', 'p', {
       kind: SessionClientKind.WEB,
       name: 'ClawAI Web',
       persistent: true,
+      origin: LOGIN_ORIGIN,
     });
     expect(result).toBe(expected);
   });
@@ -92,17 +113,21 @@ describe('AuthController', () => {
       user: { id: 'u1', email: 'a@b' },
     });
 
-    await controller.login({
-      email: 'a@b',
-      password: 'p',
-      clientKind: SessionClientKind.VSCODE,
-      clientName: 'ClawAI for VS Code',
-    });
+    await controller.login(
+      {
+        email: 'a@b',
+        password: 'p',
+        clientKind: SessionClientKind.VSCODE,
+        clientName: 'ClawAI for VS Code',
+      },
+      loginRequest(),
+    );
 
     expect(serviceMock.login).toHaveBeenCalledWith('a@b', 'p', {
       kind: SessionClientKind.VSCODE,
       name: 'ClawAI for VS Code',
       persistent: true,
+      origin: LOGIN_ORIGIN,
     });
   });
 

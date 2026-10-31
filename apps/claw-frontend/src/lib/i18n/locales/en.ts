@@ -1,6 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
+import { ADMIN_SESSIONS_TRANSLATIONS } from './admin-sessions-translations';
 import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
@@ -278,6 +279,12 @@ export const en: TranslationDictionary = {
     loginEmailNotVerifiedDescription:
       'Your password was correct, but this account has not been activated yet. Open the confirmation email we sent you and select the link inside, then sign in again.',
     loginEmailNotVerifiedAction: 'I did not get the email',
+    loginBannedTitle: 'This account is banned',
+    loginBannedDescription:
+      'An administrator banned this account until {date}. You cannot sign in before then.',
+    loginBannedPermanentDescription:
+      'An administrator banned this account permanently. You cannot sign in.',
+    loginBannedGeneric: 'This account is banned.',
     loginSuspendedTitle: 'This account has been suspended',
     loginSuspendedDescription:
       'Your password was correct, but an administrator has disabled this account. Please contact support if you believe this is a mistake.',
@@ -419,6 +426,7 @@ export const en: TranslationDictionary = {
     adminRoles: 'Roles',
     adminRuntimeProgress: 'Runtime diagnostics',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.en.navigationLabel,
+    adminSecuritySessions: ADMIN_SESSIONS_TRANSLATIONS.en.navigationLabel,
     adminPaymentGateways: 'Payment gateways',
     adminSmartRouter: 'Smart Router',
     adminModelCosts: 'Model Prices',
@@ -2254,6 +2262,9 @@ export const en: TranslationDictionary = {
     // "you may never" and "you may, but not to yourself" are different
     // sentences. See rules/35-super-administrator-and-privilege-boundaries.md.
     errors: {
+      cannotBanSelf: 'You cannot ban your own account.',
+      userNotBanned: 'This account is not banned.',
+      cannotSetOwnPassword: 'Change your own password from your account settings.',
       superAdminImmutable: 'Only the super admin can change the super admin account.',
       superAdminSelfLocked: 'The super admin cannot make this change to their own account.',
       superAdminRequired: 'Only the super admin can perform this action.',
@@ -2352,6 +2363,73 @@ export const en: TranslationDictionary = {
 
     editUserCancel: 'Cancel',
 
+    colRegistration: 'Registered from',
+    presenceOnline: 'Online now',
+    presenceRecent: 'Active in the last 24 hours',
+    presenceOffline: 'Offline',
+    presenceOnlineNow: 'Online now',
+    presenceActive24h: 'Active in the last 24 hours',
+    presenceBannedNow: 'Banned now',
+    presenceActiveNow: 'Active now',
+    viewUserDetails: 'View details',
+    userDetailTitle: 'User details',
+    userDetailDescription: 'Account information. Visible to administrators only.',
+    detailName: 'Name',
+    detailPhone: 'Phone',
+    detailRegistrationIp: 'Registration IP',
+    detailRegistrationCountry: 'Registration country',
+    detailRegisteredOn: 'Registered on',
+    detailLastOnline: 'Last online',
+    detailActivity: 'Activity',
+    detailBanState: 'Ban',
+    detailNotBanned: 'Not banned',
+    detailBannedPermanent: 'Banned permanently',
+    detailBannedUntil: 'Banned until {date}',
+    detailBanReason: 'Ban reason',
+    detailMustChangePassword: 'Must change password',
+    banAction: 'Ban',
+    unbanAction: 'Unban',
+    bannedBadge: 'Banned',
+    banDialogTitle: 'Ban {username}',
+    banDialogDescription:
+      'The user is signed out everywhere at once and cannot sign in until the ban ends.',
+    banUnit: 'Duration unit',
+    banAmount: 'Amount',
+    banUnitMinutes: 'Minutes',
+    banUnitHours: 'Hours',
+    banUnitDays: 'Days',
+    banUnitLifetime: 'Lifetime',
+    banAmountInvalid: 'Enter a whole number of 1 or more.',
+    banReason: 'Reason',
+    banReasonPlaceholder: 'Why is this account being banned?',
+    banReasonRequired: 'A reason is required.',
+    banConfirm: 'Ban user',
+    userBanned: 'User banned',
+    userBanFailed: 'Could not ban the user',
+    userUnbanned: 'User unbanned',
+    userUnbanFailed: 'Could not unban the user',
+    setPasswordAction: 'Set password',
+    setPasswordTitle: 'Set a password for {username}',
+    setPasswordDescription:
+      'The user is signed out everywhere and must choose a new password at the next sign-in.',
+    setPasswordMode: 'How to set the password',
+    setPasswordModeGenerate: 'Generate',
+    setPasswordModeManual: 'Type one',
+    setPasswordGenerateHint: 'A strong random password is created on the server and shown once.',
+    setPasswordGenerateConfirm: 'Generate and set',
+    setPasswordManualLabel: 'New password',
+    setPasswordManualHint:
+      'At least 8 characters, with an uppercase letter, a lowercase letter and a number.',
+    setPasswordConfirm: 'Set password',
+    setPasswordGeneratedTitle: 'Password set. Give it to the user:',
+    setPasswordGeneratedWarning: 'Copy it now. It is shown once and is not stored anywhere.',
+    setPasswordCopy: 'Copy password',
+    setPasswordDone: 'Done',
+    setPasswordFailed: 'Could not set the password',
+    setPasswordSucceeded: 'Password set',
+    editUserPhone: 'Phone',
+    editUserPhoneHint: 'International format, for example +201001234567. Leave empty to remove it.',
+    editUserPhoneInvalid: 'Use international format, for example +201001234567.',
     editUserRotatePassword: 'Rotate password',
     userUpdated: 'User updated',
     userUpdateFailed: 'Failed to update user',
@@ -4811,6 +4889,7 @@ export const en: TranslationDictionary = {
     failed: 'Could not issue the refund.',
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.en.section,
+  adminSessions: ADMIN_SESSIONS_TRANSLATIONS.en.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.en,
   narration: NARRATION_TRANSLATIONS.en,
   pickedModel: PICKED_MODEL_TRANSLATIONS.en,

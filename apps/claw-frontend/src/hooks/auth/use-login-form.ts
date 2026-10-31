@@ -11,9 +11,10 @@ import { useLocalizedHref } from '@/hooks/common/use-localized-href';
 import { useTranslation } from '@/lib/i18n';
 import { loginSchema } from '@/lib/validation/login.schema';
 import type { LoginFormValues } from '@/lib/validation/login.schema';
+import type { LoginBanInfo } from '@/types';
 import type { UseLoginFormReturn } from '@/types/hook.types';
-import { classifyLoginFailure, resolveLoginFailureCopy } from '@/utilities';
-import { readRetryAfterSeconds } from '@/utilities/rate-limit.utility';
+import { resolveLoginFormFailureCopy } from '@/utilities';
+import { takeBanNotice } from '@/utilities/ban-notice.utility';
 
 // Controller hook for the login page. Owns:
 //   1. the react-hook-form instance + submit handler
@@ -30,6 +31,12 @@ export function useLoginForm(): UseLoginFormReturn {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  // Set when the server ended this very session because the account was banned (ADR-200).
+  const [banNotice, setBanNotice] = useState<LoginBanInfo | null>(null);
+
+  useEffect(() => {
+    setBanNotice(takeBanNotice());
+  }, []);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -99,15 +106,14 @@ export function useLoginForm(): UseLoginFormReturn {
     registerHref,
     onSubmit: form.handleSubmit(onSubmit),
     isPending,
-    isError,
+    isError: isError || banNotice !== null,
     // The classified reason, never the backend's own message. That message is
     // written for a log reader, is only ever English, and for a bad sign-in it
     // says "Invalid email or password" — the exact phrasing the product has
     // decided against, because it invites the reader to guess which half was
     // wrong when the server deliberately refuses to say.
-    failureCopy: isError
-      ? resolveLoginFailureCopy(classifyLoginFailure(error), readRetryAfterSeconds(error))
-      : null,
+    failureCopy: resolveLoginFormFailureCopy(isError, error, banNotice),
+
     t,
   };
 }

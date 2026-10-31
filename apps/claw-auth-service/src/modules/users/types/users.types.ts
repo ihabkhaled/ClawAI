@@ -1,4 +1,10 @@
-import { type SortOrder, type UserRole, type UserStatus } from '../../../common/enums';
+import {
+  type PresenceFilter,
+  type PresenceState,
+  type SortOrder,
+  type UserRole,
+  type UserStatus,
+} from '../../../common/enums';
 
 export interface PasswordPolicyResult {
   valid: boolean;
@@ -68,6 +74,30 @@ export interface SafeUser {
   updatedAt: Date;
 }
 
+/**
+ * What the ADMIN user endpoints return: a SafeUser plus personal and operational
+ * fields no self-service response may carry (registration IP, presence, ban).
+ * Ban fields describe the EFFECTIVE state: an expired timed ban reads as not banned.
+ */
+export interface AdminUser extends SafeUser {
+  registrationIp: string | null;
+  registrationCountryCode: string | null;
+  lastSeenAt: Date | null;
+  presence: PresenceState;
+  isBanned: boolean;
+  banPermanent: boolean;
+  bannedAt: Date | null;
+  bannedUntil: Date | null;
+  banReason: string | null;
+  bannedByUserId: string | null;
+}
+
+export interface PresenceSummary {
+  onlineNow: number;
+  active24h: number;
+  bannedNow: number;
+}
+
 export interface UpdateUserData {
   email?: string;
   username?: string;
@@ -81,6 +111,10 @@ export interface UpdateUserData {
   firstName?: string | null;
   lastName?: string | null;
   phone?: string | null;
+  bannedAt?: Date | null;
+  bannedUntil?: Date | null;
+  banReason?: string | null;
+  bannedByUserId?: string | null;
 }
 
 export interface UserFilters {
@@ -89,6 +123,9 @@ export interface UserFilters {
   status?: UserStatus;
   planId?: string;
   verification?: 'VERIFIED' | 'UNVERIFIED';
+  presence?: PresenceFilter;
+  /** true: only accounts with an active ban right now. */
+  banned?: boolean;
 }
 
 export interface ListUsersQuery {

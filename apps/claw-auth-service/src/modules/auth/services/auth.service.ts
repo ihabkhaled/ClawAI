@@ -11,6 +11,8 @@ import {
 } from '../types/auth.types';
 import type { SessionClient } from '../types/token-session.types';
 import type { RegisterDto } from '../dto/register.dto';
+import { EMPTY_REGISTRATION_ORIGIN } from '../../users/constants/user-admin.constants';
+import { type RegistrationOrigin } from '../../users/types/user-admin.types';
 import { EmailVerificationService } from './email-verification.service';
 
 @Injectable()
@@ -31,10 +33,13 @@ export class AuthService {
     );
   }
 
-  async register(dto: RegisterDto): Promise<RegisterResult> {
+  async register(
+    dto: RegisterDto,
+    origin: RegistrationOrigin = EMPTY_REGISTRATION_ORIGIN,
+  ): Promise<RegisterResult> {
     this.logger.log(`register: attempting registration for email=${dto.email}`);
     try {
-      const account = await this.authManager.register(dto);
+      const account = await this.authManager.register(dto, origin);
       const result: RegisterResult = {
         ...account,
         verificationEmailSent: await this.sendVerificationEmail(

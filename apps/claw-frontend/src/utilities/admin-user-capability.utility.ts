@@ -11,7 +11,17 @@ const UNRESTRICTED: AdminUserCapability = {
   canAssignPlan: true,
   canChangeStatus: true,
   canRotatePassword: true,
+  canBan: true,
+  canSetPassword: true,
   reason: null,
+};
+
+// Changing your own password without the current one, or banning yourself, is
+// refused by the API for every administrator, so the controls are not offered.
+const UNRESTRICTED_SELF: AdminUserCapability = {
+  ...UNRESTRICTED,
+  canBan: false,
+  canSetPassword: false,
 };
 
 /**
@@ -32,11 +42,11 @@ export function resolveAdminUserCapability(
   target: AdminUserCapabilityTarget,
   actor: AdminUserActor | null,
 ): AdminUserCapability {
+  const isSelf = actor !== null && actor.id === target.id;
   if (!target.isSuperAdmin) {
-    return UNRESTRICTED;
+    return isSelf ? UNRESTRICTED_SELF : UNRESTRICTED;
   }
 
-  const isSelf = actor !== null && actor.id === target.id;
   if (!isSelf) {
     return {
       canEditProfile: false,
@@ -44,6 +54,8 @@ export function resolveAdminUserCapability(
       canAssignPlan: false,
       canChangeStatus: false,
       canRotatePassword: false,
+      canBan: false,
+      canSetPassword: false,
       reason: AdminUserCapabilityReason.SuperAdminOther,
     };
   }
@@ -54,6 +66,8 @@ export function resolveAdminUserCapability(
     canAssignPlan: false,
     canChangeStatus: false,
     canRotatePassword: false,
+    canBan: false,
+    canSetPassword: false,
     reason: AdminUserCapabilityReason.SuperAdminSelf,
   };
 }

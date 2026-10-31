@@ -1,6 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
+import { ADMIN_SESSIONS_TRANSLATIONS } from './admin-sessions-translations';
 import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
@@ -278,6 +279,12 @@ export const fa: TranslationDictionary = {
     loginEmailNotVerifiedDescription:
       'گذرواژه شما درست بود، اما این حساب هنوز فعال نشده است. ایمیل تأییدی را که برایتان فرستادیم باز کنید، روی پیوند داخل آن بزنید و سپس دوباره وارد شوید.',
     loginEmailNotVerifiedAction: 'ایمیل به دستم نرسید',
+    loginBannedTitle: 'این حساب مسدود شده است',
+    loginBannedDescription:
+      'یک مدیر این حساب را تا {date} مسدود کرده است. تا آن زمان نمی‌توانید وارد شوید.',
+    loginBannedPermanentDescription:
+      'یک مدیر این حساب را برای همیشه مسدود کرده است. نمی‌توانید وارد شوید.',
+    loginBannedGeneric: 'این حساب مسدود شده است.',
     loginSuspendedTitle: 'این حساب تعلیق شده است',
     loginSuspendedDescription:
       'گذرواژه شما درست بود، اما یکی از مدیران این حساب را غیرفعال کرده است. اگر فکر می‌کنید اشتباهی رخ داده، لطفاً با پشتیبانی تماس بگیرید.',
@@ -420,6 +427,7 @@ export const fa: TranslationDictionary = {
     adminRoles: 'نقش ها',
     adminRuntimeProgress: 'تشخیص زمان اجرا',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.fa.navigationLabel,
+    adminSecuritySessions: ADMIN_SESSIONS_TRANSLATIONS.fa.navigationLabel,
     adminPaymentGateways: 'درگاه‌های پرداخت',
     adminSmartRouter: 'مسیریاب هوشمند',
     adminModelCosts: 'قیمت مدل‌ها',
@@ -2267,6 +2275,9 @@ export const fa: TranslationDictionary = {
     // "you may never" and "you may, but not to yourself" are different
     // sentences. See rules/35-super-administrator-and-privilege-boundaries.md.
     errors: {
+      cannotBanSelf: 'نمی‌توانید حساب خودتان را مسدود کنید.',
+      userNotBanned: 'این حساب مسدود نیست.',
+      cannotSetOwnPassword: 'گذرواژه خودتان را از تنظیمات حساب تغییر دهید.',
       superAdminImmutable: 'تنها سوپر ادمین می‌تواند حساب سوپر ادمین را تغییر دهد.',
       superAdminSelfLocked: 'سوپر ادمین نمی‌تواند این تغییر را روی حساب خودش اعمال کند.',
       superAdminRequired: 'تنها سوپر ادمین می‌تواند این کار را انجام دهد.',
@@ -2364,6 +2375,74 @@ export const fa: TranslationDictionary = {
 
     editUserCancel: 'لغو',
 
+    colRegistration: 'محل ثبت‌نام',
+    presenceOnline: 'اکنون آنلاین',
+    presenceRecent: 'فعال در ۲۴ ساعت گذشته',
+    presenceOffline: 'آفلاین',
+    presenceOnlineNow: 'اکنون آنلاین',
+    presenceActive24h: 'فعال در ۲۴ ساعت گذشته',
+    presenceBannedNow: 'اکنون مسدود',
+    presenceActiveNow: 'اکنون فعال',
+    viewUserDetails: 'مشاهده جزئیات',
+    userDetailTitle: 'جزئیات کاربر',
+    userDetailDescription: 'اطلاعات حساب. فقط برای مدیران قابل مشاهده است.',
+    detailName: 'نام',
+    detailPhone: 'تلفن',
+    detailRegistrationIp: 'آی‌پی ثبت‌نام',
+    detailRegistrationCountry: 'کشور ثبت‌نام',
+    detailRegisteredOn: 'تاریخ ثبت‌نام',
+    detailLastOnline: 'آخرین حضور',
+    detailActivity: 'فعالیت',
+    detailBanState: 'مسدودسازی',
+    detailNotBanned: 'مسدود نشده',
+    detailBannedPermanent: 'برای همیشه مسدود',
+    detailBannedUntil: 'مسدود تا {date}',
+    detailBanReason: 'دلیل مسدودسازی',
+    detailMustChangePassword: 'باید گذرواژه را تغییر دهد',
+    banAction: 'مسدود کردن',
+    unbanAction: 'رفع مسدودیت',
+    bannedBadge: 'مسدود',
+    banDialogTitle: 'مسدود کردن {username}',
+    banDialogDescription:
+      'کاربر فوراً از همه‌جا خارج می‌شود و تا پایان مسدودیت نمی‌تواند وارد شود.',
+    banUnit: 'واحد مدت',
+    banAmount: 'مقدار',
+    banUnitMinutes: 'دقیقه',
+    banUnitHours: 'ساعت',
+    banUnitDays: 'روز',
+    banUnitLifetime: 'همیشگی',
+    banAmountInvalid: 'یک عدد صحیح ۱ یا بیشتر وارد کنید.',
+    banReason: 'دلیل',
+    banReasonPlaceholder: 'چرا این حساب مسدود می‌شود؟',
+    banReasonRequired: 'دلیل الزامی است.',
+    banConfirm: 'مسدود کردن کاربر',
+    userBanned: 'کاربر مسدود شد',
+    userBanFailed: 'مسدود کردن کاربر ممکن نشد',
+    userUnbanned: 'مسدودیت کاربر برداشته شد',
+    userUnbanFailed: 'رفع مسدودیت کاربر ممکن نشد',
+    setPasswordAction: 'تعیین گذرواژه',
+    setPasswordTitle: 'تعیین گذرواژه برای {username}',
+    setPasswordDescription:
+      'کاربر از همه‌جا خارج می‌شود و باید در ورود بعدی گذرواژه‌ای جدید انتخاب کند.',
+    setPasswordMode: 'روش تعیین گذرواژه',
+    setPasswordModeGenerate: 'تولید',
+    setPasswordModeManual: 'تایپ دستی',
+    setPasswordGenerateHint:
+      'گذرواژه‌ای تصادفی و قوی روی سرور ساخته می‌شود و فقط یک بار نمایش داده می‌شود.',
+    setPasswordGenerateConfirm: 'تولید و تعیین',
+    setPasswordManualLabel: 'گذرواژه جدید',
+    setPasswordManualHint: 'دست‌کم ۸ نویسه، شامل یک حرف بزرگ، یک حرف کوچک و یک عدد.',
+    setPasswordConfirm: 'تعیین گذرواژه',
+    setPasswordGeneratedTitle: 'گذرواژه تعیین شد. آن را به کاربر بدهید:',
+    setPasswordGeneratedWarning:
+      'همین حالا کپی کنید. فقط یک بار نمایش داده می‌شود و جایی ذخیره نمی‌شود.',
+    setPasswordCopy: 'کپی گذرواژه',
+    setPasswordDone: 'انجام شد',
+    setPasswordFailed: 'تعیین گذرواژه ممکن نشد',
+    setPasswordSucceeded: 'گذرواژه تعیین شد',
+    editUserPhone: 'تلفن',
+    editUserPhoneHint: 'قالب بین‌المللی، مثلاً +201001234567. برای حذف خالی بگذارید.',
+    editUserPhoneInvalid: 'از قالب بین‌المللی استفاده کنید، مثلاً +201001234567.',
     editUserRotatePassword: 'تغییر رمز عبور',
     userUpdated: 'کاربر به‌روزرسانی شد',
     userUpdateFailed: 'به‌روزرسانی کاربر ناموفق بود',
@@ -4844,6 +4923,7 @@ export const fa: TranslationDictionary = {
     failed: 'بازپرداخت صادر نشد.',
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.fa.section,
+  adminSessions: ADMIN_SESSIONS_TRANSLATIONS.fa.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.fa,
   narration: NARRATION_TRANSLATIONS.fa,
   pickedModel: PICKED_MODEL_TRANSLATIONS.fa,

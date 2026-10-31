@@ -1,6 +1,7 @@
 import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { SessionClientKind } from '../../enums/session-client-kind.enum';
+import { SessionTerminationReason } from '../../../sessions/enums/session-termination-reason.enum';
 import { AuthRepository } from '../auth.repository';
 import { PrismaService } from '../../../../infrastructure/database/prisma/prisma.service';
 
@@ -143,7 +144,11 @@ describe('AuthRepository', () => {
   it('revokes every active session in a token family and returns their ids', async () => {
     const revokedAt = new Date('2026-07-27T00:00:00.000Z');
 
-    const revoked = await repository.revokeSessionFamily('family-1', revokedAt);
+    const revoked = await repository.revokeSessionFamily(
+      'family-1',
+      SessionTerminationReason.TOKEN_REUSE,
+      revokedAt,
+    );
 
     expect(revoked).toEqual(['s1', 's2']);
     expect(prismaMock.session.deleteMany).not.toHaveBeenCalled();
@@ -152,14 +157,24 @@ describe('AuthRepository', () => {
         familyId: 'family-1',
         revokedAt: null,
       },
-      data: { revokedAt },
+      data: {
+        revokedAt,
+        terminatedAt: revokedAt,
+        terminationReason: 'TOKEN_REUSE',
+        terminatedByUserId: null,
+      },
     });
   });
 
   it('revokes a session only when it belongs to the authenticated user', async () => {
     const revokedAt = new Date('2026-07-27T00:00:00.000Z');
 
-    await repository.revokeSessionForUser('session-1', 'user-1', revokedAt);
+    await repository.revokeSessionForUser(
+      'session-1',
+      'user-1',
+      SessionTerminationReason.USER_LOGOUT,
+      revokedAt,
+    );
 
     expect(prismaMock.session.updateMany).toHaveBeenCalledWith({
       where: {
@@ -167,7 +182,12 @@ describe('AuthRepository', () => {
         userId: 'user-1',
         revokedAt: null,
       },
-      data: { revokedAt },
+      data: {
+        revokedAt,
+        terminatedAt: revokedAt,
+        terminationReason: 'USER_LOGOUT',
+        terminatedByUserId: null,
+      },
     });
   });
 

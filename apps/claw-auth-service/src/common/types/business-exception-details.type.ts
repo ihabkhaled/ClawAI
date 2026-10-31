@@ -11,4 +11,8 @@ export interface BusinessExceptionDetails {
   availableMicroUsd?: number;
   /** What this request needed. `null` when no single number would help. */
   requiredMicroUsd?: number | null;
+  /** ACCOUNT_BANNED: when a timed ban ends (ISO-8601), `null` for a lifetime ban. */
+  bannedUntil?: string | null;
+  /** ACCOUNT_BANNED: true when the ban has no end date. */
+  banPermanent?: boolean;
 }

@@ -1,4 +1,5 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Req } from '@nestjs/common';
+import type { Request } from 'express';
 
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
 import { Public } from '../../../app/decorators/public.decorator';
@@ -12,6 +13,7 @@ import {
   type VscodeAuthorizationRequestDto,
   vscodeAuthorizationRequestSchema,
 } from '../dto/vscode-authorization.dto';
+import { resolveSessionOrigin } from '../utilities/session-origin.utility';
 import { VscodeAuthorizationService } from '../services/vscode-authorization.service';
 import { AuthRateLimit } from '../decorators/auth-rate-limit.decorator';
 import { AuthRateLimitPolicy } from '../enums/auth-rate-limit-policy.enum';
@@ -62,7 +64,9 @@ export class VscodeAuthorizationController {
   async exchange(
     @Body(new ZodValidationPipe(vscodeAuthorizationExchangeSchema))
     dto: VscodeAuthorizationExchangeDto,
+    @Req() request: Request,
   ): Promise<VscodeAuthorizationExchangeResult> {
-    return this.authorization.exchange(dto.code, dto.codeVerifier);
+    const origin = await resolveSessionOrigin(request.headers, request.socket.remoteAddress);
+    return this.authorization.exchange(dto.code, dto.codeVerifier, origin);
   }
 }

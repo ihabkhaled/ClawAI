@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { EditUserDialog } from '@/components/admin/edit-user-dialog';
+import { PresenceState } from '@/enums';
 import type { AdminUser } from '@/types/audit.types';
 
 const user: AdminUser = {
@@ -17,6 +18,18 @@ const user: AdminUser = {
   emailVerifiedAt: null,
   firstName: 'Ada',
   lastName: 'Khaled',
+  phone: '+201001234567',
+  registrationIp: '41.33.1.1',
+  registrationCountryCode: 'EG',
+  lastSeenAt: null,
+  presence: PresenceState.OFFLINE,
+  isBanned: false,
+  banPermanent: false,
+  bannedAt: null,
+  bannedUntil: null,
+  banReason: null,
+  bannedByUserId: null,
+  mustChangePassword: false,
 };
 
 function renderDialog(overrides: Partial<React.ComponentProps<typeof EditUserDialog>> = {}) {
@@ -32,6 +45,11 @@ function renderDialog(overrides: Partial<React.ComponentProps<typeof EditUserDia
       onClose={vi.fn()}
       onSave={onSave}
       onRotatePassword={onRotatePassword}
+      onSetPassword={vi.fn()}
+      onBan={vi.fn()}
+      onUnban={vi.fn()}
+      isUnbanning={false}
+      locale="en"
       t={(key: string) => key}
       {...overrides}
     />,

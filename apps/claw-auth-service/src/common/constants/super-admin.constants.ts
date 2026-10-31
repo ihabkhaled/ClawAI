@@ -31,4 +31,5 @@ export const SUPER_ADMIN_REFUSED_ACTOR_ACTION = 'super_admin_actor_refused';
  */
 export const SUPER_ADMIN_SELF_PERMITTED_SCOPES: ReadonlySet<SuperAdminMutationScope> = new Set([
   SuperAdminMutationScope.PROFILE,
+  SuperAdminMutationScope.SESSIONS,
 ]);

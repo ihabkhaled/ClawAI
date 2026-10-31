@@ -14,6 +14,7 @@ export type {
   AdminCreateUserRequest,
   EmailVerificationCopyKeys,
   EmailVerificationPanelCopy,
+  LoginBanInfo,
   LoginFailureCopy,
   PasswordRule,
   PasswordRuleState,
@@ -206,6 +207,24 @@ export type {
   PasswordStrengthPresentation,
   PasswordStrengthResult,
 } from './password-strength.types';
+export type {
+  AdminUserTarget,
+  BanFormValues,
+  BanUserDialogProps,
+  BanUserRequest,
+  SetPasswordDialogProps,
+  UseBanUserFormReturn,
+  UseSetPasswordDialogReturn,
+  UseUserSecurityDialogStateReturn,
+  UserDetailDialogProps,
+  UserSecurityHandlers,
+  PasswordFormValues,
+  PresenceSummary,
+  PresenceSummaryCardProps,
+  SetUserPasswordRequest,
+  SetUserPasswordResponse,
+  UserPresenceDotProps,
+} from './admin-user-management.types';
 export type {
   AdminUserActor,
   AdminUserCapability,

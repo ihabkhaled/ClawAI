@@ -88,6 +88,8 @@ export type AdminUserUpdateRequest = {
   username?: string;
   firstName?: string | null;
   lastName?: string | null;
+  /** E.164-ish; null clears it. */
+  phone?: string | null;
 };
 
 /**
@@ -221,11 +223,17 @@ export type PasswordRuleState = {
   isMet: boolean;
 };
 
+/** What an ACCOUNT_BANNED reply says about the ban. `until` is ISO-8601, null for a lifetime ban. */
+export type LoginBanInfo = {
+  permanent: boolean;
+  until: string | null;
+};
+
 export type LoginFailureCopy = {
   titleKey: string;
   descriptionKey: string;
   /** Interpolation for `descriptionKey`, e.g. `{ minutes }` for a 429. */
-  descriptionParams?: Record<string, number>;
+  descriptionParams?: Record<string, number | string>;
   actionKey: string | null;
   isRecoverable: boolean;
 };

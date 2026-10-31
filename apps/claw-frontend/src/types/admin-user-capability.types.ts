@@ -26,6 +26,10 @@ export interface AdminUserCapability {
   canAssignPlan: boolean;
   canChangeStatus: boolean;
   canRotatePassword: boolean;
+  /** Ban and unban. Never on yourself, never on the super administrator (ADR-200). */
+  canBan: boolean;
+  /** Set a password by hand or by generation. Never on yourself, never on the super administrator. */
+  canSetPassword: boolean;
   /**
    * `null` when nothing is restricted on this row. Carried rather than inferred
    * so the row can explain itself in its own words.

@@ -1,6 +1,7 @@
 import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
+import { ADMIN_SESSIONS_TRANSLATIONS } from './admin-sessions-translations';
 import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
@@ -284,6 +285,12 @@ export const de: TranslationDictionary = {
     loginEmailNotVerifiedDescription:
       'Ihr Passwort war richtig, dieses Konto ist jedoch noch nicht aktiviert. Öffnen Sie die Bestätigungs-E-Mail, die wir Ihnen gesendet haben, klicken Sie auf den enthaltenen Link und melden Sie sich danach erneut an.',
     loginEmailNotVerifiedAction: 'Ich habe die E-Mail nicht erhalten',
+    loginBannedTitle: 'Dieses Konto ist gesperrt',
+    loginBannedDescription:
+      'Ein Administrator hat dieses Konto bis {date} gesperrt. Bis dahin ist keine Anmeldung möglich.',
+    loginBannedPermanentDescription:
+      'Ein Administrator hat dieses Konto dauerhaft gesperrt. Eine Anmeldung ist nicht möglich.',
+    loginBannedGeneric: 'Dieses Konto ist gesperrt.',
     loginSuspendedTitle: 'Dieses Konto wurde gesperrt',
     loginSuspendedDescription:
       'Ihr Passwort war richtig, ein Administrator hat dieses Konto jedoch deaktiviert. Bitte wenden Sie sich an den Support, wenn Sie glauben, dass es sich um einen Fehler handelt.',
@@ -427,6 +434,7 @@ export const de: TranslationDictionary = {
     adminRoles: 'Rollen',
     adminRuntimeProgress: 'Laufzeitdiagnose',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.de.navigationLabel,
+    adminSecuritySessions: ADMIN_SESSIONS_TRANSLATIONS.de.navigationLabel,
     adminPaymentGateways: 'Zahlungs-Gateways',
     adminSmartRouter: 'Smart Router',
     adminModelCosts: 'Modellpreise',
@@ -2337,6 +2345,9 @@ export const de: TranslationDictionary = {
     // "you may never" and "you may, but not to yourself" are different
     // sentences. See rules/35-super-administrator-and-privilege-boundaries.md.
     errors: {
+      cannotBanSelf: 'Sie können Ihr eigenes Konto nicht sperren.',
+      userNotBanned: 'Dieses Konto ist nicht gesperrt.',
+      cannotSetOwnPassword: 'Ändern Sie Ihr eigenes Passwort in den Kontoeinstellungen.',
       superAdminImmutable: 'Nur der Super-Admin kann das Super-Admin-Konto ändern.',
       superAdminSelfLocked: 'Der Super-Admin kann diese Änderung nicht am eigenen Konto vornehmen.',
       superAdminRequired: 'Nur der Super-Admin darf diese Aktion ausführen.',
@@ -2437,6 +2448,76 @@ export const de: TranslationDictionary = {
 
     editUserCancel: 'Abbrechen',
 
+    colRegistration: 'Registriert von',
+    presenceOnline: 'Jetzt online',
+    presenceRecent: 'In den letzten 24 Stunden aktiv',
+    presenceOffline: 'Offline',
+    presenceOnlineNow: 'Jetzt online',
+    presenceActive24h: 'In den letzten 24 Stunden aktiv',
+    presenceBannedNow: 'Jetzt gesperrt',
+    presenceActiveNow: 'Jetzt aktiv',
+    viewUserDetails: 'Details anzeigen',
+    userDetailTitle: 'Benutzerdetails',
+    userDetailDescription: 'Kontoinformationen. Nur für Administratoren sichtbar.',
+    detailName: 'Name',
+    detailPhone: 'Telefon',
+    detailRegistrationIp: 'Registrierungs-IP',
+    detailRegistrationCountry: 'Registrierungsland',
+    detailRegisteredOn: 'Registriert am',
+    detailLastOnline: 'Zuletzt online',
+    detailActivity: 'Aktivität',
+    detailBanState: 'Sperre',
+    detailNotBanned: 'Nicht gesperrt',
+    detailBannedPermanent: 'Dauerhaft gesperrt',
+    detailBannedUntil: 'Gesperrt bis {date}',
+    detailBanReason: 'Sperrgrund',
+    detailMustChangePassword: 'Muss Passwort ändern',
+    banAction: 'Sperren',
+    unbanAction: 'Entsperren',
+    bannedBadge: 'Gesperrt',
+    banDialogTitle: '{username} sperren',
+    banDialogDescription:
+      'Der Benutzer wird sofort überall abgemeldet und kann sich bis zum Ende der Sperre nicht anmelden.',
+    banUnit: 'Einheit der Dauer',
+    banAmount: 'Anzahl',
+    banUnitMinutes: 'Minuten',
+    banUnitHours: 'Stunden',
+    banUnitDays: 'Tage',
+    banUnitLifetime: 'Dauerhaft',
+    banAmountInvalid: 'Geben Sie eine ganze Zahl ab 1 ein.',
+    banReason: 'Grund',
+    banReasonPlaceholder: 'Warum wird dieses Konto gesperrt?',
+    banReasonRequired: 'Ein Grund ist erforderlich.',
+    banConfirm: 'Benutzer sperren',
+    userBanned: 'Benutzer gesperrt',
+    userBanFailed: 'Der Benutzer konnte nicht gesperrt werden',
+    userUnbanned: 'Benutzer entsperrt',
+    userUnbanFailed: 'Der Benutzer konnte nicht entsperrt werden',
+    setPasswordAction: 'Passwort festlegen',
+    setPasswordTitle: 'Passwort für {username} festlegen',
+    setPasswordDescription:
+      'Der Benutzer wird überall abgemeldet und muss bei der nächsten Anmeldung ein neues Passwort wählen.',
+    setPasswordMode: 'So wird das Passwort festgelegt',
+    setPasswordModeGenerate: 'Generieren',
+    setPasswordModeManual: 'Selbst eingeben',
+    setPasswordGenerateHint:
+      'Ein sicheres Zufallspasswort wird auf dem Server erzeugt und einmalig angezeigt.',
+    setPasswordGenerateConfirm: 'Generieren und festlegen',
+    setPasswordManualLabel: 'Neues Passwort',
+    setPasswordManualHint:
+      'Mindestens 8 Zeichen mit einem Großbuchstaben, einem Kleinbuchstaben und einer Zahl.',
+    setPasswordConfirm: 'Passwort festlegen',
+    setPasswordGeneratedTitle: 'Passwort festgelegt. Geben Sie es dem Benutzer:',
+    setPasswordGeneratedWarning:
+      'Jetzt kopieren. Es wird nur einmal angezeigt und nirgends gespeichert.',
+    setPasswordCopy: 'Passwort kopieren',
+    setPasswordDone: 'Fertig',
+    setPasswordFailed: 'Das Passwort konnte nicht festgelegt werden',
+    setPasswordSucceeded: 'Passwort festgelegt',
+    editUserPhone: 'Telefon',
+    editUserPhoneHint:
+      'Internationales Format, z. B. +201001234567. Leer lassen, um die Nummer zu entfernen.',
+    editUserPhoneInvalid: 'Verwenden Sie das internationale Format, z. B. +201001234567.',
     editUserRotatePassword: 'Passwort neu vergeben',
     userUpdated: 'Benutzer aktualisiert',
     userUpdateFailed: 'Benutzer konnte nicht aktualisiert werden',
@@ -4952,6 +5033,7 @@ export const de: TranslationDictionary = {
     failed: 'Rückerstattung konnte nicht ausgelöst werden.',
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.de.section,
+  adminSessions: ADMIN_SESSIONS_TRANSLATIONS.de.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.de,
   narration: NARRATION_TRANSLATIONS.de,
   pickedModel: PICKED_MODEL_TRANSLATIONS.de,

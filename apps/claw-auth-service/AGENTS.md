@@ -22,9 +22,9 @@ change type needs (`rules/23-git-commits-hooks-and-release-gates.md`, gate matri
 ## Ownership (generated)
 - Port: 4001
 - Database: postgresql
-- Prisma models: CreditFreeAllowanceUsage, CreditLedgerEntry, CreditPackage, CreditPackageVersion, DeploymentCredential, DeviceAuthorizationGrant, EmailChangeRequest, EmailVerificationToken, EntitlementInboxEvent, FeatureUsageRecord, OpsAccessToken, PasswordResetToken, Plan, PlanFeatureRule, PlanModelAccess, PlanPriceVersion, PlanRetirementMigration, PlanTrialRedemption, PushSubscription, Role, RolePermission, SeedExecution, Session, SystemSetting, ThreadJobBudget, ThreadJobBudgetCall, TokenUsageLedger, User, UserCreditWallet, UserDeletionOutboxEvent, UserNotification, UserNotificationPreference, UserPlanAssignment, WeightedUsageRecord
-- API endpoints: 149 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 204 (vitest)
+- Prisma models: CreditFreeAllowanceUsage, CreditLedgerEntry, CreditPackage, CreditPackageVersion, DeploymentCredential, DeviceAuthorizationGrant, EmailChangeRequest, EmailVerificationToken, EntitlementInboxEvent, FeatureUsageRecord, OpsAccessToken, PasswordResetToken, Plan, PlanFeatureRule, PlanModelAccess, PlanPriceVersion, PlanRetirementMigration, PlanTrialRedemption, PushSubscription, Role, RolePermission, SeedExecution, Session, SessionAdminAudit, SystemSetting, ThreadJobBudget, ThreadJobBudgetCall, TokenUsageLedger, User, UserCreditWallet, UserDeletionOutboxEvent, UserNotification, UserNotificationPreference, UserPlanAssignment, WeightedUsageRecord
+- API endpoints: 162 (see `.ai/manifests/api-endpoints.json`)
+- Test files: 227 (vitest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing
