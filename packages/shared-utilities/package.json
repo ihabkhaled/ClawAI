@@ -34,7 +34,7 @@
   "dependencies": {
     "@claw/shared-constants": "1.224.3",
     "@claw/shared-types": "1.224.3",
-    "@nestjs/common": "^12.2.0",
+    "@nestjs/common": "^12.3.2",
     "axios": "^1.20.0",
     "jsonwebtoken": "^9.0.3",
     "nodemailer": "^10.2.1"
