@@ -1,18 +1,26 @@
 import { Logger } from '@nestjs/common';
 import { declaredHost } from '@claw/shared-utilities';
 import { BusinessException } from '../../../common/errors';
-import { fetchPageViaResearch, httpRequest } from '../../../common/utilities';
+import { httpRequest } from '../../../common/utilities';
 import { OLLAMA_TOOL_RESULT_MAX_CHARS } from '../constants/agentic-loop.constants';
 import {
   OLLAMA_CLOUD_TOOL_DEFINITIONS,
+  RESEARCH_TOOL_SEARCH_DEFAULT_MAX_RESULTS,
   TOOL_WEB_FETCH,
   TOOL_WEB_SEARCH,
 } from '../constants/ollama-cloud-tools.constants';
 import type {
   ExecuteOllamaCloudToolCallOptions,
   ExecuteResearchWebFetchOptions,
+  ExecuteResearchWebSearchOptions,
   OllamaCloudToolCall,
 } from '../types/ollama-cloud-tool.types';
+import {
+  describeGatewayProviders,
+  gatewaySearchForUser,
+  gatewayToolFetch,
+  isNoProviderConfigured,
+} from './research-gateway.utility';
 
 export { OLLAMA_CLOUD_TOOL_DEFINITIONS };
 
@@ -103,11 +111,10 @@ export async function executeResearchWebFetch(
     const message = error instanceof Error ? error.message : 'unknown';
     logger.warn(`executeResearchWebFetch: accounting failed - ${message}`);
   }
-  const outcome = await fetchPageViaResearch(options.researchServiceUrl, {
-    userId: options.userId,
-    url,
-    timeoutMs: options.timeoutMs,
-  });
+  const outcome = await gatewayToolFetch(
+    { userId: options.userId, url, timeoutMs: options.timeoutMs },
+    options.researchServiceUrl,
+  );
   if (!outcome.ok) {
     logger.warn(`executeResearchWebFetch: refused or failed status=${String(outcome.status)}`);
     throw new BusinessException(
@@ -123,6 +130,58 @@ export async function executeResearchWebFetch(
   });
   logger.log(
     `executeResearchWebFetch: ok servedBy=${outcome.view.servedBy ?? 'unknown'} resultChars=${String(serialized.length)}`,
+  );
+  return truncateResult(serialized);
+}
+
+// The `web_search` tool, answered by the platform's CONFIGURED search providers through
+// the research gateway (AUTO: every enabled provider in parallel, ADR-212) instead of
+// Ollama Cloud's hosted search. The hosted call stays as a fallback for exactly two cases:
+// research-service is down, or it has no search provider to run. An empty answer from
+// working providers is an answer, not a reason to search somewhere else.
+//
+// Metering: research-service records one unit per provider call itself, so `onDispatch`
+// (chat's own WEB_SEARCH unit) runs only when the hosted fallback answers instead.
+//
+// Same result contract as the hosted call: a truncated JSON string
+// `{ results: [{ title, url, content }] }`, plus the providers that searched.
+export async function executeResearchWebSearch(
+  call: OllamaCloudToolCall,
+  options: ExecuteResearchWebSearchOptions,
+): Promise<string> {
+  const payload = buildPayload(TOOL_WEB_SEARCH, call.function.arguments) as {
+    query: string;
+    max_results?: number;
+  };
+  const outcome = await gatewaySearchForUser({
+    userId: options.userId,
+    query: payload.query,
+    maxResults: payload.max_results ?? RESEARCH_TOOL_SEARCH_DEFAULT_MAX_RESULTS,
+  });
+  if (!outcome.ok || isNoProviderConfigured(outcome)) {
+    logger.warn(
+      `executeResearchWebSearch: gateway unavailable (${outcome.failure ?? 'no provider'}) - using the hosted search`,
+    );
+    // Usage is recorded exactly once per search (rule 28). On the research path
+    // research-service records its own provider calls, so chat records nothing there;
+    // only the hosted call, which research-service never saw, is recorded here.
+    return executeOllamaCloudToolCall(call, { ...options.hosted, onDispatch: options.onDispatch });
+  }
+  const providers = describeGatewayProviders(outcome.providers);
+  const serialized = stringifyResult({
+    results: outcome.entries.map((entry) => ({
+      title: entry.title ?? entry.url,
+      url: entry.url,
+      content: entry.snippet ?? '',
+      ...(entry.providers !== undefined && entry.providers.length > 0
+        ? { foundBy: entry.providers }
+        : {}),
+    })),
+    ...(providers.length > 0 ? { providers } : {}),
+    ...(outcome.mode === undefined ? {} : { mode: outcome.mode }),
+  });
+  logger.log(
+    `executeResearchWebSearch: ok providers=${String(providers.length)} results=${String(outcome.entries.length)} resultChars=${String(serialized.length)}`,
   );
   return truncateResult(serialized);
 }
@@ -177,13 +236,17 @@ function buildPayload(toolName: string, args: Record<string, unknown>): Record<s
   return { url };
 }
 
+function readArg(args: Record<string, unknown>, key: string): unknown {
+  return new Map(Object.entries(args)).get(key);
+}
+
 function readStringArg(args: Record<string, unknown>, key: string): string | null {
-  const value = args[key];
+  const value = readArg(args, key);
   return typeof value === 'string' && value.length > 0 ? value : null;
 }
 
 function readNumberArg(args: Record<string, unknown>, key: string): number | null {
-  const value = args[key];
+  const value = readArg(args, key);
   if (typeof value === 'number' && Number.isFinite(value)) {
     return Math.trunc(value);
   }

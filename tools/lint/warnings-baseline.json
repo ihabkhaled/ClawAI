@@ -411,9 +411,6 @@
     "apps/claw-chat-service/src/modules/chat-messages/__tests__/runtime-v2-catalog-admission.spec.ts": {
       "unicorn/prefer-ternary": 1
     },
-    "apps/claw-chat-service/src/modules/chat-messages/__tests__/search-first.manager.spec.ts": {
-      "sort-imports": 1
-    },
     "apps/claw-chat-service/src/modules/chat-messages/clients/__tests__/file-writer-candidates.client.spec.ts": {
       "@typescript-eslint/consistent-type-imports": 1
     },
@@ -456,9 +453,6 @@
     "apps/claw-chat-service/src/modules/chat-messages/managers/__tests__/lab-modes-research-grounding.spec.ts": {
       "security/detect-non-literal-fs-filename": 2
     },
-    "apps/claw-chat-service/src/modules/chat-messages/managers/__tests__/research-orchestrator.manager.spec.ts": {
-      "@typescript-eslint/consistent-type-imports": 1
-    },
     "apps/claw-chat-service/src/modules/chat-messages/managers/__tests__/runtime-v2-loop.continuation-history.spec.ts": {
       "sort-imports": 1
     },
@@ -474,18 +468,8 @@
     "apps/claw-chat-service/src/modules/chat-messages/managers/best-of-n.manager.ts": {
       "max-lines-per-function": 1
     },
-    "apps/claw-chat-service/src/modules/chat-messages/managers/chat-execution.manager.ts": {
-      "complexity": 3,
-      "max-lines-per-function": 5
-    },
     "apps/claw-chat-service/src/modules/chat-messages/managers/consensus-execution.manager.ts": {
       "max-lines-per-function": 1
-    },
-    "apps/claw-chat-service/src/modules/chat-messages/managers/context-assembly.manager.ts": {
-      "@typescript-eslint/prefer-optional-chain": 1,
-      "complexity": 2,
-      "max-lines-per-function": 1,
-      "security/detect-object-injection": 4
     },
     "apps/claw-chat-service/src/modules/chat-messages/managers/context-composer.manager.ts": {
       "@typescript-eslint/prefer-optional-chain": 1,
@@ -549,13 +533,6 @@
     "apps/claw-chat-service/src/modules/chat-messages/services/advanced-module-model-selection.service.ts": {
       "unicorn/prefer-ternary": 1
     },
-    "apps/claw-chat-service/src/modules/chat-messages/services/chat-messages.service.ts": {
-      "@typescript-eslint/prefer-optional-chain": 2,
-      "complexity": 6,
-      "max-lines-per-function": 6,
-      "security/detect-object-injection": 1,
-      "unicorn/prefer-array-some": 1
-    },
     "apps/claw-chat-service/src/modules/chat-messages/services/chat-stream-bus.service.ts": {
       "unicorn/prefer-ternary": 1
     },
@@ -613,9 +590,6 @@
       "unicorn/prefer-ternary": 1
     },
     "apps/claw-chat-service/src/modules/chat-messages/utilities/image-mask-refusal.utility.ts": {
-      "security/detect-object-injection": 2
-    },
-    "apps/claw-chat-service/src/modules/chat-messages/utilities/ollama-cloud-tool-runner.utility.ts": {
       "security/detect-object-injection": 2
     },
     "apps/claw-chat-service/src/modules/chat-messages/utilities/picked-model-fallback.utility.ts": {
@@ -1420,9 +1394,6 @@
       "complexity": 1,
       "max-lines-per-function": 1
     },
-    "apps/claw-research-service/src/modules/fetch/services/fetch.service.ts": {
-      "max-lines-per-function": 1
-    },
     "apps/claw-research-service/src/modules/fetch/utilities/__tests__/fetch-helpers.utility.spec.ts": {
       "sort-imports": 1
     },
@@ -1444,14 +1415,8 @@
     "apps/claw-research-service/src/modules/research/managers/__tests__/research-progress-publisher.service.spec.ts": {
       "sort-imports": 1
     },
-    "apps/claw-research-service/src/modules/research/managers/__tests__/site-crawl.manager.spec.ts": {
-      "unicorn/prefer-ternary": 10
-    },
     "apps/claw-research-service/src/modules/research/managers/site-audit.manager.ts": {
       "unicorn/prefer-ternary": 1
-    },
-    "apps/claw-research-service/src/modules/research/managers/site-crawl.manager.ts": {
-      "max-lines-per-function": 1
     },
     "apps/claw-research-service/src/modules/scrape/adapters/article.extractor.ts": {
       "unicorn/prefer-ternary": 1
@@ -1465,17 +1430,8 @@
     "apps/claw-research-service/src/modules/search/adapters/__tests__/tavily.adapter.spec.ts": {
       "sort-imports": 1
     },
-    "apps/claw-research-service/src/modules/search/services/__tests__/search-execution.service.spec.ts": {
-      "sort-imports": 1,
-      "unicorn/prefer-ternary": 1
-    },
     "apps/claw-research-service/src/modules/search/services/__tests__/search-provider-bootstrap.service.spec.ts": {
       "sort-imports": 1
-    },
-    "apps/claw-research-service/src/modules/search/services/search-execution.service.ts": {
-      "complexity": 1,
-      "max-lines-per-function": 2,
-      "security/detect-object-injection": 1
     },
     "apps/claw-research-service/src/modules/search/services/search-provider.service.ts": {
       "unicorn/prefer-ternary": 1

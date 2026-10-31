@@ -2,6 +2,11 @@ import type { FetchStrategyKind } from '../../../generated/prisma';
 import type { ProviderSelectionMode } from '../../../common/enums/provider-selection-mode.enum';
 import type { ResearchWorkflowKind } from '../../../common/enums/research-workflow-kind.enum';
 import type { AuditFinding } from './audit-finding.types';
+import type {
+  EvidenceFetchReportEntry,
+  EvidenceFetchSummary,
+  FetchBatchStatus,
+} from './fetch-batch.types';
 
 /**
  * How a fetched page was actually read (ADR-121): the tier that served it and
@@ -36,6 +41,11 @@ export type EvidenceItem = {
   structured?: Record<string, unknown>;
   /** Which fetch tier served this page. Absent for search hits and cache hits (not measured, so not claimed). */
   fetch?: EvidenceFetchProvenance;
+  /**
+   * How the page fetch for this item ended (ADR-211). Additive: set on the
+   * search hit whose page was opened, and on the fetched page itself.
+   */
+  fetchStatus?: FetchBatchStatus;
 };
 
 /** A trace entry describing a phase of the research run. */
@@ -77,6 +87,10 @@ export type EvidenceBundle = {
    * item that was trimmed out of the bundle it lives in.
    */
   auditFindings?: AuditFinding[];
+  /** One row per page the parallel fetch phases opened or tried (ADR-211). */
+  fetchReport?: EvidenceFetchReportEntry[];
+  /** Wall time versus summed page time of the fetch phases (ADR-211). */
+  fetchSummary?: EvidenceFetchSummary;
 };
 
 export type BuildEvidenceInput = {

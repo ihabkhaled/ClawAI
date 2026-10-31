@@ -55,11 +55,10 @@ export const URL_TRAILING_PUNCTUATION: ReadonlyArray<string> = [
  * How many pasted URLs one run will open.
  *
  * A bound, not a preference: a prompt can contain a hundred links, and each
- * fetch is a network round trip and a cache write. Three matches
- * `EVIDENCE_FETCH_TOP_N`, so a run that opens the user's links costs no more
- * than one that opens the search engine's.
+ * fetch is a network round trip and a cache write. Six are opened in parallel
+ * (ADR-211), still below one search-hit batch (`EVIDENCE_FETCH_TOP_N`).
  */
-export const DIRECT_FETCH_MAX_URLS = 3;
+export const DIRECT_FETCH_MAX_URLS = 6;
 
 /** Longest URL accepted, matching the fetch DTO's own cap. */
 export const URL_MAX_LENGTH = 2048;

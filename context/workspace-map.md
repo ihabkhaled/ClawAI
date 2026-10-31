@@ -59,7 +59,7 @@ env-only-port note for client-logs/server-logs is expanded in
 
 ## Test totals
 
-<!-- count:specFiles -->2768<!-- /count --> test files across the monorepo (`.ai/manifests/tests.json`). Every backend
+<!-- count:specFiles -->2778<!-- /count --> test files across the monorepo (`.ai/manifests/tests.json`). Every backend
 
 service, shared package and the frontend uses **vitest** (ADR-099). See
 [testing-map.md](testing-map.md).

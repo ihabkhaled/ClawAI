@@ -27,6 +27,7 @@ import { ResearchWorkflow } from '../../../common/enums/research-workflow.enum';
 import { detectPromptUrls } from '../../../common/utilities/prompt-url.utility';
 import { ResearchGateService } from '../services/research-gate.service';
 import { NarrationService } from '../services/narration.service';
+import { gatewayRun } from '../utilities/research-gateway.utility';
 import { bundleOf, pageReadNarrations } from '../utilities/research-orchestration.utility';
 import { AccessControlService } from '../services/access-control.service';
 import { AppConfig } from '../../../app/config/app.config';
@@ -34,7 +35,6 @@ import {
   buildInterServiceAuthHeader,
   httpRequest,
   mapResearchModeToWorkflow,
-  runResearch,
 } from '../../../common/utilities';
 import { MemoryRecordType } from '../../../common/enums/memory-record-type.enum';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
@@ -678,7 +678,6 @@ ${evidence.snippet}`);
     if (effectiveMode === ResearchMode.NONE && !hasCrawlTarget) {
       return null;
     }
-    const config = AppConfig.get();
     // With a URL present and research also on, BOTH run: SITE_CRAWL reads the
     // named pages and the search workflow brings in everything else. The
     // evidence bundles merge downstream, so the model sees the page the user
@@ -686,7 +685,7 @@ ${evidence.snippet}`);
     const workflow = hasCrawlTarget
       ? ResearchWorkflow.SITE_CRAWL
       : mapResearchModeToWorkflow(effectiveMode);
-    const run = await runResearch(config.RESEARCH_SERVICE_URL, {
+    const run = await gatewayRun({
       userToken: research.userToken,
       userId,
       intent,

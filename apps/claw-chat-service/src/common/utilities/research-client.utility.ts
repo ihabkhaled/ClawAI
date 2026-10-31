@@ -55,9 +55,10 @@ export async function runResearch(
         searchQuery: request.searchQuery,
       },
       timeoutMs:
-        request.workflow === ResearchWorkflow.SITE_CRAWL
+        request.timeoutMs ??
+        (request.workflow === ResearchWorkflow.SITE_CRAWL
           ? RESEARCH_CRAWL_REQUEST_TIMEOUT_MS
-          : RESEARCH_REQUEST_TIMEOUT_MS,
+          : RESEARCH_REQUEST_TIMEOUT_MS),
     });
     if (!response.ok) {
       logger.warn(

@@ -1,7 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { describeFetchFailure } from '../../../common/utilities/describe-fetch-failure.utility';
-import { EVIDENCE_FETCH_TOP_N } from '../../../common/constants/evidence.constants';
+import {
+  EVIDENCE_FETCH_CONCURRENCY,
+  EVIDENCE_FETCH_MAX_PER_HOST,
+  EVIDENCE_FETCH_PHASE_DEADLINE_MS,
+  EVIDENCE_FETCH_TOP_N,
+} from '../../../common/constants/evidence.constants';
+import { CRAWL_SITE_CONCURRENCY } from '../../../common/constants/crawl.constants';
 import { DIRECT_FETCH_CONFIDENCE } from '../../../common/constants/url-detection.constants';
 import { clampSearchQuery } from '../../../common/utilities/search-query.utility';
 import { detectUrlsInText } from '../../../common/utilities/url-detection.utility';
@@ -21,6 +27,9 @@ import {
   pushFetchToolMarker,
   traceEntry,
 } from '../utilities/evidence-builder.utility';
+import { hostLaneKey, runFetchBatch } from '../utilities/fetch-batch.utility';
+import { canonicalUrlKey, selectFetchTargets } from '../utilities/fetch-targets.utility';
+import { FetchPhaseState } from '../utilities/fetch-phase-state.utility';
 import { SiteAuditManager } from './site-audit.manager';
 import { SiteCrawlManager } from './site-crawl.manager';
 import type { ExecuteResearchDto } from '../dto/execute-research.dto';
@@ -61,6 +70,7 @@ export class ResearchManager {
     const warnings: string[] = [];
     const toolsUsed: string[] = [];
     const items: EvidenceItem[] = [];
+    const phase = new FetchPhaseState();
 
     try {
       // A URL the user wrote is opened FIRST and on its own terms. It used to
@@ -84,34 +94,36 @@ export class ResearchManager {
         );
       }
 
-      const direct = await this.runDirectFetch(
+      // The pasted-URL fetch and the search call are independent, so they run
+      // side by side (ADR-211); the hits are fetched the moment search returns,
+      // without waiting for the pasted URLs to finish.
+      const directPromise = this.runDirectFetch(
         userId,
         requestedUrls,
         dto,
         trace,
         toolsUsed,
         warnings,
+        phase,
       );
-      items.push(...direct.items);
-
       const search = await this.runSearch(userId, dto, trace, toolsUsed, warnings);
-      items.push(...search.items);
-
       if (this.needsFetch(dto.workflow)) {
         // Never fetch a page twice in one run: a search hit for a URL the user
         // already pasted is the same page, and the direct fetch has the better
         // provenance.
-        const alreadyFetched = new Set(direct.items.map((item) => item.url.toLowerCase()));
-        const searchTargets = search.items.filter(
-          (item) => !alreadyFetched.has(item.url.toLowerCase()),
-        );
-        const fetch = await this.runFetch(userId, searchTargets, trace, toolsUsed, warnings);
-        items.push(...fetch.items);
+        const pasted = new Set(requestedUrls.map((url) => canonicalUrlKey(url)));
+        const searchTargets = search.items.filter((item) => !pasted.has(canonicalUrlKey(item.url)));
+        const [direct, fetch] = await Promise.all([
+          directPromise,
+          this.runFetch(userId, searchTargets, trace, toolsUsed, warnings, phase),
+        ]);
+        const fresh = this.dropDuplicatePages(direct.items, fetch.items, trace);
+        items.push(...direct.items, ...search.items, ...fresh);
         if (this.needsExtract(dto.workflow)) {
           await this.runExtract(
             userId,
             run.id,
-            [...direct.items, ...fetch.items],
+            [...direct.items, ...fresh],
             new Map([...direct.rawByUrl, ...fetch.rawByUrl]),
             dto,
             trace,
@@ -119,10 +131,13 @@ export class ResearchManager {
             warnings,
           );
         }
+      } else {
+        const direct = await directPromise;
+        items.push(...direct.items, ...search.items);
       }
 
       const bundle = this.finalize(dto, search.providerSelection, items, warnings, toolsUsed);
-      return await this.completeRun(run.id, bundle, trace);
+      return await this.completeRun(run.id, { ...bundle, ...phase.bundleFields() }, trace);
     } catch (error) {
       const message = describeFetchFailure(error);
       this.logger.warn(`Research run ${run.id} failed: ${message}`);
@@ -162,25 +177,34 @@ export class ResearchManager {
       // answering confidently from it is worse than saying nothing about the
       // other two.
       //
-      // Sequential on purpose. Each crawl already fans out internally across a
-      // site's pages with its own concurrency limit, so running the sites in
-      // parallel too would multiply the outbound request rate against hosts
-      // that have done nothing to deserve it — and getting the crawler banned
-      // costs more than the seconds saved.
-      for (const crawlUrl of requestedUrls) {
-        const crawled = await this.siteCrawlManager.crawl(
-          userId,
-          crawlUrl,
-          trace,
-          toolsUsed,
-          warnings,
-          dto.correlationId,
-          dto.maxPages,
-          dto.intent,
-          undefined,
-          dto.render,
-        );
-        items.push(...crawled);
+      // Different sites crawl in parallel (ADR-211): each crawl already fans out
+      // across its own pages, and the process-wide worker cap in SiteCrawlManager
+      // keeps sites x workers bounded. URLs of the SAME host stay serial, so one
+      // host is never hit by two crawls at once. Results merge in URL order.
+      const crawls = await runFetchBatch(requestedUrls, {
+        urlOf: (url) => url,
+        worker: (crawlUrl) =>
+          this.siteCrawlManager.crawl(
+            userId,
+            crawlUrl,
+            trace,
+            toolsUsed,
+            warnings,
+            dto.correlationId,
+            dto.maxPages,
+            dto.intent,
+            undefined,
+            dto.render,
+          ),
+        concurrency: CRAWL_SITE_CONCURRENCY,
+        deadlineMs: null,
+      });
+      for (const crawl of crawls) {
+        if (crawl.status === 'OK' && crawl.value !== undefined) {
+          items.push(...crawl.value);
+        } else {
+          warnings.push(`Could not crawl ${crawl.url}: ${crawl.error ?? crawl.status}`);
+        }
       }
     }
     const bundle = this.finalize(
@@ -309,6 +333,7 @@ export class ResearchManager {
     trace: ResearchTraceEntry[],
     toolsUsed: string[],
     warnings: string[],
+    phase: FetchPhaseState,
   ): Promise<{ items: EvidenceItem[]; rawByUrl: Map<string, string> }> {
     const rawByUrl = new Map<string, string>();
     if (urls.length === 0) {
@@ -326,71 +351,163 @@ export class ResearchManager {
     }
 
     const items: EvidenceItem[] = [];
-    for (const url of urls) {
-      const start = Date.now();
-      try {
-        const result = await this.fetchService.fetchPage(userId, { url, render: dto.render });
-        pushFetchToolMarker(toolsUsed, result);
-        toolsUsed.push('web_fetch:user_url');
-        const evidence = this.directFetchResultToEvidence(result);
-        items.push(evidence);
-        if (result.rawHtml !== undefined) {
-          rawByUrl.set(evidence.url, result.rawHtml);
-        }
+    const outcomes = await runFetchBatch(urls, {
+      urlOf: (url) => url,
+      worker: (url) => this.fetchService.fetchPage(userId, { url, render: dto.render }),
+      concurrency: EVIDENCE_FETCH_CONCURRENCY,
+      deadlineMs: EVIDENCE_FETCH_PHASE_DEADLINE_MS,
+    });
+    phase.record(outcomes, 'user');
+    this.logBatch('user', outcomes);
+    for (const outcome of outcomes) {
+      const took = this.tookMs(outcome);
+      if (outcome.status !== 'OK' || outcome.value === undefined) {
+        // Named explicitly, because this is the one the user will ask about:
+        // they pasted THIS link and it is THIS page that could not be read.
+        const reason = outcome.error ?? outcome.status;
+        warnings.push(`Could not open the link you provided (${outcome.url}): ${reason}`);
         trace.push(
           traceEntry(
             'fetch.direct',
-            'ok',
-            Date.now() - start,
-            `${url} (${String(result.byteSize)} bytes${result.cacheHit ? ', cached' : ''})`,
+            'warning',
+            took,
+            `${outcome.url}: [${outcome.status}] ${reason}`,
           ),
         );
-      } catch (error) {
-        const message = describeFetchFailure(error);
-        // Named explicitly, because this is the one the user will ask about:
-        // they pasted THIS link and it is THIS page that could not be read.
-        warnings.push(`Could not open the link you provided (${url}): ${message}`);
-        trace.push(traceEntry('fetch.direct', 'warning', Date.now() - start, `${url}: ${message}`));
+        continue;
       }
+      const result = outcome.value;
+      pushFetchToolMarker(toolsUsed, result);
+      toolsUsed.push('web_fetch:user_url');
+      const evidence = { ...this.directFetchResultToEvidence(result), fetchStatus: 'OK' as const };
+      items.push(evidence);
+      if (result.rawHtml !== undefined) {
+        rawByUrl.set(evidence.url, result.rawHtml);
+      }
+      trace.push(
+        traceEntry(
+          'fetch.direct',
+          'ok',
+          took,
+          `${outcome.url} (${String(result.byteSize)} bytes${result.cacheHit ? ', cached' : ''})`,
+        ),
+      );
     }
     return { items, rawByUrl };
   }
 
+  /**
+   * Opens the best search hits in parallel (ADR-211): distinct hosts first, a
+   * bounded pool across hosts, one host serial, one wall-clock cap for the
+   * whole phase. Results are reported in search-rank order, not completion order.
+   */
   private async runFetch(
     userId: string,
     searchItems: EvidenceItem[],
     trace: ResearchTraceEntry[],
     toolsUsed: string[],
     warnings: string[],
+    phase: FetchPhaseState,
   ): Promise<{ items: EvidenceItem[]; rawByUrl: Map<string, string> }> {
-    const top = searchItems.slice(0, EVIDENCE_FETCH_TOP_N);
+    const targets = selectFetchTargets(
+      searchItems,
+      EVIDENCE_FETCH_TOP_N,
+      EVIDENCE_FETCH_MAX_PER_HOST,
+    );
     const fetched: EvidenceItem[] = [];
     const rawByUrl = new Map<string, string>();
-    for (const item of top) {
-      const start = Date.now();
-      try {
-        const result = await this.fetchService.fetchPage(userId, { url: item.url });
-        pushFetchToolMarker(toolsUsed, result);
-        const evidence = this.fetchResultToEvidence(item, result);
-        fetched.push(evidence);
-        if (result.rawHtml !== undefined) {
-          rawByUrl.set(evidence.url, result.rawHtml);
-        }
-        trace.push(
-          traceEntry(
-            'fetch',
-            'ok',
-            Date.now() - start,
-            `${item.url} (${String(result.byteSize)} bytes${result.cacheHit ? ', cached' : ''})`,
-          ),
-        );
-      } catch (error) {
-        const message = describeFetchFailure(error);
-        warnings.push(`Fetch failed for ${item.url}: ${message}`);
-        trace.push(traceEntry('fetch', 'warning', Date.now() - start, `${item.url}: ${message}`));
+    const outcomes = await runFetchBatch(targets, {
+      urlOf: (item) => item.url,
+      worker: (item) => this.fetchService.fetchPage(userId, { url: item.url }),
+      concurrency: EVIDENCE_FETCH_CONCURRENCY,
+      deadlineMs: EVIDENCE_FETCH_PHASE_DEADLINE_MS,
+    });
+    phase.record(outcomes, 'search');
+    this.logBatch('search', outcomes);
+    for (const outcome of outcomes) {
+      const item = targets[outcome.index];
+      if (item === undefined) {
+        continue;
       }
+      item.fetchStatus = outcome.status;
+      const took = this.tookMs(outcome);
+      if (outcome.status !== 'OK' || outcome.value === undefined) {
+        const reason = outcome.error ?? outcome.status;
+        warnings.push(`Fetch failed for ${item.url}: ${reason}`);
+        trace.push(
+          traceEntry('fetch', 'warning', took, `${item.url}: [${outcome.status}] ${reason}`),
+        );
+        continue;
+      }
+      const result = outcome.value;
+      pushFetchToolMarker(toolsUsed, result);
+      const evidence = { ...this.fetchResultToEvidence(item, result), fetchStatus: 'OK' as const };
+      fetched.push(evidence);
+      if (result.rawHtml !== undefined) {
+        rawByUrl.set(evidence.url, result.rawHtml);
+      }
+      trace.push(
+        traceEntry(
+          'fetch',
+          'ok',
+          took,
+          `${item.url} (${String(result.byteSize)} bytes${result.cacheHit ? ', cached' : ''})`,
+        ),
+      );
     }
     return { items: fetched, rawByUrl };
+  }
+
+  /**
+   * Same page reached by two routes (a redirect, a mirror, tracking params):
+   * keep the first by rank. Direct pages win over search pages.
+   */
+  private dropDuplicatePages(
+    direct: EvidenceItem[],
+    fetched: EvidenceItem[],
+    trace: ResearchTraceEntry[],
+  ): EvidenceItem[] {
+    const seenUrl = new Set(direct.map((item) => canonicalUrlKey(item.url)));
+    const seenBody = new Set(direct.map((item) => sha1Short(item.snippet)));
+    const kept: EvidenceItem[] = [];
+    for (const item of fetched) {
+      const urlKey = canonicalUrlKey(item.url);
+      const bodyKey = sha1Short(item.snippet);
+      if (seenUrl.has(urlKey) || (item.snippet.length > 0 && seenBody.has(bodyKey))) {
+        trace.push(traceEntry('fetch.dedupe', 'skipped', null, `${item.url}: duplicate page`));
+        continue;
+      }
+      seenUrl.add(urlKey);
+      seenBody.add(bodyKey);
+      kept.push(item);
+    }
+    return kept;
+  }
+
+  private tookMs(outcome: { startedAt: number | null; endedAt: number | null }): number | null {
+    return outcome.startedAt !== null && outcome.endedAt !== null
+      ? outcome.endedAt - outcome.startedAt
+      : null;
+  }
+
+  /** Per-page start/end offsets so overlap is visible in the logs; hosts only, never a full URL. */
+  private logBatch(
+    origin: string,
+    outcomes: ReadonlyArray<{
+      url: string;
+      status: string;
+      startedAt: number | null;
+      endedAt: number | null;
+    }>,
+  ): void {
+    const starts = outcomes.flatMap((o) => (o.startedAt === null ? [] : [o.startedAt]));
+    const t0 = starts.length > 0 ? Math.min(...starts) : 0;
+    const rows = outcomes.map((o) => {
+      const start = o.startedAt === null ? '-' : String(o.startedAt - t0);
+      const end = o.endedAt === null ? '-' : String(o.endedAt - t0);
+      return `${hostLaneKey(o.url)}[${o.status} ${start}..${end}ms]`;
+    });
+    this.logger.log(`research.fetch.batch origin=${origin} pages=${rows.join(' ')}`);
   }
 
   private async runExtract(

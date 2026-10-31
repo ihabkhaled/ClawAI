@@ -32,6 +32,8 @@ export type ResearchEnrichInput = {
    * don't have a thread (tests, background batch jobs).
    */
   threadId?: string;
+  /** The answering model's context window when known; else the conservative default sizes the evidence. */
+  contextWindowTokens?: number;
 };
 
 // ─── Orchestration-shared input/output ─────────────────────────────────────
@@ -57,6 +59,8 @@ export type ResearchOrchestrationInput = {
   userToken: string;
   /** Optional provider id requested by the user, persisted on the transcript. */
   providerId?: string;
+  /** The answering model's context window when the caller knows it (sizes the evidence budget). */
+  contextWindowTokens?: number;
 };
 
 export type ResearchOrchestrationResult = {
@@ -78,6 +82,8 @@ export type ResearchSource = {
   url: string;
   snippet?: string;
   extracted?: string;
+  /** Provenance: the search providers that returned this page, when research-service said. */
+  foundBy?: string[];
 };
 
 export type ResearchEnrichResult = {
@@ -98,6 +104,10 @@ export type ResearchEnrichResult = {
   providerName?: string;
   /** True when the requested provider failed and another one answered. */
   fallbackUsed?: boolean;
+  /** Names of the providers that searched, when research-service reported them (ADR-212). */
+  providers?: string[];
+  /** Notices for the user: a search that timed out or failed, sources left out to fit (ADR-212). */
+  warnings?: string[];
 };
 
 /**
@@ -109,15 +119,7 @@ export type ResearchProviderOutcome = {
   providerId?: string;
   providerName?: string;
   fallbackUsed?: boolean;
-};
-
-export type ResearchSearchOutcome = {
-  entries: ResearchSearchEntry[];
-  requestCount: number;
-  /** Provider that answered, echoed from research-service. */
-  providerId?: string;
-  providerName?: string;
-  fallbackUsed?: boolean;
+  providers?: string[];
 };
 
 // ─── Wire shapes for research-service HTTP responses ───────────────────────
@@ -129,6 +131,8 @@ export type ResearchSearchEntry = {
   snippet?: string | null;
   publishedAt?: string | null;
   providerKind?: string | null;
+  /** Every provider (by name) that returned this page after the merge (ADR-210). */
+  providers?: string[];
 };
 
 export type ResearchSearchWireResponse = {
@@ -141,6 +145,10 @@ export type ResearchSearchWireResponse = {
   results?: ResearchSearchEntry[];
   warnings?: string[];
   searchRequestCount?: number;
+  /** Additive (ADR-210): one entry per provider considered. Absent on the old shape. */
+  providers?: unknown;
+  /** Additive (ADR-210): AUTO_ALL or EXPLICIT. Absent on the old shape. */
+  mode?: string;
 };
 
 export type ResearchFetchWireResponse = {

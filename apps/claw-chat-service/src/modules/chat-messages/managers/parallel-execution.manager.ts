@@ -402,10 +402,13 @@ export class ParallelExecutionManager {
       ...(result.providerName === undefined ? {} : { providerName: result.providerName }),
       sources,
       latencyMs,
-      warnings:
-        result.fallbackUsed === true
+      warnings: [
+        ...(result.fallbackUsed === true
           ? [`research.providerFallbackUsed:${result.providerName ?? 'unknown'}`]
-          : [],
+          : []),
+        // A search that timed out or failed: the answer still comes, with this notice.
+        ...(result.warnings ?? []),
+      ],
       searchRequestCount: result.searchRequestCount,
       fetchRequestCount: result.fetchRequestCount,
       // On this path every source came from the search engine, and a source

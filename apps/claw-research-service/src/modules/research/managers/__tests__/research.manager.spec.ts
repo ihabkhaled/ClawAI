@@ -1,4 +1,7 @@
+import { HttpStatus } from '@nestjs/common';
 import { type Mock, vi } from 'vitest';
+import { ResearchErrorCode } from '../../../../common/enums/research-error-code.enum';
+import { BusinessException } from '../../../../common/errors/business.exception';
 import { ProviderSelectionMode } from '../../../../common/enums/provider-selection-mode.enum';
 import { ResearchWorkflowKind } from '../../../../common/enums/research-workflow-kind.enum';
 import { SearchProviderKind } from '../../../../common/enums/search-provider-kind.enum';
@@ -479,6 +482,317 @@ describe('ResearchManager', () => {
       });
 
       expect(lastBundle().auditFindings).toBeUndefined();
+    });
+  });
+
+  describe('parallel fetch batches (ADR-211)', () => {
+    const hits = (n: number): unknown[] =>
+      Array.from({ length: n }, (_, i) => ({
+        id: `s${String(i)}`,
+        title: `Result ${String(i)}`,
+        url: `https://site${String(i)}.example.com/page`,
+        snippet: 'Snippet',
+        publishedAt: null,
+        freshness: null,
+        score: 0.9 - i * 0.01,
+        providerKind: SearchProviderKind.OLLAMA_WEB,
+        raw: {},
+      }));
+
+    const page = (url: string): object => ({
+      url,
+      finalUrl: url,
+      httpStatus: 200,
+      mimeType: 'text/html',
+      title: 'T',
+      content: `body of ${url}`,
+      links: [],
+      byteSize: 10,
+      cacheHit: false,
+      latencyMs: 1,
+    });
+
+    const sleep = (ms: number): Promise<void> =>
+      new Promise((resolve) => {
+        setTimeout(resolve, ms);
+      });
+
+    function searchReturns(count: number): void {
+      search.execute.mockImplementation(async () => ({
+        providerId: 'p',
+        providerName: 'P',
+        providerKind: SearchProviderKind.OLLAMA_WEB,
+        selectionMode: ProviderSelectionMode.AUTO,
+        fallbackUsed: false,
+        attemptedProviders: ['P'],
+        results: hits(count),
+      }));
+    }
+
+    function lastBundle(): {
+      items: Array<{ url: string; source?: string; fetchStatus?: string }>;
+      warnings: string[];
+      fetchReport?: Array<{ url: string; status: string; origin: string }>;
+      fetchSummary?: { attempted: number; ok: number; wallMs: number; sumMs: number };
+    } {
+      const payload = runs.update.mock.calls.at(-1)?.[1] as { bundle?: never };
+      return (payload.bundle ?? {}) as never;
+    }
+
+    it('fetches the top 8 search hits at once (more than 1 in flight), not one by one', async () => {
+      searchReturns(12);
+      let inFlight = 0;
+      let max = 0;
+      fetchService.fetchPage.mockImplementation(async (_u: string, dto: { url: string }) => {
+        inFlight += 1;
+        max = Math.max(max, inFlight);
+        await sleep(20);
+        inFlight -= 1;
+        return page(dto.url);
+      });
+
+      await manager.run('u1', {
+        intent: 'many hits',
+        workflow: ResearchWorkflowKind.SEARCH_THEN_FETCH,
+      });
+
+      expect(fetchService.fetchPage).toHaveBeenCalledTimes(8);
+      expect(max).toBeGreaterThan(1);
+      expect(max).toBeLessThanOrEqual(6);
+      const bundle = lastBundle();
+      expect(bundle.fetchReport).toHaveLength(8);
+      expect(bundle.fetchSummary?.ok).toBe(8);
+      expect(bundle.fetchSummary?.sumMs ?? 0).toBeGreaterThan(bundle.fetchSummary?.wallMs ?? 0);
+    });
+
+    it('serialises two hits of the same host', async () => {
+      search.execute.mockImplementation(async () => ({
+        providerId: 'p',
+        providerName: 'P',
+        providerKind: SearchProviderKind.OLLAMA_WEB,
+        selectionMode: ProviderSelectionMode.AUTO,
+        fallbackUsed: false,
+        attemptedProviders: ['P'],
+        results: [
+          ...hits(1),
+          { ...(hits(1)[0] as object), id: 'x', url: 'https://site0.example.com/other' },
+        ],
+      }));
+      const running = new Map<string, number>();
+      let overlap = false;
+      fetchService.fetchPage.mockImplementation(async (_u: string, dto: { url: string }) => {
+        const host = new URL(dto.url).hostname;
+        running.set(host, (running.get(host) ?? 0) + 1);
+        overlap = overlap || (running.get(host) ?? 0) > 1;
+        await sleep(15);
+        running.set(host, (running.get(host) ?? 0) - 1);
+        return page(dto.url);
+      });
+
+      await manager.run('u1', {
+        intent: 'same host',
+        workflow: ResearchWorkflowKind.SEARCH_THEN_FETCH,
+      });
+
+      expect(fetchService.fetchPage).toHaveBeenCalledTimes(2);
+      expect(overlap).toBe(false);
+    });
+
+    it('overlaps the pasted-URL fetch with the search call', async () => {
+      const events: string[] = [];
+      search.execute.mockImplementation(async () => {
+        events.push('search:start');
+        await sleep(30);
+        events.push('search:end');
+        return {
+          providerId: 'p',
+          providerName: 'P',
+          providerKind: SearchProviderKind.OLLAMA_WEB,
+          selectionMode: ProviderSelectionMode.AUTO,
+          fallbackUsed: false,
+          attemptedProviders: ['P'],
+          results: [],
+        };
+      });
+      fetchService.fetchPage.mockImplementation(async (_u: string, dto: { url: string }) => {
+        events.push('fetch:start');
+        await sleep(10);
+        return page(dto.url);
+      });
+
+      await manager.run('u1', {
+        intent: 'read https://user.example.com/post',
+        workflow: ResearchWorkflowKind.SEARCH_THEN_FETCH,
+      });
+
+      expect(events.indexOf('fetch:start')).toBeLessThan(events.indexOf('search:end'));
+    });
+
+    it('reports a hung page as TIMEOUT at the cap but keeps the finished ones', async () => {
+      vi.useFakeTimers();
+      try {
+        searchReturns(3);
+        fetchService.fetchPage.mockImplementation(async (_u: string, dto: { url: string }) => {
+          if (dto.url.includes('site1')) {
+            await new Promise(() => {});
+          }
+          return page(dto.url);
+        });
+
+        const running = manager.run('u1', {
+          intent: 'one hangs',
+          workflow: ResearchWorkflowKind.SEARCH_THEN_FETCH,
+        });
+        await vi.advanceTimersByTimeAsync(31_000);
+        await running;
+
+        const bundle = lastBundle();
+        const status = Object.fromEntries(
+          (bundle.fetchReport ?? []).map((row) => [new URL(row.url).hostname, row.status]),
+        );
+        expect(status['site0.example.com']).toBe('OK');
+        expect(status['site1.example.com']).toBe('TIMEOUT');
+        expect(status['site2.example.com']).toBe('OK');
+        expect(bundle.items.find((i) => i.url.includes('site1'))?.fetchStatus).toBe('TIMEOUT');
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('keeps results in search-rank order whatever order pages finish in', async () => {
+      searchReturns(3);
+      const delays: Record<string, number> = { site0: 40, site1: 5, site2: 20 };
+      fetchService.fetchPage.mockImplementation(async (_u: string, dto: { url: string }) => {
+        await sleep(delays[new URL(dto.url).hostname.split('.')[0] ?? ''] ?? 0);
+        return page(dto.url);
+      });
+
+      await manager.run('u1', {
+        intent: 'order',
+        workflow: ResearchWorkflowKind.SEARCH_THEN_FETCH,
+      });
+
+      expect((lastBundle().fetchReport ?? []).map((r) => new URL(r.url).hostname)).toEqual([
+        'site0.example.com',
+        'site1.example.com',
+        'site2.example.com',
+      ]);
+    });
+
+    it('one failing URL becomes a warning and a FAILED row, the rest still land', async () => {
+      searchReturns(3);
+      fetchService.fetchPage.mockImplementation(async (_u: string, dto: { url: string }) => {
+        if (dto.url.includes('site1')) throw new Error('connection reset');
+        return page(dto.url);
+      });
+
+      await manager.run('u1', {
+        intent: 'one fails',
+        workflow: ResearchWorkflowKind.SEARCH_THEN_FETCH,
+      });
+
+      const bundle = lastBundle();
+      expect(bundle.warnings.join(' ')).toContain('connection reset');
+      expect((bundle.fetchReport ?? []).map((r) => r.status)).toEqual(['OK', 'FAILED', 'OK']);
+    });
+
+    it('keeps refusing SSRF targets and robots disallows inside a batch', async () => {
+      search.execute.mockImplementation(async () => ({
+        providerId: 'p',
+        providerName: 'P',
+        providerKind: SearchProviderKind.OLLAMA_WEB,
+        selectionMode: ProviderSelectionMode.AUTO,
+        fallbackUsed: false,
+        attemptedProviders: ['P'],
+        results: [
+          ...hits(1),
+          { ...(hits(1)[0] as object), id: 'm', url: 'http://169.254.169.254/latest/meta-data' },
+          { ...(hits(1)[0] as object), id: 'n', url: 'http://10.0.0.5/admin' },
+          { ...(hits(1)[0] as object), id: 'r', url: 'https://robots.example.com/no' },
+        ],
+      }));
+      fetchService.fetchPage.mockImplementation(async (_u: string, dto: { url: string }) => {
+        if (dto.url.includes('169.254') || dto.url.includes('10.0.0.5')) {
+          throw new BusinessException('k', ResearchErrorCode.UNSAFE_URL, HttpStatus.BAD_REQUEST, {
+            message: 'private address',
+          });
+        }
+        if (dto.url.includes('robots.example')) {
+          throw new BusinessException(
+            'k',
+            ResearchErrorCode.FETCH_ROBOTS_DISALLOWED,
+            HttpStatus.FORBIDDEN,
+          );
+        }
+        return page(dto.url);
+      });
+
+      await manager.run('u1', { intent: 'ssrf', workflow: ResearchWorkflowKind.SEARCH_THEN_FETCH });
+
+      const status = Object.fromEntries(
+        (lastBundle().fetchReport ?? []).map((row) => [new URL(row.url).hostname, row.status]),
+      );
+      expect(status['169.254.169.254']).toBe('BLOCKED_SSRF');
+      expect(status['10.0.0.5']).toBe('BLOCKED_SSRF');
+      expect(status['robots.example.com']).toBe('BLOCKED_ROBOTS');
+      expect(status['site0.example.com']).toBe('OK');
+    });
+
+    it('drops a page whose canonical URL or body repeats an earlier page', async () => {
+      search.execute.mockImplementation(async () => ({
+        providerId: 'p',
+        providerName: 'P',
+        providerKind: SearchProviderKind.OLLAMA_WEB,
+        selectionMode: ProviderSelectionMode.AUTO,
+        fallbackUsed: false,
+        attemptedProviders: ['P'],
+        results: [
+          ...hits(1),
+          { ...(hits(1)[0] as object), id: 'mirror', url: 'https://mirror.example.com/copy' },
+        ],
+      }));
+      fetchService.fetchPage.mockImplementation(async (_u: string, dto: { url: string }) => ({
+        ...page(dto.url),
+        content: 'identical body',
+      }));
+
+      await manager.run('u1', { intent: 'dup', workflow: ResearchWorkflowKind.SEARCH_THEN_FETCH });
+
+      const fetched = lastBundle().items.filter((i) => i.source === 'fetch');
+      expect(fetched).toHaveLength(1);
+    });
+
+    it('crawls several sites in parallel and merges them in URL order', async () => {
+      let inFlight = 0;
+      let max = 0;
+      siteCrawlManager.crawl.mockImplementation(async (_u: string, url: string) => {
+        inFlight += 1;
+        max = Math.max(max, inFlight);
+        await sleep(url.includes('one') ? 30 : 5);
+        inFlight -= 1;
+        return [
+          {
+            id: url,
+            title: null,
+            url,
+            snippet: 's',
+            source: 'fetch',
+            providerKind: null,
+            publishedAt: null,
+            fetchedAt: null,
+            confidence: 0.7,
+          },
+        ];
+      });
+
+      await manager.run('u1', {
+        intent: 'crawl https://one.example.com https://two.example.com https://three.example.com',
+        workflow: ResearchWorkflowKind.SITE_CRAWL,
+      });
+
+      expect(max).toBeGreaterThan(1);
+      expect(siteCrawlManager.crawl).toHaveBeenCalledTimes(3);
+      expect(lastBundle().items).toHaveLength(3);
     });
   });
 });

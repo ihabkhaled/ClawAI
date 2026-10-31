@@ -11,6 +11,10 @@ export const TOOL_WEB_FETCH = 'web_fetch';
 // not from a new network call.
 export const TOOL_GET_CRAWLED_PAGE = 'get_crawled_page';
 
+// Results a model-called web_search asks the gateway for when it names no `max_results`
+// (the tool description promises 5; merged providers return more, the budget trims).
+export const RESEARCH_TOOL_SEARCH_DEFAULT_MAX_RESULTS = 8;
+
 // JSON-schema descriptors exposed to the agentic model in the `tools`
 // field of /api/chat. Mirrors the schemas shown in the Ollama docs so
 // the model emits compatible arguments shapes.

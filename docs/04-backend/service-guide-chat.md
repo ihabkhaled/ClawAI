@@ -1145,3 +1145,15 @@ durationMs, errorCode?}`. plugin-service owns ownership, plan gates, consent, qu
 - **Not built yet.** No `PLUGIN_*` SSE events and no consent card (a consent-required call is told to the model as
   "not approved"); no tool-capable-model preference in AUTO routing; no deferred catalog loading; own MCP servers are
   not offered by `resolve` yet. The two plugin-service internal routes exist (`PluginInternalController`, integrated 2026-10-14).
+
+## Research gateway (ADR-212)
+
+Every chat surface reaches research-service through one client, `utilities/research-gateway.utility.ts`; the old per-surface clients (enricher, search-first, orchestrator, explicit modes, context assembly) are gone, and `research-gateway-parity.spec.ts` fails if one comes back.
+
+- **Calls.** `gatewaySearch` (user bearer, `POST /api/v1/research/search`), `gatewaySearchForUser` (service token, `POST /api/v1/internal/research/runs` with `SEARCH_ONLY`; used by search-first and the `web_search` tool), `gatewayFetchPages` (`POST /api/v1/research/fetch`, bounded parallel batch under one deadline), `gatewayRun` (a whole run), `gatewayToolFetch` (`web_fetch`).
+- **Timeouts** (one set, `common/constants/research-client.constants.ts`): search 24 s, fetch phase 36 s, run 60 s, each above research-service's own 20 s / 30 s bound so a slow provider's results are never cut off by chat.
+- **Order.** The answering model starts after the gateway returned: normal chat publishes the turn after research settled (in `finally`), Compare and the nine orchestration managers await `ResearchEnricherManager`, search-first and context assembly are awaited. A failed or timed-out search is announced and the model answers with what came back.
+- **What the model gets.** Merged results of every provider with provenance and fetched page text, fitted to 45% of the window. Compare/labs assume a 16,384-token window unless the caller passes `contextWindowTokens`. Dropped sources are stated in the prompt.
+- **Narration.** `SEARCH_DONE` gets `providers` / `providerCount` params when research-service reports `providers[]` (or the attempted providers on the old shape); the stream's `RESEARCH_SOURCES_FOUND` carries `providers`.
+- **Tools.** `web_search` uses the configured providers (all in parallel); the hosted Ollama search is the fallback. Independent tool calls of one turn run in parallel, at most 4, in call order.
+- **Metering.** research-service records one unit per provider call; chat adds none on the research path.

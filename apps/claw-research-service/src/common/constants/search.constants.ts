@@ -68,3 +68,23 @@ export const DEFAULT_PROVIDER_SCORES: ReadonlyMap<string, number> = new Map<stri
  * the derived search query is clamped, with a warning.
  */
 export const RESEARCH_MAX_INTENT_LENGTH = 8_000;
+
+/**
+ * AUTO search runs EVERY enabled + ACTIVE provider in parallel and waits for
+ * all of them to settle (ADR-210). Each provider is bound by its own
+ * `timeoutMs`, never by more than this ceiling, so the slowest provider can
+ * delay the answer by at most this long.
+ */
+export const SEARCH_AUTO_CEILING_MS = 20_000;
+
+/** Rank smoothing K in `(K+1)/(K+rank)`: rank 1 scores 1, rank 10 about 0.55. */
+export const SEARCH_RANK_SMOOTHING = 10;
+/** Score added per additional provider that returned the same page. */
+export const SEARCH_AGREEMENT_BONUS = 0.05;
+
+/** Consecutive failures before a provider's breaker opens (per process). */
+export const SEARCH_BREAKER_FAILURE_THRESHOLD = 3;
+/** How long an open breaker skips a provider before one probe is allowed. */
+export const SEARCH_BREAKER_COOLDOWN_MS = 30_000;
+/** Upper bound on providers tracked by the breaker map. */
+export const SEARCH_BREAKER_MAX_TRACKED = 200;

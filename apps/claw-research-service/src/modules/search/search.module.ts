@@ -14,6 +14,7 @@ import { SearchProviderRepository } from './repositories/search-provider.reposit
 import { SearchRunRepository } from './repositories/search-run.repository';
 import { SearchExecutionService } from './services/search-execution.service';
 import { SearchProviderBootstrapService } from './services/search-provider-bootstrap.service';
+import { SearchProviderHealthService } from './services/search-provider-health.service';
 import { SearchProviderService } from './services/search-provider.service';
 
 @Module({
@@ -24,6 +25,7 @@ import { SearchProviderService } from './services/search-provider.service';
     SearchProviderBootstrapService,
     SearchProviderService,
     SearchExecutionService,
+    SearchProviderHealthService,
     SearchAdapterFactory,
     TavilyAdapter,
     OllamaWebSearchAdapter,

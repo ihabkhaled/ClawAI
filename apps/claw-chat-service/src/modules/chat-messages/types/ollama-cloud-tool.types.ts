@@ -64,7 +64,8 @@ export type OllamaCloudToolDefinition = {
 
 // Options for the research-service-backed web_fetch (executeResearchWebFetch).
 export type ExecuteResearchWebFetchOptions = {
-  researchServiceUrl: string;
+  /** Test seam only; production callers omit it and the gateway reads the configured URL. */
+  researchServiceUrl?: string;
   userId: string;
   timeoutMs?: number;
   /** Called immediately before a validated fetch is requested (feature-usage accounting). */
@@ -80,4 +81,13 @@ export type ExecuteOllamaCloudToolCallOptions = {
   timeoutMs: number;
   /** Called immediately before a validated tool request reaches the network. */
   onDispatch?: () => Promise<void>;
+};
+
+// Options for the research-gateway-backed web_search (executeResearchWebSearch, ADR-212).
+export type ExecuteResearchWebSearchOptions = {
+  userId: string;
+  /** Feature-usage accounting for the HOSTED fallback only: research-service records its own provider calls (no double count). */
+  onDispatch?: () => Promise<void>;
+  /** The hosted Ollama Cloud search, used ONLY when research-service is down or has no provider. */
+  hosted: ExecuteOllamaCloudToolCallOptions;
 };

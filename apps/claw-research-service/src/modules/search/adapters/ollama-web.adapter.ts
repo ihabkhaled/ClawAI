@@ -407,89 +407,52 @@ export class OllamaWebSearchAdapter implements SearchAdapter {
     );
   }
 
+  /**
+   * The two keyless engines run IN PARALLEL (ADR-210): DuckDuckGo and Bing RSS
+   * are independent, so waiting for one before starting the other only adds
+   * its latency. DuckDuckGo is preferred when both are good, then Bing; when
+   * neither is relevant enough the weak evidence is withheld with a warning.
+   * Costs one extra metered request when DuckDuckGo alone would have sufficed.
+   */
   private async resolveLowRelevanceFallback(
     request: SearchRequest,
     context: SearchAdapterContext,
     start: number,
     primaryResults: SearchResult[],
   ): Promise<SearchResponse> {
-    try {
-      const duckDuckGoFallback = await this.searchDuckDuckGoHtml(request, context);
-      const duckDuckGoQuality = this.measureResultSet(duckDuckGoFallback.results);
-      if (!this.isLowRelevance(duckDuckGoQuality)) {
-        return { results: duckDuckGoFallback.results, latencyMs: Date.now() - start };
+    const [duckDuckGo, bing] = await Promise.allSettled([
+      this.searchDuckDuckGoHtml(request, context),
+      this.searchBingRss(request, context),
+    ]);
+    const labelled = [
+      { label: 'DuckDuckGo HTML', outcome: duckDuckGo },
+      { label: 'Bing RSS', outcome: bing },
+    ];
+    const snippet = request.query.slice(0, 120);
+    for (const { label, outcome } of labelled) {
+      if (outcome.status === 'rejected') {
+        const message = outcome.reason instanceof Error ? outcome.reason.message : 'Unknown error';
+        this.logger.warn(`${label} fallback failed for "${snippet}": ${message}`);
+        continue;
+      }
+      const quality = this.measureResultSet(outcome.value.results);
+      if (!this.isLowRelevance(quality)) {
+        return { results: outcome.value.results, latencyMs: Date.now() - start };
       }
       this.logger.warn(
-        `DuckDuckGo HTML fallback also returned low-relevance results for "${request.query.slice(0, 120)}" (best=${duckDuckGoQuality.bestScore.toFixed(2)}, avgTop=${duckDuckGoQuality.averageTopScore.toFixed(2)}); trying Bing RSS fallback`,
+        `${label} fallback returned low-relevance results for "${snippet}" (best=${quality.bestScore.toFixed(2)}, avgTop=${quality.averageTopScore.toFixed(2)}); withholding weak evidence`,
       );
-
-      try {
-        const bingFallback = await this.searchBingRss(request, context);
-        const bingQuality = this.measureResultSet(bingFallback.results);
-        if (!this.isLowRelevance(bingQuality)) {
-          return { results: bingFallback.results, latencyMs: Date.now() - start };
-        }
-        this.logger.warn(
-          `Bing RSS fallback also returned low-relevance results for "${request.query.slice(0, 120)}" (best=${bingQuality.bestScore.toFixed(2)}, avgTop=${bingQuality.averageTopScore.toFixed(2)}); withholding weak evidence`,
-        );
-      } catch (bingError) {
-        const bingMessage = bingError instanceof Error ? bingError.message : 'Unknown error';
-        this.logger.warn(
-          `Bing RSS fallback failed after DuckDuckGo low-relevance results for "${request.query.slice(0, 120)}": ${bingMessage}`,
-        );
-        if (primaryResults.length === 0) {
-          return {
-            results: [],
-            latencyMs: Date.now() - start,
-            warnings: [
-              `${this.buildLowRelevanceWarning(request.query)} Fallback search also failed: ${bingMessage}.`,
-            ],
-          };
-        }
-      }
-
+    }
+    const warning = this.buildLowRelevanceWarning(request.query);
+    if (bing.status === 'rejected' && primaryResults.length === 0) {
+      const bingMessage = bing.reason instanceof Error ? bing.reason.message : 'Unknown error';
       return {
         results: [],
         latencyMs: Date.now() - start,
-        warnings: [this.buildLowRelevanceWarning(request.query)],
-      };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.warn(
-        `DuckDuckGo HTML fallback failed after low-relevance search for "${request.query.slice(0, 120)}": ${message}`,
-      );
-
-      try {
-        const bingFallback = await this.searchBingRss(request, context);
-        const bingQuality = this.measureResultSet(bingFallback.results);
-        if (!this.isLowRelevance(bingQuality)) {
-          return { results: bingFallback.results, latencyMs: Date.now() - start };
-        }
-        this.logger.warn(
-          `Bing RSS fallback also returned low-relevance results for "${request.query.slice(0, 120)}" (best=${bingQuality.bestScore.toFixed(2)}, avgTop=${bingQuality.averageTopScore.toFixed(2)}); withholding weak evidence`,
-        );
-      } catch (bingError) {
-        const bingMessage = bingError instanceof Error ? bingError.message : 'Unknown error';
-        this.logger.warn(
-          `Bing RSS fallback failed after DuckDuckGo error for "${request.query.slice(0, 120)}": ${bingMessage}`,
-        );
-        if (primaryResults.length === 0) {
-          return {
-            results: [],
-            latencyMs: Date.now() - start,
-            warnings: [
-              `${this.buildLowRelevanceWarning(request.query)} Fallback search also failed: ${bingMessage}.`,
-            ],
-          };
-        }
-      }
-
-      return {
-        results: [],
-        latencyMs: Date.now() - start,
-        warnings: [this.buildLowRelevanceWarning(request.query)],
+        warnings: [`${warning} Fallback search also failed: ${bingMessage}.`],
       };
     }
+    return { results: [], latencyMs: Date.now() - start, warnings: [warning] };
   }
 
   private buildLowRelevanceWarning(query: string): string {

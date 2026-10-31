@@ -1,17 +1,20 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { AppConfig } from '../../../app/config/app.config';
 import { NarrationKind } from '../../../common/enums/narration-kind.enum';
 import { PlannedResearchAction } from '../../../common/enums/planned-research-action.enum';
 import type { ResearchRenderHint } from '../../../common/enums/research-render-hint.enum';
 import { ResearchWorkflow } from '../../../common/enums/research-workflow.enum';
 import { RESEARCH_PLANNER_DEFAULT_MAX_PAGES } from '../../../common/constants/research-gate.constants';
-import { runResearch } from '../../../common/utilities';
 import { SELF_CRAWL_NARRATION } from '../constants/platform-identity.constants';
 import { NarrationService } from '../services/narration.service';
 import { ResearchGateService } from '../services/research-gate.service';
 import type { ResearchRequestBase, ResearchRunResponse } from '../types/research.types';
 import type { ResearchOrchestrationInput } from '../types/research-orchestration.types';
+import {
+  describeGatewayProviders,
+  gatewayRun,
+  providersOfBundle,
+} from '../utilities/research-gateway.utility';
 import {
   appendMissingUrls,
   bundleOf,
@@ -119,7 +122,7 @@ export class ResearchOrchestratorManager {
     // The URLs travel in the intent because research-service reads them from
     // there; a URL the planner added is appended so it is crawled too.
     const intent = appendMissingUrls(input.intent, urls);
-    const run = await runResearch(AppConfig.get().RESEARCH_SERVICE_URL, {
+    const run = await gatewayRun({
       ...this.baseRequest(input),
       intent,
       workflow: ResearchWorkflow.SITE_CRAWL,
@@ -137,7 +140,7 @@ export class ResearchOrchestratorManager {
       kind: NarrationKind.SEARCH_STARTED,
       params: { query: query ?? '' },
     });
-    const run = await runResearch(AppConfig.get().RESEARCH_SERVICE_URL, {
+    const run = await gatewayRun({
       ...this.baseRequest(input),
       intent: input.intent,
       workflow: ResearchWorkflow.SEARCH_THEN_FETCH,
@@ -165,9 +168,22 @@ export class ResearchOrchestratorManager {
       return null;
     }
     await this.narratePagesRead(threadId, run);
+    // Which providers searched, when research-service said (`providers[]`, or the
+    // providers it attempted on the old shape). Extra params are ignored by a
+    // template that has no placeholder for them, so this is safe before the UI text lands.
+    const providers =
+      doneKind === NarrationKind.SEARCH_DONE
+        ? describeGatewayProviders(providersOfBundle(bundle))
+        : [];
     await this.narration.append(threadId, {
       kind: doneKind,
-      params: { count: bundle.items.length, warnings: bundle.warnings.length },
+      params: {
+        count: bundle.items.length,
+        warnings: bundle.warnings.length,
+        ...(providers.length > 0
+          ? { providers: providers.join(', '), providerCount: providers.length }
+          : {}),
+      },
     });
     return run;
   }

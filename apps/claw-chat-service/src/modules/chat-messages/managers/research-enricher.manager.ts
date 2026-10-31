@@ -17,37 +17,43 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 
-import { AppConfig } from '../../../app/config/app.config';
 import { AiStreamStage } from '../../../common/enums';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { resolveEffectiveResearchMode } from '../utilities/auto-research-mode.utility';
-import { httpRequest } from '../../../common/utilities';
 import {
   GITHUB_REPOSITORY_COVERAGE_NOTE,
   RESEARCH_GROUNDING_NO_INVENT_INSTRUCTION,
 } from '../constants/research-grounding.constants';
 import { hasGithubRepositoryEvidence } from '../utilities/research-prompt.utility';
 import {
+  RESEARCH_ENRICHER_ASSUMED_WINDOW_TOKENS,
   RESEARCH_ENRICHER_DEFAULT_TOP_FETCH,
   RESEARCH_ENRICHER_DEFAULT_TOP_RESULTS,
   RESEARCH_ENRICHER_EMPTY_RESULTS_BLOCK,
   RESEARCH_ENRICHER_EXTRACT_BODY_MAX_CHARS,
   RESEARCH_ENRICHER_FETCH_BODY_MAX_CHARS,
-  RESEARCH_ENRICHER_FETCH_TIMEOUT_MS,
   RESEARCH_ENRICHER_QUERY_LOG_PREVIEW_CHARS,
-  RESEARCH_ENRICHER_SEARCH_TIMEOUT_MS,
 } from '../constants/research-enricher.constants';
+import {
+  RESEARCH_GATEWAY_WARNING_FAILED,
+  RESEARCH_GATEWAY_WARNING_TIMEOUT,
+} from '../constants/research-gateway.constants';
+import { ResearchGatewayFailure } from '../enums/research-gateway-failure.enum';
+import {
+  describeGatewayProviders,
+  gatewayFetchPages,
+  gatewaySearch,
+} from '../utilities/research-gateway.utility';
+import { fitSourcesToResearchBudget } from '../utilities/research-evidence-budget.utility';
+import type { ResearchGatewaySearchOutcome } from '../types/research-gateway.types';
 import { ChatStreamService } from '../services/chat-stream.service';
 import {
   type ResearchEnrichInput,
   type ResearchEnrichResult,
-  type ResearchFetchWireResponse,
   type ResearchOrchestrationInput,
   type ResearchOrchestrationResult,
   type ResearchProviderOutcome,
   type ResearchSearchEntry,
-  type ResearchSearchOutcome,
-  type ResearchSearchWireResponse,
   type ResearchSource,
 } from '../types/research-enricher.types';
 import {
@@ -83,39 +89,36 @@ export class ResearchEnricherManager {
       query: input.query,
     });
     try {
-      const searchOutcome = await this.runSearch(
-        input,
-        input.topResults ?? RESEARCH_ENRICHER_DEFAULT_TOP_RESULTS,
-      );
-      const searchResults = searchOutcome.entries;
+      // The model starts only after this resolves: the gateway returns when every
+      // provider has settled or hit research-service's own bound (ADR-212).
+      const searchOutcome = await gatewaySearch({
+        query: input.query,
+        maxResults: input.topResults ?? RESEARCH_ENRICHER_DEFAULT_TOP_RESULTS,
+        authorization: input.userAuthHeader,
+        ...(input.providerId === undefined ? {} : { providerId: input.providerId }),
+      });
+      const searchResults = this.dedupeByUrl(searchOutcome.entries);
+      const providerNames = describeGatewayProviders(searchOutcome.providers);
+      const searchWarnings = this.searchWarnings(searchOutcome);
       this.emitResearch(resolvedInput, AiStreamStage.RESEARCH_SOURCES_FOUND, {
         mode,
         query: input.query,
         sourcesCount: searchResults.length,
+        ...(providerNames.length > 0 ? { providers: providerNames } : {}),
       });
       if (searchResults.length === 0) {
-        this.logger.log(`enrich: mode=${mode} sources=0 (empty search)`);
-        this.emitResearch(resolvedInput, AiStreamStage.RESEARCH_COMPLETED, {
-          mode,
-          query: input.query,
-          sourcesCount: 0,
-        });
-        return {
-          evidence: RESEARCH_ENRICHER_EMPTY_RESULTS_BLOCK,
-          sources: [],
-          mode,
-          searchRequestCount: searchOutcome.requestCount,
-          fetchRequestCount: 0,
-          ...this.providerOutcome(searchOutcome),
-        };
+        return this.emptySearchResult(resolvedInput, searchOutcome, searchWarnings);
       }
-      const sources = await this.enrichSourcesByMode(resolvedInput, searchResults);
+      const fetched = await this.enrichSourcesByMode(resolvedInput, searchResults);
       const fetchRequestCount =
         mode === ResearchMode.SEARCH
           ? 0
           : Math.min(searchResults.length, input.topFetch ?? RESEARCH_ENRICHER_DEFAULT_TOP_FETCH);
-      const evidence = this.buildEvidenceBlock(mode, sources, fetchRequestCount);
-      this.logger.log(`enrich: mode=${mode} sources=${String(sources.length)} (completed)`);
+      const { sources, omitted } = this.fitSources(fetched, input.contextWindowTokens);
+      const evidence = this.buildEvidenceBlock(mode, sources, fetchRequestCount, omitted);
+      this.logger.log(
+        `enrich: mode=${mode} sources=${String(sources.length)} omitted=${String(omitted)} (completed)`,
+      );
       this.emitResearch(resolvedInput, AiStreamStage.RESEARCH_COMPLETED, {
         mode,
         query: input.query,
@@ -128,6 +131,7 @@ export class ResearchEnricherManager {
         searchRequestCount: searchOutcome.requestCount,
         fetchRequestCount,
         ...this.providerOutcome(searchOutcome),
+        ...(searchWarnings.length > 0 ? { warnings: searchWarnings } : {}),
       };
     } catch (error) {
       const message = (error as Error).message;
@@ -239,10 +243,13 @@ export class ResearchEnricherManager {
       latencyMs,
       // A fallback is not a failure, but it IS a different answer than the one
       // requested, and the user is entitled to know which provider replied.
-      warnings:
-        result.fallbackUsed === true
+      warnings: [
+        ...(result.fallbackUsed === true
           ? [`research.providerFallbackUsed:${result.providerName ?? 'unknown'}`]
-          : [],
+          : []),
+        // A search that timed out or failed: the answer still comes, with this notice.
+        ...(result.warnings ?? []),
+      ],
       searchRequestCount: result.searchRequestCount,
       fetchRequestCount: result.fetchRequestCount,
       // On this path every source came from the search engine, and a source
@@ -316,113 +323,122 @@ export class ResearchEnricherManager {
     );
     const fetchTargets = searchResults.slice(0, topFetch);
     const carryThrough = searchResults.slice(topFetch).map((entry) => this.toSnippetSource(entry));
-    const fetched = await Promise.all(
-      fetchTargets.map((entry) => this.fetchSourceWithFallback(input, entry)),
+    // One parallel batch under ONE phase deadline (the gateway); a page that fails
+    // or times out keeps its snippet, so the others are never lost to it.
+    const pages = await gatewayFetchPages(
+      input.userAuthHeader,
+      fetchTargets.map((entry) => entry.url),
+      (url) =>
+        this.emitResearch(input, AiStreamStage.RESEARCH_FETCHING, {
+          mode: input.mode,
+          query: input.query,
+          currentUrl: url,
+        }),
     );
+    const limit =
+      input.mode === ResearchMode.SEARCH_EXTRACT
+        ? RESEARCH_ENRICHER_EXTRACT_BODY_MAX_CHARS
+        : RESEARCH_ENRICHER_FETCH_BODY_MAX_CHARS;
+    const fetched = fetchTargets.map((entry, index): ResearchSource => {
+      const page = pages.at(index);
+      return page?.ok === true
+        ? { ...this.toSnippetSource(entry), extracted: page.content.slice(0, limit) }
+        : this.toSnippetSource(entry);
+    });
     return [...fetched, ...carryThrough];
   }
 
+  /** The narration and result for a search that found nothing (or failed): no fetch phase runs. */
+  private emptySearchResult(
+    input: ResearchEnrichInput,
+    searchOutcome: ResearchGatewaySearchOutcome,
+    searchWarnings: string[],
+  ): ResearchEnrichResult {
+    this.logger.log(`enrich: mode=${input.mode} sources=0 (empty search)`);
+    this.emitResearch(
+      input,
+      searchOutcome.ok ? AiStreamStage.RESEARCH_COMPLETED : AiStreamStage.RESEARCH_FAILED,
+      {
+        mode: input.mode,
+        query: input.query,
+        sourcesCount: 0,
+        ...(searchOutcome.ok ? {} : { error: searchOutcome.failure }),
+      },
+    );
+    return {
+      evidence: RESEARCH_ENRICHER_EMPTY_RESULTS_BLOCK,
+      sources: [],
+      mode: input.mode,
+      searchRequestCount: searchOutcome.requestCount,
+      fetchRequestCount: 0,
+      ...this.providerOutcome(searchOutcome),
+      ...(searchWarnings.length > 0 ? { warnings: searchWarnings } : {}),
+    };
+  }
+
   /** The provider fields worth carrying, omitted rather than nulled when absent. */
-  private providerOutcome(outcome: ResearchSearchOutcome): ResearchProviderOutcome {
+  private providerOutcome(outcome: ResearchGatewaySearchOutcome): ResearchProviderOutcome {
     return {
       ...(outcome.providerId === undefined ? {} : { providerId: outcome.providerId }),
       ...(outcome.providerName === undefined ? {} : { providerName: outcome.providerName }),
       ...(outcome.fallbackUsed === undefined ? {} : { fallbackUsed: outcome.fallbackUsed }),
+      ...(outcome.providers.length > 0
+        ? { providers: describeGatewayProviders(outcome.providers) }
+        : {}),
     };
   }
 
-  private async runSearch(
-    input: ResearchEnrichInput,
-    topResults: number,
-  ): Promise<ResearchSearchOutcome> {
-    try {
-      const config = AppConfig.get();
-      const url = `${config.RESEARCH_SERVICE_URL}/api/v1/research/search`;
-      const response = await httpRequest<ResearchSearchWireResponse>({
-        url,
-        method: 'POST',
-        headers: { Authorization: input.userAuthHeader },
-        // `providerId` was missing here, and its absence is the whole of the
-        // "provider dropdown does nothing" defect: research-service reads it as
-        // the explicit choice, and without it takes the AUTO branch and picks
-        // the top of a hardcoded score map.
-        body: {
-          query: input.query,
-          maxResults: topResults,
-          ...(input.providerId === undefined ? {} : { providerId: input.providerId }),
-        },
-        timeoutMs: RESEARCH_ENRICHER_SEARCH_TIMEOUT_MS,
-      });
-      if (!response.ok) {
-        this.logger.warn(`runSearch: research-service returned status=${String(response.status)}`);
-        return { entries: [], requestCount: 1 };
-      }
-      const results = Array.isArray(response.data.results) ? response.data.results : [];
-      return {
-        entries: results.slice(0, topResults),
-        requestCount:
-          typeof response.data.searchRequestCount === 'number'
-            ? Math.max(1, Math.floor(response.data.searchRequestCount))
-            : 1,
-        // What ANSWERED, which is not always what was asked for. A transcript
-        // built from the request rather than the outcome is how the UI came to
-        // name a provider that never executed.
-        ...(response.data.providerId === undefined ? {} : { providerId: response.data.providerId }),
-        ...(response.data.providerName === undefined
-          ? {}
-          : { providerName: response.data.providerName }),
-        ...(response.data.fallbackUsed === undefined
-          ? {}
-          : { fallbackUsed: response.data.fallbackUsed }),
-      };
-    } catch (error) {
-      this.logger.error(`runSearch: exception — ${(error as Error).message}`);
-      return { entries: [], requestCount: 1 };
+  /** The user-visible notice for a search that did not complete (they get the answer anyway). */
+  private searchWarnings(outcome: ResearchGatewaySearchOutcome): string[] {
+    if (outcome.ok) {
+      return [];
     }
+    return [
+      outcome.failure === ResearchGatewayFailure.TIMEOUT
+        ? RESEARCH_GATEWAY_WARNING_TIMEOUT
+        : `${RESEARCH_GATEWAY_WARNING_FAILED}:${outcome.failure ?? ResearchGatewayFailure.EXCEPTION}`,
+    ];
   }
 
-  private async fetchSourceWithFallback(
-    input: ResearchEnrichInput,
-    entry: ResearchSearchEntry,
-  ): Promise<ResearchSource> {
-    this.emitResearch(input, AiStreamStage.RESEARCH_FETCHING, {
-      mode: input.mode,
-      query: input.query,
-      currentUrl: entry.url,
+  /** Providers return overlapping pages; the first (best ranked) occurrence of a URL wins. */
+  private dedupeByUrl(entries: ResearchSearchEntry[]): ResearchSearchEntry[] {
+    const seen = new Set<string>();
+    return entries.filter((entry) => {
+      const key = entry.url.trim().replace(/#.*$/u, '').replace(/\/+$/u, '').toLowerCase();
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
     });
-    try {
-      const config = AppConfig.get();
-      const response = await httpRequest<ResearchFetchWireResponse>({
-        url: `${config.RESEARCH_SERVICE_URL}/api/v1/research/fetch`,
-        method: 'POST',
-        headers: { Authorization: input.userAuthHeader },
-        body: { url: entry.url },
-        timeoutMs: RESEARCH_ENRICHER_FETCH_TIMEOUT_MS,
-      });
-      if (!response.ok) {
-        this.logger.warn(
-          `fetchSource: status=${String(response.status)} url=${entry.url} — falling back to snippet`,
-        );
-        return this.toSnippetSource(entry);
-      }
-      const content = (response.data.content ?? '').trim();
-      if (content.length === 0) {
-        return this.toSnippetSource(entry);
-      }
-      const limit =
-        input.mode === ResearchMode.SEARCH_EXTRACT
-          ? RESEARCH_ENRICHER_EXTRACT_BODY_MAX_CHARS
-          : RESEARCH_ENRICHER_FETCH_BODY_MAX_CHARS;
-      return {
-        title: entry.title ?? entry.url,
-        url: entry.url,
-        snippet: entry.snippet ?? undefined,
-        extracted: content.slice(0, limit),
-      };
-    } catch (error) {
-      this.logger.warn(`fetchSource: exception url=${entry.url} — ${(error as Error).message}`);
-      return this.toSnippetSource(entry);
-    }
+  }
+
+  /**
+   * Fits the sources to the shared evidence budget (45% of the window), so merging every
+   * provider's hits plus page text can never overflow the answering model. Bodies are
+   * shortened evenly first; whole sources are dropped from the tail only as a last resort.
+   */
+  private fitSources(
+    sources: ResearchSource[],
+    contextWindowTokens: number | undefined,
+  ): { sources: ResearchSource[]; omitted: number } {
+    const fitted = fitSourcesToResearchBudget(
+      sources.map((source) => ({
+        source,
+        title: source.title,
+        url: source.url,
+        body: source.extracted ?? source.snippet ?? '',
+      })),
+      contextWindowTokens ?? RESEARCH_ENRICHER_ASSUMED_WINDOW_TOKENS,
+    );
+    return {
+      omitted: fitted.omitted,
+      sources: fitted.kept.map(({ source, body }) =>
+        source.extracted === undefined
+          ? { ...source, ...(source.snippet === undefined ? {} : { snippet: body }) }
+          : { ...source, extracted: body },
+      ),
+    };
   }
 
   private toSnippetSource(entry: ResearchSearchEntry): ResearchSource {
@@ -430,6 +446,9 @@ export class ResearchEnricherManager {
       title: entry.title ?? entry.url,
       url: entry.url,
       snippet: entry.snippet ?? undefined,
+      ...(entry.providers !== undefined && entry.providers.length > 0
+        ? { foundBy: entry.providers }
+        : {}),
     };
   }
 
@@ -451,6 +470,7 @@ export class ResearchEnricherManager {
     mode: ResearchMode,
     sources: ResearchSource[],
     fetchedCount: number,
+    omitted = 0,
   ): string {
     const readCount = sources.filter((source) => source.extracted !== undefined).length;
     const opened = fetchedCount > 0 ? `, then opened ${String(readCount)} of them` : '';
@@ -468,11 +488,22 @@ export class ResearchEnricherManager {
         : []),
     ].join('\n');
     const blocks = sources.map((source, index) => this.formatSource(index + 1, source));
-    return [header, '', ...blocks].join('\n').trimEnd();
+    // Rule 41: never silently present less than was found.
+    const omittedNote =
+      omitted > 0
+        ? [
+            `(${String(omitted)} further search results were left out to fit the context window; say so if the answer might be on them.)`,
+          ]
+        : [];
+    return [header, '', ...blocks, ...omittedNote].join('\n').trimEnd();
   }
 
   private formatSource(num: number, source: ResearchSource): string {
     const body = source.extracted ?? source.snippet ?? '(no snippet)';
-    return `[${String(num)}] ${source.title} — ${source.url}\n${body}\n`;
+    const via =
+      source.foundBy !== undefined && source.foundBy.length > 0
+        ? ` (found by ${source.foundBy.join(', ')})`
+        : '';
+    return `[${String(num)}] ${source.title} — ${source.url}${via}\n${body}\n`;
   }
 }

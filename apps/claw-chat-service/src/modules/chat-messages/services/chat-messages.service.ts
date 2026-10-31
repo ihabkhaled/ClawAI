@@ -56,7 +56,6 @@ import {
   classifyResearchWorkflow,
   recordGet,
   resolveExplicitFetchMode,
-  runResearch,
 } from '../../../common/utilities';
 import {
   FILE_FOLLOW_UP_PREFIXES,
@@ -111,6 +110,7 @@ import { type MessageQuote } from '../types/message-quote.types';
 import { type StoredContextMetadata } from '../types/message-citation.types';
 import { toStoredCitations } from '../utilities/stored-citations.utility';
 import { fetchStrategiesOf } from '../utilities/research-orchestration.utility';
+import { gatewayRun } from '../utilities/research-gateway.utility';
 import { type ContextSaveDecision, type ContextSaveRecord } from '../types/context-save.types';
 import { ContextSaveOrchestratorManager } from '../managers/context-save-orchestrator.manager';
 import { hasContextSave, withContextSaveNote } from '../utilities/context-save-note.utility';
@@ -724,7 +724,7 @@ export class ChatMessagesService implements OnModuleInit {
     // Announced only once research is actually going to run, so every start
     // the user sees is followed by a completion.
     this.chatStreamService.emitResearchStarted(threadId, resolvedMode);
-    const run = await runResearch(AppConfig.get().RESEARCH_SERVICE_URL, {
+    const run = await gatewayRun({
       userToken,
       userId,
       intent,

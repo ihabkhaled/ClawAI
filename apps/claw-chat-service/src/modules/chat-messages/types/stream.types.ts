@@ -100,6 +100,8 @@ export type ResearchProgressDetails = {
   sourcesCount?: number;
   currentUrl?: string;
   error?: string;
+  /** Names of the search providers that searched (ADR-212); absent on the old shape. */
+  providers?: string[];
 };
 
 export type StreamEvent = {

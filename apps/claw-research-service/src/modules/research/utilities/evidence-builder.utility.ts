@@ -1,8 +1,10 @@
 import {
   EVIDENCE_COMPRESSED_SNIPPET_LENGTH,
   EVIDENCE_DETAILED_SNIPPET_LENGTH,
+  EVIDENCE_FETCH_CONTEXT_BUDGET_CHARS,
   EVIDENCE_MAX_ITEMS,
 } from '../../../common/constants/evidence.constants';
+import { allocateCharBudget } from './fetch-targets.utility';
 import { sanitizeForLlm } from '../../../common/utilities/content-safety.utility';
 import type { FetchStrategyKind } from '../../../generated/prisma';
 import type { FetchAttemptSummary } from '../../fetch/types/fetch.types';
@@ -25,7 +27,9 @@ export function buildEvidenceBundle(input: BuildEvidenceInput): EvidenceBundle {
   const capped = ranked.slice(0, maxItems);
 
   const warnings = [...input.warnings];
-  const trimmed = capped.map((item) => {
+  const limits = snippetLimits(capped, mode, limit);
+  const trimmed = capped.map((item, position) => {
+    const itemLimit = limits.at(position) ?? limit;
     const safety = sanitizeForLlm(item.snippet);
     if (safety.detected.length > 0) {
       warnings.push(
@@ -40,7 +44,7 @@ export function buildEvidenceBundle(input: BuildEvidenceInput): EvidenceBundle {
     const safeSnippet = safety.text;
     return {
       ...item,
-      snippet: safeSnippet.length > limit ? `${safeSnippet.slice(0, limit)}…` : safeSnippet,
+      snippet: safeSnippet.length > itemLimit ? `${safeSnippet.slice(0, itemLimit)}…` : safeSnippet,
     };
   });
 
@@ -61,6 +65,32 @@ export function buildEvidenceBundle(input: BuildEvidenceInput): EvidenceBundle {
     generatedAt: new Date().toISOString(),
     mode,
   };
+}
+
+/**
+ * Per-item snippet limit. Search hits and compressed mode keep the flat
+ * limit. Fetched pages (detailed mode) may use more: a shared character
+ * budget is split fairly, best-ranked first, and never drops an item below the
+ * flat limit (ADR-211), so a larger batch cannot blow the model's window.
+ */
+function snippetLimits(
+  items: readonly EvidenceItem[],
+  mode: 'detailed' | 'compressed',
+  limit: number,
+): number[] {
+  const pages = items
+    .map((item, position) => ({ item, position }))
+    .filter(({ item }) => mode === 'detailed' && item.source !== 'search');
+  const allocated = allocateCharBudget(
+    pages.map(({ item }) => item.snippet.length),
+    EVIDENCE_FETCH_CONTEXT_BUDGET_CHARS,
+    limit,
+  );
+  const pageLimits = new Map<number, number>();
+  for (const [index, { position }] of pages.entries()) {
+    pageLimits.set(position, allocated.at(index) ?? limit);
+  }
+  return items.map((_, position) => pageLimits.get(position) ?? limit);
 }
 
 export function traceEntry(

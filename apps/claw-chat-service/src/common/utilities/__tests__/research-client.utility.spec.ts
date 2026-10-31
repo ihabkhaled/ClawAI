@@ -55,9 +55,9 @@ describe('runResearch', () => {
 
     expect(mockedHttpRequest).toHaveBeenCalledWith(
       expect.objectContaining({
-        timeoutMs: 30_000,
+        timeoutMs: 60_000,
         body: expect.objectContaining({
-          maxResults: 4,
+          maxResults: 6,
         }),
       }),
     );

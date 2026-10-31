@@ -7,8 +7,17 @@ export const CRAWL_MAX_SITEMAP_FETCHES = 20;
 /** Sitemap entries below this count trigger the homepage-link fallback. */
 export const CRAWL_MIN_SITEMAP_URLS_BEFORE_LINK_FALLBACK = 3;
 
-/** Concurrent page fetches in flight at once. */
+/** Concurrent page fetches in flight at once, per site. */
 export const CRAWL_CONCURRENCY = 8;
+
+/**
+ * Page fetches in flight at once across ALL crawls in this process (ADR-211).
+ * Sites crawl in parallel, so sites x CRAWL_CONCURRENCY is bounded by this.
+ */
+export const CRAWL_GLOBAL_WORKER_CAP = 12;
+
+/** Sites of one message crawled at once; URLs of the same host stay serial. */
+export const CRAWL_SITE_CONCURRENCY = 3;
 
 export const CRAWL_ROBOTS_TXT_PATH = '/robots.txt';
 export const CRAWL_DEFAULT_SITEMAP_PATH = '/sitemap.xml';
@@ -27,8 +36,8 @@ export const CRAWL_USER_AGENT = 'ClawAI-ResearchBot';
  * The planner may ask for more pages than the default when a question is about
  * a whole site, but every page is an outbound fetch billed as WEB_FETCH and a
  * request against someone else's server, and the whole crawl runs inside one
- * chat turn. Forty keeps a large docs site useful without turning one message
- * into a scrape.
+ * chat turn. Two hundred keeps a large docs site useful without turning one
+ * message into an unbounded scrape.
  */
 export const CRAWL_MAX_PAGES_CEILING = 200;
 

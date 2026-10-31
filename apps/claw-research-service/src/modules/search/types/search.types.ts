@@ -16,6 +16,8 @@ export type SearchResult = {
   score: number;
   /** Origin provider kind — useful when results are merged across providers. */
   providerKind: SearchProviderKind;
+  /** Every provider (by name) that returned this page after a merge (ADR-210). */
+  providers?: string[];
   /** Raw provider payload (may contain extra fields). */
   raw?: Record<string, unknown>;
 };

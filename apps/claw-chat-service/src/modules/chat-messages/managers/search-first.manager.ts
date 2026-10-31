@@ -12,22 +12,20 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 
-import { AppConfig } from '../../../app/config/app.config';
-import { httpRequest } from '../../../common/utilities';
 import {
   SEARCH_FIRST_MAX_RESULTS,
   SEARCH_FIRST_MAX_SNIPPET_CHARS,
-  SEARCH_FIRST_TIMEOUT_MS,
+  SEARCH_FIRST_WARNING_ALREADY_RESEARCHED,
   SEARCH_FIRST_WARNING_EXCEPTION,
   SEARCH_FIRST_WARNING_HTTP_ERROR,
   SEARCH_FIRST_WARNING_NO_RESULTS,
+  SEARCH_FIRST_WARNING_TIMEOUT,
 } from '../constants/search-first.constants';
 import { type AssembledContext } from '../types/context.types';
-import {
-  type ResearchSearchResponse,
-  type SearchFirstOutcome,
-  type SearchFirstResult,
-} from '../types/search-first.types';
+import { ResearchGatewayFailure } from '../enums/research-gateway-failure.enum';
+import { type SearchFirstOutcome, type SearchFirstResult } from '../types/search-first.types';
+import { fitSourcesToResearchBudget } from '../utilities/research-evidence-budget.utility';
+import { gatewaySearchForUser } from '../utilities/research-gateway.utility';
 
 @Injectable()
 export class SearchFirstManager {
@@ -40,24 +38,49 @@ export class SearchFirstManager {
     userPrompt: string,
     context: AssembledContext,
   ): Promise<{ context: AssembledContext; outcome: SearchFirstOutcome }> {
-    this.logger.debug(
-      `run: querying research-service for promptLen=${String(userPrompt.length)}`,
-    );
-    const outcome = await this.search(userPrompt);
+    this.logger.debug(`run: querying research-service for promptLen=${String(userPrompt.length)}`);
+    // Awaited in full: the model is not called until the gateway has returned (ADR-212).
+    // The turn already carries web evidence (research ran before the model, or the user
+    // asked for it): a second search would spend a second search for the same question.
+    if (context.researchRequested || context.researchEvidence.length > 0) {
+      this.logger.log('run: search-first skipped - the turn already has research evidence');
+      return {
+        context,
+        outcome: {
+          applied: false,
+          results: [],
+          runId: null,
+          warning: SEARCH_FIRST_WARNING_ALREADY_RESEARCHED,
+        },
+      };
+    }
+    const outcome = await this.search(userPrompt, context);
     if (!outcome.applied || outcome.results.length === 0) {
       this.logger.warn(
         `run: search-first NOT applied (warning=${outcome.warning ?? 'none'} resultCount=${String(outcome.results.length)})`,
       );
       return { context, outcome };
     }
-    const enriched = this.injectIntoSystemPrompt(context, outcome.results);
+    // Same 45% evidence share of the answering model's window the main chat path uses.
+    const fitted = fitSourcesToResearchBudget(
+      outcome.results.map((result) => ({
+        ...result,
+        body: result.snippet ?? '',
+      })),
+      context.modelBudget.contextWindowTokens,
+    );
+    const results = fitted.kept.map(({ body, ...result }) => ({
+      ...result,
+      snippet: result.snippet === null ? null : body,
+    }));
+    const enriched = this.injectIntoSystemPrompt(context, results);
     this.logger.log(
       `run: search-first applied — resultCount=${String(outcome.results.length)} runId=${outcome.runId ?? 'none'}`,
     );
     return { context: enriched, outcome };
   }
 
-  private async search(query: string): Promise<SearchFirstOutcome> {
+  private async search(query: string, context: AssembledContext): Promise<SearchFirstOutcome> {
     const trimmed = query.trim();
     if (trimmed.length === 0) {
       this.logger.debug('search: empty query, skipping search-first');
@@ -68,66 +91,53 @@ export class SearchFirstManager {
         warning: SEARCH_FIRST_WARNING_NO_RESULTS,
       };
     }
-    try {
-      const config = AppConfig.get();
-      const url = `${config.RESEARCH_SERVICE_URL}/api/v1/research/search`;
-      const response = await httpRequest<ResearchSearchResponse>({
-        url,
-        method: 'POST',
-        body: {
-          query: trimmed.slice(0, 512),
-          maxResults: SEARCH_FIRST_MAX_RESULTS,
-        },
-        timeoutMs: SEARCH_FIRST_TIMEOUT_MS,
-      });
-      if (!response.ok) {
-        this.logger.warn(
-          `search: research-service returned status=${String(response.status)}`,
-        );
-        return {
-          applied: false,
-          results: [],
-          runId: null,
-          warning: SEARCH_FIRST_WARNING_HTTP_ERROR,
-        };
-      }
-      const data = response.data;
-      if (!data || !Array.isArray(data.results) || data.results.length === 0) {
-        this.logger.warn('search: research-service returned no results');
-        return {
-          applied: false,
-          results: [],
-          runId: data?.runId ?? null,
-          warning: SEARCH_FIRST_WARNING_NO_RESULTS,
-        };
-      }
-      const results = data.results
-        .slice(0, SEARCH_FIRST_MAX_RESULTS)
-        .map((entry): SearchFirstResult => ({
-          id: entry.id,
-          title: entry.title,
-          url: entry.url,
-          snippet:
-            entry.snippet === null
-              ? null
-              : entry.snippet.slice(0, SEARCH_FIRST_MAX_SNIPPET_CHARS),
-          publishedAt: entry.publishedAt,
-          source: entry.providerKind ?? data.providerKind ?? 'unknown',
-        }));
-      return {
-        applied: true,
-        results,
-        runId: data.runId,
-        warning: null,
-      };
-    } catch (error) {
-      this.logger.error(`search: exception during search-first — ${(error as Error).message}`);
+    const gateway = await gatewaySearchForUser({
+      query: trimmed.slice(0, 512),
+      maxResults: SEARCH_FIRST_MAX_RESULTS,
+      userId: context.userId,
+    });
+    if (!gateway.ok) {
+      this.logger.warn(`search: gateway failed (${gateway.failure ?? 'unknown'})`);
       return {
         applied: false,
         results: [],
         runId: null,
-        warning: SEARCH_FIRST_WARNING_EXCEPTION,
+        warning: this.warningFor(gateway.failure),
       };
+    }
+    if (gateway.entries.length === 0) {
+      this.logger.warn('search: research-service returned no results');
+      return {
+        applied: false,
+        results: [],
+        runId: gateway.runId ?? null,
+        warning: SEARCH_FIRST_WARNING_NO_RESULTS,
+      };
+    }
+    const results = gateway.entries
+      .slice(0, SEARCH_FIRST_MAX_RESULTS)
+      .map((entry): SearchFirstResult => ({
+        id: entry.id ?? entry.url,
+        title: entry.title ?? entry.url,
+        url: entry.url,
+        snippet:
+          entry.snippet === null || entry.snippet === undefined
+            ? null
+            : entry.snippet.slice(0, SEARCH_FIRST_MAX_SNIPPET_CHARS),
+        publishedAt: entry.publishedAt ?? null,
+        source: entry.providers?.join(', ') ?? entry.providerKind ?? 'unknown',
+      }));
+    return { applied: true, results, runId: gateway.runId ?? null, warning: null };
+  }
+
+  private warningFor(failure: ResearchGatewayFailure | undefined): string {
+    switch (failure) {
+      case ResearchGatewayFailure.TIMEOUT:
+        return SEARCH_FIRST_WARNING_TIMEOUT;
+      case ResearchGatewayFailure.EXCEPTION:
+        return SEARCH_FIRST_WARNING_EXCEPTION;
+      default:
+        return SEARCH_FIRST_WARNING_HTTP_ERROR;
     }
   }
 

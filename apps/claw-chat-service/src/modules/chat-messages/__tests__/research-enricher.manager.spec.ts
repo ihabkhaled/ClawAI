@@ -177,7 +177,7 @@ describe('ResearchEnricherManager (chat-messages contract)', () => {
         url: SEARCH_URL,
         method: 'POST',
         headers: { Authorization: AUTH_HEADER },
-        body: { query: 'latest typescript release', maxResults: 5 },
+        body: { query: 'latest typescript release', maxResults: 10 },
       }),
     );
 
@@ -252,7 +252,7 @@ describe('ResearchEnricherManager (chat-messages contract)', () => {
 
   // ─── Case 4: SEARCH_EXTRACT routes through fetch with larger excerpt ─────
   it('SEARCH_EXTRACT: routes through /research/fetch with the larger 2_500-char extract budget', async () => {
-    const longContent = 'Y'.repeat(3_500);
+    const longContent = 'Y'.repeat(RESEARCH_ENRICHER_EXTRACT_BODY_MAX_CHARS + 1_500);
     httpRequest.mockResolvedValueOnce(
       searchPayload([{ title: 'RFC 1234', url: 'https://rfc/1234', snippet: 'rfc' }]),
     );
@@ -299,15 +299,14 @@ describe('ResearchEnricherManager (chat-messages contract)', () => {
     expect(result.sources).toEqual([]);
     expect(result.mode).toBe(ResearchMode.SEARCH);
 
-    // RESEARCH_FAILED is reserved for the catch-path (uncaught throw). A 5xx
-    // is recoverable: we surface RESEARCH_COMPLETED with sourcesCount=0 and
-    // let the caller record a transcript.warnings entry. This contract is
-    // what makes runEnricherTranscript safe to call from every chat flow.
+    // ADR-212: a search that failed (5xx, timeout) is SAID. RESEARCH_FAILED goes
+    // out and the result carries a warning the transcript shows, but nothing
+    // throws, so the model still answers with whatever there is.
     const stages = stream.emitResearchProgress.mock.calls.map(
       (call: [string, { stage: AiStreamStage }]) => call[1].stage,
     );
-    expect(stages).not.toContain(AiStreamStage.RESEARCH_FAILED);
-    expect(stages).toContain(AiStreamStage.RESEARCH_COMPLETED);
+    expect(stages).toContain(AiStreamStage.RESEARCH_FAILED);
+    expect(result.warnings).toEqual(['research.searchFailed:HTTP_ERROR']);
 
     const transcript = buildTranscriptFromEnricher(
       ResearchMode.SEARCH,
@@ -358,7 +357,7 @@ describe('ResearchEnricherManager (chat-messages contract)', () => {
 
   // ─── Case 7: per-source char budget truncation ───────────────────────────
   it('SEARCH_FETCH: per-source body is truncated at RESEARCH_ENRICHER_FETCH_BODY_MAX_CHARS (2_000)', async () => {
-    const oversize = 'Z'.repeat(5_000);
+    const oversize = 'Z'.repeat(RESEARCH_ENRICHER_FETCH_BODY_MAX_CHARS + 1_000);
     httpRequest.mockResolvedValueOnce(
       searchPayload([{ title: 'Long', url: 'https://long/', snippet: 's' }]),
     );

@@ -22,3 +22,6 @@ export type TextBudgetResult = {
 
 /** The fetched sources fitFixedContext trims in place. */
 export type FixedContextSources = Pick<AssembledContext, 'memories' | 'contextPackItems'>;
+
+/** A source the budget fit can shorten: title and url are kept, the body is what gives. */
+export type BudgetedSource = { title: string | null; url: string; body: string };

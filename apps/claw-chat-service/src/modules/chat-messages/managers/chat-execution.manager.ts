@@ -141,6 +141,8 @@ import type { FileDeliveryEntry } from '../types/file-delivery.types';
 import { QualityCheckManager } from './quality-check.manager';
 import { JudgeRefereeManager } from './judge-referee.manager';
 import { SearchFirstManager } from './search-first.manager';
+import { mapWithConcurrency } from '../utilities/bounded-parallel.utility';
+import { RESEARCH_TOOL_CALL_PARALLEL_LIMIT } from '../constants/research-gateway.constants';
 import { WORKFLOW_KIND_SEARCH_FIRST } from '../constants/search-first.constants';
 import type { SearchFirstOutcome } from '../types/search-first.types';
 import { ChatStreamService } from '../services/chat-stream.service';
@@ -221,6 +223,7 @@ import { OLLAMA_TOOL_LOOP_WRAPUP_INSTRUCTION } from '../constants/agentic-loop.c
 import {
   executeOllamaCloudToolCall,
   executeResearchWebFetch,
+  executeResearchWebSearch,
   truncateResult,
 } from '../utilities/ollama-cloud-tool-runner.utility';
 import {
@@ -4726,7 +4729,6 @@ export class ChatExecutionManager implements OnModuleInit {
     }
     if (toolName === TOOL_WEB_FETCH) {
       return executeResearchWebFetch(call, {
-        researchServiceUrl: AppConfig.get().RESEARCH_SERVICE_URL,
         userId: args.userId,
         onDispatch: async () =>
           this.accessControlService.recordFeatureUsage(
@@ -4736,23 +4738,36 @@ export class ChatExecutionManager implements OnModuleInit {
           ),
       });
     }
-    return executeOllamaCloudToolCall(call, {
+    const hosted = {
       baseUrl: args.baseUrl,
       apiKey: args.apiKey,
       timeoutMs: args.timeoutMs,
-      onDispatch: async () =>
-        this.accessControlService.recordFeatureUsage(
-          args.userId,
-          toolName === TOOL_WEB_SEARCH ? 'WEB_SEARCH' : 'WEB_FETCH',
-          `${args.usageRunId}:${String(args.iteration)}:${callId}`,
-        ),
-    });
+    };
+    const recordUsage = async (): Promise<void> =>
+      this.accessControlService.recordFeatureUsage(
+        args.userId,
+        toolName === TOOL_WEB_SEARCH ? 'WEB_SEARCH' : 'WEB_FETCH',
+        `${args.usageRunId}:${String(args.iteration)}:${callId}`,
+      );
+    if (toolName === TOOL_WEB_SEARCH) {
+      // The platform's configured providers, all in parallel (ADR-212). The hosted
+      // Ollama search is only the fallback inside; usage is recorded once either way.
+      return executeResearchWebSearch(call, {
+        userId: args.userId,
+        onDispatch: recordUsage,
+        hosted,
+      });
+    }
+    return executeOllamaCloudToolCall(call, { ...hosted, onDispatch: recordUsage });
   }
 
-  // Per-turn dispatcher. Executes every tool_call serially so we can
-  // emit lifecycle events in deterministic order and bail fast on the
-  // first failure. Each invocation tracks its own transcript entry so
-  // the FE can show ok/error per call.
+  // Per-turn dispatcher. A model turn's tool calls are independent of each other (each
+  // names its own query or URL and the model sees the results together), so up to
+  // RESEARCH_TOOL_CALL_PARALLEL_LIMIT run at once (ADR-212). The returned array is in the
+  // model's call order whatever order they finish in, with each call's own id, so the
+  // tool messages that follow line up with the calls. A failure is a result (the model
+  // sees the error and can recover), never a reason to drop the others. Each invocation
+  // tracks its own transcript entry so the FE can show ok/error per call.
   private async executeToolCalls(args: {
     toolCalls: OllamaCloudToolCall[];
     baseUrl: string;
@@ -4768,58 +4783,65 @@ export class ChatExecutionManager implements OnModuleInit {
   }): Promise<
     Array<{ toolCallId: string; result: string; transcriptTurn: OllamaToolTranscriptTurn }>
   > {
-    const results: Array<{
-      toolCallId: string;
-      result: string;
-      transcriptTurn: OllamaToolTranscriptTurn;
-    }> = [];
-    let index = 0;
-    for (const call of args.toolCalls) {
-      const i = index;
-      index += 1;
-      const callStart = Date.now();
-      const toolName = call.function.name;
-      const callId = call.id ?? `${toolName}-${String(args.iteration)}-${String(i)}`;
-      this.emitToolLifecycle(
-        args.streamThreadId,
-        toolName,
-        call.function.arguments,
-        OllamaToolPhase.STARTED,
+    return mapWithConcurrency(args.toolCalls, RESEARCH_TOOL_CALL_PARALLEL_LIMIT, (call, i) =>
+      this.executeOneToolCall(call, i, args),
+    );
+  }
+
+  private async executeOneToolCall(
+    call: OllamaCloudToolCall,
+    i: number,
+    args: {
+      baseUrl: string;
+      apiKey: string;
+      timeoutMs: number;
+      streamThreadId: string | undefined;
+      iteration: number;
+      userId: string;
+      usageRunId: string;
+      crawlRetrieval?: CrawlRetrievalContext;
+    },
+  ): Promise<{ toolCallId: string; result: string; transcriptTurn: OllamaToolTranscriptTurn }> {
+    const callStart = Date.now();
+    const toolName = call.function.name;
+    const callId = call.id ?? `${toolName}-${String(args.iteration)}-${String(i)}`;
+    this.emitToolLifecycle(
+      args.streamThreadId,
+      toolName,
+      call.function.arguments,
+      OllamaToolPhase.STARTED,
+    );
+    let resultText: string;
+    let ok = true;
+    let errorMessage: string | undefined;
+    try {
+      resultText = await this.dispatchOneToolCall(call, toolName, callId, args);
+    } catch (error: unknown) {
+      ok = false;
+      errorMessage = error instanceof Error ? error.message : 'unknown';
+      // Surface the error to the model so it can recover (e.g. retry
+      // with a different URL). Truncate for safety.
+      resultText = truncateResult(JSON.stringify({ error: errorMessage, tool: toolName }));
+      this.logger.warn(
+        `executeToolCalls: tool=${toolName} call_id=${callId} failed — ${errorMessage}`,
       );
-      let resultText: string;
-      let ok = true;
-      let errorMessage: string | undefined;
-      try {
-        resultText = await this.dispatchOneToolCall(call, toolName, callId, args);
-      } catch (error: unknown) {
-        ok = false;
-        errorMessage = error instanceof Error ? error.message : 'unknown';
-        // Surface the error to the model so it can recover (e.g. retry
-        // with a different URL). Truncate for safety.
-        resultText = truncateResult(JSON.stringify({ error: errorMessage, tool: toolName }));
-        this.logger.warn(
-          `executeToolCalls: tool=${toolName} call_id=${callId} failed — ${errorMessage}`,
-        );
-      }
-      const durationMs = Date.now() - callStart;
-      this.emitToolLifecycle(
-        args.streamThreadId,
-        toolName,
-        call.function.arguments,
-        OllamaToolPhase.COMPLETED,
-      );
-      const transcriptTurn: OllamaToolTranscriptTurn = {
-        turn: args.iteration,
-        tool: toolName,
-        args: call.function.arguments,
-        resultPreview: resultText.slice(0, 500),
-        durationMs,
-        ok,
-        ...(errorMessage === undefined ? {} : { error: errorMessage }),
-      };
-      results.push({ toolCallId: callId, result: resultText, transcriptTurn });
     }
-    return results;
+    this.emitToolLifecycle(
+      args.streamThreadId,
+      toolName,
+      call.function.arguments,
+      OllamaToolPhase.COMPLETED,
+    );
+    const transcriptTurn: OllamaToolTranscriptTurn = {
+      turn: args.iteration,
+      tool: toolName,
+      args: call.function.arguments,
+      resultPreview: resultText.slice(0, 500),
+      durationMs: Date.now() - callStart,
+      ok,
+      ...(errorMessage === undefined ? {} : { error: errorMessage }),
+    };
+    return { toolCallId: callId, result: resultText, transcriptTurn };
   }
 
   private resolveFinalToolLoopContent(

@@ -6,6 +6,7 @@ import {
   CRAWL_CONCURRENCY,
   CRAWL_DEFAULT_MAX_PAGES,
   CRAWL_DEFAULT_SITEMAP_PATH,
+  CRAWL_GLOBAL_WORKER_CAP,
   CRAWL_MAX_LINK_DEPTH,
   CRAWL_MAX_PAGES_CEILING,
   CRAWL_MAX_SITEMAP_FETCHES,
@@ -16,6 +17,7 @@ import {
 import { runWithConcurrencyLimit } from '../../../common/utilities/concurrency-pool.utility';
 import { parseFeedXml } from '../../../common/utilities/feed.utility';
 import { sha1Short } from '../../../common/utilities/hash.utility';
+import { Semaphore } from '../../../common/utilities/semaphore.utility';
 import { isPathAllowed, parseRobotsTxt } from '../../../common/utilities/robots-txt.utility';
 import { parseSitemapXml } from '../../../common/utilities/sitemap.utility';
 import { CrawlDiscoveryMethod } from '../../../common/enums/crawl-discovery-method.enum';
@@ -54,6 +56,13 @@ import type { EvidenceItem, ResearchTraceEntry } from '../types/evidence-bundle.
  */
 @Injectable()
 export class SiteCrawlManager {
+  /**
+   * Page fetches in flight across EVERY crawl in this process (ADR-211). Each
+   * site has its own pool of CRAWL_CONCURRENCY workers and several sites crawl
+   * at once, so without a shared cap the load would be sites x workers.
+   */
+  private readonly pageSlots = new Semaphore(CRAWL_GLOBAL_WORKER_CAP);
+
   constructor(
     private readonly fetchService: FetchService,
     private readonly progressPublisher: ResearchProgressPublisher,
@@ -79,11 +88,14 @@ export class SiteCrawlManager {
 
     this.publishCrawlStarted(correlationId, origin);
 
-    const robots = await this.fetchCrawlRobots(userId, origin, trace, toolsUsed, correlationId);
-
+    // robots.txt and the homepage are independent requests (FetchService checks
+    // robots itself for the homepage), so they run side by side (ADR-211).
     // The hint applies to the page the user named. If a renderer wins there, host
     // memory moves it to the front for the rest of this site's pages as well.
-    const homepage = await this.fetchOne(userId, startUrl, trace, warnings, 'homepage', render);
+    const [robots, homepage] = await Promise.all([
+      this.fetchCrawlRobots(userId, origin, trace, toolsUsed, correlationId),
+      this.fetchOne(userId, startUrl, trace, warnings, 'homepage', render),
+    ]);
     if (homepage === null) {
       // Nothing to crawl from if even the page the user named cannot be
       // read - matches runDirectFetch naming the page that failed.
@@ -255,13 +267,11 @@ export class SiteCrawlManager {
     pathPrefix: string | null,
   ): Promise<CrawlDiscoveryResult> {
     const sitemapBudget = { remaining: CRAWL_MAX_SITEMAP_FETCHES };
-    const sitemapEntries = await this.discoverSitemapEntries(
-      userId,
-      robots,
-      origin,
-      trace,
-      sitemapBudget,
-    );
+    // The feed does not depend on the sitemap, so both are discovered at once.
+    const [sitemapEntries, feedEntries] = await Promise.all([
+      this.discoverSitemapEntries(userId, robots, origin, trace, sitemapBudget),
+      this.discoverFeedEntries(userId, homepage, trace, toolsUsed),
+    ]);
     if (sitemapEntries.length > 0) {
       toolsUsed.push('web_crawl:sitemap');
     }
@@ -295,7 +305,6 @@ export class SiteCrawlManager {
     // a sitemap can be complete but stale, while a feed is usually exactly
     // the site's most recent content — a genuinely different signal, not a
     // fallback for a missing one.
-    const feedEntries = await this.discoverFeedEntries(userId, homepage, trace, toolsUsed);
     for (const entry of feedEntries) {
       this.addCandidate(
         candidates,
@@ -346,7 +355,9 @@ export class SiteCrawlManager {
         );
         return;
       }
-      const result = await this.fetchOne(userId, candidate.url, trace, warnings, 'crawl.page');
+      const result = await this.pageSlots.run(() =>
+        this.fetchOne(userId, candidate.url, trace, warnings, 'crawl.page'),
+      );
       if (result !== null) {
         items.push(this.toEvidence(result, candidate.discoveryMethod));
         links.push(...result.links);

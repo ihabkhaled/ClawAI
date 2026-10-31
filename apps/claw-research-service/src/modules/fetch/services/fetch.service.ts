@@ -54,22 +54,25 @@ export class FetchService {
   ): Promise<FetchResult> {
     const normalized = this.normalizeUrl(dto.url);
     this.enforceDomainPolicy(normalized);
-    const robots = await this.robots.evaluate(normalized);
+    // robots.txt and the cache row are independent lookups, so they run side
+    // by side (ADR-211). Robots is still enforced BEFORE anything is served or
+    // a job row is written: a Disallow is a refusal even for a cached page.
+    const cacheKey = sha256Hex(normalized);
+    const [robots, cached] = await Promise.all([
+      this.robots.evaluate(normalized),
+      dto.refresh === true ? Promise.resolve(null) : this.cache.findByKey(cacheKey),
+    ]);
     this.enforceRobots(normalized, robots);
 
-    const cacheKey = sha256Hex(normalized);
     const job = await this.jobs.create({
       userId,
       url: normalized,
       status: FetchJobStatus.RUNNING,
     });
 
-    if (dto.refresh !== true) {
-      const cached = await this.cache.findByKey(cacheKey);
-      if (cached !== null && cached.expiresAt > new Date()) {
-        await this.completeFromCache(job.id, cached);
-        return this.cacheToResult(normalized, cached);
-      }
+    if (cached !== null && cached.expiresAt > new Date()) {
+      await this.completeFromCache(job.id, cached);
+      return this.cacheToResult(normalized, cached);
     }
 
     try {
@@ -80,30 +83,39 @@ export class FetchService {
       await this.persist(job.id, result, cacheKey);
       return result;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.warn(`Fetch failed ${loggablePath(normalized)}: ${message}`);
-      await this.jobs.update(job.id, {
-        status: FetchJobStatus.FAILED,
-        errorMessage: message,
-        completedAt: new Date(),
-      });
-      throw new BusinessException(
-        'research.fetch.failed',
-        ResearchErrorCode.FETCH_FAILED,
-        HttpStatus.BAD_GATEWAY,
-        {
-          url: normalized,
-          message,
-          signals: error instanceof FetchEscalationError ? error.signals : [],
-          strategiesTried:
-            error instanceof FetchEscalationError
-              ? error.attempts.map((attempt) => attempt.kind)
-              : [],
-        },
-      );
+      throw await this.failJob(job.id, normalized, error);
     } finally {
       await this.researchUsage.record(userId, 'WEB_FETCH', job.id);
     }
+  }
+
+  /** Marks the job FAILED and builds the exception `fetchPage` rethrows. */
+  private async failJob(
+    jobId: string,
+    normalized: string,
+    error: unknown,
+  ): Promise<BusinessException> {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    this.logger.warn(`Fetch failed ${loggablePath(normalized)}: ${message}`);
+    await this.jobs.update(jobId, {
+      status: FetchJobStatus.FAILED,
+      errorMessage: message,
+      completedAt: new Date(),
+    });
+    return new BusinessException(
+      'research.fetch.failed',
+      ResearchErrorCode.FETCH_FAILED,
+      HttpStatus.BAD_GATEWAY,
+      {
+        url: normalized,
+        message,
+        signals: error instanceof FetchEscalationError ? error.signals : [],
+        strategiesTried:
+          error instanceof FetchEscalationError
+            ? error.attempts.map((attempt) => attempt.kind)
+            : [],
+      },
+    );
   }
 
   /** `fetchPage`, reduced to what a tool-calling model may see (no raw HTML). */

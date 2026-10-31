@@ -65,6 +65,24 @@ Controller → Service → Repository (data access)
 - How to add/enable/prove a tier: `skills/add-a-fetch-strategy.md`.
 - _(future)_ `EvidenceBundle`, `ScrapeProfile`, `CloneJob`.
 
+## Search invariants (ADR-210)
+
+- `POST /research/search` without `providerId` runs EVERY enabled + ACTIVE provider in parallel and returns only after all settled (success, failure or `min(timeoutMs, 20 s)`). No quorum, no early return, no hard-coded provider count.
+- Never re-call providers after a total failure: one call per provider per search, then `SEARCH_FAILED`. A `SearchRun` always ends `COMPLETED` or `FAILED`.
+- Response fields `mode` and `providers[]` and result `providers` are additive; do not rename the older fields (chat-service and threads-service read them).
+- Merged scores are rank-based per provider. Explicit `providerId` keeps the provider's own scores and skips the merge and the breaker.
+- Breaker state is per process (`SearchProviderHealthService`). Adapter code inside a provider must also be parallel (Ollama DuckDuckGo + Bing).
+- Each adapter network call records one `WEB_SEARCH` unit, so N units per search. That policy is the owner's; do not change counting silently.
+
+## Parallel fetch batches (ADR-211, 2026-10-31)
+
+- Page work in a research run is batched, never one page at a time: search hits (top 8, max 2 per host) and pasted URLs (max 6) go through `runFetchBatch` (`modules/research/utilities/fetch-batch.utility.ts`): 6 hosts at once, a host's URLs serial, one 30 s cap per phase, unfinished = `TIMEOUT`. Caps are constants (`EVIDENCE_FETCH_*`, `CRAWL_GLOBAL_WORKER_CAP`, `CRAWL_SITE_CONCURRENCY`), not env.
+- New fetch loops use `runFetchBatch`, not a bare `for`/`Promise.all` over a list. Cap every batch input first.
+- Crawl page fetches go through `SiteCrawlManager.pageSlots` (process-wide 12). Do not add a crawl path that bypasses it.
+- Response fields are additive: `items[].fetchStatus`, `bundle.fetchReport`, `bundle.fetchSummary`. Never rename or remove existing fields (chat-service and threads-service read the bundle).
+- Fetched-page snippet length comes from the shared 96 000-char budget in `buildEvidenceBundle` (floor 1 500); do not add a second truncation.
+- SSRF, robots and size limits are unchanged and live in `FetchService`; a batch only reports them per URL.
+
 ## Key Environment Variables
 
 - `RESEARCH_DATABASE_URL`, `RESEARCH_PORT` (default 4016)

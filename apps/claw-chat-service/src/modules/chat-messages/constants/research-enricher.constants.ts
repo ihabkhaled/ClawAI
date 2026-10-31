@@ -1,19 +1,25 @@
 // Constants for the compare-mode ResearchEnricherManager.
 
-// Default top-K search results to request when the caller does not specify.
-export const RESEARCH_ENRICHER_DEFAULT_TOP_RESULTS = 5;
-// Default number of URLs to fetch / extract after the search step.
-export const RESEARCH_ENRICHER_DEFAULT_TOP_FETCH = 3;
+// Default top-K search results to request when the caller does not specify. AUTO
+// runs every provider, so the merged list is wider than one engine's top five (ADR-212);
+// the evidence budget, not this number, is what keeps the prompt inside the window.
+export const RESEARCH_ENRICHER_DEFAULT_TOP_RESULTS = 10;
+// Default number of URLs to fetch / extract after the search step (in parallel).
+export const RESEARCH_ENRICHER_DEFAULT_TOP_FETCH = 6;
 
-// Per-call timeouts. The search call is shorter; fetch can take longer
-// because it touches arbitrary remote sites.
-export const RESEARCH_ENRICHER_SEARCH_TIMEOUT_MS = 8_000;
-export const RESEARCH_ENRICHER_FETCH_TIMEOUT_MS = 15_000;
+// The timeouts are NOT here: there is one set for every surface, in
+// common/constants/research-client.constants.ts, used only by the research gateway.
 
-// Trim lengths for the evidence body. Excerpts keep enough text for the
-// model to ground while staying inside the shared prompt's token budget.
-export const RESEARCH_ENRICHER_FETCH_BODY_MAX_CHARS = 2_000;
-export const RESEARCH_ENRICHER_EXTRACT_BODY_MAX_CHARS = 2_500;
+// Per-source CEILINGS for the evidence body (were 2000 / 2500). They are not what
+// is sent: `fitSourcesToResearchBudget` shortens every body evenly when the sum would pass
+// the 45% evidence share of the window, so a bigger ceiling costs nothing on a small model.
+export const RESEARCH_ENRICHER_FETCH_BODY_MAX_CHARS = 6_000;
+export const RESEARCH_ENRICHER_EXTRACT_BODY_MAX_CHARS = 8_000;
+
+// The window the shared evidence block is sized for when the caller does not know the
+// answering model's. Compare and the labs fan one block out to several models, so this
+// is a floor most current models clear, not the largest one.
+export const RESEARCH_ENRICHER_ASSUMED_WINDOW_TOKENS = 16_384;
 
 // Query is logged at debug only; we truncate to keep logs PII-light.
 export const RESEARCH_ENRICHER_QUERY_LOG_PREVIEW_CHARS = 80;

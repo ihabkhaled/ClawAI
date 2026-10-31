@@ -5,10 +5,11 @@ import { NarrationKind } from '../../../../common/enums/narration-kind.enum';
 import { PlannedResearchAction } from '../../../../common/enums/planned-research-action.enum';
 import { ResearchWorkflow } from '../../../../common/enums/research-workflow.enum';
 import { runResearch } from '../../../../common/utilities';
+import type * as CommonUtilities from '../../../../common/utilities';
 import { ResearchOrchestratorManager } from '../research-orchestrator.manager';
 
 vi.mock('../../../../common/utilities', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../../../common/utilities')>()),
+  ...(await importOriginal<typeof CommonUtilities>()),
   runResearch: vi.fn(),
 }));
 
@@ -283,5 +284,82 @@ describe('ResearchOrchestratorManager', () => {
     ).resolves.toBeNull();
     expect(kinds()).toContain(NarrationKind.RESEARCH_FAILED);
     expect(kinds()).not.toContain(NarrationKind.CRAWL_DONE);
+  });
+
+  describe('which providers searched (ADR-212)', () => {
+    const searchPlan = {
+      action: PlannedResearchAction.SEARCH,
+      urls: [],
+      query: 'cats',
+      maxPages: 1,
+      narration: 'Searching.',
+      thinking: '',
+      decidedBy: 'm1',
+    };
+    const searchDoneParams = (): Record<string, unknown> | undefined =>
+      append.mock.calls
+        .map((call) => call[1] as { kind: string; params?: Record<string, unknown> })
+        .find((entry) => entry.kind === NarrationKind.SEARCH_DONE)?.params;
+
+    it('names the providers research-service reports in providers[]', async () => {
+      plan.mockResolvedValue(searchPlan);
+      const run = runWith('SEARCH_THEN_FETCH', ['https://a.test']) as {
+        bundle: Record<string, unknown>;
+      };
+      run.bundle.providers = [
+        { name: 'Brave', status: 'OK' },
+        { name: 'Exa', status: 'TIMEOUT' },
+      ];
+      mockedRunResearch.mockResolvedValue(run as never);
+      await manager.run(input);
+      expect(searchDoneParams()).toMatchObject({ providers: 'Brave, Exa', providerCount: 2 });
+    });
+
+    it('falls back to the attempted providers of the old shape', async () => {
+      plan.mockResolvedValue(searchPlan);
+      const run = runWith('SEARCH_THEN_FETCH', ['https://a.test']) as {
+        bundle: { providerSelection: Record<string, unknown> };
+      };
+      run.bundle.providerSelection.attemptedProviders = ['Ollama'];
+      mockedRunResearch.mockResolvedValue(run as never);
+      await manager.run(input);
+      expect(searchDoneParams()).toMatchObject({ providers: 'Ollama', providerCount: 1 });
+    });
+
+    it('adds no provider params when research-service reports none', async () => {
+      plan.mockResolvedValue(searchPlan);
+      mockedRunResearch.mockResolvedValue(
+        runWith('SEARCH_THEN_FETCH', ['https://a.test']) as never,
+      );
+      await manager.run(input);
+      expect(searchDoneParams()).toEqual({ count: 1, warnings: 0 });
+    });
+  });
+
+  it('returns only after research-service has answered: nothing downstream runs before', async () => {
+    plan.mockResolvedValue({
+      action: PlannedResearchAction.SEARCH,
+      urls: [],
+      query: 'cats',
+      maxPages: 1,
+      narration: '',
+      thinking: '',
+      decidedBy: 'm1',
+    });
+    let release!: (value: unknown) => void;
+    mockedRunResearch.mockReturnValue(
+      new Promise((resolve) => {
+        release = resolve;
+      }) as never,
+    );
+    let modelStarted = false;
+    const turn = manager.run(input).then(() => {
+      modelStarted = true;
+    });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(modelStarted).toBe(false);
+    release(runWith('SEARCH_THEN_FETCH', ['https://a.test']));
+    await turn;
+    expect(modelStarted).toBe(true);
   });
 });

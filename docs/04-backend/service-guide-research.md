@@ -12,14 +12,14 @@ The existing chat-service calls models directly. Search/fetch/scrape/clone are o
 
 ### Data model
 
-- `SearchProvider` — kind (`TAVILY`/`OLLAMA_WEB`/`SEARXNG`/`GENERIC_HTTP`), name, baseUrl, `encryptedSecret` (AES-256-GCM), `publicConfig`, priority, allow/block domain lists, timeout, status.
+- `SearchProvider` — kind (`TAVILY`/`OLLAMA_WEB`/`SEARXNG`/`EXA`/`FIRECRAWL`/`BRAVE`/`SERPAPI`/`GENERIC_HTTP`), name, baseUrl, `encryptedSecret` (AES-256-GCM), `publicConfig`, priority, allow/block domain lists, timeout, status.
 - `SearchRun` — per execution: user, query, status (`RUNNING`/`COMPLETED`/`FAILED`), result count, latency, error message, normalized results payload.
 
 Both tables plus enums are defined in `apps/claw-research-service/prisma/schema.prisma` and seeded via the initial migration in `prisma/migrations/20260420100000_init_search/`.
 
 ### Adapters
 
-`SearchAdapter` interface: `kind`, `healthCheck(context)`, `search(request, context)`. Three implementations:
+`SearchAdapter` interface: `kind`, `healthCheck(context)`, `search(request, context)`. One implementation per kind (Tavily, Ollama Web, SearXNG, Exa, Firecrawl, Brave, SerpApi); the first three:
 
 | Kind         | Adapter                  | Notes                                                                                                    |
 | ------------ | ------------------------ | -------------------------------------------------------------------------------------------------------- |
@@ -29,10 +29,23 @@ Both tables plus enums are defined in `apps/claw-research-service/prisma/schema.
 
 Every adapter returns the same normalized `SearchResult` shape (`id`, `title`, `url`, `snippet`, `publishedAt`, `freshness`, `score`, `providerKind`) so the service layer can merge or re-rank results across providers.
 
+### Automatic search runs every provider in parallel (ADR-210)
+
+`POST /research/search` without `providerId` is `mode: 'AUTO_ALL'`: all enabled + ACTIVE providers (any count) run at once and the response is built only after every one has succeeded, failed or hit its bound (`min(timeoutMs, SEARCH_AUTO_CEILING_MS = 20 s)`). No quorum, no early return. With `providerId` it is `mode: 'EXPLICIT'`, unchanged.
+
+- Response (additive): `mode`, `providers[]` (`name`, `kind`, `status` `OK|FAILED|TIMEOUT|SKIPPED`, `latencyMs`, `resultCount`, `errorCode`). Merged results carry `providers: string[]`. `latencyMs` is the slowest provider.
+- Merge: score from the rank inside each provider's list, canonical-URL dedupe, +0.05 per extra provider that found it.
+- One or more providers down is tolerated and reported. All down: run `FAILED`, `SEARCH_FAILED` 502, no second round of calls.
+- 429 `PROVIDER_RATE_LIMITED`, 401/403 `PROVIDER_AUTH_FAILED`, 5xx/network `PROVIDER_UNAVAILABLE`, bound `SEARCH_TIMEOUT`.
+- Breaker (this process only): 3 consecutive failures, `SKIPPED` for 30 s, then one half-open probe; if all are open all are tried.
+- Billing: one `WEB_SEARCH` unit per adapter call, so N units per search (Ollama Web may add up to 2 for its parallel DuckDuckGo/Bing fallbacks). `WEB_SEARCH` has no plan limit today, so nothing is refused or charged; see the ADR before setting one.
+- Log line per provider: `search.provider run= provider= kind= status= latencyMs= results= code=`.
+
 ### Services
 
 - `SearchProviderService` — CRUD, secret encryption/decryption, `testConnection()` that runs the adapter's `healthCheck` and records `lastValidatedAt`/`validationError` on the provider row.
-- `SearchExecutionService` — resolves provider (explicit id or first enabled by priority), creates a `SearchRun`, invokes the adapter, applies domain allow/block policy, updates the run row with results and latency.
+- `SearchExecutionService` — no `providerId`: calls EVERY enabled + ACTIVE provider in parallel and waits for all (see below); `providerId`: that one provider. Creates a `SearchRun`, applies each provider's domain allow/block policy, ends the run `COMPLETED` or `FAILED` (never left `RUNNING`).
+- `SearchProviderHealthService` — per-process circuit breaker and per-provider outcome counters.
 
 ### API
 
@@ -443,3 +456,15 @@ curl -sk -H "Authorization: Bearer $TOKEN" "https://claw.local/api/v1/research/c
 curl -sk -X POST https://claw.local/api/v1/research/crawl/runs -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' -d '{"url":"https://example.com","profile":"extract"}'
 ```
+
+## Update 2026-10-31 - fetches and crawls run in parallel batches (ADR-211)
+
+Decision: [ADR-211](../13-adr/adr-211-research-fetches-and-crawls-in-parallel-batches.md).
+
+- **Search hits and pasted URLs** go through `runFetchBatch` (`modules/research/utilities/fetch-batch.utility.ts`): grouped by host, a host serial, different hosts in parallel (6 at once), one 30 s wall-clock cap per phase. Top 8 hits (max 2 per host, distinct hosts first), up to 6 pasted URLs. Constants: `EVIDENCE_FETCH_*` in `common/constants/evidence.constants.ts`, `DIRECT_FETCH_MAX_URLS`.
+- **Overlap.** The pasted-URL fetch runs together with the search call; hits are fetched as soon as search returns.
+- **Per-URL status**, additive: `items[].fetchStatus`, `bundle.fetchReport[]`, `bundle.fetchSummary` (`wallMs` vs `sumMs`). Statuses: `OK`, `FAILED`, `TIMEOUT`, `BLOCKED_ROBOTS`, `BLOCKED_SSRF`. One bad URL never fails the batch; results are in search-rank order; duplicate pages (canonical URL or body) are dropped.
+- **Context budget.** Fetched pages share 96 000 chars (best-ranked first, floor 1 500 each) in `buildEvidenceBundle`.
+- **Crawl.** Up to 3 sites at once (`CRAWL_SITE_CONCURRENCY`); every crawl page fetch passes a process-wide `Semaphore` (`CRAWL_GLOBAL_WORKER_CAP = 12`), so sites x 8 workers is bounded. Robots + homepage and sitemap + feed are fetched together.
+- **Log.** `research.fetch.batch origin= pages=host[STATUS start..end ms]` (hosts only) shows the overlap.
+- **Unchanged:** `FetchService.fetchPage` is still the only fetch path (SSRF on every hop, robots, 2 MB cap, 60 s / 6 attempts per URL).

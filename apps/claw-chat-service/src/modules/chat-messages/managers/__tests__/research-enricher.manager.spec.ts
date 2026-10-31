@@ -1,6 +1,9 @@
 import { type Mock, vi } from 'vitest';
 import { ResearchEnricherManager } from '../research-enricher.manager';
-import { RESEARCH_ENRICHER_EMPTY_RESULTS_BLOCK } from '../../constants/research-enricher.constants';
+import {
+  RESEARCH_ENRICHER_EMPTY_RESULTS_BLOCK,
+  RESEARCH_ENRICHER_EXTRACT_BODY_MAX_CHARS,
+} from '../../constants/research-enricher.constants';
 import { ResearchMode } from '../../../../common/enums/research-mode.enum';
 import { AiStreamStage } from '../../../../common/enums';
 import { type ChatStreamService } from '../../services/chat-stream.service';
@@ -103,7 +106,7 @@ describe('ResearchEnricherManager', () => {
     expect(call.url).toBe(`${RESEARCH_URL}/api/v1/research/search`);
     expect(call.method).toBe('POST');
     expect(call.headers).toEqual({ Authorization: AUTH_HEADER });
-    expect(call.body).toEqual({ query: 'what happened with gpt-5', maxResults: 5 });
+    expect(call.body).toEqual({ query: 'what happened with gpt-5', maxResults: 10 });
 
     expect(result.mode).toBe(ResearchMode.SEARCH);
     expect(result.sources).toHaveLength(2);
@@ -212,7 +215,7 @@ describe('ResearchEnricherManager', () => {
   });
 
   it('SEARCH_EXTRACT: routes via /research/fetch using the cleaned content field with a larger excerpt budget', async () => {
-    const longContent = 'X'.repeat(3_000);
+    const longContent = 'X'.repeat(RESEARCH_ENRICHER_EXTRACT_BODY_MAX_CHARS + 1_000);
     httpRequest.mockResolvedValueOnce({
       ok: true,
       status: 200,
@@ -243,7 +246,7 @@ describe('ResearchEnricherManager', () => {
     expect(result.sources).toHaveLength(1);
     const [only] = result.sources;
     if (!only) throw new Error('expected one source');
-    expect(only.extracted?.length).toBe(2_500);
+    expect(only.extracted?.length).toBe(RESEARCH_ENRICHER_EXTRACT_BODY_MAX_CHARS);
     expect(result.evidence).toContain('## Web research evidence (mode: SEARCH_EXTRACT');
   });
 

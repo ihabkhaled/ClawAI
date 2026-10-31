@@ -106,6 +106,8 @@ export type ResearchRequest = {
   render?: ResearchRenderHint;
   /** A planner-written search query, used instead of the raw prompt. */
   searchQuery?: string;
+  /** Overrides the workflow's default HTTP timeout; set only by the research gateway. */
+  timeoutMs?: number;
 };
 
 /** A research request minus what each step sets for itself (the intent and the workflow). */

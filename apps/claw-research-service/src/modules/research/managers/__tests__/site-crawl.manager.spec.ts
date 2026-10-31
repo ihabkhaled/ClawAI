@@ -1,4 +1,5 @@
 import { type Mock, vi } from 'vitest';
+import { CRAWL_GLOBAL_WORKER_CAP } from '../../../../common/constants/crawl.constants';
 import { SiteCrawlManager } from '../site-crawl.manager';
 import type { ResearchProgressPublisher } from '../research-progress-publisher.service';
 import type { FetchService } from '../../../fetch/services/fetch.service';
@@ -726,5 +727,43 @@ describe('SiteCrawlManager', () => {
 
     expect(items).toHaveLength(12);
     expect(new Set(items.map((item) => item.url)).size).toBe(12);
+  });
+
+  it('caps page fetches across simultaneous crawls at the global worker cap', async () => {
+    let inFlight = 0;
+    let max = 0;
+    const links = Array.from({ length: 30 }, (_, i) => `/p${String(i)}`);
+    fetchPage.mockImplementation(async (_userId: string, { url }: { url: string }) => {
+      if (url.endsWith('/robots.txt') || url.endsWith('/sitemap.xml')) {
+        throw new Error('404');
+      }
+      const origin = new URL(url).origin;
+      const isPage = /[/]p[0-9]+$/u.test(url);
+      if (isPage) {
+        inFlight += 1;
+        max = Math.max(max, inFlight);
+      }
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, 10);
+      });
+      if (isPage) {
+        inFlight -= 1;
+      }
+      return buildFetchResult({
+        url,
+        finalUrl: url,
+        links: url === `${origin}/` ? links.map((l) => `${origin}${l}`) : [],
+      });
+    });
+
+    await Promise.all(
+      ['https://a.example.com/', 'https://b.example.com/', 'https://c.example.com/'].map((site) =>
+        manager.crawl('u1', site, [], [], [], undefined, 25),
+      ),
+    );
+
+    // Three sites x 8 per-site workers would be 24; the shared cap holds it at 12.
+    expect(max).toBeGreaterThan(8);
+    expect(max).toBeLessThanOrEqual(CRAWL_GLOBAL_WORKER_CAP);
   });
 });
