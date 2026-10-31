@@ -159,3 +159,9 @@ export const THREAD_STATUS_LABEL_KEYS: Readonly<Record<string, string>> = {
   CANCELLED: 'chat.threadGenerationCancelled',
   WAITING_FOR_REVIEW: 'chat.threadStageReady',
 };
+
+/** How close to the bottom of the scrolling area the reader must be to resume following, in pixels. */
+export const THREAD_FOLLOW_BOTTOM_THRESHOLD_PX = 24;
+
+/** Keys that mean the reader is scrolling up on purpose, so the page stops following. */
+export const THREAD_FOLLOW_STOP_KEYS: readonly string[] = ['PageUp', 'ArrowUp', 'Home'];

@@ -278,3 +278,29 @@ export function toThreadRetryRoleSelections(
 export function threadHeadlineKey(status: string, stage: string): string | null {
   return threadStatusLabelKey(status) ?? threadStageLabelKey(stage);
 }
+
+/** True when a scrolling area is within `thresholdPx` of its own bottom edge. */
+export function isScrolledToBottom(
+  scrollHeight: number,
+  scrollTop: number,
+  clientHeight: number,
+  thresholdPx: number,
+): boolean {
+  return scrollHeight - scrollTop - clientHeight <= thresholdPx;
+}
+
+/** Changes whenever the job gains a step or moves to a new status, stage or round. */
+export function threadProgressSignature(progress: ThreadGenerationProgress | undefined): string {
+  if (progress === undefined) {
+    return '';
+  }
+  const lastSeq = progress.steps.at(-1)?.seq ?? 0;
+  return [
+    progress.status,
+    progress.stage,
+    progress.round,
+    progress.steps.length,
+    lastSeq,
+    progress.failure?.code ?? '',
+  ].join('|');
+}

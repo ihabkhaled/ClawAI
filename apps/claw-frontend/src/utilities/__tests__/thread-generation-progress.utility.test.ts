@@ -16,6 +16,8 @@ import {
   isQueuedThreadStatus,
   isRetryableThreadStatus,
   isTerminalThreadStatus,
+  isScrolledToBottom,
+  threadProgressSignature,
   microUsdToInputValue,
   resolveThreadFailureKeys,
   threadRoleLabelKey,
@@ -306,5 +308,27 @@ describe('readIncludedUsageTokens', () => {
   it('is null when no call succeeded', () => {
     const steps = [makeStep({ outcome: 'FAILED' }), makeStep({ provider: null })];
     expect(readIncludedUsageTokens(makeProgress({ steps }))).toBeNull();
+  });
+});
+
+describe('follow-the-bottom helpers', () => {
+  it('is at the bottom only within the margin of the scroll area end', () => {
+    expect(isScrolledToBottom(2000, 1200, 800, 24)).toBe(true);
+    expect(isScrolledToBottom(2000, 1180, 800, 24)).toBe(true);
+    expect(isScrolledToBottom(2000, 1100, 800, 24)).toBe(false);
+  });
+
+  it('changes the signature when a step arrives or the status moves, and not otherwise', () => {
+    const one = makeProgress({ status: 'RUNNING', steps: [makeStep({ seq: 1 })] });
+    const same = makeProgress({ status: 'RUNNING', steps: [makeStep({ seq: 1 })] });
+    const more = makeProgress({
+      status: 'RUNNING',
+      steps: [makeStep({ seq: 1 }), makeStep({ seq: 2 })],
+    });
+    const done = makeProgress({ status: 'COMPLETED', steps: [makeStep({ seq: 1 })] });
+    expect(threadProgressSignature(same)).toBe(threadProgressSignature(one));
+    expect(threadProgressSignature(more)).not.toBe(threadProgressSignature(one));
+    expect(threadProgressSignature(done)).not.toBe(threadProgressSignature(one));
+    expect(threadProgressSignature(undefined)).toBe('');
   });
 });

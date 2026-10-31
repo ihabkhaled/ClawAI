@@ -10,6 +10,7 @@ import { ThreadGenerationRetryForm } from '@/components/threads/thread-generatio
 import { ThreadGenerationSelectionsView } from '@/components/threads/thread-generation-selections';
 import { ThreadGenerationTimeline } from '@/components/threads/thread-generation-timeline';
 import { Button } from '@/components/ui/button';
+import { useThreadFollowBottom } from '@/hooks/threads/use-thread-follow-bottom';
 import { useThreadProgressPanel } from '@/hooks/threads/use-thread-progress-panel';
 import { useTranslation } from '@/lib/i18n';
 import type { ThreadProgressPanelProps } from '@/types/thread-generation-progress.types';
@@ -23,6 +24,7 @@ import {
   readAllowanceRefunded,
   readThreadSpentMicro,
   threadHeadlineKey,
+  threadProgressSignature,
 } from '@/utilities/thread-generation-progress.utility';
 
 /**
@@ -45,6 +47,7 @@ export function ThreadGenerationProgressPanel({
   const included = progress === undefined ? null : describeIncludedUsage(progress);
   const isQueued = progress !== undefined && isQueuedThreadStatus(progress.status);
   const queueLine = describeThreadQueue(progress?.queue);
+  const endRef = useThreadFollowBottom(threadProgressSignature(progress), panel.isRunning);
 
   return (
     <section
@@ -186,6 +189,7 @@ export function ThreadGenerationProgressPanel({
           <ThreadGenerationDeleteDialog remove={panel.remove} />
         </>
       ) : null}
+      <div ref={endRef} aria-hidden="true" data-testid="thread-progress-end" />
     </section>
   );
 }

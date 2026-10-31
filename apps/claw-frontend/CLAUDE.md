@@ -1101,3 +1101,13 @@ copy the file from the matching `@fontsource/<family>` package and add it to `fo
 Admin plan model-access page (`use-model-access-page.ts`): in `ALLOW_COST_CLASSES` mode a model without a row is already allowed, so save sends only the rows that differ from the default (blocked, a role switched off, or a daily override). Sending one row per catalogue model passed the auth-service 100 KB JSON limit and failed with "request entity too large" (2026-10-30). Saved overrides are merged over the catalogue defaults on load, so a save does not drop them.
 
 Model pickers dim what the plan excludes (ADR-198). `useModelPlanAccess` asks `POST /chat-messages/model-access` (chunks of 300, cached a minute) and `useAvailableModels` sets `isLocked` on each cloud model; the shared `ModelPicker`, Compare list, escalation builder and AI-action dialog render it dimmed with the "Not on your plan" tag and refuse the click. The server decides: never re-derive a model's class in the browser. A failed lookup locks nothing. Local models are not asked about.
+
+### Thread progress follows the newest update
+
+`useThreadFollowBottom` (`hooks/threads/use-thread-follow-bottom.ts`) keeps the owner progress panel scrolled to its
+end marker while a job runs. The signature is `threadProgressSignature(progress)` (status, stage, round, step count,
+last step, failure code). It stops when the reader scrolls up on purpose (wheel up, touch drag, PageUp, ArrowUp, Home)
+and resumes once the scrolling element is within `THREAD_FOLLOW_BOTTOM_THRESHOLD_PX` (24) of its own bottom. The page
+scrolls inside `<main>`, not the window, so the check reads `event.target` (capture listener), never `window.innerHeight`:
+measuring against the window re-enabled following on a small scroll up. Reduced motion scrolls instantly. The panel polls
+every 3 s; there is no token streaming on this page.
