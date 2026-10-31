@@ -99,7 +99,7 @@
     "prettier": "^3.9.10",
     "prisma": "^7.10.1",
     "typescript": "6.0.3",
-    "typescript-eslint": "^8.72.0",
+    "typescript-eslint": "^8.72.1",
     "typescript7": "npm:typescript@7.0.2",
     "unplugin-swc": "^2.0.0",
     "vitest": "5.0.5"
@@ -118,7 +118,7 @@
     "mysql2": "^3.24.4",
     "@xmldom/xmldom": "^0.8.13",
     "follow-redirects": "^1.16.2",
-    "postcss": "^8.5.28",
+    "postcss": "^8.5.32",
     "fast-uri": "^3.1.4",
     "shell-quote": "^1.10.0",
     "sharp": "^0.35.3",
