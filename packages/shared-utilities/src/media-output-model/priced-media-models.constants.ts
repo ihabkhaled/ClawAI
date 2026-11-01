@@ -21,6 +21,7 @@ export const PRICED_MEDIA_MODEL_KEYS_BY_PROVIDER: ReadonlyMap<
       'gemini-3-pro-image-preview',
       'gemini-3-pro-image',
       'gemini-3.1-flash-lite-image',
+      'gemini-nano-banana-2.1',
       'nano-banana-pro-preview',
       'veo-3.1-lite-generate-preview',
       'veo-3.1-fast-generate-preview',

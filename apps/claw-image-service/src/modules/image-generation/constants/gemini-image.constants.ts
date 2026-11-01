@@ -1,9 +1,5 @@
 // Gemini models that support image generation via generateContent + IMAGE modality
-export const IMAGE_CAPABLE_MODELS = [
-  'gemini-2.5-flash-image',
-  'gemini-3.1-flash-image-preview',
-  'gemini-3-pro-image-preview',
-] as const;
+export const IMAGE_CAPABLE_MODELS = ['gemini-2.5-flash-image', 'gemini-nano-banana-2.1'] as const;
 
 /**
  * Prefix Google's ListModels puts on every id (`models/gemini-3-pro-image`).

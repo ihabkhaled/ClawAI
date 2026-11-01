@@ -99,6 +99,7 @@ describe('meteredImageModelKey', () => {
       'gemini-2.5-flash-image',
       'gemini-3.1-flash-image-preview',
       'gemini-3-pro-image-preview',
+      'gemini-nano-banana-2.1',
       'nano-banana-pro-preview',
     ]) {
       expect(meteredImageModelKey('IMAGE_GEMINI', id, 1024, 1024)).toBe(id);

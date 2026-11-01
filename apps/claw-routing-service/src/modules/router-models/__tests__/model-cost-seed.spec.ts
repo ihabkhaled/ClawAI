@@ -416,9 +416,17 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
     expect(find('GEMINI', 'gemini-2.5-flash-preview-tts')).toBeDefined();
   });
 
-  it('is version 16, so installs that ran v15 pick up the Gemini Omni video price', () => {
-    expect(MODEL_COST_SEED_VERSION).toBe(16);
-    expect(MODEL_COST_SEED_NAME).toBe('model-cost-list-prices-2026-v16');
+  it('is version 17, so installs that ran v16 pick up the Nano Banana 2.1 image price', () => {
+    expect(MODEL_COST_SEED_VERSION).toBe(17);
+    expect(MODEL_COST_SEED_NAME).toBe('model-cost-list-prices-2026-v17');
+  });
+
+  it('prices gemini-nano-banana-2.1 at $1.50/M input and $30/M image output', () => {
+    const row = MODEL_COST_SEED_ENTRIES.find(
+      (entry) => entry.provider === 'GEMINI' && entry.modelKey === 'gemini-nano-banana-2.1',
+    );
+    expect(row?.inputPerMillionMicroUsd).toBe(1_500_000);
+    expect(row?.outputPerMillionMicroUsd).toBe(30_000_000);
   });
 
   it('prices gemini-omni-1.1-flash at $0.10 per second of video', () => {

@@ -13,6 +13,7 @@ describe('classifyMediaOutputModel', () => {
     ['GEMINI', 'gemini-3-pro-image-preview', 'IMAGE'],
     ['GEMINI', 'models/gemini-2.5-flash-image', 'IMAGE'],
     ['GEMINI', 'nano-banana-pro-preview', 'IMAGE'],
+    ['GEMINI', 'models/gemini-nano-banana-2.1', 'IMAGE'],
     ['GEMINI', 'imagen-4.0-generate-001', 'IMAGE'],
     ['OPENAI', 'chatgpt-image-latest', 'IMAGE'],
     ['OPENAI', 'gpt-image-1', 'IMAGE'],

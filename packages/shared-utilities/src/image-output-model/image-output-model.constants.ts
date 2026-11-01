@@ -20,7 +20,10 @@
  * no video-generation capability to redirect them to.
  */
 export const IMAGE_OUTPUT_MODEL_PATTERNS_BY_CONNECTOR: ReadonlyMap<string, RegExp> = new Map([
-  ['GEMINI', /^(models\/)?(gemini-[\w.-]*-image[\w.-]*|imagen-[\w.-]+|nano-banana[\w.-]*)$/iu],
+  [
+    'GEMINI',
+    /^(models\/)?(gemini-[\w.-]*-image[\w.-]*|imagen-[\w.-]+|(?:gemini-)?nano-banana[\w.-]*)$/iu,
+  ],
   ['GROK', /^(grok-imagine-image[\w.-]*|grok-2-image[\w.-]*)$/iu],
   ['OPENAI', /^(gpt-image[\w.-]*|dall-e-\d[\w.-]*|chatgpt-image[\w.-]*)$/iu],
 ]);

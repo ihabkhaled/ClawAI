@@ -76,8 +76,11 @@ import { AGGREGATOR_COST_ROWS } from './model-cost-seed-aggregators.constants';
 /// down on 2026-10-22. Priced per SECOND of 720p video at the pricing page's about $0.10/s
 /// ($17.50 per 1M video output tokens at 5,792 tokens/s). A new key: it fills a gap. The Veo
 /// rows stay for old receipts.
-export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v16';
-export const MODEL_COST_SEED_VERSION = 16;
+///
+/// v17 (2026-11-01): `gemini-nano-banana-2.1` image row (input $1.50/M, image output $30/M).
+/// A new key: it fills a gap.
+export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v17';
+export const MODEL_COST_SEED_VERSION = 17;
 
 /// Next in routing-service's 740_040_00N advisory-lock block (001 = deployment
 /// backfill, 002 = router chain). Distinct from payment-service's 740_018_001
@@ -492,6 +495,18 @@ const LISTED_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.freeze([
     cacheWritePerMillionMicroUsd: null,
     costClass: CostClass.PREMIUM,
     replacesFallbackRate: true,
+  }),
+  // v17: Gemini Nano Banana 2.1 (ai.google.dev/gemini-api/docs/pricing, 2026-11-01): input $1.50/M,
+  // image output $30/M (1K image = 1,120 tokens = $0.0336; 2K $0.0504; 4K $0.113).
+  Object.freeze({
+    provider: 'GEMINI',
+    modelKey: 'gemini-nano-banana-2.1',
+    inputPerMillionMicroUsd: 1_500_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 30_000_000,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
   }),
   // ── OpenAI images: PER-IMAGE list prices (unit metering, seed v4) ────────
   //

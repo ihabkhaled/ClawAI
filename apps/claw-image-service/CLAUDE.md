@@ -633,3 +633,7 @@ bytes; there is no provider poll. Invariants:
 (owner check, idempotent, a hold is released by the execution path, never by the route).
 `POST /internal/{videos,audio}/:id/assistant-message` takes `{userId, assistantMessageId}` exactly as
 chat-service's `linkMedia` sends it. The image wrapper is `cancelGenerationForService`.
+
+## Nano Banana 2.1 (2026-11-01)
+
+Gemini Nano Banana 2.1 (`gemini-nano-banana-2.1`) is a priced image model: input $1.50/M, image output $30/M (1K image $0.0336, 2K $0.0504, 4K $0.113), routing seed v17, source ai.google.dev/gemini-api/docs/pricing read 2026-11-01. It is in `GEMINI_IMAGE_PRICED_MODELS` and `IMAGE_CAPABLE_MODELS`; the dead 3.1 Flash and 3 Pro previews left the fallback list. It goes through `:generateContent` like 2.5 Flash Image; the Interactions API is not used for images.

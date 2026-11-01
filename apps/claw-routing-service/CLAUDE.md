@@ -416,3 +416,7 @@ Cost seed v15 (`model-cost-list-prices-2026-v15`): media prices checked 2026-10-
 ## Cost seed v16 (2026-11-01)
 
 Gemini video is `gemini-omni-1.1-flash` (Interactions API, about $0.10/s, routing seed v16). Google shut Veo 3.1 down on 2026-10-22; image-service walks a refused Veo pick to Omni. The v16 seed adds the `gemini-omni-1.1-flash` per-second row; the Veo rows stay for old receipts. `gemini-omni` is excluded from chat substitutes like Veo.
+
+## Cost seed v17 (2026-11-01)
+
+Gemini Nano Banana 2.1 (`gemini-nano-banana-2.1`) is a priced image model: input $1.50/M, image output $30/M (1K image $0.0336, 2K $0.0504, 4K $0.113), routing seed v17, source ai.google.dev/gemini-api/docs/pricing read 2026-11-01. The v17 seed adds its token-priced row.
