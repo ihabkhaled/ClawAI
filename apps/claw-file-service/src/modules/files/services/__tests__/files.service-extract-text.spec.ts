@@ -2,6 +2,7 @@ import { vi } from 'vitest';
 
 import { FilesService } from '../files.service';
 import { type ExtractTextDto } from '../../dto/extract-text.dto';
+import { extractTextFromDocument } from '../../../../common/utilities/document-text.utility';
 import { extractTextFromPdf } from '../../../../common/utilities/pdf-parser.utility';
 
 // Hoisted above the imports by vitest whatever their position here, so the
@@ -10,11 +11,16 @@ import { extractTextFromPdf } from '../../../../common/utilities/pdf-parser.util
 vi.mock('../../../../common/utilities/pdf-parser.utility', () => ({
   extractTextFromPdf: vi.fn(),
 }));
+vi.mock('../../../../common/utilities/document-text.utility', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  extractTextFromDocument: vi.fn(),
+}));
 vi.mock('../../../../app/config/app.config', () => ({
   AppConfig: { get: () => ({ SCANNED_PDF_CHAR_THRESHOLD: 100 }) },
 }));
 
 const parse = vi.mocked(extractTextFromPdf);
+const parseDocument = vi.mocked(extractTextFromDocument);
 
 // Every collaborator is absent on purpose: this path must not reach a
 // repository, the queue or storage, so a test that gave it one could not tell
@@ -130,10 +136,49 @@ describe('FilesService.extractText', () => {
   });
 
   it('refuses a format it cannot read, by name', async () => {
-    await expect(service().extractText(request({ filename: 'notes.docx' }))).rejects.toThrow(
-      /PDF/u,
+    await expect(service().extractText(request({ filename: 'notes.odt' }))).rejects.toThrow(
+      /PDF, DOCX, XLSX, PPTX and RTF/u,
     );
     expect(parse).not.toHaveBeenCalled();
+    expect(parseDocument).not.toHaveBeenCalled();
+  });
+
+  describe.each(['.docx', '.xlsx', '.pptx', '.rtf'])('an office document (%s)', (extension) => {
+    beforeEach(() => {
+      parseDocument.mockReset();
+      parseDocument.mockResolvedValue('the whole document');
+    });
+
+    it('is read as one page and never touches the PDF parser', async () => {
+      const result = await service().extractText(
+        request({ filename: `Report${extension.toUpperCase()}` }),
+      );
+
+      expect(parseDocument.mock.calls[0]?.[0]).toBe(extension);
+      expect(parse).not.toHaveBeenCalled();
+      expect(result).toEqual({
+        text: 'the whole document',
+        pages: [{ number: 1, text: 'the whole document' }],
+        totalPages: 1,
+        isScanned: false,
+      });
+    });
+
+    it('ignores a page range instead of answering an empty page', async () => {
+      const result = await service().extractText(
+        request({ filename: `a${extension}`, pages: { from: 4, to: 6 } }),
+      );
+
+      expect(result.pages).toHaveLength(1);
+      expect(result.totalPages).toBe(1);
+    });
+  });
+
+  it('still refuses an empty office payload', async () => {
+    await expect(
+      service().extractText(request({ filename: 'a.docx', contentBase64: '!!!!' })),
+    ).rejects.toThrow(/no bytes/u);
+    expect(parseDocument).not.toHaveBeenCalled();
   });
 
   it('refuses a payload that decodes to nothing', async () => {

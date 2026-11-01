@@ -24,6 +24,10 @@ import { type StoreGeneratedVideoDto } from '../dto/store-generated-video.dto';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { deleteFile, readFile, saveFile } from '../../../common/utilities';
 import { resolveUploadMimeType } from '../../../common/utilities/archive-format.utility';
+import {
+  documentTextExtension,
+  extractTextFromDocument,
+} from '../../../common/utilities/document-text.utility';
 import { normalizeImageUpload } from '../../../common/utilities/image-normalization.utility';
 import {
   MAX_PUBLISHED_COPY_BYTES,
@@ -839,17 +843,23 @@ export class FilesService {
    * their storage, which is not what "read this file" means — so nothing here
    * is persisted, no row is written and no event is published.
    *
-   * PDF only for now, and it says so rather than returning empty text for a
-   * format it cannot read: an agent that gets "" cannot tell an empty document
-   * from an unsupported one, and will try again.
+   * PDF, DOCX, XLSX, PPTX and RTF, and it says so rather than returning empty
+   * text for a format it cannot read: an agent that gets "" cannot tell an empty
+   * document from an unsupported one, and will try again.
    */
   async extractText(dto: ExtractTextDto): Promise<ExtractedTextResult> {
-    if (!dto.filename.toLowerCase().endsWith('.pdf')) {
-      throw new BadRequestException('extract-text reads PDF files only');
+    const documentExtension = documentTextExtension(dto.filename);
+    if (documentExtension === undefined && !dto.filename.toLowerCase().endsWith('.pdf')) {
+      throw new BadRequestException('extract-text reads PDF, DOCX, XLSX, PPTX and RTF files only');
     }
     const buffer = Buffer.from(dto.contentBase64, 'base64');
     if (buffer.length === 0) {
       throw new BadRequestException('contentBase64 decoded to no bytes');
+    }
+    if (documentExtension !== undefined) {
+      const text = await extractTextFromDocument(documentExtension, buffer);
+      this.logger.debug(`extractText: "${dto.filename}" ${String(text.length)} chars`);
+      return { text, pages: [{ number: 1, text }], totalPages: 1, isScanned: false };
     }
     const cfg = AppConfig.get();
     const extraction = await extractTextFromPdf(buffer, cfg.SCANNED_PDF_CHAR_THRESHOLD, dto.pages);

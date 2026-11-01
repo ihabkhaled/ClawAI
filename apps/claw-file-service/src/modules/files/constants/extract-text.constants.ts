@@ -42,3 +42,12 @@ export const EXTRACT_TEXT_MAX_PAGE_SPAN = 100;
  * a document look scanned.
  */
 export const EXTRACT_TEXT_SCANNED_PAGE_MIN_CHARS = 20;
+
+/**
+ * Office formats the stateless read understands besides PDF.
+ *
+ * None of them has stable pages, so each reads as one page: the agent gets the
+ * whole text (bounded by the parsers) and `totalPages: 1`, and a `pages` range on
+ * one of them is ignored rather than answered with an empty page.
+ */
+export const DOCUMENT_TEXT_EXTENSIONS = ['.docx', '.xlsx', '.pptx', '.rtf'] as const;

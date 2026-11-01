@@ -290,6 +290,10 @@ export default tseslint.config(
       // from a constant name or a formatted integer; the user's filename
       // never reaches it (media-args.utility / video-processing.constants).
       'src/common/utilities/media-process.utility.ts',
+      // 2026-11-01 — the one path written is `document.<ext>` inside a fresh
+      // mkdtemp dir; the extension comes from a four-value allowlist and the
+      // user's filename never reaches it (document-text.utility).
+      'src/common/utilities/document-text.utility.ts',
     ],
     rules: {
       'security/detect-non-literal-fs-filename': 'off',

@@ -731,6 +731,16 @@ Failure modes:
 `POST /files/extract-text` takes bytes and page numbers and returns text. It
 writes no row, publishes no event and keeps no bytes.
 
+**Office documents too (2026-11-01).** The same call reads `.docx`, `.xlsx`, `.pptx`
+and `.rtf` (`documentTextExtension`, `extractTextFromDocument` in
+`common/utilities/document-text.utility.ts`; the parsers are the upload path's own and keep
+their ADR-053/ADR-095 bounds). They have no pages, so the answer is one page,
+`totalPages: 1`, `isScanned: false`, and a `pages` range is ignored. DOCX and RTF are parsed
+from memory; XLSX and PPTX open a ZIP by path, so the bytes sit in a private temporary
+folder (mode 0600) for one parse and the folder is removed in every outcome. Any other
+extension answers 400 `extract-text reads PDF, DOCX, XLSX, PPTX and RTF files only`. Tests:
+`document-text.utility.spec.ts`, `files.service-extract-text.spec.ts`.
+
 **Why it is not `upload`.** The coding agent reads a PDF that is already in the
 user's workspace. Uploading it would put a copy of a repository file in their
 file list, their storage and their retention window — which is not what "read
