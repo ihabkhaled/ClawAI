@@ -30,7 +30,31 @@ export const MEDIA_TOOL_FENCE_SOURCE = 'clawai-media';
 export const MEDIA_TOOL_SURFACES: ReadonlySet<ChatSurface> = new Set([
   ChatSurface.CHAT,
   ChatSurface.COMPARE,
+  ChatSurface.CONSENSUS,
+  ChatSurface.ESCALATION,
+  ChatSurface.DECOMPOSE,
+  ChatSurface.BEST_OF_N,
+  ChatSurface.PIPELINE,
+  ChatSurface.COST_ENSEMBLE,
+  ChatSurface.ROLE_PACK,
+  ChatSurface.VERIFY,
 ]);
+
+/**
+ * Of those, the surfaces where EVERY model call may carry the tools (one answer per call). The
+ * rest produce many candidates and offer the tools only on the single final-answer call
+ * (`context.mediaFinalStep`, set by `MediaFinalStepManager`).
+ */
+export const MEDIA_EVERY_CALL_SURFACES: ReadonlySet<ChatSurface> = new Set([
+  ChatSurface.CHAT,
+  ChatSurface.COMPARE,
+]);
+
+/** Background given to the final-answer call of a many-candidate surface. */
+export const MEDIA_FINAL_STEP_NOTE =
+  "FINAL ANSWER STEP: other models already prepared the answer below for the user's request. " +
+  'If the user asked you to create media, create it with the media tools, then reply with the final answer ' +
+  'that keeps the useful content of the prepared answer. If you do not need a tool, reply with the prepared answer unchanged.';
 
 /** Tool rounds, calls per answer and generations per user message (all lanes together). */
 export const MEDIA_TOOL_MAX_ROUNDS = 3;
@@ -494,4 +518,54 @@ export const MEDIA_CREATE_VERBS: ReadonlySet<string> = new Set([
   'انشئ',
   'اعمل',
   'ولد',
+]);
+
+/** Words that decide the kind of media when the shared video and image classifiers are silent. */
+export const MEDIA_AUDIO_WORDS: ReadonlySet<string> = new Set([
+  'audio',
+  'voiceover',
+  'voiceovers',
+  'voice-over',
+  'song',
+  'songs',
+  'music',
+  'melody',
+  'jingle',
+  'soundtrack',
+  'podcast',
+  'speech',
+  'tts',
+  'sing',
+  'speak',
+  'aloud',
+  'narrate',
+]);
+export const MEDIA_MUSIC_WORDS: ReadonlySet<string> = new Set([
+  'song',
+  'songs',
+  'music',
+  'melody',
+  'jingle',
+  'soundtrack',
+  'sing',
+]);
+export const MEDIA_IMAGE_WORDS: ReadonlySet<string> = new Set([
+  'image',
+  'images',
+  'picture',
+  'pictures',
+  'photo',
+  'photos',
+  'drawing',
+  'illustration',
+  'logo',
+  'icon',
+  'wallpaper',
+  'poster',
+  'artwork',
+  'sketch',
+  'painting',
+  'avatar',
+  'draw',
+  'paint',
 ]);

@@ -1,4 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { MediaFinalStepManager } from './media-final-step.manager';
+import { runInMediaTurn } from '../utilities/media-turn.utility';
+import type { MediaFinalStepResult } from '../types/media-tools.types';
+import { buildMediaMetaPart } from '../utilities/media-metadata.utility';
 import { PaygSurface, TokenLedgerContext } from '@claw/shared-types';
 
 import { EscalationChainStatus } from '../../../common/enums/escalation-chain-status.enum';
@@ -38,6 +42,7 @@ export class EscalationChainManager {
     private readonly chatStreamService: ChatStreamService,
     private readonly qualityCheckManager: QualityCheckManager,
     private readonly researchEnricherManager: ResearchEnricherManager,
+    private readonly mediaFinalStep?: MediaFinalStepManager,
   ) {}
 
   async executeEscalationChain(
@@ -57,15 +62,17 @@ export class EscalationChainManager {
 
     const userMessage = await this.storeUserMessage(threadId, content, fileIds, pluginRefs);
 
-    void this.executeInBackground(
-      userId,
-      threadId,
-      content,
-      chain,
-      fileIds,
-      researchMode,
-      userToken,
-      researchProviderId,
+    void runInMediaTurn(this.mediaFinalStep, threadId, () =>
+      this.executeInBackground(
+        userId,
+        threadId,
+        content,
+        chain,
+        fileIds,
+        researchMode,
+        userToken,
+        researchProviderId,
+      ),
     );
 
     return { messageId: userMessage.id, threadId, prompt: content };
@@ -101,7 +108,15 @@ export class EscalationChainManager {
       });
       const context = injectResearchEvidenceIntoContext(rawContext, enrichment.systemPrompt);
       const result = await this.runChain(threadId, content, chain, context, threadSettings);
-      await this.storeChainResult(threadId, result, enrichment.transcript);
+      const final = await this.mediaFinalStep?.finalize({
+        context,
+        threadSettings,
+        provider: result.finalProvider,
+        model: result.finalModel,
+        ledgerContext: TokenLedgerContext.ESCALATION_CHAIN,
+        answer: result.finalAnswer,
+      });
+      await this.storeChainResult(threadId, result, enrichment.transcript, final);
 
       this.logger.log(
         `executeInBackground: escalation done — stepUsed=${String(result.stepUsed)}/${String(result.totalSteps)} status=${result.status}`,
@@ -335,11 +350,12 @@ export class EscalationChainManager {
     threadId: string,
     result: EscalationChainResult,
     researchTranscript: ResearchTranscript | null,
+    final?: MediaFinalStepResult,
   ): Promise<void> {
-    await this.chatMessagesRepository.create({
+    const saved = await this.chatMessagesRepository.create({
       threadId,
       role: 'ASSISTANT',
-      content: result.finalAnswer,
+      content: final?.content ?? result.finalAnswer,
       provider: result.finalProvider,
       model: result.finalModel,
       usedFallback: false,
@@ -352,9 +368,11 @@ export class EscalationChainManager {
         stepResults: result.stepResults,
         finalProvider: result.finalProvider,
         finalModel: result.finalModel,
+        ...buildMediaMetaPart(final ?? {}),
         ...(researchTranscript === null ? {} : { researchTranscript }),
       },
     });
+    void this.mediaFinalStep?.linkSaved(final, threadId, saved.id);
   }
 
   private async storeErrorMessage(threadId: string, errorMsg: string): Promise<void> {

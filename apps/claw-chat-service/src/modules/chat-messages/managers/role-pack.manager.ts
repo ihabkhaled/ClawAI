@@ -1,4 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { MediaFinalStepManager } from './media-final-step.manager';
+import { runInMediaTurn } from '../utilities/media-turn.utility';
+import type { MediaFinalStepResult } from '../types/media-tools.types';
+import { buildMediaMetaPart } from '../utilities/media-metadata.utility';
 import { randomUUID } from 'node:crypto';
 
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
@@ -55,6 +59,7 @@ export class RolePackManager {
     private readonly researchEnricherManager: ResearchEnricherManager,
     private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
+    private readonly mediaFinalStep?: MediaFinalStepManager,
   ) {}
 
   async executeRolePack(
@@ -79,16 +84,18 @@ export class RolePackManager {
       },
     });
 
-    void this.executeInBackground(
-      threadId,
-      dto.content,
-      dto.pack,
-      userId,
-      selection,
-      dto.researchMode,
-      dto.researchProviderId,
-      userToken,
-      dto.fileIds,
+    void runInMediaTurn(this.mediaFinalStep, threadId, () =>
+      this.executeInBackground(
+        threadId,
+        dto.content,
+        dto.pack,
+        userId,
+        selection,
+        dto.researchMode,
+        dto.researchProviderId,
+        userToken,
+        dto.fileIds,
+      ),
     );
 
     return { messageId: userMessage.id, threadId };
@@ -134,6 +141,12 @@ export class RolePackManager {
       }
       const bestOutput = this.aggregateAndAnnounce(threadId, results, pack);
 
+      const final = await this.mediaFinalStep?.finalizeForBundle(
+        bundle,
+        resolvedSelection,
+        TokenLedgerContext.ROLE_PACK,
+        bestOutput,
+      );
       await this.storePackMessage(
         threadId,
         bestOutput,
@@ -142,6 +155,7 @@ export class RolePackManager {
         resolvedSelection,
         enrichment.transcript,
         Date.now() - startTime,
+        final,
       );
 
       this.safeEmitStage(threadId, {
@@ -212,11 +226,12 @@ export class RolePackManager {
     selection: AdvancedModelSelectionResolution,
     transcript: ResearchOrchestrationResult['transcript'],
     latencyMs: number,
+    final?: MediaFinalStepResult,
   ): Promise<void> {
-    await this.chatMessagesRepository.create({
+    const saved = await this.chatMessagesRepository.create({
       threadId,
       role: 'ASSISTANT',
-      content,
+      content: final?.content ?? content,
       provider: selection.actualProvider,
       model: selection.actualModel,
       latencyMs,
@@ -229,10 +244,12 @@ export class RolePackManager {
         rolePack: true,
         pack,
         members: results,
+        ...buildMediaMetaPart(final ?? {}),
         modelSelection: selection,
         ...(transcript === null ? {} : { researchTranscript: transcript }),
       },
     });
+    void this.mediaFinalStep?.linkSaved(final, threadId, saved.id);
   }
 
   private async handleBackgroundFailure(threadId: string, error: unknown): Promise<void> {

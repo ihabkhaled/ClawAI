@@ -1868,4 +1868,14 @@ mimeType, durationSec, no bytes, no link) as the tool result to the SAME model.
   `imageGenerationId` (which marks a generation turn and skips token accounting).
 - Limits: 3 tool rounds, 2 calls per answer, 3 generations per user message across Compare lanes, polls bounded per
   kind. A timeout keeps the card (it keeps rendering); a failure is a tool error the model explains.
-- New surface? Add it to `MEDIA_TOOL_SURFACES` only together with a store path that spreads `buildMediaMetaPart`.
+- Many-candidate surfaces (Consensus, Escalation, Best-of-N, Decompose, Pipeline, Cost-Ensemble, Role Pack, Verify):
+  candidates never get the tools. The step that produces the one user-visible answer calls
+  `MediaFinalStepManager.finalize` / `finalizeForBundle` once (only when the user asked to create media); the media rides
+  on the final message through `buildMediaMetaPart(final)`. Repair keeps the media of the message it rewrites
+  (`readStoredMediaGenerations`); the judge and critic are never offered tools and a judge revision keeps the media.
+- Orchestration managers launch their background run through `runInMediaTurn(this.mediaFinalStep, threadId, ...)`
+  (the thread's Stop key for the whole turn) and, after saving the final message, call
+  `mediaFinalStep.linkSaved(final, threadId, saved.id)`. A final model that cannot call tools gets the media
+  generated directly (`MediaToolLoopManager.generateDirect`).
+- New surface? Add it to `MEDIA_TOOL_SURFACES` only together with a store path that spreads `buildMediaMetaPart`, and
+  if it makes many candidates call `finalize` from its final step and leave `MEDIA_EVERY_CALL_SURFACES` alone.

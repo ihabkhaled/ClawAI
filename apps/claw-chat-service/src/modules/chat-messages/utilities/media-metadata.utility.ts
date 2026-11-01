@@ -1,5 +1,6 @@
 import { MEDIA_GENERATIONS_METADATA_KEY } from '../constants/media-tools.constants';
-import type { MediaKind } from '../enums/media-kind.enum';
+import { MediaGenerationState } from '../enums/media-generation-state.enum';
+import { MediaKind } from '../enums/media-kind.enum';
 import type { LlmResponse } from '../types/execution.types';
 import type { MediaGenerationRef } from '../types/media-tools.types';
 import { buildPluginMetaPart } from './plugin-metadata.utility';
@@ -48,4 +49,26 @@ export function mediaGenerationIds(
 /** Whether Stop has aborted the run (read through a function so narrowing does not freeze it). */
 export function isAbortedSignal(signal: AbortSignal | undefined): boolean {
   return signal?.aborted === true;
+}
+
+/**
+ * The media a stored assistant message carries (`metadata.mediaGenerations`), read defensively.
+ * Repair and Verify rewrite text; the rewritten message keeps these cards, never drops or invents.
+ */
+export function readStoredMediaGenerations(metadata: unknown): MediaGenerationRef[] {
+  if (typeof metadata !== 'object' || metadata === null) return [];
+  const raw: unknown = Reflect.get(metadata, MEDIA_GENERATIONS_METADATA_KEY);
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((entry): MediaGenerationRef[] => {
+    if (typeof entry !== 'object' || entry === null) return [];
+    const kind: unknown = Reflect.get(entry, 'kind');
+    const id: unknown = Reflect.get(entry, 'id');
+    const status: unknown = Reflect.get(entry, 'status');
+    const prompt: unknown = Reflect.get(entry, 'prompt');
+    const known = Object.values(MediaKind).find((candidate) => candidate === kind);
+    const state = Object.values(MediaGenerationState).find((candidate) => candidate === status);
+    return known === undefined || state === undefined || typeof id !== 'string' || id.length === 0
+      ? []
+      : [{ kind: known, id, status: state, prompt: typeof prompt === 'string' ? prompt : '' }];
+  });
 }

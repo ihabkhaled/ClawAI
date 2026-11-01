@@ -16,6 +16,7 @@ import {
   MEDIA_PLAN_ERROR_CODES,
   MEDIA_POLL,
   MEDIA_PROMPT_CARD_CHARS,
+  MEDIA_PROMPT_MAX_CHARS,
   MEDIA_RESULT_HINT_BUDGET,
   MEDIA_RESULT_HINT_CANCELLED,
   MEDIA_RESULT_HINT_CREDIT,
@@ -59,6 +60,7 @@ import type { NormalizedToolCall } from '../types/provider-tool.types';
 import type { ToolTurn } from '../types/tool-turn.types';
 import { claimsMedia, stripMediaClaims } from '../utilities/media-claim.utility';
 import { isAbortedSignal } from '../utilities/media-metadata.utility';
+import { detectAudioKind, detectMediaKind } from '../utilities/media-tool-eligibility.utility';
 import { awaitMedia, cancelMedia, startMedia } from '../utilities/media-gateway.utility';
 import {
   buildMediaToolCatalog,
@@ -109,7 +111,7 @@ export class MediaToolLoopManager {
       return this.planDeniedAnswer(args, base, options, text);
     }
     const definitions = buildMediaToolCatalog(Object.values(MediaKind));
-    const lastUser = [...args.context.threadMessages].reverse().find((m) => m.role === 'USER');
+    const lastUser = this.lastRealUser(args.context);
     const state: MediaLoopState = {
       context: this.withInstructions(base),
       generations: [],
@@ -121,18 +123,98 @@ export class MediaToolLoopManager {
     };
     const threadId = lastUser?.threadId;
     if (this.wasCancelled(state.turnKey)) return this.stoppedAnswer(args.planRefusal(), state);
-    // Only a single-lane chat turn owns the thread's Stop key; Compare lanes run side by side
-    // and must not abort each other, so their wait is bounded by the poll cap alone.
-    const controller =
-      (args.context.platformSurface ?? ChatSurface.CHAT) === ChatSurface.CHAT &&
-      threadId !== undefined
-        ? this.cancellation?.register(threadId)
-        : undefined;
+    const stop = this.registerStop(args.context, threadId);
+    const controller = stop.controller;
     try {
       return await this.toolRounds({ args, state, options, definitions, controller });
     } finally {
-      if (controller !== undefined && threadId !== undefined) this.cancellation?.release(threadId);
+      if (stop.owned && threadId !== undefined) this.cancellation?.release(threadId);
     }
+  }
+
+  /**
+   * Only a single-lane chat turn, or the ONE final-answer step of an orchestration, owns the
+   * thread's Stop key; Compare lanes run side by side and must not abort each other, so their
+   * wait is bounded by the poll cap alone.
+   */
+  private registerStop(
+    context: AssembledContext,
+    threadId: string | undefined,
+  ): { controller: AbortController | undefined; owned: boolean } {
+    if (threadId === undefined || this.cancellation === undefined) {
+      return { controller: undefined, owned: false };
+    }
+    // The final step of an orchestration listens to the turn's own controller (registered for the
+    // whole run by `MediaFinalStepManager.runScoped`): registering again would abort that turn.
+    if (context.mediaFinalStep === true) {
+      const scoped = this.cancellation.getController(threadId);
+      if (scoped !== undefined) return { controller: scoped, owned: false };
+    }
+    const owns =
+      (context.platformSurface ?? ChatSurface.CHAT) === ChatSurface.CHAT ||
+      context.mediaFinalStep === true;
+    return owns
+      ? { controller: this.cancellation.register(threadId), owned: true }
+      : { controller: undefined, owned: false };
+  }
+
+  /** The last message the user typed (a mode's synthetic prompt turn is not one). */
+  private lastRealUser(
+    context: AssembledContext,
+  ): AssembledContext['threadMessages'][number] | undefined {
+    return [...context.threadMessages]
+      .reverse()
+      .find((m) => m.role === 'USER' && !m.id.startsWith('mode-prompt-'));
+  }
+
+  /**
+   * Media for a final answer whose model cannot call tools (Ollama, any non-tool provider): the
+   * user's own request is the prompt, the kind comes from the shared classifiers, and the SAME
+   * machinery runs once: plan gate, shared per-message budget, provider fallback list, Stop. The
+   * card alone says the rest; no text is added.
+   */
+  async generateDirect(
+    context: AssembledContext,
+    signal: AbortSignal | undefined,
+  ): Promise<{ generations: MediaGenerationRef[]; cancelled: boolean }> {
+    const text = latestUserTurnText(context.threadMessages) ?? '';
+    const kind = detectMediaKind(text);
+    const lastUser = this.lastRealUser(context);
+    const turnKey = `${context.userId}:${lastUser?.id ?? 'turn'}`;
+    if (
+      kind === undefined ||
+      !(await this.planAllows(context.userId)) ||
+      !this.takeBudget(turnKey)
+    ) {
+      return { generations: [], cancelled: false };
+    }
+    const state: MediaLoopState = {
+      context,
+      generations: [],
+      callsMade: 1,
+      planDenied: false,
+      cancelled: false,
+      turnKey,
+      claimRetried: false,
+    };
+    const toolArgs: MediaToolArgs = {
+      kind,
+      prompt: text.slice(0, MEDIA_PROMPT_MAX_CHARS),
+      audioKind: kind === MediaKind.AUDIO ? detectAudioKind(text) : undefined,
+    };
+    await this.generate(
+      {
+        context,
+        executionOptions: undefined,
+        // The direct path never asks a model or shows a plan notice: these are not called.
+        callModel: () => Promise.reject(new Error('generateDirect does not call a model')),
+        planRefusal: () => ({ content: '', provider: '', model: '' }) as LlmResponse,
+      },
+      state,
+      toolArgs,
+      signal,
+    );
+    return { generations: state.generations, cancelled: state.cancelled };
   }
 
   private async planAllows(userId: string): Promise<boolean> {
@@ -335,7 +417,7 @@ export class MediaToolLoopManager {
     isLast: boolean;
   }): Promise<{ done: boolean; outcome: MediaCallOutcome }> {
     const { args, state, toolArgs, target, signal, isLast } = input;
-    const lastUser = [...args.context.threadMessages].reverse().find((m) => m.role === 'USER');
+    const lastUser = this.lastRealUser(args.context);
     const started = await startMedia(
       toMediaStartRequest(toolArgs, target, {
         userId: args.context.userId,

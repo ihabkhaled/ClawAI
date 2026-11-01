@@ -1,3 +1,8 @@
+import type { MediaGenerationRef } from '../types/media-tools.types';
+import {
+  buildMediaMetaPart,
+  readStoredMediaGenerations,
+} from '../utilities/media-metadata.utility';
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 
@@ -177,6 +182,7 @@ export class AnswerRepairManager {
         resolvedSelection,
         enrichment.transcript,
         Date.now() - startTime,
+        routedMessageId,
       );
 
       this.logger.log(
@@ -228,7 +234,9 @@ export class AnswerRepairManager {
     selection: AdvancedModelSelectionResolution,
     transcript: ResearchOrchestrationResult['transcript'],
     latencyMs: number,
+    sourceMessageId?: string,
   ): Promise<void> {
+    const preserved = await this.sourceMedia(sourceMessageId);
     const provider = selection.actualProvider;
     const model = selection.actualModel;
     await this.chatMessagesRepository.create({
@@ -245,9 +253,17 @@ export class AnswerRepairManager {
         repairProvider: provider,
         repairModel: model,
         modelSelection: selection,
+        ...buildMediaMetaPart({ mediaGenerations: preserved }),
         ...(transcript === null ? {} : { researchTranscript: transcript }),
       },
     });
+  }
+
+  /** The cards of the message being repaired: a repair rewrites its text and keeps its media. */
+  private async sourceMedia(messageId: string | undefined): Promise<MediaGenerationRef[]> {
+    if (messageId === undefined) return [];
+    const source = await this.chatMessagesRepository.findById(messageId);
+    return readStoredMediaGenerations(source?.metadata);
   }
 
   private async handleBackgroundFailure(threadId: string, error: unknown): Promise<void> {

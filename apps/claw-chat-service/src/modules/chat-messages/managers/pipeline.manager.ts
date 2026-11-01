@@ -1,4 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { MediaFinalStepManager } from './media-final-step.manager';
+import { runInMediaTurn } from '../utilities/media-turn.utility';
+import type { MediaFinalStepResult } from '../types/media-tools.types';
+import { buildMediaMetaPart } from '../utilities/media-metadata.utility';
 import { randomUUID } from 'node:crypto';
 import { ProgressActorType, StreamEventType } from '../../../common/enums';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
@@ -57,6 +61,7 @@ export class PipelineManager {
     private readonly researchEnricherManager: ResearchEnricherManager,
     private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
+    private readonly mediaFinalStep?: MediaFinalStepManager,
   ) {}
 
   async executePipeline(
@@ -82,7 +87,9 @@ export class PipelineManager {
       },
     });
 
-    void this.executeInBackground(threadId, dto.content, dto, userId, selection, userToken);
+    void runInMediaTurn(this.mediaFinalStep, threadId, () =>
+      this.executeInBackground(threadId, dto.content, dto, userId, selection, userToken),
+    );
 
     return { messageId: userMessage.id, threadId };
   }
@@ -141,6 +148,12 @@ export class PipelineManager {
       const finalOutput = stageResults.at(-1)?.output ?? content;
       const resolvedModel = resolvedSelection.actualModel;
 
+      const final = await this.mediaFinalStep?.finalizeForBundle(
+        bundle,
+        resolvedSelection,
+        TokenLedgerContext.PIPELINE,
+        finalOutput,
+      );
       await this.storeFinalMessage(
         threadId,
         finalOutput,
@@ -153,6 +166,7 @@ export class PipelineManager {
           stageResults,
           enrichment.transcript,
         ),
+        final,
       );
 
       this.safeEmitStage(threadId, {
@@ -191,17 +205,19 @@ export class PipelineManager {
     model: string,
     latencyMs: number,
     metadata: Record<string, unknown>,
+    final?: MediaFinalStepResult,
   ): Promise<void> {
-    await this.chatMessagesRepository.create({
+    const saved = await this.chatMessagesRepository.create({
       threadId,
       role: 'ASSISTANT',
-      content,
+      content: final?.content ?? content,
       provider: 'local-ollama',
       model,
       latencyMs,
       usedFallback: false,
-      metadata: metadata as Prisma.InputJsonValue,
+      metadata: { ...metadata, ...buildMediaMetaPart(final ?? {}) } as Prisma.InputJsonValue,
     });
+    void this.mediaFinalStep?.linkSaved(final, threadId, saved.id);
   }
 
   private async handleBackgroundFailure(threadId: string, error: unknown): Promise<void> {

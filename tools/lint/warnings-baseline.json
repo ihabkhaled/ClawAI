@@ -459,27 +459,12 @@
     "apps/claw-chat-service/src/modules/chat-messages/managers/__tests__/video-generation.manager.spec.ts": {
       "@typescript-eslint/consistent-type-imports": 1
     },
-    "apps/claw-chat-service/src/modules/chat-messages/managers/answer-repair.manager.ts": {
-      "max-lines-per-function": 1
-    },
-    "apps/claw-chat-service/src/modules/chat-messages/managers/best-of-n.manager.ts": {
-      "max-lines-per-function": 1
-    },
-    "apps/claw-chat-service/src/modules/chat-messages/managers/consensus-execution.manager.ts": {
-      "max-lines-per-function": 1
-    },
     "apps/claw-chat-service/src/modules/chat-messages/managers/context-composer.manager.ts": {
       "@typescript-eslint/prefer-optional-chain": 1,
       "security/detect-object-injection": 1
     },
-    "apps/claw-chat-service/src/modules/chat-messages/managers/cost-ensemble.manager.ts": {
-      "max-lines-per-function": 1
-    },
     "apps/claw-chat-service/src/modules/chat-messages/managers/judge-referee.manager.ts": {
       "@typescript-eslint/prefer-nullish-coalescing": 1,
-      "max-lines-per-function": 1
-    },
-    "apps/claw-chat-service/src/modules/chat-messages/managers/pipeline.manager.ts": {
       "max-lines-per-function": 1
     },
     "apps/claw-chat-service/src/modules/chat-messages/managers/provider-stream-executor.manager.ts": {
@@ -487,15 +472,6 @@
     },
     "apps/claw-chat-service/src/modules/chat-messages/managers/quality-check.manager.ts": {
       "unicorn/prefer-ternary": 5
-    },
-    "apps/claw-chat-service/src/modules/chat-messages/managers/role-pack.manager.ts": {
-      "max-lines-per-function": 1
-    },
-    "apps/claw-chat-service/src/modules/chat-messages/managers/task-decomposition.manager.ts": {
-      "max-lines-per-function": 1
-    },
-    "apps/claw-chat-service/src/modules/chat-messages/managers/verifier.manager.ts": {
-      "max-lines-per-function": 1
     },
     "apps/claw-chat-service/src/modules/chat-messages/managers/video-delivery.manager.ts": {
       "security/detect-object-injection": 2

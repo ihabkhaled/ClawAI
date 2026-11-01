@@ -60,23 +60,50 @@ Service entry points that create threads for Compare/Consensus/Escalation: `chat
   `PLUGIN_*` stream events, and own MCP servers in `resolve`; the plugin-service `/api/v1/internal/plugins/*` routes now exist. If plugin-service is down a mentioned
   message answers as plain chat with a notice.
 
-- **Media tools (2026-10-31).** A tool-calling chat model can decide to make media: `generate_image`,
-  `generate_video`, `generate_audio` are offered as native tools, the call runs through ONE gateway
-  (`utilities/media-gateway.utility.ts`, the only file that knows the image, video and audio routes), waits
-  with bounded polling, and the result goes back to the SAME model as the tool result so it writes the reply.
-  The cards ride on the answer as `metadata.mediaGenerations` and render under the text. One chokepoint
+- **Media tools (2026-10-31, closed for every surface 2026-11-01).** A tool-calling chat model can decide to
+  make media: `generate_image`, `generate_video`, `generate_audio` are offered as native tools, the call runs
+  through ONE gateway (`utilities/media-gateway.utility.ts`, the only file that knows the image, video and audio
+  routes), waits with bounded polling, and the result goes back to the SAME model as the tool result so it writes
+  the reply. The cards ride on the answer as `metadata.mediaGenerations` and render under the text. One chokepoint
   (`ChatExecutionManager.callProvider` -> `MediaToolLoopManager`); a media turn is not streamed (tool calls need
-  the whole response), and only a turn that names media at all is offered the tools (`MEDIA_TOOL_CUE_WORDS`).
-  Models without tool calling, and every provider outside the tool table, keep the router-side redirect.
-  **Offered on: normal chat and Compare lanes (also in-thread Compare)** because those two store paths carry the
-  card (`buildToolMetaPart`, `mediaGenerationsField`). **Not offered, by design, on Consensus, Escalation,
-  Best-of-N, Decompose, Pipeline, Cost-Ensemble, Role Pack, Repair, Verify, the judge and the critic.** Why: each
-  stores only the text of a candidate (no response object to carry a card), several run N candidates that would
-  each pay for the same media, and Repair/Verify/judge/critic only rewrite or grade an existing answer. Closing it:
-  give each manager's stored message `mediaGenerations` from its winning response and add its surface to
-  `MEDIA_TOOL_SURFACES`, in one change. Compare lanes share a budget of 3 generations per user message and wait
-  half as long; Stop ends the wait for a single-lane chat turn only. Guard: `media-tool-surfaces.spec.ts`.
-  Open: no audio card in the thread yet (the answer carries the audio entry, the card is skipped).
+  the whole response), and only a turn where the user asks to CREATE media is offered the tools
+  (`asksToCreateMedia`). Models without tool calling, Ollama, and every provider outside the shared
+  `modelCanCallMediaTools` set keep the router-side redirect. Three families:
+  1. **One answer per call (every call may carry the tools):** normal chat, Compare lanes, in-thread Compare.
+     Stored through `buildToolMetaPart` / `mediaGenerationsField`.
+  2. **Many candidates (final-step rule):** Consensus, Escalation, Best-of-N, Decompose, Pipeline, Cost-Ensemble,
+     Role Pack, Verify (it drafts, then checks). Candidates, tiers and sub-steps NEVER get the tools, so N
+     candidates cannot each pay for the same picture. The step that produces the ONE user-visible answer calls
+     `MediaFinalStepManager.finalize` once: only when the user asked to create media and the answering model can
+     call the tools, one extra metered call runs the media loop on that model with the prepared answer as
+     background (`context.mediaFinalStep`); the resulting `mediaGenerations` ride on the FINAL message
+     (`buildMediaMetaPart(final)`) and are linked to it once saved (`linkSaved`, image, video and audio). If the
+     model makes no media the orchestrated answer is kept unchanged. A candidate that says "I generated an image"
+     with no tool result is stripped by the claim guard. **When the answering model cannot call tools** (Ollama,
+     which is all the labs accept today, or any non-tool provider) the final step generates DIRECTLY
+     (`MediaToolLoopManager.generateDirect`): the kind comes from the shared classifiers on the user's request, the
+     request is the prompt, and the same plan gate, per-message budget, fallback list and Stop apply; the card
+     alone is the output (no new text). Normal chat with a non-tool model is not touched: the router redirect
+     already handles it, so it is never generated twice. Answering model: Best-of-N, Cost-Ensemble, Role Pack,
+     Pipeline, Decompose and Verify use the run's resolved selection; Escalation the tier that finally answered;
+     Consensus the first completed lane whose model can call tools. **Stop:** the whole orchestrated turn
+     (candidates and final step) runs under the thread's Stop key (`MediaFinalStepManager.runScoped`), so
+     `POST .../stream/:threadId/cancel` returns `cancelled:true`; the final step then saves "Generation stopped at
+     your request." and makes no media, and an in-flight media job is cancelled at the media service. Candidate
+     model calls already in flight cannot be aborted (no signal reaches `callProvider`); they finish and are
+     discarded.
+  3. **Rewrite or grade an existing answer:** Repair keeps the `mediaGenerations` of the message it repairs
+     (`readStoredMediaGenerations(source.metadata)`), never offers tools and never invents or drops a card; the
+     judge and critic are never offered tools (they are not in `MEDIA_TOOL_SURFACES`), and a judge revision keeps
+     the answer's `mediaGenerations` (`chat-execution.manager.ts`). Verify has no source message (its DTO carries
+     text only), so there is nothing to preserve there; it is family 2.
+     Budget: 3 generations per user message across the whole orchestration, 2 calls per answer; Compare lanes wait as
+     long as normal chat. Stop: single-lane chat and the one final step own the thread's Stop key, abort the wait and
+     cancel the job at the media service; Compare lanes (side by side) are bounded by the poll cap. Guards:
+     `media-tool-surfaces.spec.ts`, `media-final-step.spec.ts`.
+     Remaining, with the reason: **Threads** are published by their own service, not by a chat-service surface, so they
+     are outside this loop (not verified here). No lab keeps an exception. The audio card is still skipped in the thread UI. The final step is an
+     EXTRA model call on a media turn (the price of one tool-offering call instead of N).
 
 - **Loose composer controls (closed 2026-10-14).** Compare, in-thread Compare and the seven labs now render the same
   grouped `ComposerPlusMenu` as normal chat plus the research chip; the loose `FileAttachmentPicker`,

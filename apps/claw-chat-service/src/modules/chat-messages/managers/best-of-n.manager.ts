@@ -1,4 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { MediaFinalStepManager } from './media-final-step.manager';
+import { runInMediaTurn } from '../utilities/media-turn.utility';
+import type { MediaFinalStepResult } from '../types/media-tools.types';
+import { buildMediaMetaPart } from '../utilities/media-metadata.utility';
 import { randomUUID } from 'node:crypto';
 
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
@@ -59,6 +63,7 @@ export class BestOfNManager {
     private readonly researchEnricherManager: ResearchEnricherManager,
     private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
+    private readonly mediaFinalStep?: MediaFinalStepManager,
   ) {}
 
   async executeBestOfN(
@@ -83,17 +88,19 @@ export class BestOfNManager {
       },
     });
 
-    void this.executeInBackground(
-      threadId,
-      dto.content,
-      dto.n,
-      userId,
-      selection,
-      dto.models,
-      dto.researchMode,
-      dto.researchProviderId,
-      userToken,
-      dto.fileIds,
+    void runInMediaTurn(this.mediaFinalStep, threadId, () =>
+      this.executeInBackground(
+        threadId,
+        dto.content,
+        dto.n,
+        userId,
+        selection,
+        dto.models,
+        dto.researchMode,
+        dto.researchProviderId,
+        userToken,
+        dto.fileIds,
+      ),
     );
 
     return { messageId: userMessage.id, threadId };
@@ -148,12 +155,19 @@ export class BestOfNManager {
       );
       const { best, ranked } = this.scoreAndAnnounce(threadId, candidates, content);
 
+      const final = await this.mediaFinalStep?.finalizeForBundle(
+        bundle,
+        resolvedSelection,
+        TokenLedgerContext.BEST_OF_N,
+        best.content,
+      );
       await this.storeWinnerMessage(
         threadId,
         best,
         ranked,
         resolvedSelection,
         enrichment.transcript,
+        final,
       );
 
       this.safeEmitStage(threadId, {
@@ -234,11 +248,12 @@ export class BestOfNManager {
     ranked: CandidateResult[],
     selection: AdvancedModelSelectionResolution,
     transcript: ResearchOrchestrationResult['transcript'],
+    final?: MediaFinalStepResult,
   ): Promise<void> {
-    await this.chatMessagesRepository.create({
+    const saved = await this.chatMessagesRepository.create({
       threadId,
       role: 'ASSISTANT',
-      content: best.content,
+      content: final?.content ?? best.content,
       provider: 'local-ollama',
       model: best.model,
       latencyMs: best.latencyMs,
@@ -251,10 +266,12 @@ export class BestOfNManager {
         bestOfN: true,
         candidates: ranked,
         bestRank: 1,
+        ...buildMediaMetaPart(final ?? {}),
         modelSelection: selection,
         ...(transcript === null ? {} : { researchTranscript: transcript }),
       },
     });
+    void this.mediaFinalStep?.linkSaved(final, threadId, saved.id);
   }
 
   private async handleBackgroundFailure(threadId: string, error: unknown): Promise<void> {

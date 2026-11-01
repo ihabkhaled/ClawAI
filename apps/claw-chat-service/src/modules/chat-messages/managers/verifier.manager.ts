@@ -1,3 +1,7 @@
+import { MediaFinalStepManager } from './media-final-step.manager';
+import { runInMediaTurn } from '../utilities/media-turn.utility';
+import { buildMediaMetaPart } from '../utilities/media-metadata.utility';
+import { type ChatContextBundle } from '../types/chat-context-gateway.types';
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 
@@ -28,7 +32,7 @@ import type { ResearchTranscript } from '../types/research-transcript.types';
 import type { VerifyMessageDto } from '../dto/verify-message.dto';
 import type { AdvancedModelSelectionResolution } from '../types/advanced-model-selection.types';
 import type { VerifierCheckResult, VerifyResponse } from '../types/verifier.types';
-import type { ChatContextBundle } from '../types/chat-context-gateway.types';
+
 import type { ResearchOrchestrationResult } from '../types/research-enricher.types';
 import { RoutingMode } from '../../../generated/prisma';
 import { OLLAMA_PROVIDER } from '../../../common/constants';
@@ -61,6 +65,7 @@ export class VerifierManager {
     private readonly researchEnricherManager: ResearchEnricherManager,
     private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
+    private readonly mediaFinalStep?: MediaFinalStepManager,
   ) {}
 
   async executeVerify(
@@ -86,16 +91,18 @@ export class VerifierManager {
       },
     });
 
-    void this.executeInBackground(
-      threadId,
-      dto.content,
-      dto.maxRevisions,
-      userId,
-      selection,
-      dto.researchMode,
-      dto.researchProviderId,
-      userToken,
-      dto.fileIds,
+    void runInMediaTurn(this.mediaFinalStep, threadId, () =>
+      this.executeInBackground(
+        threadId,
+        dto.content,
+        dto.maxRevisions,
+        userId,
+        selection,
+        dto.researchMode,
+        dto.researchProviderId,
+        userToken,
+        dto.fileIds,
+      ),
     );
 
     return { messageId: userMessage.id, threadId };
@@ -150,6 +157,7 @@ export class VerifierManager {
           startTime,
           resolvedSelection,
           enrichment.transcript,
+          bundle,
         );
         this.announceComplete(threadId, resolvedSelection, 'Passed on first check');
         return;
@@ -173,6 +181,7 @@ export class VerifierManager {
         startTime,
         resolvedSelection,
         enrichment.transcript,
+        bundle,
       );
       this.announceComplete(
         threadId,
@@ -529,11 +538,18 @@ Return ONLY the improved response. Do not explain changes.`;
     startTime: number,
     selection: AdvancedModelSelectionResolution,
     researchTranscript: ResearchTranscript | null,
+    bundle: ChatContextBundle,
   ): Promise<void> {
-    await this.chatMessagesRepository.create({
+    const final = await this.mediaFinalStep?.finalizeForBundle(
+      bundle,
+      selection,
+      TokenLedgerContext.VERIFY,
+      content,
+    );
+    const saved = await this.chatMessagesRepository.create({
       threadId,
       role: 'ASSISTANT',
-      content,
+      content: final?.content ?? content,
       provider: selection.actualProvider,
       model: selection.actualModel,
       routingMode:
@@ -548,9 +564,11 @@ Return ONLY the improved response. Do not explain changes.`;
         verifierIssues: checkResult.issues,
         revisionCount,
         modelSelection: selection,
+        ...buildMediaMetaPart(final ?? {}),
         ...(researchTranscript === null ? {} : { researchTranscript }),
       },
     });
+    void this.mediaFinalStep?.linkSaved(final, threadId, saved.id);
   }
 
   private async resolveThreadId(userId: string, dto: VerifyMessageDto): Promise<string> {

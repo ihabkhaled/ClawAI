@@ -174,6 +174,12 @@ export type AssembledContext = {
    */
   mediaToolsHandled?: boolean;
   /**
+   * Set only on the ONE call that produces the user-visible answer of a many-candidate surface
+   * (Consensus, Best-of-N, ...). Candidates and sub-steps never carry it, so they never get the
+   * media tools; this call may.
+   */
+  mediaFinalStep?: boolean;
+  /**
    * Completed Runtime V2 tool rounds, oldest first.
    *
    * Runtime V2 tools execute client-side across an SSE hop, so the provider

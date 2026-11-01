@@ -1,4 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { modelCanCallMediaTools } from '@claw/shared-utilities';
+import { MediaFinalStepManager } from './media-final-step.manager';
+import { runInMediaTurn } from '../utilities/media-turn.utility';
+import type { MediaFinalStepResult } from '../types/media-tools.types';
+import { buildMediaMetaPart } from '../utilities/media-metadata.utility';
 import { PaygSurface, TokenLedgerContext } from '@claw/shared-types';
 
 import { AppConfig } from '../../../app/config/app.config';
@@ -53,6 +58,7 @@ export class ConsensusExecutionManager {
     private readonly researchEnricherManager: ResearchEnricherManager,
     private readonly accessControlService: AccessControlService,
     private readonly localModelSelection?: LocalModelSelectionService,
+    private readonly mediaFinalStep?: MediaFinalStepManager,
   ) {
     this.timeoutMs = AppConfig.get().OLLAMA_GENERATE_TIMEOUT_MS;
   }
@@ -74,16 +80,18 @@ export class ConsensusExecutionManager {
 
     const userMessage = await this.storeUserMessage(threadId, content, fileIds, pluginRefs);
 
-    void this.executeInBackground(
-      userId,
-      threadId,
-      userMessage.id,
-      content,
-      models,
-      fileIds,
-      researchMode,
-      researchProviderId,
-      userToken,
+    void runInMediaTurn(this.mediaFinalStep, threadId, () =>
+      this.executeInBackground(
+        userId,
+        threadId,
+        userMessage.id,
+        content,
+        models,
+        fileIds,
+        researchMode,
+        researchProviderId,
+        userToken,
+      ),
     );
 
     return { messageId: userMessage.id, threadId, prompt: content };
@@ -135,11 +143,26 @@ export class ConsensusExecutionManager {
         userId,
         enrichment.systemPrompt.length > 0,
       );
+      const answerer =
+        completedResponses.find((r) => modelCanCallMediaTools(r.provider, r.model)) ??
+        completedResponses[0];
+      const final =
+        answerer === undefined
+          ? undefined
+          : await this.mediaFinalStep?.finalize({
+              context,
+              threadSettings,
+              provider: answerer.provider,
+              model: answerer.model,
+              ledgerContext: TokenLedgerContext.CONSENSUS,
+              answer: synthesis.finalAnswer,
+            });
       await this.storeSynthesisMessage(
         threadId,
         consensusGroupId,
         synthesis,
         enrichment.transcript,
+        final,
       );
 
       this.logger.log(
@@ -709,11 +732,12 @@ Rules: agreementScore 0.0-1.0, confidenceLevel must be HIGH/MEDIUM/LOW, max 3 it
     consensusGroupId: string,
     synthesis: ConsensusSynthesisResult,
     researchTranscript: ResearchTranscript | null,
+    final?: MediaFinalStepResult,
   ): Promise<void> {
-    await this.chatMessagesRepository.create({
+    const saved = await this.chatMessagesRepository.create({
       threadId,
       role: 'ASSISTANT',
-      content: synthesis.finalAnswer,
+      content: final?.content ?? synthesis.finalAnswer,
       provider: 'consensus',
       model: 'synthesis',
       usedFallback: false,
@@ -727,9 +751,11 @@ Rules: agreementScore 0.0-1.0, confidenceLevel must be HIGH/MEDIUM/LOW, max 3 it
         confidenceLevel: synthesis.analysis.confidenceLevel,
         synthesisRationale: synthesis.analysis.synthesisRationale,
         modelBreakdown: synthesis.modelBreakdown,
+        ...buildMediaMetaPart(final ?? {}),
         ...(researchTranscript === null ? {} : { researchTranscript }),
       },
     });
+    void this.mediaFinalStep?.linkSaved(final, threadId, saved.id);
   }
 
   private async resolveModel(): Promise<string> {

@@ -1,4 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { MediaFinalStepManager } from './media-final-step.manager';
+import { runInMediaTurn } from '../utilities/media-turn.utility';
+import type { MediaFinalStepResult } from '../types/media-tools.types';
+import { buildMediaMetaPart } from '../utilities/media-metadata.utility';
 import { randomUUID } from 'node:crypto';
 import { ProgressActorType, StreamEventType } from '../../../common/enums';
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
@@ -78,6 +82,7 @@ export class TaskDecompositionManager {
     private readonly researchEnricherManager: ResearchEnricherManager,
     private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
+    private readonly mediaFinalStep?: MediaFinalStepManager,
   ) {}
 
   async executeDecomposition(
@@ -103,16 +108,18 @@ export class TaskDecompositionManager {
       },
     });
 
-    void this.executeInBackground(
-      threadId,
-      dto.content,
-      dto.maxSubTasks,
-      userId,
-      selection,
-      dto.researchMode,
-      dto.researchProviderId,
-      userToken,
-      dto.fileIds,
+    void runInMediaTurn(this.mediaFinalStep, threadId, () =>
+      this.executeInBackground(
+        threadId,
+        dto.content,
+        dto.maxSubTasks,
+        userId,
+        selection,
+        dto.researchMode,
+        dto.researchProviderId,
+        userToken,
+        dto.fileIds,
+      ),
     );
 
     return { messageId: userMessage.id, threadId };
@@ -180,6 +187,12 @@ export class TaskDecompositionManager {
       );
       const resolvedModel = resolvedSelection.actualModel;
 
+      const final = await this.mediaFinalStep?.finalizeForBundle(
+        bundle,
+        resolvedSelection,
+        TokenLedgerContext.TASK_DECOMPOSITION,
+        mergedContent,
+      );
       await this.storeMergedMessage(
         threadId,
         mergedContent,
@@ -191,6 +204,7 @@ export class TaskDecompositionManager {
           subTaskResults,
           enrichment.transcript,
         ),
+        final,
       );
 
       this.safeEmitStage(threadId, {
@@ -272,17 +286,19 @@ export class TaskDecompositionManager {
     model: string,
     latencyMs: number,
     metadata: Record<string, unknown>,
+    final?: MediaFinalStepResult,
   ): Promise<void> {
-    await this.chatMessagesRepository.create({
+    const saved = await this.chatMessagesRepository.create({
       threadId,
       role: 'ASSISTANT',
-      content,
+      content: final?.content ?? content,
       provider: 'local-ollama',
       model,
       latencyMs,
       usedFallback: false,
-      metadata: metadata as Prisma.InputJsonValue,
+      metadata: { ...metadata, ...buildMediaMetaPart(final ?? {}) } as Prisma.InputJsonValue,
     });
+    void this.mediaFinalStep?.linkSaved(final, threadId, saved.id);
   }
 
   private async handleBackgroundFailure(threadId: string, error: unknown): Promise<void> {

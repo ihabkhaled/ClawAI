@@ -1,4 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { MediaFinalStepManager } from './media-final-step.manager';
+import { runInMediaTurn } from '../utilities/media-turn.utility';
+import type { MediaFinalStepResult } from '../types/media-tools.types';
+import { buildMediaMetaPart } from '../utilities/media-metadata.utility';
 import { randomUUID } from 'node:crypto';
 
 import { ModelSelectionMode } from '../../../common/enums/model-selection-mode.enum';
@@ -74,6 +78,7 @@ export class CostEnsembleManager {
     private readonly researchEnricherManager: ResearchEnricherManager,
     private readonly advancedModelSelectionService?: AdvancedModuleModelSelectionService,
     private readonly localModelSelection?: LocalModelSelectionService,
+    private readonly mediaFinalStep?: MediaFinalStepManager,
   ) {}
 
   async executeCostEnsemble(
@@ -98,15 +103,17 @@ export class CostEnsembleManager {
       },
     });
 
-    void this.executeInBackground(
-      threadId,
-      dto.content,
-      userId,
-      selection,
-      dto.researchMode,
-      dto.researchProviderId,
-      userToken,
-      dto.fileIds,
+    void runInMediaTurn(this.mediaFinalStep, threadId, () =>
+      this.executeInBackground(
+        threadId,
+        dto.content,
+        userId,
+        selection,
+        dto.researchMode,
+        dto.researchProviderId,
+        userToken,
+        dto.fileIds,
+      ),
     );
 
     return { messageId: userMessage.id, threadId };
@@ -165,6 +172,12 @@ export class CostEnsembleManager {
         stageId: 'cost-ensemble:select',
       });
 
+      const final = await this.mediaFinalStep?.finalizeForBundle(
+        bundle,
+        resolvedSelection,
+        TokenLedgerContext.COST_ENSEMBLE,
+        best,
+      );
       await this.storeSelectedMessage(
         threadId,
         best,
@@ -178,6 +191,7 @@ export class CostEnsembleManager {
           enrichment.transcript,
         ),
         resolvedSelection,
+        final,
       );
 
       this.safeEmitStage(threadId, {
@@ -249,11 +263,12 @@ export class CostEnsembleManager {
     latencyMs: number,
     metadata: Record<string, unknown>,
     selection: AdvancedModelSelectionResolution,
+    final?: MediaFinalStepResult,
   ): Promise<void> {
-    await this.chatMessagesRepository.create({
+    const saved = await this.chatMessagesRepository.create({
       threadId,
       role: 'ASSISTANT',
-      content,
+      content: final?.content ?? content,
       provider: selection.actualProvider,
       model: selection.actualModel,
       latencyMs,
@@ -262,8 +277,9 @@ export class CostEnsembleManager {
         selection.modelSelectionMode === 'MANUAL_MODEL'
           ? RoutingMode.MANUAL_MODEL
           : RoutingMode.AUTO,
-      metadata: metadata as Prisma.InputJsonValue,
+      metadata: { ...metadata, ...buildMediaMetaPart(final ?? {}) } as Prisma.InputJsonValue,
     });
+    void this.mediaFinalStep?.linkSaved(final, threadId, saved.id);
   }
 
   private async handleBackgroundFailure(threadId: string, error: unknown): Promise<void> {

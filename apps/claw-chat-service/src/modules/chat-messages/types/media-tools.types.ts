@@ -112,6 +112,12 @@ export type MediaPollLimits = { pollMs: number; maxPolls: number };
 /** What a tool-call step hands back to the model (JSON text) and whether it is an error. */
 export type MediaCallOutcome = { content: string; isError: boolean };
 
+/** What the final step of a many-candidate surface hands back: the answer and the media it made. */
+export type MediaFinalStepResult = {
+  content: string;
+  mediaGenerations?: readonly MediaGenerationRef[];
+};
+
 /** The loop's running state for one answer. */
 export type MediaLoopState = {
   context: AssembledContext;

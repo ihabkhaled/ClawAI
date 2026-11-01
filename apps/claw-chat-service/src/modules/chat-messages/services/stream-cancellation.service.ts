@@ -118,6 +118,11 @@ export class StreamCancellationService implements OnModuleInit {
       );
   }
 
+  /** The live controller of a run this replica holds, so a nested step can listen without replacing it. */
+  getController(key: string): AbortController | undefined {
+    return this.controllers.get(key);
+  }
+
   /** Whether THIS replica is running it. Not a cluster-wide answer. */
   isActive(key: string): boolean {
     return this.controllers.has(key);

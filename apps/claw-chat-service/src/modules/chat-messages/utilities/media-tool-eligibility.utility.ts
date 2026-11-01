@@ -6,11 +6,16 @@ import {
   MultimodalImageIntent,
 } from '@claw/shared-utilities';
 
+import { MediaKind } from '../enums/media-kind.enum';
 import {
+  MEDIA_AUDIO_WORDS,
   MEDIA_CREATE_VERBS,
   MEDIA_DISCUSSION_LEADS,
   MEDIA_ECHO_LEADS,
   MEDIA_ECHO_PHRASES,
+  MEDIA_EVERY_CALL_SURFACES,
+  MEDIA_IMAGE_WORDS,
+  MEDIA_MUSIC_WORDS,
   MEDIA_POLITE_WORDS,
   MEDIA_TOOL_CUE_STEMS,
   MEDIA_TOOL_CUE_WORD_SPLIT,
@@ -39,7 +44,10 @@ export function wantsMediaTools(
 ): boolean {
   if (context === undefined || context.mediaToolsHandled === true) return false;
   // Normal chat never sets a surface; absent means CHAT (like the plugin tool loop).
-  if (!MEDIA_TOOL_SURFACES.has(context.platformSurface ?? ChatSurface.CHAT)) return false;
+  const surface = context.platformSurface ?? ChatSurface.CHAT;
+  if (!MEDIA_TOOL_SURFACES.has(surface)) return false;
+  // A many-candidate surface offers the tools only on its one final-answer call.
+  if (!MEDIA_EVERY_CALL_SURFACES.has(surface) && context.mediaFinalStep !== true) return false;
   if ((options?.toolCatalog?.length ?? 0) > 0 || (context.toolTurns?.length ?? 0) > 0) return false;
   if (isGenerationProvider(provider)) return false;
   // The ONE shared predicate (A1, shared-utilities): provider dialect AND a chat model id; the
@@ -77,4 +85,23 @@ export function asksToCreateMedia(text: string): boolean {
     : classifyImageIntent(text, false) === MultimodalImageIntent.GENERATE ||
         classifyVideoIntent(text) ||
         words.some((word) => MEDIA_CREATE_VERBS.has(word));
+}
+
+/**
+ * Which media a create-intent message asks for, with the shared classifiers (video, then image) and
+ * the audio words. Undefined when it asks for none (a discussion, an echo, plain text).
+ */
+export function detectMediaKind(text: string): MediaKind | undefined {
+  if (!asksToCreateMedia(text)) return undefined;
+  if (classifyVideoIntent(text)) return MediaKind.VIDEO;
+  if (classifyImageIntent(text, false) === MultimodalImageIntent.GENERATE) return MediaKind.IMAGE;
+  const words = text.toLowerCase().split(MEDIA_TOOL_CUE_WORD_SPLIT).filter(Boolean);
+  if (words.some((word) => MEDIA_AUDIO_WORDS.has(word))) return MediaKind.AUDIO;
+  return words.some((word) => MEDIA_IMAGE_WORDS.has(word)) ? MediaKind.IMAGE : undefined;
+}
+
+/** Music for a song or tune request, otherwise the text is read aloud. */
+export function detectAudioKind(text: string): 'SPEECH' | 'MUSIC' {
+  const words = text.toLowerCase().split(MEDIA_TOOL_CUE_WORD_SPLIT).filter(Boolean);
+  return words.some((word) => MEDIA_MUSIC_WORDS.has(word)) ? 'MUSIC' : 'SPEECH';
 }

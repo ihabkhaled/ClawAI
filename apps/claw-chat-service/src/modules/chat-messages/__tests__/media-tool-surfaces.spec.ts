@@ -11,7 +11,18 @@ import { wantsMediaTools } from '../utilities/media-tool-eligibility.utility';
 // The media tool guard (rules/59, context/chat-surface-parity-map.md "Media tools").
 // A surface is offered the media tools only if its STORE path can carry a media card; a surface
 // added to the set without a store path would make media the user paid for disappear.
-const CARD_SURFACES = [ChatSurface.CHAT, ChatSurface.COMPARE];
+const CARD_SURFACES = [
+  ChatSurface.CHAT,
+  ChatSurface.COMPARE,
+  ChatSurface.CONSENSUS,
+  ChatSurface.ESCALATION,
+  ChatSurface.DECOMPOSE,
+  ChatSurface.BEST_OF_N,
+  ChatSurface.PIPELINE,
+  ChatSurface.COST_ENSEMBLE,
+  ChatSurface.ROLE_PACK,
+  ChatSurface.VERIFY,
+];
 
 describe('media tool surfaces', () => {
   it('offers the tools to exactly the surfaces whose stored answer carries a card', () => {
@@ -46,7 +57,7 @@ describe('media tool surfaces', () => {
   });
 
   it.each(Object.values(ChatSurface).filter((surface) => !MEDIA_TOOL_SURFACES.has(surface)))(
-    '%s keeps the router-side redirect: no media tools are offered',
+    '%s (rewrites or grades an answer, never makes one) is never offered the media tools',
     (surface) => {
       const context = {
         userId: 'u',

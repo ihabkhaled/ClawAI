@@ -261,6 +261,7 @@ import { ModelUnavailableClient } from '../clients/model-unavailable.client';
 import { ProviderCircuitBreakerManager } from './provider-circuit-breaker.manager';
 import { MediaToolLoopManager } from './media-tool-loop.manager';
 import { PluginToolLoopManager } from './plugin-tool-loop.manager';
+import { mediaGenerationsField } from '../utilities/media-metadata.utility';
 import { wantsMediaTools } from '../utilities/media-tool-eligibility.utility';
 import { hasPluginRefs } from '../utilities/plugin-refs.utility';
 import { paygForPluginRound } from '../utilities/plugin-payg-round.utility';
@@ -2087,6 +2088,8 @@ export class ChatExecutionManager implements OnModuleInit {
         kind: 'success',
         response: {
           ...judgedResponse,
+          // The judge grades or rewrites the TEXT; the media the answer made stays on the message.
+          ...mediaGenerationsField(finalResponse),
           judgeRefereeMetadata: this.judgeRefereeManager.buildMetadata(judgeResult),
           ...this.buildExecutionMetadata(executionOptions, fastPathEscalated),
         },
