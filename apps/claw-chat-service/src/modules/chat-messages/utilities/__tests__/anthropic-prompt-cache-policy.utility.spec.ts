@@ -3,7 +3,7 @@ import { isPromptCacheEligible } from '../anthropic-prompt-cache-policy.utility'
 const ELIGIBLE = {
   provider: 'ANTHROPIC',
   catalogEnabled: true,
-  carriesTools: false,
+  toolsUnavailable: false,
   holdSuppliedByCaller: false,
 };
 
@@ -23,8 +23,8 @@ describe('isPromptCacheEligible', () => {
     },
   );
 
-  it('stays on the compatible path for a tool-carrying turn', () => {
-    expect(isPromptCacheEligible({ ...ELIGIBLE, carriesTools: true })).toBe(false);
+  it('stays on the compatible path when the tool catalog cannot ride the native body', () => {
+    expect(isPromptCacheEligible({ ...ELIGIBLE, toolsUnavailable: true })).toBe(false);
   });
 
   it('refuses when the caller already took a hold that was not sized for the write premium', () => {

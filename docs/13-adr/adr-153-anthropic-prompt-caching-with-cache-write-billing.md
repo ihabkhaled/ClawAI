@@ -1,6 +1,6 @@
 # ADR-153: Anthropic prompt caching, billed from the cache-write rate only when it exists
 
-- Status: Accepted (owner approved 2026-10-02; built, default OFF, not yet run against the live Anthropic API)
+- Status: Accepted (owner approved 2026-10-02; built, default OFF; amended 2026-11-01 so agent turns carrying tools are cached; run against the live Anthropic API 2026-11-01)
 - Date: 2026-10-01
 
 ## Context
@@ -53,9 +53,8 @@ default.
    affordability clamp holds those tokens at the dearer of the write and input rates.
    With no published write rate the figure is what it was before.
 5. **Where it is allowed.** `isPromptCacheEligible`: provider ANTHROPIC, the catalog
-   switch ON, no native tool catalog on the call (the native transport has no
-   `tool_use` reader, so a tool turn stays on the compatible path), and no hold taken
-   by the caller (compare reserves every lane before the call, sized without the
+   switch ON, a tool catalog (if the call carries one) that the native body can express
+   (see the amendment below), and no hold taken by the caller (compare reserves every lane before the call, sized without the
    premium). Anything uncertain (no policy wired, an unreadable catalog, a thrown
    lookup) is "no caching", never an error.
 6. **The legacy flag-gated body no longer carries breakpoints.**
@@ -76,8 +75,8 @@ default.
   user gets no read discount either, because the read rate also falls back to input
   when absent). Publish the write and read rates (`ModelCostVersion`) BEFORE
   switching a model on. The seed already carries them for the Claude 4 family.
-- A tool-carrying agent turn is not cached. That is the common agent shape, so the
-  saving lands on plain chat first.
+- A tool-carrying agent turn is cached too (amendment below). That is the common agent shape and
+  the one that resends the most prefix, so it is where the saving is largest.
 - A cold-cache hold is up to 25% larger on the prompt portion. It is released at
   finalize, but a user close to their balance can be clamped sooner.
 
@@ -86,7 +85,8 @@ default.
 - Anthropic changing the write multiplier or the 5-minute TTL. The rate is a catalog
   row, so the price follows; the TTL and the breakpoint count are constants in
   `anthropic-prompt-cache.constants.ts`.
-- A `tool_use` reader on the native transport (a tool catalog could then be cached).
+- Anthropic changing how `tools` sit in the cached prefix (tools, system, messages), or the
+  `input_json_delta` stream framing the reader assembles.
 - Compare lanes taking a hold sized for the premium (they could then be cached).
 - The 1-hour TTL (2x write). Not requested anywhere; `usage.cache_creation` splits
   by TTL and would need its own slice.
@@ -96,3 +96,35 @@ default.
 ## Seeding
 
 No seeder is needed and none is added: the migration column `DEFAULT false` is the idempotent seed (re-running changes nothing), a catalog sync never writes the flag, and a model a sync marks REMOVED is switched back OFF. Turning it on is the admin call `PUT /connectors/:id/models/prompt-caching` (permission `ADMIN_CONNECTORS_MANAGE`); there is no environment variable.
+
+## Amendment 2026-11-01: agent turns carrying tools are cached
+
+Owner decision, 2026-11-01 ("Yes" to enabling caching for tool-carrying agent turns). Until now a
+call carrying a Runtime tool catalog stayed on the OpenAI-compatible path, which ignores
+`cache_control`, so the agent (the heaviest resender of prefix) never saved a token.
+
+1. **The native body carries the tools.** `attachAnthropicTools` puts the catalog (Anthropic
+   shape, `toAnthropicToolSpecs`) and `tool_choice` on the cached body. The prefix order is tools,
+   system, messages, so the existing system breakpoint covers the tools: every turn of a run reads
+   them from cache.
+2. **The native transport reads `tool_use`.** The buffered reply is reverse-mapped by
+   `normalizeToolCalls` under the ANTHROPIC dialect. The stream reader assembles `tool_use` blocks
+   from `content_block_start` plus `input_json_delta` frames and releases one `tool-calls` fragment
+   before usage and `done`. A stream that ends without `message_stop` drops its half-built calls
+   instead of running truncated JSON.
+3. **The hold covers the catalog.** The text estimate cannot see the tool catalog, yet it is
+   prompt and the first thing written to the cache, so `reservePaygHold` adds its estimated tokens
+   (`byteSize / 4`) to both `promptTokens` and `cacheWritePromptTokens`. Without this the premium on
+   those tokens would be absorbed (settlement is capped at the hold).
+4. **Eligibility changed from "carries tools" to "tools unavailable".** `toolsUnavailable` is true
+   when the call carries a catalog the native body cannot express (over `CHAT_TOOL_CATALOG_MAX_BYTES`,
+   unknown dialect). A tool-less native request would silently turn the run into a no-op, so that
+   call stays uncached on the compatible path. Compare lanes (caller-supplied hold) are unchanged.
+5. **Proof.** Live, 2026-11-01, against the real Anthropic API with a tool body of this shape and a
+   ~19k-token prefix: HTTP 200, the tool schema accepted, a `tool_use` block returned, and the second
+   buffered call and the streamed call each read 19,428 tokens from cache (`cache_read_input_tokens`),
+   with 14 `input_json_delta` frames on the stream. Unit and spec coverage:
+   `anthropic-cache-tools.spec.ts`, `anthropic-stream-protocol.spec.ts`.
+
+Still gated by the per-model admin switch (default OFF). Nothing changes for a model until an owner
+flips it on, and publish the write and read rates first (see Consequences).

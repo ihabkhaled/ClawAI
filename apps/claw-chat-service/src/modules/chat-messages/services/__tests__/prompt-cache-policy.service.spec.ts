@@ -19,7 +19,7 @@ function service(enabled: boolean): {
 const ARGS = {
   provider: 'ANTHROPIC',
   model: 'claude-sonnet-4',
-  carriesTools: false,
+  toolsUnavailable: false,
   holdSuppliedByCaller: false,
 };
 
@@ -42,7 +42,7 @@ describe('PromptCachePolicyService', () => {
 
   it('respects the tool and caller-hold refusals', async () => {
     const { policy } = service(true);
-    await expect(policy.shouldCache({ ...ARGS, carriesTools: true })).resolves.toBe(false);
+    await expect(policy.shouldCache({ ...ARGS, toolsUnavailable: true })).resolves.toBe(false);
     await expect(policy.shouldCache({ ...ARGS, holdSuppliedByCaller: true })).resolves.toBe(false);
   });
 });

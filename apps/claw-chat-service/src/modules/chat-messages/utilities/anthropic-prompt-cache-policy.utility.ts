@@ -14,7 +14,7 @@ export function isPromptCacheEligible(input: PromptCacheEligibilityInput): boole
   return (
     input.provider === ANTHROPIC_PROVIDER &&
     input.catalogEnabled &&
-    !input.carriesTools &&
+    !input.toolsUnavailable &&
     !input.holdSuppliedByCaller
   );
 }

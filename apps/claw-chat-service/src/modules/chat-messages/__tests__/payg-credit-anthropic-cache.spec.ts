@@ -408,7 +408,7 @@ describe('Anthropic prompt caching at the chat chokepoint (F093)', () => {
       { hold: accessControl.hold },
     );
     expect(shouldCache).toHaveBeenCalledWith(
-      expect.objectContaining({ holdSuppliedByCaller: true, carriesTools: false }),
+      expect.objectContaining({ holdSuppliedByCaller: true, toolsUnavailable: false }),
     );
   });
 });

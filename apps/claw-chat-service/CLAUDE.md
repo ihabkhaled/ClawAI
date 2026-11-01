@@ -1769,8 +1769,11 @@ research planner decided with no attachment facts and its `thinking` was shown a
 - `applyPromptCaching` runs in BOTH chokepoints, BEFORE `reservePaygHold`, so the hold carries
   `cacheWritePromptTokens`. Setting `anthropicPromptCache` anywhere else, or after the hold, lets
   the write premium slip past a hold that was sized without it.
-- The native Messages transport has no `tool_use` reader and compare lanes arrive with a hold: both
-  stay uncached (`isPromptCacheEligible`). Do not widen it without a hold sized for the premium.
+- A tool-carrying agent turn IS cached (2026-11-01, ADR-153 amendment): the tools ride the native body
+  (`attachAnthropicTools`), the stream reader assembles `tool_use` (`input_json_delta`), and the hold adds
+  the catalog's tokens to `cacheWritePromptTokens`. Only a catalog the native body cannot express
+  (`toolsUnavailable`) and compare lanes (their hold is taken unsized) stay uncached. Do not widen it
+  without a hold sized for the premium.
 - `applyAnthropicPromptCache` is applied ONLY when `promptCache` is true; the legacy
   `ENABLE_ANTHROPIC_NATIVE_PDF` body must not carry breakpoints (its usage is read as OpenAI).
 

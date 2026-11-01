@@ -13,16 +13,22 @@ import { extractAnthropicUsage } from '@claw/shared-utilities';
 
 import { AiReasoningVisibility } from '../../../common/enums';
 import {
+  ANTHROPIC_DELTA_INPUT_JSON,
   ANTHROPIC_DELTA_TEXT,
   ANTHROPIC_DELTA_THINKING,
   ANTHROPIC_EVENT_CONTENT_BLOCK_DELTA,
+  ANTHROPIC_EVENT_CONTENT_BLOCK_START,
   ANTHROPIC_EVENT_MESSAGE_DELTA,
   ANTHROPIC_EVENT_MESSAGE_START,
   ANTHROPIC_EVENT_MESSAGE_STOP,
   ANTHROPIC_USAGE_FIELDS,
 } from '../constants/anthropic-native-transport.constants';
+import { ANTHROPIC_TOOL_USE_BLOCK_TYPE } from '../constants/provider-tool.constants';
 import type { AnthropicUsageField } from '../types/anthropic-message-shape.types';
-import type { NormalizedStreamFragment } from '../types/provider-stream.types';
+import type {
+  NormalizedStreamFragment,
+  StreamToolCallPayload,
+} from '../types/provider-stream.types';
 import { mapAnthropicStopReason } from './anthropic-messages-response.utility';
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -45,14 +51,21 @@ export class AnthropicStreamFrameReader {
   private readonly usage = new Map<AnthropicUsageField, unknown>();
   private stopReason: string | undefined;
   private finished = false;
+  // `tool_use` blocks being assembled, by the block index the frames carry. The
+  // input arrives as JSON text split across `input_json_delta` frames.
+  private readonly toolBlocks = new Map<number, { id: string; name: string; json: string }>();
 
   read(frame: Record<string, unknown>, out: NormalizedStreamFragment[]): void {
     switch (frame['type']) {
       case ANTHROPIC_EVENT_MESSAGE_START:
         this.mergeUsage(asRecord(asRecord(frame['message'])?.['usage']));
         return;
+      case ANTHROPIC_EVENT_CONTENT_BLOCK_START:
+        this.startToolBlock(frame);
+        return;
       case ANTHROPIC_EVENT_CONTENT_BLOCK_DELTA:
         this.readBlockDelta(asRecord(frame['delta']), out);
+        this.appendToolInput(frame);
         return;
       case ANTHROPIC_EVENT_MESSAGE_DELTA:
         this.stopReason = asString(asRecord(frame['delta'])?.['stop_reason']) ?? this.stopReason;
@@ -69,6 +82,8 @@ export class AnthropicStreamFrameReader {
   /**
    * A stream that ended without `message_stop` still owes its usage: the hold
    * is settled on whatever was measured. Idempotent with the terminal frame.
+   * Tool calls still being assembled are dropped, never run: their input may be
+   * cut off mid-JSON.
    */
   flush(out: NormalizedStreamFragment[]): void {
     if (!this.finished && this.usage.size > 0) {
@@ -102,6 +117,52 @@ export class AnthropicStreamFrameReader {
     }
   }
 
+  private startToolBlock(frame: Record<string, unknown>): void {
+    const block = asRecord(frame['content_block']);
+    const index = frame['index'];
+    if (block?.['type'] !== ANTHROPIC_TOOL_USE_BLOCK_TYPE || typeof index !== 'number') {
+      return;
+    }
+    this.toolBlocks.set(index, {
+      id: asString(block['id']) ?? `toolu_${String(index)}`,
+      name: asString(block['name']) ?? '',
+      json: '',
+    });
+  }
+
+  private appendToolInput(frame: Record<string, unknown>): void {
+    const delta = asRecord(frame['delta']);
+    const index = frame['index'];
+    if (delta?.['type'] !== ANTHROPIC_DELTA_INPUT_JSON || typeof index !== 'number') {
+      return;
+    }
+    const block = this.toolBlocks.get(index);
+    if (block !== undefined) {
+      block.json += asString(delta['partial_json']) ?? '';
+    }
+  }
+
+  /**
+   * Every tool call, released once and before usage, in the order the model
+   * emitted them. A call with no input delta takes no arguments: `{}`, which is
+   * what Anthropic means by it.
+   */
+  private releaseToolCalls(out: NormalizedStreamFragment[]): void {
+    if (this.toolBlocks.size === 0) {
+      return;
+    }
+    const calls = [...this.toolBlocks.entries()]
+      .sort(([a], [b]) => a - b)
+      .map(([, block]): StreamToolCallPayload => ({
+        id: block.id,
+        type: ANTHROPIC_TOOL_USE_BLOCK_TYPE,
+        name: block.name,
+        input: block.json.length > 0 ? block.json : '{}',
+      }));
+    this.toolBlocks.clear();
+    out.push({ kind: 'tool-calls', calls });
+  }
+
   private mergeUsage(usage: Record<string, unknown> | null): void {
     if (usage === null) {
       return;
@@ -117,6 +178,7 @@ export class AnthropicStreamFrameReader {
     if (this.finished) {
       return;
     }
+    this.releaseToolCalls(out);
     if (this.usage.size > 0) {
       this.emitUsage(out);
     }

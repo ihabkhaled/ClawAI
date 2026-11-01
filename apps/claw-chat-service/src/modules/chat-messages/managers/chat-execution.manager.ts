@@ -104,6 +104,7 @@ import {
   buildOllamaToolTurnMessages,
   buildOpenAiToolTurnMessages,
   normalizeToolCalls,
+  toAnthropicToolSpecs,
   toOpenAiToolSpecs,
   translateToolCatalog,
 } from '../utilities/provider-tool-translation.utility';
@@ -3013,6 +3014,9 @@ export class ChatExecutionManager implements OnModuleInit {
     // Widening ASSIGNMENT, not an assertion: `string` assigns freely to
     // `string | undefined`, so the runtime guard below is legal without a cast.
     const userId: string | undefined = args.context.userId;
+    // The tool catalog is prompt too, and on the cached native body it is the
+    // first thing written to the cache. The text estimate cannot see it.
+    const cachedToolTokens = this.cachedToolCatalogTokens(args.provider, args.executionOptions);
     return userId === undefined || userId.length === 0
       ? this.paygHoldWithoutUser(args.provider, args.requestedMax)
       : this.accessControlService.reserveCredit({
@@ -3022,13 +3026,13 @@ export class ChatExecutionManager implements OnModuleInit {
           model: args.model,
           surface: args.paygCall?.surface ?? paygSurfaceForTokenContext(args.ledgerContext),
           workflow: args.paygCall?.workflow ?? paygWorkflowForTokenContext(args.ledgerContext),
-          promptTokens: this.estimatePromptTokens(args.context),
+          promptTokens: this.estimatePromptTokens(args.context) + cachedToolTokens,
           cachedPromptTokens: 0,
           // F093: a call that asks Anthropic to cache could be billed the whole
           // prompt as a cache WRITE. Settlement is capped at the hold, so the
           // hold must already cover that premium or it is silently absorbed.
           ...(args.executionOptions?.anthropicPromptCache === true
-            ? { cacheWritePromptTokens: this.estimatePromptTokens(args.context) }
+            ? { cacheWritePromptTokens: this.estimatePromptTokens(args.context) + cachedToolTokens }
             : {}),
           requestedMaxOutputTokens: args.requestedMax,
         });
@@ -3055,7 +3059,13 @@ export class ChatExecutionManager implements OnModuleInit {
       const armed = await this.promptCachePolicy.shouldCache({
         provider,
         model,
-        carriesTools: this.hasNativeToolCatalog(executionOptions),
+        toolsUnavailable:
+          this.hasNativeToolCatalog(executionOptions) &&
+          this.resolveNativeToolCatalog(
+            provider,
+            ProviderToolDialect.ANTHROPIC,
+            executionOptions,
+          ) === undefined,
         holdSuppliedByCaller: paygCall?.hold !== undefined,
       });
       return armed
@@ -4208,6 +4218,7 @@ export class ChatExecutionManager implements OnModuleInit {
         startTime,
         usedFallback,
         promptText,
+        executionOptions,
       );
     }
     if (isNativeGemini) {
@@ -5470,6 +5481,9 @@ export class ChatExecutionManager implements OnModuleInit {
         this.estimatePromptTokens(context),
       );
     }
+    if (promptCache) {
+      this.attachAnthropicTools(requestBody, executionOptions);
+    }
     const anthropicEffort = effortLevelForRequest(
       this.resolveEffortForDialect(executionOptions, ProviderToolDialect.ANTHROPIC),
     );
@@ -5486,6 +5500,49 @@ export class ChatExecutionManager implements OnModuleInit {
     // only for the cached native transport: the legacy flag-gated body above has
     // no reader for cache usage, so a breakpoint there would be an unbilled write.
     return promptCache ? applyAnthropicPromptCache(requestBody) : requestBody;
+  }
+
+  // Tokens the tool catalog adds to a cached native call; zero for any other call.
+  private cachedToolCatalogTokens(
+    provider: string,
+    executionOptions: ExecutionOptions | undefined,
+  ): number {
+    if (executionOptions?.anthropicPromptCache !== true) {
+      return 0;
+    }
+    const toolCatalog = this.resolveNativeToolCatalog(
+      provider,
+      ProviderToolDialect.ANTHROPIC,
+      executionOptions,
+    );
+    // Same four-bytes-per-token rule as estimateTokensFromText.
+    return toolCatalog === undefined ? 0 : Math.ceil(toolCatalog.byteSize / 4);
+  }
+
+  // The Runtime tool catalog on the cached native body, in Anthropic's shape. The
+  // tools sit first in the cached prefix (tools, system, messages), so the
+  // system breakpoint covers them: every turn of a run reads them from cache.
+  private attachAnthropicTools(
+    requestBody: AnthropicMessagesRequest,
+    executionOptions: ExecutionOptions | undefined,
+  ): void {
+    const toolCatalog = this.resolveNativeToolCatalog(
+      ANTHROPIC_PROVIDER,
+      ProviderToolDialect.ANTHROPIC,
+      executionOptions,
+    );
+    if (!toolCatalog) {
+      return;
+    }
+    const choice = resolveToolChoicePayload(
+      this.resolveToolChoiceMode(executionOptions),
+      ProviderToolDialect.ANTHROPIC,
+    );
+    requestBody.tools = toAnthropicToolSpecs(toolCatalog.specs);
+    requestBody.tool_choice = choice.anthropic;
+    this.logger.debug(
+      `buildAnthropicMessagesRequestBody: attached ${String(toolCatalog.specs.length)} native tools (${String(toolCatalog.byteSize)} bytes)`,
+    );
   }
 
   // F093: true when this call goes to Anthropic's own Messages endpoint. Set by
@@ -5507,6 +5564,7 @@ export class ChatExecutionManager implements OnModuleInit {
     startTime: number,
     usedFallback: boolean,
     promptText: string,
+    executionOptions?: ExecutionOptions,
   ): LlmResponse {
     const message = readAnthropicMessageContent(data);
     if (!message.hasContent) {
@@ -5520,6 +5578,14 @@ export class ChatExecutionManager implements OnModuleInit {
     this.logger.debug(
       `parseAnthropicMessagesResponse: inputTokens=${String(usage.promptTokens)} cacheRead=${String(usage.cachedPromptTokens)} cacheWrite=${String(usage.cacheCreationPromptTokens ?? 0)} outputTokens=${String(usage.completionTokens)}`,
     );
+    // The content blocks go through as they came: normalizeToolCalls keeps the
+    // `tool_use` ones and reverse-maps them onto Runtime tool identity.
+    const toolCalls = this.extractNativeToolCalls(
+      data.content,
+      provider,
+      ProviderToolDialect.ANTHROPIC,
+      executionOptions,
+    );
     return {
       content: message.text,
       provider,
@@ -5529,6 +5595,9 @@ export class ChatExecutionManager implements OnModuleInit {
       finishReason: message.finishReason,
       usedFallback,
       ...(message.reasoning.trim().length > 0 ? { reasoning: message.reasoning } : {}),
+      ...(toolCalls.length > 0
+        ? { toolCalls, finishedForTools: message.finishReason === OPENAI_TOOL_CALLS_FINISH_REASON }
+        : {}),
     };
   }
 

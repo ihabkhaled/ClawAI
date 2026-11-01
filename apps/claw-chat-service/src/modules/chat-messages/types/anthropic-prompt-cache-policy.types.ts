@@ -5,10 +5,12 @@ export type PromptCacheEligibilityInput = {
   /** The administrator's per-model switch from the catalog. Default OFF. */
   catalogEnabled: boolean;
   /**
-   * The call carries a native tool catalog. The native Messages transport here
-   * has no tool_use reader, so such a turn stays on the compatible path.
+   * The call carries a tool catalog the native body cannot express (over the
+   * byte budget, unknown dialect). A tool-less native request would make the run
+   * a silent no-op, so such a turn stays on the compatible path. A catalog that
+   * does fit rides the native body and is cached with the rest of the prefix.
    */
-  carriesTools: boolean;
+  toolsUnavailable: boolean;
   /**
    * The caller already took the PAYG hold (compare reserves every lane up
    * front). That hold was sized without the write premium, and settlement is

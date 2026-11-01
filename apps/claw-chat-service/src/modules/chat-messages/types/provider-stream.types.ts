@@ -30,14 +30,18 @@ export type ProviderStreamFinalTimings = {
 // shape its own protocol produced, and `normalizeToolCalls` — called with the
 // matching dialect — already accepts both. Converting inside the reader would
 // mean parsing JSON twice and losing the provider's exact bytes.
-export type StreamToolCallPayload = {
-  id?: string;
-  type?: string;
-  function: {
-    name: string;
-    arguments: string | Record<string, unknown>;
-  };
-};
+export type StreamToolCallPayload =
+  | {
+      id?: string;
+      type?: string;
+      function: {
+        name: string;
+        arguments: string | Record<string, unknown>;
+      };
+    }
+  // Anthropic's own shape: a `tool_use` block, `input` still the JSON text the
+  // stream delivered (parsed once, by `normalizeToolCalls`).
+  | { id: string; type: 'tool_use'; name: string; input: string };
 
 // Accumulator slot inside ProviderStreamReader while a tool call is still
 // being assembled from deltas. `argumentsText` is the concatenated OpenAI JSON

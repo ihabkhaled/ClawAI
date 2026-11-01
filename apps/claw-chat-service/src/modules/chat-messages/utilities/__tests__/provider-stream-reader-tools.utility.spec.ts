@@ -1,6 +1,9 @@
 import { AiStreamProtocol } from '../../../../common/enums';
 import { ProviderStreamReader } from '../provider-stream-reader.utility';
-import type { NormalizedStreamFragment } from '../../types/provider-stream.types';
+import type {
+  NormalizedStreamFragment,
+  StreamToolCallPayload,
+} from '../../types/provider-stream.types';
 
 // OpenAI-SSE streams a single tool call across MANY frames: the id and function
 // name arrive once, then `arguments` is emitted as an arbitrarily split JSON
@@ -31,6 +34,15 @@ const toolCallFragments = (
     (f): f is Extract<NormalizedStreamFragment, { kind: 'tool-calls' }> => f.kind === 'tool-calls',
   );
 
+// The OpenAI and Ollama readers emit the `function` shape; Anthropic's `tool_use`
+// shape is covered in anthropic-stream-protocol.spec.ts.
+const functionCalls = (
+  calls: readonly StreamToolCallPayload[],
+): Extract<StreamToolCallPayload, { function: unknown }>[] =>
+  calls.filter(
+    (call): call is Extract<StreamToolCallPayload, { function: unknown }> => 'function' in call,
+  );
+
 describe('ProviderStreamReader — OpenAI SSE tool calls', () => {
   it('reassembles one call whose arguments JSON is split across many frames', () => {
     const reader = new ProviderStreamReader(AiStreamProtocol.OPENAI_SSE);
@@ -50,7 +62,7 @@ describe('ProviderStreamReader — OpenAI SSE tool calls', () => {
     const calls = toolCallFragments(fragments);
     expect(calls).toHaveLength(1);
     expect(calls[0]?.calls).toHaveLength(1);
-    const call = calls[0]?.calls[0];
+    const call = functionCalls(calls[0]?.calls ?? [])[0];
     expect(call?.id).toBe('call_1');
     expect(call?.function.name).toBe('workspace_files');
     // Reassembled into valid JSON — the whole point.
@@ -76,7 +88,7 @@ describe('ProviderStreamReader — OpenAI SSE tool calls', () => {
       sse({ choices: [{ delta: {}, finish_reason: 'tool_calls' }] }),
     ]);
 
-    const call = toolCallFragments(fragments)[0]?.calls[0];
+    const call = functionCalls(toolCallFragments(fragments)[0]?.calls ?? [])[0];
     expect(call?.function.name).toBe('workspace_files');
     expect(JSON.parse(String(call?.function.arguments))).toEqual({ operation: 'list' });
   });
@@ -95,7 +107,7 @@ describe('ProviderStreamReader — OpenAI SSE tool calls', () => {
       sse({ choices: [{ delta: {}, finish_reason: 'tool_calls' }] }),
     ]);
 
-    const calls = toolCallFragments(fragments)[0]?.calls ?? [];
+    const calls = functionCalls(toolCallFragments(fragments)[0]?.calls ?? []);
     expect(calls).toHaveLength(2);
     expect(calls[0]?.function.name).toBe('workspace_files');
     expect(calls[0]?.id).toBe('call_a');
@@ -199,7 +211,7 @@ describe('ProviderStreamReader — Ollama NDJSON tool calls', () => {
       `${JSON.stringify({ done: true, done_reason: 'stop', prompt_eval_count: 9, eval_count: 3 })}\n`,
     ]);
 
-    const call = toolCallFragments(fragments)[0]?.calls[0];
+    const call = functionCalls(toolCallFragments(fragments)[0]?.calls ?? [])[0];
     expect(call?.function.name).toBe('workspace_files');
     // Native Ollama delivers arguments as an OBJECT, not a JSON string — the
     // reader emits whichever shape its own protocol produced.

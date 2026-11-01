@@ -18,7 +18,7 @@ export class PromptCachePolicyService {
   async shouldCache(args: {
     provider: string;
     model: string;
-    carriesTools: boolean;
+    toolsUnavailable: boolean;
     holdSuppliedByCaller: boolean;
   }): Promise<boolean> {
     if (args.provider !== ANTHROPIC_PROVIDER) {
@@ -27,7 +27,7 @@ export class PromptCachePolicyService {
     return isPromptCacheEligible({
       provider: args.provider,
       catalogEnabled: await this.modelCapability.resolvePromptCaching(args.provider, args.model),
-      carriesTools: args.carriesTools,
+      toolsUnavailable: args.toolsUnavailable,
       holdSuppliedByCaller: args.holdSuppliedByCaller,
     });
   }

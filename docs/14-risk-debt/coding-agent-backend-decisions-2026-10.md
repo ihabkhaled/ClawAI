@@ -40,8 +40,9 @@ running dev stack.
 [ADR-153](../13-adr/adr-153-anthropic-prompt-caching-with-cache-write-billing.md). Built: native
 `/v1/messages` transport behind `connector_models.prompt_caching`, `cacheCreationPromptTokens`
 end to end, cache writes billed from `cacheWritePerMillionMicroUsd` only when that row exists,
-and the hold sized for the premium. Not built: caching for tool turns and compare lanes; not run
-against the live Anthropic API. (Original decision text follows.)
+and the hold sized for the premium. Tool-carrying agent turns are cached since 2026-11-01 (ADR-153
+amendment, run against the live Anthropic API that day). Not built: caching for compare lanes.
+(Original decision text follows.)
 
 - Options: (a) native Anthropic `/v1/messages` transport with `cache_control` plus a cache-write usage field end to end; (b) keep the OpenAI-compatible path and skip caching.
 - Default: (a), behind a per-model flag in the model catalog (DB-level), cache writes billed from `cacheWritePerMillionMicroUsd` only when the rate row is present.

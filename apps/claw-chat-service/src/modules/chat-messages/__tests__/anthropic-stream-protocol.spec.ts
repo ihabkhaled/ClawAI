@@ -324,3 +324,101 @@ describe('ProviderStreamReader - Anthropic SSE', () => {
     expect(usage).not.toHaveProperty('cacheCreationPromptTokens');
   });
 });
+
+const toolStart = (index: number, id: string, name: string): string =>
+  sse('content_block_start', {
+    type: 'content_block_start',
+    index,
+    content_block: { type: 'tool_use', id, name, input: {} },
+  });
+
+const toolDelta = (index: number, partialJson: string): string =>
+  sse('content_block_delta', {
+    type: 'content_block_delta',
+    index,
+    delta: { type: 'input_json_delta', partial_json: partialJson },
+  });
+
+describe('ProviderStreamReader - Anthropic SSE tool calls', () => {
+  it('assembles split input_json_delta frames into one call, released before usage and done', () => {
+    const fragments = readAll([
+      startFrame({ input_tokens: 5, cache_creation_input_tokens: 2000, output_tokens: 1 }),
+      textDelta('Reading.'),
+      toolStart(1, 'toolu_1', 'workspace_files'),
+      toolDelta(1, '{"operation":"re'),
+      toolDelta(1, 'ad","arguments":{"path":"a.ts"}}'),
+      sse('content_block_stop', { type: 'content_block_stop', index: 1 }),
+      messageDelta('tool_use', { output_tokens: 40 }),
+      messageStop(),
+    ]);
+    expect(fragments.map((fragment) => fragment.kind)).toEqual([
+      'content',
+      'tool-calls',
+      'usage',
+      'done',
+    ]);
+    const toolCalls = fragments.find((fragment) => fragment.kind === 'tool-calls');
+    expect(toolCalls).toEqual({
+      kind: 'tool-calls',
+      calls: [
+        {
+          id: 'toolu_1',
+          type: 'tool_use',
+          name: 'workspace_files',
+          input: '{"operation":"read","arguments":{"path":"a.ts"}}',
+        },
+      ],
+    });
+    expect(fragments.at(-1)).toEqual({ kind: 'done', finishReason: 'tool_calls' });
+  });
+
+  it('keeps several calls apart and in the order the model emitted them', () => {
+    const fragments = readAll([
+      startFrame({ input_tokens: 5, output_tokens: 1 }),
+      toolStart(2, 'toolu_b', 'runtime_evidence'),
+      toolStart(1, 'toolu_a', 'workspace_files'),
+      toolDelta(1, '{"operation":"list"}'),
+      toolDelta(2, '{"operation":"read"}'),
+      messageDelta('tool_use', { output_tokens: 9 }),
+      messageStop(),
+    ]);
+    const toolCalls = fragments.find((fragment) => fragment.kind === 'tool-calls');
+    expect(toolCalls).toMatchObject({
+      calls: [
+        { id: 'toolu_a', input: '{"operation":"list"}' },
+        { id: 'toolu_b', input: '{"operation":"read"}' },
+      ],
+    });
+  });
+
+  it('reads a call with no input frames as taking no arguments', () => {
+    const fragments = readAll([
+      startFrame({ input_tokens: 5, output_tokens: 1 }),
+      toolStart(0, 'toolu_1', 'workspace_files'),
+      messageDelta('tool_use', { output_tokens: 3 }),
+      messageStop(),
+    ]);
+    expect(fragments.find((fragment) => fragment.kind === 'tool-calls')).toMatchObject({
+      calls: [{ input: '{}' }],
+    });
+  });
+
+  it('never runs a call from a stream that ended without message_stop', () => {
+    const fragments = readAll([
+      startFrame({ input_tokens: 5, output_tokens: 1 }),
+      toolStart(0, 'toolu_1', 'workspace_files'),
+      toolDelta(0, '{"operation":"re'),
+    ]);
+    expect(fragments.some((fragment) => fragment.kind === 'tool-calls')).toBe(false);
+  });
+
+  it('ignores input deltas for a block that was never a tool call', () => {
+    const fragments = readAll([
+      startFrame({ input_tokens: 5, output_tokens: 1 }),
+      toolDelta(7, '{"x":1}'),
+      messageDelta('end_turn', { output_tokens: 3 }),
+      messageStop(),
+    ]);
+    expect(fragments.some((fragment) => fragment.kind === 'tool-calls')).toBe(false);
+  });
+});

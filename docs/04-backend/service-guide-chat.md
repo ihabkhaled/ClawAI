@@ -278,11 +278,11 @@ Bearer auth, response parsing through the real dispatch path).
 (`ModelCapabilityClient.resolvePromptCaching`, false on any doubt). Both chat
 chokepoints (`callProviderOnce`, `streamCandidateOnce`) call
 `applyPromptCaching` BEFORE the PAYG hold: `PromptCachePolicyService` →
-`isPromptCacheEligible` (ANTHROPIC, switch ON, no native tool catalog, no
+`isPromptCacheEligible` (ANTHROPIC, switch ON, tool catalog expressible on the native body, no
 caller-supplied hold) sets `ExecutionOptions.anthropicPromptCache`. When set:
 
-- `reservePaygHold` adds `cacheWritePromptTokens` (the estimated prompt) so auth holds
-  the premium; settlement is capped at the hold, so an unsized premium is margin loss.
+- `reservePaygHold` adds `cacheWritePromptTokens` (the estimated prompt plus the tool catalog's
+  tokens) so auth holds the premium; settlement is capped at the hold, so an unsized premium is margin loss.
 - The call is Anthropic's own `POST {baseUrl}/messages`: `x-api-key` +
   `anthropic-version` (`buildAnthropicNativeHeaders`), `max_tokens` always set, and
   `applyAnthropicPromptCache` marks the system block plus the automatic top-level
@@ -293,8 +293,11 @@ caller-supplied hold) sets `ExecutionOptions.anthropicPromptCache`. When set:
 - `LlmResponse.cacheCreationPromptTokens` flows to `settlePaygHold` →
   `finalizeCredit`, which sends it on the wire only when positive.
 
-Not cached, on purpose: a tool-carrying turn (no `tool_use` reader), a compare lane
-(its hold is taken before the call, unsized), every other provider. The legacy
+A tool-carrying agent turn is cached since 2026-11-01 (ADR-153 amendment): the catalog rides the
+native body (`attachAnthropicTools`, inside the cached prefix) and `tool_use` is read from the buffered
+reply and from `input_json_delta` stream frames. Not cached, on purpose: a catalog the native body
+cannot express (`toolsUnavailable`, e.g. over the byte budget), a compare lane (its hold is taken
+before the call, unsized), every other provider. The legacy
 `ENABLE_ANTHROPIC_NATIVE_PDF` body no longer carries breakpoints (nothing reads its
 cache usage). Tests: `__tests__/payg-credit-anthropic-cache.spec.ts`,
 `__tests__/anthropic-stream-protocol.spec.ts`, `utilities/__tests__/anthropic-*.spec.ts`.
