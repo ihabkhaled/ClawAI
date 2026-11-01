@@ -447,13 +447,23 @@ export class MediaToolLoopManager {
     const lookup = await this.catalog.findNamed(userId, kind, named);
     if (lookup.status === 'found') return { targets: [lookup.target], denied: false };
     if (lookup.status === 'denied') return { targets: [], denied: true };
-    // Not in the catalog: the classifier-inferred target still has to pass the plan check.
-    const inferred = fallback.at(0);
-    if (fallback.length !== 1 || inferred === undefined)
-      return { targets: fallback, denied: false };
-    const connector = inferred.provider.replace(/^(?:IMAGE|VIDEO|AUDIO)_/u, '');
-    const allowed = await this.catalog.isAllowed(userId, connector, inferred.model ?? named);
-    return allowed ? { targets: fallback, denied: false } : { targets: [], denied: true };
+    // Not in the catalog: every fallback target still has to pass the plan check, so an unknown
+    // name can never reach a model the plan does not allow.
+    const catalog = this.catalog;
+    const checked = await Promise.all(
+      fallback.map(async (target) => ({
+        target,
+        allowed: await catalog.isAllowed(
+          userId,
+          target.provider.replace(/^(?:IMAGE|VIDEO|AUDIO)_/u, ''),
+          target.model ?? named,
+        ),
+      })),
+    );
+    const allowedTargets = checked.filter((entry) => entry.allowed).map((entry) => entry.target);
+    return allowedTargets.length > 0
+      ? { targets: allowedTargets, denied: false }
+      : { targets: [], denied: true };
   }
 
   private async attempt(input: {

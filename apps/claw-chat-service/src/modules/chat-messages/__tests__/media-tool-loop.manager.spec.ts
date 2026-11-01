@@ -939,6 +939,21 @@ describe('MediaToolLoopManager', () => {
       });
     });
 
+    it('plan-checks every fallback target of an unknown named model; none allowed means refused', async () => {
+      const loop = manager(catalogOf([], { status: 'unknown' }, false));
+      const { callModel } = modelReplying(
+        response('', [call(MediaKind.IMAGE, 'c1', { prompt: 'a cat', model: 'mystery-img-9' })]),
+        response('ok'),
+      );
+      await loop.run({
+        context: contextSaying('use mystery-img-9 to draw a cat'),
+        executionOptions: undefined,
+        callModel,
+        planRefusal: vi.fn(),
+      });
+      expect(gateway.startMedia).not.toHaveBeenCalled();
+    });
+
     it('falls back to the constants only when the catalog call failed (null)', async () => {
       const loop = manager(catalogOf(null));
       const { callModel } = modelReplying(
