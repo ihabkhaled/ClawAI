@@ -107,6 +107,15 @@ export const VEO_MODEL_FALLBACK_CODES: readonly string[] = [
   VideoFailureCode.PROVIDER_REJECTED,
 ];
 
+/**
+ * Veo ids priced BELOW the Omni model (seed: Lite $0.05/s, Omni $0.10/s). A refused pick of one of
+ * these never silently moves to Omni: the user would pay more than the clip they chose.
+ */
+export const VEO_MODELS_CHEAPER_THAN_OMNI: readonly string[] = [
+  'veo-3.1-lite-generate-preview',
+  'veo-3.1-lite',
+];
+
 /** The longest provider reason stored beside a generic rejection. */
 export const VIDEO_REJECTION_REASON_MAX_CHARACTERS = 200;
 

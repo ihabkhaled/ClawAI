@@ -605,7 +605,7 @@ so `start` does the whole call and `utilities/omni-clip-store.utility.ts` holds 
 poll and download (operation ids start `omni:`; a restart in between ends the job NO_VIDEO_RETURNED
 and releases the hold). Omni has no duration field, so the wanted length rides in the prompt and
 the price is metered per requested second (about $0.10/s at 720p); confirm the real clip length
-against the Google bill. A refused Veo pick walks the sibling chain to Omni.
+against the Google bill. A refused Veo pick walks the sibling chain to Omni, except a Veo Lite pick ($0.05/s): Omni costs more, so it fails instead of silently charging more (`VEO_MODELS_CHEAPER_THAN_OMNI`).
 
 ## Audio generation: speech and music (2026-10-31)
 

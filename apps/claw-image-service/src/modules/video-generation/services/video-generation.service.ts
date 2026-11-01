@@ -14,6 +14,7 @@ import { type GenerateVideoDto } from '../dto/generate-video.dto';
 import {
   NO_FALLBACK_CODES,
   VEO_MODEL_FALLBACK_CODES,
+  VEO_MODELS_CHEAPER_THAN_OMNI,
   VIDEO_CHAIN_MAX_HOPS,
   VIDEO_CREDIT_FAILURE_MESSAGE,
 } from '../constants/video-generation.constants';
@@ -241,7 +242,9 @@ export class VideoGenerationService {
     code: string,
     tried: readonly string[],
   ): string | null {
-    return row.provider !== VIDEO_PROVIDER_GEMINI || !VEO_MODEL_FALLBACK_CODES.includes(code)
+    return row.provider !== VIDEO_PROVIDER_GEMINI ||
+      !VEO_MODEL_FALLBACK_CODES.includes(code) ||
+      VEO_MODELS_CHEAPER_THAN_OMNI.includes(videoPriceKey(row.model))
       ? null
       : (VEO_MODEL_FALLBACK_CHAIN.find((model) => !tried.includes(model)) ?? null);
   }

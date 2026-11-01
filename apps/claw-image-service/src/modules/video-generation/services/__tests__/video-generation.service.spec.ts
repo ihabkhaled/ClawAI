@@ -398,6 +398,20 @@ describe('VideoGenerationService', () => {
       expect(execution['execute']).toHaveBeenCalledTimes(2);
     });
 
+    it('never moves a refused Veo Lite pick to the dearer Omni model', async () => {
+      repo['create']!.mockResolvedValue(
+        row({ isAutoMode: false, model: 'veo-3.1-lite-generate-preview' }),
+      );
+      execution['execute']!.mockRejectedValue(rejected());
+
+      await service.enqueueGeneration({ ...dto, isAutoMode: false });
+      await flush();
+      await flush();
+
+      expect(repo['createSuccessor']).not.toHaveBeenCalled();
+      expect(execution['execute']).toHaveBeenCalledTimes(1);
+    });
+
     it('never revisits a model and stops after the chain for a manual pick', async () => {
       repo['create']!.mockResolvedValue(row({ isAutoMode: false }));
       repo['createSuccessor']!.mockResolvedValueOnce(
