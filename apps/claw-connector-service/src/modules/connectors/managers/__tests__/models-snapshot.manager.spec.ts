@@ -56,6 +56,18 @@ describe('ModelsSnapshotManager', () => {
     expect(result.models[0]!.contextWindowTokens).toBe(128_000);
   });
 
+  it.each([
+    ['GEMINI', 'gemini-3-pro-image-preview', 'IMAGE_OUTPUT', 'IMAGE'],
+    ['GEMINI', 'veo-3.1-generate-preview', 'VIDEO_OUTPUT', 'VIDEO'],
+    ['GROK', 'grok-imagine-image-quality', 'IMAGE_OUTPUT', 'IMAGE'],
+    ['OPENAI', 'gpt-4o-mini-tts', 'AUDIO_OUTPUT', 'AUDIO'],
+  ])('marks %s %s as media output', async (provider, modelKey, modality, mediaKind) => {
+    const manager = buildManager([makeRow({ provider, modelKey })]);
+    const entry = (await manager.build()).models[0]!;
+    expect(entry.modalitiesOut).toEqual([modality]);
+    expect(entry.mediaKind).toBe(mediaKind);
+  });
+
   it('publishes the smaller of the catalog and learned output ceilings (ADR-125)', async () => {
     const manager = buildManager([
       makeRow({ modelKey: 'a', maxOutputTokens: 32_768, learnedMaxOutputTokens: 16_384 }),

@@ -20,13 +20,14 @@ This document catalogs all AI providers integrated with ClawAI, including setup 
 
 ## Provider Overview
 
-| Provider      | Type  | Models                         | Streaming | Tools | Vision | Audio | Privacy Class | Cost Class    | Latency Class |
-| ------------- | ----- | ------------------------------ | --------- | ----- | ------ | ----- | ------------- | ------------- | ------------- |
-| OpenAI        | Cloud | GPT-4o, GPT-4o-mini            | Yes       | Yes   | Yes    | No    | CLOUD         | STANDARD      | LOW           |
-| Anthropic     | Cloud | Claude Sonnet 4, Claude Opus 4 | Yes       | Yes   | Yes    | No    | CLOUD         | STANDARD-HIGH | MEDIUM        |
-| Google Gemini | Cloud | Gemini 2.5 Flash               | Yes       | Yes   | Yes    | No    | CLOUD         | LOW           | LOW           |
-| DeepSeek      | Cloud | deepseek-chat                  | Yes       | Yes   | No     | No    | CLOUD         | LOW           | MEDIUM        |
-| Local Ollama  | Local | 5 models (see below)           | No        | No    | No     | No    | LOCAL         | FREE          | VARIABLE      |
+| Provider      | Type  | Models                                             | Streaming | Tools | Vision | Audio                                        | Privacy Class | Cost Class    | Latency Class |
+| ------------- | ----- | -------------------------------------------------- | --------- | ----- | ------ | -------------------------------------------- | ------------- | ------------- | ------------- |
+| OpenAI        | Cloud | GPT-4o, GPT-4o-mini                                | Yes       | Yes   | Yes    | No                                           | CLOUD         | STANDARD      | LOW           |
+| Anthropic     | Cloud | Claude Sonnet 4, Claude Opus 4                     | Yes       | Yes   | Yes    | No                                           | CLOUD         | STANDARD-HIGH | MEDIUM        |
+| Google Gemini | Cloud | Gemini 2.5 Flash                                   | Yes       | Yes   | Yes    | Yes (native audio; TTS and music generation) | CLOUD         | LOW           | LOW           |
+| xAI (Grok)    | Cloud | Grok chat models, `grok-imagine-*` image and video | Yes       | Yes   | Yes    | No (no public speech API)                    | CLOUD         | per model     | MEDIUM        |
+| DeepSeek      | Cloud | deepseek-chat                                      | Yes       | Yes   | No     | No                                           | CLOUD         | LOW           | MEDIUM        |
+| Local Ollama  | Local | 5 models (see below)                               | No        | No    | No     | No                                           | LOCAL         | FREE          | VARIABLE      |
 
 ---
 
@@ -176,7 +177,7 @@ Google's Gemini models are multimodal, excelling at image understanding, video a
 
 | Model            | Context Window | Best For                                                                  | Streaming | Tools | Vision | Audio |
 | ---------------- | -------------- | ------------------------------------------------------------------------- | --------- | ----- | ------ | ----- |
-| gemini-2.5-flash | 1M tokens      | File/data analysis, image understanding, web search, fast general purpose | Yes       | Yes   | Yes    | No    |
+| gemini-2.5-flash | 1M tokens      | File/data analysis, image understanding, web search, fast general purpose | Yes       | Yes   | Yes    | Yes   |
 
 ### Routing Rules (AUTO Mode)
 
@@ -202,7 +203,7 @@ Google's Gemini models are multimodal, excelling at image understanding, video a
 
 - Gemini is the preferred provider for multimodal tasks (image understanding, video, web search) in AUTO mode.
 - The large context window (1M tokens) makes it ideal for file analysis with large documents.
-- Also used for image generation via the Imagen integration.
+- Also used for image generation (`gemini-2.5-flash-image`), video (Veo) and speech/music (Gemini TTS, Lyria). Imagen is shut down and is not used.
 
 ---
 
@@ -360,17 +361,17 @@ Ollama is a local AI runtime that runs models on the user's hardware. No data le
 
 ### Capability Comparison
 
-| Capability          | OpenAI       | Anthropic             | Gemini       | DeepSeek    | Local Ollama                         |
-| ------------------- | ------------ | --------------------- | ------------ | ----------- | ------------------------------------ |
-| Text chat           | Excellent    | Excellent             | Excellent    | Good        | Good (limited by model size)         |
-| Code generation     | Good         | Excellent             | Good         | Good        | Fair (phi3:mini best)                |
-| Reasoning           | Good         | Excellent (Opus)      | Good         | Good (math) | Fair (llama3.2:3b)                   |
-| Data analysis       | Good         | Good                  | Excellent    | Good        | Poor                                 |
-| Image understanding | Yes (GPT-4o) | Yes (Claude)          | Yes (Gemini) | No          | No                                   |
-| Image generation    | Via DALL-E   | No                    | Via Imagen   | No          | Via Stable Diffusion (if configured) |
-| Web/search          | No           | No                    | Yes          | No          | No                                   |
-| Privacy             | Cloud        | Cloud (strong policy) | Cloud        | Cloud       | Full local                           |
-| Offline capable     | No           | No                    | No           | No          | Yes                                  |
+| Capability          | OpenAI          | Anthropic             | Gemini           | DeepSeek    | Local Ollama                         |
+| ------------------- | --------------- | --------------------- | ---------------- | ----------- | ------------------------------------ |
+| Text chat           | Excellent       | Excellent             | Excellent        | Good        | Good (limited by model size)         |
+| Code generation     | Good            | Excellent             | Good             | Good        | Fair (phi3:mini best)                |
+| Reasoning           | Good            | Excellent (Opus)      | Good             | Good (math) | Fair (llama3.2:3b)                   |
+| Data analysis       | Good            | Good                  | Excellent        | Good        | Poor                                 |
+| Image understanding | Yes (GPT-4o)    | Yes (Claude)          | Yes (Gemini)     | No          | No                                   |
+| Image generation    | Via gpt-image-1 | No                    | Via Gemini image | No          | Via Stable Diffusion (if configured) |
+| Web/search          | No              | No                    | Yes              | No          | No                                   |
+| Privacy             | Cloud           | Cloud (strong policy) | Cloud            | Cloud       | Full local                           |
+| Offline capable     | No              | No                    | No               | No          | Yes                                  |
 
 ### Task-to-Provider Routing (AUTO Mode Summary)
 

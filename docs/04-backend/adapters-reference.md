@@ -47,7 +47,7 @@ These adapters implement `ProviderAdapter`:
 **Provider**: `ConnectorProvider.OPENAI`  
 **API**: OpenAI REST API (`api.openai.com`)  
 **healthCheck**: GET `/v1/models` — checks API key validity  
-**syncModels**: GET `/v1/models` → filters for `gpt-*`, `o1-*`, `o3-*`, `dall-e-*` models  
+**syncModels**: GET `/v1/models` → filters for `gpt-*`, `o1-*`, `o3-*`, `gpt-image-*` models  
 **Capabilities**: streaming=true, tools=true, vision=true (gpt-4o), audio=false
 
 ### `anthropic.adapter.ts`
@@ -106,13 +106,13 @@ These implement `ImageGenerationAdapter`:
 
 ### `openai-image.adapter.ts`
 
-**Provider**: OpenAI DALL-E (`dall-e-2`, `dall-e-3`)  
+**Provider**: OpenAI Images (`gpt-image-1`; the DALL-E models are legacy and not the default)  
 **API**: `POST /v1/images/generations`  
 **Output**: URL to generated image (hosted by OpenAI, temporary)
 
 ### `gemini-image.adapter.ts`
 
-**Provider**: Google Imagen via Gemini API  
+**Provider**: Google Gemini image models (`gemini-2.5-flash-image`) via the Gemini API (Imagen is shut down and is not used)  
 **API**: Gemini Generative Language API (image generation endpoint)  
 **Output**: Base64-encoded image data
 

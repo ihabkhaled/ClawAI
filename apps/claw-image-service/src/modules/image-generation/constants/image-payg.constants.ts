@@ -152,3 +152,41 @@ export const GROK_PER_IMAGE_PRICED_MODELS: readonly string[] = [
  * zero-token finalize settles the image at $0. Never under-charge.
  */
 export const GROK_IMAGE_WORST_CASE_MODEL = 'grok-imagine-image-2.0';
+
+/**
+ * OpenAI image-model id prefixes that belong to the gpt-image FAMILY
+ * (`gpt-image-1.5`, `gpt-image-2`, `gpt-image-1-mini`, and ChatGPT's alias
+ * `chatgpt-image-latest`). Only `gpt-image-1` has price rows (seed v4/v7); every
+ * other id of the family is metered on the family's DEAREST row,
+ * `gpt-image-1@1536x1024` ($0.25), so a newer id is never refused as unpriced and
+ * never settles below its real price. Official OpenAI rates for these ids are
+ * per-token only (developers.openai.com/api/docs/pricing, 2026-10-31: gpt-image-2
+ * image output $30/M, gpt-image-1.5 and chatgpt-image-latest $32/M,
+ * gpt-image-1-mini $8/M); a per-image figure at the pinned `high` quality is not
+ * published there, so none is seeded and the family fallback applies.
+ */
+export const OPENAI_GPT_IMAGE_FAMILY_PREFIXES: readonly string[] = [
+  OPENAI_GPT_IMAGE_MODEL_PREFIX,
+  'chatgpt-image',
+];
+
+/** The price row an unseeded gpt-image-family id is metered on (dearest known tier). */
+export const OPENAI_GPT_IMAGE_FAMILY_WORST_CASE_KEY = 'gpt-image-1@1536x1024';
+
+/**
+ * Gemini image models with their own seeded row (token-priced, output $/M:
+ * 2.5 Flash Image $30, 3.1 Flash Image preview $30, 3 Pro Image and its
+ * `nano-banana-pro-preview` alias $120). Any other Gemini image id
+ * (`gemini-3.1-flash-image`, `gemini-3.1-flash-lite-image`, `gemini-3-pro-image`,
+ * a future release) is metered on the dearest row below.
+ * Source: ai.google.dev/gemini-api/docs/pricing, 2026-10-31.
+ */
+export const GEMINI_IMAGE_PRICED_MODELS: readonly string[] = [
+  'gemini-2.5-flash-image',
+  'gemini-3.1-flash-image-preview',
+  'gemini-3-pro-image-preview',
+  'nano-banana-pro-preview',
+];
+
+/** The dearest seeded Gemini image row: what an unseeded Gemini image id is metered on. */
+export const GEMINI_IMAGE_WORST_CASE_MODEL = 'gemini-3-pro-image-preview';

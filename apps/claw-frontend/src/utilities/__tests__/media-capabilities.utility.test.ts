@@ -107,3 +107,49 @@ function rowStub(): ConnectorModel {
     syncedAt: '2026-09-25T00:00:00.000Z',
   };
 }
+
+describe('getConnectorModelCapabilityBadges — image output', () => {
+  it.each([
+    ['GEMINI', 'models/gemini-3-pro-image-preview'],
+    ['GEMINI', 'nano-banana-pro-preview'],
+    ['OPENAI', 'chatgpt-image-latest'],
+    ['GROK', 'grok-imagine-image-quality'],
+  ])('badges %s %s as an image-output model', (provider, modelKey) => {
+    expect(
+      getConnectorModelCapabilityBadges({ supportsVision: false, provider, modelKey } as never),
+    ).toContain(ModelCapabilityBadge.ImageOutput);
+  });
+
+  it('does not badge a chat model', () => {
+    expect(
+      getConnectorModelCapabilityBadges({
+        supportsVision: true,
+        provider: 'GEMINI',
+        modelKey: 'gemini-2.5-pro',
+      } as never),
+    ).not.toContain(ModelCapabilityBadge.ImageOutput);
+  });
+});
+
+describe('audio output badge and kind typing', () => {
+  it.each(['gpt-4o-mini-tts', 'gemini-2.5-pro-preview-tts', 'lyria-3.5'])(
+    'badges %s as audio output',
+    (modelKey) => {
+      expect(
+        getConnectorModelCapabilityBadges({
+          supportsVision: false,
+          provider: 'GEMINI',
+          modelKey,
+        } as never),
+      ).toContain(ModelCapabilityBadge.AudioOutput);
+    },
+  );
+});
+
+describe('mediaKind from connector-service', () => {
+  it('badges by the wire mediaKind even for an id the patterns do not know', () => {
+    expect(
+      getConnectorModelCapabilityBadges({ supportsVision: false, mediaKind: 'AUDIO' } as never),
+    ).toEqual([ModelCapabilityBadge.AudioOutput]);
+  });
+});

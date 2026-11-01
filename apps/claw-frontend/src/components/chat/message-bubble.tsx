@@ -22,6 +22,7 @@ import { FileLimitNotice } from '@/components/chat/file-limit-notice';
 import { ImageGenerationBubble } from '@/components/chat/image-generation-bubble';
 import { ImageMaskRefusalNotice } from '@/components/chat/image-mask-refusal-notice';
 import { JudgeRefereeDetails } from '@/components/chat/judge-referee-details';
+import { MediaGenerationCards } from '@/components/chat/media-generation-cards';
 import { MessageAttachments } from '@/components/chat/message-attachments';
 import { MessageBranchAction } from '@/components/chat/message-branch-action';
 import { MessageEditAction } from '@/components/chat/message-edit-action';
@@ -67,6 +68,7 @@ import {
 import { resolveStoredErrorMessage } from '@/utilities/chat-stream-error.utility';
 import { readFileLimit } from '@/utilities/file-limit.utility';
 import { readImageMaskRefusal } from '@/utilities/image-mask-refusal.utility';
+import { readMediaGenerations } from '@/utilities/media-generation.utility';
 import { getStoredNarration } from '@/utilities/narration.utility';
 import {
   offersPickedModelRecovery,
@@ -124,6 +126,7 @@ function MessageBubbleBase({
   // Plugins this turn mentioned (user) / used (assistant), straight from what was stored.
   const pluginRefs = isUser ? readPluginRefs(metadata) : [];
   const pluginCalls = isUser ? [] : readPluginCalls(metadata);
+  const mediaGenerations = isUser ? [] : readMediaGenerations(metadata);
   const pluginNotices = isUser ? [] : readPluginNotices(metadata);
   const citations = isUser ? undefined : citationsOfMessage(metadata);
   const contextSave = isUser ? null : contextSaveOfMessage(metadata);
@@ -325,6 +328,8 @@ function MessageBubbleBase({
           {!isUser && !isImageGeneration && !isVideoGeneration && !isFileGeneration && !isNotice
             ? assistantContent
             : null}
+          {/* Media the chat model made with a tool: cards under its reply. */}
+          {mediaGenerations.length > 0 ? <MediaGenerationCards items={mediaGenerations} /> : null}
           {/* Every model failed: one-click retries + the model picker. */}
           {showPickedModelRecovery && onRegenerate !== undefined ? (
             <PickedModelRecovery

@@ -1,6 +1,6 @@
 # ADR-120: ClawAI owns multimodal orchestration — the selected model is not the media executor
 
-**Status**: Accepted (batch 2b implements the capability read, the per-lane resolver and provenance; batch 5 adds helper vision; video processing and TTS follow)
+**Status**: Accepted (batch 2b implements the capability read, the per-lane resolver and provenance; batch 5 adds helper vision; video processing, TTS and audio generation are built, see ADR-122, ADR-139 and ADR-213)
 **Date**: 2026-09-25
 **Plan**: [multimodal-orchestration-plan.md](../implementation/multimodal-orchestration-plan.md)
 **Rule**: [rules/42](../../rules/42-attachment-understanding.md) item 14

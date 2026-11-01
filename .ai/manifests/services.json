@@ -151,7 +151,7 @@
         "MessageAttachment",
         "PromptTemplate"
       ],
-      "testFiles": 354,
+      "testFiles": 359,
       "testRunner": "vitest"
     },
     {
@@ -198,7 +198,7 @@
         "ConnectorProviderDefinition",
         "ModelSyncRun"
       ],
-      "testFiles": 59,
+      "testFiles": 61,
       "testRunner": "vitest"
     },
     {
@@ -268,7 +268,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-image-service",
-      "endpointCount": 18,
+      "endpointCount": 27,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -282,13 +282,15 @@
       "port": 4012,
       "portSource": "shared-constants",
       "prismaModels": [
+        "AudioGeneration",
+        "AudioGenerationAsset",
         "ImageGeneration",
         "ImageGenerationAsset",
         "ImageGenerationEvent",
         "VideoGeneration",
         "VideoGenerationAsset"
       ],
-      "testFiles": 48,
+      "testFiles": 56,
       "testRunner": "vitest"
     },
     {
@@ -536,7 +538,7 @@
         "SeedExecution",
         "TaxonomyRole"
       ],
-      "testFiles": 121,
+      "testFiles": 122,
       "testRunner": "vitest"
     },
     {

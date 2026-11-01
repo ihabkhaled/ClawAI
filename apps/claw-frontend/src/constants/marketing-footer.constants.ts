@@ -30,6 +30,7 @@ export const MARKETING_FOOTER_FEATURE_PATHS: ReadonlyArray<string> = [
   FeatureCapability.FILES_FROM_CHAT,
   FeatureCapability.SMART_ATTACHMENTS,
   FeatureCapability.IMAGE_GENERATION,
+  FeatureCapability.CHAT_MODELS_MAKE_MEDIA,
   FeatureCapability.READ_ALOUD,
   FeatureCapability.NARRATED_RESEARCH,
   FeatureCapability.ORCHESTRATION_LABS,

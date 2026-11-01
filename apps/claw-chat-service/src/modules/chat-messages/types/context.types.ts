@@ -169,6 +169,11 @@ export type AssembledContext = {
    */
   pluginTurn?: PluginTurn;
   /**
+   * Set on every round the media tool loop sends, so the `callProvider` chokepoint does not
+   * start a second loop inside it. Absent on a fresh turn.
+   */
+  mediaToolsHandled?: boolean;
+  /**
    * Completed Runtime V2 tool rounds, oldest first.
    *
    * Runtime V2 tools execute client-side across an SSE hop, so the provider

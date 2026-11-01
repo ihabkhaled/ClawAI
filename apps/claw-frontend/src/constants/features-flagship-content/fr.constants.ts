@@ -21,6 +21,8 @@ export const FR_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
       'Écoutez n’importe quelle réponse au lieu de la lire, avec une lecture qui démarre dès que la première courte partie est prête.',
     [FeatureCapability.IMAGE_GENERATION]:
       'Générez et modifiez des images dans la conversation, avec plusieurs fournisseurs d’images et un basculement automatique de l’un à l’autre.',
+    [FeatureCapability.CHAT_MODELS_MAKE_MEDIA]:
+      "Demandez une image, une vidéo ou un clip audio à tout modèle de chat capable d'appeler des outils : il appelle un outil, ClawAI crée le média et le même modèle rédige la réponse.",
     [FeatureCapability.RELIABILITY]:
       'Basculement automatique vers un autre modèle, un disjoncteur partagé pour les fournisseurs à court de crédit, et des flux qui survivent à une reconnexion.',
     [FeatureCapability.PAY_AS_YOU_GO_CREDIT]:
@@ -493,6 +495,71 @@ export const FR_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
       ],
       productNote:
         'La génération d’images s’exécute dans son propre service d’images, avec un basculement entre fournisseurs des modèles cloud vers les modèles locaux, et elle est décomptée sur la surface IMAGE.',
+    },
+    [FeatureCapability.CHAT_MODELS_MAKE_MEDIA]: {
+      seo: {
+        title: 'Des modèles de chat qui créent images, vidéo et audio',
+        description:
+          'Dans ClawAI, un modèle de chat comme Grok, GPT ou Gemini peut générer images, vidéo et audio via des outils, attendre le résultat, puis rédiger sa réponse à son sujet.',
+        keywords: [
+          'générer images vidéo et audio dans le chat',
+          'Grok GPT Gemini génèrent des images',
+          'chat IA avec outils',
+        ],
+      },
+      eyebrow: 'Fonctionnalité',
+      title: 'Des modèles de chat qui créent des médias',
+      summary:
+        'Demandez une image, un clip ou une voix off dans la conversation. Le modèle de chat appelle un outil de génération, ClawAI crée le média et le rend au même modèle, qui rédige la réponse finale autour.',
+      sections: [
+        {
+          id: 'how-it-works',
+          heading: 'Le modèle demande, ClawAI crée, le modèle répond',
+          paragraphs: [
+            "Quand votre message appelle un média, le modèle de chat peut appeler l'un des trois outils : générer une image, générer une vidéo ou générer un audio. ClawAI exécute le modèle de média, attend la fin et rend le résultat au même modèle de chat : la réponse que vous lisez a donc été écrite par le modèle qui a vu ce qui a été créé. L'image, la vidéo ou l'audio terminé apparaît sous la réponse. Les modèles qui ne savent pas appeler d'outils gardent l'ancien raccourci, où un modèle de média distinct répond à la demande.",
+          ],
+        },
+        {
+          id: 'which-models',
+          heading: 'Compatible avec Grok, GPT et Gemini',
+          paragraphs: [
+            "Tout modèle de chat qui prend en charge l'appel d'outils peut les utiliser, y compris les modèles Grok, GPT et Gemini. Un modèle qui ne génère pas de médias lui-même, comme Claude, peut quand même en demander, car ce sont des modèles dédiés d'image, de vidéo et d'audio, derrière les outils, qui produisent les médias, et non le modèle de chat.",
+          ],
+        },
+        {
+          id: 'what-you-can-make',
+          heading: 'Images, vidéo et audio',
+          paragraphs: [
+            "Les images viennent des modèles Gemini, OpenAI ou xAI, la vidéo de Veo ou Grok Imagine, et l'audio sous forme de voix (OpenAI ou Gemini) ou de courts morceaux de musique (Gemini Lyria). Les modèles disponibles dépendent de ce que l'opérateur a connecté. Un modèle de chat peut nommer un modèle, mais seulement parmi la liste connue de la plateforme ; sinon, le modèle par défaut est utilisé.",
+          ],
+        },
+        {
+          id: 'waiting-limits-and-cost',
+          heading: 'Attente, limites et coût',
+          paragraphs: [
+            "La génération est mesurée comme toute autre : elle puise dans l'allocation de votre forfait ou dans votre crédit à l'usage, et elle est refusée si aucun des deux ne la couvre. Un tour qui crée un média n'est pas diffusé mot à mot, car le modèle doit attendre le résultat. Une réponse peut créer jusqu'à deux éléments et un message jusqu'à trois dans la vue Comparer, chacun avec une attente bornée.",
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Quels modèles de chat peuvent créer des médias ?',
+          answer:
+            "Tout modèle de chat qui prend en charge l'appel d'outils, par exemple les modèles Grok, GPT et Gemini. Les médias sont produits par des modèles d'image, de vidéo et d'audio derrière les outils : un modèle qui ne les génère pas lui-même, comme Claude, peut donc quand même en demander.",
+        },
+        {
+          question: 'Où cela fonctionne-t-il ?',
+          answer:
+            "Dans le chat normal et dans les voies de Comparer. Les autres laboratoires d'orchestration (consensus, escalade, meilleur de N, etc.) n'offrent pas encore les outils de médias ; ils gardent le comportement précédent, où une demande d'image va à un modèle d'image.",
+        },
+        {
+          question: 'Combien cela coûte-t-il ?',
+          answer:
+            "Chaque génération est mesurée sur l'allocation de votre forfait ou votre crédit à l'usage, en plus des tokens du modèle de chat lui-même. La page des tarifs indique ce que chaque forfait inclut.",
+        },
+      ],
+      productNote:
+        "Les modèles de chat appellent generate_image, generate_video et generate_audio ; le service d'images crée le média et le même modèle de chat rédige la réponse, mesurée comme toute autre génération.",
     },
     [FeatureCapability.RELIABILITY]: {
       seo: {

@@ -38,7 +38,7 @@ import {
   type ResearchTranscript,
   type ResearchTranscriptSource,
 } from '../types/research-transcript.types';
-import { type ThreadSettings } from '../types/execution.types';
+import { type LlmResponse, type ThreadSettings } from '../types/execution.types';
 import { type AssembledContext } from '../types/context.types';
 import { type Prisma } from '../../../generated/prisma';
 import { AppConfig } from '../../../app/config/app.config';
@@ -49,6 +49,8 @@ import {
   LANE_IMPLAUSIBLY_SHORT_REPLY_MESSAGE,
 } from '../constants/implausible-lane-reply.constants';
 import { isImplausiblyShortLaneReply } from '../utilities/implausible-lane-reply.utility';
+import { linkMedia } from '../utilities/media-gateway.utility';
+import { buildMediaMetaPart, mediaGenerationsField } from '../utilities/media-metadata.utility';
 import { injectResearchEvidenceIntoContext } from '../utilities/research-prompt.utility';
 import { BusinessException } from '../../../common/errors';
 import {
@@ -700,9 +702,7 @@ export class ParallelExecutionManager {
         status: 'completed',
         errorMessage: null,
         attachmentDelivery,
-        ...(llmResponse.helperExecutions === undefined
-          ? {}
-          : { helperExecutions: llmResponse.helperExecutions }),
+        ...this.laneExtras(llmResponse),
       };
     } catch (error: unknown) {
       // Stored as the lane's content ("Error: …") and streamed to the browser,
@@ -733,6 +733,17 @@ export class ParallelExecutionManager {
   // Per-lane capability when the resolver is wired; the provider-level
   // classifier otherwise. Never throws — the capability client degrades to
   // UNKNOWN on its own.
+  // Optional parts of a lane result that only some answers carry: the helper calls that ran for
+  // it (vision) and the media a media tool made for it. Kept out of executeSingleModel.
+  private laneExtras(llmResponse: LlmResponse): Partial<ParallelModelResponse> {
+    return {
+      ...(llmResponse.helperExecutions === undefined
+        ? {}
+        : { helperExecutions: llmResponse.helperExecutions }),
+      ...mediaGenerationsField(llmResponse),
+    };
+  }
+
   private async laneDeliveryEntries(
     context: AssembledContext,
     provider: string,
@@ -772,6 +783,22 @@ export class ParallelExecutionManager {
     // file, provider, model) so the new GET /chat-messages/:id/file-delivery
     // endpoint and downstream consumers can read structured data.
     await this.dualWriteFileDeliveryRecords(userId, threadId, storedMessages, responses);
+    this.linkLaneMedia(userId, storedMessages, responses);
+  }
+
+  /** Tells the media service which lane message shows each image, video or audio a lane made. */
+  private linkLaneMedia(
+    userId: string,
+    storedMessages: { id: string }[],
+    responses: ParallelModelResponse[],
+  ): void {
+    for (const [index, response] of responses.entries()) {
+      const message = storedMessages.at(index);
+      if (message === undefined) continue;
+      for (const ref of response.mediaGenerations ?? []) {
+        void linkMedia(ref.kind, ref.id, userId, message.id);
+      }
+    }
   }
 
   private async dualWriteFileDeliveryRecords(
@@ -864,6 +891,7 @@ export class ParallelExecutionManager {
       ...this.buildCompareJudgeMetaPart(response),
       ...this.buildJudgeTokenMetaPart(response),
       ...this.buildResearchTranscriptMetaPart(response),
+      ...buildMediaMetaPart(response),
       // Slice A — per-lane attachment delivery telemetry. Mirrored to the FE
       // via ParallelModelResponse.attachmentDelivery so it can render which
       // files reached which lane, and consumed by the judge prompt builder.

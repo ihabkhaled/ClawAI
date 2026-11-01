@@ -31,6 +31,8 @@ export type ParallelModelResponse = {
   /** ADR-116 — the run's one comparative judge verdict; identical on every lane. */
   compareJudge?: CompareJudgeVerdict | null;
   message?: ChatMessage;
+  /** Media this lane's model made with a media tool (`metadata.mediaGenerations`). */
+  mediaGenerations?: unknown;
   // Per-file delivery record for THIS lane. Populated by chat-service from
   // ASSISTANT message `metadata.fileDelivery`. Lane 5 renders delivery
   // indicators off these entries.

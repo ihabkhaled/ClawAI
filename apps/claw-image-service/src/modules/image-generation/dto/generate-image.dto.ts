@@ -49,6 +49,11 @@ export const linkAssistantMessageSchema = z.object({
 
 export type LinkAssistantMessageDto = z.infer<typeof linkAssistantMessageSchema>;
 
+/** Body of the internal cancel route: the owner the row must belong to. */
+export const cancelImageSchema = z.object({ userId: z.string().min(1).max(100) });
+
+export type CancelImageDto = z.infer<typeof cancelImageSchema>;
+
 export const listImagesQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),

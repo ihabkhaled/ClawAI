@@ -2,7 +2,7 @@
 
 ## Overview
 
-OpenAI provides GPT-series models and DALL-E image generation. ClawAI integrates via the OpenAI Chat Completions API for text generation and the Images API for image generation. The connector-service manages API key configuration, and the chat-service/image-service handle execution.
+OpenAI provides GPT-series models, `gpt-image-1` image generation (the old DALL-E models are legacy and not the default) and speech (`tts-1`, `tts-1-hd`, `gpt-4o-mini-tts`). ClawAI integrates via the OpenAI Chat Completions API for text generation and the Images API for image generation. The connector-service manages API key configuration, and the chat-service/image-service handle execution.
 
 ## Architecture
 
@@ -29,6 +29,7 @@ Authentication: `Authorization: Bearer sk-...`
 The primary endpoint for text generation.
 
 **Request:**
+
 ```json
 {
   "model": "gpt-4o",
@@ -43,6 +44,7 @@ The primary endpoint for text generation.
 ```
 
 **Response:**
+
 ```json
 {
   "id": "chatcmpl-abc123",
@@ -67,14 +69,15 @@ The primary endpoint for text generation.
 }
 ```
 
-### POST /images/generations (DALL-E)
+### POST /images/generations (gpt-image-1)
 
 Generate images from text prompts.
 
 **Request:**
+
 ```json
 {
-  "model": "dall-e-3",
+  "model": "gpt-image-1",
   "prompt": "A beautiful sunset over mountains, photorealistic",
   "size": "1024x1024",
   "quality": "standard",
@@ -84,6 +87,7 @@ Generate images from text prompts.
 ```
 
 **Response:**
+
 ```json
 {
   "created": 1705300000,
@@ -105,7 +109,7 @@ List available models.
   "data": [
     { "id": "gpt-4o", "object": "model", "owned_by": "openai" },
     { "id": "gpt-4o-mini", "object": "model", "owned_by": "openai" },
-    { "id": "dall-e-3", "object": "model", "owned_by": "openai" }
+    { "id": "gpt-image-1", "object": "model", "owned_by": "openai" }
   ]
 }
 ```
@@ -118,7 +122,7 @@ List available models.
 | -------- | ---------------------------------------------- |
 | Provider | `OPENAI`                                       |
 | Base URL | `https://api.openai.com/v1`                    |
-| Config   | `{ apiKey: "sk-..." }` (AES-256-GCM encrypted)|
+| Config   | `{ apiKey: "sk-..." }` (AES-256-GCM encrypted) |
 
 ### Chat Execution Flow
 
@@ -139,38 +143,38 @@ The AUTO router sends these task types to OpenAI:
 
 ### Available Models
 
-| Model       | Context  | Output  | Best For             | Cost Class |
-| ----------- | -------- | ------- | -------------------- | ---------- |
-| gpt-4o      | 128K     | 16K     | General purpose      | STANDARD   |
-| gpt-4o-mini | 128K     | 16K     | Fast, cheap          | LOW        |
+| Model       | Context | Output | Best For        | Cost Class |
+| ----------- | ------- | ------ | --------------- | ---------- |
+| gpt-4o      | 128K    | 16K    | General purpose | STANDARD   |
+| gpt-4o-mini | 128K    | 16K    | Fast, cheap     | LOW        |
 
-### Image Generation (DALL-E Adapter)
+### Image Generation (OpenAI image adapter)
 
-The image-service uses the DALL-E adapter for OpenAI image generation:
+The image-service uses `openai-image.adapter.ts` for OpenAI image generation. The default image model is Gemini (`gemini-2.5-flash-image`); OpenAI is the second choice. A chat model can also ask for an image through the `generate_image` tool ([ADR-213](../13-adr/adr-213-chat-models-make-media-through-tools.md)):
 
 1. User submits image generation request with provider=OPENAI
-2. Image-service calls `POST /images/generations` with DALL-E 3
+2. Image-service calls `POST /images/generations` with `gpt-image-1`
 3. Decodes base64 response and stores image file
 4. Creates database record with generation metadata
 5. Publishes `image.generated` event
 
 ### Parameter Mapping
 
-| ClawAI Parameter  | OpenAI Chat Parameter | OpenAI Image Parameter |
-| ----------------- | --------------------- | ---------------------- |
-| `prompt`/`content`| `messages[].content`  | `prompt`               |
-| `temperature`     | `temperature`         | N/A                    |
-| `maxTokens`       | `max_tokens`          | N/A                    |
-| `width x height`  | N/A                   | `size` ("1024x1024")   |
+| ClawAI Parameter   | OpenAI Chat Parameter | OpenAI Image Parameter |
+| ------------------ | --------------------- | ---------------------- |
+| `prompt`/`content` | `messages[].content`  | `prompt`               |
+| `temperature`      | `temperature`         | N/A                    |
+| `maxTokens`        | `max_tokens`          | N/A                    |
+| `width x height`   | N/A                   | `size` ("1024x1024")   |
 
 ## Error Handling
 
-| HTTP Status | Meaning               | ClawAI Response                   |
-| ----------- | --------------------- | --------------------------------- |
-| 401         | Invalid API key       | Mark connector unhealthy          |
-| 429         | Rate limited          | Retry with backoff, then fallback |
-| 500         | OpenAI server error   | Retry once, then fallback         |
-| 503         | Service overloaded    | Fallback to alternative provider  |
+| HTTP Status | Meaning             | ClawAI Response                   |
+| ----------- | ------------------- | --------------------------------- |
+| 401         | Invalid API key     | Mark connector unhealthy          |
+| 429         | Rate limited        | Retry with backoff, then fallback |
+| 500         | OpenAI server error | Retry once, then fallback         |
+| 503         | Service overloaded  | Fallback to alternative provider  |
 
 ## Rate Limits
 
@@ -178,10 +182,10 @@ OpenAI rate limits vary by tier and model. ClawAI handles 429 responses with exp
 
 ## Troubleshooting
 
-| Symptom | Cause | Fix |
-| ------- | ----- | --- |
-| 401 Unauthorized | Invalid/revoked API key | Update connector config |
-| "insufficient_quota" | Billing limit reached | Add credits to OpenAI account |
-| Slow responses | Large context or server load | Reduce context window, use gpt-4o-mini |
-| Content filtered | OpenAI safety filter triggered | Rephrase prompt |
-| DALL-E 400 error | Invalid size or prompt too long | Use supported sizes: 1024x1024, 1792x1024, 1024x1792 |
+| Symptom              | Cause                           | Fix                                                  |
+| -------------------- | ------------------------------- | ---------------------------------------------------- |
+| 401 Unauthorized     | Invalid/revoked API key         | Update connector config                              |
+| "insufficient_quota" | Billing limit reached           | Add credits to OpenAI account                        |
+| Slow responses       | Large context or server load    | Reduce context window, use gpt-4o-mini               |
+| Content filtered     | OpenAI safety filter triggered  | Rephrase prompt                                      |
+| Image 400 error      | Invalid size or prompt too long | Use supported sizes: 1024x1024, 1792x1024, 1024x1792 |

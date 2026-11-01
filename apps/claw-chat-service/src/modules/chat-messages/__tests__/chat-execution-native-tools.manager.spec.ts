@@ -25,6 +25,8 @@ import { createFakePaygAccessControl } from './helpers/fake-payg-access-control.
 import type { PluginInvokePort } from '../clients/plugin-invoke.port';
 import { PluginInvokeStatus } from '../enums/plugin-invoke-status.enum';
 import { PluginToolLoopManager } from '../managers/plugin-tool-loop.manager';
+import { MediaToolLoopManager } from '../managers/media-tool-loop.manager';
+import { ChatSurface } from '../../../common/enums/chat-surface.enum';
 
 vi.mock('../clients/model-exposure.client', () => ({
   ModelExposureClient: vi.fn(function () {
@@ -55,6 +57,19 @@ const { appConfigGet } = vi.hoisted(() => ({ appConfigGet: vi.fn() }));
 
 vi.mock('../../../app/config/app.config', () => ({
   AppConfig: { get: appConfigGet },
+}));
+
+const { startMedia, awaitMedia, cancelMedia, linkMedia } = vi.hoisted(() => ({
+  startMedia: vi.fn(),
+  awaitMedia: vi.fn(),
+  cancelMedia: vi.fn(),
+  linkMedia: vi.fn(),
+}));
+vi.mock('../utilities/media-gateway.utility', () => ({
+  startMedia,
+  awaitMedia,
+  cancelMedia,
+  linkMedia,
 }));
 
 const AppConfig = { get: appConfigGet };
@@ -1118,5 +1133,200 @@ describe('ChatExecutionManager — @mentioned plugin tools (rule 59)', () => {
     expect(result.content).toBe('plain answer');
     expect(result.pluginNotices).toEqual([{ code: 'PLUGIN_SERVICE_UNAVAILABLE' }]);
     expect((httpRequest.mock.calls[1]?.[0].body as OpenAiChatRequest).tools).toBeUndefined();
+  });
+});
+
+describe('ChatExecutionManager — media tools (rule 59)', () => {
+  function mockOpenAiTurn(message: Record<string, unknown>, finishReason: string): void {
+    httpRequest
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: { provider: 'OPENAI', apiKey: 'test-key', baseUrl: 'https://api.openai.com/v1' },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        data: {
+          id: 'chatcmpl-m',
+          choices: [{ index: 0, message, finish_reason: finishReason }],
+          usage: { prompt_tokens: 12, completion_tokens: 8, total_tokens: 20 },
+        },
+      });
+  }
+
+  function build(plan: boolean): ChatExecutionManager {
+    const access = createFakePaygAccessControl({
+      lockedPlanFeatures: plan ? [] : ['allowImageGeneration'],
+    });
+    return new ChatExecutionManager(
+      {
+        buildPromptString: vi.fn().mockReturnValue('user prompt'),
+        buildChatMessages: vi.fn().mockReturnValue([{ role: 'user', content: 'Draw a fox' }]),
+        buildGeminiChatMessages: vi.fn().mockReturnValue([{ role: 'user', content: 'Draw a fox' }]),
+      } as unknown as ContextAssemblyManager,
+      {
+        checkResponseQuality: vi.fn().mockReturnValue({ score: 0.9, reasons: [] }),
+        shouldReRoute: vi.fn().mockReturnValue({ shouldReRoute: false }),
+      } as unknown as QualityCheckManager,
+      {
+        setExecutionManager: vi.fn(),
+        shouldActivate: vi.fn().mockReturnValue(false),
+        evaluate: vi.fn(),
+        buildMetadata: vi.fn().mockReturnValue({}),
+      } as unknown as JudgeRefereeManager,
+      {
+        emitRouterStarted: vi.fn(),
+        emitProviderSelected: vi.fn(),
+        emitResponseStreaming: vi.fn(),
+        startResponseProgressHeartbeat: vi.fn().mockReturnValue(vi.fn()),
+        emitFallbackAttempt: vi.fn(),
+        emitError: vi.fn(),
+      } as unknown as ChatStreamService,
+      {
+        run: vi.fn().mockImplementation(async (_q: string, ctx: unknown) => ({
+          context: ctx,
+          outcome: { applied: false, results: [], runId: null, warning: null },
+        })),
+      } as any,
+      access as unknown as AccessControlService,
+      { uploadFile: vi.fn(), getCachedOrUpload: vi.fn() } as any,
+      {
+        resolveDefaultModel: vi.fn().mockResolvedValue('qwen3:1.7b'),
+        resolveModelList: vi.fn().mockResolvedValue(['qwen3:7b']),
+      } as unknown as LocalModelSelectionService,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      new MediaToolLoopManager(access as unknown as AccessControlService),
+    );
+  }
+
+  const ctx = (text: string): AssembledContext =>
+    ({ ...makeContext(text), platformSurface: ChatSurface.CHAT }) as AssembledContext;
+
+  beforeEach(() => {
+    httpRequest.mockReset();
+    startMedia.mockReset().mockResolvedValue({
+      ok: true,
+      id: 'gen-9',
+      provider: 'IMAGE_GEMINI',
+      model: 'gemini-2.5-flash-image',
+    });
+    awaitMedia.mockReset().mockResolvedValue({
+      state: 'completed',
+      snapshot: { id: 'gen-9', status: 'COMPLETED', mimeType: 'image/png' },
+    });
+    AppConfig.get.mockReturnValue(DEFAULT_APP_CONFIG);
+  });
+
+  it('the chat model asks for an image, gets the result back as the tool result, and writes the reply', async () => {
+    const manager = build(true);
+    mockOpenAiTurn(
+      {
+        role: 'assistant',
+        content: '',
+        tool_calls: [
+          {
+            id: 'call_img',
+            type: 'function',
+            function: {
+              name: 'generate_image',
+              arguments: JSON.stringify({
+                operation: 'generate',
+                targetId: 'clawai-media',
+                arguments: { prompt: 'a fox in snow' },
+              }),
+            },
+          },
+        ],
+      },
+      'tool_calls',
+    );
+    mockOpenAiTurn({ role: 'assistant', content: 'Here is your fox.' }, 'stop');
+
+    const result = await manager.callProvider(
+      'OPENAI',
+      'gpt-4o-mini',
+      ctx('draw me a fox in snow'),
+      Date.now(),
+      false,
+      undefined,
+      'MANUAL_MODEL',
+    );
+
+    expect(result.content).toBe('Here is your fox.');
+    expect(result.mediaGenerations).toEqual([
+      { kind: 'image', id: 'gen-9', status: 'completed', prompt: 'a fox in snow' },
+    ]);
+    // Not a generation turn: it stays metered as ordinary chat.
+    expect(result.imageGenerationId).toBeUndefined();
+    const first = httpRequest.mock.calls[1]?.[0].body as OpenAiChatRequest;
+    expect(first.tools?.map((tool) => tool.function.name)).toEqual([
+      'generate_image',
+      'generate_video',
+      'generate_audio',
+    ]);
+    const second = httpRequest.mock.calls[3]?.[0].body as OpenAiChatRequest;
+    const toolMessage = second.messages.find((message) => message.role === 'tool');
+    expect(String(toolMessage?.content)).toContain('"status":"completed"');
+    expect(String(toolMessage?.content)).not.toContain('base64');
+  });
+
+  it('offers the tools to normal chat, which never sets a surface', async () => {
+    const manager = build(true);
+    mockOpenAiTurn({ role: 'assistant', content: 'ok' }, 'stop');
+    await manager.callProvider(
+      'OPENAI',
+      'gpt-4o-mini',
+      makeContext('put together a nice picture of a red apple'),
+      Date.now(),
+      false,
+      undefined,
+      'MANUAL_MODEL',
+    );
+    const body = httpRequest.mock.calls[1]?.[0].body as OpenAiChatRequest;
+    expect(body.tools?.map((tool) => tool.function.name)).toContain('generate_image');
+  });
+
+  it('sends no tools on a turn that does not talk about media', async () => {
+    const manager = build(true);
+    mockOpenAiTurn({ role: 'assistant', content: 'plain' }, 'stop');
+    const result = await manager.callProvider(
+      'OPENAI',
+      'gpt-4o-mini',
+      ctx('explain monads'),
+      Date.now(),
+      false,
+      undefined,
+      'MANUAL_MODEL',
+    );
+    expect(result.content).toBe('plain');
+    expect((httpRequest.mock.calls[1]?.[0].body as OpenAiChatRequest).tools).toBeUndefined();
+    expect(startMedia).not.toHaveBeenCalled();
+  });
+
+  it('a plan without media gets the upgrade notice for a clear request, and no model call', async () => {
+    const manager = build(false);
+    const result = await manager.callProvider(
+      'OPENAI',
+      'gpt-4o-mini',
+      ctx('draw me a fox in snow'),
+      Date.now(),
+      false,
+      undefined,
+      'MANUAL_MODEL',
+    );
+    expect(result.planFeatureRefusal).toEqual({ feature: 'allowImageGeneration' });
+    expect(httpRequest).not.toHaveBeenCalled();
+    expect(startMedia).not.toHaveBeenCalled();
   });
 });

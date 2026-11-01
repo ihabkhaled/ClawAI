@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import {
   CostConfidence,
@@ -149,6 +149,35 @@ describe('RouterModelRegistryRepository', () => {
         ModalityKind.IMAGE_INPUT,
         ModalityKind.TEXT,
       ]);
+    });
+  });
+
+  describe('findExecutionCandidates media output', () => {
+    const mediaKinds = [
+      ModalityKind.IMAGE_OUTPUT,
+      ModalityKind.VIDEO_OUTPUT,
+      ModalityKind.AUDIO_OUTPUT,
+    ];
+
+    it('leaves media-output models out of a text candidate list', async () => {
+      prisma.routerModelRegistry.findMany!.mockResolvedValue([]);
+      await repo.findExecutionCandidates({});
+      const call = prisma.routerModelRegistry.findMany!.mock.calls[0]![0];
+      expect(call.where.NOT).toEqual({ modalitiesOut: { hasSome: mediaKinds } });
+    });
+
+    it('keeps them when a media output is asked for', async () => {
+      prisma.routerModelRegistry.findMany!.mockResolvedValue([]);
+      await repo.findExecutionCandidates({ requiredModalitiesOut: [ModalityKind.VIDEO_OUTPUT] });
+      const call = prisma.routerModelRegistry.findMany!.mock.calls[0]![0];
+      expect(call.where.NOT).toBeUndefined();
+    });
+
+    it('keeps them when includeMediaOutput is set', async () => {
+      prisma.routerModelRegistry.findMany!.mockResolvedValue([]);
+      await repo.findExecutionCandidates({ includeMediaOutput: true });
+      const call = prisma.routerModelRegistry.findMany!.mock.calls[0]![0];
+      expect(call.where.NOT).toBeUndefined();
     });
   });
 

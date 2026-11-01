@@ -552,3 +552,7 @@ See [routing-engine.md](../03-architecture/routing-engine.md) "A model named in 
 `named-model-request.{manager,utility,constants,types}.ts`, enum `NamedModelCapability`. Tests:
 `utilities/__tests__/named-model-request.utility.spec.ts`, `managers/__tests__/named-model-request.manager.spec.ts`,
 `routing.manager.spec.ts` "a model named in the prompt".
+
+## Media-output models (2026-10-31)
+
+Connector snapshot `modalitiesOut` now comes from the shared id classifier (`IMAGE_OUTPUT` / `VIDEO_OUTPUT` / `AUDIO_OUTPUT`, plus `mediaKind`). Routing stores it, leaves media models out of text AUTO and execution candidates, and keeps them for pickers and media-tool targets. Migration `20261031120000_media_output_modalities` backfills the registry and adds the xAI `grok-imagine-*` rows; cost seed v15 prices them and the audio models. See the workspace CLAUDE.md files.

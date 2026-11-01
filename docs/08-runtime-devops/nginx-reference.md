@@ -114,10 +114,12 @@ All routes are prefixed with `/api/v1/`. Nginx uses dynamic variables for upstre
 
 ### Image Service (port 4012)
 
-| Frontend Path      | Backend Destination         | Notes                         |
-| ------------------ | --------------------------- | ----------------------------- |
-| `/api/v1/images`   | `http://image-service:4012` | Image generation requests     |
-| `/api/v1/images/*` | `http://image-service:4012` | SSE endpoint (special config) |
+| Frontend Path      | Backend Destination         | Notes                                        |
+| ------------------ | --------------------------- | -------------------------------------------- |
+| `/api/v1/images`   | `http://image-service:4012` | Image generation requests                    |
+| `/api/v1/images/*` | `http://image-service:4012` | SSE endpoint (special config)                |
+| `/api/v1/videos`   | `http://image-service:4012` | Video generation poll/retry/cancel (ADR-137) |
+| `/api/v1/audio`    | `http://image-service:4012` | Audio generation poll/retry/cancel           |
 
 ### Threads Service (port 4019)
 

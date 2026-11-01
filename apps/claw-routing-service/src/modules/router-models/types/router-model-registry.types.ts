@@ -94,4 +94,6 @@ export type FindExecutionCandidatesFilter = {
   privacyClassMinimum?: PrivacyClass;
   excludeRouterOnly?: boolean;
   excludeProviders?: string[];
+  /** Keep image/video/audio-output models; default false (text routing leaves them out). */
+  includeMediaOutput?: boolean;
 };

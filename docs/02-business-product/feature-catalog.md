@@ -170,13 +170,13 @@ Last updated: 2026-04-11
 
 ## 7. Image Generation
 
-| #     | Feature                  | Status | Description                                                    |
-| ----- | ------------------------ | ------ | -------------------------------------------------------------- |
-| F-120 | Multi-Provider Image Gen | GA     | DALL-E 3, Gemini 2.5 Flash Image, Stable Diffusion (local)     |
-| F-121 | Image Intent Routing     | GA     | AUTO mode detects image requests and routes to image providers |
-| F-122 | Reference Image Support  | GA     | Generate variations based on attached reference images         |
-| F-123 | Image Generation History | GA     | View all past generations with prompts and results             |
-| F-124 | Retry & Alternate        | GA     | Retry with same provider or try a different image model        |
+| #     | Feature                  | Status | Description                                                                                  |
+| ----- | ------------------------ | ------ | -------------------------------------------------------------------------------------------- |
+| F-120 | Multi-Provider Image Gen | GA     | Gemini 2.5 Flash Image, OpenAI gpt-image-1, xAI grok-imagine-image, Stable Diffusion (local) |
+| F-121 | Image Intent Routing     | GA     | AUTO mode detects image requests and routes to image providers                               |
+| F-122 | Reference Image Support  | GA     | Generate variations based on attached reference images                                       |
+| F-123 | Image Generation History | GA     | View all past generations with prompts and results                                           |
+| F-124 | Retry & Alternate        | GA     | Retry with same provider or try a different image model                                      |
 
 ### User Stories
 

@@ -471,3 +471,96 @@ describe('ModelCostService.isAggregatorProvider — real connector ids', () => {
     expect(ModelCostService.isAggregatorProvider(provider)).toBe(false);
   });
 });
+
+describe('ModelCostService — unseeded media ids (fallback pricing)', () => {
+  const fallbackConfig = (enabled: boolean): void => {
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
+      LOCAL_COMPUTE_OWNERSHIP: 'USER_OWNED',
+      LOCAL_COMPUTE_COST_PER_MILLION_MICRO_USD: 0,
+      PAYG_FALLBACK_PRICING_ENABLED: enabled,
+    } as unknown as ReturnType<typeof AppConfig.get>);
+  };
+  const row = (provider: string, modelKey: string, overrides: Record<string, unknown> = {}) =>
+    baseRecord({
+      provider,
+      modelKey,
+      activeKey: `${provider}:${modelKey}`,
+      inputPerMillionMicroUsd: 0n,
+      outputPerMillionMicroUsd: 0n,
+      ...overrides,
+    });
+  const build = (rows: unknown[]): ModelCostService => {
+    const repository = {
+      findActive: vi.fn(async () => null),
+      findActiveForProvider: vi.fn(async () => rows),
+      findMostExpensiveForProvider: vi.fn(async () =>
+        baseRecord({ provider: 'GROK', modelKey: 'grok-4' }),
+      ),
+    } as unknown as ModelCostRepository;
+    return new ModelCostService(repository);
+  };
+
+  it('prices an unknown image id at the dearest priced image sibling, not the chat token rate', async () => {
+    fallbackConfig(true);
+    const service = build([
+      row('GROK', 'grok-imagine-image', { imagePerUnitMicroUsd: 20_000n }),
+      row('GROK', 'grok-imagine-image-2.0', { imagePerUnitMicroUsd: 40_000n }),
+      row('GROK', 'grok-imagine-video', { videoPerUnitMicroUsd: 50_000n }),
+    ]);
+
+    const snapshot = await service.getSnapshot('GROK', 'grok-imagine-image-ultra');
+
+    expect(snapshot).toMatchObject({
+      isPriced: true,
+      isFallbackRate: true,
+      model: 'grok-imagine-image-ultra',
+    });
+    expect(snapshot.imagePerUnitMicroUsd).toBe(40_000);
+  });
+
+  it('prices an unknown video id at the dearest video sibling per second', async () => {
+    fallbackConfig(true);
+    const service = build([
+      row('GEMINI', 'veo-3.1-fast-generate-preview', { videoPerUnitMicroUsd: 100_000n }),
+      row('GEMINI', 'veo-3.1-generate-preview', { videoPerUnitMicroUsd: 400_000n }),
+    ]);
+
+    const snapshot = await service.getSnapshot('GEMINI', 'veo-4-generate-preview');
+
+    expect(snapshot.isPriced).toBe(true);
+    expect(snapshot.videoPerUnitMicroUsd).toBe(400_000);
+  });
+
+  it('keeps music and speech families apart', async () => {
+    fallbackConfig(true);
+    const service = build([
+      row('GEMINI', 'lyria-3-pro-preview', { imagePerUnitMicroUsd: 80_000n }),
+      row('GEMINI', 'gemini-2.5-flash-preview-tts', {
+        inputPerMillionMicroUsd: 500_000n,
+        outputPerMillionMicroUsd: 10_000_000n,
+      }),
+    ]);
+
+    const song = await service.getSnapshot('GEMINI', 'lyria-4');
+    const speech = await service.getSnapshot('GEMINI', 'gemini-4-flash-tts');
+
+    expect(song.imagePerUnitMicroUsd).toBe(80_000);
+    expect(speech.outputPerMillionMicroUsd).toBe(10_000_000);
+  });
+
+  it('leaves a media id with NO priced sibling UNPRICED (PAYG_MODEL_UNPRICED), never a chat rate', async () => {
+    fallbackConfig(true);
+    const service = build([row('GROK', 'grok-imagine-image', { imagePerUnitMicroUsd: 20_000n })]);
+
+    const snapshot = await service.getSnapshot('GROK', 'grok-imagine-video-9');
+
+    expect(snapshot.isPriced).toBe(false);
+  });
+
+  it('leaves an unknown media id UNPRICED when fallback pricing is switched off', async () => {
+    fallbackConfig(false);
+    const service = build([row('GROK', 'grok-imagine-image', { imagePerUnitMicroUsd: 20_000n })]);
+
+    expect((await service.getSnapshot('GROK', 'grok-imagine-image-ultra')).isPriced).toBe(false);
+  });
+});

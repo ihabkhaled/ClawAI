@@ -6,6 +6,7 @@ import { AttachmentDeliveryChip } from '@/components/chat/attachments/attachment
 import { CompareJudgeBadges } from '@/components/chat/compare-judge-badges';
 import { CompareResultActions } from '@/components/chat/compare-result-actions';
 import { JudgeRefereeDetails } from '@/components/chat/judge-referee-details';
+import { MediaGenerationCards } from '@/components/chat/media-generation-cards';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -15,6 +16,7 @@ import { MarkdownRenderer } from '@/lib/markdown';
 import { cn } from '@/lib/utils';
 import type { CompareResultCardProps } from '@/types';
 import { formatLatency, getLaneRanking } from '@/utilities';
+import { readLaneMediaGenerations } from '@/utilities/media-generation.utility';
 
 export function CompareResultCard({
   response,
@@ -35,6 +37,7 @@ export function CompareResultCard({
   const hasJudgeDetails =
     response.judgeReview?.judgeDialogAvailable === true && judgeMessage !== undefined;
   const isMarkdown = viewMode === CompareResultViewMode.MARKDOWN;
+  const mediaGenerations = readLaneMediaGenerations(response);
 
   return (
     <Card
@@ -132,6 +135,8 @@ export function CompareResultCard({
             )}
           </div>
         ) : null}
+        {/* Media this lane's model made with a media tool: image, video cards under its text. */}
+        {mediaGenerations.length > 0 ? <MediaGenerationCards items={mediaGenerations} /> : null}
         {hasJudgeDetails && judgeMessage ? (
           <div className="border-border/60 mt-4 border-t pt-3">
             <JudgeRefereeDetails message={judgeMessage} />

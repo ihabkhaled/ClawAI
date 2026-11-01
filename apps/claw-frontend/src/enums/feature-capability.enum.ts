@@ -26,6 +26,7 @@ export enum FeatureCapability {
   CONVERSATION_TOOLS = 'conversation-power-tools',
   READ_ALOUD = 'read-aloud',
   IMAGE_GENERATION = 'image-generation',
+  CHAT_MODELS_MAKE_MEDIA = 'chat-models-make-media',
   RELIABILITY = 'reliability',
   PAY_AS_YOU_GO_CREDIT = 'pay-as-you-go-credit',
   ADMINISTRATION_AND_ACCESS = 'administration-and-access-control',

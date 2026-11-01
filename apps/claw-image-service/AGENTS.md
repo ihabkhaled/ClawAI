@@ -22,9 +22,9 @@ change type needs (`rules/23-git-commits-hooks-and-release-gates.md`, gate matri
 ## Ownership (generated)
 - Port: 4012
 - Database: postgresql
-- Prisma models: ImageGeneration, ImageGenerationAsset, ImageGenerationEvent, VideoGeneration, VideoGenerationAsset
-- API endpoints: 18 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 48 (vitest)
+- Prisma models: AudioGeneration, AudioGenerationAsset, ImageGeneration, ImageGenerationAsset, ImageGenerationEvent, VideoGeneration, VideoGenerationAsset
+- API endpoints: 27 (see `.ai/manifests/api-endpoints.json`)
+- Test files: 56 (vitest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

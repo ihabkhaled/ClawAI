@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { Clapperboard, Eye, Film, ImageIcon, Mic } from 'lucide-react';
+import { Clapperboard, Eye, Film, ImageIcon, Mic, Volume2 } from 'lucide-react';
 
 import { ModelCapabilityBadge } from '@/enums/model-capability-badge.enum';
 
@@ -13,6 +13,7 @@ export const MODEL_CAPABILITY_BADGE_LABEL_KEYS: Readonly<Record<ModelCapabilityB
   [ModelCapabilityBadge.VideoInput]: 'mediaUi.capability.videoInput',
   [ModelCapabilityBadge.ImageOutput]: 'mediaUi.capability.imageOutput',
   [ModelCapabilityBadge.VideoOutput]: 'mediaUi.capability.videoOutput',
+  [ModelCapabilityBadge.AudioOutput]: 'mediaUi.capability.audioOutput',
 };
 
 /** A distinct glyph per badge, so the row is never read by colour alone. */
@@ -22,6 +23,14 @@ export const MODEL_CAPABILITY_BADGE_ICONS: Readonly<Record<ModelCapabilityBadge,
   [ModelCapabilityBadge.VideoInput]: Film,
   [ModelCapabilityBadge.ImageOutput]: ImageIcon,
   [ModelCapabilityBadge.VideoOutput]: Clapperboard,
+  [ModelCapabilityBadge.AudioOutput]: Volume2,
 };
 
 export const MODEL_CAPABILITY_BADGE_LIST_LABEL_KEY = 'mediaUi.capability.listLabel';
+
+/** The picker-row kind word (translation key) for each media-output badge. */
+export const MODEL_MEDIA_KIND_LABEL_KEYS: ReadonlyMap<ModelCapabilityBadge, string> = new Map([
+  [ModelCapabilityBadge.ImageOutput, 'mediaUi.modelKind.image'],
+  [ModelCapabilityBadge.VideoOutput, 'mediaUi.modelKind.video'],
+  [ModelCapabilityBadge.AudioOutput, 'mediaUi.modelKind.audio'],
+]);

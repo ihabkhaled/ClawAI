@@ -30,3 +30,8 @@ export const linkVideoAssistantMessageSchema = z.object({
 });
 
 export type LinkVideoAssistantMessageDto = z.infer<typeof linkVideoAssistantMessageSchema>;
+
+/** Body of the internal cancel route: the owner the row must belong to. */
+export const cancelVideoSchema = z.object({ userId: z.string().min(1).max(100) });
+
+export type CancelVideoDto = z.infer<typeof cancelVideoSchema>;

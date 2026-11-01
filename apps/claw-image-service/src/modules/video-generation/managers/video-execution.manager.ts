@@ -32,7 +32,7 @@ import type {
   VideoSettlement,
 } from '../types/video-generation.types';
 import { videoCancelled } from '../utilities/video-cancel.utility';
-import { videoPriceKey } from '../utilities/video-price-key.utility';
+import { meteredVideoModelKey } from '../utilities/video-price-key.utility';
 import { videoFailure } from '../utilities/video-provider-error.utility';
 import { abandonedVideoHold, videoSettlement } from '../utilities/video-settlement.utility';
 
@@ -205,7 +205,7 @@ export class VideoExecutionManager {
         requestId: input.requestId,
         provider: connector,
         // The PRICE row: the bare model id the routing seed prices per second.
-        model: videoPriceKey(input.model),
+        model: meteredVideoModelKey(input.model),
         surface: PaygSurface.VIDEO,
         promptTokens: VIDEO_PAYG_PROMPT_TOKENS,
         cachedPromptTokens: 0,

@@ -20,12 +20,13 @@ ClawAI integrates with 5 AI providers for text generation and 4 providers for im
 
 ### Image Generation
 
-| Provider        | Type  | Models             | Max Resolution | Formats | Cost   |
-| --------------- | ----- | ------------------ | -------------- | ------- | ------ |
-| OpenAI (DALL-E) | Cloud | dall-e-3           | 1792x1024      | PNG     | $0.04+ |
-| Gemini          | Cloud | gemini-2.5-flash   | 1024x1024      | PNG     | Varies |
-| SD WebUI        | Local | SDXL, SD 3.5       | Unlimited\*    | PNG     | FREE   |
-| ComfyUI         | Local | FLUX, SDXL, SD 3.5 | Unlimited\*    | PNG     | FREE   |
+| Provider   | Type  | Models                 | Max Resolution   | Formats | Cost                          |
+| ---------- | ----- | ---------------------- | ---------------- | ------- | ----------------------------- |
+| OpenAI     | Cloud | gpt-image-1            | 1792x1024        | PNG     | Per image (see the cost seed) |
+| xAI (Grok) | Cloud | grok-imagine-image     | Provider default | PNG     | Per image (see the cost seed) |
+| Gemini     | Cloud | gemini-2.5-flash-image | 1024x1024        | PNG     | Varies                        |
+| SD WebUI   | Local | SDXL, SD 3.5           | Unlimited\*      | PNG     | FREE                          |
+| ComfyUI    | Local | FLUX, SDXL, SD 3.5     | Unlimited\*      | PNG     | FREE                          |
 
 \*Limited by GPU VRAM.
 
@@ -189,18 +190,18 @@ This matrix scores each provider on quality (1-5), cost (1-5, lower is cheaper),
 
 ### When to Use Each Provider
 
-| Provider                      | Use When                                                                    | Avoid When                                               |
-| ----------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------- |
-| **Anthropic claude-sonnet-4** | Code generation, debugging, code review, security audits, technical writing | Simple Q&A, cost-sensitive tasks, privacy-sensitive data |
-| **Anthropic claude-opus-4**   | Complex reasoning, architecture decisions, deep analysis, system design     | Simple tasks, high-volume workloads (expensive)          |
-| **OpenAI gpt-4o-mini**        | Creative writing, general chat, summaries, low-latency requirements         | Complex coding, deep reasoning, privacy-sensitive        |
-| **OpenAI gpt-4o**             | Fallback for coding tasks when Anthropic is unavailable                     | Cost-sensitive tasks (expensive)                         |
-| **Gemini gemini-2.5-flash**   | Image analysis, file parsing, data analysis, research, large context        | Privacy-sensitive content, offline scenarios             |
-| **DeepSeek deepseek-chat**    | Math problems, algorithms, competitive programming, cost-sensitive coding   | Privacy-sensitive, complex natural language tasks        |
-| **local-ollama**              | Privacy-sensitive, simple Q&A, translations, offline usage, cost-free tasks | Complex reasoning (quality gap vs. cloud)                |
-| **IMAGE_GEMINI**              | Image generation, default image provider                                    | Offline-only deployments                                 |
-| **IMAGE_OPENAI (DALL-E)**     | Photorealistic images, highest quality image gen                            | Budget-constrained, Gemini is available                  |
-| **IMAGE_LOCAL (SD)**          | Offline image generation, zero-cost images                                  | Quality matters more than cost                           |
+| Provider                       | Use When                                                                    | Avoid When                                               |
+| ------------------------------ | --------------------------------------------------------------------------- | -------------------------------------------------------- |
+| **Anthropic claude-sonnet-4**  | Code generation, debugging, code review, security audits, technical writing | Simple Q&A, cost-sensitive tasks, privacy-sensitive data |
+| **Anthropic claude-opus-4**    | Complex reasoning, architecture decisions, deep analysis, system design     | Simple tasks, high-volume workloads (expensive)          |
+| **OpenAI gpt-4o-mini**         | Creative writing, general chat, summaries, low-latency requirements         | Complex coding, deep reasoning, privacy-sensitive        |
+| **OpenAI gpt-4o**              | Fallback for coding tasks when Anthropic is unavailable                     | Cost-sensitive tasks (expensive)                         |
+| **Gemini gemini-2.5-flash**    | Image analysis, file parsing, data analysis, research, large context        | Privacy-sensitive content, offline scenarios             |
+| **DeepSeek deepseek-chat**     | Math problems, algorithms, competitive programming, cost-sensitive coding   | Privacy-sensitive, complex natural language tasks        |
+| **local-ollama**               | Privacy-sensitive, simple Q&A, translations, offline usage, cost-free tasks | Complex reasoning (quality gap vs. cloud)                |
+| **IMAGE_GEMINI**               | Image generation, default image provider                                    | Offline-only deployments                                 |
+| **IMAGE_OPENAI (gpt-image-1)** | Photorealistic images, highest quality image gen                            | Budget-constrained, Gemini is available                  |
+| **IMAGE_LOCAL (SD)**           | Offline image generation, zero-cost images                                  | Quality matters more than cost                           |
 
 ### Fallback Chain Strategy
 
@@ -234,7 +235,7 @@ The routing engine builds a 3-layer fallback chain for every decision. The strat
 
 ```
 1. IMAGE_GEMINI / gemini-2.5-flash-image
-2. IMAGE_OPENAI / dall-e-3
+2. IMAGE_OPENAI / gpt-image-1
 3. IMAGE_LOCAL / sdxl-turbo
 ```
 

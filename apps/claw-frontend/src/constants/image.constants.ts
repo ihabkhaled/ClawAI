@@ -76,3 +76,25 @@ export const IMAGE_RUNTIME_STAGE_LABEL_KEYS: ReadonlyMap<RuntimeProgressStage, s
 ]);
 
 export const IMAGE_RUNTIME_STAGE_FALLBACK_KEY = 'chat.imageStage.working';
+
+/**
+ * How to recognise an image-OUTPUT model listed under an ordinary chat connector.
+ * Mirror of `IMAGE_OUTPUT_MODEL_PATTERNS_BY_CONNECTOR` in
+ * packages/shared-utilities/src/image-output-model/image-output-model.constants.ts
+ * (that package's root barrel pulls server-only modules, so the browser bundle
+ * cannot import it). Keep the two in step.
+ */
+export const IMAGE_OUTPUT_MODEL_PATTERNS_BY_CONNECTOR: ReadonlyMap<string, RegExp> = new Map([
+  ['GEMINI', /^(models\/)?(gemini-[\w.-]*-image[\w.-]*|imagen-[\w.-]+|nano-banana[\w.-]*)$/iu],
+  ['GROK', /^(grok-imagine-image[\w.-]*|grok-2-image[\w.-]*)$/iu],
+  ['OPENAI', /^(gpt-image[\w.-]*|dall-e-\d[\w.-]*|chatgpt-image[\w.-]*)$/iu],
+]);
+
+/**
+ * How to recognise an audio-OUTPUT model (speech, native audio, music) listed
+ * under an ordinary chat connector. Mirror of the patterns in
+ * packages/shared-utilities/src/audio-output-model/audio-output-model.constants.ts
+ * (the package's root barrel pulls server-only modules). Keep the two in step.
+ */
+export const AUDIO_OUTPUT_MODEL_PATTERN =
+  /(?:^|[/_.:-])(?:tts|text-to-speech|native-audio|speech|lyria|music|musicgen)(?:[_.:-]|$)/iu;

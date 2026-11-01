@@ -6,6 +6,7 @@ import {
   snapshotSupportsAudio,
   snapshotSupportsVideoInput,
 } from '../utilities/snapshot-media-capability.utility';
+import { snapshotMediaOutputFields } from '../utilities/snapshot-media-output.utility';
 import { publishedSnapshotPrices } from '../utilities/snapshot-price.utility';
 import { effectiveMaxOutputTokens } from '../utilities/model-output-limit.utility';
 import {
@@ -41,7 +42,7 @@ export class ModelsSnapshotManager {
     },
   ): UpstreamModelSnapshotEntry {
     const modalitiesIn: string[] = ['TEXT'];
-    const modalitiesOut: string[] = ['TEXT'];
+    const providerKey = row.connector?.providerDefinition?.key ?? row.provider;
     if (row.supportsVision) modalitiesIn.push('IMAGE_INPUT');
     // Media flags go through the same fail-closed heuristic the sync uses, so
     // a row written before that heuristic cannot advertise audio it lacks.
@@ -50,7 +51,7 @@ export class ModelsSnapshotManager {
     // 'VIDEO' is not a member and would fail that row's registry upsert.
     if (snapshotSupportsVideoInput(row)) modalitiesIn.push(SNAPSHOT_VIDEO_INPUT_MODALITY);
     return {
-      provider: row.connector?.providerDefinition?.key ?? row.provider,
+      provider: providerKey,
       ...(row.connector?.providerDefinition
         ? { providerDisplayName: row.connector.providerDefinition.displayName }
         : {}),
@@ -61,7 +62,7 @@ export class ModelsSnapshotManager {
       displayName: row.displayName,
       isLocal: false,
       modalitiesIn,
-      modalitiesOut,
+      ...snapshotMediaOutputFields(row.modelKey, providerKey),
       contextWindowTokens: row.maxContextTokens ?? undefined,
       // chat-service pre-clamps `max_tokens` with this (ADR-125).
       maxOutputTokens: effectiveMaxOutputTokens(row.maxOutputTokens, row.learnedMaxOutputTokens),

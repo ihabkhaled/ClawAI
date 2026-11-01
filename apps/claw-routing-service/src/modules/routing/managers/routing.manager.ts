@@ -7,6 +7,7 @@ import {
   imageEditModelFor,
   imageEditProviders,
   inferImageCapabilityProvider,
+  modelCanCallMediaTools,
   MultimodalImageIntent,
   resolveImageCapabilityProvider,
   resolveVideoCapabilityProvider,
@@ -275,6 +276,12 @@ export class RoutingManager {
       return this.buildImageEditDecision(context, localOnly);
     }
     if (intent === MultimodalImageIntent.GENERATE) {
+      if (this.pickedToolModelHandlesMedia(context)) {
+        this.logger.log(
+          `detectExplicitModeArtifact: picked tool-capable model ${context.forcedProvider ?? 'inferred'}/${context.forcedModel ?? ''} keeps the turn; its tool loop generates the image`,
+        );
+        return null;
+      }
       if (context.forcedModel && context.userMode === RoutingMode.MANUAL_MODEL) {
         this.logger.log(
           `detectExplicitModeArtifact: picked chat model ${context.forcedProvider ?? 'inferred'}/${context.forcedModel} cannot generate images → best available image provider`,
@@ -288,6 +295,27 @@ export class RoutingManager {
       };
     }
     return this.detectFileGenerationRequest(context);
+  }
+
+  /**
+   * A MANUAL_MODEL pick of a tool-capable chat model keeps the turn for an image
+   * request: chat-service's tool loop calls the media tool. Tool support is the shared
+   * `modelCanCallMediaTools` (provider has a tool dialect AND a chat model), or the
+   * registry flag; the registry column alone was FALSE for grok-4.20-*. AUTO and non-tool
+   * models keep the redirect to the best image provider (AUTO keeps it in this
+   * batch). Needs the plan to allow media.
+   */
+  private pickedToolModelHandlesMedia(context: RoutingContext): boolean {
+    return (
+      context.userMode === RoutingMode.MANUAL_MODEL &&
+      context.forcedModel !== undefined &&
+      (context.pickedModelSupportsTools === true ||
+        modelCanCallMediaTools(
+          context.forcedProvider ?? this.inferProvider(context.forcedModel),
+          context.forcedModel,
+        )) &&
+      context.planAllowsMedia !== false
+    );
   }
 
   private get modeHandlers(): ReadonlyMap<RoutingMode, ModeHandler> {
@@ -995,7 +1023,7 @@ export class RoutingManager {
       return includedResult;
     }
     const cloudResult = this.tryCloudRoute(context, state);
-    return cloudResult ? cloudResult : this.buildNoReachableModelDecision();
+    return cloudResult ?? this.buildNoReachableModelDecision();
   }
 
   /**

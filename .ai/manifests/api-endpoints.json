@@ -2321,6 +2321,21 @@
     "claw-image-service": [
       {
         "method": "GET",
+        "route": "/audio/:id",
+        "source": "apps/claw-image-service/src/modules/audio-generation/controllers/audio-generation.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/audio/:id/cancel",
+        "source": "apps/claw-image-service/src/modules/audio-generation/controllers/audio-generation.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/audio/:id/retry",
+        "source": "apps/claw-image-service/src/modules/audio-generation/controllers/audio-generation.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/health",
         "source": "apps/claw-image-service/src/modules/health/controllers/health.controller.ts"
       },
@@ -2351,12 +2366,37 @@
       },
       {
         "method": "GET",
+        "route": "/internal/audio/:id",
+        "source": "apps/claw-image-service/src/modules/audio-generation/controllers/internal-audio.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/audio/:id/assistant-message",
+        "source": "apps/claw-image-service/src/modules/audio-generation/controllers/internal-audio.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/audio/:id/cancel",
+        "source": "apps/claw-image-service/src/modules/audio-generation/controllers/internal-audio.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/audio/generate",
+        "source": "apps/claw-image-service/src/modules/audio-generation/controllers/internal-audio.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/internal/images/:generationId",
         "source": "apps/claw-image-service/src/modules/image-generation/controllers/internal-image.controller.ts"
       },
       {
         "method": "POST",
         "route": "/internal/images/:generationId/assistant-message",
+        "source": "apps/claw-image-service/src/modules/image-generation/controllers/internal-image.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/images/:generationId/cancel",
         "source": "apps/claw-image-service/src/modules/image-generation/controllers/internal-image.controller.ts"
       },
       {
@@ -2382,6 +2422,11 @@
       {
         "method": "POST",
         "route": "/internal/videos/:generationId/assistant-message",
+        "source": "apps/claw-image-service/src/modules/video-generation/controllers/internal-video.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/videos/:generationId/cancel",
         "source": "apps/claw-image-service/src/modules/video-generation/controllers/internal-video.controller.ts"
       },
       {
@@ -4864,5 +4909,5 @@
     ]
   },
   "generated": true,
-  "total": 964
+  "total": 973
 }

@@ -397,3 +397,16 @@ provider refuse a `max_tokens` — only ever lowered, never touched by sync, and
 matched across catalog spellings (`modelKeyVariants`). The models-snapshot
 publishes the smaller of the two as `maxOutputTokens`; routing-service's registry
 sync and chat-service's pre-clamp both read it.
+
+## Media-output models (2026-10-31)
+
+Connector snapshot `modalitiesOut` now comes from the shared id classifier (`IMAGE_OUTPUT` / `VIDEO_OUTPUT` / `AUDIO_OUTPUT`, plus `mediaKind`). Routing stores it, leaves media models out of text AUTO and execution candidates, and keeps them for pickers and media-tool targets. Migration `20261031120000_media_output_modalities` backfills the registry and adds the xAI `grok-imagine-*` rows; cost seed v15 prices them and the audio models. See the workspace CLAUDE.md files.
+
+## Exposure policy for media-generation models (2026-11-01)
+
+Exposure is normally an admin decision (new models arrive UNEXPOSED). Media models are the exception: an image, video, speech or music model that routing-service's cost seed prices is EXPOSED by policy, because the seed row carries a cost class (so plan cost-class limits apply) and an unpriced model is refused at the hold. The list is `PRICED_MEDIA_MODEL_KEYS_BY_PROVIDER` in `@claw/shared-utilities`; add a model there in the same change that seeds its price (a routing-service spec fails if the two drift). Aggregator ids (OpenRouter Lyria, ...) are never listed: they stay UNEXPOSED until priced individually.
+
+- New rows: `newMediaModelExposure` creates them EXPOSED; an update never changes exposure, so an admin who hides one keeps it hidden.
+- `adapterKindFields` ignores Google's `predict` verdict (TOOL) for these models, otherwise every sync would unexpose Veo.
+- Migration `20261031150000_expose_priced_media_models` exposes the existing rows and repairs their kind (AUDIO for speech/music, else CHAT). Idempotent.
+- `GET /connectors/available-models` returns CHAT plus audio-output AUDIO rows, with `mediaKind` / `modalitiesOut`.

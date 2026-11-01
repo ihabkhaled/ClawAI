@@ -106,7 +106,7 @@ research, and workspace add `@claw/shared-auth`. All 17 non-health services publ
 ## claw-image-service — :4012 · PostgreSQL
 
 - **Path:** `apps/claw-image-service` · **Gateway:** `/api/v1/images`
-- **Owns:** ImageGeneration, ImageGenerationAsset, ImageGenerationEvent
+- **Owns:** ImageGeneration, ImageGenerationAsset, ImageGenerationEvent, AudioGeneration, AudioGenerationAsset (plus video generation); audio (speech, music) generation at `/internal/audio/*` and `/audio/*` (ADR-215), the media endpoints chat-service's media tools call (ADR-213)
 - **Responsibility:** image generation (OpenAI gpt-image-1/Gemini/xAI/SD/ComfyUI adapters), owner-only retry/retry-alternate + owner-guarded SSE `/images/:id/events`, service-token-guarded `/internal/images/*`, SSE progress (SD WebUI + ComfyUI adapters).
 - **Pitfalls:** `image.generated`/`image.failed` patterns declared; ComfyUI/SD gated by `local-ai`.
 

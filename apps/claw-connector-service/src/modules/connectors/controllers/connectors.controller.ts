@@ -17,6 +17,7 @@ import {
   listConnectorsQuerySchema,
 } from '../dto/list-connectors-query.dto';
 import {
+  type AvailableModelEntry,
   type ConnectorWithModels,
   type HealthCheckResult,
   type SyncModelsResult,
@@ -47,9 +48,7 @@ export class ConnectorsController {
   // so the static segment is not captured as an :id param.
   @Get('available-models')
   @RequirePermissions(Permission.MODEL_USE_ALLOWED)
-  async getAvailableModels(): Promise<
-    Array<Omit<ConnectorModel, 'provider'> & { provider: string }>
-  > {
+  async getAvailableModels(): Promise<AvailableModelEntry[]> {
     return this.connectorsService.getAvailableModels();
   }
 

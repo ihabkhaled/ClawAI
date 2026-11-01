@@ -286,3 +286,5 @@ Paid entitlement arrives only through a verified billing event consumed via
 `effectiveAt` lets a stale event be skipped rather than overwrite newer state.
 An admin grant requires a reason and an issuing administrator, and must never
 fabricate a payment transaction.
+
+Media-generation models (image, video, speech, music) that the cost seed prices are exposed by policy and gated by the cost class of their seed row like any other model; see the connector service guide, "Exposure policy for media-generation models".

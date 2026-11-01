@@ -170,7 +170,7 @@ Six services use the adapter factory pattern for provider-agnostic operations:
 | Service         | Factory                        | Adapters                                                                                                           |
 | --------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
 | Connector       | `AdapterFactory`               | 7 (OpenAI, Anthropic, Gemini, Bedrock, DeepSeek, Ollama, Grok)                                                     |
-| Image           | `ImageAdapterFactory`          | 3 (DALL-E, Gemini, Stable Diffusion)                                                                               |
+| Image           | `ImageAdapterFactory`          | 4 (Gemini, OpenAI, Grok, Stable Diffusion)                                                                         |
 | File Generation | `FileFormatAdapterFactory`     | 7 (PDF, DOCX, CSV, HTML, MD, JSON, TXT)                                                                            |
 | Ollama          | `RuntimeAdapterFactory`        | 5 (Ollama, ComfyUI, llama.cpp, LocalAI, vLLM)                                                                      |
 | Research        | `SearchProviderAdapterFactory` | 4 (Tavily, SearXNG, Ollama Web, HTTP Fetch)                                                                        |

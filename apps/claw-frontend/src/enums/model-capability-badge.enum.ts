@@ -10,4 +10,5 @@ export enum ModelCapabilityBadge {
   VideoInput = 'VIDEO_INPUT',
   ImageOutput = 'IMAGE_OUTPUT',
   VideoOutput = 'VIDEO_OUTPUT',
+  AudioOutput = 'AUDIO_OUTPUT',
 }

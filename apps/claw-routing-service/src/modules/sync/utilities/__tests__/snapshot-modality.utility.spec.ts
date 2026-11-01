@@ -29,6 +29,12 @@ describe('normalizeSnapshotModalities', () => {
     ]);
   });
 
+  it('keeps the media output modalities the connector snapshot now sends', () => {
+    expect(normalizeSnapshotModalities(['IMAGE_OUTPUT'])).toEqual([ModalityKind.IMAGE_OUTPUT]);
+    expect(normalizeSnapshotModalities(['VIDEO_OUTPUT'])).toEqual([ModalityKind.VIDEO_OUTPUT]);
+    expect(normalizeSnapshotModalities(['AUDIO_OUTPUT'])).toEqual([ModalityKind.AUDIO_OUTPUT]);
+  });
+
   it('keeps undefined as undefined so the builder default still applies', () => {
     expect(normalizeSnapshotModalities(undefined)).toBeUndefined();
   });

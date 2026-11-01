@@ -341,6 +341,22 @@ const PROFILES: SeedProfile[] = [
     qualityTier: QualityTier.A,
   },
 
+  // --- Grok Imagine (media output; not offered for chat completion) ---
+  ...[
+    ['grok-imagine-image', 'Grok Imagine Image', ModalityKind.IMAGE_OUTPUT],
+    ['grok-imagine-image-quality', 'Grok Imagine Image (Quality)', ModalityKind.IMAGE_OUTPUT],
+    ['grok-imagine-image-2.0', 'Grok Imagine Image 2.0', ModalityKind.IMAGE_OUTPUT],
+    ['grok-imagine-video', 'Grok Imagine Video', ModalityKind.VIDEO_OUTPUT],
+    ['grok-imagine-video-1.5', 'Grok Imagine Video 1.5', ModalityKind.VIDEO_OUTPUT],
+  ].map(([modelKey, displayName, modality]): SeedProfile => ({
+    provider: 'GROK',
+    modelKey: modelKey as string,
+    displayName: displayName as string,
+    family: 'grok-imagine',
+    modalitiesIn: [ModalityKind.TEXT],
+    modalitiesOut: [modality as ModalityKind],
+  })),
+
   // ─── AWS Bedrock (cloud) ─────────────────────────────────
   {
     provider: 'BEDROCK',
@@ -596,6 +612,10 @@ async function main(): Promise<void> {
       },
       update: {
         displayName: profile.displayName,
+        // Media models (image/video/audio output) re-assert their output kind.
+        ...(profile.modalitiesOut?.some((m) => m !== ModalityKind.TEXT && m !== ModalityKind.CODE)
+          ? { modalitiesOut: profile.modalitiesOut }
+          : {}),
         // Also set on update: every existing row is sitting on the column
         // default of false, so a create-only assignment would leave every
         // already-seeded deployment exactly as broken as before.

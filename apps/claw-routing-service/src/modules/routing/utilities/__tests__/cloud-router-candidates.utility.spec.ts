@@ -88,6 +88,21 @@ describe('selectCloudRouterCandidates', () => {
     expect(result.map((r) => r.id)).toEqual(['chat']);
   });
 
+  it('never offers a video or audio-output model as a chat candidate', () => {
+    const rows = [
+      row('vid1', RouterProvider.GEMINI, 'veo-3.1-fast-generate-preview', 'ACTIVE'),
+      row('vid2', RouterProvider.GROK, 'grok-imagine-video', 'ACTIVE'),
+      row('tts1', RouterProvider.OPENAI, 'gpt-4o-mini-tts', 'ACTIVE'),
+      row('tts2', RouterProvider.GEMINI, 'gemini-2.5-flash-preview-tts', 'ACTIVE'),
+      row('chat', RouterProvider.OPENAI, 'gpt-4.1-mini', 'ACTIVE'),
+    ];
+    const exposed = new Set(rows.map((r) => modelMatchKey(r.provider, r.providerModelId)));
+
+    const result = selectCloudRouterCandidates(rows, { ...unfiltered, exposed, max: 10 });
+
+    expect(result.map((r) => r.id)).toEqual(['chat']);
+  });
+
   it('treats an unknown connector health as usable', () => {
     const rows = [row('a', RouterProvider.ANTHROPIC, 'claude-sonnet-5')];
     const exposed = new Set(['ANTHROPIC/claude-sonnet-5']);

@@ -195,7 +195,13 @@ import { type SearchMessagesQueryDto } from '../dto/search-messages-query.dto';
 import { type InThreadSearchMatch } from '../types/in-thread-search.types';
 import { buildSearchSnippet } from '../utilities/search-snippet.utility';
 import { pickedModelSubstitutesField } from '../utilities/picked-model-fallback.utility';
-import { buildPluginMetaPart } from '../utilities/plugin-metadata.utility';
+import { MediaKind } from '../enums/media-kind.enum';
+import { linkMedia } from '../utilities/media-gateway.utility';
+import {
+  buildToolMetaPart,
+  imageGenerationIds,
+  mediaGenerationIds,
+} from '../utilities/media-metadata.utility';
 import { pluginRefsFor, withPluginRefs } from '../utilities/plugin-refs.utility';
 import {
   namedModelFields,
@@ -2099,6 +2105,7 @@ export class ChatMessagesService implements OnModuleInit {
     if (llmResponse.imageGenerationId) {
       void this.linkImageGeneration(llmResponse.imageGenerationId, payload.threadId, stored.id);
     }
+    this.linkToolMedia(llmResponse, payload.threadId, stored.id);
     return stored;
   }
 
@@ -2108,6 +2115,36 @@ export class ChatMessagesService implements OnModuleInit {
    * existed, so it is linked now. Fire-and-forget; the thread's owner is the
    * owner image-service checks against. Never throws.
    */
+  /** Images and videos a tool-calling chat model made: the same owner link, one per card. */
+  private linkToolMedia(llmResponse: LlmResponse, threadId: string, messageId: string): void {
+    for (const id of imageGenerationIds(llmResponse.mediaGenerations)) {
+      void this.linkImageGeneration(id, threadId, messageId);
+    }
+    for (const kind of [MediaKind.VIDEO, MediaKind.AUDIO]) {
+      for (const id of mediaGenerationIds(llmResponse.mediaGenerations, kind)) {
+        void this.linkMediaGeneration(kind, id, threadId, messageId);
+      }
+    }
+  }
+
+  /** The video or audio row's assistant message id, like the image link. Never throws. */
+  private async linkMediaGeneration(
+    kind: MediaKind,
+    generationId: string,
+    threadId: string,
+    assistantMessageId: string,
+  ): Promise<void> {
+    try {
+      const thread = await this.chatThreadsRepository.findById(threadId);
+      if (thread === null) return;
+      await linkMedia(kind, generationId, thread.userId, assistantMessageId);
+    } catch (error: unknown) {
+      this.logger.warn(
+        `linkMediaGeneration: ${kind} generation=${generationId} not linked - ${error instanceof Error ? error.message : 'error'}`,
+      );
+    }
+  }
+
   private async linkImageGeneration(
     generationId: string,
     threadId: string,
@@ -2264,7 +2301,7 @@ export class ChatMessagesService implements OnModuleInit {
       ...this.buildPaygMetaPart(llmResponse),
       ...this.buildFallbackMetaPart(llmResponse),
       ...this.buildToolTranscriptMetaPart(llmResponse),
-      ...buildPluginMetaPart(llmResponse),
+      ...buildToolMetaPart(llmResponse),
       ...(!hasVisibleContent ? { emptyContent: true } : {}),
       ...this.buildDisplayNameMetaPart(latestUserMetadata),
       routeRoadmap,

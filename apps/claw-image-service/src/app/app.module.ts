@@ -18,6 +18,7 @@ import { LoggingInterceptor } from './interceptors/logging.interceptor';
 
 import { ImageGenerationModule } from '../modules/image-generation/image-generation.module';
 import { VideoGenerationModule } from '../modules/video-generation/video-generation.module';
+import { AudioGenerationModule } from '../modules/audio-generation/audio-generation.module';
 import { HealthModule } from '../modules/health/health.module';
 import { MetricsModule } from '../modules/metrics/metrics.module';
 
@@ -76,6 +77,7 @@ import { MetricsModule } from '../modules/metrics/metrics.module';
     RedisModule,
     ImageGenerationModule,
     VideoGenerationModule,
+    AudioGenerationModule,
     HealthModule,
     MetricsModule,
     ThrottlerModule.forRoot(

@@ -66,8 +66,13 @@ import { AGGREGATOR_COST_ROWS } from './model-cost-seed-aggregators.constants';
 /// v14 (2026-10-31): prices for the 474 OpenRouter, NVIDIA NIM, Hugging Face, Groq and AI Horde models that were
 /// unpriced and so refused on every plan. Sources, estimates and the 37 left unpriced on purpose:
 /// docs/03-architecture/model-price-ledger-2026-10-31.md. New keys fill gaps; nothing is repriced.
-export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v14';
-export const MODEL_COST_SEED_VERSION = 14;
+///
+/// v15 (2026-10-31): media-generation prices checked against the providers' price cards.
+/// Gemini 3.1 Flash Image output $30/M -> $60/M and the grok-imagine-image-2.0 per-image
+/// price $0.08 -> $0.04 are CORRECTED in place (`supersedesSeededPrice`); the new
+/// image/video keys fill gaps. Veo prices are aggregator sourced, not from Google's card.
+export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v15';
+export const MODEL_COST_SEED_VERSION = 15;
 
 /// Next in routing-service's 740_040_00N advisory-lock block (001 = deployment
 /// backfill, 002 = router chain). Distinct from payment-service's 740_018_001
@@ -360,7 +365,24 @@ const LISTED_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.freeze([
     reasoningPerMillionMicroUsd: null,
     cacheWritePerMillionMicroUsd: null,
     costClass: CostClass.STANDARD,
-    imagePerUnitMicroUsd: 80_000,
+    // v15: official price is $0.04 per image (docs.x.ai/developers/models, checked
+    // 2026-10-31); v8 had seeded the $0.08 top tier.
+    imagePerUnitMicroUsd: 40_000,
+    replacesFallbackRate: true,
+    supersedesSeededPrice: true,
+  }),
+  // v15: `grok-imagine-image-quality` $0.05 per image (docs.x.ai/developers/models,
+  // checked 2026-10-31). New key, fills a gap.
+  Object.freeze({
+    provider: 'GROK',
+    modelKey: 'grok-imagine-image-quality',
+    inputPerMillionMicroUsd: 0,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 0,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
+    imagePerUnitMicroUsd: 50_000,
     replacesFallbackRate: true,
   }),
 
@@ -396,13 +418,50 @@ const LISTED_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.freeze([
   }),
   Object.freeze({
     provider: 'GEMINI',
+    // v15: official image output is $60/M tokens (ai.google.dev/gemini-api/docs/pricing,
+    // checked 2026-10-31); it was seeded at $30/M.
     modelKey: 'gemini-3.1-flash-image-preview',
+    inputPerMillionMicroUsd: 300_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 60_000_000,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
+    supersedesSeededPrice: true,
+  }),
+  // v15: Gemini image keys without the -preview suffix (pricing page, checked 2026-10-31).
+  Object.freeze({
+    provider: 'GEMINI',
+    modelKey: 'gemini-3.1-flash-image',
+    inputPerMillionMicroUsd: 300_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 60_000_000,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
+    replacesFallbackRate: true,
+  }),
+  Object.freeze({
+    provider: 'GEMINI',
+    modelKey: 'gemini-3-pro-image',
+    inputPerMillionMicroUsd: 2_000_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 120_000_000,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.PREMIUM,
+    replacesFallbackRate: true,
+  }),
+  Object.freeze({
+    provider: 'GEMINI',
+    modelKey: 'gemini-3.1-flash-lite-image',
     inputPerMillionMicroUsd: 300_000,
     cachedInputPerMillionMicroUsd: null,
     outputPerMillionMicroUsd: 30_000_000,
     reasoningPerMillionMicroUsd: null,
     cacheWritePerMillionMicroUsd: null,
     costClass: CostClass.STANDARD,
+    replacesFallbackRate: true,
   }),
   Object.freeze({
     provider: 'GEMINI',
@@ -513,6 +572,55 @@ const LISTED_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.freeze([
     costClass: CostClass.PREMIUM,
     imagePerUnitMicroUsd: 167_000,
     supersedesSeededPrice: true,
+  }),
+  // v15: OpenAI image models billed per image-output token (platform.openai.com/docs/pricing,
+  // "Image generation", checked 2026-10-31): gpt-image-1.5 and chatgpt-image-latest $32/M,
+  // gpt-image-2 $30/M, gpt-image-1-mini $8/M. The text-prompt input rate was not part of the
+  // brief; text input is set to the gpt-image-1 rate ($5/M; $2/M for the mini) so the row is
+  // priced in and out. image-service reserves 0 prompt tokens today.
+  Object.freeze({
+    provider: 'OPENAI',
+    modelKey: 'gpt-image-1.5',
+    inputPerMillionMicroUsd: 5_000_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 32_000_000,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.PREMIUM,
+    replacesFallbackRate: true,
+  }),
+  Object.freeze({
+    provider: 'OPENAI',
+    modelKey: 'chatgpt-image-latest',
+    inputPerMillionMicroUsd: 5_000_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 32_000_000,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.PREMIUM,
+    replacesFallbackRate: true,
+  }),
+  Object.freeze({
+    provider: 'OPENAI',
+    modelKey: 'gpt-image-2',
+    inputPerMillionMicroUsd: 5_000_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 30_000_000,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.PREMIUM,
+    replacesFallbackRate: true,
+  }),
+  Object.freeze({
+    provider: 'OPENAI',
+    modelKey: 'gpt-image-1-mini',
+    inputPerMillionMicroUsd: 2_000_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 8_000_000,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.CHEAP,
+    replacesFallbackRate: true,
   }),
   // ── OpenAI gpt-image-1 by SIZE (unit metering, seed v7) ──────────────────
   //
@@ -670,6 +778,44 @@ const LISTED_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.freeze([
     costClass: CostClass.PREMIUM,
     videoPerUnitMicroUsd: 400000,
   }),
+  // v15: the same Veo 3.1 prices under the ids without `-generate-preview` (720p, with audio).
+  // AGGREGATOR sourced, not Google's own card; the -preview rows above are unchanged.
+  Object.freeze({
+    provider: 'GEMINI',
+    modelKey: 'veo-3.1-lite',
+    inputPerMillionMicroUsd: 0,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 0,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.CHEAP,
+    videoPerUnitMicroUsd: 50000,
+    replacesFallbackRate: true,
+  }),
+  Object.freeze({
+    provider: 'GEMINI',
+    modelKey: 'veo-3.1-fast',
+    inputPerMillionMicroUsd: 0,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 0,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
+    videoPerUnitMicroUsd: 100000,
+    replacesFallbackRate: true,
+  }),
+  Object.freeze({
+    provider: 'GEMINI',
+    modelKey: 'veo-3.1-generate',
+    inputPerMillionMicroUsd: 0,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 0,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.PREMIUM,
+    videoPerUnitMicroUsd: 400000,
+    replacesFallbackRate: true,
+  }),
   Object.freeze({
     provider: 'GROK',
     modelKey: 'grok-imagine-video',
@@ -743,6 +889,85 @@ const LISTED_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.freeze([
     reasoningPerMillionMicroUsd: null,
     cacheWritePerMillionMicroUsd: null,
     costClass: CostClass.STANDARD,
+  }),
+  // v15 audio generation (image-service audio-generation; PAYG_MODEL_UNPRICED otherwise).
+  // Sources, verified 2026-10-31 and mirrored from image-service's AUDIO_PRICE_TABLE:
+  //   ai.google.dev/gemini-api/docs/pricing (paid tier, Standard) and
+  //   developers.openai.com/api/docs/models/gpt-4o-mini-tts.
+  // The v6 note above that gpt-4o-mini-tts is not seeded is superseded: image-service meters
+  // it on TOKENS ($0.60/M text in, $12/M audio out), not characters. tts-1, tts-1-hd and
+  // gemini-2.5-flash-preview-tts were verified as already seeded.
+  Object.freeze({
+    provider: 'OPENAI',
+    modelKey: 'gpt-4o-mini-tts',
+    inputPerMillionMicroUsd: 600_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 12_000_000,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.CHEAP,
+    replacesFallbackRate: true,
+  }),
+  Object.freeze({
+    provider: 'GEMINI',
+    modelKey: 'gemini-2.5-pro-preview-tts',
+    inputPerMillionMicroUsd: 1_000_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 20_000_000,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
+    replacesFallbackRate: true,
+  }),
+  Object.freeze({
+    provider: 'GEMINI',
+    modelKey: 'gemini-3.1-flash-tts-preview',
+    inputPerMillionMicroUsd: 1_000_000,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 20_000_000,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
+    replacesFallbackRate: true,
+  }),
+  // Music (Lyria) is priced per SONG. PaygSurface has no per-song unit, so image-service
+  // meters one song as `imageUnits: 1` on the TTS surface; the per-song price therefore
+  // lives in `imagePerUnitMicroUsd`, token rates are published-and-zero.
+  Object.freeze({
+    provider: 'GEMINI',
+    modelKey: 'lyria-3-clip-preview',
+    inputPerMillionMicroUsd: 0,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 0,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
+    imagePerUnitMicroUsd: 40_000,
+    replacesFallbackRate: true,
+  }),
+  Object.freeze({
+    provider: 'GEMINI',
+    modelKey: 'lyria-3-pro-preview',
+    inputPerMillionMicroUsd: 0,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 0,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
+    imagePerUnitMicroUsd: 80_000,
+    replacesFallbackRate: true,
+  }),
+  Object.freeze({
+    provider: 'GEMINI',
+    modelKey: 'lyria-3.5',
+    inputPerMillionMicroUsd: 0,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 0,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
+    imagePerUnitMicroUsd: 80_000,
+    replacesFallbackRate: true,
   }),
 
   // ── Connector presets batch 2 (ADR-116/117) ─────────────────────────────

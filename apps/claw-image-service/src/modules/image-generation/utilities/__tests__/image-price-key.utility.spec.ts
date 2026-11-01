@@ -93,4 +93,34 @@ describe('meteredImageModelKey', () => {
       'grok-imagine-image-2.0',
     );
   });
+
+  it('meters each seeded Gemini image id on its own row', () => {
+    for (const id of [
+      'gemini-2.5-flash-image',
+      'gemini-3.1-flash-image-preview',
+      'gemini-3-pro-image-preview',
+      'nano-banana-pro-preview',
+    ]) {
+      expect(meteredImageModelKey('IMAGE_GEMINI', id, 1024, 1024)).toBe(id);
+    }
+  });
+
+  it('meters an unseeded Gemini image id on the dearest Gemini row', () => {
+    for (const id of [
+      'gemini-3.1-flash-image',
+      'gemini-3.1-flash-lite-image',
+      'gemini-3-pro-image',
+      'gemini-4-image',
+    ]) {
+      expect(meteredImageModelKey('IMAGE_GEMINI', id, 1024, 1024)).toBe(
+        'gemini-3-pro-image-preview',
+      );
+    }
+  });
+
+  it('meters an unseeded gpt-image-family id on the dearest gpt-image row at any size', () => {
+    for (const id of ['gpt-image-1.5', 'gpt-image-2', 'gpt-image-1-mini', 'chatgpt-image-latest']) {
+      expect(meteredImageModelKey('IMAGE_OPENAI', id, 1024, 1024)).toBe('gpt-image-1@1536x1024');
+    }
+  });
 });

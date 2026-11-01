@@ -17,6 +17,8 @@ import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { ImageGenerationService } from '../services/image-generation.service';
 import { ImageGenerationEventsService } from '../services/image-generation-events.service';
 import {
+  type CancelImageDto,
+  cancelImageSchema,
   type GenerateImageDto,
   generateImageSchema,
   type LinkAssistantMessageDto,
@@ -68,6 +70,16 @@ export class InternalImageController {
       body.assistantMessageId,
     );
     return { linked };
+  }
+
+  @Public()
+  @Post(':generationId/cancel')
+  @HttpCode(HttpStatus.OK)
+  async cancel(
+    @Param('generationId') generationId: string,
+    @Body(new ZodValidationPipe(cancelImageSchema)) body: CancelImageDto,
+  ): Promise<{ id: string; status: string; cancelled: boolean }> {
+    return this.imageService.cancelGenerationForService(generationId, body.userId);
   }
 
   @Public()

@@ -1,6 +1,7 @@
 import {
   type Connector,
   type ConnectorAuthType,
+  type ConnectorModel,
   type ConnectorProvider,
   type ConnectorStatus,
   type ModelKind,
@@ -185,6 +186,10 @@ export interface UpstreamModelSnapshotEntry {
   isLocal?: boolean;
   modalitiesIn?: string[];
   modalitiesOut?: string[];
+  /** IMAGE, VIDEO or AUDIO when the model outputs media instead of text; absent for chat models. */
+  mediaKind?: string;
+  /** SPEECH or MUSIC when `mediaKind` is AUDIO. */
+  audioKind?: string;
   contextWindowTokens?: number;
   maxOutputTokens?: number;
   /**
@@ -230,3 +235,16 @@ export interface ConnectorModelsSnapshotResult {
   models: UpstreamModelSnapshotEntry[];
   generatedAt: string;
 }
+
+/**
+ * One row of `GET /connectors/available-models`. `kind` stays as stored (CHAT, or AUDIO for
+ * tts/music) for older clients; `modalitiesOut` and `mediaKind` type the media models.
+ */
+export type AvailableModelEntry = Omit<ConnectorModel, 'provider'> & {
+  provider: string;
+  modalitiesOut: string[];
+  /** IMAGE, VIDEO or AUDIO for a media-generation model; absent for a chat model. */
+  mediaKind?: string;
+  /** SPEECH or MUSIC when `mediaKind` is AUDIO. */
+  audioKind?: string;
+};

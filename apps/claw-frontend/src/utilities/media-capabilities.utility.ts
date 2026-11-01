@@ -1,6 +1,7 @@
 import { ModelCapabilityBadge } from '@/enums/model-capability-badge.enum';
 import type { ConnectorModel } from '@/types/connector.types';
 import type { ModelMediaCapabilities } from '@/types/media-recording.types';
+import { isAudioOutputModel, isImageOutputModel } from '@/utilities/image-output-model.utility';
 import { isVideoOutputModel } from '@/utilities/video-generation.utility';
 
 /**
@@ -35,7 +36,7 @@ export function resolveMediaCapabilities(
  */
 export function getConnectorModelCapabilityBadges(
   row: Pick<ConnectorModel, 'supportsVision' | 'supportsAudio' | 'supportsVideoInput'> &
-    Partial<Pick<ConnectorModel, 'provider' | 'modelKey'>>,
+    Partial<Pick<ConnectorModel, 'provider' | 'modelKey' | 'mediaKind'>>,
 ): ModelCapabilityBadge[] {
   const badges: ModelCapabilityBadge[] = [];
   if (row.supportsVision === true) {
@@ -47,14 +48,31 @@ export function getConnectorModelCapabilityBadges(
   if (row.supportsVideoInput === true) {
     badges.push(ModelCapabilityBadge.VideoInput);
   }
+  // Image-OUTPUT models (Gemini *-image*, nano-banana, Grok Imagine, GPT Image):
+  // the same CHAT-row situation as video, so they are recognised by model id.
+  if (
+    row.mediaKind === 'IMAGE' ||
+    (row.provider !== undefined &&
+      row.modelKey !== undefined &&
+      isImageOutputModel(row.provider, row.modelKey))
+  ) {
+    badges.push(ModelCapabilityBadge.ImageOutput);
+  }
   // Video-OUTPUT models (Veo, Grok Imagine Video) are ordinary CHAT rows in the
   // catalog with no flag of their own, so they are recognised by model id.
   if (
-    row.provider !== undefined &&
-    row.modelKey !== undefined &&
-    isVideoOutputModel(row.provider, row.modelKey)
+    row.mediaKind === 'VIDEO' ||
+    (row.provider !== undefined &&
+      row.modelKey !== undefined &&
+      isVideoOutputModel(row.provider, row.modelKey))
   ) {
     badges.push(ModelCapabilityBadge.VideoOutput);
+  }
+  if (
+    row.mediaKind === 'AUDIO' ||
+    (row.modelKey !== undefined && isAudioOutputModel(row.modelKey))
+  ) {
+    badges.push(ModelCapabilityBadge.AudioOutput);
   }
   return badges;
 }

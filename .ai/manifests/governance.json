@@ -372,7 +372,7 @@
   ],
   "skills": [
     {
-      "bytes": 38024,
+      "bytes": 38334,
       "file": "skills/00-index.md"
     },
     {
@@ -438,6 +438,10 @@
     {
       "bytes": 4925,
       "file": "skills/add-a-localized-money-surface.md"
+    },
+    {
+      "bytes": 4589,
+      "file": "skills/add-a-media-generation-provider.md"
     },
     {
       "bytes": 18916,

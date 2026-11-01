@@ -1,8 +1,12 @@
-import { IMAGE_PROVIDER_GROK } from '../../../common/constants';
+import { IMAGE_PROVIDER_GEMINI, IMAGE_PROVIDER_GROK } from '../../../common/constants';
 import { DallE3Quality } from '../../../common/enums';
 import {
+  GEMINI_IMAGE_PRICED_MODELS,
+  GEMINI_IMAGE_WORST_CASE_MODEL,
   GROK_IMAGE_WORST_CASE_MODEL,
   GROK_PER_IMAGE_PRICED_MODELS,
+  OPENAI_GPT_IMAGE_FAMILY_PREFIXES,
+  OPENAI_GPT_IMAGE_FAMILY_WORST_CASE_KEY,
   OPENAI_GPT_IMAGE_PRICED_SIZES,
   OPENAI_GPT_IMAGE_WORST_CASE_SIZE,
   OPENAI_QUALITY_PRICED_IMAGE_MODEL,
@@ -42,7 +46,11 @@ function dallE3PriceKey(model: string, quality: string | undefined): string {
  * - A Grok image model (`IMAGE_GROK`) → its own per-image row when it has one,
  *   else the dearest Grok image row (seed v8) — never the provider fallback,
  *   which would price it by grok-4's tokens and settle at $0.
- * - Every other model → unchanged (Gemini is token-priced; dall-e-2 keeps its row).
+ * - A Gemini image model with a seeded row → unchanged; any other id → the dearest
+ *   Gemini image row (`gemini-3-pro-image-preview`).
+ * - An unseeded gpt-image-family id (`gpt-image-1.5`, `gpt-image-2`,
+ *   `chatgpt-image-latest`) → `gpt-image-1@1536x1024`, the family's dearest row.
+ * - Every other model → unchanged (dall-e-2 keeps its row).
  */
 export function meteredImageModelKey(
   provider: string,
@@ -57,11 +65,16 @@ export function meteredImageModelKey(
       ? normalized
       : GROK_IMAGE_WORST_CASE_MODEL;
   }
+  if (provider === IMAGE_PROVIDER_GEMINI) {
+    return GEMINI_IMAGE_PRICED_MODELS.includes(normalized) ? model : GEMINI_IMAGE_WORST_CASE_MODEL;
+  }
   if (normalized === OPENAI_QUALITY_PRICED_IMAGE_MODEL) {
     return dallE3PriceKey(normalized, quality);
   }
   if (!OPENAI_SIZE_PRICED_IMAGE_MODELS.includes(normalized)) {
-    return model;
+    return OPENAI_GPT_IMAGE_FAMILY_PREFIXES.some((prefix) => normalized.startsWith(prefix))
+      ? OPENAI_GPT_IMAGE_FAMILY_WORST_CASE_KEY
+      : model;
   }
   const size = `${String(width)}x${String(height)}`;
   const priced = OPENAI_GPT_IMAGE_PRICED_SIZES.includes(size)

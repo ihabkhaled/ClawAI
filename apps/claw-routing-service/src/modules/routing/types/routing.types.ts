@@ -44,6 +44,18 @@ export interface RoutingContext {
   freeModelPriceCap?: number | null;
   forcedModel?: string;
   forcedProvider?: string;
+  /**
+   * MANUAL_MODEL only: the picked model's registry `supports_tools` is true, so
+   * chat-service's tool loop can draw/create media itself and the router must not
+   * redirect the turn to an image provider. Resolved by routing.service from the
+   * registry; absent/false keeps the redirect.
+   */
+  pickedModelSupportsTools?: boolean;
+  /**
+   * The plan allows media generation. `message.created` carries no such signal
+   * today, so absent means allowed; only an explicit `false` keeps the redirect.
+   */
+  planAllowsMedia?: boolean;
   complexity?: ComplexityClassification;
   /**
    * Set by the caller when this request will execute through the Runtime V2

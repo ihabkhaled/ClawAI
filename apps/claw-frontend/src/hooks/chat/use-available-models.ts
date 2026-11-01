@@ -7,9 +7,11 @@ import { useAvailableConnectorModels } from '@/hooks/chat/use-available-connecto
 import { useModelPlanAccess } from '@/hooks/chat/use-model-plan-access';
 import { useFrontierCatalog } from '@/hooks/local-frontier/use-frontier-catalog';
 import { useLocalModels } from '@/hooks/ollama/use-local-models';
+import { useTranslation } from '@/lib/i18n';
 import type { GroupedModels, ModelSelection } from '@/types';
 import { compareModelsByRecency, getLocalModelSpecificationLabels } from '@/utilities';
 import { getConnectorModelCapabilityBadges } from '@/utilities/media-capabilities.utility';
+import { typeModelsByMediaKind } from '@/utilities/model-picker-media-kind.utility';
 
 const PROVIDER_LABELS: Record<string, string> = {
   'local-ollama': 'Ollama (Local)',
@@ -30,6 +32,7 @@ export function useAvailableModels(): {
   groupedModels: GroupedModels[];
   isLoading: boolean;
 } {
+  const { t } = useTranslation();
   const { models, isLoading: isLoadingCloud } = useAvailableConnectorModels();
   const { models: localModels, isLoading: isLoadingLocal } = useLocalModels();
   const { isLocked } = useModelPlanAccess(models);
@@ -105,7 +108,7 @@ export function useAvailableModels(): {
         // REVERSE-chronologically, so `localeCompare` reliably put the oldest
         // thing a provider still serves at the top: "Chatgpt Image Latest" and
         // "GPT 3.5 Turbo" above "GPT 5.4", in a list ~180 long.
-        models: providerModels.toSorted(compareModelsByRecency),
+        models: typeModelsByMediaKind(providerModels.toSorted(compareModelsByRecency), t),
       });
     }
 
@@ -121,7 +124,13 @@ export function useAvailableModels(): {
     // presence of that connector's models is the signal: it is the same
     // credential image-service will resolve when the request arrives.
     for (const image of IMAGE_CAPABILITIES) {
-      if (!groups.has(image.requiresConnector)) {
+      const connectorModels = groups.get(image.requiresConnector);
+      if (connectorModels === undefined) {
+        continue;
+      }
+      // The connector's own catalog already lists its image models (typed by id
+      // with the image badge), so the built-in entry is only a fallback.
+      if (connectorModels.some((m) => m.capabilities?.includes(ModelCapabilityBadge.ImageOutput))) {
         continue;
       }
       result.push({
@@ -155,7 +164,7 @@ export function useAvailableModels(): {
     });
 
     return result;
-  }, [models, localModels, frontierEntries, isLocked]);
+  }, [models, localModels, frontierEntries, isLocked, t]);
 
   return {
     groupedModels,

@@ -439,3 +439,54 @@ describe('ImageGenerationService — user cancellation (POST /images/:id/cancel)
     });
   });
 });
+
+describe('ImageGenerationService — internal cancel for chat-service Stop', () => {
+  it('cancels an active row as its owner and says this call cancelled it', async () => {
+    const repo = buildInMemoryImageRepo(baseRecord({}));
+    const { service } = replica(repo);
+
+    const result = await service.cancelGenerationForService('img-1', OWNER);
+
+    expect(result).toEqual({
+      id: 'img-1',
+      status: ImageGenerationStatus.CANCELLED,
+      cancelled: true,
+    });
+  });
+
+  it('is idempotent: a second cancel reports cancelled false and the same status', async () => {
+    const repo = buildInMemoryImageRepo(baseRecord({}));
+    const { service } = replica(repo);
+    await service.cancelGenerationForService('img-1', OWNER);
+
+    const again = await service.cancelGenerationForService('img-1', OWNER);
+
+    expect(again).toEqual({
+      id: 'img-1',
+      status: ImageGenerationStatus.CANCELLED,
+      cancelled: false,
+    });
+  });
+
+  it('leaves a finished row alone', async () => {
+    const repo = buildInMemoryImageRepo(baseRecord({ status: ImageGenerationStatus.COMPLETED }));
+    const { service } = replica(repo);
+
+    const result = await service.cancelGenerationForService('img-1', OWNER);
+
+    expect(result).toEqual({
+      id: 'img-1',
+      status: ImageGenerationStatus.COMPLETED,
+      cancelled: false,
+    });
+  });
+
+  it('hides a stranger behind the missing-id 404', async () => {
+    const repo = buildInMemoryImageRepo(baseRecord({}));
+    const { service } = replica(repo);
+
+    await expect(service.cancelGenerationForService('img-1', STRANGER)).rejects.toMatchObject({
+      status: HttpStatus.NOT_FOUND,
+    });
+  });
+});

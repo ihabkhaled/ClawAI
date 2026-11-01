@@ -57,6 +57,7 @@ export const FEATURES_CAPABILITY_ORDER: ReadonlyArray<FeatureCapability> = [
   FeatureCapability.SMART_ATTACHMENTS,
   FeatureCapability.FILES_FROM_CHAT,
   FeatureCapability.IMAGE_GENERATION,
+  FeatureCapability.CHAT_MODELS_MAKE_MEDIA,
   FeatureCapability.READ_ALOUD,
   FeatureCapability.NARRATED_RESEARCH,
   FeatureCapability.MODEL_ROUTING_AND_ORCHESTRATION,
@@ -156,6 +157,11 @@ export const FEATURES_RELATED_PATHS: Readonly<Record<FeatureCapability, Readonly
   [FeatureCapability.IMAGE_GENERATION]: [
     '/features/multimodal-ai',
     '/features/pay-as-you-go-credit',
+    '/pricing',
+  ],
+  [FeatureCapability.CHAT_MODELS_MAKE_MEDIA]: [
+    '/features/image-generation',
+    '/features/multimodal-ai',
     '/pricing',
   ],
   [FeatureCapability.RELIABILITY]: [

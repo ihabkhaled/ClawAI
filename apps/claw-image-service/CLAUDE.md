@@ -468,6 +468,21 @@ as of 2026-08-07.
   grok row → 20,000 µUSD consumption; unknown model → 2.0 row; unpriced → 402),
   `provider-adapters.http.spec.ts` (ticks passthrough).
 
+## Family fallback metering (2026-10-31)
+
+A newer id of a known family must never be refused as unpriced nor settle below
+its real price. `meteredImageModelKey` / `meteredVideoModelKey` pick the row; the
+prices stay in routing's seed rows (rule 37 item 13).
+
+- Gemini image id without a row (`gemini-3.1-flash-image`, `-flash-lite-image`,
+  `gemini-3-pro-image`) → `gemini-3-pro-image-preview` ($120/M output, dearest).
+- gpt-image family id other than `gpt-image-1` (`gpt-image-1.5`, `-2`, `-mini`,
+  `chatgpt-image-latest`) → `gpt-image-1@1536x1024` ($0.25/image, dearest).
+- Veo id without a row → `veo-3.1-generate-preview` ($0.40/s); `grok-imagine-video*`
+  without a row → `grok-imagine-video-1.5` ($0.08/s). Anything else is refused.
+- Not runnable here: `imagen-*` (Imagen is shut down; the adapter 404s).
+- Tests: `image-price-key.utility.spec.ts`, `video-utilities.spec.ts`.
+
 ## `image.failed` carries `supersededById` (2026-09-25)
 
 The RabbitMQ `image.failed` event is typed `ImageFailedPayload`
@@ -583,3 +598,28 @@ standard; each model once, manual picks included) via `createSuccessor`. Credit 
 `Provider said: <reason>` (key shapes redacted, 200 chars) beside the fixed sentence.
 Live-verified 2026-10-03: `veo-3.1-{fast,lite,}generate-preview` are the only Veo models the
 key lists; all three do text-to-video, fast and lite do image-to-video.
+
+## Audio generation: speech and music (2026-10-31)
+
+`src/modules/audio-generation/` mirrors the video module (see the service guide section of the
+same name). Providers are synchronous: the adapter in `adapters/` makes one call and returns
+bytes; there is no provider poll. Invariants:
+
+- Money: `PaygSurface.TTS`. OpenAI settles on `ttsCharacters` (its reply has no usage), Gemini TTS
+  on `usageMetadata` tokens (falls back to the hold estimate, never less), Lyria on `imageUnits: 1`.
+  Gemini TTS always sends `hold.maxOutputTokens`; a clamped hold is refused (402), never a cut-off
+  clip. Hold, call, store, then `settle`; every other exit releases.
+- The price key is the bare model id (`audioPriceKey`). Unseeded models fail closed at the hold.
+  `constants/audio-payg.constants.ts` is a reference table, not a price source.
+- Clients are assembled in `constants/audio-provider-clients.constants.ts` (lint forbids
+  exported objects in adapters). Output containers are mp3 or wav only (file-service allow-list).
+- Failure sentences are fixed (`audio-failure.constants.ts`); provider text is never stored.
+- Plan gate: `ImagePlanGateManager`, reused. Stale recovery runs at boot and every 60 s.
+- Not supported: xAI (no verifiable endpoint), music on OpenAI.
+
+## Internal cancel and assistant-message link (2026-11-01)
+
+`POST /internal/{images,videos,audio}/:id/cancel` with `{userId}` returns `{id, status, cancelled}`
+(owner check, idempotent, a hold is released by the execution path, never by the route).
+`POST /internal/{videos,audio}/:id/assistant-message` takes `{userId, assistantMessageId}` exactly as
+chat-service's `linkMedia` sends it. The image wrapper is `cancelGenerationForService`.

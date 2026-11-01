@@ -4,6 +4,7 @@ import type { AssembledContext } from './context.types';
 import type { CompareJudgeVerdict } from './compare-judge.types';
 import type { FileDeliveryEntry } from './file-delivery.types';
 import type { JudgeReviewPayload } from './judge-referee.types';
+import type { MediaGenerationRef } from './media-tools.types';
 import type { ResearchTranscript } from './research-transcript.types';
 import type { HelperExecution } from './vision-helper.types';
 
@@ -25,6 +26,8 @@ export type ParallelModelResponse = {
   tokenContext?: TokenLedgerContext;
   status: 'completed' | 'failed' | 'timeout';
   errorMessage: string | null;
+  /** Media this lane made with a media tool; stored as `metadata.mediaGenerations`. */
+  mediaGenerations?: readonly MediaGenerationRef[];
   judgeEnabled?: boolean;
   judgeModel?: string | null;
   judgeDisplayName?: string | null;

@@ -8,6 +8,7 @@ import { PluginConsentClient } from './clients/plugin-consent.client';
 import { PluginConsentPort } from './clients/plugin-consent.port';
 import { PluginInvokeClient } from './clients/plugin-invoke.client';
 import { PluginInvokePort } from './clients/plugin-invoke.port';
+import { MediaToolLoopManager } from './managers/media-tool-loop.manager';
 import { PluginToolLoopManager } from './managers/plugin-tool-loop.manager';
 import { AnswerRepairManager } from './managers/answer-repair.manager';
 import { BestOfNManager } from './managers/best-of-n.manager';
@@ -125,6 +126,7 @@ import { RuntimeV2ThreadActivityService } from './services/runtime-v2-thread-act
     // @mentioned plugin tools (rule 59): the loop is reached from the callProvider chokepoint;
     // the port is plugin-service's `/internal/plugins/*` routes.
     PluginToolLoopManager,
+    MediaToolLoopManager,
     { provide: PluginInvokePort, useClass: PluginInvokeClient },
     { provide: PluginConsentPort, useClass: PluginConsentClient },
     NarrationService,

@@ -127,11 +127,11 @@ one row, and it survives redeploys.
 Owner decision: **Free keeps the basics, paid gets everything.** Image
 understanding (a model that can see, or OCR + an honest note), voice notes
 (transcription, PAYG-metered on its own) and short video are on every plan.
-The four entitlements below are the paid half.
+The four entitlements below are the paid half. Image and video generation on Free are unlocked by PAYG credit ([ADR-139](../13-adr/adr-139-credit-unlocks-media-generation.md)); audio generation (speech and music) uses the same `allowImageGeneration` unlock and the same metering ([ADR-215](../13-adr/adr-215-audio-generation-speech-and-music.md)).
 
 | Plan      | Image generation / edit | Helper vision | Text-to-speech | Max video length |
 | --------- | :---------------------: | :-----------: | :------------: | ---------------: |
-| Free      |           no            |      no       |       no       |             60 s |
+| Free      |   no (credit unlocks)   |      no       |       no       |             60 s |
 | Starter   |           yes           |      yes      |      yes       |            600 s |
 | Plus      |           yes           |      yes      |      yes       |            600 s |
 | Pro       |           yes           |      yes      |      yes       |            600 s |

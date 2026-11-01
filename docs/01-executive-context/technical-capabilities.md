@@ -8,21 +8,21 @@ This document summarizes ClawAI's technical capabilities for business stakeholde
 
 ## Platform Scale
 
-| Metric                     | Value                                                         |
-| -------------------------- | ------------------------------------------------------------- |
-| Backend services           | <!-- count:services -->21<!-- /count --> NestJS microservices |
-| Frontend                   | Next.js 16 with React 19                                      |
-| PostgreSQL databases       | 9                                                             |
-| MongoDB databases          | 3                                                             |
-| Cloud AI providers         | 5 (OpenAI, Anthropic, Google Gemini, DeepSeek, xAI)           |
-| Local AI models (catalog)  | 30 across 6 categories                                        |
-| Pre-installed local models | 5 (auto-pulled on startup)                                    |
-| Routing modes              | 7                                                             |
-| Supported languages (UI)   | 8 (including Arabic RTL)                                      |
-| File generation formats    | 7 (PDF, DOCX, CSV, HTML, MD, TXT, JSON)                       |
-| Image generation providers | 3 (DALL-E, Gemini, Stable Diffusion)                          |
-| Audit event types          | 10                                                            |
-| Frontend pages             | 17                                                            |
+| Metric                     | Value                                                              |
+| -------------------------- | ------------------------------------------------------------------ |
+| Backend services           | <!-- count:services -->21<!-- /count --> NestJS microservices      |
+| Frontend                   | Next.js 16 with React 19                                           |
+| PostgreSQL databases       | 9                                                                  |
+| MongoDB databases          | 3                                                                  |
+| Cloud AI providers         | 5 (OpenAI, Anthropic, Google Gemini, DeepSeek, xAI)                |
+| Local AI models (catalog)  | 30 across 6 categories                                             |
+| Pre-installed local models | 5 (auto-pulled on startup)                                         |
+| Routing modes              | 7                                                                  |
+| Supported languages (UI)   | 8 (including Arabic RTL)                                           |
+| File generation formats    | 7 (PDF, DOCX, CSV, HTML, MD, TXT, JSON)                            |
+| Image generation providers | 4 (Gemini, OpenAI gpt-image-1, xAI grok-imagine, Stable Diffusion) |
+| Audit event types          | 10                                                                 |
+| Frontend pages             | 17                                                                 |
 
 ---
 
@@ -139,7 +139,8 @@ This document summarizes ClawAI's technical capabilities for business stakeholde
 
 ### Image Generation
 
-- 3 providers: DALL-E 3, Gemini 2.5 Flash Image, local Stable Diffusion
+- 4 providers: Gemini 2.5 Flash Image, OpenAI gpt-image-1, xAI grok-imagine-image, local Stable Diffusion
+- Video (Veo, Grok) and audio (speech, music) generation; any tool-calling chat model can request all three through tools (ADR-213)
 - Reference image support (generate variations)
 - Multi-provider fallback
 

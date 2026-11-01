@@ -2,7 +2,7 @@
 
 ## Overview
 
-The image generation pipeline supports three providers: OpenAI DALL-E 3, Google Gemini 2.5 Flash Image, and local Stable Diffusion via ComfyUI. The routing engine detects image intent and dispatches to the appropriate provider through the image-service.
+The image generation pipeline supports four providers: Google Gemini 2.5 Flash Image (default), OpenAI `gpt-image-1`, xAI `grok-imagine-image`, and local Stable Diffusion via ComfyUI. Image, video and audio can also be requested by a chat model through tools ([ADR-213](../13-adr/adr-213-chat-models-make-media-through-tools.md)). The routing engine detects image intent and dispatches to the appropriate provider through the image-service.
 
 ---
 
@@ -15,16 +15,16 @@ flowchart TD
     C --> D{Image Intent?}
     D -->|No| E[Text LLM Pipeline]
     D -->|Yes| F[Image Provider Selection]
-    
+
     F --> G{Which Provider?}
     G -->|IMAGE_GEMINI| H[Gemini Image Adapter]
     G -->|IMAGE_OPENAI| I[OpenAI Image Adapter]
     G -->|IMAGE_LOCAL| J[SD Adapter / ComfyUI]
-    
+
     H --> K[Google Gemini API]
-    I --> L[OpenAI DALL-E API]
+    I --> L[OpenAI Images API]
     J --> M[ComfyUI Runtime]
-    
+
     K & L & M --> N[Generated Image]
     N --> O[Store Result]
     O --> P[Return to Chat Service]
@@ -51,13 +51,13 @@ Image generation detection has the **highest priority** in the routing pipeline.
 
 ### Keyword Categories
 
-| Category | Count | Examples |
-| --- | --- | --- |
-| Direct creation | ~25 | "generate an image", "draw me", "create a picture" |
-| Reference-based | ~20 | "similar to this", "recreate this image", "variation of" |
-| Scene/location | ~12 | "fantasy map", "movie poster", "app icon" |
-| Single-word indicators | ~10 | "render", "portrait", "illustration", "logo" |
-| Strong phrases | ~25 | "make me a picture", "design a logo", "paint a" |
+| Category               | Count | Examples                                                 |
+| ---------------------- | ----- | -------------------------------------------------------- |
+| Direct creation        | ~25   | "generate an image", "draw me", "create a picture"       |
+| Reference-based        | ~20   | "similar to this", "recreate this image", "variation of" |
+| Scene/location         | ~12   | "fantasy map", "movie poster", "app icon"                |
+| Single-word indicators | ~10   | "render", "portrait", "illustration", "logo"             |
+| Strong phrases         | ~25   | "make me a picture", "design a logo", "paint a"          |
 
 ---
 
@@ -73,8 +73,8 @@ Image generation detection has the **highest priority** in the routing pipeline.
 
 ### openai-image.adapter.ts
 
-- **Provider**: OpenAI DALL-E 3
-- **Model**: `dall-e-3`
+- **Provider**: OpenAI
+- **Model**: `gpt-image-1` (DALL-E is legacy)
 - **Capabilities**: Photorealistic images, creative art, text rendering
 - **API**: OpenAI Images API
 - **Cost**: Per-image pricing (varies by resolution)
@@ -95,7 +95,7 @@ Image generation detection has the **highest priority** in the routing pipeline.
 flowchart LR
     A[Image Request] --> B{Primary: Gemini}
     B -->|Success| C[Return Image]
-    B -->|Fail| D{Fallback: DALL-E}
+    B -->|Fail| D{Fallback: OpenAI}
     D -->|Success| C
     D -->|Fail| E{Last Resort: Local SD}
     E -->|Success| C
@@ -103,6 +103,7 @@ flowchart LR
 ```
 
 Fallback triggers:
+
 - API timeout
 - Rate limiting (429)
 - Server error (500/502/503)
@@ -138,7 +139,7 @@ ImageJob:
   id:              UUID
   userId:          UUID
   prompt:          String
-  provider:        String (IMAGE_OPENAI, IMAGE_GEMINI, IMAGE_LOCAL)
+  provider:        String (IMAGE_OPENAI, IMAGE_GEMINI, IMAGE_GROK, IMAGE_LOCAL)
   model:           String
   status:          Enum (PENDING, IN_PROGRESS, COMPLETED, FAILED)
   imageUrl:        String?
@@ -154,22 +155,22 @@ ImageJob:
 
 ## Events
 
-| Event | Payload | Consumer |
-| --- | --- | --- |
+| Event             | Payload                                | Consumer      |
+| ----------------- | -------------------------------------- | ------------- |
 | `image.generated` | jobId, userId, provider, model, prompt | audit-service |
-| `image.failed` | jobId, userId, provider, error | audit-service |
+| `image.failed`    | jobId, userId, provider, error         | audit-service |
 
 ---
 
 ## Configuration
 
-| Variable | Default | Description |
-| --- | --- | --- |
-| `STABLE_DIFFUSION_URL` | -- | Local SD/ComfyUI endpoint |
-| `COMFYUI_BASE_URL` | -- | ComfyUI API base URL |
-| `COMFYUI_PORT` | -- | ComfyUI port |
-| `IMAGE_SERVICE_URL` | `http://image-service:4012` | Internal service URL |
-| `IMAGE_PORT` | `4012` | Image service port |
+| Variable               | Default                     | Description               |
+| ---------------------- | --------------------------- | ------------------------- |
+| `STABLE_DIFFUSION_URL` | --                          | Local SD/ComfyUI endpoint |
+| `COMFYUI_BASE_URL`     | --                          | ComfyUI API base URL      |
+| `COMFYUI_PORT`         | --                          | ComfyUI port              |
+| `IMAGE_SERVICE_URL`    | `http://image-service:4012` | Internal service URL      |
+| `IMAGE_PORT`           | `4012`                      | Image service port        |
 
 ---
 

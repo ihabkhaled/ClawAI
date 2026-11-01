@@ -470,3 +470,47 @@ for the design and `apps/claw-image-service/CLAUDE.md` for the invariants. Table
 (redacted, 200 chars). Image-to-video sends `image: { bytesBase64Encoded, mimeType }`. Live
 2026-10-03: fast, lite and standard 3.1 all completed text- and image-to-video. See
 [runbook-video-generation-failure.md](../11-runbooks/runbook-video-generation-failure.md).
+
+## Audio generation: speech and music (2026-10-31)
+
+`src/modules/audio-generation/` is the audio twin of video. Tables `audio_generations` and
+`audio_generation_assets` (idempotent migration `20261031100000_add_audio_generations`).
+Unlike video, the providers answer in ONE synchronous call, so the "async job, poll" is our own:
+the caller enqueues, the row runs in the background, the caller polls.
+
+| Provider       | Kind   | Endpoint                                                                                                                                                         | Metered as                 |
+| -------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| `AUDIO_OPENAI` | SPEECH | `POST {base}/audio/speech` (mp3 or wav; `tts-1`, `tts-1-hd`, `gpt-4o-mini-tts`)                                                                                  | `ttsCharacters` sent       |
+| `AUDIO_GEMINI` | SPEECH | `models/{id}:generateContent`, AUDIO modality (`gemini-2.5-flash-preview-tts`, `gemini-2.5-pro-preview-tts`, `gemini-3.1-flash-tts-preview`); PCM wrapped as WAV | `usageMetadata` tokens     |
+| `AUDIO_GEMINI` | MUSIC  | `POST {base}/interactions` (`lyria-3-clip-preview` 30 s, `lyria-3-pro-preview`, `lyria-3.5`)                                                                     | one song = `imageUnits: 1` |
+
+xAI is NOT an audio provider: its docs list text to speech at $15 per 1M characters but publish
+no model id or request shape.
+
+Internal contract (service token): `POST /internal/audio/generate`
+`{userId, workspaceId?, threadId?, messageId?, kind, provider, model?, prompt, voice?, format?}`
+returns `{id, status}`; `GET /internal/audio/:id` returns
+`{id, status, assetUrl?, mimeType?, durationSec?, errorCode?, errorMessage?, provider, model, kind}`.
+Status is `QUEUED | RUNNING | COMPLETED | FAILED | TIMED_OUT | CANCELLED`. Public JWT routes:
+`GET /audio/:id` (with `latest`), `POST /audio/:id/retry`, `POST /audio/:id/cancel`.
+No `audio.generated` event: video publishes none either.
+
+Money: `PaygSurface.TTS`. Hold before the call, settle only after the asset row exists, release on
+every other exit. The plan gate is `ImagePlanGateManager`. Prices are in the routing cost seed, not
+here; `audio-payg.constants.ts` is the verified reference table. Only `tts-1`, `tts-1-hd` and
+`gemini-2.5-flash-preview-tts` are seeded; every other audio model is refused with
+`PAYG_MODEL_UNPRICED` until a row is added (fails closed). Music also needs a per-song unit in the
+meter (today it rides `imageUnits`), tracked as an open item. File-service stores only
+`audio/mpeg` and `audio/wav`.
+
+### Internal cancel and assistant-message link (2026-11-01)
+
+chat-service Stop and card linking use service-token routes (owner named by `userId`, a stranger gets
+the missing-id 404, idempotent, safe on finished rows):
+
+- `POST /internal/images/:id/cancel`, `POST /internal/videos/:id/cancel`,
+  `POST /internal/audio/:id/cancel`, body `{userId}`, answer `{id, status, cancelled}`.
+  `cancelled` is true only when THIS call moved an active row to CANCELLED. The PAYG hold is released
+  by the execution path when the in-flight provider call returns and finds the row CANCELLED.
+- `POST /internal/{videos,audio}/:id/assistant-message`, body `{userId, assistantMessageId}` (images
+  already had it), answer `{linked}`. Audio stores it in `audio_generations.assistant_message_id`.

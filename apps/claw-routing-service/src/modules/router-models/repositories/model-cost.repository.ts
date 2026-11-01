@@ -56,6 +56,11 @@ export class ModelCostRepository {
     return dearest;
   }
 
+  /** Every ACTIVE row of one provider (small set), for the media-family fallback. */
+  async findActiveForProvider(provider: string): Promise<ModelCostVersion[]> {
+    return this.prisma.modelCostVersion.findMany({ where: { provider, isActive: true } });
+  }
+
   async listActive(): Promise<ModelCostVersion[]> {
     return this.prisma.modelCostVersion.findMany({
       where: { isActive: true },

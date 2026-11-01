@@ -24,6 +24,12 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       videoInput: 'Video: watches video',
       imageOutput: 'Image output: creates images',
       videoOutput: 'Video output: creates videos',
+      audioOutput: 'Audio output: creates speech and music',
+    },
+    modelKind: {
+      image: 'Image',
+      video: 'Video',
+      audio: 'Audio',
     },
     attachmentState: {
       listLabel: 'Attached files',
@@ -113,6 +119,18 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       thumbnailAlt: 'Video preview: {name}',
       duration: 'Length {duration}',
     },
+    audio: {
+      label: 'Generated audio',
+      preparing: 'Preparing audio',
+      queued: 'Queued',
+      running: 'Generating audio',
+      failed: 'Audio generation failed',
+      timedOut: 'Audio generation timed out',
+      loadFailed: 'Could not load the audio',
+      loadFailedHint: 'Reload the page to try again.',
+      statusUnknown:
+        'We stopped checking this audio. Reload the page to see if it finished, or send the request again.',
+    },
   },
   [Locale.AR]: {
     recorder: {
@@ -126,6 +144,12 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       videoInput: 'الفيديو: يشاهد الفيديو',
       imageOutput: 'إخراج الصور: ينشئ الصور',
       videoOutput: 'إخراج الفيديو: ينشئ مقاطع فيديو',
+      audioOutput: 'إخراج الصوت: ينشئ الكلام والموسيقى',
+    },
+    modelKind: {
+      image: 'صورة',
+      video: 'فيديو',
+      audio: 'صوت',
     },
     attachmentState: {
       listLabel: 'الملفات المرفقة',
@@ -208,6 +232,18 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       thumbnailAlt: 'معاينة الفيديو: {name}',
       duration: 'المدة {duration}',
     },
+    audio: {
+      label: 'صوت تم إنشاؤه',
+      preparing: 'جارٍ تجهيز الصوت',
+      queued: 'في قائمة الانتظار',
+      running: 'جارٍ إنشاء الصوت',
+      failed: 'فشل إنشاء الصوت',
+      timedOut: 'انتهت مهلة إنشاء الصوت',
+      loadFailed: 'تعذّر تحميل الصوت',
+      loadFailedHint: 'أعد تحميل الصفحة وحاول مرة أخرى.',
+      statusUnknown:
+        'توقفنا عن متابعة هذا الصوت. أعد تحميل الصفحة لمعرفة إن اكتمل، أو أرسل الطلب مرة أخرى.',
+    },
   },
   [Locale.FR]: {
     recorder: {
@@ -222,6 +258,12 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       videoInput: 'Vidéo : regarde les vidéos',
       imageOutput: 'Sortie image : crée des images',
       videoOutput: 'Sortie vidéo : crée des vidéos',
+      audioOutput: 'Sortie audio : crée de la voix et de la musique',
+    },
+    modelKind: {
+      image: 'Image',
+      video: 'Vidéo',
+      audio: 'Audio',
     },
     attachmentState: {
       listLabel: 'Fichiers joints',
@@ -315,6 +357,18 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       thumbnailAlt: 'Aperçu de la vidéo : {name}',
       duration: 'Durée {duration}',
     },
+    audio: {
+      label: 'Audio généré',
+      preparing: 'Préparation de l’audio',
+      queued: 'En attente',
+      running: 'Génération de l’audio',
+      failed: 'La génération audio a échoué',
+      timedOut: 'La génération audio a expiré',
+      loadFailed: 'Impossible de charger l’audio',
+      loadFailedHint: 'Rechargez la page pour réessayer.',
+      statusUnknown:
+        'Nous avons arrêté de suivre cet audio. Rechargez la page pour voir s’il est terminé, ou renvoyez la demande.',
+    },
   },
   [Locale.IT]: {
     recorder: {
@@ -329,6 +383,12 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       videoInput: 'Video: guarda i video',
       imageOutput: 'Uscita immagini: crea immagini',
       videoOutput: 'Uscita video: crea video',
+      audioOutput: 'Uscita audio: crea voce e musica',
+    },
+    modelKind: {
+      image: 'Immagine',
+      video: 'Video',
+      audio: 'Audio',
     },
     attachmentState: {
       listLabel: 'File allegati',
@@ -422,6 +482,18 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       thumbnailAlt: 'Anteprima video: {name}',
       duration: 'Durata {duration}',
     },
+    audio: {
+      label: 'Audio generato',
+      preparing: 'Preparazione dell’audio',
+      queued: 'In coda',
+      running: 'Generazione dell’audio',
+      failed: 'Generazione audio non riuscita',
+      timedOut: 'Generazione audio scaduta',
+      loadFailed: 'Impossibile caricare l’audio',
+      loadFailedHint: 'Ricarica la pagina per riprovare.',
+      statusUnknown:
+        'Abbiamo smesso di controllare questo audio. Ricarica la pagina per vedere se è finito, o invia di nuovo la richiesta.',
+    },
   },
   [Locale.DE]: {
     recorder: {
@@ -436,6 +508,12 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       videoInput: 'Video: sieht sich Videos an',
       imageOutput: 'Bildausgabe: erstellt Bilder',
       videoOutput: 'Videoausgabe: erstellt Videos',
+      audioOutput: 'Audioausgabe: erstellt Sprache und Musik',
+    },
+    modelKind: {
+      image: 'Bild',
+      video: 'Video',
+      audio: 'Audio',
     },
     attachmentState: {
       listLabel: 'Angehängte Dateien',
@@ -528,6 +606,18 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       thumbnailAlt: 'Videovorschau: {name}',
       duration: 'Länge {duration}',
     },
+    audio: {
+      label: 'Erzeugtes Audio',
+      preparing: 'Audio wird vorbereitet',
+      queued: 'In der Warteschlange',
+      running: 'Audio wird erzeugt',
+      failed: 'Audioerzeugung fehlgeschlagen',
+      timedOut: 'Zeitüberschreitung bei der Audioerzeugung',
+      loadFailed: 'Das Audio konnte nicht geladen werden',
+      loadFailedHint: 'Lade die Seite neu und versuche es erneut.',
+      statusUnknown:
+        'Wir prüfen dieses Audio nicht mehr. Lade die Seite neu, um zu sehen, ob es fertig ist, oder sende die Anfrage erneut.',
+    },
   },
   [Locale.ES]: {
     recorder: {
@@ -542,6 +632,12 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       videoInput: 'Vídeo: ve vídeos',
       imageOutput: 'Salida de imagen: crea imágenes',
       videoOutput: 'Salida de vídeo: crea vídeos',
+      audioOutput: 'Salida de audio: crea voz y música',
+    },
+    modelKind: {
+      image: 'Imagen',
+      video: 'Vídeo',
+      audio: 'Audio',
     },
     attachmentState: {
       listLabel: 'Archivos adjuntos',
@@ -632,6 +728,18 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       thumbnailAlt: 'Vista previa del vídeo: {name}',
       duration: 'Duración {duration}',
     },
+    audio: {
+      label: 'Audio generado',
+      preparing: 'Preparando el audio',
+      queued: 'En cola',
+      running: 'Generando audio',
+      failed: 'La generación del audio falló',
+      timedOut: 'La generación del audio agotó el tiempo',
+      loadFailed: 'No se pudo cargar el audio',
+      loadFailedHint: 'Recarga la página para intentarlo de nuevo.',
+      statusUnknown:
+        'Dejamos de comprobar este audio. Recarga la página para ver si terminó, o envía la solicitud de nuevo.',
+    },
   },
   [Locale.RU]: {
     recorder: {
@@ -645,6 +753,12 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       videoInput: 'Видео: смотрит видео',
       imageOutput: 'Вывод изображений: создаёт изображения',
       videoOutput: 'Вывод видео: создаёт видео',
+      audioOutput: 'Вывод аудио: создаёт речь и музыку',
+    },
+    modelKind: {
+      image: 'Изображение',
+      video: 'Видео',
+      audio: 'Аудио',
     },
     attachmentState: {
       listLabel: 'Прикреплённые файлы',
@@ -731,6 +845,18 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       thumbnailAlt: 'Превью видео: {name}',
       duration: 'Длительность {duration}',
     },
+    audio: {
+      label: 'Созданное аудио',
+      preparing: 'Подготовка аудио',
+      queued: 'В очереди',
+      running: 'Создание аудио',
+      failed: 'Не удалось создать аудио',
+      timedOut: 'Время создания аудио истекло',
+      loadFailed: 'Не удалось загрузить аудио',
+      loadFailedHint: 'Перезагрузите страницу и попробуйте снова.',
+      statusUnknown:
+        'Мы перестали проверять это аудио. Перезагрузите страницу, чтобы узнать, готово ли оно, или отправьте запрос снова.',
+    },
   },
   [Locale.PT]: {
     recorder: {
@@ -745,6 +871,12 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       videoInput: 'Vídeo: assiste a vídeos',
       imageOutput: 'Saída de imagem: cria imagens',
       videoOutput: 'Saída de vídeo: cria vídeos',
+      audioOutput: 'Saída de áudio: cria fala e música',
+    },
+    modelKind: {
+      image: 'Imagem',
+      video: 'Vídeo',
+      audio: 'Áudio',
     },
     attachmentState: {
       listLabel: 'Arquivos anexados',
@@ -835,6 +967,18 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       thumbnailAlt: 'Prévia do vídeo: {name}',
       duration: 'Duração {duration}',
     },
+    audio: {
+      label: 'Áudio gerado',
+      preparing: 'Preparando o áudio',
+      queued: 'Na fila',
+      running: 'Gerando áudio',
+      failed: 'A geração do áudio falhou',
+      timedOut: 'A geração do áudio expirou',
+      loadFailed: 'Não foi possível carregar o áudio',
+      loadFailedHint: 'Recarregue a página para tentar novamente.',
+      statusUnknown:
+        'Paramos de verificar este áudio. Recarregue a página para ver se terminou, ou envie o pedido novamente.',
+    },
   },
   [Locale.HI]: {
     recorder: {
@@ -848,6 +992,12 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       videoInput: 'वीडियो: वीडियो देखता है',
       imageOutput: 'इमेज आउटपुट: चित्र बनाता है',
       videoOutput: 'वीडियो आउटपुट: वीडियो बनाता है',
+      audioOutput: 'ऑडियो आउटपुट: आवाज़ और संगीत बनाता है',
+    },
+    modelKind: {
+      image: 'इमेज',
+      video: 'वीडियो',
+      audio: 'ऑडियो',
     },
     attachmentState: {
       listLabel: 'संलग्न फ़ाइलें',
@@ -936,6 +1086,18 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       thumbnailAlt: 'वीडियो पूर्वावलोकन: {name}',
       duration: 'अवधि {duration}',
     },
+    audio: {
+      label: 'बनाया गया ऑडियो',
+      preparing: 'ऑडियो तैयार हो रहा है',
+      queued: 'कतार में',
+      running: 'ऑडियो बनाया जा रहा है',
+      failed: 'ऑडियो बनाना विफल रहा',
+      timedOut: 'ऑडियो बनाने में समय समाप्त हो गया',
+      loadFailed: 'ऑडियो लोड नहीं हो सका',
+      loadFailedHint: 'पेज दोबारा लोड करके फिर कोशिश करें।',
+      statusUnknown:
+        'हमने इस ऑडियो की जाँच रोक दी है। पेज दोबारा लोड करके देखें कि यह पूरा हुआ या नहीं, या अनुरोध फिर से भेजें।',
+    },
   },
   [Locale.JA]: {
     recorder: {
@@ -949,6 +1111,12 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       videoInput: '動画: 動画を視聴します',
       imageOutput: '画像出力: 画像を生成します',
       videoOutput: '動画出力: 動画を生成します',
+      audioOutput: '音声出力: 音声と音楽を生成します',
+    },
+    modelKind: {
+      image: '画像',
+      video: '動画',
+      audio: '音声',
     },
     attachmentState: {
       listLabel: '添付ファイル',
@@ -1036,6 +1204,18 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       thumbnailAlt: '動画のプレビュー: {name}',
       duration: '長さ {duration}',
     },
+    audio: {
+      label: '生成された音声',
+      preparing: '音声を準備中',
+      queued: '待機中',
+      running: '音声を生成中',
+      failed: '音声の生成に失敗しました',
+      timedOut: '音声の生成がタイムアウトしました',
+      loadFailed: '音声を読み込めませんでした',
+      loadFailedHint: 'ページを再読み込みして、もう一度お試しください。',
+      statusUnknown:
+        'この音声の確認を停止しました。ページを再読み込みして完了したか確認するか、もう一度リクエストを送信してください。',
+    },
   },
   [Locale.TH]: {
     recorder: {
@@ -1049,6 +1229,12 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       videoInput: 'วิดีโอ: ดูวิดีโอได้',
       imageOutput: 'เอาต์พุตรูปภาพ: สร้างรูปภาพได้',
       videoOutput: 'เอาต์พุตวิดีโอ: สร้างวิดีโอได้',
+      audioOutput: 'เอาต์พุตเสียง: สร้างเสียงพูดและเพลงได้',
+    },
+    modelKind: {
+      image: 'รูปภาพ',
+      video: 'วิดีโอ',
+      audio: 'เสียง',
     },
     attachmentState: {
       listLabel: 'ไฟล์ที่แนบ',
@@ -1132,6 +1318,18 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       thumbnailAlt: 'ตัวอย่างวิดีโอ: {name}',
       duration: 'ความยาว {duration}',
     },
+    audio: {
+      label: 'เสียงที่สร้างแล้ว',
+      preparing: 'กำลังเตรียมเสียง',
+      queued: 'อยู่ในคิว',
+      running: 'กำลังสร้างเสียง',
+      failed: 'สร้างเสียงไม่สำเร็จ',
+      timedOut: 'การสร้างเสียงหมดเวลา',
+      loadFailed: 'ไม่สามารถโหลดเสียงได้',
+      loadFailedHint: 'โหลดหน้าใหม่แล้วลองอีกครั้ง',
+      statusUnknown:
+        'เราหยุดตรวจสอบเสียงนี้แล้ว โหลดหน้าใหม่เพื่อดูว่าเสร็จหรือยัง หรือส่งคำขออีกครั้ง',
+    },
   },
   [Locale.FA]: {
     recorder: {
@@ -1145,6 +1343,12 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       videoInput: 'ویدیو: ویدیو را تماشا می‌کند',
       imageOutput: 'خروجی تصویر: تصویر می‌سازد',
       videoOutput: 'خروجی ویدیو: ویدیو می‌سازد',
+      audioOutput: 'خروجی صدا: گفتار و موسیقی می‌سازد',
+    },
+    modelKind: {
+      image: 'تصویر',
+      video: 'ویدیو',
+      audio: 'صدا',
     },
     attachmentState: {
       listLabel: 'فایل‌های پیوست‌شده',
@@ -1229,6 +1433,18 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       thumbnailAlt: 'پیش‌نمایش ویدیو: {name}',
       duration: 'مدت {duration}',
     },
+    audio: {
+      label: 'صدای تولیدشده',
+      preparing: 'در حال آماده‌سازی صدا',
+      queued: 'در صف',
+      running: 'در حال تولید صدا',
+      failed: 'تولید صدا ناموفق بود',
+      timedOut: 'تولید صدا زمان‌بر شد و متوقف شد',
+      loadFailed: 'بارگیری صدا ممکن نشد',
+      loadFailedHint: 'صفحه را دوباره بارگیری کنید و دوباره تلاش کنید.',
+      statusUnknown:
+        'بررسی این صدا را متوقف کردیم. صفحه را دوباره بارگیری کنید تا ببینید تمام شده یا نه، یا درخواست را دوباره بفرستید.',
+    },
   },
   [Locale.ZH]: {
     recorder: {
@@ -1242,6 +1458,12 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       videoInput: '视频：可观看视频',
       imageOutput: '图片输出：可生成图片',
       videoOutput: '视频输出：可生成视频',
+      audioOutput: '音频输出：可生成语音和音乐',
+    },
+    modelKind: {
+      image: '图片',
+      video: '视频',
+      audio: '音频',
     },
     attachmentState: {
       listLabel: '已附加的文件',
@@ -1323,6 +1545,17 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
     video: {
       thumbnailAlt: '视频预览：{name}',
       duration: '时长 {duration}',
+    },
+    audio: {
+      label: '已生成的音频',
+      preparing: '正在准备音频',
+      queued: '排队中',
+      running: '正在生成音频',
+      failed: '音频生成失败',
+      timedOut: '音频生成超时',
+      loadFailed: '无法加载音频',
+      loadFailedHint: '请刷新页面后重试。',
+      statusUnknown: '我们已停止检查此音频。请刷新页面查看是否已完成，或重新发送请求。',
     },
   },
 };

@@ -5,3 +5,4 @@ export { ImageCancelOutcome, ImageProviderCancel } from './image-cancel.enum';
 export { DallE3Quality } from './dall-e-3-quality.enum';
 export { ImageGenerationMetricOutcome } from './image-generation-metric-outcome.enum';
 export { VideoFailureCode } from './video-failure-code.enum';
+export { AudioFailureCode } from './audio-failure-code.enum';

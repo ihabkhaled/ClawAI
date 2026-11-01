@@ -777,13 +777,89 @@ describe('RoutingManager', () => {
           connectorHealth: imageConnectors,
           message: 'draw a cat',
           userMode: RoutingMode.MANUAL_MODEL,
-          forcedProvider: 'ANTHROPIC',
-          forcedModel: 'claude-sonnet-4',
+          forcedProvider: 'GROQ',
+          forcedModel: 'llama-3.3-70b',
         });
 
         expect(result.selectedProvider).toBe('IMAGE_GEMINI');
         expect(result.selectedModel).toBe('gemini-2.5-flash-image');
         expect(result.routingMode).toBe(RoutingMode.MANUAL_MODEL);
+      });
+
+      it('keeps a picked TOOL-capable chat model on chat for an image request', async () => {
+        const result = await manager.evaluateRoute({
+          ...baseContext,
+          connectorHealth: imageConnectors,
+          message: 'draw a red apple',
+          userMode: RoutingMode.MANUAL_MODEL,
+          forcedProvider: 'GROK',
+          forcedModel: 'grok-4.20-0309-non-reasoning',
+          pickedModelSupportsTools: true,
+        });
+
+        expect(result.selectedProvider).toBe('GROK');
+        expect(result.selectedModel).toBe('grok-4.20-0309-non-reasoning');
+        expect(result.reasonTags).toEqual(['user_forced']);
+      });
+
+      it.each([
+        ['GROK', 'grok-4.20-0309-non-reasoning'],
+        ['GROK', 'grok-4.20-0309-reasoning'],
+        ['OPENAI', 'gpt-4o'],
+      ])(
+        'keeps %s/%s on chat with NO registry supports_tools flag (dialect rule)',
+        async (forcedProvider, forcedModel) => {
+          const result = await manager.evaluateRoute({
+            ...baseContext,
+            connectorHealth: imageConnectors,
+            message: 'draw a red apple on a white table',
+            userMode: RoutingMode.MANUAL_MODEL,
+            forcedProvider,
+            forcedModel,
+          });
+
+          expect(result.selectedProvider).toBe(forcedProvider);
+          expect(result.selectedModel).toBe(forcedModel);
+        },
+      );
+
+      it('redirects a picked agent-only model (grok multi-agent) that cannot run the tool loop', async () => {
+        const result = await manager.evaluateRoute({
+          ...baseContext,
+          connectorHealth: imageConnectors,
+          message: 'draw a red apple',
+          userMode: RoutingMode.MANUAL_MODEL,
+          forcedProvider: 'GROK',
+          forcedModel: 'grok-4.20-multi-agent',
+        });
+
+        expect(result.selectedProvider.startsWith('IMAGE_')).toBe(true);
+      });
+
+      it('still redirects a tool-capable pick when the plan does not allow media', async () => {
+        const result = await manager.evaluateRoute({
+          ...baseContext,
+          connectorHealth: imageConnectors,
+          message: 'draw a red apple',
+          userMode: RoutingMode.MANUAL_MODEL,
+          forcedProvider: 'GROK',
+          forcedModel: 'grok-4.20-0309-non-reasoning',
+          pickedModelSupportsTools: true,
+          planAllowsMedia: false,
+        });
+
+        expect(result.selectedProvider.startsWith('IMAGE_')).toBe(true);
+      });
+
+      it('AUTO keeps the image redirect even when tools are flagged (this batch)', async () => {
+        const result = await manager.evaluateRoute({
+          ...baseContext,
+          connectorHealth: imageConnectors,
+          message: 'Generate an image of a lighthouse at dusk.',
+          pickedModelSupportsTools: true,
+        });
+
+        expect(result.selectedProvider.startsWith('IMAGE_')).toBe(true);
       });
 
       it.each([
@@ -917,8 +993,8 @@ describe('RoutingManager', () => {
         connectorHealth: { GEMINI: true },
         message: 'generate an image of a red bicycle on a beach',
         userMode: RoutingMode.MANUAL_MODEL,
-        forcedProvider: 'OLLAMA',
-        forcedModel: 'glm-5.1',
+        forcedProvider: 'GROQ',
+        forcedModel: 'llama-3.3-70b',
       });
 
       expect(result.selectedProvider).toBe('IMAGE_GEMINI');

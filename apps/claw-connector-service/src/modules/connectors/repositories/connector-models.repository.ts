@@ -11,7 +11,7 @@ import {
   MODEL_UNAVAILABLE_RETIRE_THRESHOLD,
   MODEL_UNAVAILABLE_WINDOW_MS,
 } from '../constants/model-unavailable.constants';
-import { adapterKindFields } from '../utilities/adapter-kind-fields.utility';
+import { adapterKindFields, newMediaModelExposure } from '../utilities/adapter-kind-fields.utility';
 import { nonChatKind } from '../utilities/model-kind.utility';
 import { isConnectorProvider } from '../utilities/connector-provider.utility';
 
@@ -45,7 +45,7 @@ export class ConnectorModelsRepository {
           cachedInputUsdPerMillion: model.usage?.cachedInputUsdPerMillion,
           outputUsdPerMillion: model.usage?.outputUsdPerMillion,
           ...nonChatKind(model.modelKey),
-          ...adapterKindFields(model, true),
+          ...adapterKindFields(model, true, provider),
           syncedAt: new Date(),
         },
         create: {
@@ -67,7 +67,8 @@ export class ConnectorModelsRepository {
           cachedInputUsdPerMillion: model.usage?.cachedInputUsdPerMillion,
           outputUsdPerMillion: model.usage?.outputUsdPerMillion,
           ...nonChatKind(model.modelKey),
-          ...adapterKindFields(model, false),
+          ...adapterKindFields(model, false, provider),
+          ...newMediaModelExposure(provider, model.modelKey),
         },
       }),
     );
@@ -120,7 +121,7 @@ export class ConnectorModelsRepository {
             cachedInputUsdPerMillion: model.usage?.cachedInputUsdPerMillion,
             outputUsdPerMillion: model.usage?.outputUsdPerMillion,
             ...nonChatKind(model.modelKey),
-            ...adapterKindFields(model, true),
+            ...adapterKindFields(model, true, provider),
             syncedAt: new Date(),
             lastSeenAt: new Date(),
           },
@@ -143,7 +144,8 @@ export class ConnectorModelsRepository {
             cachedInputUsdPerMillion: model.usage?.cachedInputUsdPerMillion,
             outputUsdPerMillion: model.usage?.outputUsdPerMillion,
             ...nonChatKind(model.modelKey),
-            ...adapterKindFields(model, false),
+            ...adapterKindFields(model, false, provider),
+            ...newMediaModelExposure(provider, model.modelKey),
             lastSeenAt: new Date(),
           },
         }),
@@ -223,7 +225,9 @@ export class ConnectorModelsRepository {
   // router infrastructure or an embedding or reranker deployment. The snapshot query
   // (findAllForSnapshot) stays unfiltered on purpose because the router needs
   // infrastructure models that are never user-executable.
-  async findExposedForCatalog(): Promise<
+  // `includeAudio` also returns kind AUDIO rows (tts, lyria, native-audio, but also
+  // whisper/transcribe/realtime); the caller keeps only the audio-OUTPUT ones.
+  async findExposedForCatalog(includeAudio = false): Promise<
     Array<
       ConnectorModel & {
         connector: {
@@ -242,7 +246,7 @@ export class ConnectorModelsRepository {
         },
         lifecycle: 'ACTIVE',
         exposure: 'EXPOSED',
-        kind: 'CHAT',
+        kind: includeAudio ? { in: ['CHAT', 'AUDIO'] } : 'CHAT',
       },
       include: {
         connector: {

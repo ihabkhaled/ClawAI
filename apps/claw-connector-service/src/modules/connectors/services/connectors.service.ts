@@ -21,6 +21,7 @@ import { type CreateConnectorDto } from '../dto/create-connector.dto';
 import { type UpdateConnectorDto } from '../dto/update-connector.dto';
 import { type ListConnectorsQueryDto } from '../dto/list-connectors-query.dto';
 import {
+  type AvailableModelEntry,
   type ConnectorConfigResult,
   type ConnectorHealthSnapshotResult,
   type ConnectorPaygPolicyResult,
@@ -29,6 +30,8 @@ import {
   type SyncModelsResult,
 } from '../types/connectors.types';
 import { paygDefaultForProvider, rollUpPaygPolicy } from '../utilities/payg-policy.utility';
+import { classifyAudioOutputModel } from '@claw/shared-utilities';
+import { snapshotMediaOutputFields } from '../utilities/snapshot-media-output.utility';
 import { formatModelDisplayName } from '../utilities/model-display-name.utility';
 import { ProviderDefinitionsService } from './provider-definitions.service';
 
@@ -419,11 +422,13 @@ export class ConnectorsService implements OnApplicationBootstrap {
   // ThreadSettings and MessageComposer model selectors both consume this list
   // unmodified; plan features (compare/judge/critic/research) gate WORKFLOWS,
   // never which model the user can pick.
-  async getAvailableModels(): Promise<
-    Array<Omit<ConnectorModel, 'provider'> & { provider: string }>
-  > {
-    this.logger.debug('getAvailableModels: listing exposed chat models');
-    const rows = await this.connectorModelsRepository.findExposedForCatalog();
+  async getAvailableModels(): Promise<AvailableModelEntry[]> {
+    this.logger.debug('getAvailableModels: listing exposed chat and audio-generation models');
+    // Audio-OUTPUT models (tts, music) are kind AUDIO in the catalog, so they are asked for
+    // explicitly; input-only audio models (whisper, transcribe, realtime) are dropped below.
+    const rows = (await this.connectorModelsRepository.findExposedForCatalog(true)).filter(
+      (row) => row.kind !== 'AUDIO' || classifyAudioOutputModel(row.modelKey) !== undefined,
+    );
     // The display name is re-formatted on READ, exactly as the public catalog
     // does it. Gemini's ids are namespaced (`models/gemini-2.5-pro`) and the
     // old sync stored the namespace in the name, so the composer's model picker
@@ -431,12 +436,16 @@ export class ConnectorsService implements OnApplicationBootstrap {
     // formatter existed still hold the mangled name, and a user must not have
     // to wait for an administrator to re-sync a connector before the list stops
     // looking broken. The formatter is idempotent, so a clean name is untouched.
-    return rows.map(({ connector, ...model }) => ({
-      ...model,
-      provider: connector.providerDefinition?.key ?? model.provider,
-      providerDisplayName: connector.providerDefinition?.displayName,
-      displayName: formatModelDisplayName(model.displayName),
-    }));
+    return rows.map(({ connector, ...model }) => {
+      const provider = connector.providerDefinition?.key ?? model.provider;
+      return {
+        ...model,
+        provider,
+        providerDisplayName: connector.providerDefinition?.displayName,
+        displayName: formatModelDisplayName(model.displayName),
+        ...snapshotMediaOutputFields(model.modelKey, provider),
+      };
+    });
   }
 
   // Admin exposure control. The connector is verified first so a bad id fails as

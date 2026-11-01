@@ -480,6 +480,27 @@ export class RoutingService implements OnModuleInit {
     await this.publishRoutedDecision(priced, context, messageId, threadId, content);
   }
 
+  /** MANUAL_MODEL only: whether the picked model's registry row says it supports tools. */
+  private async pickedModelSupportsTools(
+    routingMode: string | undefined,
+    forcedProvider: string | undefined,
+    forcedModel: string | undefined,
+  ): Promise<boolean> {
+    if (routingMode !== 'MANUAL_MODEL' || !forcedModel || !forcedProvider) return false;
+    try {
+      const record = await this.modelRegistry.findByProviderAndModelKey(
+        forcedProvider.toUpperCase(),
+        forcedModel.replace(/^models\//u, ''),
+      );
+      return record?.supportsTools === true;
+    } catch (error) {
+      this.logger.warn(
+        `pickedModelSupportsTools: registry read failed - ${(error as Error).message}`,
+      );
+      return false;
+    }
+  }
+
   private async evaluateMessageRoute(
     parsed: NonNullable<ReturnType<RoutingService['parseMessageCreatedPayload']>>,
     payload: Record<string, unknown>,
@@ -513,6 +534,11 @@ export class RoutingService implements OnModuleInit {
       modelAccessAllowAll: modelAccessMode === 'ALLOW_ALL',
       freeModelPriceCap,
       runtimeV2,
+      pickedModelSupportsTools: await this.pickedModelSupportsTools(
+        routingMode,
+        forcedProvider,
+        forcedModel,
+      ),
       ...attachments,
     };
     const rawDecision = await this.routingManager.evaluateRoute(context);

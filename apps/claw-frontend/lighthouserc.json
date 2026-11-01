@@ -131,6 +131,7 @@
         "http://localhost:3000/en/features/conversation-power-tools",
         "http://localhost:3000/en/features/read-aloud",
         "http://localhost:3000/en/features/image-generation",
+        "http://localhost:3000/en/features/chat-models-make-media",
         "http://localhost:3000/en/features/reliability",
         "http://localhost:3000/en/features/pay-as-you-go-credit",
         "http://localhost:3000/en/features/administration-and-access-control"

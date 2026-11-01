@@ -289,3 +289,18 @@ chat-listed `CHAT` row and chat-service redirects a pin to `IMAGE_GEMINI`
 `PUT /connectors/:id/models/prompt-caching` (ANTHROPIC rows, audit-logged), published on the models
 snapshot as `promptCaching`, and reset to OFF when `replaceMany` marks a model REMOVED. A sync must
 never write it: it changes what a request costs.
+
+## Media-output models in the routing snapshot (2026-10-31)
+
+The catalog has no IMAGE/VIDEO/AUDIO model kind, so media models are CHAT rows. `ModelsSnapshotManager` now sets `modalitiesOut` from the shared classifier (`utilities/snapshot-media-output.utility.ts`): `IMAGE_OUTPUT`, `VIDEO_OUTPUT` or `AUDIO_OUTPUT` instead of the old hard-coded `['TEXT']`, plus `mediaKind` / `audioKind` on the entry. routing-service stores the modality on sync.
+
+`classifyMediaOutputModel(model, connector?)` (`media-output-model/`, with `audio-output-model/` and the image/video pattern tables) maps a model id to IMAGE / VIDEO / AUDIO (speech or music) by pattern, never by provider-named code. Add a new family by extending a pattern table. The browser cannot import the package root, so `apps/claw-frontend/src/constants/image.constants.ts` mirrors the image and audio patterns; keep them in step.
+
+## Exposure policy for media-generation models (2026-11-01)
+
+Exposure is normally an admin decision (new models arrive UNEXPOSED). Media models are the exception: an image, video, speech or music model that routing-service's cost seed prices is EXPOSED by policy, because the seed row carries a cost class (so plan cost-class limits apply) and an unpriced model is refused at the hold. The list is `PRICED_MEDIA_MODEL_KEYS_BY_PROVIDER` in `@claw/shared-utilities`; add a model there in the same change that seeds its price (a routing-service spec fails if the two drift). Aggregator ids (OpenRouter Lyria, ...) are never listed: they stay UNEXPOSED until priced individually.
+
+- New rows: `newMediaModelExposure` creates them EXPOSED; an update never changes exposure, so an admin who hides one keeps it hidden.
+- `adapterKindFields` ignores Google's `predict` verdict (TOOL) for these models, otherwise every sync would unexpose Veo.
+- Migration `20261031150000_expose_priced_media_models` exposes the existing rows and repairs their kind (AUDIO for speech/music, else CHAT). Idempotent.
+- `GET /connectors/available-models` returns CHAT plus audio-output AUDIO rows, with `mediaKind` / `modalitiesOut`.

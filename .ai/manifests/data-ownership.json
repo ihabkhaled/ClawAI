@@ -143,6 +143,8 @@
       "database": "postgresql",
       "mongooseModels": [],
       "prismaModels": [
+        "AudioGeneration",
+        "AudioGenerationAsset",
         "ImageGeneration",
         "ImageGenerationAsset",
         "ImageGenerationEvent",

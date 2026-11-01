@@ -60,6 +60,24 @@ Service entry points that create threads for Compare/Consensus/Escalation: `chat
   `PLUGIN_*` stream events, and own MCP servers in `resolve`; the plugin-service `/api/v1/internal/plugins/*` routes now exist. If plugin-service is down a mentioned
   message answers as plain chat with a notice.
 
+- **Media tools (2026-10-31).** A tool-calling chat model can decide to make media: `generate_image`,
+  `generate_video`, `generate_audio` are offered as native tools, the call runs through ONE gateway
+  (`utilities/media-gateway.utility.ts`, the only file that knows the image, video and audio routes), waits
+  with bounded polling, and the result goes back to the SAME model as the tool result so it writes the reply.
+  The cards ride on the answer as `metadata.mediaGenerations` and render under the text. One chokepoint
+  (`ChatExecutionManager.callProvider` -> `MediaToolLoopManager`); a media turn is not streamed (tool calls need
+  the whole response), and only a turn that names media at all is offered the tools (`MEDIA_TOOL_CUE_WORDS`).
+  Models without tool calling, and every provider outside the tool table, keep the router-side redirect.
+  **Offered on: normal chat and Compare lanes (also in-thread Compare)** because those two store paths carry the
+  card (`buildToolMetaPart`, `mediaGenerationsField`). **Not offered, by design, on Consensus, Escalation,
+  Best-of-N, Decompose, Pipeline, Cost-Ensemble, Role Pack, Repair, Verify, the judge and the critic.** Why: each
+  stores only the text of a candidate (no response object to carry a card), several run N candidates that would
+  each pay for the same media, and Repair/Verify/judge/critic only rewrite or grade an existing answer. Closing it:
+  give each manager's stored message `mediaGenerations` from its winning response and add its surface to
+  `MEDIA_TOOL_SURFACES`, in one change. Compare lanes share a budget of 3 generations per user message and wait
+  half as long; Stop ends the wait for a single-lane chat turn only. Guard: `media-tool-surfaces.spec.ts`.
+  Open: no audio card in the thread yet (the answer carries the audio entry, the card is skipped).
+
 - **Loose composer controls (closed 2026-10-14).** Compare, in-thread Compare and the seven labs now render the same
   grouped `ComposerPlusMenu` as normal chat plus the research chip; the loose `FileAttachmentPicker`,
   `PromptLibraryButton`, `ResearchToggle` and `OrchestrationContextButton` are gone from them. A surface with no

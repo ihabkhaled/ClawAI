@@ -91,6 +91,8 @@
       "PublishedArtifact"
     ],
     "claw-image-service": [
+      "AudioGeneration",
+      "AudioGenerationAsset",
       "ImageGeneration",
       "ImageGenerationAsset",
       "ImageGenerationEvent",

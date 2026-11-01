@@ -2,17 +2,18 @@
 
 ## Overview
 
-ClawAI supports AI image generation through three providers: OpenAI DALL-E 3, Google Gemini 2.5 Flash Image, and local Stable Diffusion via ComfyUI. Users can generate images from text prompts within chat threads, generate variations from reference images, and manage their generation history.
+ClawAI supports AI image generation through four providers: Google Gemini 2.5 Flash Image (the default), OpenAI `gpt-image-1`, xAI `grok-imagine-image`, and local Stable Diffusion via ComfyUI. A chat model can also call the `generate_image` tool to make an image mid-answer ([ADR-213](../13-adr/adr-213-chat-models-make-media-through-tools.md)). Users can generate images from text prompts within chat threads, generate variations from reference images, and manage their generation history.
 
 ---
 
 ## Supported Providers
 
-| Provider | Model | Quality | Cost | Privacy |
-| --- | --- | --- | --- | --- |
-| OpenAI | DALL-E 3 | High (photorealistic) | Paid | Cloud |
-| Google | Gemini 2.5 Flash Image | High (versatile) | Paid | Cloud |
-| Local (ComfyUI) | SDXL-Turbo, FLUX, SD 3.5 | Medium | Free | Local |
+| Provider        | Model                    | Quality               | Cost | Privacy |
+| --------------- | ------------------------ | --------------------- | ---- | ------- |
+| OpenAI          | gpt-image-1              | High (photorealistic) | Paid | Cloud   |
+| xAI             | grok-imagine-image       | High                  | Paid | Cloud   |
+| Google          | Gemini 2.5 Flash Image   | High (versatile)      | Paid | Cloud   |
+| Local (ComfyUI) | SDXL-Turbo, FLUX, SD 3.5 | Medium                | Free | Local   |
 
 ---
 
@@ -38,7 +39,7 @@ ClawAI supports AI image generation through three providers: OpenAI DALL-E 3, Go
 ### Retry and Alternate
 
 - **Retry**: Regenerate with the same prompt and provider
-- **Try Alternate**: Use a different image model (e.g., switch from Gemini to DALL-E)
+- **Try Alternate**: Use a different image model (e.g., switch from Gemini to OpenAI)
 
 ---
 
@@ -47,15 +48,19 @@ ClawAI supports AI image generation through three providers: OpenAI DALL-E 3, Go
 The routing engine uses 90+ keywords to detect image generation requests:
 
 ### Direct Creation Phrases
+
 `generate an image`, `create a picture`, `draw me`, `make an image`, `design a logo`, `sketch`, `illustration of`, `paint me`, `photo of`, `render an image`, `visualize`, `depict`
 
 ### Reference-Based Phrases
+
 `generate similar`, `similar to this`, `like this image`, `recreate this`, `reproduce this`, `variation of this`, `based on this image`, `inspired by this`, `generate from this`, `create similar`
 
 ### Scene/Location Prompts
+
 `fantasy map`, `travel poster`, `floor plan`, `book cover`, `album cover`, `movie poster`, `game character`, `profile picture`, `social media post`, `app icon`
 
 ### Single-Word Strong Indicators
+
 `render`, `photo`, `portrait`, `illustration`, `poster`, `sticker`, `logo`, `banner`, `mascot`
 
 ---
@@ -70,7 +75,7 @@ flowchart LR
     B -->|IMAGE_LOCAL| C
     C --> D{Provider Adapter}
     D -->|Gemini| E[Google API]
-    D -->|DALL-E| F[OpenAI API]
+    D -->|OpenAI| F[OpenAI API]
     D -->|Local| G[ComfyUI / SD]
     E --> H[Generated Image]
     F --> H
@@ -82,9 +87,10 @@ flowchart LR
 
 - **Controller**: Receives generation requests, returns results
 - **Service**: Orchestrates generation, manages history
-- **Adapters** (3): Provider-specific API adapters
+- **Adapters** (4 plus an edit adapter): Provider-specific API adapters
   - `gemini-image.adapter.ts` - Google Gemini image generation
-  - `openai-image.adapter.ts` - OpenAI DALL-E 3 generation
+  - `openai-image.adapter.ts` - OpenAI gpt-image-1 generation
+  - `xai-image.adapter.ts` - xAI grok-imagine-image generation
   - `stable-diffusion.adapter.ts` - Local ComfyUI/SD generation
 - **Repository**: Image job and result persistence
 
@@ -110,30 +116,30 @@ ImageJob:
 
 ## Events
 
-| Event | Publisher | Consumers | Payload |
-| --- | --- | --- | --- |
+| Event             | Publisher     | Consumers     | Payload                                |
+| ----------------- | ------------- | ------------- | -------------------------------------- |
 | `image.generated` | image-service | audit-service | jobId, userId, provider, model, prompt |
-| `image.failed` | image-service | audit-service | jobId, userId, provider, error |
+| `image.failed`    | image-service | audit-service | jobId, userId, provider, error         |
 
 ---
 
 ## Error Handling
 
-| Error | Cause | User Experience |
-| --- | --- | --- |
-| Provider timeout | Cloud API slow/down | Retry offered, alternate provider suggested |
-| UNSUPPORTED_IMAGE_PROVIDER | Selected provider lacks image support | Error message, suggest switching provider |
-| Content policy violation | Provider rejects prompt | Error message explaining content policy |
-| Local SD unavailable | ComfyUI not running | Fallback to cloud provider or error message |
+| Error                      | Cause                                 | User Experience                             |
+| -------------------------- | ------------------------------------- | ------------------------------------------- |
+| Provider timeout           | Cloud API slow/down                   | Retry offered, alternate provider suggested |
+| UNSUPPORTED_IMAGE_PROVIDER | Selected provider lacks image support | Error message, suggest switching provider   |
+| Content policy violation   | Provider rejects prompt               | Error message explaining content policy     |
+| Local SD unavailable       | ComfyUI not running                   | Fallback to cloud provider or error message |
 
 ---
 
 ## Configuration
 
-| Environment Variable | Default | Description |
-| --- | --- | --- |
-| `STABLE_DIFFUSION_URL` | -- | URL for local Stable Diffusion / ComfyUI |
-| `IMAGE_SERVICE_URL` | `http://image-service:4012` | Internal service URL |
-| `IMAGE_PORT` | `4012` | Image service port |
-| `COMFYUI_BASE_URL` | -- | ComfyUI API endpoint |
-| `COMFYUI_PORT` | -- | ComfyUI port |
+| Environment Variable   | Default                     | Description                              |
+| ---------------------- | --------------------------- | ---------------------------------------- |
+| `STABLE_DIFFUSION_URL` | --                          | URL for local Stable Diffusion / ComfyUI |
+| `IMAGE_SERVICE_URL`    | `http://image-service:4012` | Internal service URL                     |
+| `IMAGE_PORT`           | `4012`                      | Image service port                       |
+| `COMFYUI_BASE_URL`     | --                          | ComfyUI API endpoint                     |
+| `COMFYUI_PORT`         | --                          | ComfyUI port                             |

@@ -1,3 +1,13 @@
+import { ModalityKind } from '../../../generated/prisma';
+
+/// Image / video / audio OUTPUT modalities: a registry row carrying one is a
+/// media model, left out of text-routing candidate lists.
+export const MEDIA_MODALITY_KINDS: ModalityKind[] = [
+  ModalityKind.IMAGE_OUTPUT,
+  ModalityKind.VIDEO_OUTPUT,
+  ModalityKind.AUDIO_OUTPUT,
+];
+
 /// Field names that, when modified via PATCH /routing/models/:id, also create
 /// a `RouterAdminOverride` row so the change survives upstream syncs.
 export const OVERRIDE_MANAGED_FIELDS: ReadonlyArray<string> = Object.freeze([

@@ -10,6 +10,10 @@ const mockUseLocalModels = vi.fn();
 const mockUseFrontierCatalog = vi.fn();
 const mockIsLocked = vi.fn((_provider: string, _model: string) => false);
 
+vi.mock('@/lib/i18n', () => ({
+  useTranslation: () => ({ t: (key: string) => key }),
+}));
+
 vi.mock('@/hooks/chat/use-model-plan-access', () => ({
   useModelPlanAccess: () => ({ isLocked: mockIsLocked }),
 }));

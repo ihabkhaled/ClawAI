@@ -886,6 +886,14 @@ Lighthouse CI — and every pair page cross-links out to `/model-providers/*`,
 `/model-fit`, and `/learn/*`. Trigger to revisit: if search-console data
 shows `/compare/models` under-discovered relative to its sibling clusters.
 
+## 11. Chat models make media page (2026-11-01)
+
+`/features/chat-models-make-media` is a capability page (`FeatureCapability.CHAT_MODELS_MAKE_MEDIA`), so it needs no new page type: the
+registry entry, sitemap, RSS, `llms.txt`, hreflang and the footer Features column come from `FEATURES_CAPABILITY_ORDER` and
+`MARKETING_FOOTER_FEATURE_PATHS`; the copy sits in `features-flagship-content/<locale>.constants.ts` (13 locales). Claims are limited to
+what ADR-213 to ADR-215 ship: image, video and audio generation from chat through tools, for tool-calling chat models, metered from plan
+allowance or credit, normal chat and Compare only. It lists no prices.
+
 ## 10. Public Threads board (2026-10-14)
 
 The guest-facing Threads board is registry slug `threads/board`, path `/threads/board`, in all 13 locales

@@ -1852,3 +1852,20 @@ The cost-class cache key is `costClassKey(provider, model)` (a JSON pair), never
 - **`web_search` tool** (`executeResearchWebSearch`): configured providers through the gateway; the hosted Ollama search only when research-service is down or has no provider. Chat records no `WEB_SEARCH` unit on the research path (research-service records one per provider call); only the hosted fallback records one. A turn's tool calls run in parallel, limit `RESEARCH_TOOL_CALL_PARALLEL_LIMIT` (4), `mapWithConcurrency` keeps the model's call order and ids.
 - **Search-first** is skipped when the turn already carries research evidence (it would search twice).
 - Tests: `research-gateway.utility.spec.ts`, `research-gateway-parity.spec.ts`, `research-wait-before-model.spec.ts`, `research-web-search-tool.utility.spec.ts`, `bounded-parallel.utility.spec.ts`.
+
+## Media tools (2026-10-31)
+
+A tool-calling chat model can make media itself: `callProvider` runs `MediaToolLoopManager` when
+`wantsMediaTools` is true (surface in `MEDIA_TOOL_SURFACES`, provider in the native tool table, no other tool
+lane active, latest user turn names media). The model gets `generate_image` / `generate_video` /
+`generate_audio`; the executor validates the arguments, calls `media-gateway.utility.ts` (the ONLY file that knows
+the image, video and audio service routes), waits with bounded polling, and returns compact JSON (status, id,
+mimeType, durationSec, no bytes, no link) as the tool result to the SAME model.
+
+- Plan gate and metering stay in the media services; the loop also checks the plan so a plan without media never
+  sees the tools, and a clear media request still gets the existing upgrade notice (`planRefusal`).
+- The answer stays a normal metered chat answer: media rides as `LlmResponse.mediaGenerations`, NOT as
+  `imageGenerationId` (which marks a generation turn and skips token accounting).
+- Limits: 3 tool rounds, 2 calls per answer, 3 generations per user message across Compare lanes, polls bounded per
+  kind. A timeout keeps the card (it keeps rendering); a failure is a tool error the model explains.
+- New surface? Add it to `MEDIA_TOOL_SURFACES` only together with a store path that spreads `buildMediaMetaPart`.

@@ -100,3 +100,23 @@ export const VEO_MODEL_FALLBACK_CODES: readonly string[] = [
 
 /** The longest provider reason stored beside a generic rejection. */
 export const VIDEO_REJECTION_REASON_MAX_CHARACTERS = 200;
+
+/**
+ * Video models with a seeded per-second row (routing seed v11). Official list
+ * prices, Gemini API Standard tier at 720p (image-service's resolution), sources
+ * ai.google.dev/gemini-api/docs/pricing and docs.x.ai/docs/models, 2026-10-31:
+ * Veo 3.1 Lite $0.05/s, Veo 3.1 Fast $0.10/s, Veo 3.1 $0.40/s; grok-imagine-video
+ * $0.05/s, grok-imagine-video-1.5 $0.08/s. The prices live ONLY in those rows.
+ */
+export const SEEDED_VIDEO_PRICE_KEYS: readonly string[] = [
+  'veo-3.1-lite-generate-preview',
+  'veo-3.1-fast-generate-preview',
+  'veo-3.1-generate-preview',
+  'grok-imagine-video',
+  'grok-imagine-video-1.5',
+];
+
+/** Dearest seeded Veo row: what an unseeded `veo-*` id is metered on. */
+export const VEO_WORST_CASE_PRICE_KEY = 'veo-3.1-generate-preview';
+/** Dearest seeded Grok video row: what an unseeded `grok-imagine-video*` id is metered on. */
+export const GROK_VIDEO_WORST_CASE_PRICE_KEY = 'grok-imagine-video-1.5';

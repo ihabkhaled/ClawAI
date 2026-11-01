@@ -7610,6 +7610,13 @@ export type MediaUiLocaleTranslation = {
     videoInput: string;
     imageOutput: string;
     videoOutput: string;
+    audioOutput: string;
+  };
+  /** The media kind of an image / video / audio generation model, shown on its picker row. */
+  modelKind: {
+    image: string;
+    video: string;
+    audio: string;
   };
   attachmentState: {
     listLabel: string;
@@ -7692,6 +7699,18 @@ export type MediaUiLocaleTranslation = {
   video: {
     thumbnailAlt: string;
     duration: string;
+  };
+  /** The chat audio card (speech or music a model made). */
+  audio: {
+    label: string;
+    preparing: string;
+    queued: string;
+    running: string;
+    failed: string;
+    timedOut: string;
+    loadFailed: string;
+    loadFailedHint: string;
+    statusUnknown: string;
   };
 };
 

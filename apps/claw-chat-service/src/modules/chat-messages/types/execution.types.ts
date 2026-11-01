@@ -22,6 +22,7 @@ import type {
   AnthropicSystemTextBlock,
 } from './anthropic-message-shape.types';
 import type { GeminiContent } from './gemini.types';
+import type { MediaGenerationRef } from './media-tools.types';
 import type { PluginCallRecord, PluginNotice } from './plugin-tools.types';
 import type {
   OllamaCloudToolCall,
@@ -247,6 +248,10 @@ export type LlmResponse = {
   // notices explaining a mentioned plugin that did not run (`metadata.pluginNotices`).
   pluginCalls?: readonly PluginCallRecord[];
   pluginNotices?: readonly PluginNotice[];
+  // Media the chat model made with a media tool this answer (`metadata.mediaGenerations`): the
+  // cards shown under the text. Not the same as `imageGenerationId`, which marks a turn that IS a
+  // generation and skips token accounting; this answer is a normal, metered chat answer.
+  mediaGenerations?: readonly MediaGenerationRef[];
   // What the speed contract actually granted, plus measured throughput when it
   // was measured. Carrying the resolution (not just the request) is what lets
   // the UI say "requested turbo, ran standard" instead of silently showing a

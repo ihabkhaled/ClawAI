@@ -74,6 +74,10 @@ export const FEATURE_CAPABILITY_SCENES: Record<
     MarketingSceneId.CHAT_CONVERSATION,
     MarketingSceneId.FILES,
   ],
+  [FeatureCapability.CHAT_MODELS_MAKE_MEDIA]: [
+    MarketingSceneId.CHAT_CONVERSATION,
+    MarketingSceneId.CHAT_MODEL_PICKER,
+  ],
   [FeatureCapability.READ_ALOUD]: [
     MarketingSceneId.CHAT_CONVERSATION,
     MarketingSceneId.MOBILE_CHAT,

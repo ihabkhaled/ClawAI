@@ -1153,3 +1153,7 @@ shows the stream state (no new i18n key). See [ADR-201](../../docs/13-adr/adr-20
   phrases live in `SESSION_GLOBAL_PHRASES` and must equal the server's.
 - Ending your own current login sends `confirmCurrent: true` and the dialog shows the warning first; the next
   request then follows the normal signed-out flow (refresh answers `SESSION_TERMINATED`).
+
+## Media-output models in the picker (2026-10-31)
+
+`getConnectorModelCapabilityBadges` badges image, video and audio generation models by id (`ImageOutput`, `VideoOutput`, `AudioOutput`). `typeModelsByMediaKind` (`utilities/model-picker-media-kind.utility.ts`) lists a provider's chat models first, then its Image, Video and Audio models, each tagged with `mediaUi.modelKind.*`. The built-in `IMAGE_CAPABILITIES` entry is only a fallback, shown when the connector's catalog lists no image model. Keys `mediaUi.capability.audioOutput` and `mediaUi.modelKind.{image,video,audio}` exist in all 13 locales.

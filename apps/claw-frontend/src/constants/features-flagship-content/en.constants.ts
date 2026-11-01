@@ -21,6 +21,8 @@ export const EN_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
       'Listen to any answer instead of reading it, with playback that starts after the first short part is ready.',
     [FeatureCapability.IMAGE_GENERATION]:
       'Generate and edit images inside the conversation, across several image providers with automatic fallback between them.',
+    [FeatureCapability.CHAT_MODELS_MAKE_MEDIA]:
+      'Ask any tool-calling chat model for an image, a video or a voice clip: it calls a tool, ClawAI makes the media, and the same model writes the reply.',
     [FeatureCapability.RELIABILITY]:
       'Automatic fallback to another model, a shared breaker for providers that run out of credit, and streams that survive a reconnect.',
     [FeatureCapability.PAY_AS_YOU_GO_CREDIT]:
@@ -472,6 +474,71 @@ export const EN_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
       ],
       productNote:
         'Image generation runs in its own image service with provider fallback from cloud to local models, metered on the IMAGE surface.',
+    },
+    [FeatureCapability.CHAT_MODELS_MAKE_MEDIA]: {
+      seo: {
+        title: 'Chat models that make images, video and audio',
+        description:
+          'In ClawAI a chat model such as Grok, GPT or Gemini can generate images, video and audio through tools, wait for the result and then write its answer about it.',
+        keywords: [
+          'AI image video audio generation in chat',
+          'Grok GPT Gemini generate images',
+          'AI chat with tools',
+        ],
+      },
+      eyebrow: 'Feature',
+      title: 'Chat models that make media',
+      summary:
+        'Ask for a picture, a clip or a voice-over in the conversation. The chat model calls a generation tool, ClawAI makes the media and hands it back to the same model, which writes the final reply around it.',
+      sections: [
+        {
+          id: 'how-it-works',
+          heading: 'The model asks, ClawAI makes, the model answers',
+          paragraphs: [
+            'When your message calls for media, the chat model can call one of three tools: generate image, generate video or generate audio. ClawAI runs the media model, waits for it to finish and gives the result back to that same chat model, so the reply you read was written by the model that saw what was made. The finished image, video or audio appears under the answer. Models that cannot call tools keep the older shortcut, where a separate media model answers the request.',
+          ],
+        },
+        {
+          id: 'which-models',
+          heading: 'Works with Grok, GPT and Gemini',
+          paragraphs: [
+            'Any chat model that supports tool calling can use the tools, including Grok, GPT and Gemini models. A model that does not generate media itself, Claude among them, can still ask for it, because the media is made by dedicated image, video and audio models behind the tools and not by the chat model.',
+          ],
+        },
+        {
+          id: 'what-you-can-make',
+          heading: 'Images, video and audio',
+          paragraphs: [
+            "Images come from Gemini, OpenAI or xAI image models, video from Veo or Grok Imagine, and audio as speech (OpenAI or Gemini voices) or short pieces of music (Gemini Lyria). Which models are available depends on what the operator has connected. A chat model may name a model, but only one on the platform's known list; anything else falls back to the default.",
+          ],
+        },
+        {
+          id: 'waiting-limits-and-cost',
+          heading: 'Waiting, limits and cost',
+          paragraphs: [
+            'Generation is metered like any other generation: it draws on your plan allowance or your pay-as-you-go credit, and it is refused when neither covers it. A turn that makes media is not streamed word by word, because the model has to wait for the result. One answer can make up to two items, and one message up to three across a Compare view, each with a bounded wait.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Which chat models can make media?',
+          answer:
+            'Any chat model that supports tool calling, for example Grok, GPT and Gemini models. The media itself is produced by image, video and audio models behind the tools, so a model that cannot generate media on its own, such as Claude, can still ask for it.',
+        },
+        {
+          question: 'Where does this work?',
+          answer:
+            'In normal chat and in Compare lanes. The other orchestration labs (consensus, escalation, best-of-N and so on) do not offer the media tools yet; they keep the older behaviour, where a request for an image goes to an image model.',
+        },
+        {
+          question: 'What does it cost?',
+          answer:
+            "Each generation is metered from your plan allowance or your pay-as-you-go credit, on top of the chat model's own tokens. The pricing page shows what each plan includes.",
+        },
+      ],
+      productNote:
+        'Chat models call generate_image, generate_video and generate_audio; the image service makes the media and the same chat model writes the reply, metered like any other generation.',
     },
     [FeatureCapability.RELIABILITY]: {
       seo: {

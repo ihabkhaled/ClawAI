@@ -17,21 +17,25 @@ User Upload → Validate (type/size) → Store (local disk) → Chunk (by MIME t
 ```
 
 ### Step 1: Upload
+
 - `FilesController` accepts multipart file upload
 - DTO validation via `upload-file.dto.ts` with Zod pipe
 - Auth guard enforces JWT authentication
 
 ### Step 2: Validate
+
 - MIME type checking at controller level
 - File size limits enforced
 - Supported types: JSON, CSV, Markdown, plain text
 
 ### Step 3: Store
+
 - `file-storage.utility.ts` wraps `fs` operations (follows library wrapping rule)
 - Files written to local disk at `storagePath`
 - File metadata persisted to PostgreSQL via `FilesRepository`
 
 ### Step 4: Chunk
+
 - `FileProcessingManager` reads file from disk, splits by MIME type
 - JSON: splits by top-level keys (objects) or array items
 - CSV: splits into 50-row batches, preserving header row
@@ -42,6 +46,7 @@ User Upload → Validate (type/size) → Store (local disk) → Chunk (by MIME t
 - `file.failed` event published on error
 
 ### Step 5: Retrieve
+
 - `FilesInternalController` at `/internal/files/:id/chunks` — public (no auth), service-to-service only
 - Returns all `FileChunk[]` for a given file ID
 - Used by chat-service during context assembly to inject file content
@@ -50,15 +55,15 @@ User Upload → Validate (type/size) → Store (local disk) → Chunk (by MIME t
 
 ## Current File Types Supported
 
-| MIME Type | Chunking Strategy | Status |
-|---|---|---|
-| `application/json` | Top-level keys or array items | Working |
-| `text/csv` | 50-row batches with header | Working |
-| `text/markdown` | Section boundaries (headings) | Working |
-| `text/plain` (default) | Paragraph splits | Working |
-| PDF | Not implemented | Missing |
-| Images (PNG/JPG) | Not implemented | Missing |
-| DOCX/XLSX | Not implemented | Missing |
+| MIME Type              | Chunking Strategy                                                                      | Status  |
+| ---------------------- | -------------------------------------------------------------------------------------- | ------- |
+| `application/json`     | Top-level keys or array items                                                          | Working |
+| `text/csv`             | 50-row batches with header                                                             | Working |
+| `text/markdown`        | Section boundaries (headings)                                                          | Working |
+| `text/plain` (default) | Paragraph splits                                                                       | Working |
+| PDF                    | Not implemented                                                                        | Missing |
+| Images (PNG/JPG)       | Understood by vision-capable models, OCR or helper vision otherwise (rule 42, ADR-120) | Working |
+| DOCX/XLSX              | Not implemented                                                                        | Missing |
 
 ---
 
@@ -133,6 +138,7 @@ User Upload → Validate (type/size) → Store (local disk) → Chunk (by MIME t
 ## Parser/Chunker Design
 
 ### Current Architecture
+
 ```
 FileProcessingManager
 ├── processFile(file)           — orchestrator
@@ -145,12 +151,14 @@ FileProcessingManager
 ```
 
 ### Design Strengths
+
 - Clean separation of concerns (repository/manager/controller)
 - Each MIME type has a dedicated splitting strategy
 - Follows the library wrapping rule (file I/O wrapped in utility)
 - Ingestion status provides visibility into pipeline state
 
 ### Design Weaknesses
+
 - All parsing logic in a single manager class — should extract per-type parsers
 - No pluggable parser interface — adding new types requires modifying the switch statement
 - No chunk metadata (line numbers, section titles, byte offsets)
@@ -160,20 +168,21 @@ FileProcessingManager
 
 ## Signs File Support Is Fake — Checklist
 
-| # | Check | Status | Notes |
-|---|---|---|---|
-| 1 | Can a user upload a file and see it in the UI? | REAL | Upload endpoint + file picker exist |
-| 2 | Are uploaded files actually stored on disk? | REAL | `file-storage.utility.ts` writes to disk |
-| 3 | Are files chunked after upload? | REAL | `FileProcessingManager.processFile()` chunks them |
-| 4 | Can chat-service retrieve chunks? | REAL | `/internal/files/:id/chunks` endpoint exists |
-| 5 | Do file chunks influence AI responses? | PARTIAL | Chunks are fetched during context assembly, but no semantic relevance filtering |
-| 6 | Can users search within uploaded files? | FAKE | No search endpoint, no embeddings, no similarity query |
-| 7 | Does the UI show file processing status? | UNKNOWN | Ingestion status tracked in DB, unclear if frontend polls it |
-| 8 | Are PDF files supported? | FAKE | No PDF parser, falls through to plain text |
-| 9 | Do large files get processed correctly? | RISKY | Entire file loaded into memory, no streaming |
-| 10 | Are chunks relevant to the user's query? | NO | All chunks for a file are injected, no relevance filtering |
+| #   | Check                                          | Status  | Notes                                                                           |
+| --- | ---------------------------------------------- | ------- | ------------------------------------------------------------------------------- |
+| 1   | Can a user upload a file and see it in the UI? | REAL    | Upload endpoint + file picker exist                                             |
+| 2   | Are uploaded files actually stored on disk?    | REAL    | `file-storage.utility.ts` writes to disk                                        |
+| 3   | Are files chunked after upload?                | REAL    | `FileProcessingManager.processFile()` chunks them                               |
+| 4   | Can chat-service retrieve chunks?              | REAL    | `/internal/files/:id/chunks` endpoint exists                                    |
+| 5   | Do file chunks influence AI responses?         | PARTIAL | Chunks are fetched during context assembly, but no semantic relevance filtering |
+| 6   | Can users search within uploaded files?        | FAKE    | No search endpoint, no embeddings, no similarity query                          |
+| 7   | Does the UI show file processing status?       | UNKNOWN | Ingestion status tracked in DB, unclear if frontend polls it                    |
+| 8   | Are PDF files supported?                       | FAKE    | No PDF parser, falls through to plain text                                      |
+| 9   | Do large files get processed correctly?        | RISKY   | Entire file loaded into memory, no streaming                                    |
+| 10  | Are chunks relevant to the user's query?       | NO      | All chunks for a file are injected, no relevance filtering                      |
 
 ### Verdict
+
 File support is **partially real**. The upload-store-chunk pipeline works. The critical gap is the absence of vector embeddings and semantic search — files are chunked but all chunks are dumped into context regardless of relevance, which means file grounding is brute-force rather than intelligent.
 
 ---

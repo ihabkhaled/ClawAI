@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ModelLifecycle, type Prisma } from '../../../generated/prisma';
+import { MEDIA_MODALITY_KINDS } from '../constants/router-models.constants';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { type RouterModelCatalogEntry } from '../types/model-cost-catalog.types';
 import {
@@ -105,6 +106,15 @@ export class RouterModelRegistryRepository {
     }
     if (filter.requiredModalitiesOut !== undefined && filter.requiredModalitiesOut.length > 0) {
       where.modalitiesOut = { hasEvery: filter.requiredModalitiesOut };
+    }
+    // Image / video / audio OUTPUT models cannot answer a chat turn, so a text
+    // candidate list leaves them out. Asking for a media output (or opting in
+    // with `includeMediaOutput`, as a media-tool target list does) keeps them.
+    if (filter.includeMediaOutput !== true) {
+      const wantsMedia = (filter.requiredModalitiesOut ?? []).some((kind) =>
+        MEDIA_MODALITY_KINDS.includes(kind),
+      );
+      if (!wantsMedia) where.NOT = { modalitiesOut: { hasSome: MEDIA_MODALITY_KINDS } };
     }
     if (filter.domain !== undefined) {
       where.domainTags = { has: filter.domain };

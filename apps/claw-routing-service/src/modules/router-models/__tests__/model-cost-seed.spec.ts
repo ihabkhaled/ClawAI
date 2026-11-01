@@ -269,7 +269,8 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
       outputPerMillionMicroUsd: 0,
     });
     expect(find('tts-1-hd')).toMatchObject({ ttsPerCharacterMicroUsd: 30 });
-    expect(find('gpt-4o-mini-tts')).toBeUndefined();
+    // gpt-4o-mini-tts is seeded since v15, on TOKENS (no per-character rate).
+    expect(find('gpt-4o-mini-tts')?.ttsPerCharacterMicroUsd ?? null).toBeNull();
   });
 
   // Gemini TTS reports usageMetadata, so it is token-priced: $0.50 / 1M text
@@ -314,7 +315,7 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
   // Grok Imagine (v8): xAI's image endpoint reports no tokens, so without a
   // per-image row the provider fallback priced these at grok-4's TOKEN rate and
   // every Grok image settled at $0. Owner decision 2026-09-25.
-  it('prices Grok Imagine images per image: $0.02 and the 2.0 top tier $0.08', () => {
+  it('prices Grok Imagine images per image: $0.02 and 2.0 at $0.04', () => {
     const find = (modelKey: string): ModelCostSeedEntry | undefined =>
       MODEL_COST_SEED_ENTRIES.find((e) => e.provider === 'GROK' && e.modelKey === modelKey);
     expect(find('grok-imagine-image')).toMatchObject({
@@ -324,13 +325,15 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
       replacesFallbackRate: true,
     });
     expect(find('grok-imagine-image-2.0')).toMatchObject({
-      imagePerUnitMicroUsd: 80_000,
+      imagePerUnitMicroUsd: 40_000,
       inputPerMillionMicroUsd: 0,
       outputPerMillionMicroUsd: 0,
       replacesFallbackRate: true,
     });
-    // Fills gaps — there was never a seeded Grok image row to supersede.
-    for (const key of ['grok-imagine-image', 'grok-imagine-image-2.0']) {
+    expect(find('grok-imagine-image-quality')?.imagePerUnitMicroUsd).toBe(50_000);
+    // 2.0 is corrected in place (v15); the others fill gaps.
+    expect(find('grok-imagine-image-2.0')?.supersedesSeededPrice).toBe(true);
+    for (const key of ['grok-imagine-image', 'grok-imagine-image-quality']) {
       expect(find(key)?.supersedesSeededPrice ?? false).toBe(false);
     }
   });
@@ -372,9 +375,50 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
     expect(Number.isInteger(find('gpt-4o-mini-transcribe')?.audioPerUnitMicroUsd)).toBe(true);
   });
 
-  it('is version 14, so installs that ran v13 pick up the aggregator prices', () => {
-    expect(MODEL_COST_SEED_VERSION).toBe(14);
-    expect(MODEL_COST_SEED_NAME).toBe('model-cost-list-prices-2026-v14');
+  it('prices the v15 media models (checked 2026-10-31)', () => {
+    const out = (provider: string, key: string): number | undefined =>
+      MODEL_COST_SEED_ENTRIES.find((e) => e.provider === provider && e.modelKey === key)
+        ?.outputPerMillionMicroUsd;
+    expect(out('GEMINI', 'gemini-3.1-flash-image-preview')).toBe(60_000_000);
+    expect(out('GEMINI', 'gemini-3.1-flash-image')).toBe(60_000_000);
+    expect(out('GEMINI', 'gemini-3-pro-image')).toBe(120_000_000);
+    expect(out('GEMINI', 'gemini-3.1-flash-lite-image')).toBe(30_000_000);
+    expect(out('OPENAI', 'gpt-image-1.5')).toBe(32_000_000);
+    expect(out('OPENAI', 'chatgpt-image-latest')).toBe(32_000_000);
+    expect(out('OPENAI', 'gpt-image-2')).toBe(30_000_000);
+    expect(out('OPENAI', 'gpt-image-1-mini')).toBe(8_000_000);
+    const video = (key: string): number | null | undefined =>
+      MODEL_COST_SEED_ENTRIES.find((e) => e.provider === 'GEMINI' && e.modelKey === key)
+        ?.videoPerUnitMicroUsd;
+    expect(video('veo-3.1-lite')).toBe(50_000);
+    expect(video('veo-3.1-fast')).toBe(100_000);
+    expect(video('veo-3.1-generate')).toBe(400_000);
+  });
+
+  it('prices the v15 audio models like image-service meters them', () => {
+    const find = (provider: string, key: string): ModelCostSeedEntry | undefined =>
+      MODEL_COST_SEED_ENTRIES.find((e) => e.provider === provider && e.modelKey === key);
+    expect(find('OPENAI', 'gpt-4o-mini-tts')).toMatchObject({
+      inputPerMillionMicroUsd: 600_000,
+      outputPerMillionMicroUsd: 12_000_000,
+    });
+    for (const key of ['gemini-2.5-pro-preview-tts', 'gemini-3.1-flash-tts-preview']) {
+      expect(find('GEMINI', key)).toMatchObject({
+        inputPerMillionMicroUsd: 1_000_000,
+        outputPerMillionMicroUsd: 20_000_000,
+      });
+    }
+    expect(find('GEMINI', 'lyria-3-clip-preview')?.imagePerUnitMicroUsd).toBe(40_000);
+    expect(find('GEMINI', 'lyria-3-pro-preview')?.imagePerUnitMicroUsd).toBe(80_000);
+    expect(find('GEMINI', 'lyria-3.5')?.imagePerUnitMicroUsd).toBe(80_000);
+    expect(find('OPENAI', 'tts-1')?.ttsPerCharacterMicroUsd).toBe(15);
+    expect(find('OPENAI', 'tts-1-hd')?.ttsPerCharacterMicroUsd).toBe(30);
+    expect(find('GEMINI', 'gemini-2.5-flash-preview-tts')).toBeDefined();
+  });
+
+  it('is version 15, so installs that ran v14 pick up the media prices', () => {
+    expect(MODEL_COST_SEED_VERSION).toBe(15);
+    expect(MODEL_COST_SEED_NAME).toBe('model-cost-list-prices-2026-v15');
   });
 
   describe('aggregator prices (v14)', () => {
@@ -888,10 +932,10 @@ describe('ModelCostSeedRepository', () => {
 
     it('does not announce a fallback-flagged model that already carries a price', async () => {
       transaction.modelCostVersion.findMany.mockResolvedValue([
-        { provider: 'GROK', modelKey: 'grok-imagine-image-2.0' },
+        { provider: 'GROK', modelKey: 'grok-imagine-image' },
       ]);
       const entry = MODEL_COST_SEED_ENTRIES.find(
-        (e) => e.provider === 'GROK' && e.modelKey === 'grok-imagine-image-2.0',
+        (e) => e.provider === 'GROK' && e.modelKey === 'grok-imagine-image',
       );
       const entries = entry === undefined ? [] : [entry];
 

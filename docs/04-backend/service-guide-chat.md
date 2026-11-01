@@ -1030,8 +1030,8 @@ Canonical home: the "Runtime V2 settled cost in the journal (F108, rule 37 item 
 ## Video generation (ADR-137)
 
 A picked veo/grok-video model, or an AUTO video request, routes to `VIDEO_GEMINI` /
-`VIDEO_GROK`, planned by the same gate as images and run by image-service. See
-[ADR-137](../13-adr/adr-137-video-generation.md).
+`VIDEO_GROK` (both built and live), planned by the same gate as images and run by image-service. See
+[ADR-137](../13-adr/adr-137-video-generation.md). A tool-calling chat model can also request an image, video or audio itself through `generate_image` / `generate_video` / `generate_audio`, see [ADR-213](../13-adr/adr-213-chat-models-make-media-through-tools.md).
 
 ## Prompt library
 

@@ -2,6 +2,7 @@ import { Injectable, Logger, Optional } from '@nestjs/common';
 import {
   calculateCostMicroUsd,
   calculateWeightedTokens,
+  classifyMediaOutputModel,
   estimateWeightedTokens,
   hasUsablePricing,
 } from '@claw/shared-utilities';
@@ -21,6 +22,7 @@ import {
   PRISMA_TO_SHARED_COST_CLASS,
 } from '../constants/model-cost.constants';
 import { normalizeModelId } from '../utilities/model-alias-matching.utility';
+import { dearestMediaSibling } from '../utilities/media-fallback-rate.utility';
 import { stripDatedSnapshot } from '../utilities/model-family.utility';
 import { ModelCostRepository } from '../repositories/model-cost.repository';
 import { buildSyncedPriceInput, isRejection } from '../utilities/synced-model-price.utility';
@@ -150,7 +152,17 @@ export class ModelCostService {
     if (ModelCostService.isAggregatorProvider(provider)) {
       return null;
     }
-    const dearest = await this.repository.findMostExpensiveForProvider(provider);
+    // A media-generation id (image, video, speech, music) is charged at the dearest priced
+    // row of its OWN family, never at a chat token rate; no sibling means UNPRICED.
+    const media = classifyMediaOutputModel(modelKey, provider);
+    const dearest =
+      media === undefined
+        ? await this.repository.findMostExpensiveForProvider(provider)
+        : dearestMediaSibling(
+            await this.repository.findActiveForProvider(provider),
+            provider,
+            media,
+          );
     if (dearest === null) {
       return null;
     }

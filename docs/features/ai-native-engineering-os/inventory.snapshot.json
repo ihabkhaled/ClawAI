@@ -2348,6 +2348,21 @@
       "claw-image-service": [
         {
           "method": "GET",
+          "route": "/audio/:id",
+          "source": "apps/claw-image-service/src/modules/audio-generation/controllers/audio-generation.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/audio/:id/cancel",
+          "source": "apps/claw-image-service/src/modules/audio-generation/controllers/audio-generation.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/audio/:id/retry",
+          "source": "apps/claw-image-service/src/modules/audio-generation/controllers/audio-generation.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/health",
           "source": "apps/claw-image-service/src/modules/health/controllers/health.controller.ts"
         },
@@ -2378,12 +2393,37 @@
         },
         {
           "method": "GET",
+          "route": "/internal/audio/:id",
+          "source": "apps/claw-image-service/src/modules/audio-generation/controllers/internal-audio.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/audio/:id/assistant-message",
+          "source": "apps/claw-image-service/src/modules/audio-generation/controllers/internal-audio.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/audio/:id/cancel",
+          "source": "apps/claw-image-service/src/modules/audio-generation/controllers/internal-audio.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/audio/generate",
+          "source": "apps/claw-image-service/src/modules/audio-generation/controllers/internal-audio.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/internal/images/:generationId",
           "source": "apps/claw-image-service/src/modules/image-generation/controllers/internal-image.controller.ts"
         },
         {
           "method": "POST",
           "route": "/internal/images/:generationId/assistant-message",
+          "source": "apps/claw-image-service/src/modules/image-generation/controllers/internal-image.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/images/:generationId/cancel",
           "source": "apps/claw-image-service/src/modules/image-generation/controllers/internal-image.controller.ts"
         },
         {
@@ -2409,6 +2449,11 @@
         {
           "method": "POST",
           "route": "/internal/videos/:generationId/assistant-message",
+          "source": "apps/claw-image-service/src/modules/video-generation/controllers/internal-video.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/videos/:generationId/cancel",
           "source": "apps/claw-image-service/src/modules/video-generation/controllers/internal-video.controller.ts"
         },
         {
@@ -9524,7 +9569,7 @@
       ],
       "skills": [
         {
-          "bytes": 38024,
+          "bytes": 38334,
           "file": "skills/00-index.md"
         },
         {
@@ -9590,6 +9635,10 @@
         {
           "bytes": 4925,
           "file": "skills/add-a-localized-money-surface.md"
+        },
+        {
+          "bytes": 4589,
+          "file": "skills/add-a-media-generation-provider.md"
         },
         {
           "bytes": 18916,
@@ -10093,6 +10142,12 @@
         "location": "/api/v1/artifacts",
         "port": 4006,
         "service": "file-service",
+        "source": "infra/nginx/locations.conf"
+      },
+      {
+        "location": "/api/v1/audio",
+        "port": 4012,
+        "service": "image-service",
         "source": "infra/nginx/locations.conf"
       },
       {
@@ -11505,6 +11560,16 @@
           {
             "confidence": "verified",
             "source": "apps/claw-image-service/prisma/schema.prisma",
+            "value": "AudioGeneration"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-image-service/prisma/schema.prisma",
+            "value": "AudioGenerationAsset"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-image-service/prisma/schema.prisma",
             "value": "ImageGeneration"
           },
           {
@@ -12403,7 +12468,7 @@
       },
       "@claw/shared-utilities": {
         "runner": "vitest",
-        "testFiles": 54
+        "testFiles": 56
       },
       "claw-agent-service": {
         "runner": "vitest",
@@ -12419,7 +12484,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 354
+        "testFiles": 359
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -12427,7 +12492,7 @@
       },
       "claw-connector-service": {
         "runner": "vitest",
-        "testFiles": 59
+        "testFiles": 61
       },
       "claw-file-generation-service": {
         "runner": "vitest",
@@ -12439,7 +12504,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 1029
+        "testFiles": 1033
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -12447,7 +12512,7 @@
       },
       "claw-image-service": {
         "runner": "vitest",
-        "testFiles": 48
+        "testFiles": 56
       },
       "claw-llamacpp-service": {
         "runner": "vitest",
@@ -12475,7 +12540,7 @@
       },
       "claw-routing-service": {
         "runner": "vitest",
-        "testFiles": 121
+        "testFiles": 122
       },
       "claw-server-logs-service": {
         "runner": "vitest",
@@ -13334,19 +13399,19 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 58,
-    "endpointCount": 964,
+    "endpointCount": 973,
     "envVarCount": 386,
     "eventCount": 190,
     "frontendRouteCount": 184,
     "localeCount": 13,
-    "nginxRouteCount": 72,
+    "nginxRouteCount": 73,
     "permissionCount": 94,
     "portCount": 19,
     "portCoverageGapCount": 2,
     "serviceCount": 21,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2839,
+    "totalTestFiles": 2861,
     "workspaceCount": 28
   }
 }

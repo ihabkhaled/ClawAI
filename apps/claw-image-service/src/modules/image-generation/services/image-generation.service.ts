@@ -233,6 +233,25 @@ export class ImageGenerationService {
     return { generationId, status: ImageGenerationStatus.CANCELLED };
   }
 
+  /**
+   * Internal (service token) cancel for chat-service Stop: same owner check and
+   * conditional write as the public route, answered as `{id, status, cancelled}`.
+   * `cancelled` is true only when THIS call moved an active row to CANCELLED.
+   */
+  async cancelGenerationForService(
+    generationId: string,
+    userId: string,
+  ): Promise<{ id: string; status: ImageGenerationStatus; cancelled: boolean }> {
+    const before = await this.getByIdForUser(generationId, userId);
+    const result = await this.cancelGenerationForUser(generationId, userId);
+    return {
+      id: generationId,
+      status: result.status,
+      cancelled:
+        isActiveImageStatus(before.status) && result.status === ImageGenerationStatus.CANCELLED,
+    };
+  }
+
   async listByUser(
     userId: string,
     query: ListImagesQueryDto,

@@ -13,6 +13,8 @@ import { Public } from '../../../app/decorators/public.decorator';
 import { ServiceTokenGuard } from '../../../app/guards/service-token.guard';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import {
+  type CancelVideoDto,
+  cancelVideoSchema,
   type GenerateVideoDto,
   generateVideoSchema,
   type LinkVideoAssistantMessageDto,
@@ -45,6 +47,16 @@ export class InternalVideoController {
   @Get(':generationId')
   async getGeneration(@Param('generationId') generationId: string): Promise<unknown> {
     return this.videoService.getById(generationId);
+  }
+
+  @Public()
+  @Post(':generationId/cancel')
+  @HttpCode(HttpStatus.OK)
+  async cancel(
+    @Param('generationId') generationId: string,
+    @Body(new ZodValidationPipe(cancelVideoSchema)) body: CancelVideoDto,
+  ): Promise<{ id: string; status: string; cancelled: boolean }> {
+    return this.videoService.cancelGenerationForUser(generationId, body.userId);
   }
 
   @Public()

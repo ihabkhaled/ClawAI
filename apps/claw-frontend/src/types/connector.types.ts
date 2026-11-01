@@ -43,6 +43,11 @@ export type ConnectorModel = {
   // by `getAvailableModels` like the two above; optional because a row from a
   // connector-service that predates the column carries no such field.
   supportsVideoInput?: boolean;
+  // Media typing from connector-service (absent on an older one): IMAGE, VIDEO or AUDIO for a
+  // generation model, `modalitiesOut` e.g. ['AUDIO_OUTPUT'], `audioKind` SPEECH or MUSIC.
+  mediaKind?: string;
+  audioKind?: string;
+  modalitiesOut?: string[];
   maxContextTokens: number | null;
   syncedAt: string;
 };

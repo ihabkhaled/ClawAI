@@ -190,3 +190,76 @@ model VideoGenerationAsset {
   @@index([generationId])
   @@map("video_generation_assets")
 }
+
+// ─── Audio generation: speech and music ──────────────────────────────────────
+
+enum AudioKind {
+  SPEECH
+  MUSIC
+}
+
+enum AudioGenerationStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+  TIMED_OUT
+  CANCELLED
+}
+
+model AudioGeneration {
+  id                String                @id @default(cuid())
+  userId            String                @map("user_id")
+  workspaceId       String?               @map("workspace_id")
+  threadId          String?               @map("thread_id")
+  messageId         String?               @map("message_id")
+  /// The assistant message whose card shows this audio (linked after the turn).
+  assistantMessageId String?              @map("assistant_message_id")
+  kind              AudioKind
+  /// The text to speak, or the music brief.
+  prompt            String
+  provider          String
+  model             String
+  voice             String?
+  /// The container asked for (mp3 or wav).
+  format            String                @default("mp3")
+  status            AudioGenerationStatus @default(QUEUED)
+  errorCode         String?               @map("error_code")
+  errorMessage      String?               @map("error_message")
+  startedAt         DateTime?             @map("started_at")
+  completedAt       DateTime?             @map("completed_at")
+  latencyMs         Int?                  @map("latency_ms")
+  /// The row that took this job over (a retry).
+  supersededById    String?               @map("superseded_by_id")
+  /// The OPEN PAYG hold of the attempt running on this row (auth reservation id).
+  paygReservationId String?               @map("payg_reservation_id")
+  createdAt         DateTime              @default(now()) @map("created_at")
+  updatedAt         DateTime              @updatedAt @map("updated_at")
+
+  assets AudioGenerationAsset[]
+
+  @@index([userId])
+  @@index([threadId])
+  @@index([messageId])
+  @@index([assistantMessageId])
+  @@index([status, updatedAt])
+  @@index([supersededById])
+  @@map("audio_generations")
+}
+
+model AudioGenerationAsset {
+  id              String   @id @default(cuid())
+  generationId    String   @map("generation_id")
+  storageKey      String   @map("storage_key")
+  url             String
+  downloadUrl     String   @map("download_url")
+  mimeType        String   @map("mime_type")
+  sizeBytes       Int?     @map("size_bytes")
+  durationSeconds Int?     @map("duration_seconds")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  generation AudioGeneration @relation(fields: [generationId], references: [id], onDelete: Cascade)
+
+  @@index([generationId])
+  @@map("audio_generation_assets")
+}

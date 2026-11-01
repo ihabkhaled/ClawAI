@@ -21,6 +21,8 @@ export const DE_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
       'Hören Sie sich jede Antwort an, statt sie zu lesen — die Wiedergabe beginnt, sobald der erste kurze Abschnitt fertig ist.',
     [FeatureCapability.IMAGE_GENERATION]:
       'Erzeugen und bearbeiten Sie Bilder direkt im Gespräch, über mehrere Bildanbieter mit automatischem Fallback zwischen ihnen.',
+    [FeatureCapability.CHAT_MODELS_MAKE_MEDIA]:
+      'Bitten Sie ein Chat-Modell mit Tool-Aufrufen um ein Bild, ein Video oder einen Audioclip: Es ruft ein Tool auf, ClawAI erzeugt das Medium und dasselbe Modell schreibt die Antwort.',
     [FeatureCapability.RELIABILITY]:
       'Automatischer Fallback auf ein anderes Modell, ein gemeinsamer Schutzschalter für Anbieter ohne Guthaben und Streams, die eine Neuverbindung überstehen.',
     [FeatureCapability.PAY_AS_YOU_GO_CREDIT]:
@@ -478,6 +480,71 @@ export const DE_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
       ],
       productNote:
         'Die Bildgenerierung läuft in einem eigenen Bilddienst mit Anbieter-Fallback von Cloud- zu lokalen Modellen und wird auf der Fläche IMAGE abgerechnet.',
+    },
+    [FeatureCapability.CHAT_MODELS_MAKE_MEDIA]: {
+      seo: {
+        title: 'Chat-Modelle, die Bilder, Video und Audio erzeugen',
+        description:
+          'In ClawAI kann ein Chat-Modell wie Grok, GPT oder Gemini über Tools Bilder, Video und Audio erzeugen, auf das Ergebnis warten und danach seine Antwort darüber schreiben.',
+        keywords: [
+          'KI Bild Video Audio im Chat erzeugen',
+          'Grok GPT Gemini Bilder erzeugen',
+          'KI-Chat mit Tools',
+        ],
+      },
+      eyebrow: 'Funktion',
+      title: 'Chat-Modelle, die Medien erzeugen',
+      summary:
+        'Bitten Sie im Gespräch um ein Bild, einen Clip oder einen Sprechertext. Das Chat-Modell ruft ein Erzeugungs-Tool auf, ClawAI erzeugt das Medium und gibt es an dasselbe Modell zurück, das die endgültige Antwort darum herum schreibt.',
+      sections: [
+        {
+          id: 'how-it-works',
+          heading: 'Das Modell fragt an, ClawAI erzeugt, das Modell antwortet',
+          paragraphs: [
+            'Verlangt Ihre Nachricht ein Medium, kann das Chat-Modell eines von drei Tools aufrufen: Bild erzeugen, Video erzeugen oder Audio erzeugen. ClawAI führt das Medien-Modell aus, wartet auf das Ende und gibt das Ergebnis an dasselbe Chat-Modell zurück. Die Antwort, die Sie lesen, stammt also von dem Modell, das gesehen hat, was entstanden ist. Das fertige Bild, Video oder Audio erscheint unter der Antwort. Modelle ohne Tool-Aufrufe behalten die ältere Abkürzung, bei der ein separates Medien-Modell die Anfrage beantwortet.',
+          ],
+        },
+        {
+          id: 'which-models',
+          heading: 'Funktioniert mit Grok, GPT und Gemini',
+          paragraphs: [
+            'Jedes Chat-Modell mit Tool-Unterstützung kann die Tools nutzen, darunter Grok-, GPT- und Gemini-Modelle. Ein Modell, das selbst keine Medien erzeugt, etwa Claude, kann sie trotzdem anfordern, weil spezielle Bild-, Video- und Audio-Modelle hinter den Tools die Medien erzeugen und nicht das Chat-Modell.',
+          ],
+        },
+        {
+          id: 'what-you-can-make',
+          heading: 'Bilder, Video und Audio',
+          paragraphs: [
+            'Bilder stammen von Gemini-, OpenAI- oder xAI-Bildmodellen, Videos von Veo oder Grok Imagine, Audio als Sprache (OpenAI- oder Gemini-Stimmen) oder kurze Musikstücke (Gemini Lyria). Welche Modelle verfügbar sind, hängt davon ab, was der Betreiber angebunden hat. Ein Chat-Modell darf ein Modell nennen, aber nur eines aus der bekannten Liste der Plattform; alles andere fällt auf den Standard zurück.',
+          ],
+        },
+        {
+          id: 'waiting-limits-and-cost',
+          heading: 'Warten, Grenzen und Kosten',
+          paragraphs: [
+            'Die Erzeugung wird wie jede andere Erzeugung abgerechnet: Sie verbraucht das Kontingent Ihres Tarifs oder Ihr Pay-as-you-go-Guthaben und wird abgelehnt, wenn beides nicht reicht. Ein Zug mit Medien wird nicht Wort für Wort gestreamt, weil das Modell auf das Ergebnis warten muss. Eine Antwort kann bis zu zwei Elemente erzeugen, eine Nachricht in der Vergleichsansicht bis zu drei, jeweils mit begrenzter Wartezeit.',
+          ],
+        },
+      ],
+      faq: [
+        {
+          question: 'Welche Chat-Modelle können Medien erzeugen?',
+          answer:
+            'Jedes Chat-Modell mit Tool-Unterstützung, zum Beispiel Grok-, GPT- und Gemini-Modelle. Die Medien selbst erzeugen Bild-, Video- und Audio-Modelle hinter den Tools, daher kann auch ein Modell wie Claude, das nicht selbst Medien erzeugt, sie anfordern.',
+        },
+        {
+          question: 'Wo funktioniert das?',
+          answer:
+            'Im normalen Chat und in den Vergleichsspuren. Die anderen Orchestrierungs-Labore (Konsens, Eskalation, Best-of-N und so weiter) bieten die Medien-Tools noch nicht an; sie behalten das ältere Verhalten, bei dem eine Bildanfrage an ein Bildmodell geht.',
+        },
+        {
+          question: 'Was kostet das?',
+          answer:
+            'Jede Erzeugung wird von Ihrem Tarifkontingent oder Ihrem Pay-as-you-go-Guthaben abgezogen, zusätzlich zu den Tokens des Chat-Modells. Die Preisseite zeigt, was jeder Tarif enthält.',
+        },
+      ],
+      productNote:
+        'Chat-Modelle rufen generate_image, generate_video und generate_audio auf; der Bilddienst erzeugt das Medium und dasselbe Chat-Modell schreibt die Antwort, abgerechnet wie jede andere Erzeugung.',
     },
     [FeatureCapability.RELIABILITY]: {
       seo: {

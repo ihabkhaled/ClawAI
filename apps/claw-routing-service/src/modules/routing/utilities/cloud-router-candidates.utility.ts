@@ -1,4 +1,4 @@
-import { modelMatchKey, resolveImageCapabilityProvider } from '@claw/shared-utilities';
+import { isMediaOutputModel, modelMatchKey } from '@claw/shared-utilities';
 import { ModalityFit } from '../../../common/enums/modality-fit.enum';
 import { DeploymentActivationState, RouterProvider } from '../../../generated/prisma';
 import { LOCAL_PROVIDER } from '../constants/routing.constants';
@@ -110,13 +110,13 @@ function isFit(deployment: RoutableDeploymentRecord, filter: CloudRouterCandidat
     filter.exposed === null
       ? deployment.activationState === DeploymentActivationState.ACTIVE
       : filter.exposed.has(key);
-  const healthy = filter.connectorHealth[provider] !== false;
+  const healthy = filter.connectorHealth[provider] !== false; // eslint-disable-line security/detect-object-injection
   const allowed = filter.allowed === null || filter.allowed.has(key);
-  // An image-OUTPUT model (chatgpt-image-latest, gpt-image-1, …) cannot answer a
-  // chat turn; image requests take their own path. 2026-09-29: the cloud router
-  // picked chatgpt-image-latest for "what happens at 0:02 in this video?".
-  const chatCapable =
-    resolveImageCapabilityProvider(provider, deployment.providerModelId) === undefined;
+  // An image, video or audio OUTPUT model (chatgpt-image-latest, veo-*, *-tts, ...)
+  // cannot answer a chat turn; media requests take their own path. 2026-09-29:
+  // the cloud router picked chatgpt-image-latest for "what happens at 0:02 in
+  // this video?".
+  const chatCapable = !isMediaOutputModel(deployment.providerModelId, provider);
   return exposedOk && healthy && allowed && chatCapable;
 }
 

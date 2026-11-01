@@ -259,7 +259,9 @@ import type { ProviderRetryPlan } from '../types/provider-retry.types';
 import { ModelOutputLimitClient } from '../clients/model-output-limit.client';
 import { ModelUnavailableClient } from '../clients/model-unavailable.client';
 import { ProviderCircuitBreakerManager } from './provider-circuit-breaker.manager';
+import { MediaToolLoopManager } from './media-tool-loop.manager';
 import { PluginToolLoopManager } from './plugin-tool-loop.manager';
+import { wantsMediaTools } from '../utilities/media-tool-eligibility.utility';
 import { hasPluginRefs } from '../utilities/plugin-refs.utility';
 import { paygForPluginRound } from '../utilities/plugin-payg-round.utility';
 import { SamplingParameterSupportManager } from './sampling-parameter-support.manager';
@@ -400,6 +402,7 @@ export class ChatExecutionManager implements OnModuleInit {
     // Optional for the same reason. Without it @mentioned plugins are ignored and the
     // message answers as plain chat (rule 59: every surface reaches this chokepoint).
     @Optional() private readonly pluginToolLoop?: PluginToolLoopManager,
+    @Optional() private readonly mediaToolLoop?: MediaToolLoopManager,
   ) {}
 
   private get providerBreaker(): ProviderCircuitBreakerManager {
@@ -932,7 +935,16 @@ export class ChatExecutionManager implements OnModuleInit {
     }
     // A message that @mentioned plugins needs whole responses to see tool calls, so it
     // takes the buffered path below, which runs the plugin tool loop in `callProvider`.
-    if (this.canStreamCandidate(candidate.provider) && !hasPluginRefs(executionContext)) {
+    if (
+      this.canStreamCandidate(candidate.provider) &&
+      !hasPluginRefs(executionContext) &&
+      !this.offersMediaTools(
+        executionContext,
+        candidate.provider,
+        candidate.model,
+        executionOptions,
+      )
+    ) {
       return this.streamCandidate(
         candidate,
         executionContext,
@@ -1079,6 +1091,70 @@ export class ChatExecutionManager implements OnModuleInit {
     return { ...response, tokenContext: TokenLedgerContext.CHAT };
   }
 
+  // True when this call is offered the media tools (generate_image / generate_video /
+  // generate_audio). Tool calls need a whole response, so such a turn is never streamed.
+  private offersMediaTools(
+    context: AssembledContext,
+    provider: string,
+    model: string,
+    executionOptions: ExecutionOptions | undefined,
+  ): boolean {
+    return (
+      this.mediaToolLoop !== undefined &&
+      wantsMediaTools(context, provider, model, executionOptions)
+    );
+  }
+
+  // Runs the media tool loop: each model round is one chokepoint call of its own, and a clear
+  // media request on a plan without media gets the same upgrade notice the router path gives.
+  private runMediaToolLoop(
+    target: {
+      provider: string;
+      model: string;
+      startTime: number;
+      usedFallback: boolean;
+      threadSettings: ThreadSettings | undefined;
+      routingMode: string | undefined;
+    },
+    call: {
+      laneInput: AssembledContext;
+      executionOptions: ExecutionOptions | undefined;
+      tokenContext: TokenLedgerContext | undefined;
+      paygCall: PaygCallOptions | undefined;
+    },
+  ): Promise<LlmResponse> {
+    const { provider, model, startTime, usedFallback, threadSettings, routingMode } = target;
+    const loop = this.mediaToolLoop;
+    if (loop === undefined) {
+      throw new BusinessException('Media tool loop unavailable', 'MEDIA_TOOLS_NOT_AVAILABLE');
+    }
+    return loop.run({
+      context: call.laneInput,
+      executionOptions: call.executionOptions,
+      planRefusal: () =>
+        imagePlanRefusalResponse(
+          IMAGE_GENERATION_PLAN_FEATURE,
+          provider,
+          model,
+          startTime,
+          usedFallback,
+        ),
+      callModel: (round) =>
+        this.callProvider(
+          provider,
+          model,
+          round.context,
+          startTime,
+          usedFallback,
+          threadSettings,
+          routingMode,
+          round.options,
+          call.tokenContext,
+          paygForPluginRound(call.paygCall, round.round),
+        ),
+    });
+  }
+
   // True only when the rich streaming dependencies are present AND the provider
   // produces text token streams. Image/file-generation providers never stream.
   private canStreamCandidate(provider: string): boolean {
@@ -1133,7 +1209,9 @@ export class ChatExecutionManager implements OnModuleInit {
     streamContext: StreamContext,
     paygCall?: PaygCallOptions,
   ): Promise<LlmResponse> {
-    return !this.canStreamCandidate(provider) || hasPluginRefs(context)
+    return !this.canStreamCandidate(provider) ||
+      hasPluginRefs(context) ||
+      this.offersMediaTools(context, provider, model, undefined)
       ? this.callProvider(
           provider,
           model,
@@ -2511,6 +2589,18 @@ export class ChatExecutionManager implements OnModuleInit {
             paygForPluginRound(paygCall, round.round),
           ),
       });
+    }
+    // Media tools (rule 59): a tool-calling chat model may decide to make an image, video or audio.
+    // The same chokepoint as plugins, so every surface listed in MEDIA_TOOL_SURFACES behaves alike.
+    // Each round re-enters here with `mediaToolsHandled`, as its own metered call.
+    if (
+      !hasPluginRefs(laneInput) &&
+      this.offersMediaTools(laneInput, provider, model, executionOptions)
+    ) {
+      return this.runMediaToolLoop(
+        { provider, model, startTime, usedFallback, threadSettings, routingMode },
+        { laneInput, executionOptions, tokenContext, paygCall },
+      );
     }
     // Delivery runs once, outside the retry: it can itself be a paid helper
     // call (a vision description), which a credit retry must not repeat.

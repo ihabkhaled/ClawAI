@@ -11,7 +11,7 @@ import {
   isVideoCancelledError,
   videoCancelled,
 } from '../video-cancel.utility';
-import { videoPriceKey } from '../video-price-key.utility';
+import { meteredVideoModelKey, videoPriceKey } from '../video-price-key.utility';
 import {
   storedVideoFailureMessage,
   toVideoProviderException,
@@ -267,5 +267,35 @@ describe('provider reason on a stored failure', () => {
         new Error('402 prepayment'),
       ),
     ).toBe(videoFailureMessage(VideoFailureCode.PROVIDER_CREDITS_DEPLETED));
+  });
+});
+
+describe('meteredVideoModelKey', () => {
+  it('meters each seeded video model on its own row', () => {
+    for (const id of [
+      'veo-3.1-lite-generate-preview',
+      'veo-3.1-fast-generate-preview',
+      'veo-3.1-generate-preview',
+      'grok-imagine-video',
+      'grok-imagine-video-1.5',
+    ]) {
+      expect(meteredVideoModelKey(id)).toBe(id);
+    }
+    expect(meteredVideoModelKey('models/veo-3.1-fast-generate-preview')).toBe(
+      'veo-3.1-fast-generate-preview',
+    );
+  });
+
+  it('meters an unseeded Veo id on the dearest Veo row', () => {
+    expect(meteredVideoModelKey('veo-3.1-generate')).toBe('veo-3.1-generate-preview');
+    expect(meteredVideoModelKey('models/veo-4.0-generate-001')).toBe('veo-3.1-generate-preview');
+  });
+
+  it('meters an unseeded Grok video id on the dearest Grok video row', () => {
+    expect(meteredVideoModelKey('grok-imagine-video-2')).toBe('grok-imagine-video-1.5');
+  });
+
+  it('leaves a truly unknown id unchanged so the wallet refuses it', () => {
+    expect(meteredVideoModelKey('sora-2')).toBe('sora-2');
   });
 });

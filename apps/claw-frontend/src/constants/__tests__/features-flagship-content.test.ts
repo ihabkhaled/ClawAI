@@ -44,8 +44,8 @@ function prose(locale: Locale, capability: FeatureFlagshipCapability): string[] 
 }
 
 describe('/features flagship pages', () => {
-  it('ships eleven flagship pages, all in the render order', () => {
-    expect(FLAGSHIP_CAPABILITIES).toHaveLength(11);
+  it('ships twelve flagship pages, all in the render order', () => {
+    expect(FLAGSHIP_CAPABILITIES).toHaveLength(12);
     for (const capability of FLAGSHIP_CAPABILITIES) {
       expect(FEATURES_CAPABILITY_ORDER).toContain(capability);
       expect(getFeatureCapabilityReviewDate(capability)).toBe(FEATURES_FLAGSHIP_REVIEW_DATE);
