@@ -741,12 +741,17 @@ folder (mode 0600) for one parse and the folder is removed in every outcome. Any
 extension answers 400 `extract-text reads PDF, DOCX, XLSX, PPTX and RTF files only`. Tests:
 `document-text.utility.spec.ts`, `files.service-extract-text.spec.ts`.
 
-**Zip-bomb screen for DOCX.** mammoth inflates with no caps, so a DOCX is first screened on its
-headers (`assertOoxmlArchiveWithinBounds`: entry count, each declared entry size, declared total,
-the same limits as the XLSX/PPTX readers) before mammoth sees a byte; a header that lies is caught
-by the inflater's size check. Returned text is capped at `DOCUMENT_TEXT_MAX_CHARS` (1,000,000): a
-longer document is cut on a line boundary and ends with `[Text cut: the document is longer than
-1000000 characters]`, so it is never mistaken for a whole one.
+**DOCX is not given to mammoth here.** mammoth inflates with no caps and reads the archive with a
+different zip library than any check could, so a check on declared sizes would be a parser
+differential. `extractTextFromDocxBounded` opens the archive once, with the same bounded reader as the
+workbook and the deck, and reads only `word/document.xml` (body text, one line per paragraph, tabs and
+line breaks kept; headers, footers, notes and comments are not read). Every reader refuses an archive
+over the entry-count cap and an archive that repeats an entry name (`OOXML_DUPLICATE_ENTRY`, counted
+from the central directory so a duplicate cannot shrink the count). Returned text is capped at
+`DOCUMENT_TEXT_MAX_CHARS` (1,000,000): a longer document is cut on a line boundary and ends with
+`[Text cut: the document is longer than 1000000 characters]`, so it is never mistaken for a whole one.
+The upload path still reads DOCX through mammoth (`file-processing.manager`); that is older code,
+unchanged here, and listed as an open gap in the QA record.
 
 **Why it is not `upload`.** The coding agent reads a PDF that is already in the
 user's workspace. Uploading it would put a copy of a repository file in their

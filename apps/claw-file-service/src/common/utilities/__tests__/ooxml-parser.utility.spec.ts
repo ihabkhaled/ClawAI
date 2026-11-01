@@ -3,7 +3,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import * as zlib from 'node:zlib';
 import {
-  assertOoxmlArchiveWithinBounds,
+  extractTextFromDocxBounded,
   extractTextFromPptx,
   extractTextFromXlsx,
 } from '../ooxml-parser.utility';
@@ -264,13 +264,64 @@ describe('ooxml-parser.utility', () => {
     });
   });
 
-  // The DOCX route screens the archive on its headers before mammoth, which has
-  // no caps of its own, inflates anything.
-  describe('assertOoxmlArchiveWithinBounds', () => {
-    it('accepts an ordinary archive', async () => {
+  // A DOCX is read here, not by mammoth (which inflates with no caps), through
+  // the same bounded reader as the workbook and the deck.
+  describe('extractTextFromDocxBounded', () => {
+    const body = (paragraphs: string): string =>
+      `<?xml version="1.0"?><w:document><w:body>${paragraphs}</w:body></w:document>`;
+    const docx = (paragraphs: string): string =>
+      fixture({ 'word/document.xml': body(paragraphs) }, '.docx');
+
+    it('reads one line per paragraph and joins the runs inside one', async () => {
+      const text = await extractTextFromDocxBounded(
+        docx(
+          '<w:p><w:r><w:t>Launch</w:t></w:r><w:r><w:t xml:space="preserve"> plan</w:t></w:r></w:p>' +
+            '<w:p><w:r><w:t>Owner: Dana</w:t></w:r></w:p>',
+        ),
+      );
+
+      expect(text).toBe('Launch plan\nOwner: Dana');
+    });
+
+    it('keeps tabs and line breaks and decodes entities', async () => {
+      const text = await extractTextFromDocxBounded(
+        docx('<w:p><w:r><w:t>A &amp; B</w:t><w:tab/><w:t>C</w:t><w:br/><w:t>D</w:t></w:r></w:p>'),
+      );
+
+      expect(text).toBe('A & B\tC\nD');
+    });
+
+    it('reads table cells as paragraphs', async () => {
+      const text = await extractTextFromDocxBounded(
+        docx(
+          '<w:tbl><w:tr><w:tc><w:p><w:r><w:t>Q3</w:t></w:r></w:p></w:tc>' +
+            '<w:tc><w:p><w:r><w:t>1250</w:t></w:r></w:p></w:tc></w:tr></w:tbl>',
+        ),
+      );
+
+      expect(text).toBe('Q3\n1250');
+    });
+
+    it('is not swallowed by an empty self-closing text element', async () => {
+      const text = await extractTextFromDocxBounded(
+        docx('<w:p><w:r><w:t/></w:r><w:r><w:t>kept</w:t></w:r></w:p>'),
+      );
+
+      expect(text).toBe('kept');
+    });
+
+    it('skips a paragraph that holds no text', async () => {
+      const text = await extractTextFromDocxBounded(
+        docx('<w:p><w:pPr/></w:p><w:p><w:r><w:t>only</w:t></w:r></w:p>'),
+      );
+
+      expect(text).toBe('only');
+    });
+
+    it('returns empty text for an archive with no body part', async () => {
       await expect(
-        assertOoxmlArchiveWithinBounds(fixture({ 'word/document.xml': '<w:document/>' }, '.docx')),
-      ).resolves.toBeUndefined();
+        extractTextFromDocxBounded(fixture({ 'word/styles.xml': '<w:styles/>' }, '.docx')),
+      ).resolves.toBe('');
     });
 
     it('refuses an implausible entry count before reading anything', async () => {
@@ -279,30 +330,38 @@ describe('ooxml-parser.utility', () => {
         files[`word/part${String(i + 1)}.xml`] = '<x/>';
       }
 
-      await expect(assertOoxmlArchiveWithinBounds(fixture(files, '.docx'))).rejects.toThrow(
+      await expect(extractTextFromDocxBounded(fixture(files, '.docx'))).rejects.toThrow(
         /limit 5000/,
       );
     });
 
-    it('refuses an entry whose declared size is past the per-entry cap', async () => {
+    it('refuses a body part that inflates past the per-entry cap', async () => {
       const bomb = 'A'.repeat(OOXML_MAX_UNCOMPRESSED_ENTRY_BYTES + 1024);
 
       await expect(
-        assertOoxmlArchiveWithinBounds(fixture({ 'word/document.xml': bomb }, '.docx')),
-      ).rejects.toThrow(/declares \d+ bytes/);
+        extractTextFromDocxBounded(fixture({ 'word/document.xml': bomb }, '.docx')),
+      ).rejects.toThrow(/OOXML_ENTRY_TOO_LARGE|bytes \(limit/);
     });
 
-    it('refuses an archive whose declared total is past the total cap', async () => {
-      // Each part is under the per-entry cap; together they are over the total.
-      const part = 'A'.repeat(OOXML_MAX_UNCOMPRESSED_ENTRY_BYTES - 1024);
-      const files: Record<string, string> = {};
-      for (let i = 0; i < 3; i++) {
-        files[`word/part${String(i + 1)}.xml`] = part;
-      }
-
-      await expect(assertOoxmlArchiveWithinBounds(fixture(files, '.docx'))).rejects.toThrow(
-        /exceeds/,
+    it('refuses an archive that repeats an entry name', async () => {
+      // Two parts under one name are read differently by different zip libraries,
+      // which is how a part hides from a check. Built as two names one letter
+      // apart, then made equal in every header.
+      const first = body('<w:p><w:r><w:t>one</w:t></w:r></w:p>');
+      const second = body('<w:p><w:r><w:t>two</w:t></w:r></w:p>');
+      const filePath = fixture(
+        { 'word/document.xml': first, 'word/document.xmm': second },
+        '.docx',
       );
+      const archive = fs.readFileSync(filePath);
+      const needle = Buffer.from('word/document.xmm');
+      const same = Buffer.from('word/document.xml');
+      for (let at = archive.indexOf(needle); at !== -1; at = archive.indexOf(needle, at + 1)) {
+        same.copy(archive, at);
+      }
+      fs.writeFileSync(filePath, archive);
+
+      await expect(extractTextFromDocxBounded(filePath)).rejects.toThrow(/repeats an entry name/);
     });
   });
 });

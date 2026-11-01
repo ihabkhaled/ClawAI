@@ -22,6 +22,7 @@ import { HttpStatus, Logger } from '@nestjs/common';
 import StreamZip from 'node-stream-zip';
 import { BusinessException } from '../errors/business.exception';
 import {
+  DOCX_DOCUMENT_ENTRY,
   OOXML_MAX_ENTRY_COUNT,
   OOXML_MAX_TOTAL_TEXT_BYTES,
   OOXML_MAX_UNCOMPRESSED_ENTRY_BYTES,
@@ -45,8 +46,7 @@ export async function extractTextFromXlsx(filePath: string): Promise<string> {
   logger.debug(`extractTextFromXlsx: reading ${filePath}`);
   const zip = new StreamZip.async({ file: filePath, storeEntries: true });
   try {
-    const entryNames = Object.keys(await zip.entries());
-    assertEntryCountWithinLimit(entryNames);
+    const entryNames = await readEntryNames(zip);
     const budget = new EntryBudget();
     const sharedStrings = await readSharedStrings(zip, entryNames, budget);
     const sheetNames = await readSheetNames(zip, entryNames, budget);
@@ -77,6 +77,29 @@ export async function extractTextFromXlsx(filePath: string): Promise<string> {
 }
 
 /**
+ * Flattens a document to one line per paragraph, tabs and line breaks kept.
+ *
+ * Read here rather than by mammoth, which inflates with no caps: this path opens
+ * the archive once, with the same bounded reader as the workbook and the deck, so
+ * the check and the read cannot disagree about what the archive holds. Body text
+ * only; headers, footers, notes and comments are not read.
+ */
+export async function extractTextFromDocxBounded(filePath: string): Promise<string> {
+  logger.debug(`extractTextFromDocxBounded: reading ${filePath}`);
+  const zip = new StreamZip.async({ file: filePath, storeEntries: true });
+  try {
+    const entryNames = await readEntryNames(zip);
+    if (!entryNames.includes(DOCX_DOCUMENT_ENTRY)) {
+      return '';
+    }
+    const xml = await readEntryText(zip, DOCX_DOCUMENT_ENTRY, new EntryBudget());
+    return parseWordParagraphs(xml).join('\n');
+  } finally {
+    await closeQuietly(zip);
+  }
+}
+
+/**
  * Flattens a deck to one block per slide, in slide order, with speaker notes.
  *
  * Notes matter more than they look: a deck's argument frequently lives in the
@@ -86,8 +109,7 @@ export async function extractTextFromPptx(filePath: string): Promise<string> {
   logger.debug(`extractTextFromPptx: reading ${filePath}`);
   const zip = new StreamZip.async({ file: filePath, storeEntries: true });
   try {
-    const entryNames = Object.keys(await zip.entries());
-    assertEntryCountWithinLimit(entryNames);
+    const entryNames = await readEntryNames(zip);
     const budget = new EntryBudget();
     const slideEntries = entryNames
       .filter((name) => PPTX_SLIDE_ENTRY_PATTERN.test(name))
@@ -205,6 +227,33 @@ function readCellValue(attributes: string, body: string, sharedStrings: string[]
 }
 
 /**
+ * WordprocessingML paragraphs, one string per `<w:p>`.
+ *
+ * `<w:t>` holds only text (no nested tags), so a self-closing `<w:t/>` is not
+ * matched and cannot swallow the runs after it.
+ */
+function parseWordParagraphs(xml: string): string[] {
+  const paragraphs: string[] = [];
+  for (const paragraphMatch of xml.matchAll(/<w:p\b[^>]*>([\s\S]*?)<\/w:p>/g)) {
+    const text = [
+      ...(paragraphMatch[1] ?? '').matchAll(
+        /<w:t(?=[\s>])[^>]*>([^<]*)<\/w:t>|<w:tab\s*\/>|<w:br\b[^>]*\/>/g,
+      ),
+    ]
+      .map((part) => {
+        if (part[1] !== undefined) return decodeXmlEntities(part[1]);
+        return part[0].startsWith('<w:tab') ? '\t' : '\n';
+      })
+      .join('')
+      .trim();
+    if (text.length > 0) {
+      paragraphs.push(text);
+    }
+  }
+  return paragraphs;
+}
+
+/**
  * DrawingML paragraphs, one string per `<a:p>`.
  *
  * Runs inside a paragraph are concatenated with no separator because a run
@@ -234,35 +283,6 @@ function byTrailingNumber(a: string, b: string): number {
 function trailingNumber(entryName: string): number {
   const digits = /(\d+)\.xml$/.exec(entryName)?.[1];
   return digits === undefined ? 0 : Number.parseInt(digits, 10);
-}
-
-/**
- * Refuses an OOXML archive that is a zip bomb, on its headers alone.
- *
- * For a reader that inflates by itself (DOCX goes to mammoth, which has no caps):
- * the part count, each part's declared size and the declared total are all checked
- * before any byte is inflated. A header that lies is caught by the inflater, which
- * rejects a size mismatch.
- */
-export async function assertOoxmlArchiveWithinBounds(filePath: string): Promise<void> {
-  const zip = new StreamZip.async({ file: filePath, storeEntries: true });
-  try {
-    const entries = Object.values(await zip.entries());
-    assertEntryCountWithinLimit(entries.map((entry) => entry.name));
-    const budget = new EntryBudget();
-    for (const entry of entries) {
-      if (entry.size > OOXML_MAX_UNCOMPRESSED_ENTRY_BYTES) {
-        throw new BusinessException(
-          `Archive entry ${entry.name} declares ${String(entry.size)} bytes (limit ${String(OOXML_MAX_UNCOMPRESSED_ENTRY_BYTES)})`,
-          'OOXML_ENTRY_TOO_LARGE',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-      budget.spend(entry.size, entry.name);
-    }
-  } finally {
-    await closeQuietly(zip);
-  }
 }
 
 /**
@@ -322,15 +342,36 @@ async function readEntryText(
 }
 
 /**
+ * The archive's part names, after the checks every reader needs.
+ *
+ * The count is the central directory's own, so a duplicated name cannot shrink it,
+ * and an archive that repeats a name is refused: two parts under one name are read
+ * differently by different zip libraries, which is how a part hides from a check.
+ */
+async function readEntryNames(zip: StreamZip.StreamZipAsync): Promise<string[]> {
+  const entryNames = Object.keys(await zip.entries());
+  assertEntryCountWithinLimit(entryNames, await zip.entriesCount);
+  if ((await zip.entriesCount) !== entryNames.length) {
+    throw new BusinessException(
+      'Archive repeats an entry name',
+      'OOXML_DUPLICATE_ENTRY',
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+  return entryNames;
+}
+
+/**
  * Rejects an archive with an implausible number of parts before any read.
  *
  * A real workbook or deck has tens of parts. Tens of thousands means a crafted
  * file, and the cost of discovering that one entry at a time is the attack.
  */
-function assertEntryCountWithinLimit(entryNames: string[]): void {
-  if (entryNames.length > OOXML_MAX_ENTRY_COUNT) {
+function assertEntryCountWithinLimit(entryNames: string[], declaredCount: number): void {
+  const count = Math.max(entryNames.length, declaredCount);
+  if (count > OOXML_MAX_ENTRY_COUNT) {
     throw new BusinessException(
-      `Archive has ${String(entryNames.length)} entries (limit ${String(OOXML_MAX_ENTRY_COUNT)})`,
+      `Archive has ${String(count)} entries (limit ${String(OOXML_MAX_ENTRY_COUNT)})`,
       'OOXML_TOO_MANY_ENTRIES',
       HttpStatus.BAD_REQUEST,
     );

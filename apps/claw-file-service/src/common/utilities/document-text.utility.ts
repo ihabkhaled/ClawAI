@@ -13,9 +13,8 @@ import {
   DOCUMENT_TEXT_EXTENSIONS,
   DOCUMENT_TEXT_MAX_CHARS,
 } from '../../modules/files/constants/extract-text.constants';
-import { extractTextFromDocx } from './docx-parser.utility';
 import {
-  assertOoxmlArchiveWithinBounds,
+  extractTextFromDocxBounded,
   extractTextFromPptx,
   extractTextFromXlsx,
 } from './ooxml-parser.utility';
@@ -44,11 +43,7 @@ async function withTemporaryFile<T>(
 async function readDocumentText(extension: string, buffer: Buffer): Promise<string> {
   switch (extension) {
     case '.docx':
-      return withTemporaryFile(extension, buffer, async (filePath) => {
-        // mammoth inflates without caps, so the archive is screened first.
-        await assertOoxmlArchiveWithinBounds(filePath);
-        return extractTextFromDocx(buffer);
-      });
+      return withTemporaryFile(extension, buffer, extractTextFromDocxBounded);
     case '.rtf':
       return extractTextFromRtf(buffer);
     case '.xlsx':

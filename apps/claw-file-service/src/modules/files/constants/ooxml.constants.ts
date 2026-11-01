@@ -5,6 +5,8 @@ export const XLSX_SHARED_STRINGS_ENTRY = 'xl/sharedStrings.xml';
 export const XLSX_WORKBOOK_ENTRY = 'xl/workbook.xml';
 export const XLSX_WORKSHEET_ENTRY_PATTERN = /^xl\/worksheets\/sheet\d+\.xml$/;
 
+export const DOCX_DOCUMENT_ENTRY = 'word/document.xml';
+
 export const PPTX_SLIDE_ENTRY_PATTERN = /^ppt\/slides\/slide\d+\.xml$/;
 export const PPTX_NOTES_ENTRY_PATTERN = /^ppt\/notesSlides\/notesSlide\d+\.xml$/;
 

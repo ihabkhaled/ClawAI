@@ -3,24 +3,21 @@ import { vi } from 'vitest';
 
 import { DOCUMENT_TEXT_MAX_CHARS } from '../../../modules/files/constants/extract-text.constants';
 import { documentTextExtension, extractTextFromDocument } from '../document-text.utility';
-import { extractTextFromDocx } from '../docx-parser.utility';
 import {
-  assertOoxmlArchiveWithinBounds,
+  extractTextFromDocxBounded,
   extractTextFromPptx,
   extractTextFromXlsx,
 } from '../ooxml-parser.utility';
 
 vi.mock('../ooxml-parser.utility', () => ({
-  assertOoxmlArchiveWithinBounds: vi.fn(),
+  extractTextFromDocxBounded: vi.fn(),
   extractTextFromPptx: vi.fn(),
   extractTextFromXlsx: vi.fn(),
 }));
-vi.mock('../docx-parser.utility', () => ({ extractTextFromDocx: vi.fn() }));
 
 const xlsx = vi.mocked(extractTextFromXlsx);
 const pptx = vi.mocked(extractTextFromPptx);
-const docx = vi.mocked(extractTextFromDocx);
-const bounds = vi.mocked(assertOoxmlArchiveWithinBounds);
+const docx = vi.mocked(extractTextFromDocxBounded);
 
 describe('documentTextExtension', () => {
   it.each([
@@ -45,30 +42,33 @@ describe('extractTextFromDocument', () => {
     xlsx.mockReset();
     pptx.mockReset();
     docx.mockReset();
-    bounds.mockReset();
   });
 
-  it('screens a DOCX archive before mammoth reads it, and removes the file', async () => {
-    let screened = '';
-    bounds.mockImplementation(async (filePath: string) => {
-      screened = filePath;
+  it('reads a DOCX with the bounded reader from a temp file, then removes it', async () => {
+    let seenPath = '';
+    docx.mockImplementation(async (filePath: string) => {
+      seenPath = filePath;
+      return 'word text';
     });
-    docx.mockResolvedValue('word text');
 
     const text = await extractTextFromDocument('.docx', Buffer.from('docx bytes'));
 
     expect(text).toBe('word text');
-    expect(screened.endsWith('.docx')).toBe(true);
-    expect(existsSync(screened)).toBe(false);
+    expect(seenPath.endsWith('.docx')).toBe(true);
+    expect(existsSync(seenPath)).toBe(false);
   });
 
-  it('never gives a DOCX to mammoth when the screen refuses it', async () => {
-    bounds.mockRejectedValue(new Error('too many entries'));
+  it('removes the file when the DOCX reader refuses the archive', async () => {
+    let seenPath = '';
+    docx.mockImplementation(async (filePath: string) => {
+      seenPath = filePath;
+      throw new Error('too many entries');
+    });
 
     await expect(extractTextFromDocument('.docx', Buffer.from('x'))).rejects.toThrow(
       'too many entries',
     );
-    expect(docx).not.toHaveBeenCalled();
+    expect(existsSync(seenPath)).toBe(false);
   });
 
   it('cuts text past the cap on a line boundary and says so', async () => {
