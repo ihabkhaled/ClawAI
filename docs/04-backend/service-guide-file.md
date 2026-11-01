@@ -750,6 +750,11 @@ over the entry-count cap and an archive that repeats an entry name (`OOXML_DUPLI
 from the central directory so a duplicate cannot shrink the count). Returned text is capped at
 `DOCUMENT_TEXT_MAX_CHARS` (1,000,000): a longer document is cut on a line boundary and ends with
 `[Text cut: the document is longer than 1000000 characters]`, so it is never mistaken for a whole one.
+Text is pulled out of every OOXML part by `elementsOf` (`xml-elements.utility.ts`), one forward scan,
+not by lazy-body regexes: a regex such as `<p>([\s\S]*?)</p>` rescans to the end of the part for each
+opener that never closes, so a crafted part far under the size caps is quadratic (measured: 80,000
+unclosed openers took 3.3 s, 600,000 would be minutes). Do not add a lazy `[\s\S]*?` over a part; the
+small attribute and text regexes use `[^<>]*` and `[^<]*` so a failed attempt never reads past the next tag.
 The upload path still reads DOCX through mammoth (`file-processing.manager`); that is older code,
 unchanged here, and listed as an open gap in the QA record.
 

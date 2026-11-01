@@ -21,6 +21,7 @@
 import { HttpStatus, Logger } from '@nestjs/common';
 import StreamZip from 'node-stream-zip';
 import { BusinessException } from '../errors/business.exception';
+import { elementsOf } from './xml-elements.utility';
 import {
   DOCX_DOCUMENT_ENTRY,
   OOXML_MAX_ENTRY_COUNT,
@@ -163,9 +164,9 @@ async function readSharedStrings(
   const xml = await readEntryText(zip, XLSX_SHARED_STRINGS_ENTRY, budget);
   // A <si> may hold one <t>, or several when Excel splits a run-formatted
   // string; concatenating the runs restores the cell's original text.
-  return [...xml.matchAll(/<si\b[^>]*>([\s\S]*?)<\/si>/g)].map((match) =>
-    [...(match[1] ?? '').matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)]
-      .map((run) => decodeXmlEntities(run[1] ?? ''))
+  return elementsOf(xml, 'si').map((item) =>
+    elementsOf(item.inner, 't')
+      .map((run) => decodeXmlEntities(run.inner))
       .join(''),
   );
 }
@@ -179,19 +180,17 @@ async function readSheetNames(
     return [];
   }
   const xml = await readEntryText(zip, XLSX_WORKBOOK_ENTRY, budget);
-  return [...xml.matchAll(/<sheet\b[^>]*\bname="([^"]*)"/g)].map((match) =>
+  return [...xml.matchAll(/<sheet\b[^<>]*\bname="([^"]*)"/g)].map((match) =>
     decodeXmlEntities(match[1] ?? ''),
   );
 }
 
 function parseSheetRows(xml: string, sharedStrings: string[]): string[] {
   const rows: string[] = [];
-  for (const rowMatch of xml.matchAll(/<row\b[^>]*>([\s\S]*?)<\/row>/g)) {
-    const rowXml = rowMatch[1] ?? '';
-    const cells: string[] = [];
-    for (const cellMatch of rowXml.matchAll(/<c\b([^>]*)>([\s\S]*?)<\/c>/g)) {
-      cells.push(readCellValue(cellMatch[1] ?? '', cellMatch[2] ?? '', sharedStrings));
-    }
+  for (const row of elementsOf(xml, 'row')) {
+    const cells = elementsOf(row.inner, 'c').map((cell) =>
+      readCellValue(cell.attributes, cell.inner, sharedStrings),
+    );
     // A row of nothing but empty cells is layout, not content.
     if (cells.some((cell) => cell.length > 0)) {
       rows.push(cells.join('\t'));
@@ -204,12 +203,12 @@ function readCellValue(attributes: string, body: string, sharedStrings: string[]
   const type = /\bt="([^"]*)"/.exec(attributes)?.[1];
 
   if (type === 'inlineStr') {
-    return [...body.matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)]
-      .map((run) => decodeXmlEntities(run[1] ?? ''))
+    return elementsOf(body, 't')
+      .map((run) => decodeXmlEntities(run.inner))
       .join('');
   }
 
-  const rawValue = /<v\b[^>]*>([\s\S]*?)<\/v>/.exec(body)?.[1];
+  const rawValue = elementsOf(body, 'v').at(0)?.inner;
   if (rawValue === undefined) {
     return '';
   }
@@ -234,10 +233,12 @@ function readCellValue(attributes: string, body: string, sharedStrings: string[]
  */
 function parseWordParagraphs(xml: string): string[] {
   const paragraphs: string[] = [];
-  for (const paragraphMatch of xml.matchAll(/<w:p\b[^>]*>([\s\S]*?)<\/w:p>/g)) {
+  for (const paragraph of elementsOf(xml, 'w:p')) {
+    // `[^<>]*` and `[^<]*` stop at the next tag, so a failed attempt never
+    // reads past it: no start re-scans what an earlier one already covered.
     const text = [
-      ...(paragraphMatch[1] ?? '').matchAll(
-        /<w:t(?=[\s>])[^>]*>([^<]*)<\/w:t>|<w:tab\s*\/>|<w:br\b[^>]*\/>/g,
+      ...paragraph.inner.matchAll(
+        /<w:t(?=[\s>])[^<>]*>([^<]*)<\/w:t>|<w:tab\s*\/>|<w:br\b[^<>]*\/>/g,
       ),
     ]
       .map((part) => {
@@ -262,9 +263,9 @@ function parseWordParagraphs(xml: string): string[] {
  */
 function parseDrawingParagraphs(xml: string): string[] {
   const paragraphs: string[] = [];
-  for (const paragraphMatch of xml.matchAll(/<a:p\b[^>]*>([\s\S]*?)<\/a:p>/g)) {
-    const text = [...(paragraphMatch[1] ?? '').matchAll(/<a:t\b[^>]*>([\s\S]*?)<\/a:t>/g)]
-      .map((run) => decodeXmlEntities(run[1] ?? ''))
+  for (const paragraph of elementsOf(xml, 'a:p')) {
+    const text = elementsOf(paragraph.inner, 'a:t')
+      .map((run) => decodeXmlEntities(run.inner))
       .join('')
       .trim();
     if (text.length > 0) {

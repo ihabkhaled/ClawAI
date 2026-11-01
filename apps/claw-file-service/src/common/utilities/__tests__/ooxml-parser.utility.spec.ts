@@ -264,6 +264,87 @@ describe('ooxml-parser.utility', () => {
     });
   });
 
+  // Parts are user input, so the text pulled out of them must cost time in
+  // proportion to their size. A lazy-body regex rescans to the end of the part for
+  // every opener that never closes: 600,000 such openers (3 MB, far under the
+  // size caps) ran for minutes before the scan was made forward-only.
+  describe('crafted parts cost time in proportion to their size', () => {
+    const budgetMs = 3000;
+    const timed = async (read: () => Promise<string>): Promise<{ text: string; ms: number }> => {
+      const started = Date.now();
+      const text = await read();
+      return { text, ms: Date.now() - started };
+    };
+
+    it('a document of unclosed paragraphs', async () => {
+      const part = `<w:document><w:body>${'<w:p>'.repeat(600_000)}</w:body></w:document>`;
+
+      const { text, ms } = await timed(() =>
+        extractTextFromDocxBounded(fixture({ 'word/document.xml': part }, '.docx')),
+      );
+
+      expect(text).toBe('');
+      expect(ms).toBeLessThan(budgetMs);
+    });
+
+    it('a paragraph full of text tags that never end', async () => {
+      const part = `<w:p>${'<w:t '.repeat(600_000)}</w:p>`;
+
+      const { text, ms } = await timed(() =>
+        extractTextFromDocxBounded(fixture({ 'word/document.xml': part }, '.docx')),
+      );
+
+      expect(text).toBe('');
+      expect(ms).toBeLessThan(budgetMs);
+    });
+
+    it('a worksheet of unclosed rows', async () => {
+      const part = `<worksheet><sheetData>${'<row>'.repeat(600_000)}</sheetData></worksheet>`;
+
+      const { text, ms } = await timed(() =>
+        extractTextFromXlsx(fixture({ 'xl/worksheets/sheet1.xml': part }, '.xlsx')),
+      );
+
+      expect(text).toBe('');
+      expect(ms).toBeLessThan(budgetMs);
+    });
+
+    it('a row of unclosed cells', async () => {
+      const part = `<worksheet><sheetData><row>${'<c>'.repeat(600_000)}</row></sheetData></worksheet>`;
+
+      const { ms } = await timed(() =>
+        extractTextFromXlsx(fixture({ 'xl/worksheets/sheet1.xml': part }, '.xlsx')),
+      );
+
+      expect(ms).toBeLessThan(budgetMs);
+    });
+
+    it('a slide of unclosed paragraphs', async () => {
+      const part = `<p:sld>${'<a:p>'.repeat(600_000)}</p:sld>`;
+
+      const { text, ms } = await timed(() =>
+        extractTextFromPptx(fixture({ 'ppt/slides/slide1.xml': part }, '.pptx')),
+      );
+
+      expect(text).toBe('');
+      expect(ms).toBeLessThan(budgetMs);
+    });
+
+    it('a workbook of unclosed shared strings', async () => {
+      const part = `<sst>${'<si>'.repeat(600_000)}</sst>`;
+      const sheet =
+        '<worksheet><sheetData><row><c t="s"><v>0</v></c></row></sheetData></worksheet>';
+
+      const { ms } = await timed(() =>
+        extractTextFromXlsx(
+          fixture({ 'xl/sharedStrings.xml': part, 'xl/worksheets/sheet1.xml': sheet }, '.xlsx'),
+        ),
+      );
+
+      expect(ms).toBeLessThan(budgetMs);
+    });
+  });
+
   // A DOCX is read here, not by mammoth (which inflates with no caps), through
   // the same bounded reader as the workbook and the deck.
   describe('extractTextFromDocxBounded', () => {

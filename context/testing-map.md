@@ -1,6 +1,6 @@
 # Testing Map
 
-Ground truth: `.ai/manifests/tests.json` (**<!-- count:specFiles -->2865<!-- /count --> test files** total),
+Ground truth: `.ai/manifests/tests.json` (**<!-- count:specFiles -->2866<!-- /count --> test files** total),
 `services.json` (`testRunner`/`testFiles` per service).
 
 ## Runners
