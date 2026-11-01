@@ -5,7 +5,11 @@ import { MediaGenerationState } from '../../enums/media-generation-state.enum';
 import { MediaKind } from '../../enums/media-kind.enum';
 import type { AssembledContext } from '../../types/context.types';
 import { buildMediaMetaPart, imageGenerationIds } from '../media-metadata.utility';
-import { wantsMediaTools } from '../media-tool-eligibility.utility';
+import {
+  detectAudioKind,
+  detectMediaKind,
+  wantsMediaTools,
+} from '../media-tool-eligibility.utility';
 import {
   buildMediaToolCatalog,
   mediaKindOfTool,
@@ -161,6 +165,72 @@ describe('media tool schema', () => {
       .properties;
     expect(props['model']?.description).toContain('grok-imagine-image');
     expect(props['model']?.description).toContain('names a model');
+  });
+});
+
+describe('audio create-intent', () => {
+  const grok = 'grok-4.20-0309-non-reasoning';
+  it.each([
+    'say hello in a calm voice as audio',
+    'Can you read this aloud for me: good morning team',
+    'narrate the first paragraph as a voiceover',
+    'make a short podcast intro, spoken',
+    'sing me a short song about apples',
+    'I want the speech as audio',
+  ])('offers the tools for: %s', (text) => {
+    for (const [provider, model] of [
+      ['OPENAI', 'gpt-4o-mini'],
+      ['OPENAI', 'gpt-5.4-mini'],
+      ['GROK', 'grok-4.3'],
+      ['ANTHROPIC', 'claude-haiku-4-5'],
+    ] as const) {
+      expect(wantsMediaTools(ctx(text), provider, model)).toBe(true);
+    }
+    expect(wantsMediaTools(ctx(text), 'GROK', grok)).toBe(true);
+  });
+
+  it.each([
+    'say the exact words: Image generated: done',
+    'explain how text to speech works',
+    'what is a voice assistant?',
+    'describe how a podcast is produced',
+    'repeat after me: hello there',
+  ])('offers no tool for: %s', (text) => {
+    expect(wantsMediaTools(ctx(text), 'GROK', grok)).toBe(false);
+  });
+
+  it('picks audio as the kind for a spoken-word request', () => {
+    expect(detectMediaKind('say hello in a calm voice as audio')).toBe(MediaKind.AUDIO);
+    expect(detectAudioKind('say hello in a calm voice as audio')).toBe('SPEECH');
+    expect(detectAudioKind('sing a song about apples')).toBe('MUSIC');
+    expect(detectMediaKind('say the exact words: Image generated: done')).toBeUndefined();
+  });
+
+  it('the audio tool description tells the model to use it for spoken-word requests', () => {
+    const audio = buildMediaToolCatalog([MediaKind.AUDIO])[0];
+    expect(audio?.description).toContain('say, speak, read something aloud');
+    expect(audio?.description).toContain('never for explanations');
+  });
+
+  it('honors a named audio model via the shared classifier', () => {
+    expect(
+      resolveMediaTargets(
+        { kind: MediaKind.AUDIO, prompt: 'hello', model: 'gpt-4o-mini-tts' },
+        'use gpt-4o-mini-tts to say hello as audio',
+      ),
+    ).toEqual([{ provider: 'AUDIO_OPENAI', model: 'gpt-4o-mini-tts' }]);
+    expect(
+      resolveMediaTargets({ kind: MediaKind.AUDIO, prompt: 'hello' }, 'say hello as audio').map(
+        (t) => t.provider,
+      ),
+    ).toEqual(['AUDIO_OPENAI', 'AUDIO_GEMINI']);
+  });
+
+  it('the fallback constants use the ids the production catalog has', () => {
+    const image = resolveMediaTargets({ kind: MediaKind.IMAGE, prompt: 'p' });
+    expect(image.find((t) => t.provider === 'IMAGE_OPENAI')?.model).toBe('chatgpt-image-latest');
+    const audio = resolveMediaTargets({ kind: MediaKind.AUDIO, prompt: 'p' });
+    expect(audio.find((t) => t.provider === 'AUDIO_OPENAI')?.model).toBe('gpt-4o-mini-tts');
   });
 });
 

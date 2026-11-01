@@ -1,8 +1,13 @@
-import { inferImageCapabilityProvider, inferVideoCapabilityProvider } from '@claw/shared-utilities';
+import {
+  classifyAudioOutputModel,
+  inferImageCapabilityProvider,
+  inferVideoCapabilityProvider,
+} from '@claw/shared-utilities';
 
 import {
   MEDIA_AUDIO_GEMINI_HINT,
   MEDIA_AUDIO_PROVIDER_GEMINI,
+  MEDIA_AUDIO_PROVIDER_OPENAI,
   MEDIA_DEFAULT_TARGET,
   MEDIA_FALLBACK_MAX_ATTEMPTS,
   MEDIA_IMAGE_SIZE_PIXELS,
@@ -98,7 +103,9 @@ function providerOfNamedModel(kind: MediaKind, named: string): string | undefine
   if (kind === MediaKind.VIDEO) {
     return inferVideoCapabilityProvider(named) ?? kindEntry(MEDIA_KNOWN_MODELS, kind).get(named);
   }
-  return MEDIA_AUDIO_GEMINI_HINT.test(named) ? MEDIA_AUDIO_PROVIDER_GEMINI : undefined;
+  if (MEDIA_AUDIO_GEMINI_HINT.test(named)) return MEDIA_AUDIO_PROVIDER_GEMINI;
+  // The shared audio-output classifier knows speech and music ids (gpt-4o-mini-tts, tts-1, ...).
+  return classifyAudioOutputModel(named) === undefined ? undefined : MEDIA_AUDIO_PROVIDER_OPENAI;
 }
 
 /** The target the user named, if any model they named is one the platform can serve. */

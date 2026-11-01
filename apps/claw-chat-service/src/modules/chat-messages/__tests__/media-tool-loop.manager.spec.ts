@@ -887,4 +887,164 @@ describe('MediaToolLoopManager', () => {
     // 3 attempts per lane: attempts are not generations and do not drain the shared budget.
     expect(gateway.startMedia).toHaveBeenCalledTimes(6);
   });
+
+  describe('targets from the user catalog', () => {
+    const catalogOf = (
+      candidates: unknown,
+      named: unknown = { status: 'unknown' },
+      allowed = true,
+    ) =>
+      ({
+        candidates: vi.fn().mockResolvedValue(candidates),
+        findNamed: vi.fn().mockResolvedValue(named),
+        isAllowed: vi.fn().mockResolvedValue(allowed),
+      }) as never;
+    const manager = (catalog: unknown) =>
+      new MediaToolLoopManager(
+        { hasPlanFeatureFor: vi.fn().mockResolvedValue(true) } as unknown as AccessControlService,
+        undefined,
+        catalog as never,
+      );
+    const providers = (): string[] =>
+      gateway.startMedia.mock.calls.map(
+        (c) => (c[0] as { provider: string; model: string }).provider,
+      );
+
+    it('tries the catalog models, not the constants: chatgpt-image-latest, then Grok', async () => {
+      gateway.awaitMedia
+        .mockResolvedValueOnce({
+          state: 'failed',
+          snapshot: { id: 'a', status: 'FAILED', errorCode: 'IMAGE_MODEL_UNAVAILABLE' },
+        })
+        .mockResolvedValueOnce({ state: 'completed', snapshot: { id: 'b', status: 'COMPLETED' } });
+      const loop = manager(
+        catalogOf([
+          { provider: 'IMAGE_OPENAI', model: 'chatgpt-image-latest' },
+          { provider: 'IMAGE_GROK', model: 'grok-imagine-image' },
+        ]),
+      );
+      const { callModel } = modelReplying(
+        response('', [call(MediaKind.IMAGE, 'c1', { prompt: 'a cat' })]),
+        response('ok'),
+      );
+      await loop.run({
+        context: contextSaying('draw a cat'),
+        executionOptions: undefined,
+        callModel,
+        planRefusal: vi.fn(),
+      });
+      expect(providers()).toEqual(['IMAGE_OPENAI', 'IMAGE_GROK']);
+      expect(gateway.startMedia.mock.calls[0]?.[0]).toMatchObject({
+        model: 'chatgpt-image-latest',
+      });
+    });
+
+    it('falls back to the constants only when the catalog call failed (null)', async () => {
+      const loop = manager(catalogOf(null));
+      const { callModel } = modelReplying(
+        response('', [call(MediaKind.IMAGE, 'c1', { prompt: 'a cat' })]),
+        response('ok'),
+      );
+      await loop.run({
+        context: contextSaying('draw a cat'),
+        executionOptions: undefined,
+        callModel,
+        planRefusal: vi.fn(),
+      });
+      expect(providers()[0]).toBe('IMAGE_GEMINI');
+    });
+
+    it('an empty catalog is a clear "no model" tool error, with no generation started', async () => {
+      const loop = manager(catalogOf([]));
+      const { callModel, rounds } = modelReplying(
+        response('', [call(MediaKind.VIDEO, 'c1', { prompt: 'waves' })]),
+        response('Not available.'),
+      );
+      await loop.run({
+        context: contextSaying('make a video of waves'),
+        executionOptions: undefined,
+        callModel,
+        planRefusal: vi.fn(),
+      });
+      expect(gateway.startMedia).not.toHaveBeenCalled();
+      expect(rounds[1]?.context.toolTurns?.[0]?.results[0]?.content).toContain('NO_MODEL');
+    });
+
+    it('honors an audio model the user named, resolved by the catalog', async () => {
+      const loop = manager(
+        catalogOf([{ provider: 'AUDIO_GEMINI', model: 'other' }], {
+          provider: 'AUDIO_OPENAI',
+          model: 'gpt-4o-mini-tts',
+        }),
+      );
+      const { callModel } = modelReplying(
+        response('', [call(MediaKind.AUDIO, 'c1', { prompt: 'hello', model: 'gpt-4o-mini-tts' })]),
+        response('ok'),
+      );
+      await loop.run({
+        context: contextSaying('use gpt-4o-mini-tts to say hello as audio'),
+        executionOptions: undefined,
+        callModel,
+        planRefusal: vi.fn(),
+      });
+      expect(providers()).toEqual(['AUDIO_OPENAI']);
+      expect(gateway.startMedia.mock.calls[0]?.[0]).toMatchObject({ model: 'gpt-4o-mini-tts' });
+    });
+
+    it('a named premium model on a plan without access is refused: no generation, no other model', async () => {
+      const loop = manager(
+        catalogOf([{ provider: 'IMAGE_GEMINI', model: 'm' }], { status: 'denied' }),
+      );
+      const { callModel, rounds } = modelReplying(
+        response('', [
+          call(MediaKind.IMAGE, 'c1', { prompt: 'a cat', model: 'chatgpt-image-latest' }),
+        ]),
+        response('Not in your plan.'),
+      );
+      await loop.run({
+        context: contextSaying('draw a cat with chatgpt-image-latest'),
+        executionOptions: undefined,
+        callModel,
+        planRefusal: vi.fn(),
+      });
+      expect(gateway.startMedia).not.toHaveBeenCalled();
+      const result = rounds[1]?.context.toolTurns?.[0]?.results[0];
+      expect(result?.isError).toBe(true);
+      expect(result?.content).toContain('MODEL_NOT_IN_PLAN');
+      expect(result?.content).toContain('not included in their plan');
+    });
+
+    it('an unlisted name falls back to the inferred model, but only if the plan allows it', async () => {
+      const allowedLoop = manager(catalogOf([], { status: 'unknown' }, true));
+      const first = modelReplying(
+        response('', [
+          call(MediaKind.IMAGE, 'c1', { prompt: 'a cat', model: 'grok-imagine-image' }),
+        ]),
+        response('ok'),
+      );
+      await allowedLoop.run({
+        context: contextSaying('draw a cat with grok-imagine-image'),
+        executionOptions: undefined,
+        callModel: first.callModel,
+        planRefusal: vi.fn(),
+      });
+      expect(providers()).toEqual(['IMAGE_GROK']);
+
+      gateway.startMedia.mockClear();
+      const deniedLoop = manager(catalogOf([], { status: 'unknown' }, false));
+      const second = modelReplying(
+        response('', [
+          call(MediaKind.IMAGE, 'd1', { prompt: 'a cat', model: 'grok-imagine-image' }),
+        ]),
+        response('no'),
+      );
+      await deniedLoop.run({
+        context: contextSaying('draw a cat with grok-imagine-image'),
+        executionOptions: undefined,
+        callModel: second.callModel,
+        planRefusal: vi.fn(),
+      });
+      expect(gateway.startMedia).not.toHaveBeenCalled();
+    });
+  });
 });

@@ -11,6 +11,7 @@ import {
   MODEL_UNAVAILABLE_RETIRE_THRESHOLD,
   MODEL_UNAVAILABLE_WINDOW_MS,
 } from '../constants/model-unavailable.constants';
+import { isPricedMediaModel } from '@claw/shared-utilities';
 import { adapterKindFields, newMediaModelExposure } from '../utilities/adapter-kind-fields.utility';
 import { nonChatKind } from '../utilities/model-kind.utility';
 import { isConnectorProvider } from '../utilities/connector-provider.utility';
@@ -91,11 +92,18 @@ export class ConnectorModelsRepository {
     // exposure back to UNEXPOSED means a model that disappears cannot keep serving users.
     // The prompt-caching switch (F093) goes back to OFF for the same reason: it changes
     // what a request costs, so a model that returns must be switched on again on purpose.
+    //
+    // A priced media model (Veo, chatgpt-image-latest, TTS, Lyria) is the exception: providers'
+    // model lists omit models that still work, and marking them REMOVED hid Veo and
+    // chatgpt-image-latest on prod. They keep their rows, and a row an earlier sync removed
+    // comes back ACTIVE + EXPOSED.
+    const { keepIds, restoreIds } = await this.pricedMediaOmitted(connectorId, provider, modelKeys);
     const operations = [
       this.prisma.connectorModel.updateMany({
         where: {
           connectorId,
           ...(modelKeys.length > 0 ? { modelKey: { notIn: modelKeys } } : {}),
+          ...(keepIds.length > 0 ? { id: { notIn: keepIds } } : {}),
           lifecycle: { not: 'REMOVED' },
         },
         data: { lifecycle: 'REMOVED', exposure: 'UNEXPOSED', promptCaching: false },
@@ -165,9 +173,43 @@ export class ConnectorModelsRepository {
       }),
     );
 
+    if (restoreIds.length > 0) {
+      operations.push(
+        this.prisma.connectorModel.updateMany({
+          where: { id: { in: restoreIds } },
+          data: { lifecycle: 'ACTIVE', exposure: 'EXPOSED' },
+        }),
+      );
+    }
+
     // `removed` is now models marked REMOVED rather than rows destroyed.
     const [removed] = await this.prisma.$transaction(operations);
     return { deleted: (removed as { count: number }).count, upserted: uniqueModels.length };
+  }
+
+  /**
+   * Known priced media models this sync's provider list omitted: `keepIds` are not marked
+   * REMOVED, `restoreIds` (the ones an earlier sync already removed) are brought back.
+   */
+  private async pricedMediaOmitted(
+    connectorId: string,
+    provider: ConnectorProvider,
+    listedKeys: string[],
+  ): Promise<{ keepIds: string[]; restoreIds: string[] }> {
+    const omitted = await this.prisma.connectorModel.findMany({
+      where: {
+        connectorId,
+        ...(listedKeys.length > 0 ? { modelKey: { notIn: listedKeys } } : {}),
+      },
+      select: { id: true, modelKey: true, lifecycle: true },
+    });
+    const priced = omitted.filter(
+      (row) => row.modelKey !== undefined && isPricedMediaModel(provider, row.modelKey),
+    );
+    return {
+      keepIds: priced.map((row) => row.id),
+      restoreIds: priced.filter((row) => row.lifecycle === 'REMOVED').map((row) => row.id),
+    };
   }
 
   async findByConnectorId(connectorId: string): Promise<ConnectorModel[]> {

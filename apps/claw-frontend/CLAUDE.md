@@ -1157,3 +1157,9 @@ shows the stream state (no new i18n key). See [ADR-201](../../docs/13-adr/adr-20
 ## Media-output models in the picker (2026-10-31)
 
 `getConnectorModelCapabilityBadges` badges image, video and audio generation models by id (`ImageOutput`, `VideoOutput`, `AudioOutput`). `typeModelsByMediaKind` (`utilities/model-picker-media-kind.utility.ts`) lists a provider's chat models first, then its Image, Video and Audio models, each tagged with `mediaUi.modelKind.*`. The built-in `IMAGE_CAPABILITIES` entry is only a fallback, shown when the connector's catalog lists no image model. Keys `mediaUi.capability.audioOutput` and `mediaUi.modelKind.{image,video,audio}` exist in all 13 locales.
+
+### Audio-output models in the picker (2026-11-01)
+
+`media-capabilities.utility.ts` badges audio-output models (TTS, Lyria) as Audio input and Audio output only: the
+sync's capability guess could leave a Vision flag on them, and the picker ignores Vision and Video-input for any model
+whose `mediaKind` is audio.

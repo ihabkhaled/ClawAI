@@ -8,6 +8,7 @@ import {
 
 import { MediaKind } from '../enums/media-kind.enum';
 import {
+  MEDIA_AUDIO_REQUEST_MARKERS,
   MEDIA_AUDIO_WORDS,
   MEDIA_CREATE_VERBS,
   MEDIA_DISCUSSION_LEADS,
@@ -76,10 +77,11 @@ export function asksToCreateMedia(text: string): boolean {
   const lower = text.toLowerCase();
   const words = lower.split(MEDIA_TOOL_CUE_WORD_SPLIT).filter(Boolean);
   const lead = words.find((word) => !MEDIA_POLITE_WORDS.has(word)) ?? '';
-  const vetoed =
-    MEDIA_DISCUSSION_LEADS.has(lead) ||
-    MEDIA_ECHO_LEADS.has(lead) ||
-    MEDIA_ECHO_PHRASES.some((phrase) => lower.includes(phrase));
+  const asksForAudio = words.some((word) => MEDIA_AUDIO_REQUEST_MARKERS.has(word));
+  const echo =
+    (MEDIA_ECHO_LEADS.has(lead) || MEDIA_ECHO_PHRASES.some((phrase) => lower.includes(phrase))) &&
+    !asksForAudio;
+  const vetoed = MEDIA_DISCUSSION_LEADS.has(lead) || echo;
   return vetoed
     ? false
     : classifyImageIntent(text, false) === MultimodalImageIntent.GENERATE ||

@@ -438,12 +438,18 @@ export class ConnectorsService implements OnApplicationBootstrap {
     // looking broken. The formatter is idempotent, so a clean name is untouched.
     return rows.map(({ connector, ...model }) => {
       const provider = connector.providerDefinition?.key ?? model.provider;
+      const media = snapshotMediaOutputFields(model.modelKey, provider);
+      // A speech or music model reads text only. The sync's capability guess can leave
+      // supportsVision / supportsVideoInput true on it, which showed a "Vision" badge.
+      const audioOut =
+        media.mediaKind === 'AUDIO' ? { supportsVision: false, supportsVideoInput: false } : {};
       return {
         ...model,
         provider,
         providerDisplayName: connector.providerDefinition?.displayName,
         displayName: formatModelDisplayName(model.displayName),
-        ...snapshotMediaOutputFields(model.modelKey, provider),
+        ...media,
+        ...audioOut,
       };
     });
   }

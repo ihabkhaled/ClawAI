@@ -21,6 +21,8 @@ import {
   MEDIA_RESULT_HINT_CANCELLED,
   MEDIA_RESULT_HINT_CREDIT,
   MEDIA_RESULT_HINT_FAILED,
+  MEDIA_RESULT_HINT_MODEL_DENIED,
+  MEDIA_RESULT_HINT_NO_MODEL,
   MEDIA_RESULT_HINT_PENDING,
   MEDIA_RESULT_HINT_PLAN,
   MEDIA_RESULT_HINT_READY,
@@ -40,6 +42,7 @@ import { IMAGE_GENERATION_PLAN_FEATURE } from '../constants/plan-feature-refusal
 import type { ToolDefinitionDto } from '../dto/runtime-v2.dto';
 import { MediaGenerationState } from '../enums/media-generation-state.enum';
 import { MediaKind } from '../enums/media-kind.enum';
+import { MediaCatalogManager } from './media-catalog.manager';
 import { AccessControlService } from '../services/access-control.service';
 import { StreamCancellationService } from '../services/stream-cancellation.service';
 import type { AssembledContext } from '../types/context.types';
@@ -98,6 +101,7 @@ export class MediaToolLoopManager {
   constructor(
     private readonly accessControl: AccessControlService,
     @Optional() private readonly cancellation?: StreamCancellationService,
+    @Optional() private readonly catalog?: MediaCatalogManager,
   ) {}
 
   async run(args: MediaToolLoopArgs): Promise<LlmResponse> {
@@ -387,7 +391,11 @@ export class MediaToolLoopManager {
     signal: AbortSignal | undefined,
   ): Promise<MediaCallOutcome> {
     const userText = latestUserTurnText(args.context.threadMessages);
-    const targets = resolveMediaTargets(toolArgs, userText);
+    const { targets, denied } = await this.targetsFor(args.context.userId, toolArgs, userText);
+    if (denied) return this.failure('MODEL_NOT_IN_PLAN', MEDIA_RESULT_HINT_MODEL_DENIED);
+    if (targets.length === 0) {
+      return this.failure('NO_MODEL', MEDIA_RESULT_HINT_NO_MODEL);
+    }
     let last: MediaCallOutcome = this.failure('SERVICE_UNAVAILABLE', MEDIA_RESULT_HINT_FAILED);
     for (const [index, target] of targets.entries()) {
       // Stop pressed: no further provider attempt, ever.
@@ -406,6 +414,46 @@ export class MediaToolLoopManager {
       last = attempt.outcome;
     }
     return last;
+  }
+
+  /**
+   * The targets one call may try. A model the user named is honored alone and ONLY if their plan
+   * allows it (a refused model returns `denied` and never falls back to another model); an unlisted
+   * name falls back to the shared classifiers, which are access-checked the same way. Otherwise the
+   * user's catalog gives the best plan-allowed model per provider, cheapest first; only a catalog
+   * outage falls back to the constants.
+   */
+  private async targetsFor(
+    userId: string,
+    toolArgs: MediaToolArgs,
+    userText: string | undefined,
+  ): Promise<{ targets: MediaTarget[]; denied: boolean }> {
+    const fallback = resolveMediaTargets(toolArgs, userText);
+    const named = toolArgs.model?.trim() ?? '';
+    const userNamedIt =
+      named.length > 0 && (userText ?? '').toLowerCase().includes(named.toLowerCase());
+    if (userNamedIt) return this.namedTargets(userId, toolArgs.kind, named, fallback);
+    const candidates = await this.catalog?.candidates(userId, toolArgs.kind, toolArgs.audioKind);
+    return { targets: candidates ?? fallback, denied: false };
+  }
+
+  private async namedTargets(
+    userId: string,
+    kind: MediaKind,
+    named: string,
+    fallback: MediaTarget[],
+  ): Promise<{ targets: MediaTarget[]; denied: boolean }> {
+    if (this.catalog === undefined) return { targets: fallback, denied: false };
+    const lookup = await this.catalog.findNamed(userId, kind, named);
+    if (lookup.status === 'found') return { targets: [lookup.target], denied: false };
+    if (lookup.status === 'denied') return { targets: [], denied: true };
+    // Not in the catalog: the classifier-inferred target still has to pass the plan check.
+    const inferred = fallback.at(0);
+    if (fallback.length !== 1 || inferred === undefined)
+      return { targets: fallback, denied: false };
+    const connector = inferred.provider.replace(/^(?:IMAGE|VIDEO|AUDIO)_/u, '');
+    const allowed = await this.catalog.isAllowed(userId, connector, inferred.model ?? named);
+    return allowed ? { targets: fallback, denied: false } : { targets: [], denied: true };
   }
 
   private async attempt(input: {

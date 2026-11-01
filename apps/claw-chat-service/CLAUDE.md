@@ -1879,3 +1879,14 @@ mimeType, durationSec, no bytes, no link) as the tool result to the SAME model.
   generated directly (`MediaToolLoopManager.generateDirect`).
 - New surface? Add it to `MEDIA_TOOL_SURFACES` only together with a store path that spreads `buildMediaMetaPart`, and
   if it makes many candidates call `finalize` from its final step and leave `MEDIA_EVERY_CALL_SURFACES` alone.
+
+### Media fallback candidates (MediaCatalogManager)
+
+The media tool loop does not hard-code fallback model ids. `MediaCatalogManager` builds the candidates
+from the connector models snapshot (the catalog the picker reads): exposed models of the right media
+kind, one per provider in the order IMAGE gemini, openai, grok / VIDEO gemini, grok / AUDIO openai,
+gemini, cheapest cost class first, filtered through the same `listModelAccess` plan check the picker
+uses, cached 60 s per user and kind, never local providers. A model the user names is looked up with
+`findNamed(userId, kind, name)` and plan-checked: a denied model returns a "not in your plan" tool
+error and never falls back. The constants in `media-catalog.constants.ts` are used only when the
+catalog call itself fails.

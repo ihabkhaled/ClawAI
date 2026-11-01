@@ -4,6 +4,7 @@ import {
   classifyMediaOutputModel,
   hasMediaModalityOut,
   isMediaOutputModel,
+  isPricedMediaModel,
   modalitiesOutForModel,
 } from '../media-output-model.utility';
 
@@ -58,5 +59,29 @@ describe('classifyMediaOutputModel', () => {
     expect(hasMediaModalityOut(['VIDEO_OUTPUT'])).toBe(true);
     expect(hasMediaModalityOut(['TEXT'])).toBe(false);
     expect(hasMediaModalityOut(undefined)).toBe(false);
+  });
+});
+
+describe('isPricedMediaModel (production QA 2026-11-01 keys)', () => {
+  it.each([
+    ['GEMINI', 'models/veo-3.1-fast-generate-preview'],
+    ['GEMINI', 'models/veo-3.1-generate-preview'],
+    ['GEMINI', 'models/veo-3.1-lite-generate-preview'],
+    ['OPENAI', 'chatgpt-image-latest'],
+    ['OPENAI', 'gpt-4o-mini-tts-2025-03-20'],
+    ['OPENAI', 'gpt-4o-mini-tts-2025-12-15'],
+    ['gemini', 'models/lyria-3.5'],
+  ])('%s %s is priced media', (provider, key) => {
+    expect(isPricedMediaModel(provider, key)).toBe(true);
+  });
+
+  it.each([
+    ['GEMINI', 'models/gemini-3.8-flash-tts'],
+    ['GEMINI', 'models/gemini-3.8-flash-lite-tts'],
+    ['GEMINI', 'models/lyria-realtime-exp'],
+    ['OPENROUTER', 'google/lyria-3-clip-preview'],
+    ['OPENAI', 'gpt-4o'],
+  ])('%s %s stays hidden', (provider, key) => {
+    expect(isPricedMediaModel(provider, key)).toBe(false);
   });
 });

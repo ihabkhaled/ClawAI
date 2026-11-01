@@ -41,6 +41,24 @@ describe('ConnectorsService.getAvailableModels media rows', () => {
     expect(result.map((m) => m.modelKey)).toEqual(['gpt-4o', 'gpt-4o-mini-tts', 'lyria-3.5']);
   });
 
+  it('never reports vision on a speech or music model', async () => {
+    const tts = {
+      ...row('OPENAI', 'gpt-4o-mini-tts-2025-12-15', 'AUDIO'),
+      supportsVision: true,
+      supportsVideoInput: true,
+    };
+    const chat = { ...row('OPENAI', 'gpt-4o', 'CHAT'), supportsVision: true };
+    const { service } = build([tts, chat]);
+
+    const byKey = new Map((await service.getAvailableModels()).map((m) => [m.modelKey, m]));
+
+    expect(byKey.get('gpt-4o-mini-tts-2025-12-15')).toMatchObject({
+      supportsVision: false,
+      supportsVideoInput: false,
+    });
+    expect(byKey.get('gpt-4o')).toMatchObject({ supportsVision: true });
+  });
+
   it('types media models and leaves chat models as TEXT, keeping kind for older clients', async () => {
     const { service } = build([
       row('GROK', 'grok-imagine-image', 'CHAT'),

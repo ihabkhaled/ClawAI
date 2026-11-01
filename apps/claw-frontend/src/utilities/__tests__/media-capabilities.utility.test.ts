@@ -153,3 +153,20 @@ describe('mediaKind from connector-service', () => {
     ).toEqual([ModelCapabilityBadge.AudioOutput]);
   });
 });
+
+describe('audio-output models never show Vision', () => {
+  it.each(['gpt-4o-mini-tts-2025-12-15', 'gemini-2.5-pro-preview-tts', 'lyria-3.5'])(
+    '%s',
+    (modelKey) => {
+      expect(
+        getConnectorModelCapabilityBadges({
+          supportsVision: true,
+          supportsAudio: true,
+          supportsVideoInput: true,
+          modelKey,
+          provider: 'GEMINI',
+        } as never),
+      ).toEqual([ModelCapabilityBadge.AudioInput, ModelCapabilityBadge.AudioOutput]);
+    },
+  );
+});

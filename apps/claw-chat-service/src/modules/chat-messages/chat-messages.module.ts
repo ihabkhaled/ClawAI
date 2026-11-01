@@ -8,6 +8,7 @@ import { PluginConsentClient } from './clients/plugin-consent.client';
 import { PluginConsentPort } from './clients/plugin-consent.port';
 import { PluginInvokeClient } from './clients/plugin-invoke.client';
 import { PluginInvokePort } from './clients/plugin-invoke.port';
+import { MediaCatalogManager } from './managers/media-catalog.manager';
 import { MediaFinalStepManager } from './managers/media-final-step.manager';
 import { MediaToolLoopManager } from './managers/media-tool-loop.manager';
 import { PluginToolLoopManager } from './managers/plugin-tool-loop.manager';
@@ -129,6 +130,7 @@ import { RuntimeV2ThreadActivityService } from './services/runtime-v2-thread-act
     PluginToolLoopManager,
     MediaToolLoopManager,
     MediaFinalStepManager,
+    MediaCatalogManager,
     { provide: PluginInvokePort, useClass: PluginInvokeClient },
     { provide: PluginConsentPort, useClass: PluginConsentClient },
     NarrationService,

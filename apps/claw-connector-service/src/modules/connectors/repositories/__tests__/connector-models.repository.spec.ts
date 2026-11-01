@@ -123,6 +123,33 @@ describe('ConnectorModelsRepository', () => {
       expect(prismaMock.connectorModel.deleteMany).not.toHaveBeenCalled();
     });
 
+    it('keeps a known priced media model the provider list omitted, and restores a removed one', async () => {
+      prismaMock.connectorModel.findMany.mockResolvedValue([
+        { id: 'veo1', modelKey: 'models/veo-3.1-fast-generate-preview', lifecycle: 'ACTIVE' },
+        { id: 'veo2', modelKey: 'models/veo-3.1-generate-preview', lifecycle: 'REMOVED' },
+        { id: 'chat1', modelKey: 'gpt-3.5-old', lifecycle: 'ACTIVE' },
+      ]);
+      prismaMock.$transaction = vi.fn().mockResolvedValue([{ count: 1 }]);
+
+      await repository.replaceMany('c1', 'GEMINI' as never, [
+        buildModel('gemini-2.5-pro') as never,
+      ]);
+
+      expect(prismaMock.connectorModel.updateMany).toHaveBeenCalledWith({
+        where: {
+          connectorId: 'c1',
+          modelKey: { notIn: ['gemini-2.5-pro'] },
+          id: { notIn: ['veo1', 'veo2'] },
+          lifecycle: { not: 'REMOVED' },
+        },
+        data: { lifecycle: 'REMOVED', exposure: 'UNEXPOSED', promptCaching: false },
+      });
+      expect(prismaMock.connectorModel.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: ['veo2'] } },
+        data: { lifecycle: 'ACTIVE', exposure: 'EXPOSED' },
+      });
+    });
+
     it('deduplicates models by modelKey', async () => {
       prismaMock.$transaction = vi.fn().mockResolvedValue([{ count: 0 }, { id: 'm1' }]);
       const result = await repository.replaceMany('c1', 'OPENAI' as never, [

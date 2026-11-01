@@ -20,7 +20,14 @@ describe('ConnectorModelsRepository retired models (ADR-151)', () => {
         ConnectorModelsRepository,
         {
           provide: PrismaService,
-          useValue: { connectorModel: { updateMany, upsert: vi.fn() }, $transaction: transaction },
+          useValue: {
+            connectorModel: {
+              updateMany,
+              upsert: vi.fn(),
+              findMany: vi.fn().mockResolvedValue([]),
+            },
+            $transaction: transaction,
+          },
         },
       ],
     }).compile();

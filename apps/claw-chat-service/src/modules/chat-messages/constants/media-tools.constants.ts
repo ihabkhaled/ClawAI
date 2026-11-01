@@ -100,7 +100,7 @@ export const MEDIA_STATUS_TERMINAL: ReadonlySet<string> = new Set([
 export const MEDIA_DEFAULT_TARGET: ReadonlyMap<MediaKind, MediaTarget> = new Map([
   [MediaKind.IMAGE, { provider: 'IMAGE_GEMINI', model: 'gemini-2.5-flash-image' }],
   [MediaKind.VIDEO, { provider: 'VIDEO_GEMINI', model: 'veo-3.1-fast-generate-preview' }],
-  [MediaKind.AUDIO, { provider: 'AUDIO_OPENAI', model: undefined }],
+  [MediaKind.AUDIO, { provider: 'AUDIO_OPENAI', model: 'gpt-4o-mini-tts' }],
 ]);
 /** Model id -> provider, per kind (audio picks its model itself). */
 export const MEDIA_KNOWN_MODELS: ReadonlyMap<MediaKind, ReadonlyMap<string, string>> = new Map([
@@ -108,6 +108,7 @@ export const MEDIA_KNOWN_MODELS: ReadonlyMap<MediaKind, ReadonlyMap<string, stri
     MediaKind.IMAGE,
     new Map([
       ['gpt-image-1', 'IMAGE_OPENAI'],
+      ['chatgpt-image-latest', 'IMAGE_OPENAI'],
       ['gemini-2.5-flash-image', 'IMAGE_GEMINI'],
       ['grok-imagine-image', 'IMAGE_GROK'],
     ]),
@@ -122,6 +123,7 @@ export const MEDIA_KNOWN_MODELS: ReadonlyMap<MediaKind, ReadonlyMap<string, stri
   [MediaKind.AUDIO, new Map<string, string>()],
 ]);
 export const MEDIA_AUDIO_PROVIDER_GEMINI = 'AUDIO_GEMINI';
+export const MEDIA_AUDIO_PROVIDER_OPENAI = 'AUDIO_OPENAI';
 export const MEDIA_AUDIO_GEMINI_HINT = /gemini/iu;
 
 /** Pixels per size word. Only the OpenAI image model takes them; the others choose their own. */
@@ -142,6 +144,11 @@ export const MEDIA_VIDEO_SECONDS = { min: 4, max: 8, fallback: 4 } as const;
  * Arabic words) are matched anywhere in the text.
  */
 export const MEDIA_TOOL_CUE_WORDS: ReadonlySet<string> = new Set([
+  'voice',
+  'narration',
+  'sound',
+  'sounds',
+  'narrate',
   'image',
   'images',
   'picture',
@@ -231,7 +238,7 @@ export const MEDIA_TOOL_DESCRIPTION: ReadonlyMap<MediaKind, string> = new Map([
   ],
   [
     MediaKind.AUDIO,
-    'Create audio and play it to the user in the chat: kind SPEECH reads the given text aloud; kind MUSIC makes a short piece from a description. Call it when the user asks you to read something out loud, make a voiceover, a song or music. The call waits until the audio is ready. Call it only when the user explicitly asks you to create or generate new media; never for explanations, discussion, quotes, or repeating words.',
+    'Create audio and play it to the user in the chat: kind SPEECH reads the given text aloud; kind MUSIC makes a short piece from a description. Call it for every spoken-word or sound request: when the user asks you to say, speak, read something aloud or out loud, narrate, make a voiceover, speech or audio ("say hello in a calm voice as audio"), a song or music. The call waits until the audio is ready. Call it only when the user explicitly asks you to create or generate new media; never for explanations, discussion, quotes, or repeating words.',
   ],
 ]);
 
@@ -254,6 +261,10 @@ export const MEDIA_RESULT_HINT_PLAN =
   'The media was not made because the current plan does not include media generation. Tell the user it needs an upgrade; do not retry.';
 export const MEDIA_RESULT_HINT_CREDIT =
   'The media was not made: credit exhausted. Tell the user their credit is used up and they can top up or switch plan; do not retry.';
+export const MEDIA_RESULT_HINT_NO_MODEL =
+  'No model of this kind is available for the user right now (not offered, or not on the plan). Say so briefly; do not retry.';
+export const MEDIA_RESULT_HINT_MODEL_DENIED =
+  'The model the user asked for is not included in their plan. Tell them plainly and name the plan limit; do not retry and do not pick another model.';
 export const MEDIA_RESULT_HINT_BUDGET =
   'No more media can be made for this message. Say so briefly and continue without it.';
 export const MEDIA_RESULT_HINT_UNKNOWN_TOOL =
@@ -279,10 +290,10 @@ const modelProperty = (examples: string): Record<string, unknown> => ({
   description: `The media model. If the user names a model (for example "use grok-imagine-image"), pass it here exactly as named and it is honored. Otherwise ALWAYS leave it out (do not copy a model from this list on your own): the platform picks the best available provider and falls back if one is down. Known models: ${examples}.`,
 });
 const IMAGE_MODEL_PROPERTY = modelProperty(
-  'gemini-2.5-flash-image, gpt-image-1, grok-imagine-image',
+  'gemini-2.5-flash-image, chatgpt-image-latest, grok-imagine-image',
 );
 const VIDEO_MODEL_PROPERTY = modelProperty('veo-3.1-fast-generate-preview, grok-imagine-video');
-const AUDIO_MODEL_PROPERTY = modelProperty('an OpenAI TTS model (default), a Gemini TTS model');
+const AUDIO_MODEL_PROPERTY = modelProperty('gpt-4o-mini-tts, a Gemini TTS model');
 
 /** The JSON schema each media tool shows the model. */
 export const MEDIA_TOOL_INPUT_SCHEMA: ReadonlyMap<MediaKind, Record<string, unknown>> = new Map([
@@ -385,7 +396,7 @@ export const MEDIA_PROVIDER_ORDER: ReadonlyMap<MediaKind, readonly MediaTarget[]
     MediaKind.IMAGE,
     [
       { provider: 'IMAGE_GEMINI', model: 'gemini-2.5-flash-image' },
-      { provider: 'IMAGE_OPENAI', model: 'gpt-image-1' },
+      { provider: 'IMAGE_OPENAI', model: 'chatgpt-image-latest' },
       { provider: 'IMAGE_GROK', model: 'grok-imagine-image' },
     ],
   ],
@@ -399,7 +410,7 @@ export const MEDIA_PROVIDER_ORDER: ReadonlyMap<MediaKind, readonly MediaTarget[]
   [
     MediaKind.AUDIO,
     [
-      { provider: 'AUDIO_OPENAI', model: undefined },
+      { provider: 'AUDIO_OPENAI', model: 'gpt-4o-mini-tts' },
       { provider: 'AUDIO_GEMINI', model: undefined },
     ],
   ],
@@ -483,6 +494,7 @@ export const MEDIA_ECHO_LEADS: ReadonlySet<string> = new Set([
 ]);
 export const MEDIA_ECHO_PHRASES: readonly string[] = ['exact words', 'word for word', 'verbatim'];
 export const MEDIA_CREATE_VERBS: ReadonlySet<string> = new Set([
+  'say',
   'draw',
   'paint',
   'sketch',
@@ -522,6 +534,10 @@ export const MEDIA_CREATE_VERBS: ReadonlySet<string> = new Set([
 
 /** Words that decide the kind of media when the shared video and image classifiers are silent. */
 export const MEDIA_AUDIO_WORDS: ReadonlySet<string> = new Set([
+  'voice',
+  'narration',
+  'sound',
+  'sounds',
   'audio',
   'voiceover',
   'voiceovers',
@@ -568,4 +584,21 @@ export const MEDIA_IMAGE_WORDS: ReadonlySet<string> = new Set([
   'avatar',
   'draw',
   'paint',
+]);
+
+/**
+ * Words that mark a spoken-word or sound request. A message that starts with an echo verb ("say ...")
+ * is a request for audio, not an echo, when one of these is in it ("say hello in a calm voice as
+ * audio"); "say the exact words: ..." without them stays an echo and gets no tool.
+ */
+export const MEDIA_AUDIO_REQUEST_MARKERS: ReadonlySet<string> = new Set([
+  'audio',
+  'aloud',
+  'voice',
+  'voiceover',
+  'speech',
+  'narration',
+  'podcast',
+  'song',
+  'music',
 ]);

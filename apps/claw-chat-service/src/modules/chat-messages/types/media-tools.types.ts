@@ -128,3 +128,20 @@ export type MediaLoopState = {
   turnKey: string;
   claimRetried: boolean;
 };
+
+/** One media model of the catalog snapshot (exposed, typed by `mediaKind`). */
+export type MediaCatalogRow = {
+  /** The connector: OPENAI, GEMINI, GROK. */
+  provider: string;
+  modelKey: string;
+  mediaKind: string;
+  audioKind?: string | undefined;
+  exposure?: string | undefined;
+};
+
+/** Speech reads text aloud; music makes a short piece. */
+export type MediaAudioKind = 'SPEECH' | 'MUSIC';
+
+/** What the catalog says about a model the user named: usable, refused by the plan, or not listed. */
+export type MediaNamedLookup =
+  { status: 'found'; target: MediaTarget } | { status: 'denied' } | { status: 'unknown' };

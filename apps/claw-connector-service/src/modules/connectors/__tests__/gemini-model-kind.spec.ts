@@ -83,7 +83,11 @@ describe('ConnectorModelsRepository adapter-supplied kind', () => {
   const run = async (model: NormalizedModel) => {
     const upsert = vi.fn().mockReturnValue({});
     const prisma = {
-      connectorModel: { upsert, updateMany: vi.fn().mockReturnValue({}) },
+      connectorModel: {
+        upsert,
+        updateMany: vi.fn().mockReturnValue({}),
+        findMany: vi.fn().mockResolvedValue([]),
+      },
       $transaction: vi.fn().mockResolvedValue([{ count: 0 }, {}]),
     };
     const repository = new ConnectorModelsRepository(prisma as unknown as PrismaService);

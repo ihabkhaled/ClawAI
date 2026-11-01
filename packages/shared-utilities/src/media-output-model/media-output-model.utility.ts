@@ -72,8 +72,17 @@ export function hasMediaModalityOut(modalitiesOut: readonly string[] | undefined
   return (modalitiesOut ?? []).some((value) => MEDIA_MODALITIES_OUT.includes(value));
 }
 
-/** True when the model is a media-generation model routing's cost seed prices (exposed by policy). */
+/** A trailing `-YYYY-MM-DD` or `-YYYYMMDD` snapshot date. */
+const DATED_SNAPSHOT_SUFFIX = /-(?:\d{4}-\d{2}-\d{2}|\d{8})$/u;
+
+/**
+ * True when the model is a media-generation model routing's cost seed prices (exposed by
+ * policy). The `models/` prefix is ignored, and so is a trailing snapshot date: a dated id
+ * such as `gpt-4o-mini-tts-2025-12-15` is the same model as its priced family id.
+ */
 export function isPricedMediaModel(provider: string, modelKey: string): boolean {
+  const keys = PRICED_MEDIA_MODEL_KEYS_BY_PROVIDER.get(provider.trim().toUpperCase());
+  if (keys === undefined) return false;
   const id = modelKey.trim().replace(/^models\//u, '');
-  return PRICED_MEDIA_MODEL_KEYS_BY_PROVIDER.get(provider.trim().toUpperCase())?.has(id) === true;
+  return keys.has(id) || keys.has(id.replace(DATED_SNAPSHOT_SUFFIX, ''));
 }

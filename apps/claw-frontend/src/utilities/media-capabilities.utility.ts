@@ -39,13 +39,16 @@ export function getConnectorModelCapabilityBadges(
     Partial<Pick<ConnectorModel, 'provider' | 'modelKey' | 'mediaKind'>>,
 ): ModelCapabilityBadge[] {
   const badges: ModelCapabilityBadge[] = [];
-  if (row.supportsVision === true) {
+  // A speech or music model reads text only, whatever the sync's capability guess says.
+  const audioOutput =
+    row.mediaKind === 'AUDIO' || (row.modelKey !== undefined && isAudioOutputModel(row.modelKey));
+  if (row.supportsVision === true && !audioOutput) {
     badges.push(ModelCapabilityBadge.Vision);
   }
   if (row.supportsAudio === true) {
     badges.push(ModelCapabilityBadge.AudioInput);
   }
-  if (row.supportsVideoInput === true) {
+  if (row.supportsVideoInput === true && !audioOutput) {
     badges.push(ModelCapabilityBadge.VideoInput);
   }
   // Image-OUTPUT models (Gemini *-image*, nano-banana, Grok Imagine, GPT Image):
@@ -68,10 +71,7 @@ export function getConnectorModelCapabilityBadges(
   ) {
     badges.push(ModelCapabilityBadge.VideoOutput);
   }
-  if (
-    row.mediaKind === 'AUDIO' ||
-    (row.modelKey !== undefined && isAudioOutputModel(row.modelKey))
-  ) {
+  if (audioOutput) {
     badges.push(ModelCapabilityBadge.AudioOutput);
   }
   return badges;
