@@ -201,3 +201,7 @@ A plan with `ALLOW_COST_CLASSES` refuses every model when `isModelAllowedForUsag
 ## My Threads list (ADR-205)
 
 `GET thread-publications/mine/page` (`PublicationOwnerListService`, `PublicationOwnerPageRepository`, `owner-page-sql.utility.ts`) is the owner's paged, searchable, status-filtered list; `mine` stays as it was. The job state lives upstream, so the row stores `generation_state` and the failure code, step and retryable; the service reads unresolved DRAFT jobs (NULL, or GENERATING older than 30 s) from the generation service before each list, bounded and never fatal, and `attachRetryJob` resets them. Never add a second copy of the publish or delete rules: `canPublish` uses `PUBLISHABLE_REVISION_WHERE` and `canDelete` mirrors `OWNER_DELETABLE_PUBLICATION_STATUSES`; `owner-page-publish-delete.parity.spec.ts` runs the real code. Search is `ILIKE` on a bound, escaped pattern (never a regex, never string-built SQL), always `WHERE owner_id = caller`. `failure.code` is a machine code only (`^[A-Z][A-Z0-9_]{1,63}$`), never provider text.
+
+## Video models are not team members (2026-11-01)
+
+`recommended-team.constants.ts` skips video-output models; `gemini-omni` joined `veo` in that exclusion because Omni replaced Veo as Gemini's video model.

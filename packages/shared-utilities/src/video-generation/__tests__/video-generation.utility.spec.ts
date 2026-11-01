@@ -9,6 +9,8 @@ import {
 describe('resolveVideoCapabilityProvider', () => {
   it.each([
     ['GEMINI', 'models/veo-3.1-generate-preview', 'VIDEO_GEMINI'],
+    ['GEMINI', 'models/gemini-omni-1.1-flash', 'VIDEO_GEMINI'],
+    ['gemini', 'gemini-omni-1.1-flash', 'VIDEO_GEMINI'],
     ['gemini', 'models/veo-3.1-fast-generate-preview', 'VIDEO_GEMINI'],
     ['GEMINI', 'veo-3.1-lite-generate-preview', 'VIDEO_GEMINI'],
     ['GROK', 'grok-imagine-video', 'VIDEO_GROK'],

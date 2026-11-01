@@ -1,5 +1,6 @@
 import {
   GROK_VIDEO_WORST_CASE_PRICE_KEY,
+  OMNI_PRICE_KEY,
   SEEDED_VIDEO_PRICE_KEYS,
   VEO_WORST_CASE_PRICE_KEY,
 } from '../constants/video-generation.constants';
@@ -25,6 +26,9 @@ export function meteredVideoModelKey(model: string): string {
   const lower = key.toLowerCase();
   if (SEEDED_VIDEO_PRICE_KEYS.includes(lower)) {
     return lower;
+  }
+  if (lower.startsWith('gemini-omni')) {
+    return OMNI_PRICE_KEY;
   }
   if (lower.startsWith('veo-')) {
     return VEO_WORST_CASE_PRICE_KEY;

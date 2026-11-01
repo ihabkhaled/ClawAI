@@ -46,6 +46,26 @@ export function veoInstance(request: VideoStartRequest): VeoInstance {
       };
 }
 
+/**
+ * The Gemini Omni `input`: the prompt as text, or `[image, text]` for image-to-video.
+ * Omni has no duration field, so the wanted length rides in the prompt.
+ */
+export function omniInput(
+  request: VideoStartRequest,
+): string | Array<{ type: string; text?: string; data?: string; mime_type?: string }> {
+  const text = `${request.prompt}\n\nClip length: about ${String(request.durationSeconds)} seconds.`;
+  return request.sourceImage === undefined
+    ? text
+    : [
+        {
+          type: 'image',
+          data: request.sourceImage.base64,
+          mime_type: request.sourceImage.mimeType,
+        },
+        { type: 'text', text },
+      ];
+}
+
 /** xAI takes the source image as `image: {url}`; a base64 data URI is accepted there. */
 export function xaiImageField(request: VideoStartRequest): { image?: { url: string } } {
   return request.sourceImage === undefined

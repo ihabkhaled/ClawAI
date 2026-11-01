@@ -11,4 +11,7 @@ export {
   modalitiesOutForModel,
   type MediaOutputClassification,
 } from './media-output-model.utility';
-export { PRICED_MEDIA_MODEL_KEYS_BY_PROVIDER } from './priced-media-models.constants';
+export {
+  PRICED_MEDIA_MODEL_KEYS_BY_PROVIDER,
+  RETIRED_MEDIA_MODEL_KEYS_BY_PROVIDER,
+} from './priced-media-models.constants';

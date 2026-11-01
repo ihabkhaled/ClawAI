@@ -73,4 +73,4 @@ export const MODEL_HEALTH_CACHE_TTL_MS = 60_000;
  * and `text-embedding-3` match but `imagination-chat` does not.
  */
 export const THREAD_NON_CHAT_MODEL_PATTERN =
-  /(?:^|[-_/:. ])(?:imagine|imagen|image|images|dall-?e|sora|veo|video|embeddings?|embed|tts|stt|whisper|moderation|rerank|transcribe|speech|audio-?gen)(?:$|[-_/:. 0-9])/iu;
+  /(?:^|[-_/:. ])(?:imagine|imagen|image|images|dall-?e|sora|veo|gemini-omni|video|embeddings?|embed|tts|stt|whisper|moderation|rerank|transcribe|speech|audio-?gen)(?:$|[-_/:. 0-9])/iu;

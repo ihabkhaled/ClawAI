@@ -28,6 +28,7 @@ export const PRICED_MEDIA_MODEL_KEYS_BY_PROVIDER: ReadonlyMap<
       'veo-3.1-lite',
       'veo-3.1-fast',
       'veo-3.1-generate',
+      'gemini-omni-1.1-flash',
       'gemini-2.5-flash-preview-tts',
       'gemini-2.5-pro-preview-tts',
       'gemini-3.1-flash-tts-preview',
@@ -59,6 +60,31 @@ export const PRICED_MEDIA_MODEL_KEYS_BY_PROVIDER: ReadonlyMap<
       'grok-imagine-image-2.0',
       'grok-imagine-video',
       'grok-imagine-video-1.5',
+    ]),
+  ],
+]);
+
+/**
+ * Models the provider has SHUT DOWN (https://ai.google.dev/gemini-api/docs/deprecations, read
+ * 2026-11-01): Veo 3.1 on 2026-10-22 (replacement gemini-omni-1.1-flash), the Gemini 3.x image
+ * previews on 2026-06-25. They keep a price row for old receipts but are never priced-and-exposed
+ * again, and a sync that no longer lists them lets them go REMOVED.
+ */
+export const RETIRED_MEDIA_MODEL_KEYS_BY_PROVIDER: ReadonlyMap<
+  string,
+  ReadonlySet<string>
+> = new Map([
+  [
+    'GEMINI',
+    new Set([
+      'veo-3.1-lite-generate-preview',
+      'veo-3.1-fast-generate-preview',
+      'veo-3.1-generate-preview',
+      'veo-3.1-lite',
+      'veo-3.1-fast',
+      'veo-3.1-generate',
+      'gemini-3.1-flash-image-preview',
+      'gemini-3-pro-image-preview',
     ]),
   ],
 ]);

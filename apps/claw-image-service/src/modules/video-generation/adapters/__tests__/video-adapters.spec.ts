@@ -213,3 +213,62 @@ describe('xAI video client', () => {
     ).rejects.toBeDefined();
   });
 });
+
+describe('Gemini Omni through the Gemini client', () => {
+  const omniRequest = { ...request, model: 'models/gemini-omni-1.1-flash' };
+  beforeEach(() => vi.clearAllMocks());
+
+  it('calls the Interactions API once and holds the clip for poll and download', async () => {
+    http.httpPost.mockResolvedValue({
+      status: 'completed',
+      steps: [
+        { type: 'thought', content: [{ type: 'thought' }] },
+        {
+          type: 'model_output',
+          content: [{ type: 'video', mime_type: 'video/mp4', data: 'QUJD' }],
+        },
+      ],
+    });
+
+    const operation = await geminiVeoClient.start(gemini, omniRequest);
+
+    const [url, body, config] = http.httpPost.mock.calls[0] ?? [];
+    expect(url).toBe('https://generativelanguage.googleapis.com/v1beta/interactions');
+    expect(body).toEqual({
+      model: 'gemini-omni-1.1-flash',
+      input: 'A lighthouse at dusk\n\nClip length: about 6 seconds.',
+      response_format: { type: 'video', aspect_ratio: '9:16', resolution: '720p' },
+    });
+    expect(config.headers).toEqual({ 'x-goog-api-key': 'g-key' });
+    expect(operation.startsWith('omni:')).toBe(true);
+    expect(http.httpGet).not.toHaveBeenCalled();
+
+    const polled = await geminiVeoClient.poll(gemini, operation);
+    expect(polled).toEqual({ state: 'DONE', downloadUrl: operation });
+    const bytes = await geminiVeoClient.download(gemini, operation);
+    expect(bytes.toString('base64')).toBe('QUJD');
+    expect((await geminiVeoClient.poll(gemini, operation)).state).toBe('FAILED');
+  });
+
+  it('sends a source image first, then the text, for image-to-video', async () => {
+    http.httpPost.mockResolvedValue({
+      steps: [{ type: 'model_output', content: [{ type: 'video', data: 'QUJD' }] }],
+    });
+
+    await geminiVeoClient.start(gemini, {
+      ...omniRequest,
+      sourceImage: { base64: 'SU1H', mimeType: 'image/png' },
+    });
+
+    const body = http.httpPost.mock.calls[0]?.[1] as { input: Array<{ type: string }> };
+    expect(body.input.map((part) => part.type)).toEqual(['image', 'text']);
+  });
+
+  it('fails with NO_VIDEO_RETURNED when the reply carries no video', async () => {
+    http.httpPost.mockResolvedValue({ steps: [{ type: 'model_output', content: [] }] });
+
+    await expect(geminiVeoClient.start(gemini, omniRequest)).rejects.toMatchObject({
+      response: expect.anything(),
+    });
+  });
+});

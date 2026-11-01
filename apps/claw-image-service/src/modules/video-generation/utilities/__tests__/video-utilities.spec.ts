@@ -291,6 +291,11 @@ describe('meteredVideoModelKey', () => {
     expect(meteredVideoModelKey('models/veo-4.0-generate-001')).toBe('veo-3.1-generate-preview');
   });
 
+  it('meters any Gemini Omni id on the one seeded Omni row', () => {
+    expect(meteredVideoModelKey('models/gemini-omni-1.1-flash')).toBe('gemini-omni-1.1-flash');
+    expect(meteredVideoModelKey('gemini-omni-2')).toBe('gemini-omni-1.1-flash');
+  });
+
   it('meters an unseeded Grok video id on the dearest Grok video row', () => {
     expect(meteredVideoModelKey('grok-imagine-video-2')).toBe('grok-imagine-video-1.5');
   });

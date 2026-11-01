@@ -9,7 +9,10 @@ import {
   type MediaOutputKind,
   MODALITY_OUT_BY_MEDIA_KIND,
 } from './media-output-model.constants';
-import { PRICED_MEDIA_MODEL_KEYS_BY_PROVIDER } from './priced-media-models.constants';
+import {
+  PRICED_MEDIA_MODEL_KEYS_BY_PROVIDER,
+  RETIRED_MEDIA_MODEL_KEYS_BY_PROVIDER,
+} from './priced-media-models.constants';
 
 export type MediaOutputClassification = {
   kind: MediaOutputKind;
@@ -84,5 +87,8 @@ export function isPricedMediaModel(provider: string, modelKey: string): boolean 
   const keys = PRICED_MEDIA_MODEL_KEYS_BY_PROVIDER.get(provider.trim().toUpperCase());
   if (keys === undefined) return false;
   const id = modelKey.trim().replace(/^models\//u, '');
-  return keys.has(id) || keys.has(id.replace(DATED_SNAPSHOT_SUFFIX, ''));
+  const retired = RETIRED_MEDIA_MODEL_KEYS_BY_PROVIDER.get(provider.trim().toUpperCase());
+  return retired?.has(id) === true
+    ? false
+    : keys.has(id) || keys.has(id.replace(DATED_SNAPSHOT_SUFFIX, ''));
 }

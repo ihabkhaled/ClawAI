@@ -1163,3 +1163,7 @@ shows the stream state (no new i18n key). See [ADR-201](../../docs/13-adr/adr-20
 `media-capabilities.utility.ts` badges audio-output models (TTS, Lyria) as Audio input and Audio output only: the
 sync's capability guess could leave a Vision flag on them, and the picker ignores Vision and Video-input for any model
 whose `mediaKind` is audio.
+
+## Gemini video model (2026-11-01)
+
+Gemini video is `gemini-omni-1.1-flash` (Interactions API, about $0.10/s, routing seed v16). Google shut Veo 3.1 down on 2026-10-22; image-service walks a refused Veo pick to Omni. `src/constants/video.constants.ts` mirrors the shared video-model pattern (it must recognise `gemini-omni-*`).

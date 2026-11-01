@@ -16,11 +16,11 @@ export const VIDEO_DOWNLOAD_FILENAME = 'claw-video.mp4';
 /**
  * How to recognise a video-OUTPUT model listed under an ordinary chat connector.
  * Mirror of `VIDEO_OUTPUT_MODEL_PATTERNS_BY_CONNECTOR` in
- * packages/shared-utilities/src/video-generation/video-generation.constants.ts
+ * packages/shared-utilities/src/video-generation/video-model-catalog.constants.ts
  * (that package's root barrel pulls server-only modules, so the browser bundle
  * cannot import it). Keep the two in step.
  */
 export const VIDEO_OUTPUT_MODEL_PATTERNS_BY_CONNECTOR: ReadonlyMap<string, RegExp> = new Map([
-  ['GEMINI', /^(models\/)?veo-[\w.-]+$/iu],
+  ['GEMINI', /^(models\/)?(?:veo|gemini-omni)-[\w.-]+$/iu],
   ['GROK', /^grok-imagine-video[\w.-]*$/iu],
 ]);

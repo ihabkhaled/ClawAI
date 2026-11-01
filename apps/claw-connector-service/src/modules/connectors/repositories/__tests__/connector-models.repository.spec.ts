@@ -125,8 +125,8 @@ describe('ConnectorModelsRepository', () => {
 
     it('keeps a known priced media model the provider list omitted, and restores a removed one', async () => {
       prismaMock.connectorModel.findMany.mockResolvedValue([
-        { id: 'veo1', modelKey: 'models/veo-3.1-fast-generate-preview', lifecycle: 'ACTIVE' },
-        { id: 'veo2', modelKey: 'models/veo-3.1-generate-preview', lifecycle: 'REMOVED' },
+        { id: 'veo1', modelKey: 'models/gemini-omni-1.1-flash', lifecycle: 'ACTIVE' },
+        { id: 'veo2', modelKey: 'models/gemini-3.1-flash-image', lifecycle: 'REMOVED' },
         { id: 'chat1', modelKey: 'gpt-3.5-old', lifecycle: 'ACTIVE' },
       ]);
       prismaMock.$transaction = vi.fn().mockResolvedValue([{ count: 1 }]);

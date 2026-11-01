@@ -478,7 +478,8 @@ prices stay in routing's seed rows (rule 37 item 13).
   `gemini-3-pro-image`) → `gemini-3-pro-image-preview` ($120/M output, dearest).
 - gpt-image family id other than `gpt-image-1` (`gpt-image-1.5`, `-2`, `-mini`,
   `chatgpt-image-latest`) → `gpt-image-1@1536x1024` ($0.25/image, dearest).
-- Veo id without a row → `veo-3.1-generate-preview` ($0.40/s); `grok-imagine-video*`
+- `gemini-omni-*` → `gemini-omni-1.1-flash` (about $0.10/s, seed v16); Veo id without a row →
+  `veo-3.1-generate-preview` ($0.40/s); `grok-imagine-video*`
   without a row → `grok-imagine-video-1.5` ($0.08/s). Anything else is refused.
 - Not runnable here: `imagen-*` (Imagen is shut down; the adapter 404s).
 - Tests: `image-price-key.utility.spec.ts`, `video-utilities.spec.ts`.
@@ -596,8 +597,15 @@ file-service `store-generated-video`.
 standard; each model once, manual picks included) via `createSuccessor`. Credit exhaustion
 (`VIDEO_PROVIDER_CREDITS_DEPLETED`) never does. Those two codes also store
 `Provider said: <reason>` (key shapes redacted, 200 chars) beside the fixed sentence.
-Live-verified 2026-10-03: `veo-3.1-{fast,lite,}generate-preview` are the only Veo models the
-key lists; all three do text-to-video, fast and lite do image-to-video.
+Live-verified 2026-10-03: `veo-3.1-{fast,lite,}generate-preview` were the only Veo models the
+key listed. **Google shut all three Veo 3.1 models down on 2026-10-22** (production answered
+`VIDEO_MODEL_UNAVAILABLE`); the replacement is `gemini-omni-1.1-flash` through the Interactions
+API (`adapters/gemini-omni.adapter.ts`). That call is synchronous and returns the clip as base64,
+so `start` does the whole call and `utilities/omni-clip-store.utility.ts` holds the bytes for the
+poll and download (operation ids start `omni:`; a restart in between ends the job NO_VIDEO_RETURNED
+and releases the hold). Omni has no duration field, so the wanted length rides in the prompt and
+the price is metered per requested second (about $0.10/s at 720p); confirm the real clip length
+against the Google bill. A refused Veo pick walks the sibling chain to Omni.
 
 ## Audio generation: speech and music (2026-10-31)
 

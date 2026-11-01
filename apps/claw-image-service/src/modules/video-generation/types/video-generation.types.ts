@@ -97,6 +97,15 @@ export type VideoStartRequest = {
   sourceImage?: VideoSourceImage;
 };
 
+/** The slice of a Gemini Interactions reply a video needs: `steps[model_output].content[video].data`. */
+export type OmniInteractionResponse = {
+  status?: string;
+  steps?: Array<{
+    type?: string;
+    content?: Array<{ type?: string; mime_type?: string; data?: string }>;
+  }>;
+};
+
 /** A validated source image, ready for a provider body. */
 export type VideoSourceImage = { base64: string; mimeType: string };
 

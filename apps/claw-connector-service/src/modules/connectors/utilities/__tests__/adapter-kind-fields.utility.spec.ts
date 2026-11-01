@@ -19,9 +19,9 @@ describe('adapterKindFields', () => {
     });
   });
 
-  it('ignores the adapter TOOL verdict for a priced media model (Veo is a predict model)', () => {
+  it('ignores the adapter TOOL verdict for a priced media model (Gemini Omni video is not a chat model)', () => {
     expect(
-      adapterKindFields(model('models/veo-3.1-fast-generate-preview', 'TOOL'), true, 'GEMINI'),
+      adapterKindFields(model('models/gemini-omni-1.1-flash', 'TOOL'), true, 'GEMINI'),
     ).toEqual({});
   });
 

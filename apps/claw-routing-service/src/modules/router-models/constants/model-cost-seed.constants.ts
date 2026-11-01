@@ -71,8 +71,13 @@ import { AGGREGATOR_COST_ROWS } from './model-cost-seed-aggregators.constants';
 /// Gemini 3.1 Flash Image output $30/M -> $60/M and the grok-imagine-image-2.0 per-image
 /// price $0.08 -> $0.04 are CORRECTED in place (`supersedesSeededPrice`); the new
 /// image/video keys fill gaps. Veo prices are aggregator sourced, not from Google's card.
-export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v15';
-export const MODEL_COST_SEED_VERSION = 15;
+///
+/// v16 (2026-11-01): `gemini-omni-1.1-flash`, Google's replacement for the Veo 3.1 models it shut
+/// down on 2026-10-22. Priced per SECOND of 720p video at the pricing page's about $0.10/s
+/// ($17.50 per 1M video output tokens at 5,792 tokens/s). A new key: it fills a gap. The Veo
+/// rows stay for old receipts.
+export const MODEL_COST_SEED_NAME = 'model-cost-list-prices-2026-v16';
+export const MODEL_COST_SEED_VERSION = 16;
 
 /// Next in routing-service's 740_040_00N advisory-lock block (001 = deployment
 /// backfill, 002 = router chain). Distinct from payment-service's 740_018_001
@@ -815,6 +820,18 @@ const LISTED_COST_SEED_ENTRIES: readonly ModelCostSeedEntry[] = Object.freeze([
     costClass: CostClass.PREMIUM,
     videoPerUnitMicroUsd: 400000,
     replacesFallbackRate: true,
+  }),
+  // v16: Gemini Omni Flash video, about $0.10/s at 720p (ai.google.dev/gemini-api/docs/pricing, 2026-11-01).
+  Object.freeze({
+    provider: 'GEMINI',
+    modelKey: 'gemini-omni-1.1-flash',
+    inputPerMillionMicroUsd: 0,
+    cachedInputPerMillionMicroUsd: null,
+    outputPerMillionMicroUsd: 0,
+    reasoningPerMillionMicroUsd: null,
+    cacheWritePerMillionMicroUsd: null,
+    costClass: CostClass.STANDARD,
+    videoPerUnitMicroUsd: 100000,
   }),
   Object.freeze({
     provider: 'GROK',

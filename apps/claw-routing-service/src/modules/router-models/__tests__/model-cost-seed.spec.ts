@@ -416,9 +416,16 @@ describe('MODEL_COST_SEED_ENTRIES', () => {
     expect(find('GEMINI', 'gemini-2.5-flash-preview-tts')).toBeDefined();
   });
 
-  it('is version 15, so installs that ran v14 pick up the media prices', () => {
-    expect(MODEL_COST_SEED_VERSION).toBe(15);
-    expect(MODEL_COST_SEED_NAME).toBe('model-cost-list-prices-2026-v15');
+  it('is version 16, so installs that ran v15 pick up the Gemini Omni video price', () => {
+    expect(MODEL_COST_SEED_VERSION).toBe(16);
+    expect(MODEL_COST_SEED_NAME).toBe('model-cost-list-prices-2026-v16');
+  });
+
+  it('prices gemini-omni-1.1-flash at $0.10 per second of video', () => {
+    const omni = MODEL_COST_SEED_ENTRIES.find(
+      (e) => e.provider === 'GEMINI' && e.modelKey === 'gemini-omni-1.1-flash',
+    );
+    expect(omni?.videoPerUnitMicroUsd).toBe(100000);
   });
 
   describe('aggregator prices (v14)', () => {

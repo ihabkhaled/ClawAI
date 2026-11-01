@@ -375,7 +375,7 @@ describe('VideoGenerationService', () => {
         row({ isAutoMode: false, model: 'veo-3.1-generate-preview' }),
       );
       repo['createSuccessor']!.mockResolvedValue(
-        row({ id: 'gen-2', isAutoMode: false, model: 'veo-3.1-fast-generate-preview' }),
+        row({ id: 'gen-2', isAutoMode: false, model: 'gemini-omni-1.1-flash' }),
       );
       execution['execute']!.mockRejectedValueOnce(rejected());
 
@@ -391,7 +391,7 @@ describe('VideoGenerationService', () => {
         'gen-1',
         expect.objectContaining({
           provider: 'VIDEO_GEMINI',
-          model: 'veo-3.1-fast-generate-preview',
+          model: 'gemini-omni-1.1-flash',
           isAutoMode: false,
         }),
       );
@@ -401,9 +401,7 @@ describe('VideoGenerationService', () => {
     it('never revisits a model and stops after the chain for a manual pick', async () => {
       repo['create']!.mockResolvedValue(row({ isAutoMode: false }));
       repo['createSuccessor']!.mockResolvedValueOnce(
-        row({ id: 'gen-2', isAutoMode: false, model: 'veo-3.1-lite-generate-preview' }),
-      ).mockResolvedValueOnce(
-        row({ id: 'gen-3', isAutoMode: false, model: 'veo-3.1-generate-preview' }),
+        row({ id: 'gen-2', isAutoMode: false, model: 'gemini-omni-1.1-flash' }),
       );
       execution['execute']!.mockRejectedValue(rejected());
 
@@ -412,8 +410,8 @@ describe('VideoGenerationService', () => {
         await flush();
       }
 
-      expect(repo['createSuccessor']).toHaveBeenCalledTimes(2);
-      expect(execution['execute']).toHaveBeenCalledTimes(3);
+      expect(repo['createSuccessor']).toHaveBeenCalledTimes(1);
+      expect(execution['execute']).toHaveBeenCalledTimes(2);
     });
 
     it('does not walk the Veo list after a credit refusal', async () => {

@@ -1893,3 +1893,7 @@ uses, cached 60 s per user and kind, never local providers. A model the user nam
 `findNamed(userId, kind, name)` and plan-checked: a denied model returns a "not in your plan" tool
 error and never falls back. The constants in `media-catalog.constants.ts` are used only when the
 catalog call itself fails.
+
+## Gemini video model (2026-11-01)
+
+Gemini video is `gemini-omni-1.1-flash` (Interactions API, about $0.10/s, routing seed v16). Google shut Veo 3.1 down on 2026-10-22; image-service walks a refused Veo pick to Omni. The media tool, its fallback and the AUTO video route (`media-tools.constants.ts`) use Omni.

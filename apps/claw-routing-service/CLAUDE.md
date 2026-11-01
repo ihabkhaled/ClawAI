@@ -412,3 +412,7 @@ Registry rows for image, video and audio generation models carry `IMAGE_OUTPUT` 
 Cost seed v15 (`model-cost-list-prices-2026-v15`): media prices checked 2026-10-31 (Gemini/OpenAI image tokens, Grok Imagine per image, Veo per second, aggregator sourced), plus audio rows mirroring image-service's `AUDIO_PRICE_TABLE`: `gpt-4o-mini-tts`, `gemini-2.5-pro-preview-tts`, `gemini-3.1-flash-tts-preview` on tokens; `lyria-3-clip-preview`, `lyria-3-pro-preview`, `lyria-3.5` per song in `imagePerUnitMicroUsd` (a song is metered as `imageUnits: 1`; `PaygSurface` has no per-song unit).
 
 `classifyMediaOutputModel(model, connector?)` (`media-output-model/`, with `audio-output-model/` and the image/video pattern tables) maps a model id to IMAGE / VIDEO / AUDIO (speech or music) by pattern, never by provider-named code. Add a new family by extending a pattern table. The browser cannot import the package root, so `apps/claw-frontend/src/constants/image.constants.ts` mirrors the image and audio patterns; keep them in step.
+
+## Cost seed v16 (2026-11-01)
+
+Gemini video is `gemini-omni-1.1-flash` (Interactions API, about $0.10/s, routing seed v16). Google shut Veo 3.1 down on 2026-10-22; image-service walks a refused Veo pick to Omni. The v16 seed adds the `gemini-omni-1.1-flash` per-second row; the Veo rows stay for old receipts. `gemini-omni` is excluded from chat substitutes like Veo.

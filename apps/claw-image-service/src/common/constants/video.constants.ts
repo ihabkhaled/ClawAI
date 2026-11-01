@@ -16,9 +16,10 @@ export const VIDEO_PROVIDER_CONNECTORS: ReadonlyMap<string, string> = new Map([
   [VIDEO_PROVIDER_GROK, 'GROK'],
 ]);
 
-// The cheapest model per provider that still gives a usable clip. Veo 3.1 Fast
-// is $0.10 per second, Grok Imagine Video $0.05 (routing seed v11).
-export const VIDEO_MODEL_GEMINI_AUTO = 'veo-3.1-fast-generate-preview';
+// The cheapest model per provider that still gives a usable clip. Gemini Omni Flash
+// is about $0.10 per second, Grok Imagine Video $0.05 (routing seed v16). Veo 3.1 was
+// shut down by Google on 2026-10-22.
+export const VIDEO_MODEL_GEMINI_AUTO = 'gemini-omni-1.1-flash';
 export const VIDEO_MODEL_GROK_AUTO = 'grok-imagine-video';
 
 /** The order AUTO tries providers in; a failure falls through to the next one. */
@@ -33,8 +34,4 @@ export const VIDEO_FALLBACK_CHAIN: ReadonlyArray<{ provider: string; model: stri
  * first, so a fallback never costs more than the clip the user was already
  * willing to pay for. Credit exhaustion is account-wide and never walks this list.
  */
-export const VEO_MODEL_FALLBACK_CHAIN: readonly string[] = [
-  'veo-3.1-fast-generate-preview',
-  'veo-3.1-lite-generate-preview',
-  'veo-3.1-generate-preview',
-];
+export const VEO_MODEL_FALLBACK_CHAIN: readonly string[] = ['gemini-omni-1.1-flash'];

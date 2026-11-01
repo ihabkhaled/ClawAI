@@ -99,7 +99,7 @@ export const MEDIA_STATUS_TERMINAL: ReadonlySet<string> = new Set([
 /** Defaults, and the models a chat model may name. Anything else falls back to the default. */
 export const MEDIA_DEFAULT_TARGET: ReadonlyMap<MediaKind, MediaTarget> = new Map([
   [MediaKind.IMAGE, { provider: 'IMAGE_GEMINI', model: 'gemini-2.5-flash-image' }],
-  [MediaKind.VIDEO, { provider: 'VIDEO_GEMINI', model: 'veo-3.1-fast-generate-preview' }],
+  [MediaKind.VIDEO, { provider: 'VIDEO_GEMINI', model: 'gemini-omni-1.1-flash' }],
   [MediaKind.AUDIO, { provider: 'AUDIO_OPENAI', model: 'gpt-4o-mini-tts' }],
 ]);
 /** Model id -> provider, per kind (audio picks its model itself). */
@@ -116,7 +116,7 @@ export const MEDIA_KNOWN_MODELS: ReadonlyMap<MediaKind, ReadonlyMap<string, stri
   [
     MediaKind.VIDEO,
     new Map([
-      ['veo-3.1-fast-generate-preview', 'VIDEO_GEMINI'],
+      ['gemini-omni-1.1-flash', 'VIDEO_GEMINI'],
       ['grok-imagine-video', 'VIDEO_GROK'],
     ]),
   ],
@@ -292,7 +292,7 @@ const modelProperty = (examples: string): Record<string, unknown> => ({
 const IMAGE_MODEL_PROPERTY = modelProperty(
   'gemini-2.5-flash-image, chatgpt-image-latest, grok-imagine-image',
 );
-const VIDEO_MODEL_PROPERTY = modelProperty('veo-3.1-fast-generate-preview, grok-imagine-video');
+const VIDEO_MODEL_PROPERTY = modelProperty('gemini-omni-1.1-flash, grok-imagine-video');
 const AUDIO_MODEL_PROPERTY = modelProperty('gpt-4o-mini-tts, a Gemini TTS model');
 
 /** The JSON schema each media tool shows the model. */
@@ -403,7 +403,7 @@ export const MEDIA_PROVIDER_ORDER: ReadonlyMap<MediaKind, readonly MediaTarget[]
   [
     MediaKind.VIDEO,
     [
-      { provider: 'VIDEO_GEMINI', model: 'veo-3.1-fast-generate-preview' },
+      { provider: 'VIDEO_GEMINI', model: 'gemini-omni-1.1-flash' },
       { provider: 'VIDEO_GROK', model: 'grok-imagine-video' },
     ],
   ],

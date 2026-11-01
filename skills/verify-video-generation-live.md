@@ -17,9 +17,7 @@
 
 | Model                  | Per 4 s clip |
 | ---------------------- | ------------ |
-| Veo 3.1 Lite           | $0.20        |
-| Veo 3.1 Fast           | $0.40        |
-| Veo 3.1 Standard       | $1.60        |
+| Gemini Omni Flash      | $0.40        |
 | Grok Imagine Video     | $0.20        |
 | Grok Imagine Video 1.5 | $0.32        |
 

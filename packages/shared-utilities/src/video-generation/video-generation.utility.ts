@@ -6,9 +6,9 @@ import {
   VIDEO_DURATION_SECONDS_DEFAULT,
   VIDEO_DURATION_SECONDS_MAX,
   VIDEO_DURATION_SECONDS_MIN,
-  VIDEO_OUTPUT_MODEL_PATTERNS_BY_CONNECTOR,
   VIDEO_REQUEST_PATTERNS,
 } from './video-generation.constants';
+import { VIDEO_OUTPUT_MODEL_PATTERNS_BY_CONNECTOR } from './video-model-catalog.constants';
 
 /** The `VIDEO_*` provider a connector model id belongs to, or undefined for a chat model. */
 export function resolveVideoCapabilityProvider(

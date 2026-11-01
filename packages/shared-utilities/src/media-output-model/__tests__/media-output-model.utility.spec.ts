@@ -64,9 +64,7 @@ describe('classifyMediaOutputModel', () => {
 
 describe('isPricedMediaModel (production QA 2026-11-01 keys)', () => {
   it.each([
-    ['GEMINI', 'models/veo-3.1-fast-generate-preview'],
-    ['GEMINI', 'models/veo-3.1-generate-preview'],
-    ['GEMINI', 'models/veo-3.1-lite-generate-preview'],
+    ['GEMINI', 'models/gemini-omni-1.1-flash'],
     ['OPENAI', 'chatgpt-image-latest'],
     ['OPENAI', 'gpt-4o-mini-tts-2025-03-20'],
     ['OPENAI', 'gpt-4o-mini-tts-2025-12-15'],
@@ -76,12 +74,16 @@ describe('isPricedMediaModel (production QA 2026-11-01 keys)', () => {
   });
 
   it.each([
+    ['GEMINI', 'models/veo-3.1-fast-generate-preview'],
+    ['GEMINI', 'models/veo-3.1-generate-preview'],
+    ['GEMINI', 'models/veo-3.1-lite-generate-preview'],
+    ['GEMINI', 'models/gemini-3.1-flash-image-preview'],
     ['GEMINI', 'models/gemini-3.8-flash-tts'],
     ['GEMINI', 'models/gemini-3.8-flash-lite-tts'],
     ['GEMINI', 'models/lyria-realtime-exp'],
     ['OPENROUTER', 'google/lyria-3-clip-preview'],
     ['OPENAI', 'gpt-4o'],
-  ])('%s %s stays hidden', (provider, key) => {
+  ])('%s %s stays hidden (unpriced or shut down)', (provider, key) => {
     expect(isPricedMediaModel(provider, key)).toBe(false);
   });
 });

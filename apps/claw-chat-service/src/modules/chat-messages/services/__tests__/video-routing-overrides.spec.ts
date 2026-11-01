@@ -76,7 +76,7 @@ describe('video routing overrides', () => {
       ]);
 
       expect(out.selectedProvider).toBe('VIDEO_GEMINI');
-      expect(out.selectedModel).toBe('veo-3.1-fast-generate-preview');
+      expect(out.selectedModel).toBe('gemini-omni-1.1-flash');
     });
 
     it.each([

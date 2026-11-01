@@ -36,6 +36,15 @@ export const VIDEO_MAX_BYTES = 40 * 1024 * 1024;
 export const VIDEO_MIME_TYPE = 'video/mp4';
 export const VIDEO_RESOLUTION = '720p';
 
+/** Gemini Omni answers the whole clip in one call, so the start call itself can take minutes. */
+export const VIDEO_OMNI_REQUEST_TIMEOUT_MS = 480_000;
+
+/** Marks an operation id as an Omni clip held in memory, so poll and download route to it. */
+export const OMNI_OPERATION_PREFIX = 'omni:';
+
+/** A finished Omni clip waits this long in memory for the poll and download that follow. */
+export const VIDEO_OMNI_RESULT_TTL_MS = 600_000;
+
 export const GEMINI_DEFAULT_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
 export const XAI_DEFAULT_BASE_URL = 'https://api.x.ai/v1';
 
@@ -112,11 +121,14 @@ export const SEEDED_VIDEO_PRICE_KEYS: readonly string[] = [
   'veo-3.1-lite-generate-preview',
   'veo-3.1-fast-generate-preview',
   'veo-3.1-generate-preview',
+  'gemini-omni-1.1-flash',
   'grok-imagine-video',
   'grok-imagine-video-1.5',
 ];
 
 /** Dearest seeded Veo row: what an unseeded `veo-*` id is metered on. */
 export const VEO_WORST_CASE_PRICE_KEY = 'veo-3.1-generate-preview';
+/** The one Gemini Omni video row (about $0.10/s at 720p): what any `gemini-omni-*` id is metered on. */
+export const OMNI_PRICE_KEY = 'gemini-omni-1.1-flash';
 /** Dearest seeded Grok video row: what an unseeded `grok-imagine-video*` id is metered on. */
 export const GROK_VIDEO_WORST_CASE_PRICE_KEY = 'grok-imagine-video-1.5';
