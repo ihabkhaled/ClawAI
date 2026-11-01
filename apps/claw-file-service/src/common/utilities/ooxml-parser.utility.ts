@@ -198,10 +198,7 @@ function readCellValue(attributes: string, body: string, sharedStrings: string[]
     // would be worse than showing nothing, so the cell reads as empty. `.at` is
     // used rather than a bracket read because a shared-string index comes
     // straight out of the uploaded file and must not reach a property lookup.
-    if (!Number.isInteger(index) || index < 0) {
-      return '';
-    }
-    return sharedStrings.at(index) ?? '';
+    return !Number.isInteger(index) || index < 0 ? '' : (sharedStrings.at(index) ?? '');
   }
 
   return decodeXmlEntities(rawValue);
@@ -237,6 +234,35 @@ function byTrailingNumber(a: string, b: string): number {
 function trailingNumber(entryName: string): number {
   const digits = /(\d+)\.xml$/.exec(entryName)?.[1];
   return digits === undefined ? 0 : Number.parseInt(digits, 10);
+}
+
+/**
+ * Refuses an OOXML archive that is a zip bomb, on its headers alone.
+ *
+ * For a reader that inflates by itself (DOCX goes to mammoth, which has no caps):
+ * the part count, each part's declared size and the declared total are all checked
+ * before any byte is inflated. A header that lies is caught by the inflater, which
+ * rejects a size mismatch.
+ */
+export async function assertOoxmlArchiveWithinBounds(filePath: string): Promise<void> {
+  const zip = new StreamZip.async({ file: filePath, storeEntries: true });
+  try {
+    const entries = Object.values(await zip.entries());
+    assertEntryCountWithinLimit(entries.map((entry) => entry.name));
+    const budget = new EntryBudget();
+    for (const entry of entries) {
+      if (entry.size > OOXML_MAX_UNCOMPRESSED_ENTRY_BYTES) {
+        throw new BusinessException(
+          `Archive entry ${entry.name} declares ${String(entry.size)} bytes (limit ${String(OOXML_MAX_UNCOMPRESSED_ENTRY_BYTES)})`,
+          'OOXML_ENTRY_TOO_LARGE',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      budget.spend(entry.size, entry.name);
+    }
+  } finally {
+    await closeQuietly(zip);
+  }
 }
 
 /**

@@ -50,4 +50,14 @@ export const EXTRACT_TEXT_SCANNED_PAGE_MIN_CHARS = 20;
  * whole text (bounded by the parsers) and `totalPages: 1`, and a `pages` range on
  * one of them is ignored rather than answered with an empty page.
  */
+/**
+ * Most characters one office document may return.
+ *
+ * The parsers bound what they inflate (128 MB), which is far more than a model
+ * reads and more than should cross the wire for one call. A longer text is cut
+ * on a line boundary and ends with a line saying so, so the reader never takes a
+ * cut document for a whole one.
+ */
+export const DOCUMENT_TEXT_MAX_CHARS = 1_000_000;
+
 export const DOCUMENT_TEXT_EXTENSIONS = ['.docx', '.xlsx', '.pptx', '.rtf'] as const;

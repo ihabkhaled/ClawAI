@@ -9,9 +9,16 @@ import * as fsp from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { DOCUMENT_TEXT_EXTENSIONS } from '../../modules/files/constants/extract-text.constants';
+import {
+  DOCUMENT_TEXT_EXTENSIONS,
+  DOCUMENT_TEXT_MAX_CHARS,
+} from '../../modules/files/constants/extract-text.constants';
 import { extractTextFromDocx } from './docx-parser.utility';
-import { extractTextFromPptx, extractTextFromXlsx } from './ooxml-parser.utility';
+import {
+  assertOoxmlArchiveWithinBounds,
+  extractTextFromPptx,
+  extractTextFromXlsx,
+} from './ooxml-parser.utility';
 import { extractTextFromRtf } from './rtf-parser.utility';
 
 export function documentTextExtension(filename: string): string | undefined {
@@ -34,10 +41,14 @@ async function withTemporaryFile<T>(
   }
 }
 
-export async function extractTextFromDocument(extension: string, buffer: Buffer): Promise<string> {
+async function readDocumentText(extension: string, buffer: Buffer): Promise<string> {
   switch (extension) {
     case '.docx':
-      return extractTextFromDocx(buffer);
+      return withTemporaryFile(extension, buffer, async (filePath) => {
+        // mammoth inflates without caps, so the archive is screened first.
+        await assertOoxmlArchiveWithinBounds(filePath);
+        return extractTextFromDocx(buffer);
+      });
     case '.rtf':
       return extractTextFromRtf(buffer);
     case '.xlsx':
@@ -47,4 +58,17 @@ export async function extractTextFromDocument(extension: string, buffer: Buffer)
     default:
       throw new Error(`No document reader for ${extension}`);
   }
+}
+
+function capDocumentText(text: string): string {
+  if (text.length <= DOCUMENT_TEXT_MAX_CHARS) {
+    return text;
+  }
+  const cut = text.lastIndexOf('\n', DOCUMENT_TEXT_MAX_CHARS);
+  const kept = text.slice(0, cut > 0 ? cut : DOCUMENT_TEXT_MAX_CHARS);
+  return `${kept}\n[Text cut: the document is longer than ${String(DOCUMENT_TEXT_MAX_CHARS)} characters]`;
+}
+
+export async function extractTextFromDocument(extension: string, buffer: Buffer): Promise<string> {
+  return capDocumentText(await readDocumentText(extension, buffer));
 }

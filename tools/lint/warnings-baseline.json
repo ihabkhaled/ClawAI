@@ -797,9 +797,6 @@
       "security/detect-non-literal-fs-filename": 2,
       "security/detect-object-injection": 1
     },
-    "apps/claw-file-service/src/common/utilities/ooxml-parser.utility.ts": {
-      "unicorn/prefer-ternary": 1
-    },
     "apps/claw-file-service/src/common/utilities/seven-zip-extraction.utility.ts": {
       "security/detect-non-literal-fs-filename": 3
     },

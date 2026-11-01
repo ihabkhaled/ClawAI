@@ -2,7 +2,11 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import * as zlib from 'node:zlib';
-import { extractTextFromPptx, extractTextFromXlsx } from '../ooxml-parser.utility';
+import {
+  assertOoxmlArchiveWithinBounds,
+  extractTextFromPptx,
+  extractTextFromXlsx,
+} from '../ooxml-parser.utility';
 import {
   OOXML_MAX_ENTRY_COUNT,
   OOXML_MAX_UNCOMPRESSED_ENTRY_BYTES,
@@ -257,6 +261,48 @@ describe('ooxml-parser.utility', () => {
       await expect(
         extractTextFromXlsx(fixture({ [XLSX_SHARED_STRINGS_ENTRY]: bomb }, '.xlsx')),
       ).rejects.toThrow(/OOXML_ENTRY_TOO_LARGE|bytes \(limit/);
+    });
+  });
+
+  // The DOCX route screens the archive on its headers before mammoth, which has
+  // no caps of its own, inflates anything.
+  describe('assertOoxmlArchiveWithinBounds', () => {
+    it('accepts an ordinary archive', async () => {
+      await expect(
+        assertOoxmlArchiveWithinBounds(fixture({ 'word/document.xml': '<w:document/>' }, '.docx')),
+      ).resolves.toBeUndefined();
+    });
+
+    it('refuses an implausible entry count before reading anything', async () => {
+      const files: Record<string, string> = {};
+      for (let i = 0; i < OOXML_MAX_ENTRY_COUNT + 1; i++) {
+        files[`word/part${String(i + 1)}.xml`] = '<x/>';
+      }
+
+      await expect(assertOoxmlArchiveWithinBounds(fixture(files, '.docx'))).rejects.toThrow(
+        /limit 5000/,
+      );
+    });
+
+    it('refuses an entry whose declared size is past the per-entry cap', async () => {
+      const bomb = 'A'.repeat(OOXML_MAX_UNCOMPRESSED_ENTRY_BYTES + 1024);
+
+      await expect(
+        assertOoxmlArchiveWithinBounds(fixture({ 'word/document.xml': bomb }, '.docx')),
+      ).rejects.toThrow(/declares \d+ bytes/);
+    });
+
+    it('refuses an archive whose declared total is past the total cap', async () => {
+      // Each part is under the per-entry cap; together they are over the total.
+      const part = 'A'.repeat(OOXML_MAX_UNCOMPRESSED_ENTRY_BYTES - 1024);
+      const files: Record<string, string> = {};
+      for (let i = 0; i < 3; i++) {
+        files[`word/part${String(i + 1)}.xml`] = part;
+      }
+
+      await expect(assertOoxmlArchiveWithinBounds(fixture(files, '.docx'))).rejects.toThrow(
+        /exceeds/,
+      );
     });
   });
 });

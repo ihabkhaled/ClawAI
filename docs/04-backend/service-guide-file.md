@@ -741,6 +741,13 @@ folder (mode 0600) for one parse and the folder is removed in every outcome. Any
 extension answers 400 `extract-text reads PDF, DOCX, XLSX, PPTX and RTF files only`. Tests:
 `document-text.utility.spec.ts`, `files.service-extract-text.spec.ts`.
 
+**Zip-bomb screen for DOCX.** mammoth inflates with no caps, so a DOCX is first screened on its
+headers (`assertOoxmlArchiveWithinBounds`: entry count, each declared entry size, declared total,
+the same limits as the XLSX/PPTX readers) before mammoth sees a byte; a header that lies is caught
+by the inflater's size check. Returned text is capped at `DOCUMENT_TEXT_MAX_CHARS` (1,000,000): a
+longer document is cut on a line boundary and ends with `[Text cut: the document is longer than
+1000000 characters]`, so it is never mistaken for a whole one.
+
 **Why it is not `upload`.** The coding agent reads a PDF that is already in the
 user's workspace. Uploading it would put a copy of a repository file in their
 file list, their storage and their retention window — which is not what "read
