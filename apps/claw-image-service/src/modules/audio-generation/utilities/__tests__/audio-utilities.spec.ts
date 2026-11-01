@@ -24,7 +24,8 @@ describe('audio wav utility', () => {
 
 describe('audio metering mode', () => {
   it('meters OpenAI per character, Gemini speech per token, music per song', () => {
-    expect(audioMeterMode('SPEECH', 'AUDIO_OPENAI', 'gpt-4o-mini-tts')).toBe('CHARACTERS');
+    expect(audioMeterMode('SPEECH', 'AUDIO_OPENAI', 'tts-1')).toBe('CHARACTERS');
+    expect(audioMeterMode('SPEECH', 'AUDIO_OPENAI', 'gpt-4o-mini-tts')).toBe('TOKENS');
     expect(audioMeterMode('SPEECH', 'AUDIO_GEMINI', 'models/gemini-2.5-pro-preview-tts')).toBe(
       'TOKENS',
     );

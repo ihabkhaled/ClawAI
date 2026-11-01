@@ -20,7 +20,10 @@ export function audioMeterMode(kind: AudioKind, provider: string, model: string)
   if (kind === AudioKind.MUSIC) {
     return 'SONG';
   }
-  return provider === 'AUDIO_OPENAI' || AUDIO_PER_CHARACTER_MODELS.has(audioPriceKey(model))
+  // Only tts-1 and tts-1-hd have a per-character price. gpt-4o-mini-tts is priced per token
+  // and /audio/speech reports no usage, so it settles on the hold's own estimate: the user is
+  // never charged less than the work, and a model with no price for its unit is refused.
+  return provider === 'AUDIO_OPENAI' && AUDIO_PER_CHARACTER_MODELS.has(audioPriceKey(model))
     ? 'CHARACTERS'
     : 'TOKENS';
 }

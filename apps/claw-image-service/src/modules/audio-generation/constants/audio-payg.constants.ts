@@ -41,14 +41,14 @@ export const AUDIO_PRICE_TABLE: readonly AudioPriceEntry[] = [
     outputMicroUsd: 0,
     seeded: true,
   },
-  // $0.60 / 1M text tokens, $12.00 / 1M audio tokens. /audio/speech reports no usage, so
-  // it cannot be settled on tokens: not seeded.
+  // $0.60 / 1M text tokens, $12.00 / 1M audio tokens. /audio/speech reports no usage, so it
+  // settles on the hold's own estimate (over-reserves, never under-charges).
   {
     model: 'gpt-4o-mini-tts',
     unit: 'PER_MILLION_TOKENS',
     inputMicroUsd: 600_000,
     outputMicroUsd: 12_000_000,
-    seeded: false,
+    seeded: true,
   },
   {
     model: 'gemini-2.5-flash-preview-tts',
