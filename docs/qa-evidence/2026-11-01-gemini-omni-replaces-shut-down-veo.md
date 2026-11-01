@@ -43,5 +43,7 @@ models in the picker; the retired list now overrides it.
 
 - Omni clip length is not controllable; metering is per requested second.
 - Nano Banana 2.1 (`gemini-nano-banana-2.1`, Interactions API) is not added; 2.5 Flash Image and 3.1 Flash Image still work.
-- L04/L08/L10 still pending (browser picker, owner walk-through, Google bill).
+- L04/L08/L10 pending: browser picker (API list for the Pro user shows no Veo id), owner walk-through, Google bill.
+- Nano Banana 2.1 stays unexposed: its price and Interactions image response are unverified, and money is never guessed. Owner supplies the price first.
+- Dependabot #160 (minimatch < 11.0.1, development scope, moderate) left: the fix is a major bump of dev-tool transitive deps (3.1.5 and 10.2.6 in the tree).
 - Stop during an Omni turn does not cancel the already-started synchronous call; the clip is generated and billed.
