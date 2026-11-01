@@ -58,3 +58,21 @@ hold also covers the catalog's tokens. Still behind the per-model admin switch (
   `tool_calls` with zero calls (unconfirmed stall risk).
 - Release: the Release for `06c1d2b29` (caching) ran green and deployed; caching is still OFF for every
   model. The Releases for `08a953f1d` and `754dae7fd` did not run (their CI runs were cancelled).
+
+## Live proof on the dev stack (2026-11-01)
+
+- Caching switched ON for one dev model, `claude-haiku-4-5-20251001` (rates already in the seed:
+  1,000,000 input, 5,000,000 output, 100,000 read, 1,250,000 write micro-USD per million). Dev
+  database only; production untouched. OFF again with `PUT /connectors/:id/models/prompt-caching`
+  `{modelKeys:[...], enabled:false}`.
+- Real Runtime V2 agent runs (a `workspace.file` list call, then the answer), prefix about 21k tokens.
+  A stale chat-service process still sent every call uncached until `docker restart` (the running
+  process, not the code, was old).
+- Charge versus provider usage, per call, in micro-USD: expected 27,435 / 27,455 / 10,389 / 10,262,
+  charged 27,435 / 27,455 / 10,389 / 10,262. Exact match. Holds were 191k to 199k, so the largest
+  charge was about 14% of its hold: the write premium was covered. All reservations released.
+- Reads work across runs: run 3 read 21,777 and 21,905 cached tokens.
+- FINDING, NOT FIXED: inside one run, turn 2 rewrote the whole prefix (write 21,905, read 0) instead
+  of reading turn 1's cache. The prefix is not byte-stable between turns of the same run, so the
+  main saving (cheaper later turns of a long agent run) is not yet delivered. Suspected cause: turn 1
+  decorates the last user message. Needs a fix and a re-run before caching is switched on for users.
