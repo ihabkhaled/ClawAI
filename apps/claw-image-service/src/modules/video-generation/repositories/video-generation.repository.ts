@@ -65,9 +65,10 @@ export class VideoGenerationRepository {
     return result.count > 0;
   }
 
+  /** Never revives a cancelled row: Omni's start blocks, so a Stop can land before this write. */
   async setOperation(id: string, operationId: string): Promise<void> {
-    await this.prisma.videoGeneration.update({
-      where: { id },
+    await this.prisma.videoGeneration.updateMany({
+      where: { id, status: { in: [...VIDEO_ACTIVE_STATUSES] } },
       data: { providerOperationId: operationId, status: VideoGenerationStatus.GENERATING },
     });
   }

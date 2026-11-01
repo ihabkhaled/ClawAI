@@ -290,7 +290,7 @@
         "VideoGeneration",
         "VideoGenerationAsset"
       ],
-      "testFiles": 56,
+      "testFiles": 57,
       "testRunner": "vitest"
     },
     {
