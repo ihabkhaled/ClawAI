@@ -174,6 +174,7 @@ import { boundImageGenerationPrompt } from '../utilities/image-generation-prompt
 import { buildReferenceImagePrompt } from '../utilities/image-reference-prompt.utility';
 import { transformOpenAiMessagesToOllama } from '../utilities/ollama-message-shape.utility';
 import { transformOpenAiMessagesToAnthropic } from '../utilities/anthropic-message-shape.utility';
+import { appendTailToConversation } from '../utilities/anthropic-turn-tail.utility';
 import { applyAnthropicPromptCache } from '../utilities/anthropic-prompt-cache.utility';
 import { PromptCachePolicyService } from '../services/prompt-cache-policy.service';
 import type { AnthropicMessagesResponse } from '../types/anthropic-message-shape.types';
@@ -5440,13 +5441,19 @@ export class ChatExecutionManager implements OnModuleInit {
     stream: boolean,
     promptCache: boolean,
   ): AnthropicMessagesRequest {
-    const openAiMessages = this.contextAssembly.buildChatMessages(context);
+    // On the cached body the per-turn tail rides at the END of the conversation:
+    // anything that differs between turns and sits before the messages would make
+    // every message after it a cache miss.
+    const { stableContext, systemTail } = this.splitSystemTail(context, promptCache);
+    const openAiMessages = this.contextAssembly.buildChatMessages(stableContext);
     const baseMessages = this.applyShortConstraintToOpenAiMessages(
       openAiMessages,
       executionOptions,
     );
     const { system, conversation } = this.partitionAnthropicSystem(baseMessages);
-    const shape = transformOpenAiMessagesToAnthropic(conversation);
+    const shape = transformOpenAiMessagesToAnthropic(
+      appendTailToConversation(conversation, systemTail),
+    );
     if (shape.pdfCount > 0 || shape.imageCount > 0) {
       this.logger.debug(
         `buildAnthropicMessagesRequestBody: transformed pdfCount=${String(shape.pdfCount)} imageCount=${String(shape.imageCount)} for model=${model}`,
@@ -5652,6 +5659,18 @@ export class ChatExecutionManager implements OnModuleInit {
       true,
       false,
     );
+  }
+
+  // Only the cached body moves the tail to the end of the conversation; any other
+  // body keeps it as the last part of the one system message.
+  private splitSystemTail(
+    context: AssembledContext,
+    promptCache: boolean,
+  ): { stableContext: AssembledContext; systemTail: string } {
+    const systemTail = promptCache ? (context.systemPromptTail ?? '') : '';
+    return systemTail.length > 0
+      ? { stableContext: { ...context, systemPromptTail: null }, systemTail }
+      : { stableContext: context, systemTail: '' };
   }
 
   private partitionAnthropicSystem(messages: OpenAiChatMessage[]): {

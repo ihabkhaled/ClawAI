@@ -190,10 +190,10 @@ describe('RuntimeV2LoopManager continuation ordering', () => {
     ).continueClaimedRun(binding, command, {}, 'claim_1');
 
     const providerContext = callProvider.mock.calls[0]?.[2] as {
-      systemPrompt: string;
+      systemPromptTail: string;
       threadMessages: Array<{ role: string; content: string }>;
     };
-    expect(providerContext.systemPrompt).toContain(largeContent);
+    expect(providerContext.systemPromptTail).toContain(largeContent);
     expect(providerContext.threadMessages.at(-2)).toEqual(request);
     expect(providerContext.threadMessages.at(-1)).toMatchObject({
       role: 'TOOL',

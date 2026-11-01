@@ -299,7 +299,10 @@ reply and from `input_json_delta` stream frames. Not cached, on purpose: a catal
 cannot express (`toolsUnavailable`, e.g. over the byte budget), a compare lane (its hold is taken
 before the call, unsized), every other provider. The legacy
 `ENABLE_ANTHROPIC_NATIVE_PDF` body no longer carries breakpoints (nothing reads its
-cache usage). Hold sizing for a cached tool call (2026-11-01, found by an independent review): the
+cache usage). Stable prefix inside one run (2026-11-01): the Runtime V2 loop's per-turn tool result
+is `systemPromptTail`, sent as the last block of the last user turn on the cached body
+(`anthropic-turn-tail.utility.ts`), never in front of the messages; live, turn 2 read 8,990 cached
+tokens and wrote 128. Hold sizing for a cached tool call (2026-11-01, found by an independent review): the
 tool catalog and the tool-result history (`context.toolTurns`) are sized at 2.5 bytes per token
 (`CACHED_JSON_BYTES_PER_TOKEN`), not 4, and 400 tokens (`CACHED_TOOL_PROMPT_MARGIN_TOKENS`) cover
 Anthropic's hidden tool-use system prompt. A reply cut off by `stop_reason` `max_tokens` drops

@@ -67,6 +67,13 @@ export type PluginTurn = { threadId?: string | undefined; messageId?: string | u
 export type AssembledContext = {
   userId: string;
   systemPrompt: string | null;
+  /**
+   * Text that changes every turn of one run (a tool result), kept apart from
+   * `systemPrompt`. It is the LAST part of the system message, and on the cached
+   * Anthropic body it is a separate block after the cache breakpoint: one changed
+   * byte inside the cached block rewrites the whole prefix instead of reading it.
+   */
+  systemPromptTail?: string | null;
   threadMessages: ChatMessage[];
   memories: MemoryRecordResponse[];
   contextPackItems: AssembledPackItem[];

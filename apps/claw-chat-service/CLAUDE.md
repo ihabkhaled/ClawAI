@@ -665,6 +665,13 @@ chain drafting and implementation handoff all spend real provider money through
 the callers that most need it. The response carries `clamped` so the calling
 service can tell its own user why the answer is short.
 
+**Anthropic cache: nothing that changes per turn may sit before the messages (ADR-153 amendment,
+2026-11-01).** The Runtime V2 loop puts each turn's tool result in `AssembledContext.systemPromptTail`,
+not in `systemPrompt`. On the cached body `splitSystemTail` + `appendTailToConversation`
+(`utilities/anthropic-turn-tail.utility.ts`) make it the LAST text block of the last user turn; other
+bodies keep it at the end of the one system message. A tail in `system`, even after the breakpoint,
+failed live (turn 2 wrote 9,117 tokens, read 0): the system block sits before the messages.
+
 **Anthropic cache hold sizing (ADR-153 amendment, 2026-11-01).** The hold for a cached
 tool-carrying call sizes the tool catalog AND the tool-result history (`context.toolTurns`)
 at `CACHED_JSON_BYTES_PER_TOKEN` (2.5 bytes per token, JSON), not 4, and adds

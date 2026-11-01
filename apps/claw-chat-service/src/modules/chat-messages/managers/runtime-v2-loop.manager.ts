@@ -274,9 +274,11 @@ export class RuntimeV2LoopManager {
     });
     return {
       ...context,
-      systemPrompt: [
-        context.systemPrompt,
-        buildRuntimeV2ModelInstruction(binding.toolDefinitions),
+      systemPrompt: [context.systemPrompt, buildRuntimeV2ModelInstruction(binding.toolDefinitions)]
+        .filter((value): value is string => value !== null)
+        .join('\n\n'),
+      // Differs on every turn, so it stays out of the cached prefix.
+      systemPromptTail: [
         `The trusted executor returned this redacted tool result: ${resultDocument}`,
         runtimeV2ResultFilesNote(command.result.fileIds),
       ]

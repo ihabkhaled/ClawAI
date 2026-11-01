@@ -292,6 +292,34 @@ describe('Anthropic prompt caching on a tool-carrying call (F093)', () => {
     expect(response.content).toBe('Reading it.');
   });
 
+  it('sends the per-turn tail as the last block, so the cached prefix does not change', async () => {
+    const sendWithTail = async (tail: string): Promise<Record<string, unknown>> => {
+      httpRequest.mockClear();
+      stubProvider(toolUseReply());
+      await callWithTools(build(), [filesTool], {
+        ...makeContext(),
+        systemPromptTail: tail,
+      } as AssembledContext);
+      return providerCall().body;
+    };
+
+    const turn1 = await sendWithTail('The trusted executor returned this redacted tool result: A');
+    const turn2 = await sendWithTail('The trusted executor returned this redacted tool result: B');
+
+    type Sent = { role: string; content: Array<{ text?: string }> };
+    const lastMessage = (body: Record<string, unknown>): Sent =>
+      (body['messages'] as Sent[]).at(-1) as Sent;
+    expect(turn1['system']).toEqual(turn2['system']);
+    expect(turn1['tools']).toEqual(turn2['tools']);
+    expect(JSON.stringify(turn1['system'])).not.toContain('tool result');
+    expect(lastMessage(turn1).content.at(-1)?.text).toContain('result: A');
+    expect(lastMessage(turn2).content.at(-1)?.text).toContain('result: B');
+    // Everything before the tail block is byte-identical between the two turns.
+    expect(lastMessage(turn1).content.slice(0, -1)).toEqual(
+      lastMessage(turn2).content.slice(0, -1),
+    );
+  });
+
   it('keeps the call uncached when the catalog is over the byte budget', async () => {
     appConfigGet.mockReturnValue({ ...APP_CONFIG, CHAT_TOOL_CATALOG_MAX_BYTES: 10 });
     stubProvider({

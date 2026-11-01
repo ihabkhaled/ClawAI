@@ -113,8 +113,8 @@ describe('RuntimeV2LoopManager continuation with result images', () => {
       .map(([data]) => data as { role: string; metadata: { runtimeV2?: { kind?: string } } })
       .find((data) => data.metadata.runtimeV2?.kind === 'tool-result');
     expect(toolResultRow?.metadata.runtimeV2).toMatchObject({ fileIds: ['shot-1'] });
-    const context = callProvider.mock.calls[0]?.[2] as { systemPrompt: string };
-    expect(context.systemPrompt).toContain(`${RUNTIME_V2_RESULT_FILES_NOTE_PREFIX} shot-1.`);
+    const context = callProvider.mock.calls[0]?.[2] as { systemPromptTail: string };
+    expect(context.systemPromptTail).toContain(`${RUNTIME_V2_RESULT_FILES_NOTE_PREFIX} shot-1.`);
   });
 
   it('changes nothing for a result without images', async () => {
@@ -124,7 +124,7 @@ describe('RuntimeV2LoopManager continuation with result images', () => {
 
     const request = build.mock.calls[0]?.[0] as Record<string, unknown>;
     expect(request).not.toHaveProperty('fileIds');
-    const context = callProvider.mock.calls[0]?.[2] as { systemPrompt: string };
-    expect(context.systemPrompt).not.toContain(RUNTIME_V2_RESULT_FILES_NOTE_PREFIX);
+    const context = callProvider.mock.calls[0]?.[2] as { systemPromptTail: string };
+    expect(context.systemPromptTail).not.toContain(RUNTIME_V2_RESULT_FILES_NOTE_PREFIX);
   });
 });

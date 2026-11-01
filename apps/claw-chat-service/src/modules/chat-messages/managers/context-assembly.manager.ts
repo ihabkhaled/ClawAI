@@ -787,6 +787,9 @@ ${evidence.snippet}`);
     if (context.systemPrompt) {
       parts.push(`SYSTEM: ${context.systemPrompt}`);
     }
+    if (context.systemPromptTail) {
+      parts.push(`SYSTEM: ${context.systemPromptTail}`);
+    }
     // Requested is the trigger, not produced. See `researchRequested`.
     if (
       context.researchRequested ||
@@ -1195,6 +1198,8 @@ ${RESEARCH_GROUNDING_REMINDER}`;
         );
       }
     }
+    // Last, so the part that changes every turn never sits in front of a stable one.
+    if (context.systemPromptTail) parts.push(context.systemPromptTail);
     return parts;
   }
 

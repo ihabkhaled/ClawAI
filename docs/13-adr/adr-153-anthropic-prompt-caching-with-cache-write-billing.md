@@ -143,3 +143,22 @@ An independent review of item 3 found the hold too small for a cached tool call.
 Tests: +1 hold test, +1 stream test (chat-messages: 285 files, 4050 tests pass). Caching is still
 OFF for every model by default. Open, not fixed: a stream with `stop_reason` `tool_use` but no
 `message_stop` emits `done` as `tool_calls` with zero calls (unconfirmed stall risk).
+
+## Amendment 2026-11-01 (a stable prefix inside one run)
+
+Live proof on the dev stack showed turn 2 of one agent run rewriting the whole prefix (cache write
+21,905, read 0) while a NEW run read it fine. Cause, found by hashing the real requests: the Runtime V2
+loop appended the per-turn tool result to `systemPrompt`, and that is the block the cache breakpoint
+sits on, so any change inside it invalidates everything before and after it.
+
+1. `AssembledContext.systemPromptTail` holds text that changes every turn (the tool result and the
+   result-files note). `runtime-v2-loop.manager.ts` sets it instead of extending `systemPrompt`.
+2. On the cached Anthropic body the tail is the LAST text block of the last user turn
+   (`utilities/anthropic-turn-tail.utility.ts`, `splitSystemTail` in the execution manager). A first
+   attempt made it a second system block after the breakpoint; the live re-run still wrote 9,117 tokens
+   and read 0 on turn 2, because a system block sits before the messages, so turn 2's messages could
+   never match turn 1's. On every other body the tail is the last part of the one system message.
+3. The hold counts the tail (`buildPromptString`), so the money rule is unchanged.
+
+Rule: nothing that differs between two turns of one run may sit before the part you want read from the
+cache. Put it at the end.

@@ -76,3 +76,21 @@ hold also covers the catalog's tokens. Still behind the per-model admin switch (
   of reading turn 1's cache. The prefix is not byte-stable between turns of the same run, so the
   main saving (cheaper later turns of a long agent run) is not yet delivered. Suspected cause: turn 1
   decorates the last user message. Needs a fix and a re-run before caching is switched on for users.
+
+## Fix and re-proof: a stable prefix inside one run (2026-11-01)
+
+- Cause of the finding above, found by hashing the real requests: the Runtime V2 loop appended the
+  per-turn tool result to the system prompt, ahead of the messages. A first fix (a second system block
+  after the breakpoint) still failed live: turn 2 wrote 9,117 tokens and read 0, because a system block
+  sits before the messages, so turn 2's messages could never match turn 1's.
+- Final fix: the per-turn text (`AssembledContext.systemPromptTail`) is the last text block of the last
+  user turn on the cached body (`utilities/anthropic-turn-tail.utility.ts`); other bodies keep it at the
+  end of the one system message. Tests: +6 helper cases, 1 rewritten cache-tools case, loop specs
+  updated (chat-messages: 286 files, 4057 tests pass; typecheck 0; lint 0 on the changed files).
+- Live, Haiku 4.5, dev stack, fresh prefix (about 9.0k tokens, above the 4096 minimum). Provider usage
+  and the CONSUMPTION ledger charge, in micro-USD:
+  - Run 1 turn 1: read 0, write 8,990: charged 11,711 (expected 11,711).
+  - Run 1 turn 2: read 8,990, write 128: charged 1,137 (expected 1,137). PASS: the prefix is now read.
+  - Run 2 (same prefix) turn 1: read 8,990, write 0: charged 1,422; turn 2: read 9,118: charged 990.
+  - Holds (about 175k) were released and replaced by the exact charge each time.
+- Caching is still OFF for every model by default; the dev Haiku switch is the only one on.
