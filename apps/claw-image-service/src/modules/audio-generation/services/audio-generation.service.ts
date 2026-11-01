@@ -1,10 +1,7 @@
+import { resolveTtsVoice } from '@claw/shared-constants';
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 
-import {
-  AUDIO_DEFAULT_MODELS,
-  AUDIO_DEFAULT_VOICES,
-  AUDIO_PROVIDER_CONNECTORS,
-} from '../../../common/constants';
+import { AUDIO_DEFAULT_MODELS, AUDIO_PROVIDER_CONNECTORS } from '../../../common/constants';
 import { AudioFailureCode } from '../../../common/enums';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import { AudioGenerationStatus, AudioKind } from '../../../generated/prisma';
@@ -68,7 +65,10 @@ export class AudioGenerationService {
     kind: AudioKind,
     model: string,
   ): CreateAudioGenerationData {
-    const defaultVoice = AUDIO_DEFAULT_VOICES.get(dto.provider) ?? null;
+    // A model-written voice like "calm" is not a provider voice; the provider's default speaks.
+    const connector = AUDIO_PROVIDER_CONNECTORS.get(dto.provider);
+    const voice =
+      connector === undefined ? null : (resolveTtsVoice(connector, dto.voice ?? null) ?? null);
     return {
       userId: dto.userId,
       workspaceId: dto.workspaceId ?? null,
@@ -78,7 +78,7 @@ export class AudioGenerationService {
       prompt: dto.prompt,
       provider: dto.provider,
       model,
-      voice: kind === AudioKind.SPEECH ? (dto.voice ?? defaultVoice) : null,
+      voice: kind === AudioKind.SPEECH ? voice : null,
       format: dto.format ?? AUDIO_DEFAULT_FORMAT,
     };
   }

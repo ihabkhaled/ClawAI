@@ -25,8 +25,3 @@ export const AUDIO_DEFAULT_MODELS: ReadonlyMap<string, string> = new Map([
   [`${AUDIO_KIND_SPEECH}:${AUDIO_PROVIDER_GEMINI}`, 'gemini-2.5-flash-preview-tts'],
   [`${AUDIO_KIND_MUSIC}:${AUDIO_PROVIDER_GEMINI}`, 'lyria-3-clip-preview'],
 ]);
-
-export const AUDIO_DEFAULT_VOICES: ReadonlyMap<string, string> = new Map([
-  [AUDIO_PROVIDER_OPENAI, 'alloy'],
-  [AUDIO_PROVIDER_GEMINI, 'Kore'],
-]);

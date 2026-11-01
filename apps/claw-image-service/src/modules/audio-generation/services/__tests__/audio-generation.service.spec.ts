@@ -97,6 +97,20 @@ describe('AudioGenerationService', () => {
       await flush();
     });
 
+    it('replaces a voice the provider does not offer (a style word like "calm") with its default', async () => {
+      await service.enqueueGeneration({ ...dto, voice: 'calm' });
+
+      expect(repo['create']).toHaveBeenCalledWith(expect.objectContaining({ voice: 'alloy' }));
+      await flush();
+    });
+
+    it('keeps a voice the provider does offer', async () => {
+      await service.enqueueGeneration({ ...dto, voice: 'nova' });
+
+      expect(repo['create']).toHaveBeenCalledWith(expect.objectContaining({ voice: 'nova' }));
+      await flush();
+    });
+
     it('defaults music to Lyria Clip and stores no voice', async () => {
       await service.enqueueGeneration({ ...dto, kind: 'MUSIC', provider: 'AUDIO_GEMINI' });
 

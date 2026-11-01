@@ -31,5 +31,4 @@ export {
   AUDIO_KIND_SPEECH,
   AUDIO_KIND_MUSIC,
   AUDIO_DEFAULT_MODELS,
-  AUDIO_DEFAULT_VOICES,
 } from './audio.constants';

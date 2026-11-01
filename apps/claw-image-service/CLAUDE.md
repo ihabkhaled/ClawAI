@@ -614,6 +614,8 @@ bytes; there is no provider poll. Invariants:
 - Clients are assembled in `constants/audio-provider-clients.constants.ts` (lint forbids
   exported objects in adapters). Output containers are mp3 or wav only (file-service allow-list).
 - Failure sentences are fixed (`audio-failure.constants.ts`); provider text is never stored.
+- The voice is resolved through `resolveTtsVoice` (shared-constants): a model-written style word such as
+  "calm" is not a provider voice and becomes the provider's default (OpenAI answered 400 to it, found on prod 2026-11-01).
 - Plan gate: `ImagePlanGateManager`, reused. Stale recovery runs at boot and every 60 s.
 - Not supported: xAI (no verifiable endpoint), music on OpenAI.
 
