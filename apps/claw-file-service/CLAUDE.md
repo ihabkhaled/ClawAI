@@ -53,8 +53,10 @@ Every archive this service opens is bounded. `archive-policy.utility.ts` holds
 the expand-to-disk rules, applied by BOTH engines — `zip-extraction.utility.ts`
 (node-stream-zip, ZIP) and `seven-zip-extraction.utility.ts` (7-Zip WASM, every
 other format); `ooxml-parser.utility.ts` guards the in-memory XLSX and PPTX
-path. An `.xlsx` is a ZIP and is user input. Do not add another way to open an
-archive without bounds of its own.
+path; DOCX, on upload and on extract-text, goes through `extractTextFromDocxBounded`
+(mammoth is gone). An `.xlsx` is a ZIP and is user input. Do not add another way to open an
+archive without bounds of its own. Open debt: PDF on upload (`pdf-parse`) has no size,
+page or time cap on text extraction; ODT/ODS/ODP have no reader.
 
 ## ClamAV: retried to a deadline, then fail closed (2026-09-25)
 
@@ -461,5 +463,5 @@ Labels are enums or `TRANSCRIPTION_PROVIDER_PRIORITY`; anything else is `other`.
 and service-auth rules as the generated-image route; the file is the user's, source
 `GENERATED`.
 
-- **`POST /files/extract-text` reads office documents too (2026-11-01):** `.docx`, `.xlsx`, `.pptx` and `.rtf` come back as ONE page (`totalPages: 1`, a `pages` range is ignored) via `extractTextFromDocument`; XLSX/PPTX go through a private temp folder (0600) that is removed in `finally`. Stateless like the PDF path: no row, no event, no bytes kept. DOCX is read by `extractTextFromDocxBounded` (`word/document.xml` only, the same bounded reader as XLSX/PPTX), NOT by mammoth, which has no caps; every OOXML reader refuses a repeated entry name, text is found by the forward-only `elementsOf` scan (NEVER a lazy `[\s\S]*?` regex over a part: quadratic on unclosed openers, 80,000 took 3.3 s), and returned text is capped at `DOCUMENT_TEXT_MAX_CHARS` with a visible cut line. Keep the temp-folder cleanup and the parsers' bounds; do not add a format without a parser that has them. Live-checked on the dev stack with real files.
+- **`POST /files/extract-text` reads office documents too (2026-11-01):** `.docx`, `.xlsx`, `.pptx` and `.rtf` come back as ONE page (`totalPages: 1`, a `pages` range is ignored) via `extractTextFromDocument`; XLSX/PPTX go through a private temp folder (0600) that is removed in `finally`. Stateless like the PDF path: no row, no event, no bytes kept. DOCX is read by `extractTextFromDocxBounded` (`word/document.xml` only, the same bounded reader as XLSX/PPTX), NOT by mammoth, which has no caps (upload uses the same reader since 2026-11-01, mammoth is removed from this service; upload text is one newline per paragraph and ignores headers, footers, notes and comments); every OOXML reader refuses a repeated entry name, text is found by the forward-only `elementsOf` scan (NEVER a lazy `[\s\S]*?` regex over a part: quadratic on unclosed openers, 80,000 took 3.3 s), and returned text is capped at `DOCUMENT_TEXT_MAX_CHARS` with a visible cut line. Keep the temp-folder cleanup and the parsers' bounds; do not add a format without a parser that has them. Live-checked on the dev stack with real files.
 - **Scanned PDF vs short text PDF (2026-10-01):** `extractTextFromPdf` now sets `isScanned` only when every page has no text AND `getImage()` finds an image (default 80px threshold). A PDF with under `SCANNED_PDF_CHAR_THRESHOLD` characters of real text keeps its text; it used to go to OCR and come back as `[Image file: ...]`. The parser's `-- N of M --` page markers are ignored (page text is checked, not `result.text`). Not live-verified until deployed.

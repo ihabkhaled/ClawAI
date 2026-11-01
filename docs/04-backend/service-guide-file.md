@@ -167,7 +167,7 @@ than `STALE_PROCESSING_TIMEOUT_MS` (10 min) as FAILED.
 | MIME / extension  | Extractor                                                                                         |
 | ----------------- | ------------------------------------------------------------------------------------------------- |
 | `application/pdf` | `pdf-parse`, falling back to OCR when the text layer is shorter than `SCANNED_PDF_CHAR_THRESHOLD` |
-| `.docx`           | `mammoth`                                                                                         |
+| `.docx`           | `extractTextFromDocxBounded` — `word/document.xml` only, one line per paragraph (mammoth removed) |
 | `.xlsx`           | `ooxml-parser.utility` — sharedStrings + sheet parts, one TSV line per row, grouped by sheet name |
 | `.pptx`           | `ooxml-parser.utility` — slide parts in numeric order, plus speaker notes                         |
 | `.rtf`            | `rtf-parser.utility` — strips control words, font and colour tables                               |
@@ -755,8 +755,12 @@ not by lazy-body regexes: a regex such as `<p>([\s\S]*?)</p>` rescans to the end
 opener that never closes, so a crafted part far under the size caps is quadratic (measured: 80,000
 unclosed openers took 3.3 s, 600,000 would be minutes). Do not add a lazy `[\s\S]*?` over a part; the
 small attribute and text regexes use `[^<>]*` and `[^<]*` so a failed attempt never reads past the next tag.
-The upload path still reads DOCX through mammoth (`file-processing.manager`); that is older code,
-unchanged here, and listed as an open gap in the QA record.
+The upload path (`file-processing.manager`) uses the same `extractTextFromDocxBounded` since
+2026-11-01; mammoth and `docx-parser.utility.ts` are gone from this service. Upload output differs from the
+old mammoth text: paragraphs are separated by a single newline (mammoth used a blank line), and header,
+footer, note and comment text is not read. Spec: `file-processing-docx-upload.spec.ts` (5 tests). Open
+debt: PDF on upload still goes through `pdf-parse` with no size, page or time cap on text extraction.
+ODT, ODS and ODP have no reader.
 
 **Why it is not `upload`.** The coding agent reads a PDF that is already in the
 user's workspace. Uploading it would put a copy of a repository file in their
@@ -780,7 +784,7 @@ this file" means, and is not something a person asked for by opening a file.
   scanned only if every page in it carries fewer than
   `EXTRACT_TEXT_SCANNED_PAGE_MIN_CHARS` non-whitespace characters, and a range
   past the end — no pages at all — is not scanned.
-- **PDF only**, and it says so by name. Returning empty text for a format it
+- **PDF, DOCX, XLSX, PPTX and RTF only**; any other extension answers 400 naming those five. Returning empty text for a format it
   cannot read would be indistinguishable from an empty document.
 - **Smaller payload cap than upload** (~15MB against 50MB): an upload is
   something a person chose to keep, while this runs on every agent read.

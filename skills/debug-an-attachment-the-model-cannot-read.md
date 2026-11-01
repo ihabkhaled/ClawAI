@@ -131,7 +131,7 @@ passes while the pipeline is broken.
 | Format | Extractor                                                    | Fails when                                               |
 | ------ | ------------------------------------------------------------ | -------------------------------------------------------- |
 | PDF    | `pdf-parse`, OCR fallback under `SCANNED_PDF_CHAR_THRESHOLD` | encrypted; scanned with `OCR_ENABLED=false`              |
-| DOCX   | `mammoth`                                                    | legacy `.doc` is a different format and is not accepted  |
+| DOCX   | `extractTextFromDocxBounded` (body only; mammoth removed)    | legacy `.doc` is a different format and is not accepted  |
 | XLSX   | `ooxml-parser.utility`                                       | legacy `.xls`; values that only exist as formula results |
 | PPTX   | `ooxml-parser.utility`                                       | text that lives in an embedded image                     |
 | RTF    | `rtf-parser.utility`                                         | embedded objects                                         |

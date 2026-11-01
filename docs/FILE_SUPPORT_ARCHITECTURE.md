@@ -63,7 +63,7 @@ User Upload → Validate (type/size) → Store (local disk) → Chunk (by MIME t
 | `text/plain` (default) | Paragraph splits                                                                       | Working |
 | PDF                    | Not implemented                                                                        | Missing |
 | Images (PNG/JPG)       | Understood by vision-capable models, OCR or helper vision otherwise (rule 42, ADR-120) | Working |
-| DOCX/XLSX              | Not implemented                                                                        | Missing |
+| DOCX/XLSX              | Extracted (upload per ADR-095; `/files/extract-text` since 2026-11-01)                 | Working |
 
 ---
 
@@ -89,7 +89,7 @@ User Upload → Validate (type/size) → Store (local disk) → Chunk (by MIME t
 7. **No file deduplication** — same file can be uploaded multiple times
 8. **No file deletion cascade** — unclear if deleting a file removes its chunks
 9. **No streaming for large files** — `readFile` loads entire file into memory
-10. **No DOCX/XLSX/HTML parsers** — only 4 MIME types handled
+10. **No HTML parser**
 
 ---
 

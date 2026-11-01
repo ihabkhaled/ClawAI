@@ -14,9 +14,9 @@ import {
 import { type File, FileIngestionStatus } from '../../../generated/prisma';
 import { readFile } from '../../../common/utilities';
 import { extractTextFromPdf, renderPdfPages } from '../../../common/utilities/pdf-parser.utility';
-import { extractTextFromDocx } from '../../../common/utilities/docx-parser.utility';
 import { extractTextFromImage } from '../../../common/utilities/ocr-parser.utility';
 import {
+  extractTextFromDocxBounded,
   extractTextFromPptx,
   extractTextFromXlsx,
 } from '../../../common/utilities/ooxml-parser.utility';
@@ -124,7 +124,7 @@ export class FileProcessingManager {
 
     if (mimeType === MIME_TYPE_DOCX) {
       this.logger.debug(`extractText: parsing DOCX "${filename}"`);
-      return extractTextFromDocx(buffer);
+      return extractTextFromDocxBounded(storagePath);
     }
 
     // XLSX and PPTX are ZIP containers. Decoding one as UTF-8 yields deflate

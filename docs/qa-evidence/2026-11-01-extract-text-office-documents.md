@@ -43,7 +43,8 @@ parse and the folder is removed in every outcome. Any other extension answers 40
 ## Open gaps
 
 - L08: owner walk-through with the extension build that calls this.
-- The upload path (`file-processing.manager`) still reads an uploaded DOCX with mammoth and no archive bounds. It is older code and was not changed here, but it has the same exposure the review found, so it is a candidate for the same bounded reader.
+- Closed 2026-11-01: the upload path (`file-processing.manager`) now reads DOCX with `extractTextFromDocxBounded`; mammoth and `docx-parser.utility.ts` are removed. New spec `file-processing-docx-upload.spec.ts` (5 tests). Upload text changes: one newline between paragraphs (mammoth used a blank line); header, footer, note and comment text is not read.
+- Open debt: PDF on upload still uses `pdf-parse` with no size, page or time cap on text extraction. ODT, ODS and ODP have no reader.
 - Audio and video are not read by this endpoint; transcription is a separate, billed path.
 - Not deployed: the extension's change depends on this backend release; an older backend answers 400 with
   the old "PDF files only" message.

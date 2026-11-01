@@ -48,7 +48,6 @@
     "helmet": "^8.3.0",
     "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
-    "mammoth": "^1.13.0",
     "nestjs-pino": "^5.3.1",
     "node-stream-zip": "^1.16.0",
     "pdf-parse": "^2.4.5",

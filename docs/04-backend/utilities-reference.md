@@ -110,11 +110,10 @@ export const verifyToken = (token: string): JwtPayload => { ... }
 **Purpose**: Extract plain text from PDF files for chunking and indexing.  
 **Test**: ❌ No test
 
-### `docx-parser.utility.ts`
+### `docx-parser.utility.ts` (removed 2026-11-01)
 
-**Wraps**: `mammoth`  
-**Purpose**: Extract plain text (and optionally HTML) from DOCX/Word documents.  
-**Test**: ❌ No test
+Deleted with `mammoth`. Upload DOCX now uses `extractTextFromDocxBounded` (see `ooxml-parser.utility.ts`);
+spec: `file-processing-docx-upload.spec.ts`.
 
 ---
 

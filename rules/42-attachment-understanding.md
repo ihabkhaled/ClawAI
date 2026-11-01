@@ -80,7 +80,10 @@ Full reasoning:
    user input. `zip-extraction.utility.ts` guards the expand-to-disk path and
    `ooxml-parser.utility.ts` guards the in-memory path; both check the declared
    size before inflating. A third way to open an archive without bounds of its
-   own is a hole in ADR-053, not a new feature.
+   own is a hole in ADR-053, not a new feature. DOCX is read by the bounded
+   `extractTextFromDocxBounded` on upload and on `/files/extract-text`; the
+   latter puts XLSX and PPTX bytes in a private temp folder for one parse. PDF
+   on upload (`pdf-parse`) is still uncapped: open debt.
 
 10. **Never bulk-migrate attachment rows to `PENDING`.** Nothing reprocesses
     history, so they stay `PENDING` forever, and the file list polls while any
