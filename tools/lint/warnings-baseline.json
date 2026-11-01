@@ -1518,9 +1518,6 @@
     "apps/claw-routing-service/src/modules/router-models/__tests__/router-model-registry.manager.spec.ts": {
       "sort-imports": 1
     },
-    "apps/claw-routing-service/src/modules/router-models/__tests__/router-model-registry.repository.spec.ts": {
-      "sort-imports": 1
-    },
     "apps/claw-routing-service/src/modules/router-models/managers/router-model-registry.manager.ts": {
       "security/detect-object-injection": 1
     },
@@ -1609,17 +1606,8 @@
     "apps/claw-routing-service/src/modules/routing/managers/router-shadow-evaluation.manager.ts": {
       "unicorn/prefer-ternary": 3
     },
-    "apps/claw-routing-service/src/modules/routing/managers/routing.manager.ts": {
-      "@typescript-eslint/prefer-nullish-coalescing": 1
-    },
     "apps/claw-routing-service/src/modules/routing/services/exposed-models.service.ts": {
       "complexity": 1
-    },
-    "apps/claw-routing-service/src/modules/routing/services/routing.service.ts": {
-      "max-lines-per-function": 1
-    },
-    "apps/claw-routing-service/src/modules/routing/utilities/cloud-router-candidates.utility.ts": {
-      "security/detect-object-injection": 1
     },
     "apps/claw-routing-service/src/modules/routing/utilities/modality-fit.utility.ts": {
       "security/detect-object-injection": 1
