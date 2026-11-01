@@ -75,7 +75,7 @@ export class AnswerRepairManager {
     );
 
     const threadId = await this.resolveThreadId(userId, dto);
-    const originalContent = await this.resolveOriginalContent(dto);
+    const originalContent = await this.resolveOriginalContent(dto, threadId);
     const selection = await this.resolveSelection(dto);
 
     const userMessage = await this.chatMessagesRepository.create({
@@ -236,7 +236,7 @@ export class AnswerRepairManager {
     latencyMs: number,
     sourceMessageId?: string,
   ): Promise<void> {
-    const preserved = await this.sourceMedia(sourceMessageId);
+    const preserved = await this.sourceMedia(sourceMessageId, threadId);
     const provider = selection.actualProvider;
     const model = selection.actualModel;
     await this.chatMessagesRepository.create({
@@ -260,10 +260,25 @@ export class AnswerRepairManager {
   }
 
   /** The cards of the message being repaired: a repair rewrites its text and keeps its media. */
-  private async sourceMedia(messageId: string | undefined): Promise<MediaGenerationRef[]> {
+  private async sourceMedia(
+    messageId: string | undefined,
+    threadId: string,
+  ): Promise<MediaGenerationRef[]> {
     if (messageId === undefined) return [];
-    const source = await this.chatMessagesRepository.findById(messageId);
+    const source = await this.findSourceInThread(messageId, threadId);
     return readStoredMediaGenerations(source?.metadata);
+  }
+
+  /**
+   * A message id from the request is only trusted inside the caller's own thread: the thread was
+   * resolved for this user, so a message from another thread (another user's) reads as missing.
+   */
+  private async findSourceInThread(
+    messageId: string,
+    threadId: string,
+  ): Promise<Awaited<ReturnType<ChatMessagesRepository['findById']>>> {
+    const message = await this.chatMessagesRepository.findById(messageId);
+    return message?.threadId === threadId ? message : null;
   }
 
   private async handleBackgroundFailure(threadId: string, error: unknown): Promise<void> {
@@ -399,12 +414,12 @@ Return ONLY the repaired answer. Do not explain what you changed. Do not add pre
     return thread.id;
   }
 
-  private async resolveOriginalContent(dto: RepairMessageDto): Promise<string> {
+  private async resolveOriginalContent(dto: RepairMessageDto, threadId: string): Promise<string> {
     if (dto.content !== undefined && dto.content.length > 0) {
       return dto.content;
     }
     if (dto.messageId !== undefined) {
-      const message = await this.chatMessagesRepository.findById(dto.messageId);
+      const message = await this.findSourceInThread(dto.messageId, threadId);
       if (message) {
         return message.content;
       }

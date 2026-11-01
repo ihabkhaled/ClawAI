@@ -187,6 +187,7 @@ describe('AnswerRepairManager', () => {
     it('resolves content from messageId when content is not provided', async () => {
       mockChatMessagesRepository.findById.mockResolvedValue({
         id: 'existing-msg',
+        threadId: 'thread-3',
         content: 'Original message content',
       });
       mockChatMessagesRepository.create.mockResolvedValue({ id: 'msg-4' });
@@ -251,6 +252,7 @@ describe('AnswerRepairManager', () => {
     it('windows the history at the message being repaired', async () => {
       mockChatMessagesRepository.findById.mockResolvedValue({
         id: 'a-1',
+        threadId: 'thread-1',
         content: 'Thirty days.',
       });
       mockChatMessagesRepository.create.mockResolvedValue({ id: 'u-win' });
@@ -528,6 +530,26 @@ describe('AnswerRepairManager', () => {
           {
             messageId: 'non-existent-msg',
             threadId: 'thread-x',
+            repairTypes: [RepairType.FORMAT],
+          },
+          '',
+        ),
+      ).rejects.toThrow('Could not resolve original content to repair');
+    });
+
+    it('reads a message id only inside the caller thread, never another thread', async () => {
+      mockChatMessagesRepository.findById.mockResolvedValue({
+        id: 'other-users-msg',
+        threadId: 'thread-of-someone-else',
+        content: 'Private text of another user',
+      });
+
+      await expect(
+        manager.executeRepair(
+          'user-1',
+          {
+            messageId: 'other-users-msg',
+            threadId: 'thread-mine',
             repairTypes: [RepairType.FORMAT],
           },
           '',
