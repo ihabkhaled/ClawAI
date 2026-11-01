@@ -665,6 +665,16 @@ chain drafting and implementation handoff all spend real provider money through
 the callers that most need it. The response carries `clamped` so the calling
 service can tell its own user why the answer is short.
 
+**Anthropic cache hold sizing (ADR-153 amendment, 2026-11-01).** The hold for a cached
+tool-carrying call sizes the tool catalog AND the tool-result history (`context.toolTurns`)
+at `CACHED_JSON_BYTES_PER_TOKEN` (2.5 bytes per token, JSON), not 4, and adds
+`CACHED_TOOL_PROMPT_MARGIN_TOKENS` (400) for Anthropic's hidden tool-use system prompt
+(`constants/anthropic-prompt-cache.constants.ts`). Settlement is capped at the hold, so an
+undersized hold is margin loss. A reply cut off by `stop_reason` `max_tokens` drops `tool_use`
+blocks whose arguments are not complete JSON; complete ones are still released. Caching stays
+OFF for every model by default. Open, not fixed: a stream with `stop_reason` `tool_use` but no
+`message_stop` emits `done` as `tool_calls` with zero calls (unconfirmed stall risk).
+
 ## Internal generate: silence is the signal, not the clock (ADR-175, 2026-10-13)
 
 `POST /internal/chat/generate-stream` is `generate` answered as NDJSON, for

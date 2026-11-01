@@ -39,6 +39,14 @@ hold also covers the catalog's tokens. Still behind the per-model admin switch (
   reader, so the agent never cached. Fixed in both halves.
 - The tool catalog is prompt the text estimate cannot see; left alone, the cache-write premium on it
   would have been absorbed by the hold cap. The hold now includes it.
+- An independent review then found the hold still too small: the catalog was sized at 4 bytes per
+  token (JSON is denser), the tool-result history (`context.toolTurns`) was not sized, and
+  Anthropic's hidden tool-use system prompt was not counted. Now both are sized at 2.5 bytes per
+  token (`CACHED_JSON_BYTES_PER_TOKEN`) plus a 400-token margin (`CACHED_TOOL_PROMPT_MARGIN_TOKENS`).
+  The review also found a reply cut off by `max_tokens` could release a `tool_use` with incomplete
+  JSON arguments; those blocks are now dropped (complete ones are released). Tests: +1 hold test,
+  +1 stream test; chat-messages 285 files, 4050 tests pass. The lead's live billing proof for the
+  new sizing is not recorded here.
 
 ## Open gaps
 
@@ -46,4 +54,7 @@ hold also covers the catalog's tokens. Still behind the per-model admin switch (
 /connectors/:id/models/prompt-caching`) after publishing its read and write rates, then an agent
   run is watched for `cache_read_input_tokens` on the second turn.
 - Compare lanes stay uncached (their hold is taken before the call, unsized).
-- Not deployed.
+- Open, not fixed: a stream with `stop_reason` `tool_use` but no `message_stop` emits `done` as
+  `tool_calls` with zero calls (unconfirmed stall risk).
+- Release: the Release for `06c1d2b29` (caching) ran green and deployed; caching is still OFF for every
+  model. The Releases for `08a953f1d` and `754dae7fd` did not run (their CI runs were cancelled).

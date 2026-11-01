@@ -113,6 +113,10 @@ import {
   OPENAI_TOOL_CALLS_FINISH_REASON,
 } from '../constants/provider-tool.constants';
 import { ANTHROPIC_PAUSED_FINISH_REASON } from '../constants/anthropic-native-transport.constants';
+import {
+  CACHED_JSON_BYTES_PER_TOKEN,
+  CACHED_TOOL_PROMPT_MARGIN_TOKENS,
+} from '../constants/anthropic-prompt-cache.constants';
 import type { JudgeRefereeConfig, JudgeRefereeResult } from '../types/judge-referee.types';
 import type {
   InternalGenerateArgs,
@@ -3016,7 +3020,11 @@ export class ChatExecutionManager implements OnModuleInit {
     const userId: string | undefined = args.context.userId;
     // The tool catalog is prompt too, and on the cached native body it is the
     // first thing written to the cache. The text estimate cannot see it.
-    const cachedToolTokens = this.cachedToolCatalogTokens(args.provider, args.executionOptions);
+    const cachedToolTokens = this.cachedToolCatalogTokens(
+      args.provider,
+      args.executionOptions,
+      args.context,
+    );
     return userId === undefined || userId.length === 0
       ? this.paygHoldWithoutUser(args.provider, args.requestedMax)
       : this.accessControlService.reserveCredit({
@@ -5502,10 +5510,12 @@ export class ChatExecutionManager implements OnModuleInit {
     return promptCache ? applyAnthropicPromptCache(requestBody) : requestBody;
   }
 
-  // Tokens the tool catalog adds to a cached native call; zero for any other call.
+  // Tokens a cached native call carries that the text estimate cannot see: the
+  // tool catalog and the tool-result history. Zero for any other call.
   private cachedToolCatalogTokens(
     provider: string,
     executionOptions: ExecutionOptions | undefined,
+    context: AssembledContext,
   ): number {
     if (executionOptions?.anthropicPromptCache !== true) {
       return 0;
@@ -5515,8 +5525,17 @@ export class ChatExecutionManager implements OnModuleInit {
       ProviderToolDialect.ANTHROPIC,
       executionOptions,
     );
-    // Same four-bytes-per-token rule as estimateTokensFromText.
-    return toolCatalog === undefined ? 0 : Math.ceil(toolCatalog.byteSize / 4);
+    if (toolCatalog === undefined) {
+      return 0;
+    }
+    // JSON (braces, quotes, enums) tokenizes near 2.5 bytes per token, not the
+    // four of prose, and a short hold is absorbed by the platform. The margin
+    // covers the tool-use system prompt Anthropic adds when tools are sent.
+    const catalogTokens = Math.ceil(toolCatalog.byteSize / CACHED_JSON_BYTES_PER_TOKEN);
+    const toolTurnTokens = Math.ceil(
+      Buffer.byteLength(JSON.stringify(context.toolTurns ?? [])) / CACHED_JSON_BYTES_PER_TOKEN,
+    );
+    return catalogTokens + toolTurnTokens + CACHED_TOOL_PROMPT_MARGIN_TOKENS;
   }
 
   // The Runtime tool catalog on the cached native body, in Anthropic's shape. The

@@ -412,6 +412,24 @@ describe('ProviderStreamReader - Anthropic SSE tool calls', () => {
     expect(fragments.some((fragment) => fragment.kind === 'tool-calls')).toBe(false);
   });
 
+  it('drops a call whose arguments were cut off by max_tokens and keeps a complete one', () => {
+    const fragments = readAll([
+      startFrame({ input_tokens: 5, output_tokens: 1 }),
+      toolStart(0, 'toolu_a', 'workspace_files'),
+      toolDelta(0, '{"operation":"list"}'),
+      toolStart(1, 'toolu_b', 'workspace_files'),
+      toolDelta(1, '{"operation":"wri'),
+      messageDelta('max_tokens', { output_tokens: 99 }),
+      messageStop(),
+    ]);
+    expect(fragments.find((fragment) => fragment.kind === 'tool-calls')).toMatchObject({
+      calls: [{ id: 'toolu_a' }],
+    });
+    expect(fragments.find((fragment) => fragment.kind === 'tool-calls')).not.toMatchObject({
+      calls: expect.arrayContaining([expect.objectContaining({ id: 'toolu_b' })]),
+    });
+  });
+
   it('ignores input deltas for a block that was never a tool call', () => {
     const fragments = readAll([
       startFrame({ input_tokens: 5, output_tokens: 1 }),

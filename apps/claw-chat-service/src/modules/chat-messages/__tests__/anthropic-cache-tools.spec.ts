@@ -197,11 +197,15 @@ describe('Anthropic prompt caching on a tool-carrying call (F093)', () => {
     );
   }
 
-  const callWithTools = (manager: ChatExecutionManager, toolCatalog = [filesTool]) =>
+  const callWithTools = (
+    manager: ChatExecutionManager,
+    toolCatalog = [filesTool],
+    context = makeContext(),
+  ) =>
     manager.callProvider(
       'ANTHROPIC',
       'claude-sonnet-4',
-      makeContext(),
+      context,
       Date.now(),
       false,
       undefined,
@@ -241,6 +245,33 @@ describe('Anthropic prompt caching on a tool-carrying call (F093)', () => {
 
     expect(toolHold['promptTokens']).toBeGreaterThan(plainHold['promptTokens'] ?? 0);
     expect(toolHold['cacheWritePromptTokens']).toBe(toolHold['promptTokens']);
+  });
+
+  it('sizes the hold for the tool-result history the cached prefix now carries', async () => {
+    stubProvider(toolUseReply());
+    await callWithTools(build());
+    const bareHold = accessControl.reserveCredit.mock.calls[0]?.[0] as Record<string, number>;
+
+    accessControl = createFakePaygAccessControl();
+    stubProvider(toolUseReply());
+    const withHistory = {
+      ...makeContext(),
+      toolTurns: [
+        {
+          assistantText: '',
+          calls: [{ callId: 'c1', nativeName: 'workspace_files', arguments: {} }],
+          results: [{ callId: 'c1', content: 'x'.repeat(50_000), isError: false }],
+        },
+      ],
+    } as unknown as AssembledContext;
+    await callWithTools(build(), [filesTool], withHistory);
+    const historyHold = accessControl.reserveCredit.mock.calls[0]?.[0] as Record<string, number>;
+
+    // 50,000 bytes of history at 2.5 bytes per token is at least 20,000 tokens.
+    expect(
+      (historyHold['promptTokens'] ?? 0) - (bareHold['promptTokens'] ?? 0),
+    ).toBeGreaterThanOrEqual(20_000);
+    expect(historyHold['cacheWritePromptTokens']).toBe(historyHold['promptTokens']);
   });
 
   it('returns a tool_use block as a Runtime tool call', async () => {

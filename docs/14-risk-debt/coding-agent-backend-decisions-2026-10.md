@@ -16,7 +16,7 @@ and does not decide money, permission semantics, deletion or a breaking public c
 
 | Feature                 | Status                                                                                                                                                                           |
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| F093 prompt caching     | OWNER DECISION REQUIRED: decides billing (cache-write is 1.25x input; finalize contract)                                                                                         |
+| F093 prompt caching     | DECIDED 2026-10-01 (option a); built, default OFF; tool turns cached since 2026-11-01 (ADR-153)                                                                                  |
 | F095 resume (backend)   | IMPLEMENTED `cdae9c05d`: `repositoryRef` on `createThread`, `GET agent/runners/:id/resume`                                                                                       |
 | F097 mobile token class | OWNER DECISION REQUIRED: new credential class and permission semantics                                                                                                           |
 | F098 cloud sessions     | NOT IMPLEMENTED by design: the recommended default is (b), user-hosted runners only                                                                                              |
@@ -42,6 +42,9 @@ running dev stack.
 end to end, cache writes billed from `cacheWritePerMillionMicroUsd` only when that row exists,
 and the hold sized for the premium. Tool-carrying agent turns are cached since 2026-11-01 (ADR-153
 amendment, run against the live Anthropic API that day). Not built: caching for compare lanes.
+Hold sizing fixed 2026-11-01 (ADR-153 amendment). Open: a stream that ends with `stop_reason`
+`tool_use` but no `message_stop` emits `done` as `tool_calls` with zero calls (unconfirmed stall risk,
+not fixed). Open, files: PDF on upload (`pdf-parse`) has no size, page or time cap on text extraction.
 (Original decision text follows.)
 
 - Options: (a) native Anthropic `/v1/messages` transport with `cache_control` plus a cache-write usage field end to end; (b) keep the OpenAI-compatible path and skip caching.

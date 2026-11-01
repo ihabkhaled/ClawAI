@@ -41,6 +41,15 @@ function isUsageField(field: string): field is AnthropicUsageField {
   return (ANTHROPIC_USAGE_FIELDS as readonly string[]).includes(field);
 }
 
+function isCompleteJson(text: string): boolean {
+  try {
+    JSON.parse(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function asString(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined;
 }
@@ -151,7 +160,11 @@ export class AnthropicStreamFrameReader {
     if (this.toolBlocks.size === 0) {
       return;
     }
+    // A reply cut off by max_tokens holds half-written arguments; running them
+    // would fail the whole call, so only blocks that parse are released.
+    const cutOff = this.stopReason === 'max_tokens';
     const calls = [...this.toolBlocks.entries()]
+      .filter(([, block]) => !cutOff || block.json.length === 0 || isCompleteJson(block.json))
       .sort(([a], [b]) => a - b)
       .map(([, block]): StreamToolCallPayload => ({
         id: block.id,
@@ -160,7 +173,9 @@ export class AnthropicStreamFrameReader {
         input: block.json.length > 0 ? block.json : '{}',
       }));
     this.toolBlocks.clear();
-    out.push({ kind: 'tool-calls', calls });
+    if (calls.length > 0) {
+      out.push({ kind: 'tool-calls', calls });
+    }
   }
 
   private mergeUsage(usage: Record<string, unknown> | null): void {

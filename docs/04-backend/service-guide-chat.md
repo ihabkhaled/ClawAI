@@ -299,7 +299,13 @@ reply and from `input_json_delta` stream frames. Not cached, on purpose: a catal
 cannot express (`toolsUnavailable`, e.g. over the byte budget), a compare lane (its hold is taken
 before the call, unsized), every other provider. The legacy
 `ENABLE_ANTHROPIC_NATIVE_PDF` body no longer carries breakpoints (nothing reads its
-cache usage). Tests: `__tests__/payg-credit-anthropic-cache.spec.ts`,
+cache usage). Hold sizing for a cached tool call (2026-11-01, found by an independent review): the
+tool catalog and the tool-result history (`context.toolTurns`) are sized at 2.5 bytes per token
+(`CACHED_JSON_BYTES_PER_TOKEN`), not 4, and 400 tokens (`CACHED_TOOL_PROMPT_MARGIN_TOKENS`) cover
+Anthropic's hidden tool-use system prompt. A reply cut off by `stop_reason` `max_tokens` drops
+`tool_use` blocks whose arguments are not complete JSON (complete ones are still released). Open:
+a stream with `stop_reason` `tool_use` but no `message_stop` emits `done` as `tool_calls` with zero
+calls (unconfirmed stall risk). Tests: `__tests__/payg-credit-anthropic-cache.spec.ts`,
 `__tests__/anthropic-stream-protocol.spec.ts`, `utilities/__tests__/anthropic-*.spec.ts`.
 
 **Stop reasons (2026-10-30).** `ANTHROPIC_STOP_REASON_MAP` turns `end_turn` and `stop_sequence`

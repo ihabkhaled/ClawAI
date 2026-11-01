@@ -128,3 +128,18 @@ call carrying a Runtime tool catalog stayed on the OpenAI-compatible path, which
 
 Still gated by the per-model admin switch (default OFF). Nothing changes for a model until an owner
 flips it on, and publish the write and read rates first (see Consequences).
+
+## Amendment 2026-11-01 (hold sizing)
+
+An independent review of item 3 found the hold too small for a cached tool call. Fixed:
+
+1. The tool catalog and the tool-result history (`context.toolTurns`) are sized at 2.5 bytes per
+   token (`CACHED_JSON_BYTES_PER_TOKEN`), not 4: JSON tokenizes denser than prose.
+2. 400 tokens (`CACHED_TOOL_PROMPT_MARGIN_TOKENS`) are added for Anthropic's hidden tool-use system
+   prompt, which the request body does not contain.
+3. A reply cut off by `stop_reason` `max_tokens` drops `tool_use` blocks whose arguments are not
+   complete JSON (complete ones are still released).
+
+Tests: +1 hold test, +1 stream test (chat-messages: 285 files, 4050 tests pass). Caching is still
+OFF for every model by default. Open, not fixed: a stream with `stop_reason` `tool_use` but no
+`message_stop` emits `done` as `tool_calls` with zero calls (unconfirmed stall risk).
