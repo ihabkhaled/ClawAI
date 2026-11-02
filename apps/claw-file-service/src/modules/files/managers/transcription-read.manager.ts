@@ -20,6 +20,7 @@ import {
   TRANSCRIBE_READ_MAX_VIDEO_SECONDS,
   TRANSCRIBE_READ_NO_AUDIO_TRACK_MESSAGE,
   TRANSCRIBE_READ_NO_SPEECH_MESSAGE,
+  TRANSCRIBE_READ_STILL_IMAGE_CODECS,
   TRANSCRIBE_READ_TOOL_UNAVAILABLE_MESSAGE,
   TRANSCRIBE_READ_UNAVAILABLE_MESSAGE,
   TRANSCRIBE_READ_UNREADABLE_MESSAGE,
@@ -99,11 +100,32 @@ export class TranscriptionReadManager {
         HttpStatus.PAYLOAD_TOO_LARGE,
       );
     }
+    // A clip renamed to .mp3 must not skip the plan's video gate: a container that
+    // holds a real video stream (not cover art) is read as video.
+    if (await this.holdsRealVideo(bytes)) {
+      return this.readVideo(userId, bytes);
+    }
     const base64 = bytes.toString('base64');
     // Fails open to the byte-derived estimate, exactly like the upload path:
     // the hold is never sized to zero.
     const seconds = await probeAudioSeconds(base64);
     return this.transcribe(userId, { base64, mimeType, sizeBytes: bytes.length, seconds });
+  }
+
+  /** Fails open: a probe that cannot read the bytes leaves them on the audio path. */
+  private async holdsRealVideo(bytes: Buffer): Promise<boolean> {
+    try {
+      const probe = await this.media.withBufferWorkspace(bytes, async (workspace) =>
+        this.media.probe(workspace),
+      );
+      return (
+        probe.ok &&
+        probe.summary.hasVideo &&
+        !TRANSCRIBE_READ_STILL_IMAGE_CODECS.includes(probe.summary.videoCodec ?? '')
+      );
+    } catch {
+      return false;
+    }
   }
 
   /** The audio TRACK only: no frames are extracted, so there is no vision cost. */

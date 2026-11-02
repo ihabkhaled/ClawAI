@@ -40,3 +40,7 @@ Rules: [rule 28](../../rules/28-billing-integrity-and-api-contracts.md), [rule 3
 ## What would make this stale
 
 A second per-unit read endpoint, a change to the transcription provider walk, moving the token windows into a shared service, making a transcription surface free-allowance eligible, or a stored (non-stateless) read.
+
+## Amendment 2026-11-02 (a clip renamed as audio)
+
+The kind is decided by the file extension, so a short video renamed `.mp3` took the audio path and skipped the plan's video gate (`maxVideoSeconds`, 0 = disabled). Found by the automated security review of the commit. An audio-named upload is now probed once; a container that holds a real video stream (any codec except a still-image codec used for cover art: mjpeg, png, bmp, gif, tiff, webp, jpeg2000) is read through the video path and meets the same gate. A probe that cannot read the bytes leaves them on the audio path (fails open, as before), and an audio file with cover art stays audio. Tests: four cases in `transcription-read.manager.spec.ts` (25 pass).

@@ -159,6 +159,16 @@ const buildHarness = async (
   };
 };
 
+/** Plain audio bytes: the container holds no video stream, so the audio path runs. */
+const buildAudioHarness = async (...args: Parameters<typeof buildHarness>): Promise<Harness> => {
+  const harness = await buildHarness(...args);
+  harness.media.probe.mockResolvedValue({
+    ok: true,
+    summary: summary({ hasVideo: false, videoCodec: null }),
+  });
+  return harness;
+};
+
 const refusal = async (promise: Promise<unknown>): Promise<TranscribeReadException> => {
   const error = await promise.then(
     () => null,
@@ -258,7 +268,7 @@ describe('TranscriptionReadManager (POST /files/transcribe-text)', () => {
           reasoningTokens: 0,
         },
       });
-      const h = await buildHarness([GEMINI]);
+      const h = await buildAudioHarness([GEMINI]);
 
       const result = await h.service.transcribeText(USER, audioDto);
 
@@ -295,7 +305,7 @@ describe('TranscriptionReadManager (POST /files/transcribe-text)', () => {
 
     it('a provider failure releases the hold and is a 502 (never finalized)', async () => {
       mockedGemini.mockRejectedValue(Object.assign(new Error('boom'), { code: 'ECONNRESET' }));
-      const h = await buildHarness([GEMINI]);
+      const h = await buildAudioHarness([GEMINI]);
 
       const error = await refusal(h.reader.read(USER, audioDto));
 
@@ -306,7 +316,7 @@ describe('TranscriptionReadManager (POST /files/transcribe-text)', () => {
 
     it('an empty provider answer releases the hold and is a 502', async () => {
       mockedGemini.mockResolvedValue({ text: '   ' });
-      const h = await buildHarness([GEMINI]);
+      const h = await buildAudioHarness([GEMINI]);
 
       const error = await refusal(h.reader.read(USER, audioDto));
 
@@ -328,7 +338,7 @@ describe('TranscriptionReadManager (POST /files/transcribe-text)', () => {
         }),
       );
       mockedOpenAi.mockResolvedValue({ text: 'local words', durationSeconds: 4.2 });
-      const h = await buildHarness([GEMINI, LOCAL]);
+      const h = await buildAudioHarness([GEMINI, LOCAL]);
 
       const result = await h.service.transcribeText(USER, audioDto);
 
@@ -338,7 +348,7 @@ describe('TranscriptionReadManager (POST /files/transcribe-text)', () => {
     });
 
     it('a refused credit check is a 402 with no provider call', async () => {
-      const h = await buildHarness([GEMINI], () =>
+      const h = await buildAudioHarness([GEMINI], () =>
         Promise.resolve(jsonResponse(402, { errorCode: 'INSUFFICIENT_CREDIT', message: 'no' })),
       );
 
@@ -350,7 +360,7 @@ describe('TranscriptionReadManager (POST /files/transcribe-text)', () => {
     });
 
     it('a clamped hold is a 402 and the hold goes back', async () => {
-      const h = await buildHarness([GEMINI], () =>
+      const h = await buildAudioHarness([GEMINI], () =>
         Promise.resolve(jsonResponse(200, heldReply(10, true))),
       );
 
@@ -362,7 +372,7 @@ describe('TranscriptionReadManager (POST /files/transcribe-text)', () => {
     });
 
     it('no capable connector is a 503', async () => {
-      const h = await buildHarness([]);
+      const h = await buildAudioHarness([]);
       const error = await refusal(h.reader.read(USER, audioDto));
       expect(error.code).toBe(TranscribeReadErrorCode.UNAVAILABLE);
       expect(error.getStatus()).toBe(HttpStatus.SERVICE_UNAVAILABLE);
@@ -370,10 +380,54 @@ describe('TranscriptionReadManager (POST /files/transcribe-text)', () => {
 
     it('a transcript over the character limit is cut and flagged truncated', async () => {
       mockedGemini.mockResolvedValue({ text: 'a'.repeat(TRANSCRIBE_READ_MAX_TEXT_CHARS + 10) });
-      const h = await buildHarness([GEMINI]);
+      const h = await buildAudioHarness([GEMINI]);
       const result = await h.reader.read(USER, audioDto);
       expect(result.truncated).toBe(true);
       expect(result.text.startsWith('a'.repeat(100))).toBe(true);
+    });
+  });
+
+  describe('a video renamed as audio', () => {
+    it('is read as video and meets the plan gate (video disabled is a 422)', async () => {
+      const h = await buildHarness([GEMINI]);
+      h.planLimit.check.mockResolvedValue({
+        decision: VideoPlanDecision.DISABLED,
+        limitSeconds: 0,
+      });
+      const error = await refusal(h.reader.read(USER, audioDto));
+      expect(error.code).toBe(TranscribeReadErrorCode.VIDEO_DISABLED_FOR_PLAN);
+      expect(h.wire()).toEqual([]);
+    });
+
+    it('audio with cover art (an mjpeg picture) stays on the audio path', async () => {
+      mockedOpenAi.mockResolvedValue({ text: 'spoken words' });
+      const h = await buildHarness([OPENAI]);
+      h.media.probe.mockResolvedValue({
+        ok: true,
+        summary: summary({ videoCodec: 'mjpeg', container: 'mp3' }),
+      });
+      await h.reader.read(USER, audioDto);
+      expect(h.planLimit.check).not.toHaveBeenCalled();
+      expect(h.media.extractAudio).not.toHaveBeenCalled();
+    });
+
+    it('audio-only bytes (no video stream) skip the plan gate', async () => {
+      mockedOpenAi.mockResolvedValue({ text: 'spoken words' });
+      const h = await buildHarness([OPENAI]);
+      h.media.probe.mockResolvedValue({
+        ok: true,
+        summary: summary({ hasVideo: false, videoCodec: null, container: 'mov,mp4' }),
+      });
+      await h.reader.read(USER, audioDto);
+      expect(h.planLimit.check).not.toHaveBeenCalled();
+    });
+
+    it('a probe failure leaves the bytes on the audio path (fails open)', async () => {
+      mockedOpenAi.mockResolvedValue({ text: 'spoken words' });
+      const h = await buildHarness([OPENAI]);
+      h.media.probe.mockRejectedValue(new Error('ffprobe down'));
+      await h.reader.read(USER, audioDto);
+      expect(h.planLimit.check).not.toHaveBeenCalled();
     });
   });
 

@@ -82,3 +82,18 @@ export const TRANSCRIBE_READ_TRUNCATION_NOTE = '\n[Transcript cut: it was longer
 export function transcribeReadTooLongMessage(limitSeconds: number): string {
   return `This video is longer than the ${String(limitSeconds)} second limit for a read.`;
 }
+
+/**
+ * Video codecs that are really cover art (an mp3 or m4a with artwork). A file named
+ * as audio whose container holds any OTHER video stream is video and goes through
+ * the plan's video gate, so renaming a clip to .mp3 cannot skip it.
+ */
+export const TRANSCRIBE_READ_STILL_IMAGE_CODECS: readonly string[] = [
+  'mjpeg',
+  'png',
+  'bmp',
+  'gif',
+  'tiff',
+  'webp',
+  'jpeg2000',
+];
