@@ -411,4 +411,50 @@ describe('Anthropic prompt caching at the chat chokepoint (F093)', () => {
       expect.objectContaining({ holdSuppliedByCaller: true, toolsUnavailable: false }),
     );
   });
+
+  it('compare lane armed: the lane hold covers the write premium and the call may cache', async () => {
+    stubProvider(anthropicColdWrite());
+    const manager = build(policyReturning(true));
+    const hold = await manager.reserveCompareLane({
+      provider: 'ANTHROPIC',
+      model: 'claude-sonnet-4',
+      context: makeContext(),
+      requestId: 'group:compare-lane:0',
+    });
+    const reserved = accessControl.reserveCredit.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(reserved['surface']).toBe(PaygSurface.COMPARE);
+    expect(reserved['cacheWritePromptTokens']).toBe(reserved['promptTokens']);
+    expect(reserved['cacheWritePromptTokens']).toBeGreaterThan(0);
+
+    shouldCache.mockClear();
+    await manager.callProvider(
+      'ANTHROPIC',
+      'claude-sonnet-4',
+      makeContext(),
+      Date.now(),
+      false,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { hold },
+    );
+    expect(shouldCache).toHaveBeenCalledWith(
+      expect.objectContaining({ holdSuppliedByCaller: false }),
+    );
+    expect(accessControl.reserveCredit).toHaveBeenCalledTimes(1);
+  });
+
+  it('compare lane unarmed: the hold is the plain input hold, byte for byte', async () => {
+    const manager = build(policyReturning(false));
+    await manager.reserveCompareLane({
+      provider: 'ANTHROPIC',
+      model: 'claude-sonnet-4',
+      context: makeContext(),
+      requestId: 'group:compare-lane:0',
+    });
+    expect(accessControl.reserveCredit.mock.calls[0]?.[0]).not.toHaveProperty(
+      'cacheWritePromptTokens',
+    );
+  });
 });

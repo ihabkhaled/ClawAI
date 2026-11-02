@@ -1795,8 +1795,9 @@ research planner decided with no attachment facts and its `thinking` was shown a
 - A tool-carrying agent turn IS cached (2026-11-01, ADR-153 amendment): the tools ride the native body
   (`attachAnthropicTools`), the stream reader assembles `tool_use` (`input_json_delta`), and the hold adds
   the catalog's tokens to `cacheWritePromptTokens`. Only a catalog the native body cannot express
-  (`toolsUnavailable`) and compare lanes (their hold is taken unsized) stay uncached. Do not widen it
-  without a hold sized for the premium.
+  (`toolsUnavailable`) and any caller-supplied hold not sized for the premium stay uncached. A compare
+  lane IS cached (2026-11-02): `reserveCompareLane` sizes its hold for the premium and remembers it
+  (`holdsCoveringCachePremium`). Do not widen it without a hold sized for the premium.
 - `applyAnthropicPromptCache` is applied ONLY when `promptCache` is true; the legacy
   `ENABLE_ANTHROPIC_NATIVE_PDF` body must not carry breakpoints (its usage is read as OpenAI).
 

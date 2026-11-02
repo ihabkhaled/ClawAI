@@ -365,6 +365,10 @@ export class ChatExecutionManager implements OnModuleInit {
   // Learned "model X rejects sampling parameter Y" (process-wide, TTL'd).
   private readonly samplingSupport = new SamplingParameterSupportManager();
 
+  // Compare-lane holds that were sized for the cache-write premium (ADR-153).
+  // Identity-keyed: the hold object travels unchanged to the lane's own call.
+  private readonly holdsCoveringCachePremium = new WeakSet<PaygHold>();
+
   private readonly logger = new Logger(ChatExecutionManager.name);
   private readonly modelExposure = new ModelExposureClient();
   private readonly authorizationMetrics = new ModelAuthorizationMetricsService();
@@ -2959,7 +2963,16 @@ export class ChatExecutionManager implements OnModuleInit {
       this.attachmentDelivery === undefined
         ? args.context
         : await this.attachmentDelivery.applyToContext(args.context, args.provider, args.model);
-    return this.reservePaygHold({
+    // Decide caching BEFORE the hold, so a cached lane is held at the cache-write
+    // premium. The hold is remembered; only a hold known to cover the premium
+    // lets the lane's own call turn caching on (see applyPromptCaching).
+    const executionOptions = await this.applyPromptCaching(
+      args.provider,
+      args.model,
+      undefined,
+      undefined,
+    );
+    const hold = await this.reservePaygHold({
       provider: args.provider,
       model: args.model,
       context: planned,
@@ -2970,7 +2983,12 @@ export class ChatExecutionManager implements OnModuleInit {
         workflow: PAYG_WORKFLOW_COMPARE_LANE,
         requestId: args.requestId,
       },
+      ...(executionOptions === undefined ? {} : { executionOptions }),
     });
+    if (executionOptions?.anthropicPromptCache === true) {
+      this.holdsCoveringCachePremium.add(hold);
+    }
+    return hold;
   }
 
   /** Hands a lane's hold straight back when the run as a whole cannot be paid for. */
@@ -3075,7 +3093,10 @@ export class ChatExecutionManager implements OnModuleInit {
             ProviderToolDialect.ANTHROPIC,
             executionOptions,
           ) === undefined,
-        holdSuppliedByCaller: paygCall?.hold !== undefined,
+        // A caller hold sized without the premium would absorb it, so it still
+        // blocks caching; a compare lane hold sized WITH it does not.
+        holdSuppliedByCaller:
+          paygCall?.hold !== undefined && !this.holdsCoveringCachePremium.has(paygCall.hold),
       });
       return armed
         ? {

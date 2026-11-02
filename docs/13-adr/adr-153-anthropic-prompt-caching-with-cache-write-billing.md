@@ -87,7 +87,7 @@ default.
   `anthropic-prompt-cache.constants.ts`.
 - Anthropic changing how `tools` sit in the cached prefix (tools, system, messages), or the
   `input_json_delta` stream framing the reader assembles.
-- Compare lanes taking a hold sized for the premium (they could then be cached).
+- Compare lanes reverting to a hold sized without the premium (see the 2026-11-02 compare amendment).
 - The 1-hour TTL (2x write). Not requested anywhere; `usage.cache_creation` splits
   by TTL and would need its own slice.
 - Gemini or OpenAI exposing a billable write: `cacheCreationPromptTokens` is already
@@ -119,7 +119,7 @@ call carrying a Runtime tool catalog stayed on the OpenAI-compatible path, which
 4. **Eligibility changed from "carries tools" to "tools unavailable".** `toolsUnavailable` is true
    when the call carries a catalog the native body cannot express (over `CHAT_TOOL_CATALOG_MAX_BYTES`,
    unknown dialect). A tool-less native request would silently turn the run into a no-op, so that
-   call stays uncached on the compatible path. Compare lanes (caller-supplied hold) are unchanged.
+   call stays uncached on the compatible path. Compare lanes were unchanged here; see the 2026-11-02 compare amendment.
 5. **Proof.** Live, 2026-11-01, against the real Anthropic API with a tool body of this shape and a
    ~19k-token prefix: HTTP 200, the tool schema accepted, a `tool_use` block returned, and the second
    buffered call and the streamed call each read 19,428 tokens from cache (`cache_read_input_tokens`),
@@ -168,3 +168,25 @@ sits on, so any change inside it invalidates everything before and after it.
 
 Rule: nothing that differs between two turns of one run may sit before the part you want read from the
 cache. Put it at the end.
+
+## Amendment 2026-11-02 (compare lanes may be cached)
+
+Owner decision, 2026-11-02 ("yes" to caching compare lanes). Compare reserves every lane before any
+lane is dialled, so the hold was sized without the write premium and `isPromptCacheEligible` refused any
+caller-supplied hold.
+
+1. `reserveCompareLane` decides caching first (`applyPromptCaching`), and when armed passes
+   `anthropicPromptCache` to `reservePaygHold`, so the hold carries `cacheWritePromptTokens` and is priced
+   at the write rate.
+2. The manager remembers that hold (`holdsCoveringCachePremium`, a `WeakSet` keyed by the hold object).
+   Only a remembered hold lets the lane's own call turn caching on; any other caller hold still blocks it,
+   because settlement is capped at the hold and would absorb the premium.
+3. Switch-off (default) is byte for byte what it was: an unarmed lane reserves with no write tokens.
+4. Cost: a cached compare lane's hold is up to 25% larger on the prompt slice on a cold cache, so a user
+   near their balance is refused sooner (the run is still all-or-nothing). Each model writes its own
+   prefix, so a one-shot compare pays the premium and only a follow-up turn reads it back.
+5. A compare lane that carries tools gets no catalog tokens in its hold (`cachedToolCatalogTokens` is 0
+   there). Compare sends no tool catalog today; if that changes, size it like the agent path.
+
+Tests: two cases in `payg-credit-anthropic-cache.spec.ts` (armed lane hold and call; unarmed lane
+unchanged).
