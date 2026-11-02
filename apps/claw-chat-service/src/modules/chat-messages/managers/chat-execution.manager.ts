@@ -3094,9 +3094,14 @@ export class ChatExecutionManager implements OnModuleInit {
             executionOptions,
           ) === undefined,
         // A caller hold sized without the premium would absorb it, so it still
-        // blocks caching; a compare lane hold sized WITH it does not.
+        // blocks caching; a compare lane hold sized WITH it does not. That hold
+        // counted no tool catalog, so a call that carries one is not covered.
         holdSuppliedByCaller:
-          paygCall?.hold !== undefined && !this.holdsCoveringCachePremium.has(paygCall.hold),
+          paygCall?.hold !== undefined &&
+          !(
+            this.holdsCoveringCachePremium.has(paygCall.hold) &&
+            !this.hasNativeToolCatalog(executionOptions)
+          ),
       });
       return armed
         ? {

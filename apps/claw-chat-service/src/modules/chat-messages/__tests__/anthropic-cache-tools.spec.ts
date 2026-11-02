@@ -320,6 +320,33 @@ describe('Anthropic prompt caching on a tool-carrying call (F093)', () => {
     );
   });
 
+  it('a compare lane hold does not cover a call that carries a tool catalog', async () => {
+    stubProvider(toolUseReply());
+    const manager = build();
+    const hold = await manager.reserveCompareLane({
+      provider: 'ANTHROPIC',
+      model: 'claude-sonnet-4',
+      context: makeContext(),
+      requestId: 'group:compare-lane:0',
+    });
+    shouldCache.mockClear();
+    await manager.callProvider(
+      'ANTHROPIC',
+      'claude-sonnet-4',
+      makeContext(),
+      Date.now(),
+      false,
+      undefined,
+      undefined,
+      { fastPathEnabled: false, applyShortResponseConstraint: false, toolCatalog: [filesTool] },
+      undefined,
+      { hold },
+    );
+    expect(shouldCache).toHaveBeenCalledWith(
+      expect.objectContaining({ holdSuppliedByCaller: true }),
+    );
+  });
+
   it('keeps the call uncached when the catalog is over the byte budget', async () => {
     appConfigGet.mockReturnValue({ ...APP_CONFIG, CHAT_TOOL_CATALOG_MAX_BYTES: 10 });
     stubProvider({

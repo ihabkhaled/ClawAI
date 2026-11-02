@@ -186,7 +186,7 @@ caller-supplied hold.
    near their balance is refused sooner (the run is still all-or-nothing). Each model writes its own
    prefix, so a one-shot compare pays the premium and only a follow-up turn reads it back.
 5. A compare lane that carries tools gets no catalog tokens in its hold (`cachedToolCatalogTokens` is 0
-   there). Compare sends no tool catalog today; if that changes, size it like the agent path.
+   there). Compare sends no tool catalog today; if that changes, size it like the agent path. Until then a remembered hold does not cover a call that carries a tool catalog (`holdSuppliedByCaller` stays true), so the premium on uncounted catalog tokens is never absorbed.
 
 Tests: two cases in `payg-credit-anthropic-cache.spec.ts` (armed lane hold and call; unarmed lane
 unchanged).
