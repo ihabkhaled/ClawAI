@@ -1,5 +1,11 @@
 import { vi } from 'vitest';
 
+import { PdfExtractionTimeoutError } from '../../errors/pdf-extraction-timeout.error';
+import {
+  DOCUMENT_TEXT_MAX_CHARS,
+  PDF_TEXT_MAX_PAGES,
+  PDF_TEXT_TIMEOUT_MS,
+} from '../../../modules/files/constants/extract-text.constants';
 import { extractTextFromPdf } from '../pdf-parser.utility';
 
 /**
@@ -13,6 +19,7 @@ import { extractTextFromPdf } from '../pdf-parser.utility';
  */
 const spies = vi.hoisted(() => ({
   getText: vi.fn(),
+  getInfo: vi.fn(async (): Promise<{ total: number }> => ({ total: 1 })),
   getImage: vi.fn(async (): Promise<{ pages: { images: unknown[] }[] }> => ({ pages: [] })),
   destroy: vi.fn(async () => {}),
 }));
@@ -20,12 +27,13 @@ const spies = vi.hoisted(() => ({
 vi.mock('pdf-parse', () => ({
   PDFParse: class {
     getText = spies.getText;
+    getInfo = spies.getInfo;
     getImage = spies.getImage;
     destroy = spies.destroy;
   },
 }));
 
-const { getText, destroy } = spies;
+const { getText, getInfo, destroy } = spies;
 
 const answer = (pages: { num: number; text: string }[], total: number): void => {
   getText.mockResolvedValue({ text: pages.map((page) => page.text).join('\n'), pages, total });
@@ -34,6 +42,8 @@ const answer = (pages: { num: number; text: string }[], total: number): void => 
 describe('extractTextFromPdf', () => {
   beforeEach(() => {
     getText.mockReset();
+    getInfo.mockReset();
+    getInfo.mockResolvedValue({ total: 1 });
     destroy.mockClear();
   });
 
@@ -116,5 +126,89 @@ describe('extractTextFromPdf', () => {
 
     await expect(extractTextFromPdf(Buffer.from('%PDF'), 1)).rejects.toThrow('broken document');
     expect(destroy).toHaveBeenCalledTimes(1);
+  });
+
+  describe('bounds', () => {
+    it('cuts a many-page document to the page cap with a visible line', async () => {
+      getInfo.mockResolvedValue({ total: PDF_TEXT_MAX_PAGES + 40 });
+      answer([{ num: 1, text: 'one' }], PDF_TEXT_MAX_PAGES + 40);
+
+      const result = await extractTextFromPdf(Buffer.from('%PDF'), 1);
+
+      const asked = (getText.mock.calls[0]?.[0] as { partial: number[] }).partial;
+      expect(asked).toHaveLength(PDF_TEXT_MAX_PAGES);
+      expect(asked.at(-1)).toBe(PDF_TEXT_MAX_PAGES);
+      expect(result.text).toContain(
+        `[Text cut: the document has ${String(PDF_TEXT_MAX_PAGES + 40)} pages, only the first ${String(PDF_TEXT_MAX_PAGES)} were read]`,
+      );
+    });
+
+    it('does not touch a document at or under the page cap', async () => {
+      getInfo.mockResolvedValue({ total: PDF_TEXT_MAX_PAGES });
+      answer([{ num: 1, text: 'one' }], PDF_TEXT_MAX_PAGES);
+
+      const result = await extractTextFromPdf(Buffer.from('%PDF'), 1);
+
+      expect(getText).toHaveBeenCalledWith();
+      expect(result.text).toBe('one');
+    });
+
+    it('clamps an explicit range to the page cap', async () => {
+      answer([], 9000);
+
+      await extractTextFromPdf(Buffer.from('%PDF'), 1, { from: 1, to: 9000 });
+
+      const asked = (getText.mock.calls[0]?.[0] as { partial: number[] }).partial;
+      expect(asked).toHaveLength(PDF_TEXT_MAX_PAGES);
+    });
+
+    it('caps returned characters, in the text and in the pages together', async () => {
+      const big = 'x'.repeat(DOCUMENT_TEXT_MAX_CHARS);
+      answer(
+        [
+          { num: 1, text: big },
+          { num: 2, text: big },
+        ],
+        2,
+      );
+
+      const result = await extractTextFromPdf(Buffer.from('%PDF'), 1);
+
+      expect(result.text).toContain('[Text cut: the document is longer than');
+      expect(result.text.length).toBeLessThan(DOCUMENT_TEXT_MAX_CHARS + 200);
+      expect(result.pages.reduce((sum, page) => sum + page.text.length, 0)).toBe(
+        DOCUMENT_TEXT_MAX_CHARS,
+      );
+    });
+
+    describe('wall-clock budget', () => {
+      beforeEach(() => {
+        vi.useFakeTimers();
+      });
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      it('stops waiting on a parser that never answers and frees the parser once', async () => {
+        getText.mockReturnValue(new Promise(() => {}));
+
+        const outcome = extractTextFromPdf(Buffer.from('%PDF'), 1).catch((error: unknown) => error);
+        await vi.advanceTimersByTimeAsync(PDF_TEXT_TIMEOUT_MS + 1);
+        const error = await outcome;
+
+        expect(error).toBeInstanceOf(PdfExtractionTimeoutError);
+        expect((error as PdfExtractionTimeoutError).code).toBe('PDF_EXTRACTION_TIMEOUT');
+        expect((error as PdfExtractionTimeoutError).getStatus()).toBe(422);
+        expect(destroy).toHaveBeenCalledTimes(1);
+      });
+
+      it('leaves no timer behind after a normal read', async () => {
+        answer([{ num: 1, text: 'one' }], 1);
+
+        await extractTextFromPdf(Buffer.from('%PDF'), 1);
+
+        expect(vi.getTimerCount()).toBe(0);
+      });
+    });
   });
 });

@@ -758,9 +758,14 @@ small attribute and text regexes use `[^<>]*` and `[^<]*` so a failed attempt ne
 The upload path (`file-processing.manager`) uses the same `extractTextFromDocxBounded` since
 2026-11-01; mammoth and `docx-parser.utility.ts` are gone from this service. Upload output differs from the
 old mammoth text: paragraphs are separated by a single newline (mammoth used a blank line), and header,
-footer, note and comment text is not read. Spec: `file-processing-docx-upload.spec.ts` (5 tests). Open
-debt: PDF on upload still goes through `pdf-parse` with no size, page or time cap on text extraction.
-ODT, ODS and ODP have no reader.
+footer, note and comment text is not read. Spec: `file-processing-docx-upload.spec.ts` (5 tests). PDF text
+extraction (upload and this endpoint, via `extractTextFromPdf`) is bounded since 2026-11-02: 500 pages
+(`PDF_TEXT_MAX_PAGES`, count read first, later pages never parsed, text ends with `[Text cut: the
+document has N pages, only the first 500 were read]`, explicit ranges clamped) and 60 s
+(`PDF_TEXT_TIMEOUT_MS`; `PdfExtractionTimeoutError`, `PDF_EXTRACTION_TIMEOUT`, HTTP 422, `parser.destroy()`
+called). Characters are capped at `DOCUMENT_TEXT_MAX_CHARS` (1,000,000). Honest limit: pdfjs cannot be
+cancelled mid-parse, so a parse that spins synchronously keeps its thread until it yields. Not done: a
+live crafted-PDF check and a controller-level 422 test. ODT, ODS and ODP have no reader.
 
 **Why it is not `upload`.** The coding agent reads a PDF that is already in the
 user's workspace. Uploading it would put a copy of a repository file in their

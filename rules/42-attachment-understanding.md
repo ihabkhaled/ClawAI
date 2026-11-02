@@ -83,7 +83,8 @@ Full reasoning:
    own is a hole in ADR-053, not a new feature. DOCX is read by the bounded
    `extractTextFromDocxBounded` on upload and on `/files/extract-text`; the
    latter puts XLSX and PPTX bytes in a private temp folder for one parse. PDF
-   on upload (`pdf-parse`) is still uncapped: open debt.
+   text extraction (upload and extract-text) is capped at 500 pages and 60 s since 2026-11-02; pdfjs
+   cannot be cancelled mid-parse, so the timeout frees the request but not a spinning thread.
 
 10. **Never bulk-migrate attachment rows to `PENDING`.** Nothing reprocesses
     history, so they stay `PENDING` forever, and the file list polls while any

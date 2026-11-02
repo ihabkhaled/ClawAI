@@ -55,8 +55,15 @@ the expand-to-disk rules, applied by BOTH engines — `zip-extraction.utility.ts
 other format); `ooxml-parser.utility.ts` guards the in-memory XLSX and PPTX
 path; DOCX, on upload and on extract-text, goes through `extractTextFromDocxBounded`
 (mammoth is gone). An `.xlsx` is a ZIP and is user input. Do not add another way to open an
-archive without bounds of its own. Open debt: PDF on upload (`pdf-parse`) has no size,
-page or time cap on text extraction; ODT/ODS/ODP have no reader.
+archive without bounds of its own. PDF text extraction (upload and `/files/extract-text`, both via
+`extractTextFromPdf`) is bounded since 2026-11-02: `PDF_TEXT_MAX_PAGES` = 500 (page count read first
+with `parser.getInfo()`; later pages are never parsed; the text ends with `[Text cut: the document has
+N pages, only the first 500 were read]`; an explicit range is clamped to 500) and `PDF_TEXT_TIMEOUT_MS`
+= 60_000 for the whole extraction (`PdfExtractionTimeoutError`, `PDF_EXTRACTION_TIMEOUT`, HTTP 422,
+calls `parser.destroy()`). `DOCUMENT_TEXT_MAX_CHARS` (1,000,000) caps joined and per-page text
+(`capDocumentText`). Honest limit: pdfjs cannot be cancelled mid-parse, so the budget stops waiting and
+frees the request, but a parse that spins synchronously keeps its thread until it yields. No live
+crafted-PDF check and no controller-level 422 test yet. ODT/ODS/ODP have no reader.
 
 ## ClamAV: retried to a deadline, then fail closed (2026-09-25)
 

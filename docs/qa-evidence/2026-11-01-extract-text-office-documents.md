@@ -44,7 +44,8 @@ parse and the folder is removed in every outcome. Any other extension answers 40
 
 - L08: owner walk-through with the extension build that calls this.
 - Closed 2026-11-01: the upload path (`file-processing.manager`) now reads DOCX with `extractTextFromDocxBounded`; mammoth and `docx-parser.utility.ts` are removed. New spec `file-processing-docx-upload.spec.ts` (5 tests). Upload text changes: one newline between paragraphs (mammoth used a blank line); header, footer, note and comment text is not read.
-- Open debt: PDF on upload still uses `pdf-parse` with no size, page or time cap on text extraction. ODT, ODS and ODP have no reader.
+- Finding, closed 2026-11-02: PDF text extraction (upload and this endpoint) is now capped at 500 pages and 60 s (`PdfExtractionTimeoutError`, HTTP 422), 6 new tests in `pdf-parser.utility.spec.ts` (common/utilities 357/357, modules/files 762/762). Honest limit: pdfjs cannot be cancelled mid-parse, so a synchronous spin keeps its thread until it yields. Not done: no live crafted-PDF check, no controller-level 422 test.
+- Open: ODT, ODS and ODP have no reader.
 - Audio and video are not read by this endpoint; transcription is a separate, billed path.
 - Not deployed: the extension's change depends on this backend release; an older backend answers 400 with
   the old "PDF files only" message.

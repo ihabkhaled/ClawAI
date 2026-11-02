@@ -60,4 +60,23 @@ export const EXTRACT_TEXT_SCANNED_PAGE_MIN_CHARS = 20;
  */
 export const DOCUMENT_TEXT_MAX_CHARS = 1_000_000;
 
+/**
+ * Most PDF pages whose text is read in one pass, on upload and on extract-text.
+ *
+ * A crafted page tree can claim any number of pages; reading them all is a CPU
+ * bill the file's owner chose for us. Pages past the cap are skipped and the
+ * text ends with a line saying how many the document has. An explicit range is
+ * clamped to the same number.
+ */
+export const PDF_TEXT_MAX_PAGES = 500;
+
+/**
+ * Wall-clock budget for reading one PDF's text.
+ *
+ * pdfjs cannot be cancelled mid-parse: on expiry the request is freed and the
+ * parser is destroyed, but a parse that is spinning synchronously keeps its
+ * thread until it yields. The budget stops WAITING, it does not preempt.
+ */
+export const PDF_TEXT_TIMEOUT_MS = 60_000;
+
 export const DOCUMENT_TEXT_EXTENSIONS = ['.docx', '.xlsx', '.pptx', '.rtf'] as const;

@@ -7,7 +7,16 @@
 // case where the PDF wraps a single full-page image with no real text layer.
 
 import { Logger } from '@nestjs/common';
-import { type PdfExtractionResult, type PdfPageRange } from '../types/ocr.types';
+import { type PDFParse as PdfParserInstance } from 'pdf-parse';
+
+import {
+  DOCUMENT_TEXT_MAX_CHARS,
+  PDF_TEXT_MAX_PAGES,
+  PDF_TEXT_TIMEOUT_MS,
+} from '../../modules/files/constants/extract-text.constants';
+import { PdfExtractionTimeoutError } from '../errors/pdf-extraction-timeout.error';
+import { type PdfExtractionResult, type PdfPageRange, type PdfPageText } from '../types/ocr.types';
+import { capDocumentText } from './document-text.utility';
 
 const logger = new Logger('PdfParserUtility');
 
@@ -21,24 +30,98 @@ export async function extractTextFromPdf(
   );
   const { PDFParse } = await import('pdf-parse');
   const parser = new PDFParse({ data: buffer });
+  let timedOut = false;
   try {
-    // `first`/`last` mean "the first N" and "the last N" on their own and an
-    // inclusive range only when BOTH are set — a pair of meanings behind one
-    // pair of names. `partial` takes the page numbers outright, so the
-    // requested range says what it means and an out-of-range page is simply
-    // absent from the result rather than silently reinterpreted.
-    const result = await (range === undefined
-      ? parser.getText()
-      : parser.getText({ partial: pageNumbers(range) }));
-    const pages = (result.pages ?? []).map((page) => ({ number: page.num, text: page.text }));
-    const text = result.text;
-    const isScanned = await looksScanned(parser, text, pages, scannedThreshold);
-    logger.debug(
-      `extractTextFromPdf: extracted ${String(text.length)} chars from ${String(pages.length)} of ${String(result.total)} pages isScanned=${String(isScanned)}`,
+    return await withDeadline(
+      readPdfText(parser, scannedThreshold, range),
+      PDF_TEXT_TIMEOUT_MS,
+      () => {
+        timedOut = true;
+        // Best effort: closing the document stops pdfjs between its async steps.
+        // A parse spinning synchronously is NOT interrupted by this.
+        parser.destroy().catch(() => {});
+      },
     );
-    return { text, isScanned, pages, totalPages: result.total };
   } finally {
-    await parser.destroy();
+    if (!timedOut) await parser.destroy();
+  }
+}
+
+async function readPdfText(
+  parser: PdfParserInstance,
+  scannedThreshold: number,
+  range: PdfPageRange | undefined,
+): Promise<PdfExtractionResult> {
+  // `first`/`last` mean "the first N" and "the last N" on their own and an
+  // inclusive range only when BOTH are set — a pair of meanings behind one
+  // pair of names. `partial` takes the page numbers outright, so the
+  // requested range says what it means and an out-of-range page is simply
+  // absent from the result rather than silently reinterpreted.
+  //
+  // The page count is read first (cheap: no page content is parsed) so a
+  // document with more than PDF_TEXT_MAX_PAGES pages is cut before any of the
+  // extra pages is touched. A range is clamped to the same cap.
+  const totalPages = range === undefined ? (await parser.getInfo()).total : undefined;
+  const cutAt = totalPages !== undefined && totalPages > PDF_TEXT_MAX_PAGES;
+  const wanted = range ?? (cutAt ? { from: 1, to: PDF_TEXT_MAX_PAGES } : undefined);
+  const requested =
+    wanted === undefined ? undefined : pageNumbers(wanted).slice(0, PDF_TEXT_MAX_PAGES);
+  const result = await (requested === undefined
+    ? parser.getText()
+    : parser.getText({ partial: requested }));
+  const capped = capPages(
+    (result.pages ?? []).map((page) => ({ number: page.num, text: page.text })),
+  );
+  const body = capDocumentText(result.text);
+  const text =
+    cutAt && totalPages !== undefined
+      ? `${body}\n[Text cut: the document has ${String(totalPages)} pages, only the first ${String(PDF_TEXT_MAX_PAGES)} were read]`
+      : body;
+  const isScanned = await looksScanned(parser, text, capped, scannedThreshold);
+  logger.debug(
+    `extractTextFromPdf: extracted ${String(text.length)} chars from ${String(capped.length)} of ${String(result.total)} pages isScanned=${String(isScanned)}`,
+  );
+  return { text, isScanned, pages: capped, totalPages: result.total };
+}
+
+/** Keeps the per-page text inside the same total character cap as the joined text. */
+function capPages(pages: PdfPageText[]): PdfPageText[] {
+  const kept: PdfPageText[] = [];
+  let used = 0;
+  for (const page of pages) {
+    if (used + page.text.length > DOCUMENT_TEXT_MAX_CHARS) {
+      kept.push({ number: page.number, text: page.text.slice(0, DOCUMENT_TEXT_MAX_CHARS - used) });
+      break;
+    }
+    used += page.text.length;
+    kept.push(page);
+  }
+  return kept;
+}
+
+/**
+ * Rejects with PdfExtractionTimeoutError when `work` outlives `timeoutMs`, and
+ * always clears its timer. `onTimeout` runs once, on expiry only.
+ */
+async function withDeadline<T>(
+  work: Promise<T>,
+  timeoutMs: number,
+  onTimeout: () => void,
+): Promise<T> {
+  let timer: NodeJS.Timeout | undefined;
+  const deadline = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => {
+      onTimeout();
+      reject(new PdfExtractionTimeoutError(timeoutMs));
+    }, timeoutMs);
+  });
+  try {
+    return await Promise.race([work, deadline]);
+  } finally {
+    clearTimeout(timer);
+    // The loser keeps running in the background; its late rejection must not
+    // surface as an unhandled rejection.
+    work.catch(() => {});
   }
 }
 

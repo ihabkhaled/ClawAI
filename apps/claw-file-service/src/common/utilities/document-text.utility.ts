@@ -55,7 +55,7 @@ async function readDocumentText(extension: string, buffer: Buffer): Promise<stri
   }
 }
 
-function capDocumentText(text: string): string {
+export function capDocumentText(text: string): string {
   if (text.length <= DOCUMENT_TEXT_MAX_CHARS) {
     return text;
   }
