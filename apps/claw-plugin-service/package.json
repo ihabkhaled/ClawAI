@@ -44,7 +44,7 @@
   "devDependencies": {
     "@nestjs/testing": "^12.2.0",
     "@types/express": "^5.0.6",
-    "@types/node": "^26.6.5",
+    "@types/node": "^26.6.6",
     "eslint": "^10.13.0",
     "nodemon": "^3.1.14",
     "pg": "^8.23.1",

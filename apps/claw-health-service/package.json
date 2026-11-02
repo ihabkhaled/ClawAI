@@ -46,7 +46,7 @@
     "@nestjs/testing": "^12.2.0",
     "@swc/core": "^1.16.20",
     "@types/express": "^5.0.6",
-    "@types/node": "^26.6.5",
+    "@types/node": "^26.6.6",
     "babel-plugin-transform-import-meta": "^3.1.0",
     "concurrently": "^10.0.6",
     "eslint": "^10.13.0",
