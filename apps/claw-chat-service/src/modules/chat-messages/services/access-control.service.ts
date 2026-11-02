@@ -497,20 +497,26 @@ export class AccessControlService {
     models: ReadonlyArray<{ provider: string; model: string }>,
   ): Promise<ModelAccessEntry[]> {
     const ent = await this.resolve(userId);
-    const classes =
-      ent.modelAccessMode === PlanModelAccessMode.ALLOW_COST_CLASSES && !ent.isAdmin
-        ? await this.exposure.getCostClasses(models)
-        : new Map<string, ModelCostClass | null>();
-    return models.map(({ provider, model }) => ({
-      provider,
-      model,
-      allowed: this.isPrimaryModelAllowed(
-        ent,
+    // Always asked: the picker shows the cost band on every plan. One cached, batched call that
+    // never throws; an unanswered model simply carries no band.
+    const classes = await this.exposure.getCostClasses(models).catch(() => {
+      this.logger.warn('listModelAccess: cost classes unavailable, entries carry no band');
+      return new Map<string, ModelCostClass | null>();
+    });
+    return models.map(({ provider, model }) => {
+      const costClass = classes.get(costClassKey(provider, model));
+      const allowed = this.isPrimaryModelAllowed(ent, provider, model, costClass);
+      return {
         provider,
         model,
-        classes.get(costClassKey(provider, model)),
-      ),
-    }));
+        allowed,
+        ...(costClass ? { costClass } : {}),
+        // Allowed on the plan (or admin) means included, so no credit is spent; a refused model
+        // is never "covered". Only the band is known here, so the free plan's output-price
+        // ceiling (ADR-162) is not compared; the plan's class list stands in for it.
+        coveredByAllowance: allowed,
+      };
+    });
   }
 
   private async assertModelAllowed(
@@ -592,6 +598,11 @@ export class AccessControlService {
       throw new Error(`No quota error mapping for window ${window}`);
     }
     throw new BusinessException(message, errorCode, HttpStatus.TOO_MANY_REQUESTS);
+  }
+
+  /** The user's choice for a used-up credit model (ADR-161). Absent reads as FALLBACK. */
+  async creditFallbackModeFor(userId: string): Promise<UserEntitlements['creditFallbackMode']> {
+    return (await this.resolve(userId)).creditFallbackMode;
   }
 
   private async resolve(userId: string): Promise<UserEntitlements> {

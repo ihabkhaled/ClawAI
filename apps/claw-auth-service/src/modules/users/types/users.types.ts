@@ -66,6 +66,8 @@ export interface SafeUser {
   preferredCurrencyCode: string | null;
   // "Read aloud" voice; null = each provider's default.
   ttsVoice: string | null;
+  // What a used-up credit model does: FALLBACK (default) or STOP (ADR-161).
+  creditFallbackMode: string;
   activePlanId: string | null;
   firstName: string | null;
   lastName: string | null;

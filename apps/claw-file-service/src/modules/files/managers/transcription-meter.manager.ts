@@ -2,7 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { isPaygCreditExhaustedError, PaygMeter } from '@claw/shared-entitlements';
 import { PaygSurface } from '@claw/shared-types';
 import { TranscriptionCreditRefusalCode, TranscriptionReserveStatus } from '../../../common/enums';
-import { TRANSCRIPTION_PAYG_UNIT_PRICED_OUTPUT_TOKENS } from '../constants/transcription-payg.constants';
+import {
+  TRANSCRIPTION_PAYG_UNIT_PRICED_OUTPUT_TOKENS,
+  TRANSCRIPTION_READ_PAYG_REQUEST_ID_PREFIX,
+} from '../constants/transcription-payg.constants';
 import {
   type TranscriptionMeterHold,
   type TranscriptionMeterInput,
@@ -55,11 +58,15 @@ export class TranscriptionMeterManager {
    * provider failure and fall through to a second paid provider.
    */
   async reserve(input: TranscriptionMeterInput): Promise<TranscriptionReserveOutcome> {
+    const surface = input.surface ?? PaygSurface.TRANSCRIPTION;
     const requestId = transcriptionRequestId(
       input.fileId,
       input.provider,
       input.requestScope,
       input.providerAttempt,
+      surface === PaygSurface.TRANSCRIPTION_READ
+        ? TRANSCRIPTION_READ_PAYG_REQUEST_ID_PREFIX
+        : undefined,
     );
     const seconds = holdAudioSeconds(input.sizeBytes, input.audioSeconds);
     const perSecond = isPerSecondPricedProvider(input.provider);
@@ -72,7 +79,7 @@ export class TranscriptionMeterManager {
         requestId,
         provider: input.provider,
         model: input.model,
-        surface: PaygSurface.TRANSCRIPTION,
+        surface,
         promptTokens,
         cachedPromptTokens: 0,
         requestedMaxOutputTokens: perSecond
@@ -88,13 +95,14 @@ export class TranscriptionMeterManager {
         requestId,
         reservedAudioSeconds: seconds,
         reservedPromptTokens: promptTokens,
+        surface,
       };
     } catch (error: unknown) {
       const code = isPaygCreditExhaustedError(error)
         ? transcriptionRefusalCode(error.errorCode)
         : TranscriptionCreditRefusalCode.CREDIT_CHECK_UNAVAILABLE;
       this.logger.warn(
-        `reserve: refused fileId=${input.fileId} requestId=${requestId} surface=${PaygSurface.TRANSCRIPTION} outcome=${code}`,
+        `reserve: refused fileId=${input.fileId} requestId=${requestId} surface=${surface} outcome=${code}`,
       );
       return { status: TranscriptionReserveStatus.REFUSED, ...transcriptionRefusal(code) };
     }
@@ -105,7 +113,7 @@ export class TranscriptionMeterManager {
       // a clamp must be visible), so the hold goes back and the user is told.
       await this.payg.release(meterHold.hold, 'CANCELLED');
       this.logger.warn(
-        `reserve: clamped fileId=${input.fileId} reservationId=${String(meterHold.hold.reservationId)} surface=${PaygSurface.TRANSCRIPTION} outcome=${TranscriptionCreditRefusalCode.INSUFFICIENT_CREDIT}`,
+        `reserve: clamped fileId=${input.fileId} reservationId=${String(meterHold.hold.reservationId)} surface=${surface} outcome=${TranscriptionCreditRefusalCode.INSUFFICIENT_CREDIT}`,
       );
       return {
         status: TranscriptionReserveStatus.REFUSED,
@@ -114,7 +122,7 @@ export class TranscriptionMeterManager {
     }
 
     this.logger.log(
-      `reserve: held fileId=${input.fileId} requestId=${requestId} reservationId=${String(meterHold.hold.reservationId)} surface=${PaygSurface.TRANSCRIPTION} metered=${String(meterHold.hold.metered)}`,
+      `reserve: held fileId=${input.fileId} requestId=${requestId} reservationId=${String(meterHold.hold.reservationId)} surface=${surface} metered=${String(meterHold.hold.metered)}`,
     );
     return { status: TranscriptionReserveStatus.HELD, meterHold };
   }
@@ -151,7 +159,7 @@ export class TranscriptionMeterManager {
     const reason = transcriptionReleaseReason(error);
     await this.payg.release(meterHold.hold, reason);
     this.logger.warn(
-      `release: requestId=${meterHold.requestId} reservationId=${String(meterHold.hold.reservationId)} surface=${PaygSurface.TRANSCRIPTION} outcome=RELEASED reason=${reason}`,
+      `release: requestId=${meterHold.requestId} reservationId=${String(meterHold.hold.reservationId)} surface=${meterHold.surface} outcome=RELEASED reason=${reason}`,
     );
   }
 
@@ -163,13 +171,13 @@ export class TranscriptionMeterManager {
   async releaseCancelled(meterHold: TranscriptionMeterHold): Promise<void> {
     await this.payg.release(meterHold.hold, 'CANCELLED');
     this.logger.warn(
-      `release: requestId=${meterHold.requestId} reservationId=${String(meterHold.hold.reservationId)} surface=${PaygSurface.TRANSCRIPTION} outcome=RELEASED reason=CANCELLED`,
+      `release: requestId=${meterHold.requestId} reservationId=${String(meterHold.hold.reservationId)} surface=${meterHold.surface} outcome=RELEASED reason=CANCELLED`,
     );
   }
 
   private logFinalize(meterHold: TranscriptionMeterHold, measured: string): void {
     this.logger.log(
-      `finalize: requestId=${meterHold.requestId} reservationId=${String(meterHold.hold.reservationId)} surface=${PaygSurface.TRANSCRIPTION} outcome=FINALIZED ${measured}`,
+      `finalize: requestId=${meterHold.requestId} reservationId=${String(meterHold.hold.reservationId)} surface=${meterHold.surface} outcome=FINALIZED ${measured}`,
     );
   }
 }

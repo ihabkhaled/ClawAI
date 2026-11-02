@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import {
+  CreditFallbackMode,
   CurrencyPreferenceMode,
   Prisma,
   User,
@@ -209,6 +210,7 @@ export class UsersRepository {
       preferredCountryCode?: string | null;
       preferredCurrencyCode?: string | null;
       ttsVoice?: string | null;
+      creditFallbackMode?: CreditFallbackMode;
     },
   ): Promise<User> {
     return this.prisma.user.update({

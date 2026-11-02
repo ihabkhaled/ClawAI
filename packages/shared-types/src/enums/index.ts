@@ -109,6 +109,7 @@ export { FeedbackType } from './feedback-type.enum';
 export { FeedbackStatus } from './feedback-status.enum';
 export { AdminUserTrialState } from './admin-user-trial-state.enum';
 export { CurrencyPreferenceMode } from './currency-preference-mode.enum';
+export { CreditFallbackMode } from './credit-fallback-mode.enum';
 export { DisplayFxSource } from './display-fx-source.enum';
 export { GeoCountrySource } from './geo-country-source.enum';
 export {

@@ -1,4 +1,8 @@
-import { UserAppearancePreference, UserLanguagePreference } from '../../../../generated/prisma';
+import {
+  CreditFallbackMode,
+  UserAppearancePreference,
+  UserLanguagePreference,
+} from '../../../../generated/prisma';
 import { updatePreferencesSchema } from '../update-preferences.dto';
 
 describe('updatePreferencesSchema', () => {
@@ -124,6 +128,26 @@ describe('updatePreferencesSchema', () => {
     it('trims before checking the catalog', () => {
       const result = updatePreferencesSchema.safeParse({ ttsVoice: '  nova ' });
       expect(result.data?.ttsVoice).toBe('nova');
+    });
+  });
+
+  describe('creditFallbackMode (ADR-161)', () => {
+    it.each([CreditFallbackMode.FALLBACK, CreditFallbackMode.STOP])('accepts %s alone', (mode) => {
+      const result = updatePreferencesSchema.safeParse({ creditFallbackMode: mode });
+      expect(result.success).toBe(true);
+      expect(result.data?.creditFallbackMode).toBe(mode);
+    });
+
+    it.each(['stop', 'NONE', '', null, 1])('refuses %s', (mode) => {
+      expect(updatePreferencesSchema.safeParse({ creditFallbackMode: mode }).success).toBe(false);
+    });
+
+    it('is not required: other preferences pass without it', () => {
+      const result = updatePreferencesSchema.safeParse({
+        languagePreference: UserLanguagePreference.EN,
+      });
+      expect(result.success).toBe(true);
+      expect(result.data?.creditFallbackMode).toBeUndefined();
     });
   });
 });

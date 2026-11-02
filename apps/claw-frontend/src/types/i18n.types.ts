@@ -395,6 +395,19 @@ export type TranslationDictionary = {
       search: string;
       noResults: string;
       notOnPlan: string;
+      cost: {
+        free: string;
+        cheap: string;
+        standard: string;
+        premium: string;
+        ultra: string;
+        freeHint: string;
+        cheapHint: string;
+        standardHint: string;
+        premiumHint: string;
+        ultraHint: string;
+        outsideAllowanceHint: string;
+      };
     };
     threadListDrawer: string;
     export: {
@@ -2432,6 +2445,11 @@ export type TranslationDictionary = {
     userSubscriptionInvoiceIssuedAt: string;
   };
   settings: {
+    creditFallbackMode: string;
+    creditFallbackModeDescription: string;
+    creditFallbackModeLabel: string;
+    creditFallbackModeFallback: string;
+    creditFallbackModeStop: string;
     title: string;
     description: string;
     profile: string;
@@ -5405,6 +5423,7 @@ export type TranslationDictionary = {
         WORKSPACE_ACTION: string;
         ROUTING: string;
         TRANSCRIPTION: string;
+        TRANSCRIPTION_READ: string;
         VISION_HELPER: string;
         TTS: string;
       };

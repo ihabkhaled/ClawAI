@@ -344,3 +344,13 @@ Last updated: 2026-09-10
 - **Added**: 2026-10-03 - **Severity**: Low - A lab run creates its thread, so before the first run there is
   nothing to preview. Labs have the pack picker; those two dialogs are chat and in-thread Compare only.
   Fix when a lab gets a "draft thread" (create the thread when the page opens).
+
+### TD-046: Gaps left by the 2026-11-02 batch (credit fallback, picker marks, media read)
+
+- **Added**: 2026-11-02 - **Severity**: Low to Medium - Honest gaps, none hidden:
+  - `coveredByAllowance` (model-access) is `allowed` including FREE and plan-included models; it does not compare the ADR-162 free-allowance price limit, so a dim can be missing for a model the limit would refuse. The server stays the gate (ADR-198 amendment).
+  - The Compare picker (`parallel-model-row.tsx`) shows no cost mark yet.
+  - `POST /files/transcribe-text` (ADR-216) is unit-tested only: not run against a live stack, real ffmpeg or a real provider.
+  - No per-endpoint ffmpeg concurrency limit on the read endpoint.
+  - Audio duration is not capped beyond the 12 MB byte cap; the hold is bounded at 7,200 s.
+  - The routing rate-card 403 and the credit-fallback STOP path have no live proof (QA records of 2026-11-02 are PARTIAL).

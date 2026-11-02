@@ -423,6 +423,7 @@ export type {
   UseModelPickerListResult,
   ModelPickerListProps,
   ModelCapabilityBadgesProps,
+  ModelCostMarkProps,
   ModelPickerProps,
   ModelSelectorProps,
   UseModelSelectorResult,
@@ -1305,6 +1306,11 @@ export type {
   UseMessageSpeechPlayerReturn,
 } from './message-speech.types';
 export type {
+  CreditFallbackModeCardProps,
+  CreditFallbackModeOption,
+  CreditFallbackModeState,
+} from './credit-fallback-mode.types';
+export type {
   TtsVoiceGroup,
   TtsVoicePreferenceCardProps,
   TtsVoicePreferenceState,
@@ -1363,4 +1369,8 @@ export type {
   UseContextSaveProposalHostParams,
   UseContextSaveProposalHostReturn,
 } from './context-save.types';
-export type { ModelAccessEntry, ModelAccessRequestEntry } from './model-access.types';
+export type {
+  ModelAccessEntry,
+  ModelAccessRequestEntry,
+  ModelCostInfo,
+} from './model-access.types';

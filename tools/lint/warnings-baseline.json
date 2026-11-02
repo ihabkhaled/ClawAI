@@ -267,10 +267,6 @@
     "apps/claw-auth-service/src/modules/entitlements/services/entitlement-reconciliation.service.ts": {
       "unicorn/prefer-ternary": 1
     },
-    "apps/claw-auth-service/src/modules/entitlements/services/entitlements.service.ts": {
-      "complexity": 1,
-      "max-lines-per-function": 1
-    },
     "apps/claw-auth-service/src/modules/entitlements/services/runtime-admission.service.ts": {
       "unicorn/prefer-ternary": 1
     },
@@ -499,9 +495,6 @@
     },
     "apps/claw-chat-service/src/modules/chat-messages/services/__tests__/research-gate.service.spec.ts": {
       "@typescript-eslint/consistent-type-imports": 1
-    },
-    "apps/claw-chat-service/src/modules/chat-messages/services/access-control.service.ts": {
-      "security/detect-object-injection": 2
     },
     "apps/claw-chat-service/src/modules/chat-messages/services/advanced-module-model-selection.service.ts": {
       "unicorn/prefer-ternary": 1

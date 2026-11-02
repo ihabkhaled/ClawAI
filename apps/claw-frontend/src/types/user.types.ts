@@ -1,6 +1,7 @@
 import type { CurrencyPreferenceMode } from '@claw/shared-types';
 
 import type {
+  CreditFallbackMode,
   Permission,
   UserAppearancePreference,
   UserLanguagePreference,
@@ -29,6 +30,8 @@ export type User = {
   // "Read aloud" voice (null = each provider's default). Optional: an older
   // auth service omits it.
   ttsVoice?: string | null;
+  // Credit-model-used-up behaviour; absent reads as FALLBACK (older auth service).
+  creditFallbackMode?: CreditFallbackMode;
   createdAt: string;
   updatedAt: string;
 };
@@ -56,4 +59,6 @@ export type UserProfile = {
   // "Read aloud" voice (null = each provider's default). Optional: an older
   // auth service omits it.
   ttsVoice?: string | null;
+  // Credit-model-used-up behaviour; absent reads as FALLBACK (older auth service).
+  creditFallbackMode?: CreditFallbackMode;
 };

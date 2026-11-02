@@ -1173,3 +1173,14 @@ Every chat surface reaches research-service through one client, `utilities/resea
 - **Narration.** `SEARCH_DONE` gets `providers` / `providerCount` params when research-service reports `providers[]` (or the attempted providers on the old shape); the stream's `RESEARCH_SOURCES_FOUND` carries `providers`.
 - **Tools.** `web_search` uses the configured providers (all in parallel); the hosted Ollama search is the fallback. Independent tool calls of one turn run in parallel, at most 4, in call order.
 - **Metering.** research-service records one unit per provider call; chat adds none on the research path.
+
+## Credit fallback mode: FALLBACK or STOP (ADR-161 amendment, 2026-11-02)
+
+- A used-up credit model either falls to an included model with a notice (`FALLBACK`, the default) or ends the turn with the original 402 (`STOP`). The user picks it in Settings; auth-service owns `User.creditFallbackMode`.
+- `AccessControlService.creditFallbackModeFor(userId)` reads it from `GET /internal/users/:id/entitlements` (absent means `FALLBACK`). `ChatExecutionManager` asks lazily, only after the first 402, so a turn with no credit refusal makes no extra call.
+- Under `STOP`, `skipChainCandidate` skips every remaining candidate (`creditFallbackStops`, `skipsAfterCreditStop` in `credit-fallback.utility.ts`; `creditStopped` in `candidate-chain.utility.ts`) and the chain ends in the credit refusal. A provider outage still falls to a substitute under `STOP`. Routing's `withIncludedSafetyNet` is unchanged. Spec: `__tests__/credit-fallback-mode.spec.ts`.
+
+## Model access carries cost marks (ADR-198 amendment, 2026-11-02)
+
+- `POST /chat-messages/model-access` entries: `{ provider, model, allowed, costClass?, coveredByAllowance? }` (`types/access-control.types.ts`). `costClass` is the band only (rule 37). `coveredByAllowance` is `allowed` including FREE and plan-included models; it does NOT compare the ADR-162 free-allowance price limit (honest approximation, the send path stays the gate).
+- `listModelAccess` always fetches the bands (one cached batched call to routing's `POST /internal/router-models/costs/classes`). A failed lookup leaves the fields absent. Never put a rate in this response.

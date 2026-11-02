@@ -5,8 +5,10 @@ import { CreditFallbackReason } from '../../enums/credit-fallback-reason.enum';
 import {
   creditFallbackPart,
   creditFallbackReason,
+  creditFallbackStops,
   noteCreditRefusal,
   refusalSparesCheaperModels,
+  skipsAfterCreditStop,
   skipsMeteredAfterRefusal,
 } from '../credit-fallback.utility';
 
@@ -64,5 +66,16 @@ describe('credit fallback', () => {
     expect(skipsMeteredAfterRefusal(true, { provider: 'GEMINI' })).toBe(true);
     expect(skipsMeteredAfterRefusal(true, { provider: 'OLLAMA' })).toBe(false);
     expect(skipsMeteredAfterRefusal(false, { provider: 'GEMINI' })).toBe(false);
+  });
+
+  it('stops only on an explicit STOP; absent and FALLBACK keep the fallback', () => {
+    expect(creditFallbackStops('STOP')).toBe(true);
+    expect(creditFallbackStops('FALLBACK')).toBe(false);
+    expect(creditFallbackStops(undefined)).toBe(false);
+  });
+
+  it('skips every candidate once stopped, none otherwise', () => {
+    expect(skipsAfterCreditStop(true)).toBe(true);
+    expect(skipsAfterCreditStop(false)).toBe(false);
   });
 });

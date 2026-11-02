@@ -1,5 +1,5 @@
 import { PresenceState, UserRole, UserStatus } from '../../../../common/enums';
-import { type User } from '../../../../generated/prisma';
+import { CreditFallbackMode, type User } from '../../../../generated/prisma';
 import { toAdminUser } from '../to-admin-user.utility';
 import { toSafeUser } from '../to-safe-user.utility';
 
@@ -27,6 +27,7 @@ function row(overrides: Partial<User> = {}): User {
     preferredCountryCode: null,
     preferredCurrencyCode: null,
     ttsVoice: null,
+    creditFallbackMode: CreditFallbackMode.FALLBACK,
     registrationIp: '41.33.1.1',
     registrationCountryCode: 'EG',
     lastSeenAt: new Date(NOW.getTime() - 60_000),
@@ -58,6 +59,13 @@ describe('toAdminUser', () => {
     expect(safe).not.toHaveProperty('registrationIp');
     expect(safe).not.toHaveProperty('registrationCountryCode');
     expect(safe).not.toHaveProperty('banReason');
+  });
+
+  it('the self-service view carries the credit fallback mode (ADR-161)', () => {
+    expect(toSafeUser(row()).creditFallbackMode).toBe(CreditFallbackMode.FALLBACK);
+    expect(
+      toSafeUser(row({ creditFallbackMode: CreditFallbackMode.STOP })).creditFallbackMode,
+    ).toBe(CreditFallbackMode.STOP);
   });
 
   it('reports an active lifetime ban with its reason', () => {

@@ -37,11 +37,12 @@ export function transcriptionRequestId(
   provider: string,
   scope?: string,
   providerAttempt?: number,
+  prefix: string = TRANSCRIPTION_PAYG_REQUEST_ID_PREFIX,
 ): string {
   const base =
     scope === undefined
-      ? `${TRANSCRIPTION_PAYG_REQUEST_ID_PREFIX}:${fileId}:${provider}`
-      : `${TRANSCRIPTION_PAYG_REQUEST_ID_PREFIX}:${fileId}:${scope}:${provider}`;
+      ? `${prefix}:${fileId}:${provider}`
+      : `${prefix}:${fileId}:${scope}:${provider}`;
   return providerAttempt === undefined || providerAttempt <= 1
     ? base
     : `${base}:${String(providerAttempt)}`;

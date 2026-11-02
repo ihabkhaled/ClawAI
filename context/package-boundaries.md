@@ -98,3 +98,5 @@ sees the edge. See [stack-and-toolchain.md](stack-and-toolchain.md#ci).
 The PAYG error code set in `@claw/shared-types` (`billing-error-code.enum.ts`, `payg-credit.type.ts`) now also carries `PAYG_CAP_TOO_LOW` (a Threads spend cap smaller than a call's hold) and `PAYG_MODEL_UNPRICED` (a model with no price row): `@claw/shared-entitlements` returns them from the budget-call verdict so a caller can tell them from `PAYG_CREDIT_EXHAUSTED` (an empty wallet).
 
 The same set also carries `PLAN_CALL_LIMIT_EXCEEDED` (ADR-197): one platform-paid request is larger than the plan allows for a single call. It is a 402 with no figure, and the remedy is a shorter prompt or a cheaper model, never a top-up.
+
+`@claw/shared-types` gained `CreditFallbackMode` (FALLBACK, STOP; `credit-fallback-mode.enum.ts`) and `PaygSurface.TRANSCRIPTION_READ` (the billed audio/video read in file-service, ADR-216). `@claw/shared-entitlements` `UserEntitlements` carries an optional `creditFallbackMode` (absent reads as FALLBACK), which chat-service reads lazily after the first credit refusal (ADR-161 amendment 2026-11-02).

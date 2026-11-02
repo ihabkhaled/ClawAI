@@ -207,7 +207,7 @@ paid model, rule 1 applies to it like anything else.
     `0`) lets `CreditReservationManager` admit a call the wallet cannot cover, and ONLY then
     (credit first, allowance as the fallback) **for an unlimited allowance; a FINITE allowance is counted FIRST for a user with no purchased credit, and also with the metering switch OFF** (amended 2026-10-02: a Free account must stop at exactly the plan's number, grant or no grant, switch or no switch; no wallet is charged with the switch off). The count is ONE total across all credit connectors per user per UTC month (counter provider key `'*'`). Four things are not optional: (a) only the
     allow-listed token-priced surfaces (`FREE_ALLOWANCE_ELIGIBLE_SURFACES`) with no per-unit
-    quantity are eligible: image, video, transcription and TTS never are, because one clip can cost
+    quantity are eligible: image, video, transcription (including the billed media read `TRANSCRIPTION_READ`, ADR-216) and TTS never are, because one clip can cost
     $1.60; (b) the slot is taken by one atomic `INSERT .. ON CONFLICT .. WHERE used_count < limit`
     on `credit_free_allowance_usage`, never a read-then-write; (c) the output is clamped to
     `min($0.15, plan ceiling / allowance)` so a free request is not an unbounded liability; (d) a
@@ -268,6 +268,7 @@ paid model, rule 1 applies to it like anything else.
   count, or pricing one with a fake per-token rate ("$/image ÷ 8192").
 - Finalizing (or storing) the result of a call the owner cancelled while it was
   in flight, or falling through to the next candidate after a cancel.
+- Letting a non-admin read a rate card. `GET router-models/costs`, `GET router-models/costs/:provider/:model`, `POST router-models/costs/estimate` and `POST router-models/costs/price` are `@Roles(ADMIN)` + `ADMIN_MODELS_MANAGE` (closed 2026-11-02, ADR-198 amendment); a user surface gets the cost band only.
 - Admitting a per-unit surface (image, video, transcription, speech) on the free
   allowance, or taking an allowance slot with a read-then-write instead of the
   single guarded upsert.

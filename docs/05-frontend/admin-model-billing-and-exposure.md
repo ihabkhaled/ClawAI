@@ -34,6 +34,10 @@ change a model's billing, change its provider's connector switch. No backend
 change was needed; a server-joined field on `/router-models/costs` is only
 worth adding if the 60 s auth-service policy cache must be reflected exactly.
 
+## Rate-card routes are admin-only (2026-11-02)
+
+These four routes in routing-service `model-cost.controller` were readable by any signed-in user and are now `@Roles(ADMIN)` + `ADMIN_MODELS_MANAGE`: `GET /router-models/costs`, `GET /router-models/costs/:provider/:model`, `POST /router-models/costs/estimate`, `POST /router-models/costs/price`. The Model Prices page is an admin page and is unaffected. A non-admin surface (the model picker) gets only the cost band through chat-service `POST /chat-messages/model-access` (`costClass`, `coveredByAllowance`; ADR-198 amendment). Live 403 as a non-admin is not yet proved (QA record `2026-11-02-model-picker-cost-marks`).
+
 ## Plan model access
 
 The admin plan editor configures access by explicit model or cost class. The

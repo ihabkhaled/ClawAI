@@ -42,6 +42,7 @@ import type { LoadingStateVariant } from '@/enums/loading-state.enum';
 import type { Locale } from '@/enums/locale.enum';
 import type { PlanGrantDurationUnit } from '@/enums/plan-grant-duration-unit.enum';
 import type { ResearchProviderKind } from '@/enums/research-provider-kind.enum';
+import type { CostClass } from '@/enums/router-models.enum';
 import type { ResolvedTheme, Theme } from '@/enums/theme.enum';
 import type { WorkspaceConnectorStatus } from '@/enums/workspace-connector-status.enum';
 import type { ChangePasswordFormValues } from '@/lib/validation/change-password.schema';
@@ -808,6 +809,10 @@ export type ModelSelection = {
   capabilities?: ModelCapabilityBadge[];
   /** The user's plan does not include this model. Shown dimmed and not selectable. */
   isLocked?: boolean;
+  /** Price band from the server, shown as a mark. Absent: no mark. */
+  costClass?: CostClass;
+  /** The free allowance does not cover it (it spends credit). A hint only: still selectable. */
+  outsideAllowance?: boolean;
 };
 
 // Normalized shape the shared searchable ModelPicker renders — every one of
@@ -828,6 +833,14 @@ export type ModelPickerOption = {
   isLocked?: boolean;
   /** The translated "not on your plan" tag shown on a locked option. */
   lockedLabel?: string;
+  costClass?: CostClass;
+  /** Dimmed as a hint (spends credit); unlike isLocked it stays selectable. */
+  outsideAllowance?: boolean;
+};
+
+export type ModelCostMarkProps = {
+  costClass: CostClass;
+  outsideAllowance?: boolean;
 };
 
 export type ModelCapabilityBadgesProps = {

@@ -1,3 +1,4 @@
+import type { UserEntitlements } from '@claw/shared-entitlements';
 import { BillingErrorCode } from '@claw/shared-types';
 
 import { BusinessException } from '../../../common/errors';
@@ -74,4 +75,20 @@ export function skipsMeteredAfterRefusal(
   candidate: { provider: string },
 ): boolean {
   return creditGone && !isPaygExemptProvider(candidate.provider);
+}
+
+/**
+ * The user's choice for a used-up credit model (ADR-161): only an explicit 'STOP' ends the turn
+ * with the credit refusal. Absent or 'FALLBACK' keeps today's behaviour (an included model answers).
+ */
+export function creditFallbackStops(mode: UserEntitlements['creditFallbackMode']): boolean {
+  return mode === 'STOP';
+}
+
+/**
+ * Under STOP, once a credit refusal is recorded no further candidate is dialled, so the chain
+ * ends on the ORIGINAL refusal (the upgrade notice, 402) and never on a substitute's answer.
+ */
+export function skipsAfterCreditStop(stopped: boolean): boolean {
+  return stopped;
 }

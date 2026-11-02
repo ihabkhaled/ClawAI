@@ -63,4 +63,26 @@ describe('useModelPlanAccess', () => {
 
     expect(mockGetModelAccess).not.toHaveBeenCalled();
   });
+
+  it('exposes cost band and allowance cover, and nothing when absent', async () => {
+    mockGetModelAccess.mockResolvedValue([
+      {
+        provider: 'OLLAMA',
+        model: 'kimi-k3',
+        allowed: true,
+        costClass: 'PREMIUM',
+        coveredByAllowance: false,
+      },
+      { provider: 'GROK', model: 'grok-4.7', allowed: true },
+    ]);
+
+    const { result } = renderHook(() => useModelPlanAccess(models), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.getCostInfo('OLLAMA', 'kimi-k3').costClass).toBe('PREMIUM');
+    });
+    expect(result.current.getCostInfo('OLLAMA', 'kimi-k3').coveredByAllowance).toBe(false);
+    expect(result.current.getCostInfo('GROK', 'grok-4.7')).toEqual({});
+    expect(result.current.isLocked('OLLAMA', 'kimi-k3')).toBe(false);
+  });
 });

@@ -245,6 +245,7 @@ Per-character reference: `apps/claw-chat-service/src/modules/chat-messages/manag
 (OpenAI tts-1 reserves and finalizes `ttsCharacters` = code points sent; Gemini
 TTS settles on `usageMetadata`; the requestId carries the content hash and a
 generation so a re-synthesis never reuses a settled hold).
+A direct, stateless media read is its own surface: `PaygSurface.TRANSCRIPTION_READ` (file-service `transcription-read.manager.ts`, requestId `transcription-read:{userId}:{uuid}:{provider}`, ADR-216). It reuses the transcription meter, is never free-allowance eligible, and is not counted against the token windows (rule 46).
 **A surface that stores its output settles only after the store** (rule 37
 item 17): capture the measured units from the provider response, keep the hold
 open, finalize once the file is saved, release if the store fails. Reference:

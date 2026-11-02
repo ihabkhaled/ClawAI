@@ -86,4 +86,6 @@ export type CandidateChainState = {
   creditRefusalRecord: CreditRefusalRecord | null;
   // True once a refusal says the credit itself is gone (not just this prompt's price).
   creditGone: boolean;
+  // The user chose STOP (ADR-161) and a credit refusal was recorded: no candidate is tried after it.
+  creditStopped: boolean;
 };

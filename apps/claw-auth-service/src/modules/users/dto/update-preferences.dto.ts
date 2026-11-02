@@ -6,6 +6,7 @@ import {
 } from '@claw/shared-constants';
 import { z } from 'zod';
 import {
+  CreditFallbackMode,
   CurrencyPreferenceMode,
   UserAppearancePreference,
   UserLanguagePreference,
@@ -55,6 +56,9 @@ export const updatePreferencesSchema = z
     preferredCurrencyCode: currencyCodeSchema.nullable().optional(),
     // null = back to each provider's default voice.
     ttsVoice: ttsVoiceSchema.nullable().optional(),
+    // What a used-up credit model does (ADR-161). Not nullable: there is no
+    // "unset", the default is FALLBACK.
+    creditFallbackMode: z.nativeEnum(CreditFallbackMode).optional(),
   })
   .refine(
     (data) =>
@@ -63,7 +67,8 @@ export const updatePreferencesSchema = z
       data.currencyPreferenceMode !== undefined ||
       data.preferredCountryCode !== undefined ||
       data.preferredCurrencyCode !== undefined ||
-      data.ttsVoice !== undefined,
+      data.ttsVoice !== undefined ||
+      data.creditFallbackMode !== undefined,
     { message: 'At least one preference must be provided' },
   )
   .refine(

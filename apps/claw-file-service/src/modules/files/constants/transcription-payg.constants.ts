@@ -8,6 +8,13 @@
 export const TRANSCRIPTION_PAYG_REQUEST_ID_PREFIX = 'transcription';
 
 /**
+ * Prefix of every stateless-read `requestId`:
+ * `transcription-read:${userId}:${uuid}:${provider}`. A different prefix, not a
+ * scope, so a read can never collide with an attachment's `transcription:` ids.
+ */
+export const TRANSCRIPTION_READ_PAYG_REQUEST_ID_PREFIX = 'transcription-read';
+
+/**
  * The LOWEST bitrate we assume an uploaded recording could have, in bytes per
  * second (1,000 B/s = 8 kbps). Dividing the file size by a FLOOR gives the
  * LONGEST the clip could plausibly be, so the hold errs high and the finalize

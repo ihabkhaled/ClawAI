@@ -17,6 +17,7 @@ export function toSafeUser(user: User): SafeUser {
     preferredCountryCode: user.preferredCountryCode,
     preferredCurrencyCode: user.preferredCurrencyCode,
     ttsVoice: user.ttsVoice,
+    creditFallbackMode: user.creditFallbackMode,
     activePlanId: user.activePlanId,
     firstName: user.firstName,
     lastName: user.lastName,

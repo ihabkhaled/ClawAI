@@ -93,6 +93,10 @@ export type UserEntitlements = {
   } | null;
   // Optional during rolling upgrades; explicit modes disambiguate unrestricted
   // access from an empty allow-list or deny-all policy.
+  // The user's choice when a picked credit model is used up (ADR-161). Absent reads as
+  // 'FALLBACK' (today's behaviour): answer from an included model with a notice. 'STOP' ends the
+  // turn with the credit refusal instead. Optional so a rolling deploy never changes behaviour.
+  creditFallbackMode?: 'FALLBACK' | 'STOP';
   modelAccessMode?: PlanModelAccessMode;
   allowedCostClasses?: ModelCostClass[];
   // Optional during rolling deploys. ALLOW_COST_CLASSES fails closed when absent.

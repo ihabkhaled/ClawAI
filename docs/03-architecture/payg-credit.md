@@ -247,21 +247,22 @@ surface without adding a member is what lets spend become anonymous again**, whi
 is why [rule 37](../../rules/37-payg-credit-integrity.md) requires the two to
 change together.
 
-| `PaygSurface`      | Service   | What it covers                                                                                                     | Audit ids   |
-| ------------------ | --------- | ------------------------------------------------------------------------------------------------------------------ | ----------- |
-| `CHAT`             | chat      | Ordinary chat, regenerate, edit-resend, streaming                                                                  | U1          |
-| `COMPARE`          | chat      | Compare mode — **one hold per lane**, not one per run                                                              | —           |
-| `JUDGE`            | chat      | The judge / critic second pass over a compare run                                                                  | —           |
-| `ORCHESTRATION`    | chat      | The nine advanced labs; `workflow` narrows which one                                                               | —           |
-| `CODING_AGENT`     | chat      | The runtime-v2 agent loop — one row per turn                                                                       | U11         |
-| `IMAGE`            | image     | Image generation, **including each attempt of an auto-fallback chain**                                             | U3, U4      |
-| `FILE_GENERATION`  | chat      | Document/file content generation                                                                                   | —           |
-| `WORKSPACE_ACTION` | workspace | AI actions, multi-model review, chain NL draft, IMPL handoff                                                       | U8–U10, U12 |
-| `ROUTING`          | routing   | The cloud router's own paid calls — **one hold per attempt**                                                       | U5, U6      |
-| `TRANSCRIPTION`    | file      | Speech-to-text of an uploaded audio file / voice note — **one hold per provider attempt**, charged to the uploader | —           |
-| `VISION_HELPER`    | chat      | Helper vision for a lane that cannot see — **one hold per image per turn** (lanes + judge share it)                | —           |
-| `TTS`              | chat      | "Read aloud" of an assistant reply — **one hold per provider attempt**; a replay of stored audio is free           | —           |
-| `VIDEO`            | image     | Text/image-to-video generation — **one hold per provider attempt**, priced per SECOND of clip (ADR-137)            | —           |
+| `PaygSurface`        | Service   | What it covers                                                                                                                                        | Audit ids   |
+| -------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| `CHAT`               | chat      | Ordinary chat, regenerate, edit-resend, streaming                                                                                                     | U1          |
+| `COMPARE`            | chat      | Compare mode — **one hold per lane**, not one per run                                                                                                 | —           |
+| `JUDGE`              | chat      | The judge / critic second pass over a compare run                                                                                                     | —           |
+| `ORCHESTRATION`      | chat      | The nine advanced labs; `workflow` narrows which one                                                                                                  | —           |
+| `CODING_AGENT`       | chat      | The runtime-v2 agent loop — one row per turn                                                                                                          | U11         |
+| `IMAGE`              | image     | Image generation, **including each attempt of an auto-fallback chain**                                                                                | U3, U4      |
+| `FILE_GENERATION`    | chat      | Document/file content generation                                                                                                                      | —           |
+| `WORKSPACE_ACTION`   | workspace | AI actions, multi-model review, chain NL draft, IMPL handoff                                                                                          | U8–U10, U12 |
+| `ROUTING`            | routing   | The cloud router's own paid calls — **one hold per attempt**                                                                                          | U5, U6      |
+| `TRANSCRIPTION`      | file      | Speech-to-text of an uploaded audio file / voice note — **one hold per provider attempt**, charged to the uploader                                    | —           |
+| `TRANSCRIPTION_READ` | file      | Stateless `POST /files/transcribe-text` (audio or the audio track of a video, ADR-216) — charged to the caller; not counted against the token windows | —           |
+| `VISION_HELPER`      | chat      | Helper vision for a lane that cannot see — **one hold per image per turn** (lanes + judge share it)                                                   | —           |
+| `TTS`                | chat      | "Read aloud" of an assistant reply — **one hold per provider attempt**; a replay of stored audio is free                                              | —           |
+| `VIDEO`              | image     | Text/image-to-video generation — **one hold per provider attempt**, priced per SECOND of clip (ADR-137)                                               | —           |
 
 There is **no `RESEARCH` member**: research-service reaches search SaaS, never a
 paid model, and is metered through `FeatureUsageRecord` (see "Not metered", below).
@@ -594,7 +595,7 @@ reserve(call)
 - **Ledger:** a zero-amount `FREE_ALLOWANCE` row when used (`reason: FREE_ALLOWANCE_USED`) and a
   compensating row when given back (`FREE_ALLOWANCE_RETURNED:<reason>`).
 - **Eligible surfaces:** CHAT, COMPARE, JUDGE, ORCHESTRATION, FILE_GENERATION, WORKSPACE_ACTION,
-  ROUTING. Per-unit surfaces (IMAGE, VIDEO, TRANSCRIPTION, TTS) are never eligible: one clip can
+  ROUTING. Per-unit surfaces (IMAGE, VIDEO, TRANSCRIPTION, TRANSCRIPTION_READ, TTS) are never eligible: one clip can
   cost $1.60.
 - **Refusal:** a spent cap is 402 `PAYG_FREE_ALLOWANCE_EXHAUSTED`. The chat shows a card ("You have used
   all N free requests ... Included models still work") with See plans and Add credit buttons.

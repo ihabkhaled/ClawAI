@@ -4,6 +4,7 @@ import { LoadingSpinner } from '@/components/common/loading-spinner';
 import { PageHeader } from '@/components/common/page-header';
 import { PasswordInput } from '@/components/common/password-input';
 import { ChangePasswordCard } from '@/components/settings/change-password-card';
+import { CreditFallbackModeCard } from '@/components/settings/credit-fallback-mode-card';
 import { CurrencyPreferenceCard } from '@/components/settings/currency-preference-card';
 import { EmailChangeCard } from '@/components/settings/email-change-card';
 import { NotificationPreferencesCard } from '@/components/settings/notification-preferences-card';
@@ -38,6 +39,8 @@ export default function SettingsPage() {
     detectedCountry,
     currentTtsVoice,
     handleTtsVoiceChange,
+    currentCreditFallbackMode,
+    handleCreditFallbackModeChange,
     passwordForm,
     handlePasswordSubmit,
     isPasswordPending,
@@ -190,6 +193,14 @@ export default function SettingsPage() {
           value={currentTtsVoice}
           isPending={isPending}
           onChange={handleTtsVoiceChange}
+        />
+
+        <Separator />
+
+        <CreditFallbackModeCard
+          value={currentCreditFallbackMode}
+          isPending={isPending}
+          onChange={handleCreditFallbackModeChange}
         />
 
         <Separator />

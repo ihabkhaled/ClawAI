@@ -226,6 +226,7 @@ export class AuthManager {
       preferredCountryCode: user.preferredCountryCode,
       preferredCurrencyCode: user.preferredCurrencyCode,
       ttsVoice: user.ttsVoice,
+      creditFallbackMode: user.creditFallbackMode,
       createdAt: user.createdAt,
     };
   }

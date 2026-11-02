@@ -66,6 +66,7 @@ research, and workspace add `@claw/shared-auth`. All 17 non-health services publ
 - **Responsibility:** upload + 4-check security (ClamAV, magic bytes, filename, ZIP bomb), chunking (JSON/CSV/MD/text), OCR (optional), retention sweep, `/internal/files/*` for chat/image.
 - **Produces:** `file.uploaded/chunked/deleted/downloaded/failed`, `file.upload_started/completed`, `file.ocr_started/completed/failed`, `file.extraction_failed`, `file.retention_expired`, `file.archive_expanded`.
 - **Pitfalls:** ClamAV fail-safe rejects on scanner down; ZIP guardrails run before extraction.
+- **Billed media read:** `POST /api/v1/files/transcribe-text` (stateless; audio, or the audio track of a video; `PaygSurface.TRANSCRIPTION_READ`; ADR-216). Needs ffmpeg for video; unit-tested only so far.
 
 ## claw-audit-service — :4007 · MongoDB
 

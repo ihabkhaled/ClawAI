@@ -1,6 +1,7 @@
 import { Check } from 'lucide-react';
 
 import { ModelCapabilityBadges } from '@/components/chat/model-capability-badges';
+import { ModelCostMark } from '@/components/chat/model-cost-mark';
 import type { ModelPickerItemProps } from '@/types';
 import { cn } from '@/utilities';
 
@@ -14,6 +15,8 @@ export function ModelPickerItem({
 }: ModelPickerItemProps): React.ReactElement {
   // Not on the user's plan: visible so they can see what an upgrade adds, but dimmed and inert.
   const isLocked = option.isLocked === true;
+  // Credit would pay for it: dimmed as a hint, still selectable (only isLocked blocks).
+  const isDimmed = !isLocked && option.outsideAllowance === true;
   return (
     // A listbox option, not a cmdk item: the list is virtualised, so only the
     // rows near the viewport are mounted and the picker owns the highlight.
@@ -41,23 +44,30 @@ export function ModelPickerItem({
         }
       }}
       className={cn(
-        'touch:min-h-11 touch:text-base relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none select-none',
+        'touch:min-h-11 touch:text-base relative flex cursor-default items-center gap-2 overflow-hidden rounded-sm px-2 py-1.5 text-sm whitespace-nowrap outline-none select-none',
         isActive && 'bg-accent text-accent-foreground',
         isLocked && 'cursor-not-allowed opacity-50',
+        isDimmed && 'opacity-60',
       )}
     >
       <Check className={cn('h-3.5 w-3.5 shrink-0', isSelected ? 'opacity-100' : 'opacity-0')} />
-      <span className="min-w-0 flex-1 truncate">{option.label}</span>
+      <span className="truncate-fixed min-w-[4rem] flex-1">{option.label}</span>
       {isLocked ? (
-        <span className="border-border bg-muted text-muted-foreground shrink-0 rounded border px-1.5 py-0.5 text-[10px] leading-none">
+        <span className="border-border bg-muted text-muted-foreground shrink-0 rounded border px-1.5 py-0.5 text-[10px] leading-none whitespace-nowrap">
           {option.lockedLabel}
         </span>
       ) : null}
+      {option.costClass !== undefined ? (
+        <ModelCostMark costClass={option.costClass} outsideAllowance={option.outsideAllowance} />
+      ) : null}
+      {/* Rows are a fixed height, so on a narrow screen the lock label and cost mark win the width. */}
       {option.capabilities !== undefined ? (
-        <ModelCapabilityBadges capabilities={option.capabilities} />
+        <span className="hidden shrink-0 sm:flex">
+          <ModelCapabilityBadges capabilities={option.capabilities} />
+        </span>
       ) : null}
       {option.specifications !== undefined && option.specifications.length > 0 ? (
-        <span className="flex shrink-0 flex-wrap justify-end gap-1">
+        <span className="hidden shrink-0 flex-wrap justify-end gap-1 sm:flex">
           {option.specifications.map((specification) => (
             <span
               key={specification}

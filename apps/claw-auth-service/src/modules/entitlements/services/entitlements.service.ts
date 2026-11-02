@@ -2,7 +2,7 @@ import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { PAYG_ENABLED_SETTING_KEY } from '@claw/shared-constants';
 import { UserRole } from '@claw/shared-types';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
-import { PlanModelAccessMode } from '../../../generated/prisma';
+import { CreditFallbackMode, PlanModelAccessMode } from '../../../generated/prisma';
 import { AuthRepository } from '../../auth/repositories/auth.repository';
 import { RolesService } from '../../roles/services/roles.service';
 import { PlansRepository } from '../../plans/repositories/plans.repository';
@@ -58,6 +58,7 @@ export class EntitlementsService {
         ? []
         : ((plan?.allowedCostClasses ?? []) as UserEntitlements['allowedCostClasses']),
       hasPaygCredit: isAdmin ? false : await this.resolveHasPaygCredit(userId),
+      creditFallbackMode: user.creditFallbackMode ?? CreditFallbackMode.FALLBACK,
       freeCreditMaxModelOutputMicroUsd: resolveFreeCreditCeiling(isAdmin, plan),
       allowedModels: modelAccess.map((m) => ({
         provider: m.provider,

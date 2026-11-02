@@ -5,6 +5,7 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { FilesController } from '../files.controller';
 import { FilesService } from '../../services/files.service';
 import { VideoCancellationService } from '../../services/video-cancellation.service';
+import { TranscriptionReadService } from '../../services/transcription-read.service';
 
 describe('FilesController', () => {
   let controller: FilesController;
@@ -18,6 +19,7 @@ describe('FilesController', () => {
     abortChunkedUpload: Mock;
   };
   let cancelMock: { cancelProcessing: Mock };
+  let readMock: { transcribeText: Mock };
 
   beforeEach(async () => {
     serviceMock = {
@@ -30,17 +32,30 @@ describe('FilesController', () => {
       abortChunkedUpload: vi.fn(),
     };
     cancelMock = { cancelProcessing: vi.fn() };
+    readMock = { transcribeText: vi.fn() };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [FilesController],
       providers: [
         { provide: FilesService, useValue: serviceMock },
         { provide: VideoCancellationService, useValue: cancelMock },
+        { provide: TranscriptionReadService, useValue: readMock },
       ],
     }).compile();
     controller = module.get<FilesController>(FilesController);
   });
 
   const user = { id: 'u1', email: 'a@b', role: 'OPERATOR' };
+
+  it('POST files/transcribe-text forwards user.id and dto, answering 200', async () => {
+    const dto = { fileName: 'a.mp3', contentBase64: 'YQ==' };
+    readMock.transcribeText.mockResolvedValue({ text: 'hi' });
+    await expect(controller.transcribeText(user as never, dto)).resolves.toEqual({ text: 'hi' });
+    expect(readMock.transcribeText).toHaveBeenCalledWith('u1', dto);
+    const handler = FilesController.prototype.transcribeText;
+    expect(Reflect.getMetadata(PATH_METADATA, handler)).toBe('transcribe-text');
+    expect(Reflect.getMetadata(METHOD_METADATA, handler)).toBe(RequestMethod.POST);
+    expect(Reflect.getMetadata(HTTP_CODE_METADATA, handler)).toBe(HttpStatus.OK);
+  });
 
   it('upload forwards user.id and dto', async () => {
     serviceMock.uploadFile.mockResolvedValue({ id: 'f1' });

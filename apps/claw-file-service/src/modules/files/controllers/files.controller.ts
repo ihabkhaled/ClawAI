@@ -39,6 +39,9 @@ import {
 } from '../dto/chunked-upload.dto';
 import { type ExtractTextDto, extractTextSchema } from '../dto/extract-text.dto';
 import { type ExtractedTextResult } from '../types/files.types';
+import { type TranscribeTextDto, transcribeTextSchema } from '../dto/transcribe-text.dto';
+import { TranscriptionReadService } from '../services/transcription-read.service';
+import { type TranscribeReadResult } from '../types/transcribe-read.types';
 
 // Slice C backend 3 — all user-facing file endpoints require FILES_USE.
 // Internal service-to-service routes live in FilesInternalController and stay
@@ -49,6 +52,7 @@ export class FilesController {
   constructor(
     private readonly filesService: FilesService,
     private readonly videoCancellationService: VideoCancellationService,
+    private readonly transcriptionReadService: TranscriptionReadService,
   ) {}
 
   @Post('upload')
@@ -121,6 +125,20 @@ export class FilesController {
     @Body(new ZodValidationPipe(extractTextSchema)) dto: ExtractTextDto,
   ): Promise<ExtractedTextResult> {
     return this.filesService.extractText(dto);
+  }
+
+  /**
+   * Audio or video read as text: BILLED to the caller (PAYG surface
+   * TRANSCRIPTION_READ), authenticated, nothing persisted, no event published.
+   * Unlike `extract-text` this spends money, so it needs the caller's id.
+   */
+  @Post('transcribe-text')
+  @HttpCode(HttpStatus.OK)
+  async transcribeText(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(transcribeTextSchema)) dto: TranscribeTextDto,
+  ): Promise<TranscribeReadResult> {
+    return this.transcriptionReadService.transcribeText(user.id, dto);
   }
 
   @Get()

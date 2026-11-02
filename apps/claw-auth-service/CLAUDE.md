@@ -733,3 +733,11 @@ settled vs released holds, NOT an HTTP success rate. Only the health queries rea
   `revokeBatch` for large sets) or the old access token lives until expiry.
 - "Clear logs" deletes inactive families inside one `DELETE` (never active ones). `session_admin_audit` holds
   counts only; never put a token, hash, password or address in it or in a log line.
+
+## Credit fallback mode is a PREFERENCE (ADR-161 amendment, 2026-11-02)
+
+- `User.creditFallbackMode` (enum `CreditFallbackMode`, `@claw/shared-types`): `FALLBACK` (default) or `STOP`. Column added by the idempotent migration `20261102100000_add_user_credit_fallback_mode`.
+- Written through `PATCH /users/me/preferences` (`creditFallbackMode`, validated in `update-preferences.dto.ts`), returned on `/auth/me` and in `GET /internal/users/:id/entitlements` as the optional `UserEntitlements.creditFallbackMode`. Absent means `FALLBACK`, so an old caller keeps today's behaviour.
+- Entitlements are read fresh per call; nothing caches the mode. chat-service reads it only after the first 402 of a turn.
+- `STOP` ends the turn with the original credit refusal; `FALLBACK` answers from an included model with a notice. See [ADR-161](../../docs/13-adr/adr-161-used-up-credit-falls-back-to-an-included-model.md).
+- Honest gap: not run against a live database or API yet (QA record `2026-11-02-credit-fallback-user-setting`).

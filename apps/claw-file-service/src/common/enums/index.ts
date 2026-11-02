@@ -21,3 +21,4 @@ export { TranscriptionMetricSource } from './transcription-metric-source.enum';
 export { VideoProcessingOutcome } from './video-processing-outcome.enum';
 export { MediaJobKind } from './media-job-kind.enum';
 export { VideoStaleOutcome } from './video-stale-outcome.enum';
+export { TranscribeReadErrorCode } from './transcribe-read-error-code.enum';

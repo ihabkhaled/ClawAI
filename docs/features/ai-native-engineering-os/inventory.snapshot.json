@@ -2214,6 +2214,11 @@
         },
         {
           "method": "POST",
+          "route": "/files/transcribe-text",
+          "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/files/upload",
           "source": "apps/claw-file-service/src/modules/files/controllers/files.controller.ts"
         },
@@ -9443,7 +9448,7 @@
           "file": "rules/36-floating-ui-and-toast-clearance.md"
         },
         {
-          "bytes": 36452,
+          "bytes": 36824,
           "file": "rules/37-payg-credit-integrity.md"
         },
         {
@@ -9897,7 +9902,7 @@
           "file": "skills/measure-chat-network-baseline.md"
         },
         {
-          "bytes": 19725,
+          "bytes": 20050,
           "file": "skills/meter-a-paid-provider-call.md"
         },
         {
@@ -10043,7 +10048,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 6319
+        "value": 6337
       },
       "localeCount": 13,
       "locales": [
@@ -12484,7 +12489,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 363
+        "testFiles": 364
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -12500,11 +12505,11 @@
       },
       "claw-file-service": {
         "runner": "vitest",
-        "testFiles": 85
+        "testFiles": 86
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 1033
+        "testFiles": 1036
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -13399,7 +13404,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 58,
-    "endpointCount": 973,
+    "endpointCount": 974,
     "envVarCount": 386,
     "eventCount": 190,
     "frontendRouteCount": 184,
@@ -13411,7 +13416,7 @@
     "serviceCount": 21,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2869,
+    "totalTestFiles": 2874,
     "workspaceCount": 28
   }
 }

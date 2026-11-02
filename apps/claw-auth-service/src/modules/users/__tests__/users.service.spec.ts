@@ -1,4 +1,5 @@
 import { type Mock, vi } from 'vitest';
+import { CreditFallbackMode } from '../../../generated/prisma';
 import { UsersService } from '../services/users.service';
 import { type UsersRepository } from '../repositories/users.repository';
 import { type RabbitMQService } from '@claw/shared-rabbitmq';
@@ -45,6 +46,7 @@ const mockUser = {
   preferredCountryCode: null,
   preferredCurrencyCode: null,
   ttsVoice: null as string | null,
+  creditFallbackMode: CreditFallbackMode.FALLBACK,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -813,6 +815,33 @@ describe('UsersService', () => {
       expect((repository.updatePreferences.mock.calls[0] as unknown[])[1]).not.toHaveProperty(
         'preferredCurrencyCode',
       );
+    });
+
+    it('persists creditFallbackMode and returns it (ADR-161)', async () => {
+      repository.findById.mockResolvedValue(mockUser);
+      repository.updatePreferences.mockResolvedValue({
+        ...mockUser,
+        creditFallbackMode: CreditFallbackMode.STOP,
+      });
+      const result = await service.updatePreferences('user-1', {
+        creditFallbackMode: CreditFallbackMode.STOP,
+      });
+      expect(repository.updatePreferences).toHaveBeenCalledWith('user-1', {
+        creditFallbackMode: CreditFallbackMode.STOP,
+      });
+      expect(result.creditFallbackMode).toBe(CreditFallbackMode.STOP);
+    });
+
+    it('does not send creditFallbackMode when the request omits it', async () => {
+      repository.findById.mockResolvedValue(mockUser);
+      repository.updatePreferences.mockResolvedValue(mockUser);
+      const result = await service.updatePreferences('user-1', {
+        languagePreference: 'EN' as never,
+      });
+      expect((repository.updatePreferences.mock.calls[0] as unknown[])[1]).not.toHaveProperty(
+        'creditFallbackMode',
+      );
+      expect(result.creditFallbackMode).toBe(CreditFallbackMode.FALLBACK);
     });
   });
 

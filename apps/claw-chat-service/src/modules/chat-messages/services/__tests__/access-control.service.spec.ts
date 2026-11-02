@@ -247,24 +247,85 @@ describe('AccessControlService', () => {
       }
     });
 
-    it('an administrator is allowed everything without a class lookup', async () => {
+    it('an administrator is allowed everything and still sees every band', async () => {
       getEntitlements.mockResolvedValue(ent({ isAdmin: true }));
-      getCostClasses.mockClear();
+      getCostClasses.mockResolvedValue(classes);
 
       const result = await service.listModelAccess('u1', models);
 
-      expect(result.every((entry) => entry.allowed)).toBe(true);
-      expect(getCostClasses).not.toHaveBeenCalled();
+      expect(result.every((entry) => entry.allowed && entry.coveredByAllowance)).toBe(true);
+      expect(result.map((entry) => entry.costClass)).toEqual([
+        ModelCostClass.FREE,
+        ModelCostClass.STANDARD,
+        ModelCostClass.PREMIUM,
+        undefined,
+      ]);
     });
 
-    it('an allow-all plan needs no class lookup', async () => {
+    it('an allow-all plan allows everything and carries the bands', async () => {
       getEntitlements.mockResolvedValue(ent({ modelAccessMode: PlanModelAccessMode.ALLOW_ALL }));
-      getCostClasses.mockClear();
+      getCostClasses.mockResolvedValue(classes);
 
       const result = await service.listModelAccess('u1', models);
 
       expect(result.every((entry) => entry.allowed)).toBe(true);
-      expect(getCostClasses).not.toHaveBeenCalled();
+      expect(result[2]?.costClass).toBe(ModelCostClass.PREMIUM);
+    });
+
+    it('a Free plan marks included models covered and dearer ones not, band only', async () => {
+      getEntitlements.mockResolvedValue(
+        ent({
+          modelAccessMode: PlanModelAccessMode.ALLOW_COST_CLASSES,
+          allowedCostClasses: freeClasses,
+        }),
+      );
+      getCostClasses.mockResolvedValue(classes);
+
+      const result = await service.listModelAccess('u1', models);
+
+      expect(result).toEqual([
+        { ...models[0], allowed: true, costClass: 'FREE', coveredByAllowance: true },
+        { ...models[1], allowed: true, costClass: 'STANDARD', coveredByAllowance: true },
+        { ...models[2], allowed: false, costClass: 'PREMIUM', coveredByAllowance: false },
+        { ...models[3], allowed: false, coveredByAllowance: false },
+      ]);
+    });
+
+    it('a paid plan covers PREMIUM and ULTRA when it includes them', async () => {
+      getEntitlements.mockResolvedValue(
+        ent({
+          modelAccessMode: PlanModelAccessMode.ALLOW_COST_CLASSES,
+          allowedCostClasses: Object.values(ModelCostClass),
+        }),
+      );
+      const bands = Object.values(ModelCostClass);
+      const many = bands.map((band) => ({ provider: 'P', model: band }));
+      getCostClasses.mockResolvedValue(
+        new Map(many.map((m, i) => [costClassKey(m.provider, m.model), bands[i] ?? null])),
+      );
+
+      const result = await service.listModelAccess('u1', many);
+
+      expect(result.map((entry) => entry.costClass)).toEqual(bands);
+      expect(result.every((entry) => entry.allowed && entry.coveredByAllowance)).toBe(true);
+    });
+
+    it('without a class map the bands are absent and allowed is unchanged', async () => {
+      getEntitlements.mockResolvedValue(ent({ modelAccessMode: PlanModelAccessMode.ALLOW_ALL }));
+      getCostClasses.mockResolvedValue(new Map());
+
+      const result = await service.listModelAccess('u1', models);
+
+      expect(result.every((entry) => entry.allowed && entry.costClass === undefined)).toBe(true);
+    });
+
+    it('a class lookup that throws fails open to no band', async () => {
+      getEntitlements.mockResolvedValue(ent({ modelAccessMode: PlanModelAccessMode.ALLOW_ALL }));
+      getCostClasses.mockRejectedValue(new Error('routing down'));
+
+      const result = await service.listModelAccess('u1', models);
+
+      expect(result.every((entry) => entry.allowed && !('costClass' in entry))).toBe(true);
     });
 
     it('a model routing could not answer for is refused, like a send would be', async () => {

@@ -365,6 +365,11 @@ export {
   FILE_DELIVERY_MODES,
 } from './file-delivery.constants';
 export {
+  CREDIT_FALLBACK_MODE_DEFAULT,
+  CREDIT_FALLBACK_MODE_OPTIONS,
+  CREDIT_FALLBACK_MODE_SELECT_ID,
+} from './credit-fallback-mode.constants';
+export {
   TTS_VOICE_DEFAULT_VALUE,
   TTS_VOICE_GROUPS,
   TTS_VOICE_SELECT_ID,

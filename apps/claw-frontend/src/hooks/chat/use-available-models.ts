@@ -35,7 +35,7 @@ export function useAvailableModels(): {
   const { t } = useTranslation();
   const { models, isLoading: isLoadingCloud } = useAvailableConnectorModels();
   const { models: localModels, isLoading: isLoadingLocal } = useLocalModels();
-  const { isLocked } = useModelPlanAccess(models);
+  const { isLocked, getCostInfo } = useModelPlanAccess(models);
   const frontierQuery = useFrontierCatalog({ limit: 100 });
   const frontierEntries = useMemo(() => frontierQuery.data?.data ?? [], [frontierQuery.data?.data]);
 
@@ -87,6 +87,7 @@ export function useAvailableModels(): {
       }
       const provider = model.provider;
       const existing = groups.get(provider) ?? [];
+      const cost = getCostInfo(provider, model.modelKey);
       existing.push({
         provider,
         model: model.modelKey,
@@ -95,6 +96,9 @@ export function useAvailableModels(): {
         capabilities: getConnectorModelCapabilityBadges(model),
         // Not on the user's plan: the pickers dim it and refuse the click. The send is still gated server-side.
         isLocked: isLocked(provider, model.modelKey),
+        // A hint only: the pickers mark the band and dim a model credit would pay for, never block it.
+        costClass: cost.costClass,
+        outsideAllowance: cost.coveredByAllowance === false ? true : undefined,
       });
       groups.set(provider, existing);
     }
@@ -164,7 +168,7 @@ export function useAvailableModels(): {
     });
 
     return result;
-  }, [models, localModels, frontierEntries, isLocked, t]);
+  }, [models, localModels, frontierEntries, isLocked, getCostInfo, t]);
 
   return {
     groupedModels,

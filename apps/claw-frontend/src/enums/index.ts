@@ -211,6 +211,7 @@ export { VideoGenerationStatus } from './video-generation-status.enum';
 export { PromptLibraryView } from './prompt-library.enum';
 export { MarketingAuthActionsVariant } from './marketing-auth-actions-variant.enum';
 export { ThreadPublicationExportFormat } from './thread-publication-export-format.enum';
+export { CreditFallbackMode } from './credit-fallback-mode.enum';
 export { CreditFallbackReason } from './credit-fallback-reason.enum';
 export { ThreadRevisionField } from './thread-revision-field.enum';
 export * from './file-library-filter.enum';

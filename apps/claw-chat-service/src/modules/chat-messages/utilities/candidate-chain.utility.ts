@@ -13,5 +13,6 @@ export function newCandidateChainState(): CandidateChainState {
     creditRefusal: null,
     creditRefusalRecord: null,
     creditGone: false,
+    creditStopped: false,
   };
 }

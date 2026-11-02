@@ -1,6 +1,6 @@
 import { type QuotaWindowUsage } from '../../quota/types/quota.types';
 import { type ModelCostClass, type Permission } from '@claw/shared-types';
-import { type PlanModelAccessMode } from '../../../generated/prisma';
+import { type CreditFallbackMode, type PlanModelAccessMode } from '../../../generated/prisma';
 import { type PlanFeatureGates, type PlanModelAccessView } from '../../plans/types/plans.types';
 
 // The aggregate a downstream service needs to enforce a user's access. Returned
@@ -42,6 +42,8 @@ export type UserEntitlements = {
   // PAYG metering is on and the wallet has spendable credit (ADR-139). Lets a
   // plan-locked media feature through; the PAYG reservation still gates spend.
   hasPaygCredit: boolean;
+  // What a used-up credit model does (ADR-161). FALLBACK = answer from an included model.
+  creditFallbackMode: CreditFallbackMode;
   // The dearest model the plan's free credit-connector requests cover: its OUTPUT price in
   // micro-USD per million tokens. AUTO routing avoids anything dearer. null = no limit, and always
   // null for an administrator (ADR-162).

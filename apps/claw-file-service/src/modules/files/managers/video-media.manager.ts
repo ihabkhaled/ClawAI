@@ -60,6 +60,23 @@ export class VideoMediaManager {
     }
   }
 
+  /**
+   * `withWorkspace` for bytes that are not a stored row (the stateless media
+   * read). Same temp-dir discipline: a fixed input name, removed in `finally`.
+   */
+  async withBufferWorkspace<T>(
+    source: Buffer,
+    work: (workspace: MediaWorkspace) => Promise<T>,
+  ): Promise<T> {
+    const dir = await createMediaTempDir();
+    try {
+      const inputPath = await writeMediaTempFile(dir, MEDIA_TEMP_INPUT_NAME, source);
+      return await work({ dir, inputPath });
+    } finally {
+      await removeMediaTempDir(dir);
+    }
+  }
+
   /** ffprobe → facts, or the reason there are none. Never throws. */
   async probe(workspace: MediaWorkspace, signal?: AbortSignal): Promise<VideoProbeOutcome> {
     const result = await probeMediaFile(workspace.inputPath, signal);

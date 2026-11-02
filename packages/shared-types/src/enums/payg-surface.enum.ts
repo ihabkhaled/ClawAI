@@ -36,6 +36,15 @@ export enum PaygSurface {
    */
   TRANSCRIPTION = 'TRANSCRIPTION',
   /**
+   * Stateless, billed read of an audio file or a video's audio track as text
+   * (file-service `POST /files/transcribe-text`, used by the coding agent to
+   * "read" media from a workspace). Same provider walk and the same units as
+   * TRANSCRIPTION, but nothing is stored, so it is a separate surface: "where
+   * did my $5 go" must tell an attachment's transcript from a tool read.
+   * One row per PROVIDER ATTEMPT. Never free-allowance eligible (per-unit).
+   */
+  TRANSCRIPTION_READ = 'TRANSCRIPTION_READ',
+  /**
    * Text-to-video and image-to-video generation (image-service video module,
    * ADR-137). One row per PROVIDER ATTEMPT, priced per SECOND of video produced
    * (`videoPerUnitMicroUsd`): a clip is billed for the seconds the provider made,

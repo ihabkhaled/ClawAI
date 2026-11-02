@@ -8,6 +8,7 @@ import { useCurrentUser } from '@/hooks/auth/use-current-user';
 import { useDisplayCurrency } from '@/hooks/display-currency/use-display-currency';
 import { useAccountManagement } from '@/hooks/settings/use-account-management';
 import { useChangePasswordForm } from '@/hooks/settings/use-change-password-form';
+import { useCreditFallbackMode } from '@/hooks/settings/use-credit-fallback-mode';
 import { useEmailChange } from '@/hooks/settings/use-email-change';
 import { useTtsVoicePreference } from '@/hooks/settings/use-tts-voice-preference';
 import { useUpdatePreferences } from '@/hooks/settings/use-update-preferences';
@@ -31,6 +32,7 @@ export function useSettingsPage() {
   const { theme, setTheme } = useAppTheme();
   const { updatePreferences, isPending: isPreferencesPending } = useUpdatePreferences();
   const ttsVoice = useTtsVoicePreference(user?.ttsVoice, updatePreferences);
+  const creditFallbackMode = useCreditFallbackMode(user?.creditFallbackMode, updatePreferences);
   const {
     currency: activeCurrency,
     context: currencyContext,
@@ -117,6 +119,7 @@ export function useSettingsPage() {
     handleLanguageChange,
     handleAppearanceChange,
     ...ttsVoice,
+    ...creditFallbackMode,
     passwordForm,
     handlePasswordSubmit,
     isPasswordPending,

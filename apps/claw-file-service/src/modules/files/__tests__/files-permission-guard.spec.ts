@@ -113,6 +113,7 @@ describe('FilesController @RequirePermissions(Permission.FILES_USE) gate', () =>
     const controller = new FilesController(
       serviceMock as never,
       { cancelProcessing: vi.fn() } as never,
+      { transcribeText: vi.fn() } as never,
     );
     const result = await controller.findAll(
       { id: 'user-with-files' } as never,

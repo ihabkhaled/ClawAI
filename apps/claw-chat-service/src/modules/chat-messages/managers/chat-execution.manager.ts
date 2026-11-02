@@ -285,8 +285,10 @@ import {
 import {
   creditFallbackPart,
   creditFallbackReason,
+  creditFallbackStops,
   noteCreditRefusal,
   refusalSparesCheaperModels,
+  skipsAfterCreditStop,
   skipsMeteredAfterRefusal,
 } from '../utilities/credit-fallback.utility';
 import {
@@ -492,7 +494,7 @@ export class ChatExecutionManager implements OnModuleInit {
       if (outcome.kind === 'success') {
         return this.succeedChain(outcome.response, candidate, i, payload, prepared, chain);
       }
-      this.absorbChainFailure(outcome, candidate, i, payload, chain);
+      await this.absorbChainFailure(outcome, candidate, i, payload, chain, context.userId);
     }
 
     // A chain that ended on a credit refusal shows that refusal (the upgrade
@@ -577,6 +579,10 @@ export class ChatExecutionManager implements OnModuleInit {
     chain: CandidateChainState,
   ): boolean {
     const label = `${candidate.provider}/${candidate.model}`;
+    if (skipsAfterCreditStop(chain.creditStopped)) {
+      this.logger.debug(`execute: skipping ${label} (credit refused and the user chose to stop)`);
+      return true;
+    }
     if (chain.creditRefusedProviders.has(candidate.provider.toUpperCase())) {
       this.logger.debug(`execute: skipping ${label} (credit already refused for this provider)`);
       return true;
@@ -628,13 +634,14 @@ export class ChatExecutionManager implements OnModuleInit {
   }
 
   // Records a candidate that did not answer, or throws when its failure ends the chain.
-  private absorbChainFailure(
+  private async absorbChainFailure(
     outcome: Exclude<CandidateOutcome, { kind: 'success' }>,
     candidate: { provider: string; model: string },
     index: number,
     payload: MessageRoutedData,
     chain: CandidateChainState,
-  ): void {
+    userId: string | undefined,
+  ): Promise<void> {
     if (outcome.kind === 'reRoute') {
       chain.reRouteReasons = [...chain.reRouteReasons, ...outcome.reasons];
       chain.reRouteAttempt++;
@@ -654,6 +661,7 @@ export class ChatExecutionManager implements OnModuleInit {
       }
       chain.creditRefusedProviders.add(candidate.provider.toUpperCase());
       chain.lastError = outcome.error;
+      chain.creditStopped ||= await this.userChoseCreditStop(userId);
       return;
     }
     if (this.endsCandidateChain(outcome.error, payload, index)) {
@@ -663,6 +671,25 @@ export class ChatExecutionManager implements OnModuleInit {
       chain.failedProviders.add(candidate.provider.toUpperCase());
     }
     chain.lastError = outcome.error;
+  }
+
+  /**
+   * The user's choice when a credit model is used up (ADR-161). Read only once a refusal has
+   * happened, so a turn that never meets one pays no lookup. Any failure to read it keeps
+   * today's behaviour (FALLBACK): the setting can only ever narrow, never break, a turn.
+   */
+  private async userChoseCreditStop(userId: string | undefined): Promise<boolean> {
+    if (userId === undefined || userId.length === 0) {
+      return false;
+    }
+    try {
+      return creditFallbackStops(await this.accessControlService.creditFallbackModeFor(userId));
+    } catch (error: unknown) {
+      this.logger.warn(
+        `userChoseCreditStop: mode unreadable for user=${userId}, falling back — ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return false;
+    }
   }
 
   /**

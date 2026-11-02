@@ -34,12 +34,14 @@ export class ModelCostController {
   ) {}
 
   @Get()
+  @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   async listActive(): Promise<ModelCostSnapshot[]> {
     return this.service.listActive();
   }
 
   // Every model in the registry with its RESOLVED rate, plus how that rate was
-  // reached. Gated exactly like the publish below, not like the read above:
+  // reached. Gated like every route here (admin only):
   // it exposes the full provider rate card in one response, and a rate is a
   // margin input (rule 37).
   @Get('catalog')
@@ -62,6 +64,8 @@ export class ModelCostController {
   }
 
   @Get(':provider/:model')
+  @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   async get(
     @Param('provider') provider: string,
     @Param('model') model: string,
@@ -80,6 +84,8 @@ export class ModelCostController {
   }
 
   @Post('estimate')
+  @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   async estimate(
     @Body(new ZodValidationPipe(estimateModelCostSchema)) dto: EstimateModelCostDto,
   ): Promise<ModelCostQuote> {
@@ -87,6 +93,8 @@ export class ModelCostController {
   }
 
   @Post('price')
+  @Roles(UserRole.ADMIN)
+  @RequirePermissions(Permission.ADMIN_MODELS_MANAGE)
   async price(
     @Body(new ZodValidationPipe(priceModelCostSchema)) dto: PriceModelCostDto,
   ): Promise<ModelCostQuote> {

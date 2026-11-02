@@ -9,3 +9,4 @@ export {
 export { MediaSourceUnreadableError } from './media-source-unreadable.error';
 export { ClamavSocketError } from './clamav-socket.error';
 export { TranscriptionResponseError } from './transcription-response.error';
+export { TranscribeReadException } from './transcribe-read.exception';

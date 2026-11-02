@@ -4,4 +4,6 @@ export enum TranscriptionMetricSource {
   UPLOAD = 'UPLOAD',
   /** A video's extracted audio track. */
   VIDEO_AUDIO = 'VIDEO_AUDIO',
+  /** The stateless billed read (`POST /files/transcribe-text`): nothing is stored. */
+  READ = 'READ',
 }

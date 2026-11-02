@@ -1921,3 +1921,14 @@ catalog call itself fails.
 ## Gemini video model (2026-11-01)
 
 Gemini video is `gemini-omni-1.1-flash` (Interactions API, about $0.10/s, routing seed v16). Google shut Veo 3.1 down on 2026-10-22; image-service walks a refused Veo pick to Omni. The media tool, its fallback and the AUTO video route (`media-tools.constants.ts`) use Omni.
+
+## Credit fallback mode: FALLBACK or STOP (ADR-161 amendment, 2026-11-02)
+
+- A used-up credit model either falls to an included model with a notice (`FALLBACK`, the default) or ends the turn with the original 402 (`STOP`). The user picks it in Settings; auth-service owns `User.creditFallbackMode`.
+- `AccessControlService.creditFallbackModeFor(userId)` reads it from `GET /internal/users/:id/entitlements` (absent means `FALLBACK`). `ChatExecutionManager` asks lazily, only after the first 402, so a turn with no credit refusal makes no extra call.
+- Under `STOP`, `skipChainCandidate` skips every remaining candidate (`creditFallbackStops`, `skipsAfterCreditStop` in `credit-fallback.utility.ts`; `creditStopped` in `candidate-chain.utility.ts`) and the chain ends in the credit refusal. A provider outage still falls to a substitute under `STOP`. Routing's `withIncludedSafetyNet` is unchanged. Spec: `__tests__/credit-fallback-mode.spec.ts`.
+
+## Model access carries cost marks (ADR-198 amendment, 2026-11-02)
+
+- `POST /chat-messages/model-access` entries: `{ provider, model, allowed, costClass?, coveredByAllowance? }` (`types/access-control.types.ts`). `costClass` is the band only (rule 37). `coveredByAllowance` is `allowed` including FREE and plan-included models; it does NOT compare the ADR-162 free-allowance price limit (honest approximation, the send path stays the gate).
+- `listModelAccess` always fetches the bands (one cached batched call to routing's `POST /internal/router-models/costs/classes`). A failed lookup leaves the fields absent. Never put a rate in this response.

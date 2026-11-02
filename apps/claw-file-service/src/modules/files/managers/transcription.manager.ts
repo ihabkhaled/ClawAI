@@ -384,7 +384,7 @@ export class TranscriptionManager implements OnModuleInit {
    * included. A PAYG refusal is a `REFUSED` result, not a throw, and ends the
    * walk: the next provider would only be refused again, or charged.
    */
-  private async runCandidates(
+  async runCandidates(
     context: TranscriptionRequestContext,
     candidates: TranscriptionCapability[],
   ): Promise<TranscriptionRunOutcome | null> {
@@ -612,6 +612,7 @@ export class TranscriptionManager implements OnModuleInit {
       model,
       sizeBytes: context.sizeBytes,
       providerAttempt,
+      ...(context.surface === undefined ? {} : { surface: context.surface }),
       ...(context.audioSeconds === undefined ? {} : { audioSeconds: context.audioSeconds }),
       ...(context.requestScope === undefined ? {} : { requestScope: context.requestScope }),
     });

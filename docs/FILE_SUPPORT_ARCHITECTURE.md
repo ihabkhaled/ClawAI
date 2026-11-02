@@ -55,15 +55,16 @@ User Upload → Validate (type/size) → Store (local disk) → Chunk (by MIME t
 
 ## Current File Types Supported
 
-| MIME Type              | Chunking Strategy                                                                      | Status  |
-| ---------------------- | -------------------------------------------------------------------------------------- | ------- |
-| `application/json`     | Top-level keys or array items                                                          | Working |
-| `text/csv`             | 50-row batches with header                                                             | Working |
-| `text/markdown`        | Section boundaries (headings)                                                          | Working |
-| `text/plain` (default) | Paragraph splits                                                                       | Working |
-| PDF                    | Not implemented                                                                        | Missing |
-| Images (PNG/JPG)       | Understood by vision-capable models, OCR or helper vision otherwise (rule 42, ADR-120) | Working |
-| DOCX/XLSX              | Extracted (upload per ADR-095; `/files/extract-text` since 2026-11-01)                 | Working |
+| MIME Type              | Chunking Strategy                                                                                          | Status         |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------- | -------------- |
+| `application/json`     | Top-level keys or array items                                                                              | Working        |
+| `text/csv`             | 50-row batches with header                                                                                 | Working        |
+| `text/markdown`        | Section boundaries (headings)                                                                              | Working        |
+| `text/plain` (default) | Paragraph splits                                                                                           | Working        |
+| PDF                    | Not implemented                                                                                            | Missing        |
+| Images (PNG/JPG)       | Understood by vision-capable models, OCR or helper vision otherwise (rule 42, ADR-120)                     | Working        |
+| DOCX/XLSX              | Extracted (upload per ADR-095; `/files/extract-text` since 2026-11-01)                                     | Working        |
+| Audio / video          | `POST /files/transcribe-text` returns a billed transcript (ADR-216, 2026-11-02); unit-tested, not run live | Working (unit) |
 
 ---
 

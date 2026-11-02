@@ -9,13 +9,16 @@ const mockUseAllModels = vi.fn();
 const mockUseLocalModels = vi.fn();
 const mockUseFrontierCatalog = vi.fn();
 const mockIsLocked = vi.fn((_provider: string, _model: string) => false);
+const mockGetCostInfo = vi.fn(
+  (_provider: string, _model: string): { costClass?: string; coveredByAllowance?: boolean } => ({}),
+);
 
 vi.mock('@/lib/i18n', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
 vi.mock('@/hooks/chat/use-model-plan-access', () => ({
-  useModelPlanAccess: () => ({ isLocked: mockIsLocked }),
+  useModelPlanAccess: () => ({ isLocked: mockIsLocked, getCostInfo: mockGetCostInfo }),
 }));
 
 vi.mock('@/hooks/chat/use-available-connector-models', () => ({
@@ -346,5 +349,31 @@ describe('useAvailableModels capability badges', () => {
     expect(
       all.filter((model) => model.provider.startsWith('local-')).every((model) => !model.isLocked),
     ).toBe(true);
+  });
+
+  it('carries the cost band and flags only coveredByAllowance === false', () => {
+    mockUseAllModels.mockReturnValue({
+      models: [
+        { provider: 'OPENAI', modelKey: 'gpt-4o', displayName: 'GPT-4o' },
+        { provider: 'GEMINI', modelKey: 'flash', displayName: 'Flash' },
+        { provider: 'GROK', modelKey: 'g', displayName: 'G' },
+      ] as unknown as ConnectorModel[],
+      isLoading: false,
+    });
+    mockUseLocalModels.mockReturnValue({ models: [], isLoading: false });
+    const costs: Record<string, { costClass: string; coveredByAllowance: boolean }> = {
+      'gpt-4o': { costClass: 'PREMIUM', coveredByAllowance: false },
+      flash: { costClass: 'FREE', coveredByAllowance: true },
+    };
+    mockGetCostInfo.mockImplementation((_provider, model) => costs[model] ?? {});
+
+    const { result } = renderHook(() => useAvailableModels());
+
+    const all = result.current.groupedModels.flatMap((group) => group.models);
+    const gpt = all.find((model) => model.model === 'gpt-4o');
+    expect(gpt?.costClass).toBe('PREMIUM');
+    expect(gpt?.outsideAllowance).toBe(true);
+    expect(all.find((model) => model.model === 'flash')?.outsideAllowance).toBeUndefined();
+    expect(all.find((model) => model.model === 'g')?.costClass).toBeUndefined();
   });
 });

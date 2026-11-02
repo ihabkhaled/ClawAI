@@ -48,3 +48,10 @@ plan check is `isModelAllowedForUsage` in shared-entitlements.
   `JSON.stringify([provider, model])`, 60 s, a failed lookup is never cached, and no answer means no
   model (the preflight answers 503, the picker shows the model as needing a plan and is not kept in the
   60 s team cache). Only a cost-class plan makes the call.
+
+## Amendment 2026-11-02: cost marks, and the rate-card routes close
+
+- **Contract:** `POST /chat-messages/model-access` entries are now `{ provider, model, allowed, costClass?, coveredByAllowance? }` (`types/access-control.types.ts`). `costClass` is the BAND only, never a rate (rule 37). `coveredByAllowance` is true when using the model spends no credit for this user (allowed, including FREE and plan-included models). It does NOT compare the ADR-162 free-allowance price limit, so it can say "covered" for a model the price limit would still refuse; the server stays the gate. `listModelAccess` now always fetches the class bands (one cached, batched call); a failed lookup leaves the fields absent and the picker shows no mark.
+- **Web:** a 4-pip band mark per model (`components/chat/model-cost-mark.tsx`), and a model with `coveredByAllowance === false` is dimmed as a hint only; a locked model stays locked. 11 `chat.modelSelector.cost.*` keys in 13 locales. Gap: the Compare picker (`parallel-model-row.tsx`) shows no mark yet.
+- **Security fix:** in routing-service `model-cost.controller`, `GET router-models/costs`, `GET router-models/costs/:provider/:model`, `POST router-models/costs/estimate` and `POST router-models/costs/price` were readable by any signed-in user, which exposed the rate cards (rule 37). All four are now `@Roles(ADMIN)` plus `@RequirePermissions(ADMIN_MODELS_MANAGE)`. The service-token `POST /internal/router-models/costs/classes` that chat and threads use is unchanged.
+- **Not proved live:** QA record `2026-11-02-model-picker-cost-marks` is PARTIAL; the 403 for a non-admin has not been run against a live stack.

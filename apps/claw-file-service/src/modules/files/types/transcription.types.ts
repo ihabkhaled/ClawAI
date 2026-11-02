@@ -1,4 +1,5 @@
 import { type PaygHold } from '@claw/shared-entitlements';
+import { type PaygSurface } from '@claw/shared-types';
 import { type TranscriptSegment } from './video-processing.types';
 import {
   type TranscriptionAttemptStatus,
@@ -105,6 +106,11 @@ export interface TranscriptionMeterInput {
    * real provider call is its own hold.
    */
   providerAttempt?: number;
+  /**
+   * Which product surface the spend is booked to. Absent = TRANSCRIPTION (an
+   * attachment). The stateless read sets TRANSCRIPTION_READ.
+   */
+  surface?: PaygSurface;
 }
 
 /**
@@ -126,6 +132,8 @@ export interface TranscriptionRequestContext {
   needsSegments?: boolean;
   /** A video cancel: aborts the provider call and releases (never finalizes) the hold. */
   signal?: AbortSignal;
+  /** PAYG surface to book the attempts to; absent = TRANSCRIPTION. */
+  surface?: PaygSurface;
 }
 
 /** A readable credit refusal, recorded on the row instead of a transcript. */
@@ -145,6 +153,8 @@ export interface TranscriptionMeterHold {
   requestId: string;
   reservedAudioSeconds: number;
   reservedPromptTokens: number;
+  /** The surface the hold was taken on, for the settle/release log lines. */
+  surface: PaygSurface;
 }
 
 /** The hold for one attempt. */

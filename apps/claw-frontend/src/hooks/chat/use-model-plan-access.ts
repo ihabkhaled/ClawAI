@@ -4,7 +4,7 @@ import { useCallback, useMemo } from 'react';
 import { MODEL_ACCESS_STALE_MS } from '@/constants/model-picker.constants';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
-import type { ConnectorModel } from '@/types';
+import type { ConnectorModel, ModelCostInfo } from '@/types';
 import { hashModelCatalogue } from '@/utilities/model-plan-access.utility';
 
 // Which cloud models the signed-in user's plan lets them pick, so the pickers can dim the rest.
@@ -16,6 +16,7 @@ import { hashModelCatalogue } from '@/utilities/model-plan-access.utility';
 // that dims every model because one request failed would be worse than one that does not dim.
 export function useModelPlanAccess(models: readonly ConnectorModel[]): {
   isLocked: (provider: string, model: string) => boolean;
+  getCostInfo: (provider: string, model: string) => ModelCostInfo;
 } {
   const pairs = useMemo(
     () => models.map((model) => ({ provider: model.provider, model: model.modelKey })),
@@ -44,5 +45,23 @@ export function useModelPlanAccess(models: readonly ConnectorModel[]): {
     (provider: string, model: string): boolean => lockedKeys.has(`${provider}/${model}`),
     [lockedKeys],
   );
-  return { isLocked };
+  // Cost band + allowance cover are optional on every entry: absent means no mark and no dimming.
+  const costByKey = useMemo(() => {
+    const map = new Map<string, ModelCostInfo>();
+    for (const entry of data ?? []) {
+      if (entry.costClass !== undefined || entry.coveredByAllowance !== undefined) {
+        map.set(`${entry.provider}/${entry.model}`, {
+          costClass: entry.costClass,
+          coveredByAllowance: entry.coveredByAllowance,
+        });
+      }
+    }
+    return map;
+  }, [data]);
+
+  const getCostInfo = useCallback(
+    (provider: string, model: string): ModelCostInfo => costByKey.get(`${provider}/${model}`) ?? {},
+    [costByKey],
+  );
+  return { isLocked, getCostInfo };
 }

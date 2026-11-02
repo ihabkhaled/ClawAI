@@ -420,3 +420,7 @@ Gemini video is `gemini-omni-1.1-flash` (Interactions API, about $0.10/s, routin
 ## Cost seed v17 (2026-11-01)
 
 Gemini Nano Banana 2.1 (`gemini-nano-banana-2.1`) is a priced image model: input $1.50/M, image output $30/M (1K image $0.0336, 2K $0.0504, 4K $0.113), routing seed v17, source ai.google.dev/gemini-api/docs/pricing read 2026-11-01. The v17 seed adds its token-priced row.
+
+## Rate-card routes are admin-only (2026-11-02)
+
+`GET /router-models/costs`, `GET /router-models/costs/:provider/:model`, `POST /router-models/costs/estimate` and `POST /router-models/costs/price` return provider rate cards, which rule 37 keeps off every user surface. They were guarded only by the global auth guard, so any signed-in user could read them through the edge. They now carry `@Roles(ADMIN)` and `@RequirePermissions(ADMIN_MODELS_MANAGE)` (live check on the dev stack: a free user gets 403, the admin 200). The picker path is `POST /internal/router-models/costs/classes` behind the service token and returns bands only.

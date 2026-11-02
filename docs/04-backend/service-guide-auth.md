@@ -715,3 +715,11 @@ unmetered branches (`NOT_PAYG`, `METERING_DISABLED`) through `applyPlanCallLimit
 prompt that is too long, or that alone costs more than the cap, is refused with `PLAN_CALL_LIMIT_EXCEEDED` (HTTP 402,
 no figure). A credit-wallet call, an administrator and a local provider are not limited. The `plan-call-limits` seeder
 fills NULLs only, from the table in `docs/03-architecture/model-price-ledger-2026-10-30.md`.
+
+## Credit fallback mode is a PREFERENCE (ADR-161 amendment, 2026-11-02)
+
+- `User.creditFallbackMode` (enum `CreditFallbackMode`, `@claw/shared-types`): `FALLBACK` (default) or `STOP`. Column added by the idempotent migration `20261102100000_add_user_credit_fallback_mode`.
+- Written through `PATCH /users/me/preferences` (`creditFallbackMode`, validated in `update-preferences.dto.ts`), returned on `/auth/me` and in `GET /internal/users/:id/entitlements` as the optional `UserEntitlements.creditFallbackMode`. Absent means `FALLBACK`, so an old caller keeps today's behaviour.
+- Entitlements are read fresh per call; nothing caches the mode. chat-service reads it only after the first 402 of a turn.
+- `STOP` ends the turn with the original credit refusal; `FALLBACK` answers from an included model with a notice. See [ADR-161](../13-adr/adr-161-used-up-credit-falls-back-to-an-included-model.md).
+- Honest gap: not run against a live database or API yet (QA record `2026-11-02-credit-fallback-user-setting`).

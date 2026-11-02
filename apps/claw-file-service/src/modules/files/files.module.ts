@@ -21,6 +21,8 @@ import { VideoFramesService } from './services/video-frames.service';
 import { VideoCancellationManager } from './managers/video-cancellation.manager';
 import { VideoStaleRecoveryManager } from './managers/video-stale-recovery.manager';
 import { VideoCancellationService } from './services/video-cancellation.service';
+import { TranscriptionReadManager } from './managers/transcription-read.manager';
+import { TranscriptionReadService } from './services/transcription-read.service';
 
 @Module({
   controllers: [FilesController, FileArchiveController, FilesInternalController],
@@ -55,6 +57,9 @@ import { VideoCancellationService } from './services/video-cancellation.service'
     // Re-queues video jobs lost to a restart (boot + every 60 s).
     VideoStaleRecoveryManager,
     VideoCancellationService,
+    // Stateless BILLED audio/video read (POST /files/transcribe-text).
+    TranscriptionReadManager,
+    TranscriptionReadService,
   ],
   exports: [FilesService, FilesRepository, FileChunksRepository],
 })

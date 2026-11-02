@@ -1,5 +1,5 @@
 import { type PlanFeature } from '@claw/shared-entitlements';
-import { type Permission } from '@claw/shared-types';
+import { type ModelCostClass, type Permission } from '@claw/shared-types';
 
 export type SendMessageAccessOptions = {
   provider?: string;
@@ -28,4 +28,11 @@ export type ModelAccessEntry = {
   provider: string;
   model: string;
   allowed: boolean;
+  // The cost BAND only (rule 37: never a rate). Absent when routing could not answer, so an old
+  // or degraded picker simply shows no mark.
+  costClass?: ModelCostClass;
+  // True when using this model spends no PAYG credit for this user (an administrator, a FREE
+  // model, or a model inside the plan's included set). False when it is not allowed or would
+  // draw on credit. Optional so old clients keep working.
+  coveredByAllowance?: boolean;
 };

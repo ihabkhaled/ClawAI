@@ -463,6 +463,20 @@ export const de: TranslationDictionary = {
       search: 'Suchen',
       noResults: 'Keine Ergebnisse gefunden',
       notOnPlan: 'Nicht in deinem Tarif',
+      cost: {
+        free: 'Gratis',
+        cheap: 'Niedrig',
+        standard: 'Mittel',
+        premium: 'Hoch',
+        ultra: 'Spitze',
+        freeHint: 'Kostenstufe: gratis.',
+        cheapHint: 'Kostenstufe: niedrig.',
+        standardHint: 'Kostenstufe: mittel.',
+        premiumHint: 'Kostenstufe: hoch.',
+        ultraHint: 'Kostenstufe: Spitze.',
+        outsideAllowanceHint:
+          'Nicht durch dein kostenloses Kontingent gedeckt: es verbraucht dein Guthaben.',
+      },
     },
     threadListDrawer: 'Unterhaltungen',
     export: {
@@ -2674,6 +2688,12 @@ export const de: TranslationDictionary = {
     userSubscriptionInvoiceIssuedAt: 'Ausgestellt',
   },
   settings: {
+    creditFallbackMode: 'Wenn ein Guthaben-Modell aufgebraucht ist',
+    creditFallbackModeDescription:
+      'Lege fest, was passiert, wenn das gewählte Modell sein Guthaben aufgebraucht hat.',
+    creditFallbackModeLabel: 'Wenn mein gewähltes Modell aufgebraucht ist',
+    creditFallbackModeFallback: 'Mit einem enthaltenen Modell antworten, mit Hinweis',
+    creditFallbackModeStop: 'Stoppen und die Guthaben-Meldung zeigen',
     title: 'Einstellungen',
     description: 'Kontoeinstellungen verwalten',
     profile: 'Profil',
@@ -5676,6 +5696,7 @@ export const de: TranslationDictionary = {
         WORKSPACE_ACTION: 'Workspace-Aktion',
         ROUTING: 'Routing',
         TRANSCRIPTION: 'Transkription',
+        TRANSCRIPTION_READ: 'Audio-/Video-Transkript lesen',
         VISION_HELPER: 'Bildbeschreibungs-Helfer',
         THREADS: 'Threads',
         TTS: 'Vorlesen (Text-zu-Sprache)',

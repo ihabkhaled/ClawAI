@@ -67,8 +67,17 @@ enum CurrencyPreferenceMode {
   MANUAL
 }
 
+// What happens when the user's picked credit model is used up (ADR-161).
+// FALLBACK answers from an included model with a notice (the behaviour every
+// account had before this setting existed); STOP ends the turn with the credit
+// refusal. Mirrors @claw/shared-types CreditFallbackMode.
+enum CreditFallbackMode {
+  FALLBACK
+  STOP
+}
+
 model User {
-  id                     String                   @id @default(cuid())
+  id                   String                   @id @default(cuid())
   email                  String                   @unique
   username               String                   @unique
   passwordHash           String                   @map("password_hash")
@@ -101,6 +110,8 @@ model User {
   // @claw/shared-constants TTS_VOICES_BY_PROVIDER; null = each provider's
   // default voice. Presentation state, like the display currency.
   ttsVoice               String?                  @map("tts_voice") @db.VarChar(32)
+  // Used-up credit model behaviour (ADR-161). Default FALLBACK = today's behaviour.
+  creditFallbackMode     CreditFallbackMode       @default(FALLBACK) @map("credit_fallback_mode")
   // Where the account registered from (ADR-200). PERSONAL DATA, ADMIN-ONLY: never
   // in a public profile, a token or a self-service response. Country is resolved
   // offline from the address (geoip-country) and is null for a private address.

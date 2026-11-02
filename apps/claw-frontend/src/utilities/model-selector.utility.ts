@@ -42,6 +42,8 @@ export function groupedModelsToPickerGroups(
       capabilities: model.capabilities,
       isLocked: model.isLocked,
       lockedLabel: model.isLocked === true ? lockedLabel : undefined,
+      costClass: model.costClass,
+      outsideAllowance: model.outsideAllowance,
       specifications: buildModelSpecifications(
         model.provider,
         model.specifications,

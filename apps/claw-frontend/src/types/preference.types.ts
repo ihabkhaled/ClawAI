@@ -1,6 +1,6 @@
 import type { CurrencyPreferenceMode } from '@claw/shared-types';
 
-import type { UserAppearancePreference, UserLanguagePreference } from '@/enums';
+import type { CreditFallbackMode, UserAppearancePreference, UserLanguagePreference } from '@/enums';
 
 export type UpdatePreferencesRequest = {
   languagePreference?: UserLanguagePreference;
@@ -15,6 +15,8 @@ export type UpdatePreferencesRequest = {
   preferredCurrencyCode?: string | null;
   // "Read aloud" voice; null = back to each provider's default voice.
   ttsVoice?: string | null;
+  // What happens when a picked credit model is used up (FALLBACK default | STOP).
+  creditFallbackMode?: CreditFallbackMode;
 };
 
 export type ChangePasswordRequest = {

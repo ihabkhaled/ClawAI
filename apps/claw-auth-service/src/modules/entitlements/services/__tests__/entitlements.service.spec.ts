@@ -1,4 +1,5 @@
 import { type Mocked, vi } from 'vitest';
+import { CreditFallbackMode } from '../../../../generated/prisma';
 import { PlanModelAccessMode, UserRole } from '@claw/shared-types';
 import { EntitlementsService } from '../entitlements.service';
 import { type AuthRepository } from '../../../auth/repositories/auth.repository';
@@ -238,6 +239,39 @@ describe('EntitlementsService — PlanModelAccess "empty = unrestricted" contrac
         role: UserRole.ADMIN,
       } as unknown as Awaited<ReturnType<AuthRepository['findUserById']>>);
       expect((await service.getForUser('u1')).freeCreditMaxModelOutputMicroUsd).toBeNull();
+    });
+  });
+
+  describe('creditFallbackMode (ADR-161)', () => {
+    beforeEach(() => {
+      plansRepoMock.findEffectiveForUser.mockResolvedValue(freePlanWithNoModelAccess);
+    });
+
+    const withMode = (mode: CreditFallbackMode | undefined, role: UserRole = UserRole.USER) =>
+      authRepoMock.findUserById.mockResolvedValue({
+        ...baseUser,
+        role,
+        creditFallbackMode: mode,
+      } as unknown as Awaited<ReturnType<AuthRepository['findUserById']>>);
+
+    it('projects STOP when the user chose it', async () => {
+      withMode(CreditFallbackMode.STOP);
+      expect((await service.getForUser('u1')).creditFallbackMode).toBe(CreditFallbackMode.STOP);
+    });
+
+    it('projects FALLBACK when the user chose it', async () => {
+      withMode(CreditFallbackMode.FALLBACK);
+      expect((await service.getForUser('u1')).creditFallbackMode).toBe(CreditFallbackMode.FALLBACK);
+    });
+
+    it('defaults to FALLBACK when the row carries no value', async () => {
+      withMode(undefined);
+      expect((await service.getForUser('u1')).creditFallbackMode).toBe(CreditFallbackMode.FALLBACK);
+    });
+
+    it('projects the stored value for an admin too', async () => {
+      withMode(CreditFallbackMode.STOP, UserRole.ADMIN);
+      expect((await service.getForUser('u1')).creditFallbackMode).toBe(CreditFallbackMode.STOP);
     });
   });
 
