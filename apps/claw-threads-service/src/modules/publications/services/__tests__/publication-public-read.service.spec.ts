@@ -3,6 +3,8 @@ import { NotFoundException } from '@nestjs/common';
 import { PublicationPublicReadService } from '../publication-public-read.service';
 
 const record = {
+  publicationId: 'pub-1',
+  revision: 3,
   slug: 'a-slug',
   ownerId: 'owner-1',
   title: 'A Title',
@@ -19,10 +21,19 @@ function create() {
   const identity = {
     resolveOne: vi.fn().mockResolvedValue({ username: 'ada', displayName: 'Ada' }),
   };
+  const translations = {
+    listReadyLocales: vi.fn().mockResolvedValue(['ar', 'de']),
+    findReady: vi.fn().mockResolvedValue({ title: 'عنوان', markdown: '# نص' }),
+  };
   return {
     publications,
     identity,
-    service: new PublicationPublicReadService(publications as never, identity as never),
+    translations,
+    service: new PublicationPublicReadService(
+      publications as never,
+      translations as never,
+      identity as never,
+    ),
   };
 }
 
@@ -55,5 +66,35 @@ describe('PublicationPublicReadService', () => {
     const { service, publications } = create();
     publications.findPublic.mockResolvedValue(null);
     await expect(service.get('nope')).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('serves the translated copy for ?lang and keeps the app free of it', async () => {
+    const { service, translations } = create();
+    const result = await service.get('a-slug', 'ar');
+    expect(translations.findReady).toHaveBeenCalledWith('pub-1', 'ar', 3);
+    expect(result).toMatchObject({
+      title: 'عنوان',
+      contentLocale: 'ar',
+      sourceLocale: 'en',
+      translated: true,
+      availableLocales: ['en', 'ar', 'de'],
+    });
+    expect(result.content.markdown).toBe('# نص');
+    expect(result).not.toHaveProperty('publicationId');
+    expect(result).not.toHaveProperty('revision');
+  });
+
+  it('falls back to the written language when no current copy exists or the language is unknown', async () => {
+    const { service, translations } = create();
+    translations.listReadyLocales.mockResolvedValue([]);
+    await expect(service.get('a-slug', 'ar')).resolves.toMatchObject({
+      contentLocale: 'en',
+      translated: false,
+      availableLocales: ['en'],
+    });
+    translations.listReadyLocales.mockResolvedValue(['ar']);
+    await expect(service.get('a-slug', 'xx')).resolves.toMatchObject({ translated: false });
+    await expect(service.get('a-slug', 'en')).resolves.toMatchObject({ translated: false });
+    expect(translations.findReady).not.toHaveBeenCalled();
   });
 });

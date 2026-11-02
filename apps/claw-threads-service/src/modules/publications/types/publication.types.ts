@@ -28,10 +28,19 @@ export type PublicPublication = {
   readerCount: number;
   /** The publisher's name; null when the account is gone or its name could not be read. */
   owner: PublicAuthor | null;
+  /** The language the Thread was written in; `contentLocale` is the language shown (ADR-217). */
+  sourceLocale: Locale;
+  /** True when title and text are the machine translation into `contentLocale`. */
+  translated: boolean;
+  /** The written language plus every language with a current translation. */
+  availableLocales: Locale[];
 };
 
 /** `findPublic` result: the owner is an id until `PublicationPublicReadService` names it. */
-export type PublicPublicationRecord = Omit<PublicPublication, 'owner'> & { ownerId: string | null };
+export type PublicPublicationRecord = Omit<
+  PublicPublication,
+  'owner' | 'sourceLocale' | 'translated' | 'availableLocales'
+> & { ownerId: string | null; publicationId: string; revision: number };
 
 export type PublicPublicationDiscoveryItem = {
   slug: string;

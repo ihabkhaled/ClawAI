@@ -24,6 +24,14 @@ enum PublicationGenerationState {
   DONE
 }
 
+/// One machine translation of a published Thread into one language (ADR-217).
+enum TranslationStatus {
+  PENDING
+  RUNNING
+  READY
+  FAILED
+}
+
 enum RevisionReviewStatus {
   PENDING
   READY_FOR_REVIEW
@@ -105,11 +113,37 @@ model ThreadPublication {
   reports                    ThreadPublicationReport[]
   formatPasses               ThreadFormatPass[]
   searchDoc                  ThreadPublicationSearchDoc?
+  translations               ThreadPublicationTranslation[]
 
   @@unique([ownerId, startKeyHash])
   @@index([ownerId, createdAt])
   @@index([status, publishedAt])
   @@map("thread_publications")
+}
+
+/// A machine translation of the served revision into one language. It is a copy, rebuilt by the
+/// worker whenever the served revision moves on; readers see it only while `sourceRevision` is current.
+model ThreadPublicationTranslation {
+  id             String            @id @default(cuid())
+  publicationId  String            @map("publication_id")
+  publication    ThreadPublication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  locale         String            @db.VarChar(8)
+  sourceRevision Int               @map("source_revision")
+  status         TranslationStatus @default(PENDING)
+  title          String?
+  markdown       String?
+  model          String?           @db.VarChar(120)
+  attempts       Int               @default(0)
+  failureCode    String?           @map("failure_code") @db.VarChar(64)
+  startedAt      DateTime?         @map("started_at")
+  translatedAt   DateTime?         @map("translated_at")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+
+  @@unique([publicationId, locale])
+  @@index([status, updatedAt])
+  @@index([locale, status])
+  @@map("thread_publication_translations")
 }
 
 /// One counted view. `viewerHash` is a keyed hash of the visitor, kept only to dedupe repeats

@@ -205,3 +205,7 @@ A plan with `ALLOW_COST_CLASSES` refuses every model when `isModelAllowedForUsag
 ## Video models are not team members (2026-11-01)
 
 `recommended-team.constants.ts` skips video-output models; `gemini-omni` joined `veo` in that exclusion because Omni replaced Veo as Gemini's video model.
+
+## Translations of published Threads (2026-11-02, ADR-217)
+
+`modules/publication-translations/` keeps a translated copy of every published Thread in every app language (table `thread_publication_translations`). `PublicationTranslationWorkerService` is a reconciler on a 30 s timer: it finds (Thread, language) pairs with no copy for the revision being served, claims each atomically (replica-safe, 15 min lease), translates in chunks through `TranslationModelClient` and stores `READY`. It calls the provider directly with the connector key (platform pays; only credit-free models: Gemma on the Gemini API, then Ollama cloud) and strips `<thought>` blocks. `GET /thread-publications/public/:slug?lang=xx` serves a copy only while `source_revision` is current; the sitemap endpoint takes `scope=translated&locale=xx`. Failure codes are stable (`BAD_TITLE_SHAPE`, `IMPLAUSIBLE_TRANSLATION`, `SOURCE_CHANGED`, `MODEL_HTTP_<n>`, ...); grep the worker's `Translation ... failed` warnings. Never route this through chat-service: that path meters a user.

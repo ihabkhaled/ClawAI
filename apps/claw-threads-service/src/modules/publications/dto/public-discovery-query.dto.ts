@@ -10,8 +10,11 @@ export const publicDiscoveryQuerySchema = z.object({
 export const publicSitemapQuerySchema = z
   .object({
     locale: z.nativeEnum(Locale).optional(),
-    /** `locale` (default) lists one content language; `all` lists every content language. */
-    scope: z.enum(['locale', 'all']).default('locale'),
+    /**
+     * `locale` (default) lists one content language; `all` lists every content language;
+     * `translated` lists the machine translations into `locale` (ADR-217).
+     */
+    scope: z.enum(['locale', 'all', 'translated']).default('locale'),
     page: z.coerce.number().int().min(0).max(100_000).default(0),
     limit: z.coerce.number().int().min(1).max(10_000).default(5_000),
   })

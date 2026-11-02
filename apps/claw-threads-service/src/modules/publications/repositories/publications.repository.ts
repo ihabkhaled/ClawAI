@@ -772,6 +772,7 @@ export class PublicationsRepository {
         },
       },
       select: {
+        id: true,
         slug: true,
         ownerId: true,
         contentLocale: true,
@@ -787,7 +788,7 @@ export class PublicationsRepository {
           },
           orderBy: { revision: 'desc' },
           take: 1,
-          select: { title: true, content: true },
+          select: { revision: true, title: true, content: true },
         },
       },
     });
@@ -803,6 +804,8 @@ export class PublicationsRepository {
       .safeParse(revision?.content);
     return publication?.publishedAt && revision && content.success
       ? {
+          publicationId: publication.id,
+          revision: revision.revision,
           slug: publication.slug,
           title: resolvePublicationTitle(revision.title, revision.content),
           contentLocale: publication.contentLocale as Locale,

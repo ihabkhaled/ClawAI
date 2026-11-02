@@ -1,4 +1,4 @@
-import { Controller, Get, Header, Param } from '@nestjs/common';
+import { Controller, Get, Header, Param, Query } from '@nestjs/common';
 import { Public } from '@claw/shared-auth';
 
 import { PublicationPublicReadService } from '../services/publication-public-read.service';
@@ -10,7 +10,10 @@ export class PublicationPublicController {
 
   @Get(':slug')
   @Header('Cache-Control', 'no-store')
-  getPublication(@Param('slug') slug: string): ReturnType<PublicationPublicReadService['get']> {
-    return this.reader.get(slug);
+  getPublication(
+    @Param('slug') slug: string,
+    @Query('lang') lang?: string,
+  ): ReturnType<PublicationPublicReadService['get']> {
+    return this.reader.get(slug, lang);
   }
 }

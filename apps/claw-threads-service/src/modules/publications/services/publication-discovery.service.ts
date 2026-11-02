@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PUBLICATION_DISCOVERY_CURSOR_SCHEMA } from '../constants/publication-discovery.constants';
+import { PublicationTranslationsRepository } from '../../publication-translations/repositories/publication-translations.repository';
 import { PublicationsRepository } from '../repositories/publications.repository';
 import {
   type PublicDiscoveryQuery,
@@ -10,7 +11,10 @@ import {
 
 @Injectable()
 export class PublicationDiscoveryService {
-  constructor(private readonly publications: PublicationsRepository) {}
+  constructor(
+    private readonly publications: PublicationsRepository,
+    private readonly translations: PublicationTranslationsRepository,
+  ) {}
 
   async list(input: PublicDiscoveryQuery): Promise<{
     items: Awaited<ReturnType<PublicationsRepository['findPublicDiscoveries']>>;
@@ -55,6 +59,18 @@ export class PublicationDiscoveryService {
   }> {
     const query = publicSitemapQuerySchema.parse(input);
     const skip = query.page * query.limit;
+    if (query.scope === 'translated' && query.locale !== undefined) {
+      const [translatedTotal, translated] = await Promise.all([
+        this.translations.countTranslatedSitemap(query.locale),
+        this.translations.listTranslatedSitemap(query.locale, skip, query.limit),
+      ]);
+      return {
+        total: translatedTotal,
+        page: query.page,
+        limit: query.limit,
+        items: translated.map(({ slug, translatedAt }) => ({ slug, publishedAt: translatedAt })),
+      };
+    }
     // scope=all spans every content language; a locale is only meaningful for the default scope.
     const locale = query.scope === 'all' ? null : (query.locale ?? null);
     const [total, items] = await Promise.all([

@@ -343,6 +343,7 @@
         "ThreadPublicationReport",
         "ThreadPublicationRevision",
         "ThreadPublicationSearchDoc",
+        "ThreadPublicationTranslation",
         "ThreadPublicationView"
       ],
       "service": "claw-threads-service"

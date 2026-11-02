@@ -25,7 +25,7 @@ describe('PublicationDiscoveryService', () => {
         },
       ]),
     };
-    const service = new PublicationDiscoveryService(publications as never);
+    const service = new PublicationDiscoveryService(publications as never, {} as never);
 
     const page = await service.list({ locale: Locale.EN, limit: 1 });
     expect(page.items).toHaveLength(1);
@@ -34,7 +34,10 @@ describe('PublicationDiscoveryService', () => {
   });
 
   it('rejects malformed discovery cursors', async () => {
-    const service = new PublicationDiscoveryService({ findPublicDiscoveries: vi.fn() } as never);
+    const service = new PublicationDiscoveryService(
+      { findPublicDiscoveries: vi.fn() } as never,
+      {} as never,
+    );
     await expect(
       service.list({ locale: Locale.EN, cursor: 'bad', limit: 10 }),
     ).rejects.toBeInstanceOf(BadRequestException);
@@ -45,7 +48,7 @@ describe('PublicationDiscoveryService', () => {
       countPublicDiscoveries: vi.fn().mockResolvedValue(12),
       findPublicSitemapItems: vi.fn().mockResolvedValue([]),
     };
-    const service = new PublicationDiscoveryService(publications as never);
+    const service = new PublicationDiscoveryService(publications as never, {} as never);
 
     await expect(
       service.sitemap({ locale: Locale.AR, scope: 'locale', page: 1, limit: 5 }),
@@ -63,7 +66,7 @@ describe('PublicationDiscoveryService', () => {
       countPublicDiscoveries: vi.fn().mockResolvedValue(30),
       findPublicSitemapItems: vi.fn().mockResolvedValue([]),
     };
-    const service = new PublicationDiscoveryService(publications as never);
+    const service = new PublicationDiscoveryService(publications as never, {} as never);
 
     await service.sitemap({ scope: 'all', page: 2, limit: 10 });
     expect(publications.countPublicDiscoveries).toHaveBeenCalledWith(null);
@@ -71,5 +74,24 @@ describe('PublicationDiscoveryService', () => {
 
     await service.sitemap({ scope: 'locale', locale: Locale.DE, page: 0, limit: 10 });
     expect(publications.findPublicSitemapItems).toHaveBeenLastCalledWith(Locale.DE, 0, 10);
+  });
+
+  it('lists the translated pages of one language for the sitemap, dated by the translation', async () => {
+    const translatedAt = new Date('2026-11-02T08:00:00.000Z');
+    const translations = {
+      countTranslatedSitemap: vi.fn().mockResolvedValue(3),
+      listTranslatedSitemap: vi.fn().mockResolvedValue([{ slug: 'a', translatedAt }]),
+    };
+    const service = new PublicationDiscoveryService({} as never, translations as never);
+
+    await expect(
+      service.sitemap({ locale: Locale.AR, scope: 'translated', page: 1, limit: 2 }),
+    ).resolves.toEqual({
+      total: 3,
+      page: 1,
+      limit: 2,
+      items: [{ slug: 'a', publishedAt: translatedAt }],
+    });
+    expect(translations.listTranslatedSitemap).toHaveBeenCalledWith(Locale.AR, 2, 2);
   });
 });

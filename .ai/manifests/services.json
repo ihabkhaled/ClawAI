@@ -621,9 +621,10 @@
         "ThreadPublicationReport",
         "ThreadPublicationRevision",
         "ThreadPublicationSearchDoc",
+        "ThreadPublicationTranslation",
         "ThreadPublicationView"
       ],
-      "testFiles": 134,
+      "testFiles": 137,
       "testRunner": "vitest"
     },
     {

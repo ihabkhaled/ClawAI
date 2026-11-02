@@ -1681,9 +1681,6 @@
     "apps/claw-threads-service/src/modules/publications/controllers/publication-discovery.controller.ts": {
       "@typescript-eslint/explicit-function-return-type": 2
     },
-    "apps/claw-threads-service/src/modules/publications/services/publication-discovery.service.ts": {
-      "@typescript-eslint/explicit-function-return-type": 2
-    },
     "apps/claw-threads-service/src/modules/publications/services/publication-lifecycle.service.ts": {
       "complexity": 1,
       "max-lines-per-function": 1

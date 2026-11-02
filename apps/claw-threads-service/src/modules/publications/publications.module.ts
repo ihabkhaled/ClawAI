@@ -4,6 +4,7 @@ import { AuthorIdentityModule } from '../author-identity/author-identity.module'
 import { BoardIndexModule } from '../board-index/board-index.module';
 import { PublicationModerationModule } from '../publication-moderation/publication-moderation.module';
 import { PublicationCommunityModule } from '../publication-community/publication-community.module';
+import { PublicationTranslationsModule } from '../publication-translations/publication-translations.module';
 import { PrismaModule } from '../../infrastructure/database/prisma/prisma.module';
 import { PublicationGenerationStreamController } from './controllers/publication-generation-stream.controller';
 import { GenerationProgressStreamService } from './services/generation-progress-stream.service';
@@ -54,6 +55,7 @@ import { PublicationGenerationRepairController } from './controllers/publication
     BoardIndexModule,
     PublicationModerationModule,
     PublicationCommunityModule,
+    PublicationTranslationsModule,
   ],
   controllers: [
     PublicationOwnerController,

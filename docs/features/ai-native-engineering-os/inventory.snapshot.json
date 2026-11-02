@@ -9574,7 +9574,7 @@
       ],
       "skills": [
         {
-          "bytes": 38334,
+          "bytes": 38644,
           "file": "skills/00-index.md"
         },
         {
@@ -10012,6 +10012,10 @@
         {
           "bytes": 4094,
           "file": "skills/verify-the-research-loop-live.md"
+        },
+        {
+          "bytes": 2381,
+          "file": "skills/verify-thread-translations-live.md"
         },
         {
           "bytes": 3342,
@@ -12291,6 +12295,11 @@
           {
             "confidence": "verified",
             "source": "apps/claw-threads-service/prisma/schema.prisma",
+            "value": "ThreadPublicationTranslation"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-threads-service/prisma/schema.prisma",
             "value": "ThreadPublicationView"
           }
         ],
@@ -12557,7 +12566,7 @@
       },
       "claw-threads-service": {
         "runner": "vitest",
-        "testFiles": 134
+        "testFiles": 137
       },
       "claw-workspace-service": {
         "runner": "vitest",
@@ -13416,7 +13425,7 @@
     "serviceCount": 21,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2874,
+    "totalTestFiles": 2877,
     "workspaceCount": 28
   }
 }

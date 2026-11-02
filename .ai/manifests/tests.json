@@ -106,7 +106,7 @@
     },
     "claw-threads-service": {
       "runner": "vitest",
-      "testFiles": 134
+      "testFiles": 137
     },
     "claw-workspace-service": {
       "runner": "vitest",
@@ -114,5 +114,5 @@
     }
   },
   "generated": true,
-  "total": 2874
+  "total": 2877
 }

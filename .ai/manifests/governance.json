@@ -372,7 +372,7 @@
   ],
   "skills": [
     {
-      "bytes": 38334,
+      "bytes": 38644,
       "file": "skills/00-index.md"
     },
     {
@@ -810,6 +810,10 @@
     {
       "bytes": 4094,
       "file": "skills/verify-the-research-loop-live.md"
+    },
+    {
+      "bytes": 2381,
+      "file": "skills/verify-thread-translations-live.md"
     },
     {
       "bytes": 3342,
