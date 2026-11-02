@@ -7,7 +7,6 @@ import {
   TRANSLATION_MAX_LENGTH_RATIO,
   TRANSLATION_MIN_LENGTH_RATIO,
   TRANSLATION_REASONING_TAGS,
-  TRANSLATION_SCHEME_PATTERN,
   TRANSLATION_SCRIPT_URL,
   TRANSLATION_TITLE_MARKER,
   TRANSLATION_URL_PATTERN,
@@ -76,22 +75,16 @@ export function isPlausibleTranslation(source: string, translated: string): bool
   );
 }
 
-/** A link that leaves the page: it names a scheme, starts with `//`, or is a `www.` autolink. */
-function isExternalLink(link: string): boolean {
-  const lower = link.toLowerCase();
-  return (
-    TRANSLATION_SCHEME_PATTERN.test(lower) || lower.startsWith('//') || lower.startsWith('www.')
-  );
-}
-
 function normaliseLink(link: string): string {
   return link.toLowerCase().replace(/[.,;:!?]+$/u, '');
 }
 
 /**
- * Every address a Markdown renderer would turn into a link: absolute and protocol-relative URLs,
- * `www.` autolinks, and the destination of an inline link or a reference definition when it names
- * a scheme. Compared case-insensitively, so `HTTPS://x` and `https://x` are the same address.
+ * Every address a reader could follow: bare and protocol-relative URLs, `www.` autolinks, and the
+ * destination of every inline link or reference definition, whatever it looks like. A destination is
+ * compared as written (case-insensitively), never classified: an escaped or entity-encoded form of a
+ * scheme is simply a destination the source does not have. Fragment-only destinations (`#intro`) go
+ * nowhere, so a translated heading anchor is allowed.
  */
 function linksOf(text: string): Set<string> {
   const found = [
@@ -101,7 +94,7 @@ function linksOf(text: string): Set<string> {
     ...[...text.matchAll(TRANSLATION_DEFINITION_DESTINATION_PATTERN)].map(
       (match) => match[1] ?? '',
     ),
-  ].filter((link) => isExternalLink(link));
+  ].filter((link) => link !== '' && !link.startsWith('#'));
   return new Set(found.map(normaliseLink));
 }
 

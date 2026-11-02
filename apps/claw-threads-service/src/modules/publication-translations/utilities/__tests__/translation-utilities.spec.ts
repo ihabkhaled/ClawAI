@@ -100,6 +100,9 @@ describe('addsNoLinksOrMarkup', () => {
       'texte [x](//evil.example/x)',
       'texte [x](mailto:a@evil.example)',
       'texte [x](data:text/html;base64,AAAA)',
+      'texte [x](&#104;ttps://evil.example/x)',
+      'texte [x](java\\script:alert(1))',
+      'texte [x](/relative/but/new)',
       'texte\n\n[ref]: ftp://evil.example/x',
     ]) {
       expect(addsNoLinksOrMarkup('plain text', added), added).toBe(false);
@@ -110,7 +113,10 @@ describe('addsNoLinksOrMarkup', () => {
     expect(
       addsNoLinksOrMarkup(source, 'Voir [la doc](HTTPS://EXAMPLE.ORG/a) et https://example.org/b'),
     ).toBe(true);
-    expect(addsNoLinksOrMarkup('see [x](#intro)', 'voir [x](#intro) et [y](/en/page)')).toBe(true);
+    expect(addsNoLinksOrMarkup('see [x](#intro)', 'voir [x](#introduction) et [y](/en/page)')).toBe(
+      false,
+    );
+    expect(addsNoLinksOrMarkup('see [x](#intro)', 'voir [x](#introduction)')).toBe(true);
   });
 
   it('rejects added tags and script addresses but keeps the source own tags', () => {

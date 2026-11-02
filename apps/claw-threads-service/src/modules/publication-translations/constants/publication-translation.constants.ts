@@ -97,8 +97,6 @@ export const TRANSLATION_WWW_PATTERN = /\bwww\.[^\s)\]>"'<]+/giu;
 export const TRANSLATION_INLINE_DESTINATION_PATTERN = /\]\(\s*<?([^)\s>]+)/gu;
 /** The destination of a reference definition, `[ref]: dest`, at the start of a line. */
 export const TRANSLATION_DEFINITION_DESTINATION_PATTERN = /^\s*\[[^\]\n]+\]:\s*<?(\S+?)>?\s*$/gmu;
-/** A destination that is not a page-relative link: it names a scheme, such as `mailto:` or `data:`. */
-export const TRANSLATION_SCHEME_PATTERN = /^[a-z][a-z0-9+.-]*:/iu;
 /** The start of an HTML tag. A translation may keep the tags the source has, never add any. */
 export const TRANSLATION_HTML_TAG_PATTERN = /<[A-Za-z/!]/gu;
 export const TRANSLATION_SCRIPT_URL = 'javascript:';
