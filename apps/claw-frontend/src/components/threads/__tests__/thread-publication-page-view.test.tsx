@@ -17,6 +17,9 @@ vi.mock('@/components/threads/thread-public-back-link', () => ({
 vi.mock('@/components/threads/thread-public-community', () => ({
   ThreadPublicCommunity: () => <section />,
 }));
+vi.mock('@/components/threads/thread-language-switch', () => ({
+  ThreadLanguageSwitch: () => null,
+}));
 vi.mock('@/components/threads/thread-share-menu', () => ({ ThreadShareMenu: () => <div /> }));
 
 const STATE: ThreadPublicPageController = {

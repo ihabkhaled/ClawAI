@@ -3,33 +3,34 @@ import { notFound } from 'next/navigation';
 import Script from 'next/script';
 
 import { getSiteUrl, isProductionCanonical, shouldNoIndexEverything } from '@/lib/site/site-config';
-import { loadPublicThreadFromParams } from '@/lib/threads/public-thread-page-data';
+import {
+  loadPublicThreadFromParams,
+  readRequestedThreadLanguage,
+} from '@/lib/threads/public-thread-page-data';
+import type { ThreadPageProps } from '@/types/thread-publication.types';
 import {
   buildThreadArticleJsonLd,
   buildThreadDescription,
   serializeJsonLd,
 } from '@/utilities/structured-data.utility';
-import { threadCanonicalUrl } from '@/utilities/thread-slug.utility';
+import { threadPageAddresses } from '@/utilities/thread-page-addresses.utility';
 
 import { ThreadPublicPageClient } from './page-client';
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<{ slug: string }>;
-}): Promise<Metadata> {
-  const publication = await loadPublicThreadFromParams(params);
+  searchParams,
+}: ThreadPageProps): Promise<Metadata> {
+  const lang = await readRequestedThreadLanguage(searchParams);
+  const publication = await loadPublicThreadFromParams(params, lang);
   if (!publication || shouldNoIndexEverything()) {
     return { robots: { index: false, follow: false } };
   }
-  const canonical = threadCanonicalUrl(getSiteUrl(), publication.contentLocale, publication.slug);
+  const { canonical, languages } = threadPageAddresses(getSiteUrl(), publication);
   return {
     title: publication.title,
     description: buildThreadDescription(publication.content.markdown),
-    alternates: {
-      canonical,
-      languages: { [publication.contentLocale]: canonical, 'x-default': canonical },
-    },
+    alternates: { canonical, languages },
     robots: isProductionCanonical()
       ? { index: true, follow: true }
       : { index: false, follow: false },
@@ -44,15 +45,15 @@ export async function generateMetadata({
 
 export default async function PublicThreadPublicationPage({
   params,
-}: {
-  params: Promise<{ slug: string }>;
-}): Promise<React.ReactElement> {
-  const publication = await loadPublicThreadFromParams(params);
+  searchParams,
+}: ThreadPageProps): Promise<React.ReactElement> {
+  const lang = await readRequestedThreadLanguage(searchParams);
+  const publication = await loadPublicThreadFromParams(params, lang);
   if (!publication) {
     notFound();
   }
   const jsonLd = buildThreadArticleJsonLd({
-    canonicalUrl: threadCanonicalUrl(getSiteUrl(), publication.contentLocale, publication.slug),
+    canonicalUrl: threadPageAddresses(getSiteUrl(), publication).canonical,
     title: publication.title,
     description: buildThreadDescription(publication.content.markdown),
     publishedAt: publication.publishedAt,
@@ -64,7 +65,7 @@ export default async function PublicThreadPublicationPage({
       <Script id="thread-article-jsonld" type="application/ld+json" strategy="beforeInteractive">
         {serializeJsonLd(jsonLd)}
       </Script>
-      <ThreadPublicPageClient initialPublication={publication} />
+      <ThreadPublicPageClient initialPublication={publication} lang={lang} />
     </>
   );
 }

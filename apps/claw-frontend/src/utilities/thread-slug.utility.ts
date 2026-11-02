@@ -50,3 +50,11 @@ export function threadCanonicalUrl(siteUrl: string, locale: string, slug: string
 export function threadLocalePath(locale: string, slug: string): string {
   return `/${locale}/threads/${encodeThreadSlug(slug)}`;
 }
+
+/**
+ * The address of one translated copy. The path locale is the translation's language and `?lang`
+ * names the copy, so each language is its own crawlable page that canonicalises to itself.
+ */
+export function threadTranslatedUrl(siteUrl: string, lang: string, slug: string): string {
+  return `${siteUrl}/${lang}/threads/${encodeThreadSlug(slug)}?lang=${lang}`;
+}

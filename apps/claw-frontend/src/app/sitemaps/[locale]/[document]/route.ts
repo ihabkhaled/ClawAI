@@ -14,7 +14,7 @@ import {
   getLanguageAlternates,
 } from '@/utilities/content-registry.utility';
 import { getHtmlLanguage, isSupportedLocale } from '@/utilities/locale.utility';
-import { threadCanonicalUrl } from '@/utilities/thread-slug.utility';
+import { threadCanonicalUrl, threadTranslatedUrl } from '@/utilities/thread-slug.utility';
 import { buildSitemapUrlSetXml } from '@/utilities/xml.utility';
 
 // Same reason as the index: SITE_URL is injected into the running production
@@ -32,6 +32,7 @@ export async function GET(_request: Request, context: DiscoveryRouteContext): Pr
   const chatMatch = /^chats-(\d+)\.xml$/u.exec(document);
   const threadMatch = /^threads-(\d+)\.xml$/u.exec(document);
   const allThreadsMatch = /^all-threads-(\d+)\.xml$/u.exec(document);
+  const translatedMatch = /^translated-threads-(\d+)\.xml$/u.exec(document);
   const siteUrl = getSiteUrl();
   let entries: SitemapUrlEntry[] = [];
 
@@ -128,6 +129,21 @@ export async function GET(_request: Request, context: DiscoveryRouteContext): Pr
     }
     entries = page.items.map((item) => ({
       url: threadCanonicalUrl(siteUrl, localeValue, item.slug),
+      lastModified: item.publishedAt,
+    }));
+  } else if (translatedMatch?.[1] !== undefined) {
+    // The automatic translations into THIS language: each is its own page, /<locale>/threads/<slug>
+    // ?lang=<locale>, and canonicalises to itself, so it is listed here for search engines (ADR-217).
+    const chunk = Number(translatedMatch[1]);
+    if (!Number.isSafeInteger(chunk) || chunk < 1) {
+      return new Response(null, { status: 404 });
+    }
+    const page = await getPublicThreadSitemapPage(localeValue, chunk - 1, true);
+    if (page === null || (page.items.length === 0 && chunk > 1)) {
+      return new Response(null, { status: 404 });
+    }
+    entries = page.items.map((item) => ({
+      url: threadTranslatedUrl(siteUrl, localeValue, item.slug),
       lastModified: item.publishedAt,
     }));
   } else {

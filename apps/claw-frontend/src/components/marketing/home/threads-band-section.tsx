@@ -51,6 +51,13 @@ export function ThreadsBandSection({ video }: ThreadsBandSectionProps): React.Re
           ))}
         </ol>
 
+        <div className="mx-auto mt-8 max-w-3xl text-center" data-testid="threads-translation-note">
+          <h3 className="text-foreground font-medium">{t('threadTranslation.featureTitle')}</h3>
+          <p className="text-muted-foreground mt-1.5 text-sm">
+            {t('threadTranslation.featureBody')}
+          </p>
+        </div>
+
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
           <Link href={THREADS_PORTAL_PATH} className={buttonVariants({ size: 'lg' })}>
             {t('marketing.home.threads.ctaCreate')}

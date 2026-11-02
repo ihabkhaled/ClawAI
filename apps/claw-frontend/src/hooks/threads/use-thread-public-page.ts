@@ -34,6 +34,7 @@ import {
 
 export function useThreadPublicPage(
   initialPublication: PublicThreadPublication,
+  lang: string | null = null,
 ): ThreadPublicPageController {
   const params = useParams<{ slug: string }>();
   // Next hands the segment over percent-encoded; the API and every query key use the real slug.
@@ -45,7 +46,7 @@ export function useThreadPublicPage(
     // Known only in the browser, so the share menu appears after hydration, never mismatches it.
     setShareUrl(`${window.location.origin}${window.location.pathname}`);
   }, []);
-  const queries = useThreadPublicQueries(slug, initialPublication);
+  const queries = useThreadPublicQueries(slug, initialPublication, lang);
   const actions = useThreadPublicActions(slug);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const userId = useAuthStore((state) => state.user?.id ?? '');

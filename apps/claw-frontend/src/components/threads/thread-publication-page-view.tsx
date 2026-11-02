@@ -4,6 +4,7 @@ import type { ReactElement } from 'react';
 
 import { ThreadChangeCredits } from '@/components/threads/thread-change-credits';
 import { ThreadExportPanel } from '@/components/threads/thread-export-panel';
+import { ThreadLanguageSwitch } from '@/components/threads/thread-language-switch';
 import { ThreadOwnerChangeBar } from '@/components/threads/thread-owner-change-bar';
 import { ThreadPublicArticle } from '@/components/threads/thread-public-article';
 import { ThreadPublicBackLink } from '@/components/threads/thread-public-back-link';
@@ -47,6 +48,7 @@ export function ThreadPublicPageView({ state }: ThreadPublicPageViewProps): Reac
           pendingChangeRequests={state.viewer.pendingChangeRequests}
         />
       ) : null}
+      <ThreadLanguageSwitch publication={state.publication} />
       <ThreadPublicArticle
         publication={state.publication}
         truncatedLabel={t('chat.threadPublicTruncated')}

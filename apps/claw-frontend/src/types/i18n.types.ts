@@ -4680,6 +4680,7 @@ export type TranslationDictionary = {
   pickedModel: PickedModelLocaleTranslation;
   creditFallback: CreditFallbackLocaleTranslation;
   mediaUi: MediaUiLocaleTranslation;
+  threadTranslation: ThreadTranslationLocaleTranslation;
   smartRouterAdmin: SmartRouterAdminLocaleTranslation;
   adminModelCosts: AdminModelCostsLocaleTranslation;
   providerManagement?: ProviderManagementLocaleTranslation;
@@ -8636,4 +8637,17 @@ export type ThreadReviewLocaleTranslation = {
   formatTableLost: string;
   formatUnknown: string;
   formatNotFormattable: string;
+};
+
+/** Public Threads in any language: the dropdown, its notice and the home entry (ADR-217). */
+export type ThreadTranslationLocaleTranslation = {
+  promoTitle: string;
+  promoBody: string;
+  promoCta: string;
+  languageLabel: string;
+  /** `{language}` is the native name of the language the Thread was written in. */
+  translatedNotice: string;
+  showOriginal: string;
+  featureTitle: string;
+  featureBody: string;
 };

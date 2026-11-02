@@ -156,6 +156,12 @@ export type PublicThreadPublication = {
   gapsDisclosed?: boolean;
   /** Who published it; null for a Thread published before names were shown. */
   owner?: ThreadAuthor | null;
+  /** The language it was written in; `contentLocale` is the language being shown (ADR-217). */
+  sourceLocale?: Locale;
+  /** True when title and text are the automatic translation into `contentLocale`. */
+  translated?: boolean;
+  /** The written language plus every language with a current translation. */
+  availableLocales?: Locale[];
 };
 
 export type PublicThreadComment = ThreadCommentNode;
@@ -484,4 +490,10 @@ export type ThreadChangeRequestRevisionFormProps = {
 export type ThreadMyChangeRequestItemProps = {
   request: ThreadMyChangeRequest;
   highlighted: boolean;
+};
+
+/** Props of the public Thread route: `?lang` names the language of the text, not of the app. */
+export type ThreadPageProps = {
+  params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ lang?: string | string[] }>;
 };

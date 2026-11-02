@@ -10,6 +10,7 @@ import { MARKETING_VIDEOS_TRANSLATIONS } from './marketing-videos-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
+import { THREAD_TRANSLATION_TRANSLATIONS } from './thread-translation-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
 import { OBSERVABILITY_PAGES_TRANSLATIONS } from './observability-pages-translations';
@@ -4998,6 +4999,7 @@ export const ru: TranslationDictionary = {
   adminSessions: ADMIN_SESSIONS_TRANSLATIONS.ru.section,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.ru,
   narration: NARRATION_TRANSLATIONS.ru,
+  threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.ru,
   pickedModel: PICKED_MODEL_TRANSLATIONS.ru,
   creditFallback: CREDIT_FALLBACK_TRANSLATIONS.ru,
   mediaUi: MEDIA_UI_TRANSLATIONS.ru,

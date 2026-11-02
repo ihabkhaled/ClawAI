@@ -35,6 +35,7 @@ export async function GET(): Promise<Response> {
     SUPPORTED_LOCALES.map(async ({ locale }) => ({
       locale,
       count: await countPublicThreads(locale),
+      translatedCount: await countPublicThreads(locale, true),
     })),
   );
   // One count serves every locale: the all-threads family lists the same Threads under each
@@ -61,6 +62,15 @@ export async function GET(): Promise<Response> {
       chunk += 1
     ) {
       childUrls.push(`${siteUrl}/sitemaps/${locale}/threads-${String(chunk)}.xml`);
+    }
+    const translatedCount =
+      threadCounts.find((entry) => entry.locale === locale)?.translatedCount ?? 0;
+    for (
+      let chunk = 1;
+      chunk <= Math.ceil(translatedCount / THREAD_PUBLIC_SITEMAP_PAGE_SIZE);
+      chunk += 1
+    ) {
+      childUrls.push(`${siteUrl}/sitemaps/${locale}/translated-threads-${String(chunk)}.xml`);
     }
     for (
       let chunk = 1;

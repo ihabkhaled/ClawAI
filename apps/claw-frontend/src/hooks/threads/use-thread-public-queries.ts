@@ -11,10 +11,11 @@ import type {
 export function useThreadPublicQueries(
   slug: string,
   initialPublication: PublicThreadPublication,
+  lang: string | null = null,
 ): ThreadPublicQueries {
   const publication = useQuery({
-    queryKey: queryKeys.threadPublications.publicPage(slug),
-    queryFn: () => threadPublicationsRepository.getPublic(slug),
+    queryKey: queryKeys.threadPublications.publicArticle(slug, lang),
+    queryFn: () => threadPublicationsRepository.getPublic(slug, lang),
     initialData: initialPublication,
     enabled: slug !== '',
   });

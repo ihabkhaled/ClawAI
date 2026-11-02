@@ -1,11 +1,13 @@
 'use client';
 
+import { ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
 import { buttonVariants } from '@/components/ui/button';
 import { MARKETING_HOME_PATHS } from '@/constants/marketing-home.constants';
 import { ROUTES } from '@/constants/routes.constants';
+import { THREADS_DISCOVER_PATH } from '@/constants/threads-marketing.constants';
 import { useLocalizedHref } from '@/hooks/common/use-localized-href';
 import { useTranslation } from '@/lib/i18n';
 import type { HomeHeroProps } from '@/types';
@@ -28,6 +30,20 @@ export function HeroSection({ lastReviewed }: HomeHeroProps): React.ReactElement
         aria-hidden="true"
         className="mx-auto mb-8 h-[250px] w-[250px]"
       />
+      <Link
+        href={localise(THREADS_DISCOVER_PATH)}
+        data-testid="home-threads-promo"
+        className="border-border bg-card hover:bg-muted/60 mx-auto mb-8 flex max-w-xl flex-col items-center gap-1.5 rounded-2xl border px-5 py-4 transition-colors"
+      >
+        <span className="text-primary text-xs font-semibold tracking-wide uppercase">
+          {t('threadTranslation.promoTitle')}
+        </span>
+        <span className="text-muted-foreground text-sm">{t('threadTranslation.promoBody')}</span>
+        <span className="text-foreground inline-flex items-center gap-1 text-sm font-medium">
+          {t('threadTranslation.promoCta')}
+          <ArrowRight aria-hidden="true" className="size-4 rtl:rotate-180" />
+        </span>
+      </Link>
       <h1 className="text-foreground text-4xl font-bold tracking-tight sm:text-5xl">
         {t('marketing.home.hero.title')}
       </h1>

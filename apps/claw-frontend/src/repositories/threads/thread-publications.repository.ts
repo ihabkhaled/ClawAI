@@ -41,9 +41,10 @@ type PublicReportRequest = {
 };
 
 export const threadPublicationsRepository = {
-  async getPublic(slug: string): Promise<PublicThreadPublication> {
+  async getPublic(slug: string, lang: string | null = null): Promise<PublicThreadPublication> {
     const response = await apiClient.get<PublicThreadPublication>(
       `/thread-publications/public/${encodeURIComponent(slug)}`,
+      lang === null ? undefined : { lang },
     );
     return response.data;
   },

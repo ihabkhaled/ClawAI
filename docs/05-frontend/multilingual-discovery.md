@@ -282,3 +282,7 @@ routes with crawler tests and inspect a first server response for `lang`, `dir`,
 canonical, hreflang and robots. Preview deployments must emit `Disallow: /`.
 Rebuild generated knowledge and inventory after route, documentation or test
 changes.
+
+## Translated Threads (ADR-217)
+
+Every published Thread is machine-translated into all 13 app languages by a worker in threads-service. A reader picks the Thread's language with the dropdown on the Thread; only `?lang=<language>` changes, so the app language, comments and reactions stay as they are. Each translation is its own page at `/<language>/threads/<slug>?lang=<language>`, canonical to itself, with every language listed as an `hreflang` alternate and `x-default` on the written language. The sitemap index lists `/sitemaps/<language>/translated-threads-N.xml` only for languages that have translations (10,000 URLs per chunk, same as the other Threads families). A copy is shown only while it matches the revision being served; after an edit or republish the page falls back to the written language until the worker has rebuilt it.

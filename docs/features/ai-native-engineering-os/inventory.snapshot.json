@@ -10052,7 +10052,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 6337
+        "value": 6338
       },
       "localeCount": 13,
       "locales": [
@@ -12518,7 +12518,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 1036
+        "testFiles": 1041
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -13425,7 +13425,7 @@
     "serviceCount": 21,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2877,
+    "totalTestFiles": 2882,
     "workspaceCount": 28
   }
 }

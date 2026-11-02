@@ -39,6 +39,9 @@ export const queryKeys = {
     all: ['thread-publications'] as const,
     /** The public page of one publication; the comment and reaction keys sit under it. */
     publicPage: (slug: string) => [...queryKeys.threadPublications.all, 'public', slug] as const,
+    // One entry per language: a translated copy is a different article body (ADR-217).
+    publicArticle: (slug: string, lang: string | null) =>
+      [...queryKeys.threadPublications.publicPage(slug), 'article', lang ?? 'source'] as const,
     comments: (slug: string) =>
       [...queryKeys.threadPublications.publicPage(slug), 'comments'] as const,
     reactions: (slug: string) =>

@@ -1174,3 +1174,7 @@ Gemini video is `gemini-omni-1.1-flash` (Interactions API, about $0.10/s, routin
 - `components/chat/model-cost-mark.tsx` draws a 4-pip cost band from `costClass` in the `/chat-messages/model-access` answer, and the picker dims a row whose `coveredByAllowance === false` (a hint; a locked model stays locked, ADR-198 amendment). Keys `chat.modelSelector.cost.*` (11) in 13 locales. The band is a band, never a price (rule 37).
 - Gap: the Compare picker (`parallel-model-row.tsx`) shows no mark yet.
 - Billing ledger label `billing.credit.surface.TRANSCRIPTION_READ` (13 locales, `credit.constants.ts`) for ADR-216.
+
+## Thread translations (2026-11-02, ADR-217)
+
+A public Thread page reads `?lang=` (an app language only; `readRequestedThreadLanguage`). The text language and the app language are separate: `ThreadLanguageSwitch` changes `?lang` and nothing else, so the interface, comments and reactions stay in the path locale. A translated copy canonicalises to `/<lang>/threads/<slug>?lang=<lang>`; the written language keeps its own canonical; `availableLocales` become hreflang alternates. The query key is per language (`queryKeys.threadPublications.publicArticle`). The sitemap family `translated-threads-N.xml` lists each language's copies. The home hero carries the Public Threads card (`home-threads-promo`) under the logo; strings live in `lib/i18n/locales/thread-translation-translations.ts` (13 locales). In the local dev container a source change may not reach `next dev` over the Docker mount: `docker restart claw-frontend` before browser-testing.

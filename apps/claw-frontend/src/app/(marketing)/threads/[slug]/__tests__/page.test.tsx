@@ -47,7 +47,7 @@ describe('public Thread page route parameter', () => {
 
   it('decodes the percent-encoded segment before asking the API', async () => {
     await PublicThreadPublicationPage({ params: params(encodeURIComponent(ARABIC)) });
-    expect(getPublicThreadPublication).toHaveBeenCalledWith(ARABIC);
+    expect(getPublicThreadPublication).toHaveBeenCalledWith(ARABIC, null);
   });
 
   it('renders the page for an Arabic slug instead of a 404', async () => {
@@ -93,5 +93,60 @@ describe('public Thread page route parameter', () => {
     vi.mocked(getPublicThreadPublication).mockResolvedValue(null);
     const metadata = await generateMetadata({ params: params('nope') });
     expect(metadata.robots).toEqual({ index: false, follow: false });
+  });
+
+  it('asks the API for the requested language and ignores a made-up one', async () => {
+    await PublicThreadPublicationPage({
+      params: params('a-slug'),
+      searchParams: Promise.resolve({ lang: 'fr' }),
+    });
+    expect(getPublicThreadPublication).toHaveBeenLastCalledWith('a-slug', 'fr');
+
+    await PublicThreadPublicationPage({
+      params: params('a-slug'),
+      searchParams: Promise.resolve({ lang: 'xx' }),
+    });
+    expect(getPublicThreadPublication).toHaveBeenLastCalledWith('a-slug', null);
+  });
+
+  it('makes a translated copy its own canonical page and lists every language as an alternate', async () => {
+    vi.mocked(getPublicThreadPublication).mockResolvedValue({
+      ...PUBLICATION,
+      slug: 'sky-a1b2c3d4',
+      contentLocale: Locale.FR,
+      sourceLocale: Locale.EN,
+      translated: true,
+      availableLocales: [Locale.EN, Locale.FR, Locale.DE],
+    });
+
+    const metadata = await generateMetadata({
+      params: params('sky-a1b2c3d4'),
+      searchParams: Promise.resolve({ lang: 'fr' }),
+    });
+
+    expect(metadata.alternates?.canonical).toBe(
+      'https://claw-ai.co/fr/threads/sky-a1b2c3d4?lang=fr',
+    );
+    expect(metadata.alternates?.languages).toEqual({
+      en: 'https://claw-ai.co/en/threads/sky-a1b2c3d4',
+      fr: 'https://claw-ai.co/fr/threads/sky-a1b2c3d4?lang=fr',
+      de: 'https://claw-ai.co/de/threads/sky-a1b2c3d4?lang=de',
+      'x-default': 'https://claw-ai.co/en/threads/sky-a1b2c3d4',
+    });
+  });
+
+  it('keeps the written language as the canonical when no translation is shown', async () => {
+    vi.mocked(getPublicThreadPublication).mockResolvedValue({
+      ...PUBLICATION,
+      slug: 'sky-a1b2c3d4',
+      contentLocale: Locale.EN,
+      sourceLocale: Locale.EN,
+      translated: false,
+      availableLocales: [Locale.EN, Locale.FR],
+    });
+
+    const metadata = await generateMetadata({ params: params('sky-a1b2c3d4') });
+
+    expect(metadata.alternates?.canonical).toBe('https://claw-ai.co/en/threads/sky-a1b2c3d4');
   });
 });
