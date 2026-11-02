@@ -88,3 +88,9 @@ export const TRANSLATION_REASONING_TAGS: readonly { open: string; close: string 
   { open: '<thought>', close: '</thought>' },
   { open: '<think>', close: '</think>' },
 ];
+
+/** A link in Markdown or plain text. Brackets and quotes end it, as they end it for a reader. */
+export const TRANSLATION_URL_PATTERN = /https?:\/\/[^\s)\]>"'<]+/gu;
+/** The start of an HTML tag. A translation may keep the tags the source has, never add any. */
+export const TRANSLATION_HTML_TAG_PATTERN = /<[A-Za-z/!]/gu;
+export const TRANSLATION_SCRIPT_URL = 'javascript:';

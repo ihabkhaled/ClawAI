@@ -2,6 +2,7 @@ import { Locale } from '@claw/shared-types';
 
 import { splitMarkdownForTranslation } from '../translation-chunks.utility';
 import {
+  addsNoLinksOrMarkup,
   isPlausibleTranslation,
   parseBodyChunk,
   parseTitledChunk,
@@ -75,6 +76,27 @@ describe('translation output parsing', () => {
     expect(isPlausibleTranslation(source, 'ok')).toBe(false);
     expect(isPlausibleTranslation(source, 'x'.repeat(source.length * 6))).toBe(false);
     expect(isPlausibleTranslation('a ```\ncode\n``` b', 'a ``` b')).toBe(false);
+  });
+});
+
+describe('addsNoLinksOrMarkup', () => {
+  const source = 'See [the docs](https://example.org/a) and https://example.org/b.';
+
+  it('accepts a translation that keeps the same links', () => {
+    expect(
+      addsNoLinksOrMarkup(source, 'Voir [la doc](https://example.org/a) et https://example.org/b.'),
+    ).toBe(true);
+  });
+
+  it('rejects a link the source did not have, even inside Markdown', () => {
+    expect(addsNoLinksOrMarkup(source, 'Voir [la doc](https://evil.example/x).')).toBe(false);
+    expect(addsNoLinksOrMarkup('plain text', 'texte https://evil.example')).toBe(false);
+  });
+
+  it('rejects added tags and script addresses but keeps the source own tags', () => {
+    expect(addsNoLinksOrMarkup('text', 'texte <script>alert(1)</script>')).toBe(false);
+    expect(addsNoLinksOrMarkup('text', '[x](javascript:alert(1))')).toBe(false);
+    expect(addsNoLinksOrMarkup('a <b>bold</b> word', 'un mot <b>gras</b>')).toBe(true);
   });
 });
 

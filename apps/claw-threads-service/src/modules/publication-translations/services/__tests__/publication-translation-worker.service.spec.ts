@@ -83,6 +83,22 @@ describe('PublicationTranslationWorkerService', () => {
     expect(repository.fail).toHaveBeenCalledWith('row-1', 2, 'IMPLAUSIBLE_TRANSLATION');
   });
 
+  it('fails a translation that brings a link the source did not have', async () => {
+    const { service, repository, model } = create();
+    model.complete.mockResolvedValue({
+      model: 'm',
+      content: `TITLE:
+عنوان
+
+BODY:
+${'جملة حقيقية. '.repeat(30)} https://evil.example/x`,
+    });
+
+    await service.runOnce();
+
+    expect(repository.fail).toHaveBeenCalledWith('row-1', 2, 'UNEXPECTED_LINK_OR_MARKUP');
+  });
+
   it('marks a pair whose revision is no longer public as changed', async () => {
     const { service, repository } = create();
     repository.loadSource.mockResolvedValue(null);

@@ -1,10 +1,13 @@
 import {
   MARKDOWN_CODE_FENCE,
   TRANSLATION_BODY_MARKER,
+  TRANSLATION_HTML_TAG_PATTERN,
   TRANSLATION_MAX_LENGTH_RATIO,
   TRANSLATION_MIN_LENGTH_RATIO,
   TRANSLATION_REASONING_TAGS,
+  TRANSLATION_SCRIPT_URL,
   TRANSLATION_TITLE_MARKER,
+  TRANSLATION_URL_PATTERN,
   TRANSLATION_WRAPPER_OPENERS,
 } from '../constants/publication-translation.constants';
 
@@ -67,4 +70,25 @@ export function isPlausibleTranslation(source: string, translated: string): bool
     ratio <= TRANSLATION_MAX_LENGTH_RATIO &&
     countFences(source) % 2 === countFences(translated) % 2
   );
+}
+
+function linksOf(text: string): Set<string> {
+  return new Set(
+    (text.match(TRANSLATION_URL_PATTERN) ?? []).map((url) => url.replace(/[.,;:]+$/u, '')),
+  );
+}
+
+/**
+ * A translation is the source in another language: it must not bring a link, a tag or a script
+ * address the source did not have. A model that was talked into adding one by the article text is
+ * caught here, before the copy is stored (the source itself went through the safety review).
+ */
+export function addsNoLinksOrMarkup(source: string, translated: string): boolean {
+  const known = linksOf(source);
+  const noNewLinks = [...linksOf(translated)].every((url) => known.has(url));
+  const tagCount = (text: string): number => text.match(TRANSLATION_HTML_TAG_PATTERN)?.length ?? 0;
+  const noNewScript =
+    !translated.toLowerCase().includes(TRANSLATION_SCRIPT_URL) ||
+    source.toLowerCase().includes(TRANSLATION_SCRIPT_URL);
+  return noNewLinks && tagCount(translated) <= tagCount(source) && noNewScript;
 }

@@ -19,6 +19,7 @@ import type {
 } from '../types/publication-translation.types';
 import { splitMarkdownForTranslation } from '../utilities/translation-chunks.utility';
 import {
+  addsNoLinksOrMarkup,
   isPlausibleTranslation,
   parseBodyChunk,
   parseTitledChunk,
@@ -149,6 +150,16 @@ export class PublicationTranslationWorkerService implements OnModuleInit, OnModu
     const markdown = parts.join('\n\n');
     if (!isPlausibleTranslation(source.markdown, markdown)) {
       throw new TranslationModelError('IMPLAUSIBLE_TRANSLATION');
+    }
+    if (
+      !addsNoLinksOrMarkup(
+        `${source.title}
+${source.markdown}`,
+        `${title}
+${markdown}`,
+      )
+    ) {
+      throw new TranslationModelError('UNEXPECTED_LINK_OR_MARKUP');
     }
     return { title, markdown, model };
   }
