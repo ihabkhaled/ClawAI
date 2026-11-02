@@ -99,11 +99,14 @@ export const TRANSLATION_URL_PATTERN = /\/\/[\w.~:/?#@!$&*+,;=%-]+/gu;
 /** Bare `www.` autolinks, which a Markdown renderer links without a scheme. */
 export const TRANSLATION_WWW_PATTERN = /\bwww\.[\w.~:/?#@!$&*+,;=%-]+/giu;
 /**
- * A `//` or `www.` whose host starts with a non-ASCII letter (an internationalised or look-alike
- * host). The ASCII-only link pattern cannot read such a link, so a translation may not hold more of
- * them than its source.
+ * Any run after `//` or `www.`, including non-ASCII characters. The ASCII-only pattern above cannot read an
+ * internationalised or look-alike host, so those links are compared as whole runs (ADR-217).
  */
-export const TRANSLATION_NON_ASCII_HOST_PATTERN = /(?:\/\/|\bwww\.)(?=\P{ASCII})\p{L}/giu;
+export const TRANSLATION_BROAD_LINK_PATTERN = /(?:\/\/|\bwww\.)[^\s)\]>"'<]+/giu;
+/** The start of a link whose host begins with a non-ASCII letter (internationalised or look-alike). */
+export const TRANSLATION_NON_ASCII_HOST_START = /^(?:\/\/|www\.)(?=\P{ASCII})\p{L}/iu;
+/** Punctuation and symbols that end a sentence, not a link, after a non-ASCII host. */
+export const TRANSLATION_TRAILING_PUNCTUATION = /[\p{P}\p{S}]+$/u;
 /** The destination of `[text](dest)`. */
 export const TRANSLATION_INLINE_DESTINATION_PATTERN = /\]\(\s*<?([^)\s>]+)/gu;
 /** The destination of a reference definition, `[ref]: dest`, at the start of a line. */

@@ -135,6 +135,14 @@ describe('addsNoLinksOrMarkup', () => {
       expect(addsNoLinksOrMarkup('plain text', added), added).toBe(false);
     }
     expect(addsNoLinksOrMarkup('see https://пример.рф/a', 'voir https://пример.рф/a')).toBe(true);
+    // Swapping one look-alike host for another keeps the count but is a different link.
+    expect(addsNoLinksOrMarkup('see https://пример.рф/a', 'voir https://пример.рф/evil')).toBe(
+      false,
+    );
+    // The same host with one Cyrillic letter swapped for the Latin look-alike is a different link.
+    const lookAlike = 'voir https://пример.рф/a'.replace('е', 'e');
+    expect(lookAlike).not.toBe('voir https://пример.рф/a');
+    expect(addsNoLinksOrMarkup('see https://пример.рф/a', lookAlike)).toBe(false);
   });
 
   it('keeps the same link written in another letter case and relative links', () => {

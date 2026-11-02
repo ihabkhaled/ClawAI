@@ -1,15 +1,17 @@
 import {
   MARKDOWN_CODE_FENCE,
   TRANSLATION_BODY_MARKER,
+  TRANSLATION_BROAD_LINK_PATTERN,
   TRANSLATION_DEFINITION_DESTINATION_PATTERN,
   TRANSLATION_HTML_TAG_PATTERN,
   TRANSLATION_INLINE_DESTINATION_PATTERN,
   TRANSLATION_MAX_LENGTH_RATIO,
   TRANSLATION_MIN_LENGTH_RATIO,
-  TRANSLATION_NON_ASCII_HOST_PATTERN,
+  TRANSLATION_NON_ASCII_HOST_START,
   TRANSLATION_REASONING_TAGS,
   TRANSLATION_SCRIPT_URL,
   TRANSLATION_TITLE_MARKER,
+  TRANSLATION_TRAILING_PUNCTUATION,
   TRANSLATION_URL_PATTERN,
   TRANSLATION_WRAPPER_OPENERS,
   TRANSLATION_WWW_PATTERN,
@@ -99,6 +101,16 @@ function linksOf(text: string): Set<string> {
   return new Set(found.map(normaliseLink));
 }
 
+/** Links whose host starts with a non-ASCII letter, as whole lower-cased runs without the closing punctuation. */
+function foreignHostLinksOf(text: string): Set<string> {
+  const runs = (text.match(TRANSLATION_BROAD_LINK_PATTERN) ?? []).filter((run) =>
+    TRANSLATION_NON_ASCII_HOST_START.test(run),
+  );
+  return new Set(
+    runs.map((run) => run.toLowerCase().replace(TRANSLATION_TRAILING_PUNCTUATION, '')),
+  );
+}
+
 /**
  * A translation is the source in another language: it must not bring a link, a tag or a script
  * address the source did not have. A model that was talked into adding one by the article text is
@@ -107,16 +119,13 @@ function linksOf(text: string): Set<string> {
 export function addsNoLinksOrMarkup(source: string, translated: string): boolean {
   const known = linksOf(source);
   const noNewLinks = [...linksOf(translated)].every((url) => known.has(url));
+  const knownForeign = foreignHostLinksOf(source);
+  const noNewForeignHosts = [...foreignHostLinksOf(translated)].every((url) =>
+    knownForeign.has(url),
+  );
   const tagCount = (text: string): number => text.match(TRANSLATION_HTML_TAG_PATTERN)?.length ?? 0;
-  const hostCount = (text: string): number =>
-    text.match(TRANSLATION_NON_ASCII_HOST_PATTERN)?.length ?? 0;
   const noNewScript =
     !translated.toLowerCase().includes(TRANSLATION_SCRIPT_URL) ||
     source.toLowerCase().includes(TRANSLATION_SCRIPT_URL);
-  return (
-    noNewLinks &&
-    hostCount(translated) <= hostCount(source) &&
-    tagCount(translated) <= tagCount(source) &&
-    noNewScript
-  );
+  return noNewLinks && noNewForeignHosts && tagCount(translated) <= tagCount(source) && noNewScript;
 }
