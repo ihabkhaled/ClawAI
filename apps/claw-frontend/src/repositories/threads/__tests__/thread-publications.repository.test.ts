@@ -98,7 +98,24 @@ describe('threadPublicationsRepository.publicCommunity', () => {
       id: 'publication-1',
       content: { markdown: '# Clear writing' },
     });
-    expect(apiClient.get).toHaveBeenCalledWith('/thread-publications/public/clear-writing');
+    expect(apiClient.get).toHaveBeenCalledWith(
+      '/thread-publications/public/clear-writing',
+      undefined,
+    );
+  });
+
+  it('asks for the translated text with ?lang when a language is chosen', async () => {
+    vi.mocked(apiClient.get).mockResolvedValueOnce({
+      data: { id: 'publication-1', slug: 'clear-writing', contentLocale: 'ar', translated: true },
+      status: 200,
+    });
+
+    await expect(
+      threadPublicationsRepository.getPublic('clear-writing', 'ar'),
+    ).resolves.toMatchObject({ translated: true });
+    expect(apiClient.get).toHaveBeenCalledWith('/thread-publications/public/clear-writing', {
+      lang: 'ar',
+    });
   });
 
   it('loads a page of comments and reaction totals without reader identities', async () => {

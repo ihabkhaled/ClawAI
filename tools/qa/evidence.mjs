@@ -18,7 +18,9 @@ import {
 } from './evidence-lib.mjs';
 
 const root = execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim();
-const git = (args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' });
+// The gate's probe commit lists the whole tree (~15,000 names, past the 1 MiB default buffer).
+const git = (args) =>
+  execFileSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
 
 function checkFiles(files) {
   let bad = 0;
