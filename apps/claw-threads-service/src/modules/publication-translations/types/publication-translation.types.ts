@@ -35,3 +35,6 @@ export type DueTranslationRow = {
 };
 
 export type TranslationPassCounts = { claimed: number; ready: number; failed: number };
+
+/** One model reply: its text and the model that wrote it. */
+export type TranslationReply = { content: string; model: string };

@@ -24,9 +24,9 @@ export const TRANSLATION_LANGUAGE_NAMES: Readonly<Record<Locale, string>> = {
 
 export const TRANSLATION_TICK_MS = 30_000;
 export const TRANSLATION_FIRST_TICK_MS = 20_000;
-/** Translations started per pass, and how many run at once. */
-export const TRANSLATION_BATCH_SIZE = 6;
-export const TRANSLATION_CONCURRENCY = 3;
+/** Translations in flight at once, and chunks of one translation in flight at once. */
+export const TRANSLATION_CONCURRENCY = 6;
+export const TRANSLATION_CHUNK_CONCURRENCY = 2;
 /** A RUNNING row older than this belongs to a dead worker and is taken over. */
 export const TRANSLATION_LEASE_SECONDS = 900;
 export const TRANSLATION_MAX_ATTEMPTS = 6;

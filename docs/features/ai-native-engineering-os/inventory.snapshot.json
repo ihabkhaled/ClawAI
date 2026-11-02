@@ -12566,7 +12566,7 @@
       },
       "claw-threads-service": {
         "runner": "vitest",
-        "testFiles": 137
+        "testFiles": 138
       },
       "claw-workspace-service": {
         "runner": "vitest",
@@ -13425,7 +13425,7 @@
     "serviceCount": 21,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2882,
+    "totalTestFiles": 2883,
     "workspaceCount": 28
   }
 }

@@ -18,6 +18,7 @@ function create() {
     loadSource: vi.fn().mockResolvedValue(source),
     complete: vi.fn().mockResolvedValue(true),
     fail: vi.fn().mockResolvedValue(undefined),
+    touch: vi.fn().mockResolvedValue(undefined),
   };
   const model = {
     complete: vi.fn().mockImplementation(async (_system: string, prompt: string) => ({
@@ -46,6 +47,43 @@ describe('PublicationTranslationWorkerService', () => {
       2,
       expect.objectContaining({ title: 'عنوان', model: 'GEMINI:gemma-4-31b-it' }),
     );
+  });
+
+  it('keeps its claim alive after each chunk of a long Thread', async () => {
+    const { service, repository } = create();
+    repository.loadSource.mockResolvedValue({
+      title: 'A title',
+      markdown: `${'Some real sentence. '.repeat(200)}
+
+${'Another real sentence. '.repeat(200)}`,
+    });
+
+    await service.runOnce();
+
+    expect(repository.touch).toHaveBeenCalledWith('row-1', 2);
+    expect(repository.touch.mock.calls.length).toBeGreaterThan(1);
+  });
+
+  it('fills only the free slots and does nothing while every slot is busy', async () => {
+    const { service, repository, model } = create();
+    const releases: Array<() => void> = [];
+    model.complete.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          releases.push(() =>
+            resolve({ model: 'm', content: `TITLE:\nt\n\nBODY:\n${'x'.repeat(400)}` }),
+          );
+        }),
+    );
+    repository.findDue.mockResolvedValue(Array.from({ length: 6 }, () => target));
+    const first = service.runOnce();
+    await vi.waitFor(() => expect(repository.claim).toHaveBeenCalledTimes(6));
+
+    await expect(service.runOnce()).resolves.toEqual({ claimed: 0, ready: 0, failed: 0 });
+    expect(repository.findDue).toHaveBeenCalledTimes(1);
+
+    for (const release of releases) release();
+    await first;
   });
 
   it('skips a pair another replica already holds', async () => {

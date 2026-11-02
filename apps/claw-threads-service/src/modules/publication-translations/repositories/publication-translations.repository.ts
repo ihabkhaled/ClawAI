@@ -29,7 +29,7 @@ export class PublicationTranslationsRepository {
 
   /**
    * Pairs of (published Thread, language) with no current translation: never made, made for an
-   * older revision, failed and past its back-off, or running past its lease. Oldest first.
+   * older revision, failed and past its back-off, or running past its lease. Newest first, so a Thread published today is not queued behind the backfill.
    */
   async findDue(limit: number): Promise<TranslationTarget[]> {
     const rows = await this.prisma.$queryRaw<DueTranslationRow[]>(Prisma.sql`
@@ -60,7 +60,7 @@ export class PublicationTranslationsRepository {
           OR (t.status = 'RUNNING'
               AND t.updated_at < now() - make_interval(secs => ${TRANSLATION_LEASE_SECONDS}))
         )
-      ORDER BY p.published_at ASC, l.locale ASC
+      ORDER BY p.published_at DESC, l.locale ASC
       LIMIT ${limit}
     `);
     return rows.map((row) => ({
@@ -141,6 +141,14 @@ export class PublicationTranslationsRepository {
       },
     });
     return updated.count === 1;
+  }
+
+  /** Proves the worker is alive between chunks, so a long Thread keeps its claim past the lease. */
+  async touch(id: string, revision: number): Promise<void> {
+    await this.prisma.threadPublicationTranslation.updateMany({
+      where: { id, sourceRevision: revision, status: TranslationStatus.RUNNING },
+      data: { startedAt: new Date() },
+    });
   }
 
   async fail(id: string, revision: number, code: string): Promise<void> {
