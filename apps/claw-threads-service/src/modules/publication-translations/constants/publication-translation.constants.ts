@@ -50,16 +50,17 @@ export const OLLAMA_CONNECTOR = 'OLLAMA';
 
 /**
  * The platform pays for translations, so only models that cost no credit are listed (owner
- * decision 2026-11-02): the free Gemma models on the Gemini API first, then the included Ollama
- * cloud models. A model that fails or is unknown to the key is skipped for the next one.
+ * decision 2026-11-02). Order is by measured speed on production for a 3,000 character chunk: the
+ * included Ollama cloud models answer in 2 to 8 seconds, the free Gemma models on the Gemini API
+ * think first and take about 95 seconds. A model that fails or is unknown to the key is skipped for
+ * the next one. `glm-5.3-flash` is left out: it answered without the title and body shape.
  */
 export const TRANSLATION_MODEL_CHAIN: readonly TranslationModelRef[] = [
+  { connector: 'OLLAMA', style: 'OLLAMA_NATIVE', model: 'gemma4:31b' },
+  { connector: 'OLLAMA', style: 'OLLAMA_NATIVE', model: 'deepseek-v4.1-flash' },
+  { connector: 'OLLAMA', style: 'OLLAMA_NATIVE', model: 'gpt-oss:120b' },
   { connector: 'GEMINI', style: 'OPENAI_COMPAT', model: 'gemma-4-31b-it' },
   { connector: 'GEMINI', style: 'OPENAI_COMPAT', model: 'gemma-4-26b-a4b-it' },
-  { connector: 'OLLAMA', style: 'OLLAMA_NATIVE', model: 'gpt-oss:120b' },
-  { connector: 'OLLAMA', style: 'OLLAMA_NATIVE', model: 'gemma4:31b' },
-  { connector: 'OLLAMA', style: 'OLLAMA_NATIVE', model: 'glm-5.3-flash' },
-  { connector: 'OLLAMA', style: 'OLLAMA_NATIVE', model: 'deepseek-v4.1-flash' },
 ];
 
 export const TRANSLATION_TITLE_MARKER = 'TITLE:';

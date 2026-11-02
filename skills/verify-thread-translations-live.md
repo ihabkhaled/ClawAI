@@ -16,4 +16,4 @@ Use after a deploy that touches `apps/claw-threads-service/src/modules/publicati
 
 - Never route translation through chat-service: that path meters a user's wallet.
 - Gemma reasoning blocks (`<thought>`) are stripped before parsing; a new model with another tag needs a `TRANSLATION_REASONING_TAGS` entry.
-- A new model must be a credit-free one (owner rule, 2026-11-02).
+- A new model must be a credit-free one (owner rule, 2026-11-02). Measure it first: send one 3,000 character chunk through the connector (see the chain comment in `publication-translation.constants.ts`); the order of the chain is the order of measured speed.

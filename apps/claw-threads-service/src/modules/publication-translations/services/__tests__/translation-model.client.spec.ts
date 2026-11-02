@@ -23,35 +23,36 @@ describe('TranslationModelClient', () => {
     vi.unstubAllGlobals();
   });
 
-  it('uses the first model that answers, over the OpenAI-compatible surface', async () => {
+  it('uses the fastest included model first, over the Ollama native chat', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(reply(config))
-      .mockResolvedValueOnce(reply({ choices: [{ message: { content: 'hola' } }] }));
+      .mockResolvedValueOnce(reply({ apiKey: 'o', baseUrl: 'https://ollama.com' }))
+      .mockResolvedValueOnce(reply({ message: { content: 'hola' } }));
     vi.stubGlobal('fetch', fetchMock);
 
     const result = await new TranslationModelClient().complete('sys', 'prompt');
 
-    expect(result).toEqual({ content: 'hola', model: 'GEMINI:gemma-4-31b-it' });
-    expect(fetchMock.mock.calls[1]?.[0]).toBe(
-      'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
-    );
+    expect(result).toEqual({ content: 'hola', model: 'OLLAMA:gemma4:31b' });
+    expect(fetchMock.mock.calls[1]?.[0]).toBe('https://ollama.com/api/chat');
   });
 
-  it('falls through to the next models on an error and reaches Ollama native chat', async () => {
+  it('falls through the Ollama models on errors and ends on the free Gemma models', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(reply(config))
+      .mockResolvedValueOnce(reply({ apiKey: 'o', baseUrl: 'https://ollama.com' }))
       .mockResolvedValueOnce(reply({}, false, 429))
       .mockResolvedValueOnce(reply({}, false, 503))
-      .mockResolvedValueOnce(reply({ apiKey: 'o', baseUrl: 'https://ollama.com' }))
-      .mockResolvedValueOnce(reply({ message: { content: 'bonjour' } }));
+      .mockResolvedValueOnce(reply({}, false, 500))
+      .mockResolvedValueOnce(reply(config))
+      .mockResolvedValueOnce(reply({ choices: [{ message: { content: 'bonjour' } }] }));
     vi.stubGlobal('fetch', fetchMock);
 
     const result = await new TranslationModelClient().complete('sys', 'prompt');
 
-    expect(result).toEqual({ content: 'bonjour', model: 'OLLAMA:gpt-oss:120b' });
-    expect(fetchMock.mock.calls[4]?.[0]).toBe('https://ollama.com/api/chat');
+    expect(result).toEqual({ content: 'bonjour', model: 'GEMINI:gemma-4-31b-it' });
+    expect(fetchMock.mock.calls[5]?.[0]).toBe(
+      'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+    );
   });
 
   it('fails with a stable code when every model fails', async () => {
