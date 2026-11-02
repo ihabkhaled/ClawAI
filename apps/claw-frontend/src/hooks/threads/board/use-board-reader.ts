@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { useLocalizedHref } from '@/hooks/common/use-localized-href';
@@ -18,6 +18,7 @@ import {
   readBoardListUrl,
   threadPublicPath,
 } from '@/utilities/thread-board-list-url.utility';
+import { threadLanguageFromParam } from '@/utilities/thread-language-name.utility';
 import { decodeThreadSlugParam } from '@/utilities/thread-slug.utility';
 import {
   readRememberedReaction,
@@ -41,9 +42,15 @@ export function useBoardReader(): BoardReaderController {
   }, [publicPath]);
 
   const enabled = slug !== '';
+  // The language of the Thread's text only; the app stays in the reader's own language.
+  const lang = threadLanguageFromParam(useSearchParams().get('lang'));
   const publication = useQuery({
-    queryKey: queryKeys.threadPublications.publicPage(slug),
-    queryFn: () => threadPublicationsRepository.getPublic(slug),
+    // The source text keeps the shared key so the view count still lands on it.
+    queryKey:
+      lang === null
+        ? queryKeys.threadPublications.publicPage(slug)
+        : queryKeys.threadPublications.publicArticle(slug, lang),
+    queryFn: () => threadPublicationsRepository.getPublic(slug, lang),
     enabled,
     retry: (count, error) =>
       !(error instanceof ApiClientError && error.status === 404) && count < 2,

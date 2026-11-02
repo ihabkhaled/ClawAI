@@ -8,11 +8,12 @@ import { threadPublicationsRepository } from '@/repositories/threads/thread-publ
 import { useBoardReader } from '../use-board-reader';
 
 const ARABIC = 'كيف-يعمل-التمثيل-a1b2c3d4';
-const route = vi.hoisted(() => ({ slug: '' }));
+const route = vi.hoisted(() => ({ slug: '', query: '' }));
 
 vi.mock('next/navigation', () => ({
   useParams: () => ({ slug: route.slug }),
   useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(route.query),
 }));
 vi.mock('@/hooks/common/use-localized-href', () => ({
   useLocalizedHref: () => (path: string) => path,
@@ -40,6 +41,7 @@ function wrapper() {
 describe('useBoardReader route parameter', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    route.query = '';
     vi.mocked(threadPublicationsRepository.getPublic).mockResolvedValue({} as never);
     vi.mocked(threadPublicationsRepository.listPublicComments).mockResolvedValue({
       items: [],
@@ -60,12 +62,28 @@ describe('useBoardReader route parameter', () => {
     const { result } = renderHook(() => useBoardReader(), { wrapper: wrapper() });
 
     await waitFor(() => expect(threadPublicationsRepository.getPublic).toHaveBeenCalled());
-    expect(threadPublicationsRepository.getPublic).toHaveBeenCalledWith(ARABIC);
+    expect(threadPublicationsRepository.getPublic).toHaveBeenCalledWith(ARABIC, null);
     expect(threadPublicationsRepository.listPublicComments).toHaveBeenCalledWith(ARABIC, 1);
     expect(result.current.loginHref).toBe(
       `/login?returnTo=${encodeURIComponent(`/board/${encodeURIComponent(ARABIC)}`)}`,
     );
     expect(result.current.publicPath).toBe(`/threads/${encodeURIComponent(ARABIC)}`);
+  });
+
+  it('asks for the Thread text in the language ?lang names, and ignores one that is made up', async () => {
+    route.slug = 'clear-writing';
+    route.query = 'lang=ar';
+    renderHook(() => useBoardReader(), { wrapper: wrapper() });
+    await waitFor(() =>
+      expect(threadPublicationsRepository.getPublic).toHaveBeenCalledWith('clear-writing', 'ar'),
+    );
+
+    vi.mocked(threadPublicationsRepository.getPublic).mockClear();
+    route.query = 'lang=xx';
+    renderHook(() => useBoardReader(), { wrapper: wrapper() });
+    await waitFor(() =>
+      expect(threadPublicationsRepository.getPublic).toHaveBeenCalledWith('clear-writing', null),
+    );
   });
 
   it('reports not found without any request when the segment is malformed', () => {

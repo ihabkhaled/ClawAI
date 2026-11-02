@@ -18,6 +18,9 @@ vi.mock('@/lib/i18n', () => ({
       params ? `${key}:${Object.values(params).join(',')}` : key,
   }),
 }));
+vi.mock('@/components/threads/thread-language-switch', () => ({
+  ThreadLanguageSwitch: () => <div data-testid="thread-language-switch" />,
+}));
 vi.mock('@/components/chat-shares/public-markdown-renderer', () => ({
   PublicMarkdownRenderer: ({ content }: { content: string }) => <div>{content}</div>,
 }));
@@ -138,6 +141,15 @@ describe('BoardReaderView', () => {
       'aria-pressed',
       'true',
     );
+  });
+
+  it('offers the Thread language switch above the article', () => {
+    render(<BoardReaderView state={createState()} />);
+    const switcher = screen.getByTestId('thread-language-switch');
+    const heading = screen.getByRole('heading', { level: 1, name: 'Clear writing' });
+    expect(
+      switcher.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it('has no nested main landmark and renders the share icon row', () => {
