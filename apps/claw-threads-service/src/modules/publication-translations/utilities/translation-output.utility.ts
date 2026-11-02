@@ -1,14 +1,18 @@
 import {
   MARKDOWN_CODE_FENCE,
   TRANSLATION_BODY_MARKER,
+  TRANSLATION_DEFINITION_DESTINATION_PATTERN,
   TRANSLATION_HTML_TAG_PATTERN,
+  TRANSLATION_INLINE_DESTINATION_PATTERN,
   TRANSLATION_MAX_LENGTH_RATIO,
   TRANSLATION_MIN_LENGTH_RATIO,
   TRANSLATION_REASONING_TAGS,
+  TRANSLATION_SCHEME_PATTERN,
   TRANSLATION_SCRIPT_URL,
   TRANSLATION_TITLE_MARKER,
   TRANSLATION_URL_PATTERN,
   TRANSLATION_WRAPPER_OPENERS,
+  TRANSLATION_WWW_PATTERN,
 } from '../constants/publication-translation.constants';
 
 /**
@@ -72,10 +76,33 @@ export function isPlausibleTranslation(source: string, translated: string): bool
   );
 }
 
-function linksOf(text: string): Set<string> {
-  return new Set(
-    (text.match(TRANSLATION_URL_PATTERN) ?? []).map((url) => url.replace(/[.,;:]+$/u, '')),
+/** A link that leaves the page: it names a scheme, starts with `//`, or is a `www.` autolink. */
+function isExternalLink(link: string): boolean {
+  const lower = link.toLowerCase();
+  return (
+    TRANSLATION_SCHEME_PATTERN.test(lower) || lower.startsWith('//') || lower.startsWith('www.')
   );
+}
+
+function normaliseLink(link: string): string {
+  return link.toLowerCase().replace(/[.,;:!?]+$/u, '');
+}
+
+/**
+ * Every address a Markdown renderer would turn into a link: absolute and protocol-relative URLs,
+ * `www.` autolinks, and the destination of an inline link or a reference definition when it names
+ * a scheme. Compared case-insensitively, so `HTTPS://x` and `https://x` are the same address.
+ */
+function linksOf(text: string): Set<string> {
+  const found = [
+    ...(text.match(TRANSLATION_URL_PATTERN) ?? []),
+    ...(text.match(TRANSLATION_WWW_PATTERN) ?? []),
+    ...[...text.matchAll(TRANSLATION_INLINE_DESTINATION_PATTERN)].map((match) => match[1] ?? ''),
+    ...[...text.matchAll(TRANSLATION_DEFINITION_DESTINATION_PATTERN)].map(
+      (match) => match[1] ?? '',
+    ),
+  ].filter((link) => isExternalLink(link));
+  return new Set(found.map(normaliseLink));
 }
 
 /**

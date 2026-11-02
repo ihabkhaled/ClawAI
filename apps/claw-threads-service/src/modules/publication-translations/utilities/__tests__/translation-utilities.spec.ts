@@ -93,6 +93,26 @@ describe('addsNoLinksOrMarkup', () => {
     expect(addsNoLinksOrMarkup('plain text', 'texte https://evil.example')).toBe(false);
   });
 
+  it('finds links the way a renderer does: other letter case, www, protocol-relative, any scheme', () => {
+    for (const added of [
+      'texte HTTPS://EVIL.example/x',
+      'texte www.evil.example',
+      'texte [x](//evil.example/x)',
+      'texte [x](mailto:a@evil.example)',
+      'texte [x](data:text/html;base64,AAAA)',
+      'texte\n\n[ref]: ftp://evil.example/x',
+    ]) {
+      expect(addsNoLinksOrMarkup('plain text', added), added).toBe(false);
+    }
+  });
+
+  it('keeps the same link written in another letter case and relative links', () => {
+    expect(
+      addsNoLinksOrMarkup(source, 'Voir [la doc](HTTPS://EXAMPLE.ORG/a) et https://example.org/b'),
+    ).toBe(true);
+    expect(addsNoLinksOrMarkup('see [x](#intro)', 'voir [x](#intro) et [y](/en/page)')).toBe(true);
+  });
+
   it('rejects added tags and script addresses but keeps the source own tags', () => {
     expect(addsNoLinksOrMarkup('text', 'texte <script>alert(1)</script>')).toBe(false);
     expect(addsNoLinksOrMarkup('text', '[x](javascript:alert(1))')).toBe(false);
