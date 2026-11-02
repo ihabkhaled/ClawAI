@@ -104,7 +104,7 @@ export const TRANSLATION_WWW_PATTERN = /\bwww\.[\w.~:/?#@!$&*+,;=%-]+/giu;
  */
 export const TRANSLATION_BROAD_LINK_PATTERN = /(?:\/\/|\bwww\.)[^\s)\]>"'<]+/giu;
 /** The start of a link whose host begins with a non-ASCII letter (internationalised or look-alike). */
-export const TRANSLATION_NON_ASCII_HOST_START = /^(?:\/\/|www\.)(?=\P{ASCII})\p{L}/iu;
+export const TRANSLATION_NON_ASCII_HOST_START = /^(?:\/\/|www\.)(?=\P{ASCII})[\p{L}\p{N}\p{M}]/iu;
 /** Punctuation and symbols that end a sentence, not a link, after a non-ASCII host. */
 export const TRANSLATION_TRAILING_PUNCTUATION = /[\p{P}\p{S}]+$/u;
 /** The destination of `[text](dest)`. */

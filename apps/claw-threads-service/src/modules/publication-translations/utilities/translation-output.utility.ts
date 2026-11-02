@@ -116,7 +116,10 @@ function foreignHostLinksOf(text: string): Set<string> {
  * address the source did not have. A model that was talked into adding one by the article text is
  * caught here, before the copy is stored (the source itself went through the safety review).
  */
-export function addsNoLinksOrMarkup(source: string, translated: string): boolean {
+export function addsNoLinksOrMarkup(rawSource: string, rawTranslated: string): boolean {
+  // Full-width and other compatibility forms (`ｈｔｔｐ：／／`) fold to ASCII, so the ASCII link pattern sees them.
+  const source = rawSource.normalize('NFKC');
+  const translated = rawTranslated.normalize('NFKC');
   const known = linksOf(source);
   const noNewLinks = [...linksOf(translated)].every((url) => known.has(url));
   const knownForeign = foreignHostLinksOf(source);

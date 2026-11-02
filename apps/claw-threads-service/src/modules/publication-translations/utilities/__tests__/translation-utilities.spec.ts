@@ -145,6 +145,12 @@ describe('addsNoLinksOrMarkup', () => {
     expect(addsNoLinksOrMarkup('see https://пример.рф/a', lookAlike)).toBe(false);
   });
 
+  it('reads full-width and non-letter look-alike forms of a link', () => {
+    expect(addsNoLinksOrMarkup('plain text', 'texte https：／／evil.example／x')).toBe(false);
+    expect(addsNoLinksOrMarkup('plain text', 'texte ｗｗｗ．evil．example')).toBe(false);
+    expect(addsNoLinksOrMarkup('plain text', 'texte //１２３.example')).toBe(false);
+  });
+
   it('keeps the same link written in another letter case and relative links', () => {
     expect(
       addsNoLinksOrMarkup(source, 'Voir [la doc](HTTPS://EXAMPLE.ORG/a) et https://example.org/b'),
