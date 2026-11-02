@@ -98,6 +98,12 @@ export const TRANSLATION_REASONING_TAGS: readonly { open: string; close: string 
 export const TRANSLATION_URL_PATTERN = /\/\/[\w.~:/?#@!$&*+,;=%-]+/gu;
 /** Bare `www.` autolinks, which a Markdown renderer links without a scheme. */
 export const TRANSLATION_WWW_PATTERN = /\bwww\.[\w.~:/?#@!$&*+,;=%-]+/giu;
+/**
+ * A `//` or `www.` whose host starts with a non-ASCII letter (an internationalised or look-alike
+ * host). The ASCII-only link pattern cannot read such a link, so a translation may not hold more of
+ * them than its source.
+ */
+export const TRANSLATION_NON_ASCII_HOST_PATTERN = /(?:\/\/|\bwww\.)(?=\P{ASCII})\p{L}/giu;
 /** The destination of `[text](dest)`. */
 export const TRANSLATION_INLINE_DESTINATION_PATTERN = /\]\(\s*<?([^)\s>]+)/gu;
 /** The destination of a reference definition, `[ref]: dest`, at the start of a line. */

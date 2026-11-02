@@ -6,6 +6,7 @@ import {
   TRANSLATION_INLINE_DESTINATION_PATTERN,
   TRANSLATION_MAX_LENGTH_RATIO,
   TRANSLATION_MIN_LENGTH_RATIO,
+  TRANSLATION_NON_ASCII_HOST_PATTERN,
   TRANSLATION_REASONING_TAGS,
   TRANSLATION_SCRIPT_URL,
   TRANSLATION_TITLE_MARKER,
@@ -107,8 +108,15 @@ export function addsNoLinksOrMarkup(source: string, translated: string): boolean
   const known = linksOf(source);
   const noNewLinks = [...linksOf(translated)].every((url) => known.has(url));
   const tagCount = (text: string): number => text.match(TRANSLATION_HTML_TAG_PATTERN)?.length ?? 0;
+  const hostCount = (text: string): number =>
+    text.match(TRANSLATION_NON_ASCII_HOST_PATTERN)?.length ?? 0;
   const noNewScript =
     !translated.toLowerCase().includes(TRANSLATION_SCRIPT_URL) ||
     source.toLowerCase().includes(TRANSLATION_SCRIPT_URL);
-  return noNewLinks && tagCount(translated) <= tagCount(source) && noNewScript;
+  return (
+    noNewLinks &&
+    hostCount(translated) <= hostCount(source) &&
+    tagCount(translated) <= tagCount(source) &&
+    noNewScript
+  );
 }

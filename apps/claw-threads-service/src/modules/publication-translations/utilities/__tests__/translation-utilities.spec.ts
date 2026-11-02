@@ -126,6 +126,17 @@ describe('addsNoLinksOrMarkup', () => {
     expect(addsNoLinksOrMarkup(sourceText, '出典 https://evil.example/x。')).toBe(false);
   });
 
+  it('rejects a link whose host starts with a non-ASCII letter, which the link pattern cannot read', () => {
+    for (const added of [
+      'texte https://évil.example/x',
+      'texte //экзамен.example',
+      'texte www.пример.рф',
+    ]) {
+      expect(addsNoLinksOrMarkup('plain text', added), added).toBe(false);
+    }
+    expect(addsNoLinksOrMarkup('see https://пример.рф/a', 'voir https://пример.рф/a')).toBe(true);
+  });
+
   it('keeps the same link written in another letter case and relative links', () => {
     expect(
       addsNoLinksOrMarkup(source, 'Voir [la doc](HTTPS://EXAMPLE.ORG/a) et https://example.org/b'),
