@@ -33,4 +33,4 @@ The backfill ran at about 1.3 copies a minute because the free Gemma models reas
 
 ## Open gaps
 
-L09 after the deploy and backfill; L08 owner.
+L08 owner.

@@ -33,4 +33,4 @@ A review noted that after the link pattern became ASCII-only, a host starting wi
 
 ## Open gaps
 
-L09 after the deploy; L08 owner.
+L08 owner.

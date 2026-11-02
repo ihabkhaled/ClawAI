@@ -33,4 +33,4 @@ Production showed the backfill would take hours: passes of 3 translations waited
 
 ## Open gaps
 
-L03, L09, L13: read on production after the deploy and the backfill, then update this record. L08: owner.
+L03 and L13 read on production: the backfill ran at about 5 to 10 copies a minute with 6 in flight and no 429 fallthrough needed; L08: owner.

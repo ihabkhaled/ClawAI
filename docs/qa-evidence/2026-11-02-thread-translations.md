@@ -40,5 +40,5 @@ stays in its own language; each translation has its own canonical page, hreflang
 
 ## Open gaps
 
-- L08 and the production lanes after deploy: translate the real Threads, read `thread_publication_translations` for FAILED rows, open a real translated page and the sitemap.
+- L08 owner walk-through. Production lanes are done: see the production evidence in 2026-11-02-translation-backfill-throughput.md (576 of 576 READY, 0 FAILED, e2e 6 of 6 on https://claw-ai.co).
 - Native-reader review of the 12 translations, per language.
