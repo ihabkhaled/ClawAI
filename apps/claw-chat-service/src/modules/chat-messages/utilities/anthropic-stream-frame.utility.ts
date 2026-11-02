@@ -92,11 +92,25 @@ export class AnthropicStreamFrameReader {
    * A stream that ended without `message_stop` still owes its usage: the hold
    * is settled on whatever was measured. Idempotent with the terminal frame.
    * Tool calls still being assembled are dropped, never run: their input may be
-   * cut off mid-JSON.
+   * cut off mid-JSON. A truncated stream that dropped calls must not read as a
+   * clean `tool_calls` (or `stop`) finish: it ends with `done` / `length`, the
+   * existing "incomplete answer" outcome, so no consumer waits for calls that
+   * will never come. Usage is always emitted first.
    */
   flush(out: NormalizedStreamFragment[]): void {
-    if (!this.finished && this.usage.size > 0) {
+    if (this.finished) {
+      return;
+    }
+    const droppedCalls = this.toolBlocks.size;
+    this.toolBlocks.clear();
+    if (this.usage.size > 0) {
       this.emitUsage(out);
+    }
+    if (droppedCalls > 0) {
+      this.finished = true;
+      // Same value a max_tokens stop yields: consumers already treat it as a
+      // cut-off reply (warning, fast-path escalation, never finishedForTools).
+      out.push({ kind: 'done', finishReason: mapAnthropicStopReason('max_tokens') });
     }
   }
 

@@ -42,9 +42,11 @@ running dev stack.
 end to end, cache writes billed from `cacheWritePerMillionMicroUsd` only when that row exists,
 and the hold sized for the premium. Tool-carrying agent turns are cached since 2026-11-01 (ADR-153
 amendment, run against the live Anthropic API that day). Not built: caching for compare lanes.
-Hold sizing fixed 2026-11-01 (ADR-153 amendment). Open: a stream that ends with `stop_reason`
-`tool_use` but no `message_stop` emits `done` as `tool_calls` with zero calls (unconfirmed stall risk,
-not fixed). Open, files: PDF on upload (`pdf-parse`) has no size, page or time cap on text extraction.
+Hold sizing fixed 2026-11-01 (ADR-153 amendment). Fixed 2026-11-02: a stream cut off (no
+`message_stop`) after `tool_use` blocks started now ends with `done` finishReason `length` (before, no
+`done` and the finish defaulted to `stop`; the symptom first described was not reachable). Fixed
+2026-11-02, files: PDF text extraction is capped at 500 pages and 60 s (honest limit: pdfjs cannot be
+cancelled mid-parse, so a synchronous spin keeps its thread until it yields).
 (Original decision text follows.)
 
 - Options: (a) native Anthropic `/v1/messages` transport with `cache_control` plus a cache-write usage field end to end; (b) keep the OpenAI-compatible path and skip caching.

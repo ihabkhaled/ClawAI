@@ -54,8 +54,12 @@ hold also covers the catalog's tokens. Still behind the per-model admin switch (
 /connectors/:id/models/prompt-caching`) after publishing its read and write rates, then an agent
   run is watched for `cache_read_input_tokens` on the second turn.
 - Compare lanes stay uncached (their hold is taken before the call, unsized).
-- Open, not fixed: a stream with `stop_reason` `tool_use` but no `message_stop` emits `done` as
-  `tool_calls` with zero calls (unconfirmed stall risk).
+- Fixed 2026-11-02: a stream cut off (no `message_stop`) after `tool_use` blocks started now ends with
+  usage then `done` with finishReason `length`, never `tool_calls` or `stop`. Before, `flush()` emitted
+  no `done` and the finish defaulted to `stop`, so a truncated tool turn looked like a clean answer.
+  The symptom as first described (`done` as `tool_calls` with zero calls) was not reachable. Six tests
+  in `anthropic-stream-protocol.spec.ts`; vitest cannot run on the Windows host (Smart App Control),
+  verified with a tsx script, Linux container or CI run still to be added.
 - Release: the Release for `06c1d2b29` (caching) ran green and deployed; caching is still OFF for every
   model. The Releases for `08a953f1d` and `754dae7fd` did not run (their CI runs were cancelled).
 

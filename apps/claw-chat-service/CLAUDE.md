@@ -679,8 +679,14 @@ at `CACHED_JSON_BYTES_PER_TOKEN` (2.5 bytes per token, JSON), not 4, and adds
 (`constants/anthropic-prompt-cache.constants.ts`). Settlement is capped at the hold, so an
 undersized hold is margin loss. A reply cut off by `stop_reason` `max_tokens` drops `tool_use`
 blocks whose arguments are not complete JSON; complete ones are still released. Caching stays
-OFF for every model by default. Open, not fixed: a stream with `stop_reason` `tool_use` but no
-`message_stop` emits `done` as `tool_calls` with zero calls (unconfirmed stall risk).
+OFF for every model by default. Fixed 2026-11-02: a stream cut off (no `message_stop`) after
+`tool_use` blocks started now ends with usage then `done` with finishReason `length`, never
+`tool_calls` or `stop`; the turn counts as unfinished for tools, is warned, and fast-path escalation
+treats it as a cut-off answer. Before, `flush()` emitted no `done` and the finish defaulted to `stop`,
+so a truncated tool turn looked like a clean answer with the tool dropped. The symptom as first
+described (`done` as `tool_calls` with zero calls) was not reachable. Six tests in
+`anthropic-stream-protocol.spec.ts`; vitest cannot run on the Windows host (Smart App Control blocks
+`@swc/core`), so they were verified with a tsx script and still need a Linux container or CI run.
 
 ## Internal generate: silence is the signal, not the clock (ADR-175, 2026-10-13)
 

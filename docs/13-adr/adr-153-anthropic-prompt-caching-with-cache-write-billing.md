@@ -141,8 +141,14 @@ An independent review of item 3 found the hold too small for a cached tool call.
    complete JSON (complete ones are still released).
 
 Tests: +1 hold test, +1 stream test (chat-messages: 285 files, 4050 tests pass). Caching is still
-OFF for every model by default. Open, not fixed: a stream with `stop_reason` `tool_use` but no
-`message_stop` emits `done` as `tool_calls` with zero calls (unconfirmed stall risk).
+OFF for every model by default. Fixed 2026-11-02: a stream cut off (no `message_stop`) after
+`tool_use` blocks started now ends with usage then `done` with finishReason `length`, never
+`tool_calls` or `stop`; the turn counts as unfinished for tools, is warned, and fast-path escalation
+treats it as a cut-off answer. Before, `flush()` emitted no `done` and the finish defaulted to `stop`,
+so a truncated tool turn looked like a clean answer with the tool dropped. The symptom as first
+described (`done` as `tool_calls` with zero calls) was not reachable. Six tests in
+`anthropic-stream-protocol.spec.ts`; vitest cannot run on the Windows host (Smart App Control blocks
+`@swc/core`), so they were verified with a tsx script and still need a Linux container or CI run.
 
 ## Amendment 2026-11-01 (a stable prefix inside one run)
 

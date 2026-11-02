@@ -412,6 +412,77 @@ describe('ProviderStreamReader - Anthropic SSE tool calls', () => {
     expect(fragments.some((fragment) => fragment.kind === 'tool-calls')).toBe(false);
   });
 
+  it('a cut after input_json_delta drops the call, keeps usage and ends as length, not tool_calls', () => {
+    const fragments = readAll([
+      startFrame({ input_tokens: 5, output_tokens: 1 }),
+      toolStart(0, 'toolu_1', 'workspace_files'),
+      toolDelta(0, '{"operation":"re'),
+    ]);
+    expect(fragments.map((fragment) => fragment.kind)).toEqual(['usage', 'done']);
+    expect(fragments.at(-1)).toEqual({ kind: 'done', finishReason: 'length' });
+  });
+
+  it('a tool_use message_delta without message_stop never claims a clean tool_calls finish', () => {
+    const fragments = readAll([
+      startFrame({ input_tokens: 5, output_tokens: 1 }),
+      textDelta('Reading.'),
+      toolStart(0, 'toolu_1', 'workspace_files'),
+      toolDelta(0, '{"operation":"list"}'),
+      messageDelta('tool_use', { output_tokens: 40 }),
+    ]);
+    expect(fragments.some((fragment) => fragment.kind === 'tool-calls')).toBe(false);
+    expect(usageOf(fragments)).toHaveLength(1);
+    expect(usageOf(fragments)[0]).toMatchObject({ completionTokens: 40 });
+    const done = fragments.filter((fragment) => fragment.kind === 'done');
+    expect(done).toEqual([{ kind: 'done', finishReason: 'length' }]);
+  });
+
+  it('a truncated stream with no tool call and no message_stop still emits no done', () => {
+    const fragments = readAll([startFrame({ input_tokens: 5, output_tokens: 1 }), textDelta('hi')]);
+    expect(fragments.some((fragment) => fragment.kind === 'done')).toBe(false);
+  });
+
+  it('a complete tool_use stream keeps its tool_calls finish and emits one done', () => {
+    const fragments = readAll([
+      startFrame({ input_tokens: 5, output_tokens: 1 }),
+      toolStart(0, 'toolu_1', 'workspace_files'),
+      toolDelta(0, '{"operation":"list"}'),
+      messageDelta('tool_use', { output_tokens: 4 }),
+      messageStop(),
+    ]);
+    expect(fragments.filter((fragment) => fragment.kind === 'done')).toEqual([
+      { kind: 'done', finishReason: 'tool_calls' },
+    ]);
+    expect(fragments.some((fragment) => fragment.kind === 'tool-calls')).toBe(true);
+  });
+
+  it('max_tokens with a complete call releases it and finishes as length', () => {
+    const fragments = readAll([
+      startFrame({ input_tokens: 5, output_tokens: 1 }),
+      toolStart(0, 'toolu_a', 'workspace_files'),
+      toolDelta(0, '{"operation":"list"}'),
+      messageDelta('max_tokens', { output_tokens: 99 }),
+      messageStop(),
+    ]);
+    expect(fragments.find((fragment) => fragment.kind === 'tool-calls')).toMatchObject({
+      calls: [{ id: 'toolu_a' }],
+    });
+    expect(fragments.at(-1)).toEqual({ kind: 'done', finishReason: 'length' });
+  });
+
+  it('max_tokens with only an incomplete call releases nothing and finishes as length', () => {
+    const fragments = readAll([
+      startFrame({ input_tokens: 5, output_tokens: 1 }),
+      toolStart(0, 'toolu_b', 'workspace_files'),
+      toolDelta(0, '{"operation":"wri'),
+      messageDelta('max_tokens', { output_tokens: 99 }),
+      messageStop(),
+    ]);
+    expect(fragments.some((fragment) => fragment.kind === 'tool-calls')).toBe(false);
+    expect(usageOf(fragments)).toHaveLength(1);
+    expect(fragments.at(-1)).toEqual({ kind: 'done', finishReason: 'length' });
+  });
+
   it('drops a call whose arguments were cut off by max_tokens and keeps a complete one', () => {
     const fragments = readAll([
       startFrame({ input_tokens: 5, output_tokens: 1 }),
