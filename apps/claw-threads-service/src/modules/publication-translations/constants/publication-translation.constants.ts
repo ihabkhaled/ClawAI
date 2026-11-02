@@ -90,10 +90,14 @@ export const TRANSLATION_REASONING_TAGS: readonly { open: string; close: string 
   { open: '<think>', close: '</think>' },
 ];
 
-/** The part after `//` of an absolute or protocol-relative link, any scheme: `//host/path`. */
-export const TRANSLATION_URL_PATTERN = /\/\/[^\s)\]>"'<]+/gu;
+/**
+ * The part after `//` of an absolute or protocol-relative link, any scheme: `//host/path`. A link
+ * ends at the first character that is not an ASCII URL character, so the full stops and brackets of
+ * Japanese, Hindi or Arabic text that touch it are not read as part of it.
+ */
+export const TRANSLATION_URL_PATTERN = /\/\/[\w.~:/?#@!$&*+,;=%-]+/gu;
 /** Bare `www.` autolinks, which a Markdown renderer links without a scheme. */
-export const TRANSLATION_WWW_PATTERN = /\bwww\.[^\s)\]>"'<]+/giu;
+export const TRANSLATION_WWW_PATTERN = /\bwww\.[\w.~:/?#@!$&*+,;=%-]+/giu;
 /** The destination of `[text](dest)`. */
 export const TRANSLATION_INLINE_DESTINATION_PATTERN = /\]\(\s*<?([^)\s>]+)/gu;
 /** The destination of a reference definition, `[ref]: dest`, at the start of a line. */

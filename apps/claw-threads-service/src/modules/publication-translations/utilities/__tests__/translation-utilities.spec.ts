@@ -109,6 +109,23 @@ describe('addsNoLinksOrMarkup', () => {
     }
   });
 
+  it('does not read the punctuation of Japanese, Hindi or Arabic text as part of a link', () => {
+    const sourceText = 'المصدر https://arxiv.org/pdf/2209.13085، وكذلك www.example.org/a.';
+    expect(
+      addsNoLinksOrMarkup(
+        sourceText,
+        '出典 https://arxiv.org/pdf/2209.13085。また www.example.org/a。',
+      ),
+    ).toBe(true);
+    expect(
+      addsNoLinksOrMarkup(
+        sourceText,
+        'स्रोत https://arxiv.org/pdf/2209.13085। और www.example.org/a।',
+      ),
+    ).toBe(true);
+    expect(addsNoLinksOrMarkup(sourceText, '出典 https://evil.example/x。')).toBe(false);
+  });
+
   it('keeps the same link written in another letter case and relative links', () => {
     expect(
       addsNoLinksOrMarkup(source, 'Voir [la doc](HTTPS://EXAMPLE.ORG/a) et https://example.org/b'),
