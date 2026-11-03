@@ -352,4 +352,4 @@ Last updated: 2026-09-10
   - `POST /files/transcribe-text` (ADR-216) is unit-tested only: not run against a live stack, real ffmpeg or a real provider.
   - No per-endpoint ffmpeg concurrency limit on the read endpoint.
   - Audio duration is not capped beyond the 12 MB byte cap; the hold is bounded at 7,200 s.
-  - The routing rate-card 403 and the credit-fallback STOP path have no live proof (QA records of 2026-11-02 are PARTIAL).
+  - The routing rate-card 403 was live-checked on 2026-11-02. The credit-fallback STOP path was live-checked on 2026-11-03 (ADR-161); only the manual-pick path with named substitutes is still unproved live.
