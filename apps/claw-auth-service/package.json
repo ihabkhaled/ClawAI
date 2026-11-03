@@ -64,7 +64,7 @@
     "@types/amqplib": "^0.10.8",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^26.6.5",
+    "@types/node": "^26.6.6",
     "@types/web-push": "^3.6.4",
     "babel-plugin-transform-import-meta": "^3.1.0",
     "concurrently": "^10.0.6",
