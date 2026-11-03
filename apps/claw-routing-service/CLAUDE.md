@@ -403,7 +403,7 @@ Image-intent tables are in `@claw/shared-utilities` (rebuild its `dist` before r
 
 AUTO routing filters primary and fallback candidates through the plan's llowedCostClasses. This class set is an upper bound even when an explicit model row exists; unknown classes are excluded. Canonical model cost classes come from router-model pricing. See [plan and quota specification](../../docs/06-data/plan-and-quota-specification.md#5-model-access).
 
-`POST /internal/router-models/costs/classes` (service token, ADR-198) resolves up to 300 `{provider, model}` pairs to a cost class through `ModelCostService.getSnapshot`, so decorated ids, dated snapshots and the provider fallback behave as on send. It returns the class band only (null = unpriced), never a rate. chat-service's model picker list is its only caller.
+`POST /internal/router-models/costs/classes` (service token, ADR-198) resolves up to 300 `{provider, model}` pairs to a cost class through `ModelCostService.getSnapshot`, so decorated ids, dated snapshots and the provider fallback behave as on send. It returns the class band only (null = unpriced), never a rate. With an optional `freeModelPriceCap` (micro-USD per million output tokens, ADR-162) each answer also carries `aboveFreeCap: true|false`, priced from the same snapshot auth-service charges; absent or null adds nothing. chat-service's model picker list is its only caller.
 
 ## Media-output models (2026-10-31)
 

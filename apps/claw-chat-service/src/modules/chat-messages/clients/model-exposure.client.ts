@@ -24,6 +24,13 @@ const resolvedCostClassesSchema = z.array(
     costClass: z.nativeEnum(ModelCostClass).nullable(),
   }),
 );
+const aboveFreeCapSchema = z.array(
+  z.object({
+    provider: z.string(),
+    model: z.string(),
+    aboveFreeCap: z.boolean().optional(),
+  }),
+);
 const modelCostClassSchema = z.object({
   costClass: z.nativeEnum(ModelCostClass),
   isPriced: z.boolean(),
@@ -116,6 +123,48 @@ export class ModelExposureClient {
       }
     }
     return known;
+  }
+
+  // Which of these models cost more than the free plan's price limit (ADR-162), as the same keys
+  // getCostClasses uses. Asked per call, never cached: the limit belongs to the plan, not the
+  // model. A routing outage returns an empty set (nothing flagged), so the picker never shows a
+  // model as dear on a guess; the reservation still refuses it for real.
+  async getModelsAboveFreeCap(
+    pairs: ReadonlyArray<{ provider: string; model: string }>,
+    freeModelPriceCap: number,
+  ): Promise<Set<string>> {
+    const above = new Set<string>();
+    const wanted = new Set(pairs.map((pair) => costClassKey(pair.provider, pair.model)));
+    for (let start = 0; start < pairs.length; start += MODEL_COST_CLASSES_BATCH_SIZE) {
+      const batch = pairs.slice(start, start + MODEL_COST_CLASSES_BATCH_SIZE);
+      try {
+        const response = await httpRequest<unknown>({
+          url: `${AppConfig.get().ROUTING_SERVICE_URL}${MODEL_COST_CLASSES_PATH}`,
+          method: HttpMethod.POST,
+          headers: { Authorization: buildInterServiceAuthHeader() },
+          body: { models: batch, freeModelPriceCap },
+          timeoutMs: MODEL_EXPOSURE_TIMEOUT_MS,
+        });
+        const parsed = response.ok ? aboveFreeCapSchema.safeParse(response.data) : null;
+        if (!parsed?.success) {
+          this.logger.warn(
+            `getModelsAboveFreeCap: routing answered badly for ${String(batch.length)} models`,
+          );
+          continue;
+        }
+        for (const entry of parsed.data) {
+          const key = costClassKey(entry.provider, entry.model);
+          if (entry.aboveFreeCap === true && wanted.has(key)) {
+            above.add(key);
+          }
+        }
+      } catch {
+        this.logger.warn(
+          `getModelsAboveFreeCap: routing unreachable for ${String(batch.length)} models`,
+        );
+      }
+    }
+    return above;
   }
 
   // Drops every cached answer. Called when connector-service reports an

@@ -80,3 +80,11 @@ Table-driven specs pin five shapes (10 + meter + limit, 5 no meter, 2 no meter, 
 **Progress.** `POST internal/threads/budgets/summary` adds `freeAllowanceMicroUsd` (what the meter charges for the job now; 0 for non-free and after the refund) so a Free job can show real spend.
 
 **Residuals.** The auth sweeper still closes dead jobs as RELEASED (no money refund of finished calls). A late finalize of a call whose credit release failed during close can leave at most that one call's cost on the meter. Choosing PLATFORM_FAILED versus the other statuses is the caller's job (thread-generation), not done here.
+
+## Addendum (2026-11-03): the model picker follows the price limit
+
+**Decision.** `coveredByAllowance` in `POST /chat-messages/model-access` is false for a model that is allowed on the plan but priced above the plan's limit, so the pickers dim it (a hint; the reservation still decides).
+
+**Mechanism.** For a plan with a limit, chat-service sends it as `freeModelPriceCap` to routing's internal `POST /internal/router-models/costs/classes`. Routing prices each model with the same snapshot auth-service charges (fallback rate included) and answers `aboveFreeCap: true|false`. Equal to the limit is covered. The rate is never returned (rule 37). A routing outage marks no model dear. Plans with no limit never make the call.
+
+**Evidence.** Live, local Free user: `gemini-2.5-flash-image` (STANDARD band, $30/M output) came back allowed true, covered false; `claude-haiku-4-5` ($5/M, at the limit) covered true.

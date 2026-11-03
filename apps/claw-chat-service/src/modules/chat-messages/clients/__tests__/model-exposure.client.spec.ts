@@ -141,3 +141,37 @@ describe('ModelExposureClient.getCostClasses', () => {
     expect(result.has(costClassKey('OPENAI', 'a'))).toBe(false);
   });
 });
+
+describe('ModelExposureClient.getModelsAboveFreeCap', () => {
+  const client = new ModelExposureClient();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    appConfigGet.mockReturnValue({ ROUTING_SERVICE_URL: 'https://routing:4003' });
+  });
+
+  it('sends the limit and returns only the models flagged dear', async () => {
+    httpRequest.mockResolvedValue({
+      ok: true,
+      data: [
+        { provider: 'OPENAI', model: 'a', costClass: 'FREE', aboveFreeCap: true },
+        { provider: 'OPENAI', model: 'b', costClass: 'FREE', aboveFreeCap: false },
+        { provider: 'OPENAI', model: 'planted', costClass: 'FREE', aboveFreeCap: true },
+      ],
+    });
+
+    const result = await client.getModelsAboveFreeCap([pair('a'), pair('b')], 5_000_000);
+
+    expect(httpRequest.mock.calls[0]?.[0]).toMatchObject({
+      body: { models: [pair('a'), pair('b')], freeModelPriceCap: 5_000_000 },
+    });
+    expect([...result]).toEqual([costClassKey('OPENAI', 'a')]);
+  });
+
+  it('flags nothing when routing fails or answers badly', async () => {
+    httpRequest.mockRejectedValueOnce(new Error('down'));
+    expect((await client.getModelsAboveFreeCap([pair('a')], 1)).size).toBe(0);
+    httpRequest.mockResolvedValueOnce({ ok: true, data: { nope: true } });
+    expect((await client.getModelsAboveFreeCap([pair('a')], 1)).size).toBe(0);
+  });
+});

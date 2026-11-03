@@ -32,12 +32,12 @@ export class ModelCostInternalController {
   constructor(private readonly service: ModelCostService) {}
 
   // Many models' cost classes in one call, for the model picker's plan check. Returns the class
-  // band only, never a rate, so the rate card stays private (rule 37).
+  // band only (plus a yes/no against the free plan's price limit), never a rate (rule 37).
   @Post('classes')
   async resolveClasses(
     @Body(new ZodValidationPipe(resolveCostClassesSchema)) dto: ResolveCostClassesDto,
   ): Promise<ResolvedCostClass[]> {
-    return this.service.resolveCostClasses(dto.models);
+    return this.service.resolveCostClasses(dto.models, dto.freeModelPriceCap);
   }
 
   @Get(':provider/:model')

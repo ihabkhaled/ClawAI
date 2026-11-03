@@ -199,6 +199,50 @@ describe('ModelCostService', () => {
       ]);
     });
 
+    it('says whether each model is above the free plan price limit, never the rate', async () => {
+      const rows = new Map([
+        ['OPENAI/gpt-4o', baseRecord()],
+        [
+          'OPENAI/gpt-mini',
+          baseRecord({ modelKey: 'gpt-mini', outputPerMillionMicroUsd: 600_000n }),
+        ],
+      ]);
+      repository.findActive.mockImplementation((provider: string, model: string) =>
+        Promise.resolve(rows.get(`${provider}/${model}`) ?? null),
+      );
+
+      const result = await service.resolveCostClasses(
+        [
+          { provider: 'OPENAI', model: 'gpt-4o' },
+          { provider: 'OPENAI', model: 'gpt-mini' },
+        ],
+        5_000_000,
+      );
+
+      expect(result.map((entry) => entry.aboveFreeCap)).toEqual([true, false]);
+      expect(JSON.stringify(result)).not.toContain('10000000');
+    });
+
+    it('a price exactly at the limit is covered', async () => {
+      repository.findActive.mockResolvedValue(baseRecord());
+      const result = await service.resolveCostClasses(
+        [{ provider: 'OPENAI', model: 'gpt-4o' }],
+        10_000_000,
+      );
+      expect(result[0]?.aboveFreeCap).toBe(false);
+    });
+
+    it('adds no flag without a limit', async () => {
+      repository.findActive.mockResolvedValue(baseRecord());
+      const none = await service.resolveCostClasses([{ provider: 'OPENAI', model: 'gpt-4o' }]);
+      const nulled = await service.resolveCostClasses(
+        [{ provider: 'OPENAI', model: 'gpt-4o' }],
+        null,
+      );
+      expect('aboveFreeCap' in (none[0] ?? {})).toBe(false);
+      expect('aboveFreeCap' in (nulled[0] ?? {})).toBe(false);
+    });
+
     it('resolves a list longer than one batch without dropping or reordering a model', async () => {
       repository.findActive.mockResolvedValue(baseRecord({ costClass: 'CHEAP' }));
       const models = Array.from({ length: 40 }, (_, index) => ({

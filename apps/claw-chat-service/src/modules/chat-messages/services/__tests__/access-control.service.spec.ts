@@ -14,6 +14,7 @@ const settleFeatureUsage = vi.fn();
 const isExposed = vi.fn().mockResolvedValue(true);
 const getCostClass = vi.fn();
 const getCostClasses = vi.fn();
+const getModelsAboveFreeCap = vi.fn();
 
 vi.mock('../../clients/model-exposure.client', () => ({
   ModelExposureClient: vi.fn(function () {
@@ -21,6 +22,7 @@ vi.mock('../../clients/model-exposure.client', () => ({
       isExposed: (...args: unknown[]) => isExposed(...args),
       getCostClass: (...args: unknown[]) => getCostClass(...args),
       getCostClasses: (...args: unknown[]) => getCostClasses(...args),
+      getModelsAboveFreeCap: (...args: unknown[]) => getModelsAboveFreeCap(...args),
     };
   }),
 }));
@@ -204,6 +206,57 @@ describe('AccessControlService', () => {
       const result = await service.listModelAccess('u1', models);
 
       expect(result.map((entry) => entry.allowed)).toEqual([true, true, false, false]);
+    });
+
+    it('a model above the free price limit is allowed but not covered', async () => {
+      getEntitlements.mockResolvedValue(
+        ent({
+          modelAccessMode: PlanModelAccessMode.ALLOW_COST_CLASSES,
+          allowedCostClasses: freeClasses,
+          freeCreditMaxModelOutputMicroUsd: 5_000_000,
+        }),
+      );
+      getCostClasses.mockResolvedValue(classes);
+      getModelsAboveFreeCap.mockResolvedValue(
+        new Set([costClassKey(models[1]?.provider ?? '', models[1]?.model ?? '')]),
+      );
+
+      const result = await service.listModelAccess('u1', models);
+
+      expect(getModelsAboveFreeCap).toHaveBeenCalledWith(models, 5_000_000);
+      expect(result.map((entry) => entry.allowed)).toEqual([true, true, false, false]);
+      expect(result.map((entry) => entry.coveredByAllowance)).toEqual([true, false, false, false]);
+    });
+
+    it('a plan without a price limit never asks routing for one', async () => {
+      getModelsAboveFreeCap.mockClear();
+      getEntitlements.mockResolvedValue(
+        ent({
+          modelAccessMode: PlanModelAccessMode.ALLOW_ALL,
+          freeCreditMaxModelOutputMicroUsd: null,
+        }),
+      );
+      getCostClasses.mockResolvedValue(new Map());
+
+      const result = await service.listModelAccess('u1', models);
+
+      expect(getModelsAboveFreeCap).not.toHaveBeenCalled();
+      expect(result.every((entry) => entry.coveredByAllowance)).toBe(true);
+    });
+
+    it('a price-limit lookup that throws marks no model dear', async () => {
+      getEntitlements.mockResolvedValue(
+        ent({
+          modelAccessMode: PlanModelAccessMode.ALLOW_ALL,
+          freeCreditMaxModelOutputMicroUsd: 5_000_000,
+        }),
+      );
+      getCostClasses.mockResolvedValue(new Map());
+      getModelsAboveFreeCap.mockRejectedValue(new Error('routing down'));
+
+      const result = await service.listModelAccess('u1', models);
+
+      expect(result.every((entry) => entry.coveredByAllowance)).toBe(true);
     });
 
     it('a paid plan with every class allows every priced model', async () => {

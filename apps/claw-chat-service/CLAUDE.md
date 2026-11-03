@@ -1930,5 +1930,5 @@ Gemini video is `gemini-omni-1.1-flash` (Interactions API, about $0.10/s, routin
 
 ## Model access carries cost marks (ADR-198 amendment, 2026-11-02)
 
-- `POST /chat-messages/model-access` entries: `{ provider, model, allowed, costClass?, coveredByAllowance? }` (`types/access-control.types.ts`). `costClass` is the band only (rule 37). `coveredByAllowance` is `allowed` including FREE and plan-included models; it does NOT compare the ADR-162 free-allowance price limit (honest approximation, the send path stays the gate).
+- `POST /chat-messages/model-access` entries: `{ provider, model, allowed, costClass?, coveredByAllowance? }` (`types/access-control.types.ts`). `costClass` is the band only (rule 37). `coveredByAllowance` is `allowed` minus models above the free plan's ADR-162 price limit: when the plan has one, chat-service asks routing's internal `POST /internal/router-models/costs/classes` with `freeModelPriceCap` and gets a yes/no per model (`aboveFreeCap`, never the rate; an outage marks nothing dear). The send path stays the gate.
 - `listModelAccess` always fetches the bands (one cached batched call to routing's `POST /internal/router-models/costs/classes`). A failed lookup leaves the fields absent. Never put a rate in this response.

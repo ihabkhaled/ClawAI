@@ -503,6 +503,15 @@ export class AccessControlService {
       this.logger.warn('listModelAccess: cost classes unavailable, entries carry no band');
       return new Map<string, ModelCostClass | null>();
     });
+    // Only a plan with a price limit (Free, ADR-162) needs the second question; never throws.
+    const priceCap = ent.freeCreditMaxModelOutputMicroUsd;
+    const aboveCap =
+      typeof priceCap === 'number'
+        ? await this.exposure.getModelsAboveFreeCap(models, priceCap).catch(() => {
+            this.logger.warn('listModelAccess: price limit unavailable, no model marked dear');
+            return new Set<string>();
+          })
+        : new Set<string>();
     return models.map(({ provider, model }) => {
       const costClass = classes.get(costClassKey(provider, model));
       const allowed = this.isPrimaryModelAllowed(ent, provider, model, costClass);
@@ -512,9 +521,9 @@ export class AccessControlService {
         allowed,
         ...(costClass ? { costClass } : {}),
         // Allowed on the plan (or admin) means included, so no credit is spent; a refused model
-        // is never "covered". Only the band is known here, so the free plan's output-price
-        // ceiling (ADR-162) is not compared; the plan's class list stands in for it.
-        coveredByAllowance: allowed,
+        // is never "covered". On a plan with a price limit (ADR-162) a model above it is allowed
+        // but not covered: its request would draw credit instead of the free allowance.
+        coveredByAllowance: allowed && !aboveCap.has(costClassKey(provider, model)),
       };
     });
   }

@@ -110,17 +110,30 @@ export class ModelCostService {
   // they do when a message is sent. Batched: each lookup is up to three queries.
   async resolveCostClasses(
     models: ReadonlyArray<{ provider: string; model: string }>,
+    freeModelPriceCap?: number | null,
   ): Promise<ResolvedCostClass[]> {
     const resolved: ResolvedCostClass[] = [];
     for (let start = 0; start < models.length; start += MODEL_COST_CATALOG_BATCH_SIZE) {
       const batch = models.slice(start, start + MODEL_COST_CATALOG_BATCH_SIZE);
       resolved.push(
         ...(await Promise.all(
-          batch.map(async ({ provider, model }) => ({
-            provider,
-            model,
-            costClass: (await this.getKnownCostClass(provider, model)) ?? null,
-          })),
+          batch.map(async ({ provider, model }) => {
+            const snapshot = await this.getSnapshot(provider, model);
+            return {
+              provider,
+              model,
+              costClass: snapshot.isPriced ? snapshot.costClass : null,
+              // The same price auth-service charges, fallback included, so the picker and the
+              // reservation agree on what is dear.
+              ...(typeof freeModelPriceCap === 'number'
+                ? {
+                    aboveFreeCap:
+                      snapshot.outputPerMillionMicroUsd !== null &&
+                      snapshot.outputPerMillionMicroUsd > freeModelPriceCap,
+                  }
+                : {}),
+            };
+          }),
         )),
       );
     }

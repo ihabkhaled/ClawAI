@@ -348,8 +348,7 @@ Last updated: 2026-09-10
 ### TD-046: Gaps left by the 2026-11-02 batch (credit fallback, picker marks, media read)
 
 - **Added**: 2026-11-02 - **Severity**: Low to Medium - Honest gaps, none hidden:
-  - `coveredByAllowance` (model-access) is `allowed` including FREE and plan-included models; it does not compare the ADR-162 free-allowance price limit, so a dim can be missing for a model the limit would refuse. The server stays the gate (ADR-198 amendment).
-  - The Compare picker (`parallel-model-row.tsx`) shows no cost mark yet.
+  - ~~`coveredByAllowance` ignored the ADR-162 price limit~~ and ~~the Compare picker had no cost mark~~: both closed 2026-11-03 (ADR-162 addendum, ADR-198 amendment).
   - `POST /files/transcribe-text` (ADR-216) is unit-tested only: not run against a live stack, real ffmpeg or a real provider.
   - No per-endpoint ffmpeg concurrency limit on the read endpoint.
   - Audio duration is not capped beyond the 12 MB byte cap; the hold is bounded at 7,200 s.

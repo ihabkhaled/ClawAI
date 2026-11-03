@@ -1171,7 +1171,7 @@ Gemini video is `gemini-omni-1.1-flash` (Interactions API, about $0.10/s, routin
 ## Credit fallback card and the picker cost mark (2026-11-02)
 
 - Settings card `components/settings/credit-fallback-mode-card.tsx` with `hooks/settings/use-credit-fallback-mode.ts`: FALLBACK or STOP, saved through `PATCH /users/me/preferences` (ADR-161 amendment). Keys `settings.creditFallbackMode*` (5) in 13 locales. Enum/types/constants live in `enums/`, `types/`, `constants/credit-fallback-mode.*`, never in the TSX.
-- `components/chat/model-cost-mark.tsx` draws a 4-pip cost band from `costClass` in the `/chat-messages/model-access` answer, and the picker dims a row whose `coveredByAllowance === false` (a hint; a locked model stays locked, ADR-198 amendment). Keys `chat.modelSelector.cost.*` (11) in 13 locales. The band is a band, never a price (rule 37).
+- `components/chat/model-cost-mark.tsx` draws a 4-pip cost band from `costClass` in the `/chat-messages/model-access` answer, and the picker dims a row whose `coveredByAllowance === false` (a hint; a locked model stays locked, ADR-198 amendment). Keys `chat.modelSelector.cost.*` (11) in 13 locales. The band is a band, never a price (rule 37). `parallel-model-row.tsx` (Compare) draws the same mark and the same dim; only `isLocked` blocks a tick.
 - Gap: the Compare picker (`parallel-model-row.tsx`) shows no mark yet.
 - Billing ledger label `billing.credit.surface.TRANSCRIPTION_READ` (13 locales, `credit.constants.ts`) for ADR-216.
 

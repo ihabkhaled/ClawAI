@@ -15,4 +15,7 @@ export type ResolvedCostClass = {
   provider: string;
   model: string;
   costClass: string | null;
+  // Only when the caller sent a price limit: true = dearer than the free plan covers (ADR-162).
+  // A yes/no, never the rate, so the rate card stays private (rule 37).
+  aboveFreeCap?: boolean;
 };
