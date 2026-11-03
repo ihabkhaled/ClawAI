@@ -190,3 +190,12 @@ caller-supplied hold.
 
 Tests: two cases in `payg-credit-anthropic-cache.spec.ts` (armed lane hold and call; unarmed lane
 unchanged).
+
+## Amendment 2026-11-03 (switched ON in production for Haiku 4.5)
+
+Owner decision, 2026-11-03 ("yes" to enabling caching for a real production Claude model), after the 2026-11-01 and 2026-11-02 amendments were deployed (monorepo v1.233.0).
+
+1. **Scope:** ONE model, `claude-haiku-4-5-20251001` on the production Claude connector. Every other model stays OFF. Production rates for it were read first: input $1.00/M, cache read $0.10/M, cache write $1.25/M (cost row version 1, source SEED).
+2. **Switch-off (one call):** `PUT /connectors/<claude connector id>/models/prompt-caching` with `{"modelKeys":["claude-haiku-4-5-20251001"],"enabled":false}` as an admin. Chat-service re-reads the flag within 60 seconds per replica.
+3. **What can and cannot be seen in production:** production PAYG metering is off (`GET /credit/me` reports `meteringEnabled: false`), so no billing-path usage record is written and the admin usage explorer shows `cachedTokens` and `cacheWriteTokens` as 0 there whatever Anthropic did. The saving shows only on the Anthropic invoice. A metered user on the local stack proves the plain-chat path: one send of about 15.9k tokens recorded 15,887 cache write tokens and 3 fresh input tokens in `weighted_usage_records`. A second record for the same call (the token-ledger mirror) carries the total and no cache split, which is why a first look at the explorer read 0.
+4. **Cost note:** the first turn of a thread pays the 1.25x write premium; later turns read the prefix at 0.1x within the 5-minute TTL.
