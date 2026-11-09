@@ -37,21 +37,21 @@
     "@nestjs/common": "^12.3.2",
     "axios": "^1.21.0",
     "jsonwebtoken": "^9.0.3",
-    "nodemailer": "^10.2.1"
+    "nodemailer": "^10.3.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
-    "@swc/core": "^1.16.20",
+    "@swc/core": "^1.16.22",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^26.6.5",
+    "@types/node": "^26.6.6",
     "@types/nodemailer": "^8.0.2",
     "babel-plugin-transform-import-meta": "^3.1.0",
-    "eslint": "^10.13.0",
+    "eslint": "^10.14.0",
     "eslint-plugin-unicorn": "78.0.0",
-    "tsc-alias": "^1.9.9",
+    "tsc-alias": "^1.9.10",
     "typescript": "6.0.3",
     "unplugin-swc": "^2.0.0",
-    "vitest": "5.0.5"
+    "vitest": "5.1.0"
   },
   "type": "module"
 }
