@@ -42,19 +42,19 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@nestjs/testing": "^12.2.0",
+    "@nestjs/testing": "^12.3.3",
     "@types/express": "^5.0.6",
-    "@types/node": "^26.6.5",
-    "eslint": "^10.13.0",
+    "@types/node": "^26.6.6",
+    "eslint": "^10.14.0",
     "nodemon": "^3.1.14",
     "pg": "^8.23.1",
     "prettier": "^3.9.10",
     "prisma": "^7.10.1",
-    "tsc-alias": "^1.9.9",
+    "tsc-alias": "^1.9.10",
     "typescript": "6.0.3",
     "typescript-eslint": "^8.72.1",
     "unplugin-swc": "^2.0.0",
-    "vitest": "5.0.5"
+    "vitest": "5.1.0"
   },
   "type": "module"
 }
