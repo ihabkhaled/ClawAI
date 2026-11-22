@@ -40,7 +40,7 @@ describe('sendMarkdownDownload (CodeQL js/reflected-xss)', () => {
       'attachment; filename="multi-model-review.md"; filename*=UTF-8\'\'multi-model-review.md',
     );
     // The markdown body is delivered verbatim; safety comes from the headers.
-    expect(send).toHaveBeenCalledWith(body);
+    expect(send).toHaveBeenCalledWith(Buffer.from(body, 'utf8'));
   });
 
   it('sets every header before the body is sent', () => {

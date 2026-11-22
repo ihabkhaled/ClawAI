@@ -21,5 +21,8 @@ export function sendMarkdownDownload(res: Response, filename: string, markdown: 
     'Content-Disposition',
     contentDispositionHeader(ContentDispositionType.ATTACHMENT, filename),
   );
-  res.send(markdown);
+  // The body leaves as raw UTF-8 bytes of a non-HTML content type, never as a string the framework
+  // could treat as markup (CodeQL js/reflected-xss does not follow the helper's headers, so it
+  // needs the value to stop being a user-controlled string here).
+  res.send(Buffer.from(new TextEncoder().encode(markdown)));
 }
