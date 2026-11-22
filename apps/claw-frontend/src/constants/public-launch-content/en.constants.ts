@@ -1,15 +1,12 @@
 import type {
+  PublicLaunchCorePageDictionary,
   PublicLaunchLabels,
-  PublicLaunchPageDictionary,
 } from '@/types/public-launch-content.types';
 
+import { EN_PUBLIC_LAUNCH_CHROME_LABELS } from './en-chrome-labels.constants';
+
 export const EN_PUBLIC_LAUNCH_LABELS: PublicLaunchLabels = {
-  onThisPage: 'On this page',
-  evidence: 'Repository-backed note',
-  lastReviewed: 'Last reviewed',
-  effectiveDate: 'Effective date',
-  startFree: 'Create a free account',
-  contactTeam: 'Contact the team',
+  ...EN_PUBLIC_LAUNCH_CHROME_LABELS,
   viewPricing: 'View pricing',
   readSecurity: 'Read security and privacy',
   baselineCatalog: 'Baseline subscription catalog',
@@ -37,7 +34,7 @@ export const EN_PUBLIC_LAUNCH_LABELS: PublicLaunchLabels = {
   receiptDescription: 'Stream the answer with visible model provenance and usage information.',
 };
 
-export const EN_PUBLIC_LAUNCH_PAGES: PublicLaunchPageDictionary = {
+export const EN_PUBLIC_LAUNCH_PAGES: PublicLaunchCorePageDictionary = {
   about: {
     eyebrow: 'About ClawAI',
     sections: [

@@ -5870,6 +5870,17 @@ export const en: TranslationDictionary = {
       socialLinkedin: 'LinkedIn',
       socialDiscord: 'Discord',
       featuresHeading: 'Features',
+      companyHeading: 'Company & legal',
+      linkAbout: 'About us',
+      linkContact: 'Contact us',
+      linkPrivacy: 'Privacy policy',
+      linkTerms: 'Terms of use',
+      linkDeliveryShipping: 'Delivery & shipping',
+      linkRefundCancellation: 'Refund & cancellation',
+      linkCookies: 'Cookie policy',
+      linkAcceptableUse: 'Acceptable use',
+      emailLabel: 'Email',
+      addressLabel: 'Address',
     },
     notFound: {
       title: 'Page not found',
@@ -5986,6 +5997,12 @@ export const en: TranslationDictionary = {
       errorInvalid: 'Please check the form and try again.',
       errorRateLimited: 'Too many messages. Please wait a little while before trying again.',
       errorGeneric: 'Something went wrong sending your message. Please try again.',
+      directHeading: 'Reach us directly',
+      directEmailLabel: 'Email',
+      phoneLabel: 'Phone',
+      addressLabel: 'Address',
+      addressNote:
+        'ClawAI is an online service. There is no office open to visitors, so please contact us by email.',
     },
     home: {
       codingAgent: {
@@ -6057,6 +6074,8 @@ export const en: TranslationDictionary = {
         toggleYearly: 'Yearly',
         linkFaq: 'Billing questions? Read the FAQ',
         linkUseCases: 'See what people build with ClawAI',
+        linkRefundPolicy: 'Refund and cancellation policy',
+        linkDeliveryPolicy: 'Delivery and shipping policy',
       },
       enterprise: {
         eyebrow: 'Local-first and private',

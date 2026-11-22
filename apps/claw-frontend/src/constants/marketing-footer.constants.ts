@@ -1,8 +1,8 @@
 import { getFeatureCapabilityPath } from '@/constants/features-cluster.constants';
 import { FeatureCapability } from '@/enums/feature-capability.enum';
+import type { MarketingFooterCompanyLinkConfig } from '@/types/marketing.types';
 
 export const MARKETING_FOOTER_EXPLORE_PATHS: ReadonlySet<string> = new Set([
-  '/about',
   '/architecture',
   '/coding-agent',
   '/faq',
@@ -39,3 +39,20 @@ export const MARKETING_FOOTER_FEATURE_PATHS: ReadonlyArray<string> = [
   FeatureCapability.ADMINISTRATION_AND_ACCESS,
   FeatureCapability.RELIABILITY,
 ].map(getFeatureCapabilityPath);
+
+/**
+ * The "Company & legal" footer column, in this order: who we are, how to reach
+ * us, and every policy a customer or payment provider looks for. Short i18n
+ * labels instead of registry titles ("Privacy policy", not the SEO headline).
+ * `/about` and `/contact` live here only, so no destination appears twice.
+ */
+export const MARKETING_FOOTER_COMPANY_LINKS: ReadonlyArray<MarketingFooterCompanyLinkConfig> = [
+  { path: '/about', labelKey: 'marketing.footer.linkAbout' },
+  { path: '/contact', labelKey: 'marketing.footer.linkContact' },
+  { path: '/privacy', labelKey: 'marketing.footer.linkPrivacy' },
+  { path: '/terms', labelKey: 'marketing.footer.linkTerms' },
+  { path: '/delivery-shipping', labelKey: 'marketing.footer.linkDeliveryShipping' },
+  { path: '/refund-cancellation', labelKey: 'marketing.footer.linkRefundCancellation' },
+  { path: '/cookies', labelKey: 'marketing.footer.linkCookies' },
+  { path: '/acceptable-use', labelKey: 'marketing.footer.linkAcceptableUse' },
+];

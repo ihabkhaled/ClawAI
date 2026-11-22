@@ -5787,6 +5787,17 @@ export const ar: TranslationDictionary = {
       socialLinkedin: 'LinkedIn',
       socialDiscord: 'Discord',
       featuresHeading: 'الميزات',
+      companyHeading: 'الشركة والشؤون القانونية',
+      linkAbout: 'من نحن',
+      linkContact: 'اتصل بنا',
+      linkPrivacy: 'سياسة الخصوصية',
+      linkTerms: 'شروط الاستخدام',
+      linkDeliveryShipping: 'التسليم والشحن',
+      linkRefundCancellation: 'الاسترداد والإلغاء',
+      linkCookies: 'سياسة ملفات تعريف الارتباط',
+      linkAcceptableUse: 'الاستخدام المقبول',
+      emailLabel: 'البريد الإلكتروني',
+      addressLabel: 'العنوان',
     },
     notFound: {
       title: 'الصفحة غير موجودة',
@@ -5902,6 +5913,12 @@ export const ar: TranslationDictionary = {
       errorInvalid: 'يرجى التحقق من النموذج والمحاولة مرة أخرى.',
       errorRateLimited: 'عدد كبير جدًا من الرسائل. يرجى الانتظار قليلاً قبل المحاولة مرة أخرى.',
       errorGeneric: 'حدث خطأ أثناء إرسال رسالتك. يرجى المحاولة مرة أخرى.',
+      directHeading: 'تواصل معنا مباشرة',
+      directEmailLabel: 'البريد الإلكتروني',
+      phoneLabel: 'الهاتف',
+      addressLabel: 'العنوان',
+      addressNote:
+        'ClawAI خدمة تعمل عبر الإنترنت، ولا يوجد مكتب لاستقبال الزوار، لذا يُرجى التواصل معنا عبر البريد الإلكتروني.',
     },
     home: {
       codingAgent: {
@@ -5972,6 +5989,8 @@ export const ar: TranslationDictionary = {
         toggleYearly: 'سنوي',
         linkFaq: 'أسئلة عن الفوترة؟ اطّلع على الأسئلة الشائعة',
         linkUseCases: 'شاهد ما يبنيه الناس باستخدام ClawAI',
+        linkRefundPolicy: 'سياسة الاسترداد والإلغاء',
+        linkDeliveryPolicy: 'سياسة التسليم والشحن',
       },
       enterprise: {
         eyebrow: 'محلي أولًا وخاص',

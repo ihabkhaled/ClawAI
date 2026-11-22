@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildComparisonHubJsonLd,
   buildComparisonJsonLd,
+  buildOrganizationJsonLd,
   buildThreadArticleJsonLd,
   buildThreadDescription,
   buildPublicBoardJsonLd,
@@ -213,5 +214,26 @@ describe('public Threads board structured data', () => {
     expect(serialized).toContain('"numberOfItems":0');
     expect(serialized).not.toContain('AggregateRating');
     expect(serialized).not.toContain('author');
+  });
+});
+
+describe('organization structured data', () => {
+  it('names the public email and city-level address, and no phone while none is set', () => {
+    const organization = buildOrganizationJsonLd('https://claw.example');
+
+    expect(organization).toEqual(
+      expect.objectContaining({
+        '@type': 'Organization',
+        email: 'admin@claw-ai.co',
+        address: { '@type': 'PostalAddress', addressLocality: 'Cairo', addressCountry: 'EG' },
+        contactPoint: {
+          '@type': 'ContactPoint',
+          contactType: 'customer support',
+          email: 'admin@claw-ai.co',
+        },
+      }),
+    );
+    expect(JSON.stringify(organization)).not.toContain('telephone');
+    expect(JSON.stringify(organization)).not.toContain('streetAddress');
   });
 });

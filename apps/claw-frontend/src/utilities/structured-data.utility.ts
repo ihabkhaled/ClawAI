@@ -1,4 +1,9 @@
 import { MARKETING_GITHUB_URL } from '@/constants/marketing-nav.constants';
+import {
+  PUBLIC_COMPANY_POSTAL_ADDRESS,
+  PUBLIC_CONTACT_EMAIL,
+  PUBLIC_CONTACT_PHONE,
+} from '@/constants/public-contact.constants';
 import { SITE_DESCRIPTION, SITE_SLOGAN } from '@/constants/site-metadata.constants';
 import type { SharedChatJsonLdInput } from '@/types/chat-share-page.types';
 import type { VideoObjectJsonLdInput } from '@/types/marketing-videos.types';
@@ -38,6 +43,15 @@ export function buildOrganizationJsonLd(siteUrl: string): JsonLdObject {
     slogan: SITE_SLOGAN,
     description: SITE_DESCRIPTION,
     sameAs: [MARKETING_GITHUB_URL],
+    email: PUBLIC_CONTACT_EMAIL,
+    address: { '@type': 'PostalAddress', ...PUBLIC_COMPANY_POSTAL_ADDRESS },
+    // The phone is optional config: absent from the schema until it is set.
+    contactPoint: {
+      '@type': 'ContactPoint',
+      contactType: 'customer support',
+      email: PUBLIC_CONTACT_EMAIL,
+      ...(PUBLIC_CONTACT_PHONE === null ? {} : { telephone: PUBLIC_CONTACT_PHONE }),
+    },
   };
 }
 

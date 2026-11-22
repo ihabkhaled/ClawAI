@@ -5904,6 +5904,17 @@ export const fa: TranslationDictionary = {
       socialLinkedin: 'لینکدین',
       socialDiscord: 'اختلاف نظر',
       featuresHeading: 'قابلیت‌ها',
+      companyHeading: 'شرکت و موارد حقوقی',
+      linkAbout: 'درباره ما',
+      linkContact: 'تماس با ما',
+      linkPrivacy: 'سیاست حریم خصوصی',
+      linkTerms: 'شرایط استفاده',
+      linkDeliveryShipping: 'تحویل و ارسال',
+      linkRefundCancellation: 'بازپرداخت و لغو',
+      linkCookies: 'سیاست کوکی‌ها',
+      linkAcceptableUse: 'استفاده مجاز',
+      emailLabel: 'ایمیل',
+      addressLabel: 'نشانی',
     },
     notFound: {
       title: 'صفحه پیدا نشد',
@@ -6022,6 +6033,12 @@ export const fa: TranslationDictionary = {
       errorInvalid: 'لطفا فرم را بررسی کنید و دوباره امتحان کنید.',
       errorRateLimited: 'پیام ها خیلی زیاد است.لطفاً قبل از تلاش مجدد کمی صبر کنید.',
       errorGeneric: 'هنگام ارسال پیام شما مشکلی پیش آمد.لطفا دوباره امتحان کنید.',
+      directHeading: 'تماس مستقیم با ما',
+      directEmailLabel: 'ایمیل',
+      phoneLabel: 'تلفن',
+      addressLabel: 'نشانی',
+      addressNote:
+        'ClawAI یک سرویس آنلاین است. دفتری برای مراجعه حضوری وجود ندارد، پس لطفاً از طریق ایمیل با ما تماس بگیرید.',
     },
     home: {
       codingAgent: {
@@ -6094,6 +6111,8 @@ export const fa: TranslationDictionary = {
         toggleYearly: 'سالانه',
         linkFaq: 'سوالات صورتحساب؟سوالات متداول را بخوانید',
         linkUseCases: 'ببینید مردم با ClawAI چه چیزی می سازند',
+        linkRefundPolicy: 'سیاست بازپرداخت و لغو',
+        linkDeliveryPolicy: 'سیاست تحویل و ارسال',
       },
       enterprise: {
         eyebrow: 'محلی‌محور و خصوصی',

@@ -56,7 +56,10 @@ describe('MarketingFooter', () => {
     for (const link of screen.getAllByRole('link')) {
       const href = link.getAttribute('href') ?? '';
       const isKnownStaticLink =
-        href.startsWith('http') || href.startsWith('/#') || nonRegistryLinks.has(href);
+        href.startsWith('http') ||
+        href.startsWith('mailto:') ||
+        href.startsWith('/#') ||
+        nonRegistryLinks.has(href);
       if (!isKnownStaticLink) {
         expect(publishedPaths.has(href)).toBe(true);
       }
@@ -88,4 +91,33 @@ describe('MarketingFooter', () => {
     expect(hrefs).not.toContain('/learn/what-is-rag');
     expect(hrefs).not.toContain('/integrations/github');
   });
+
+  // The owner's list: every policy a customer or a payment provider looks for,
+  // reachable from every public page, in every locale.
+  it.each(Object.values(Locale))(
+    'lists Company & legal links with the address and email in %s',
+    (locale) => {
+      render(<MarketingFooter {...buildMarketingFooterData(locale)} />);
+
+      expect(screen.getByText('marketing.footer.companyHeading')).toBeInTheDocument();
+      const expected: Array<[string, string]> = [
+        ['marketing.footer.linkAbout', '/about'],
+        ['marketing.footer.linkContact', '/contact'],
+        ['marketing.footer.linkPrivacy', '/privacy'],
+        ['marketing.footer.linkTerms', '/terms'],
+        ['marketing.footer.linkDeliveryShipping', '/delivery-shipping'],
+        ['marketing.footer.linkRefundCancellation', '/refund-cancellation'],
+        ['marketing.footer.linkCookies', '/cookies'],
+        ['marketing.footer.linkAcceptableUse', '/acceptable-use'],
+      ];
+      for (const [label, href] of expected) {
+        expect(screen.getByText(label).closest('a')).toHaveAttribute('href', href);
+      }
+      expect(screen.getByText('Cairo, Egypt')).toBeInTheDocument();
+      expect(screen.getByText('admin@claw-ai.co').closest('a')).toHaveAttribute(
+        'href',
+        'mailto:admin@claw-ai.co',
+      );
+    },
+  );
 });

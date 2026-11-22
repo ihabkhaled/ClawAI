@@ -6028,6 +6028,17 @@ export const fr: TranslationDictionary = {
       socialLinkedin: 'LinkedIn',
       socialDiscord: 'Discord',
       featuresHeading: 'Fonctionnalités',
+      companyHeading: 'Entreprise et mentions légales',
+      linkAbout: 'À propos',
+      linkContact: 'Nous contacter',
+      linkPrivacy: 'Politique de confidentialité',
+      linkTerms: 'Conditions d’utilisation',
+      linkDeliveryShipping: 'Livraison et expédition',
+      linkRefundCancellation: 'Remboursement et résiliation',
+      linkCookies: 'Politique relative aux cookies',
+      linkAcceptableUse: 'Utilisation acceptable',
+      emailLabel: 'E-mail',
+      addressLabel: 'Adresse',
     },
     notFound: {
       title: 'Page introuvable',
@@ -6152,6 +6163,12 @@ export const fr: TranslationDictionary = {
       errorRateLimited: 'Trop de messages. Veuillez patienter un instant avant de réessayer.',
       errorGeneric:
         'Une erreur s’est produite lors de l’envoi de votre message. Veuillez réessayer.',
+      directHeading: 'Nous joindre directement',
+      directEmailLabel: 'E-mail',
+      phoneLabel: 'Téléphone',
+      addressLabel: 'Adresse',
+      addressNote:
+        'ClawAI est un service en ligne. Aucun bureau n’accueille de visiteurs : merci de nous contacter par e-mail.',
     },
     home: {
       codingAgent: {
@@ -6227,6 +6244,8 @@ export const fr: TranslationDictionary = {
         toggleYearly: 'Annuel',
         linkFaq: 'Des questions sur la facturation ? Consultez la FAQ',
         linkUseCases: 'Découvrir ce que les gens créent avec ClawAI',
+        linkRefundPolicy: 'Politique de remboursement et de résiliation',
+        linkDeliveryPolicy: 'Politique de livraison et d’expédition',
       },
       enterprise: {
         eyebrow: 'Local d’abord et privé',

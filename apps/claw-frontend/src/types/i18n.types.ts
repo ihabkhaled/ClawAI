@@ -5734,6 +5734,17 @@ export type TranslationDictionary = {
       socialX: string;
       socialLinkedin: string;
       socialDiscord: string;
+      companyHeading: string;
+      linkAbout: string;
+      linkContact: string;
+      linkPrivacy: string;
+      linkTerms: string;
+      linkDeliveryShipping: string;
+      linkRefundCancellation: string;
+      linkCookies: string;
+      linkAcceptableUse: string;
+      emailLabel: string;
+      addressLabel: string;
     };
     notFound: {
       title: string;
@@ -5844,6 +5855,11 @@ export type TranslationDictionary = {
       errorInvalid: string;
       errorRateLimited: string;
       errorGeneric: string;
+      directHeading: string;
+      directEmailLabel: string;
+      phoneLabel: string;
+      addressLabel: string;
+      addressNote: string;
     };
     home: {
       codingAgent: {
@@ -5906,6 +5922,8 @@ export type TranslationDictionary = {
         toggleYearly: string;
         linkFaq: string;
         linkUseCases: string;
+        linkRefundPolicy: string;
+        linkDeliveryPolicy: string;
       };
       payg: {
         eyebrow: string;

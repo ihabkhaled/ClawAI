@@ -5960,6 +5960,17 @@ export const ru: TranslationDictionary = {
       socialLinkedin: 'LinkedIn',
       socialDiscord: 'Discord',
       featuresHeading: 'Возможности',
+      companyHeading: 'Компания и правовая информация',
+      linkAbout: 'О нас',
+      linkContact: 'Связаться с нами',
+      linkPrivacy: 'Политика конфиденциальности',
+      linkTerms: 'Условия использования',
+      linkDeliveryShipping: 'Доставка',
+      linkRefundCancellation: 'Возврат и отмена',
+      linkCookies: 'Политика cookie',
+      linkAcceptableUse: 'Допустимое использование',
+      emailLabel: 'Эл. почта',
+      addressLabel: 'Адрес',
     },
     notFound: {
       title: 'Страница не найдена',
@@ -6080,6 +6091,12 @@ export const ru: TranslationDictionary = {
       errorInvalid: 'Пожалуйста, проверьте форму и повторите попытку.',
       errorRateLimited: 'Слишком много сообщений. Подождите немного, прежде чем повторить попытку.',
       errorGeneric: 'Произошла ошибка при отправке сообщения. Повторите попытку.',
+      directHeading: 'Свяжитесь с нами напрямую',
+      directEmailLabel: 'Эл. почта',
+      phoneLabel: 'Телефон',
+      addressLabel: 'Адрес',
+      addressNote:
+        'ClawAI — онлайн-сервис. Офиса для посетителей нет, поэтому, пожалуйста, пишите нам на электронную почту.',
     },
     home: {
       codingAgent: {
@@ -6155,6 +6172,8 @@ export const ru: TranslationDictionary = {
         toggleYearly: 'Ежегодно',
         linkFaq: 'Вопросы по оплате? Читайте частые вопросы',
         linkUseCases: 'Посмотрите, что люди создают с ClawAI',
+        linkRefundPolicy: 'Политика возврата и отмены',
+        linkDeliveryPolicy: 'Политика доставки',
       },
       enterprise: {
         eyebrow: 'Локально и конфиденциально',

@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { PublicLaunchPage } from '@/components/marketing/shared/public-launch-page';
 import { PublicLaunchPageSlug } from '@/enums/public-launch-page-slug.enum';
@@ -26,8 +26,10 @@ vi.mock('@/lib/i18n', () => ({
   useTranslation: () => ({ t: (key: string) => key, locale: 'en' }),
 }));
 
+const requestLocale: { value: string } = { value: 'en' };
+
 vi.mock('next/headers', () => ({
-  headers: async (): Promise<Headers> => new Headers({ 'x-claw-locale': 'en' }),
+  headers: async (): Promise<Headers> => new Headers({ 'x-claw-locale': requestLocale.value }),
 }));
 
 describe('PublicLaunchPage', () => {
@@ -98,5 +100,46 @@ describe('PublicLaunchPage', () => {
     render(await PublicLaunchPage({ slug: PublicLaunchPageSlug.SECURITY_AND_PRIVACY }));
 
     expect(screen.getByTestId('marketing-ad-unit')).toHaveAttribute('data-slot', '2345678901');
+  });
+
+  describe('company details and commerce policies', () => {
+    afterEach(() => {
+      requestLocale.value = 'en';
+    });
+
+    it('shows the company address and email on the About page', async () => {
+      render(await PublicLaunchPage({ slug: PublicLaunchPageSlug.ABOUT }));
+
+      expect(screen.getByRole('region', { name: 'Company details' })).toBeInTheDocument();
+      expect(screen.getByText('Cairo, Egypt')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'admin@claw-ai.co' })).toHaveAttribute(
+        'href',
+        'mailto:admin@claw-ai.co',
+      );
+      expect(screen.queryByText('Phone')).not.toBeInTheDocument();
+    });
+
+    it('renders the refund policy with its own effective date and one h1', async () => {
+      render(await PublicLaunchPage({ slug: PublicLaunchPageSlug.REFUND_CANCELLATION }));
+
+      expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+      expect(screen.getByText(/Effective date/)).toBeInTheDocument();
+      expect(screen.getByText('2026-11-22')).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { level: 2, name: 'Cancel any time from your account' }),
+      ).toBeInTheDocument();
+    });
+
+    it('renders the delivery policy in Arabic, chrome included', async () => {
+      requestLocale.value = 'ar';
+      render(await PublicLaunchPage({ slug: PublicLaunchPageSlug.DELIVERY_SHIPPING }));
+
+      expect(screen.getByRole('navigation', { name: 'في هذه الصفحة' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { level: 2, name: 'ClawAI خدمة رقمية' }),
+      ).toBeInTheDocument();
+      expect(screen.getByText(/تاريخ السريان/)).toBeInTheDocument();
+      expect(screen.getByText('Cairo, Egypt')).toBeInTheDocument();
+    });
   });
 });

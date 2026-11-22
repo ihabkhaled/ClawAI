@@ -5788,6 +5788,17 @@ export const hi: TranslationDictionary = {
       socialLinkedin: 'LinkedIn',
       socialDiscord: 'Discord',
       featuresHeading: 'सुविधाएँ',
+      companyHeading: 'कंपनी और कानूनी जानकारी',
+      linkAbout: 'हमारे बारे में',
+      linkContact: 'संपर्क करें',
+      linkPrivacy: 'गोपनीयता नीति',
+      linkTerms: 'उपयोग की शर्तें',
+      linkDeliveryShipping: 'डिलीवरी और शिपिंग',
+      linkRefundCancellation: 'रिफ़ंड और रद्दीकरण',
+      linkCookies: 'कुकी नीति',
+      linkAcceptableUse: 'स्वीकार्य उपयोग',
+      emailLabel: 'ईमेल',
+      addressLabel: 'पता',
     },
     notFound: {
       title: 'पृष्ठ नहीं मिला',
@@ -5905,6 +5916,12 @@ export const hi: TranslationDictionary = {
       errorInvalid: 'कृपया फ़ॉर्म जांचें और पुनः प्रयास करें।',
       errorRateLimited: 'बहुत अधिक संदेश। कृपया पुनः प्रयास करने से पहले थोड़ी प्रतीक्षा करें।',
       errorGeneric: 'आपका संदेश भेजने में कुछ गड़बड़ हुई। कृपया पुनः प्रयास करें।',
+      directHeading: 'हमसे सीधे संपर्क करें',
+      directEmailLabel: 'ईमेल',
+      phoneLabel: 'फ़ोन',
+      addressLabel: 'पता',
+      addressNote:
+        'ClawAI एक ऑनलाइन सेवा है। आगंतुकों के लिए कोई कार्यालय नहीं है, इसलिए कृपया हमसे ईमेल से संपर्क करें।',
     },
     home: {
       codingAgent: {
@@ -5974,6 +5991,8 @@ export const hi: TranslationDictionary = {
         toggleYearly: 'वार्षिक',
         linkFaq: 'बिलिंग से जुड़े सवाल? FAQ पढ़ें',
         linkUseCases: 'देखें लोग ClawAI से क्या बनाते हैं',
+        linkRefundPolicy: 'रिफ़ंड और रद्दीकरण नीति',
+        linkDeliveryPolicy: 'डिलीवरी और शिपिंग नीति',
       },
       enterprise: {
         eyebrow: 'लोकल-फ़र्स्ट और निजी',

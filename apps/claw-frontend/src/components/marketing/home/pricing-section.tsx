@@ -79,6 +79,18 @@ export function PricingSection({
         <Link href={MARKETING_HOME_PATHS.USE_CASES} className="text-primary hover:underline">
           {controller.t('marketing.home.pricing.linkUseCases')}
         </Link>
+        <Link
+          href={MARKETING_HOME_PATHS.REFUND_CANCELLATION}
+          className="text-primary hover:underline"
+        >
+          {controller.t('marketing.home.pricing.linkRefundPolicy')}
+        </Link>
+        <Link
+          href={MARKETING_HOME_PATHS.DELIVERY_SHIPPING}
+          className="text-primary hover:underline"
+        >
+          {controller.t('marketing.home.pricing.linkDeliveryPolicy')}
+        </Link>
       </div>
     </section>
   );

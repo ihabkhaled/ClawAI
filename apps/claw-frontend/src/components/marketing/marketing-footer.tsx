@@ -7,6 +7,11 @@ import { MarketingLocaleSwitcher } from '@/components/marketing/marketing-locale
 import { Button } from '@/components/ui/button';
 import { APP_VERSION, MARKETING_GITHUB_URL, ROUTES } from '@/constants';
 import { COMPARISON_HUB_PATH } from '@/constants/public-comparison.constants';
+import {
+  PUBLIC_COMPANY_ADDRESS,
+  PUBLIC_CONTACT_EMAIL,
+  PUBLIC_CONTACT_EMAIL_HREF,
+} from '@/constants/public-contact.constants';
 import { THREADS_PUBLIC_BOARD_PATH } from '@/constants/thread-board-guest.constants';
 import { useLocalizedHref } from '@/hooks/common/use-localized-href';
 import { useTranslation } from '@/lib/i18n';
@@ -23,6 +28,7 @@ import { getConfiguredSocialLinks } from '@/utilities/social-links.utility';
 // unchanged; only the origin of the data moved.
 export function MarketingFooter({
   explorePages,
+  companyLinks,
   featurePages,
   comparisons,
   comparisonsHeading,
@@ -36,7 +42,7 @@ export function MarketingFooter({
   return (
     <footer data-no-print className="border-border bg-surface-shell border-t">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-6">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-7">
           <div className="sm:col-span-2 lg:col-span-2">
             <Link href="/" className="flex items-center gap-2 font-semibold">
               <Image src="/claw-logo.png" alt="" width={28} height={28} aria-hidden="true" />
@@ -141,11 +147,6 @@ export function MarketingFooter({
                 </Link>
               </li>
               <li>
-                <Link href={ROUTES.CONTACT} className="hover:text-foreground">
-                  {t('marketing.footer.enterpriseContact')}
-                </Link>
-              </li>
-              <li>
                 <Button
                   type="button"
                   variant="unstyled"
@@ -157,6 +158,32 @@ export function MarketingFooter({
                 </Button>
               </li>
             </ul>
+          </div>
+          <div>
+            <h2 className="text-foreground text-sm font-semibold">
+              {t('marketing.footer.companyHeading')}
+            </h2>
+            <ul className="text-muted-foreground mt-3 space-y-2 text-sm">
+              {companyLinks.map((link) => (
+                <li key={link.canonicalPath}>
+                  <Link href={link.canonicalPath} className="hover:text-foreground">
+                    {t(link.labelKey)}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <div className="text-muted-foreground mt-4 space-y-1 text-sm">
+              <p>
+                <span className="sr-only">{t('marketing.footer.addressLabel')}: </span>
+                {PUBLIC_COMPANY_ADDRESS}
+              </p>
+              <p>
+                <span className="sr-only">{t('marketing.footer.emailLabel')}: </span>
+                <a href={PUBLIC_CONTACT_EMAIL_HREF} className="hover:text-foreground break-all">
+                  {PUBLIC_CONTACT_EMAIL}
+                </a>
+              </p>
+            </div>
           </div>
         </div>
 

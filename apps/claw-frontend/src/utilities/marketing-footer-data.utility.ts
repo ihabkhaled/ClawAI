@@ -1,4 +1,5 @@
 import {
+  MARKETING_FOOTER_COMPANY_LINKS,
   MARKETING_FOOTER_EXPLORE_PATHS,
   MARKETING_FOOTER_FEATURE_PATHS,
 } from '@/constants/marketing-footer.constants';
@@ -24,10 +25,15 @@ import { buildComparisonRailItems, getComparisonContent } from './public-compari
 export function buildMarketingFooterData(locale: Locale): MarketingFooterProps {
   const comparisonContent = getComparisonContent(locale);
   const publishedPages = getPublishedPagesForLocale(locale);
+  const publishedPaths = new Set(publishedPages.map((page) => page.canonicalPath));
   return {
     explorePages: publishedPages
       .filter((page) => MARKETING_FOOTER_EXPLORE_PATHS.has(page.canonicalPath))
       .map((page) => ({ slug: page.slug, canonicalPath: page.canonicalPath, title: page.title })),
+    // Company & legal: ordered by the footer constant, PUBLISHED paths only.
+    companyLinks: MARKETING_FOOTER_COMPANY_LINKS.filter((link) =>
+      publishedPaths.has(link.path),
+    ).map((link) => ({ canonicalPath: link.path, labelKey: link.labelKey })),
     // Ordered by the footer constant, not the registry, and silently dropping
     // any path that is not PUBLISHED — a footer link is never a 404.
     featurePages: MARKETING_FOOTER_FEATURE_PATHS.flatMap((path) =>

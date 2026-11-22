@@ -26,6 +26,7 @@ vi.mock('@/components/marketing/marketing-theme-toggle', () => ({
 
 const footerProps = {
   explorePages: [],
+  companyLinks: [],
   featurePages: [],
   comparisons: [],
   comparisonsHeading: 'c',

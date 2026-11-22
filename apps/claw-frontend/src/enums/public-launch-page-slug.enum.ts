@@ -7,4 +7,6 @@ export enum PublicLaunchPageSlug {
   TERMS = 'terms',
   COOKIES = 'cookies',
   ACCEPTABLE_USE = 'acceptable-use',
+  DELIVERY_SHIPPING = 'delivery-shipping',
+  REFUND_CANCELLATION = 'refund-cancellation',
 }

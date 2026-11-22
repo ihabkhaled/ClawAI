@@ -60,6 +60,7 @@ import {
   COMPARISON_RIVAL_ORDER,
   COMPARISON_SLUG_BY_RIVAL,
 } from '@/constants/public-comparison.constants';
+import { PUBLIC_COMMERCE_POLICY_EFFECTIVE_DATE } from '@/constants/public-contact.constants';
 import { resolvePublicPageSeo } from '@/constants/public-page-seo-registry.constants';
 import { THREADS_MARKETING_PATH } from '@/constants/threads-marketing.constants';
 import {
@@ -79,6 +80,7 @@ import {
 } from '@/enums';
 import { LaunchPublicPageSlug } from '@/enums/launch-public-page-slug.enum';
 import { Locale } from '@/enums/locale.enum';
+import { PublicLaunchPageSlug } from '@/enums/public-launch-page-slug.enum';
 import type {
   ContentRegistryEntry,
   LocalizedContentMetadata,
@@ -194,6 +196,28 @@ const PUBLISHED_CONTENT_CONFIGS: ReadonlyArray<PublishedContentConfig> = [
     feedEligibility: FeedEligibility.NOT_PUBLISHABLE,
     structuredDataType: StructuredDataType.WEB_PAGE,
     relatedSlugs: ['privacy', 'terms'],
+  },
+  // The commerce policies (delivery, refund): legal, not news, and dated by
+  // their own effective date rather than the launch review date.
+  {
+    slug: PublicLaunchPageSlug.DELIVERY_SHIPPING,
+    path: '/delivery-shipping',
+    category: ContentCategory.LEGAL,
+    adEligibility: AdEligibility.INELIGIBLE,
+    feedEligibility: FeedEligibility.NOT_PUBLISHABLE,
+    structuredDataType: StructuredDataType.WEB_PAGE,
+    relatedSlugs: ['refund-cancellation', 'terms', 'pricing'],
+    reviewDate: PUBLIC_COMMERCE_POLICY_EFFECTIVE_DATE,
+  },
+  {
+    slug: PublicLaunchPageSlug.REFUND_CANCELLATION,
+    path: '/refund-cancellation',
+    category: ContentCategory.LEGAL,
+    adEligibility: AdEligibility.INELIGIBLE,
+    feedEligibility: FeedEligibility.NOT_PUBLISHABLE,
+    structuredDataType: StructuredDataType.WEB_PAGE,
+    relatedSlugs: ['delivery-shipping', 'terms', 'pricing'],
+    reviewDate: PUBLIC_COMMERCE_POLICY_EFFECTIVE_DATE,
   },
   {
     slug: LaunchPublicPageSlug.FAQ,

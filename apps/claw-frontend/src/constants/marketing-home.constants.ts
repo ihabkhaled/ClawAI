@@ -14,6 +14,8 @@ export const MARKETING_HOME_PATHS = {
   FAQ: '/faq',
   CONTACT: '/contact',
   PRICING: '/pricing',
+  REFUND_CANCELLATION: '/refund-cancellation',
+  DELIVERY_SHIPPING: '/delivery-shipping',
   PAY_AS_YOU_GO: '/features/pay-as-you-go-credit',
   ADMINISTRATION: '/features/administration-and-access-control',
 } as const;

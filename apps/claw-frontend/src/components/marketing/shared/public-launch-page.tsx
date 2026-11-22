@@ -3,6 +3,7 @@ import Link from 'next/link';
 
 import { MarketingAdUnit } from '@/components/adsense/marketing-ad-unit';
 import { ModelRosterSection } from '@/components/marketing/home/model-roster-section';
+import { CompanyContactCard } from '@/components/marketing/shared/company-contact-card';
 import { EditorialPageShell } from '@/components/marketing/shared/editorial-page-shell';
 import { EditorialSectionNav } from '@/components/marketing/shared/editorial-section-nav';
 import { EvidenceNote } from '@/components/marketing/shared/evidence-note';
@@ -14,8 +15,10 @@ import {
   PUBLIC_LAUNCH_LABELS_BY_LOCALE,
 } from '@/constants/public-launch-content.constants';
 import {
+  COMPANY_DETAILS_PUBLIC_LAUNCH_SLUGS,
   LEGAL_PUBLIC_LAUNCH_SLUGS,
   PUBLIC_LAUNCH_EFFECTIVE_DATE,
+  PUBLIC_LAUNCH_EFFECTIVE_DATE_BY_SLUG,
 } from '@/constants/public-launch-page.constants';
 import { MarketingScenePage } from '@/enums/marketing-scene-page.enum';
 import { PublicLaunchPageSlug } from '@/enums/public-launch-page-slug.enum';
@@ -95,6 +98,7 @@ export async function PublicLaunchPage({
     lastReviewed: registryEntry?.lastReviewed ?? PUBLIC_LAUNCH_EFFECTIVE_DATE,
   });
   const slots = getAdSenseSlots();
+  const effectiveDate = PUBLIC_LAUNCH_EFFECTIVE_DATE_BY_SLUG[slug] ?? PUBLIC_LAUNCH_EFFECTIVE_DATE;
 
   return (
     <>
@@ -108,7 +112,7 @@ export async function PublicLaunchPage({
         <div className="space-y-14">
           <p className="text-muted-foreground font-mono text-xs font-semibold tracking-wider uppercase">
             {LEGAL_PUBLIC_LAUNCH_SLUGS.has(slug) ? labels.effectiveDate : labels.lastReviewed}:{' '}
-            <time dateTime={PUBLIC_LAUNCH_EFFECTIVE_DATE}>{PUBLIC_LAUNCH_EFFECTIVE_DATE}</time>
+            <time dateTime={effectiveDate}>{effectiveDate}</time>
           </p>
 
           {slug === PublicLaunchPageSlug.SECURITY_AND_PRIVACY ? (
@@ -157,6 +161,16 @@ export async function PublicLaunchPage({
                 description: labels.compareDescription,
               }}
               receipt={{ label: labels.receipt, description: labels.receiptDescription }}
+            />
+          ) : null}
+
+          {COMPANY_DETAILS_PUBLIC_LAUNCH_SLUGS.has(slug) ? (
+            <CompanyContactCard
+              title={labels.companyDetailsTitle}
+              emailLabel={labels.emailLabel}
+              phoneLabel={labels.phoneLabel}
+              addressLabel={labels.addressLabel}
+              note={labels.addressNote}
             />
           ) : null}
 

@@ -1,10 +1,12 @@
 'use client';
 
+import { CompanyContactCard } from '@/components/marketing/shared/company-contact-card';
 import { useTranslation } from '@/lib/i18n';
 
 import { ContactForm } from './contact-form';
 
-// Client section for the contact page: localized heading + subtitle around the
+// Client section for the contact page: localized heading + subtitle, the
+// company's direct contact details (email, optional phone, address), then the
 // form. The server page owns metadata/SEO; this owns the translated copy
 // (useTranslation is client-only).
 export function ContactSection(): React.ReactElement {
@@ -19,6 +21,15 @@ export function ContactSection(): React.ReactElement {
         <p className="text-muted-foreground mx-auto mt-3 max-w-xl text-base">
           {t('marketing.contact.subtitle')}
         </p>
+      </div>
+      <div className="mb-8">
+        <CompanyContactCard
+          title={t('marketing.contact.directHeading')}
+          emailLabel={t('marketing.contact.directEmailLabel')}
+          phoneLabel={t('marketing.contact.phoneLabel')}
+          addressLabel={t('marketing.contact.addressLabel')}
+          note={t('marketing.contact.addressNote')}
+        />
       </div>
       <ContactForm />
     </section>

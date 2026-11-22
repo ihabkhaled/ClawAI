@@ -21,6 +21,8 @@
         "http://localhost:3000/en/security-and-privacy",
         "http://localhost:3000/en/supported-models",
         "http://localhost:3000/en/terms",
+        "http://localhost:3000/en/delivery-shipping",
+        "http://localhost:3000/en/refund-cancellation",
         "http://localhost:3000/en/threads/discover",
         "http://localhost:3000/en/threads/board",
         "http://localhost:3000/en/compare",

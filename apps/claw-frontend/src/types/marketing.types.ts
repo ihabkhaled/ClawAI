@@ -143,8 +143,14 @@ export type UsePricingToggleReturn = {
  * the shared client chunk. The rendered markup is unchanged; only where the
  * data is computed moved.
  */
+export type MarketingFooterCompanyLinkConfig = {
+  path: string;
+  labelKey: string;
+};
+
 export type MarketingFooterProps = {
   explorePages: { slug: string; canonicalPath: string; title: string }[];
+  companyLinks: { canonicalPath: string; labelKey: string }[];
   featurePages: { slug: string; canonicalPath: string; title: string }[];
   comparisons: { rival: string; path: string; summary: string }[];
   comparisonsHeading: string;

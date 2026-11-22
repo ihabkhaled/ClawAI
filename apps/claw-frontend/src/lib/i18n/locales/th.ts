@@ -5706,6 +5706,17 @@ export const th: TranslationDictionary = {
       socialLinkedin: 'ลิงค์อิน',
       socialDiscord: 'ความไม่ลงรอยกัน',
       featuresHeading: 'ฟีเจอร์',
+      companyHeading: 'บริษัทและข้อกฎหมาย',
+      linkAbout: 'เกี่ยวกับเรา',
+      linkContact: 'ติดต่อเรา',
+      linkPrivacy: 'นโยบายความเป็นส่วนตัว',
+      linkTerms: 'ข้อกำหนดการใช้งาน',
+      linkDeliveryShipping: 'การส่งมอบและการจัดส่ง',
+      linkRefundCancellation: 'การคืนเงินและการยกเลิก',
+      linkCookies: 'นโยบายคุกกี้',
+      linkAcceptableUse: 'การใช้งานที่ยอมรับได้',
+      emailLabel: 'อีเมล',
+      addressLabel: 'ที่อยู่',
     },
     notFound: {
       title: 'ไม่พบหน้า',
@@ -5822,6 +5833,11 @@ export const th: TranslationDictionary = {
       errorInvalid: 'โปรดตรวจสอบแบบฟอร์มแล้วลองอีกครั้ง',
       errorRateLimited: 'มีข้อความมากเกินไปโปรดรอสักครู่ก่อนลองอีกครั้ง',
       errorGeneric: 'เกิดข้อผิดพลาดในการส่งข้อความของคุณโปรดลองอีกครั้ง',
+      directHeading: 'ติดต่อเราโดยตรง',
+      directEmailLabel: 'อีเมล',
+      phoneLabel: 'โทรศัพท์',
+      addressLabel: 'ที่อยู่',
+      addressNote: 'ClawAI เป็นบริการออนไลน์ ไม่มีสำนักงานสำหรับผู้มาเยือน โปรดติดต่อเราทางอีเมล',
     },
     home: {
       codingAgent: {
@@ -5889,6 +5905,8 @@ export const th: TranslationDictionary = {
         toggleYearly: 'เป็นประจำทุกปี',
         linkFaq: 'คำถามเกี่ยวกับการเรียกเก็บเงิน?อ่านคำถามที่พบบ่อย',
         linkUseCases: 'ดูว่าผู้คนสร้างอะไรด้วย ClawAI',
+        linkRefundPolicy: 'นโยบายการคืนเงินและการยกเลิก',
+        linkDeliveryPolicy: 'นโยบายการส่งมอบและการจัดส่ง',
       },
       enterprise: {
         eyebrow: 'เน้นทำงานในเครื่องและเป็นส่วนตัว',

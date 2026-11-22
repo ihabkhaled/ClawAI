@@ -925,3 +925,13 @@ cluster rules above rather than adding a new mechanism:
   and absent from the sitemap. `robots.test.ts` pins that `/board` is blocked and `/threads/board` is not.
 - **Audit lists.** `lighthouserc.json`, `lighthouserc.pr.json` and `apps/claw-frontend/scripts/responsive-audit/audit.cjs` include the page;
   `lighthouse-coverage.test.ts` fails if an indexable page is missing from the Lighthouse set.
+
+## Company, contact and commerce policy pages (2026-11-22)
+
+Owner order: the public site always exposes Contact (email, optional phone), the company address ("Cairo, Egypt" only, there is no office), About, Privacy, Delivery & Shipping and Refund & Cancellation, each reachable from the footer.
+
+- **Constants:** `src/constants/public-contact.constants.ts` holds `PUBLIC_CONTACT_EMAIL` (`admin@claw-ai.co`), `PUBLIC_CONTACT_PHONE` (`null` until the owner supplies one; the phone row and JSON-LD telephone render only when set) and `PUBLIC_COMPANY_ADDRESS` (Cairo, EG).
+- **Pages:** `/contact`, `/about` (adds the company details card), `/privacy`, `/terms`, `/cookies`, `/acceptable-use`, and the new `/delivery-shipping` and `/refund-cancellation` (slugs in `PublicLaunchPageSlug`, indexable legal entries in the content registry, in `lighthouserc.json` and `lighthouserc.pr.json`; sitemap and `llms.txt` come from the registry).
+- **Copy:** the two new policies, the contact/footer/pricing labels and their SEO text are translated in all 13 locales (`public-commerce-policy-content/<locale>.constants.ts`). The older legal bodies (privacy, terms, cookies, acceptable use) are still English in every locale: open item.
+- **Footer:** a "Company & legal" column links all eight pages plus the address and email. JSON-LD Organization carries email, address and ContactPoint.
+- **Policy terms** (owner decision): digital delivery only; cancel anytime, access until the paid period ends, no refund of the used period, refunds only for billing errors or by law. Open: unspent purchased PAYG credit is refundable per `docs/business/credit-refund-and-reversal.md`, which the policy does not yet mention.

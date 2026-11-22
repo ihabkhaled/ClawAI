@@ -18,7 +18,13 @@ import { MODEL_FIT_TASK_ORDER, getModelFitTaskPath } from '@/constants/model-fit
 import { MODEL_PROVIDER_ORDER, getModelProviderPath } from '@/constants/models.constants';
 import { PROMPT_GUIDE_TOPIC_ORDER, getPromptGuideTopicPath } from '@/constants/prompts.constants';
 import { USE_CASES_TASK_ORDER, getUseCaseTaskPath } from '@/constants/use-cases-cluster.constants';
-import { ContentLifecycleStatus, ContentReviewStatus, Indexability, AdEligibility } from '@/enums';
+import {
+  AdEligibility,
+  ContentCategory,
+  ContentLifecycleStatus,
+  ContentReviewStatus,
+  Indexability,
+} from '@/enums';
 import { Locale } from '@/enums/locale.enum';
 import {
   getAdEligiblePages,
@@ -108,6 +114,7 @@ describe('content registry integrity', () => {
       '/compare/qwen',
       '/contact',
       '/cookies',
+      '/delivery-shipping',
       '/faq',
       '/features',
       '/features/threads',
@@ -120,6 +127,7 @@ describe('content registry integrity', () => {
       '/pricing',
       '/privacy',
       '/prompts',
+      '/refund-cancellation',
       '/security-and-privacy',
       '/supported-models',
       '/terms',
@@ -212,9 +220,10 @@ describe('localized publication boundary', () => {
     // per provider + the /model-fit hub + one page per task + one page per
     // /use-cases task (the /use-cases hub itself is already one of the 29
     // launch pages, unchanged by this cluster) + the /compare/models hub +
-    // one page per family pair.
+    // one page per family pair. 33 = the 31 standalone pages plus the two
+    // commerce policies (/delivery-shipping, /refund-cancellation).
     const expectedCount =
-      31 +
+      33 +
       LEARN_TOPIC_ORDER.length +
       1 +
       INTEGRATION_TOPIC_ORDER.length +
@@ -262,6 +271,19 @@ describe('localized publication boundary', () => {
           expect(page.description).not.toBe(englishPage?.description);
         }
       }
+    }
+  });
+
+  it('publishes the two commerce policies as indexable legal pages in every locale', () => {
+    for (const slug of ['delivery-shipping', 'refund-cancellation']) {
+      for (const locale of Object.values(Locale)) {
+        const page = getPageBySlugAndLocale(slug, locale);
+        expect(page?.canonicalPath, `${locale}:${slug}`).toBe(`/${slug}`);
+        expect(page?.indexability).toBe(Indexability.INDEXABLE);
+        expect(page?.category).toBe(ContentCategory.LEGAL);
+        expect(page?.lastReviewed).toBe('2026-11-22');
+      }
+      expect(getLocalizedCanonicalPath(slug, Locale.AR)).toBe(`/ar/${slug}`);
     }
   });
 

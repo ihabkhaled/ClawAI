@@ -5,6 +5,7 @@ import { LEARN_PAGE_SEO_BY_LOCALE } from '@/constants/learn-seo.constants';
 import { MODEL_FIT_PAGE_SEO_BY_LOCALE } from '@/constants/model-fit-seo.constants';
 import { MODELS_PAGE_SEO_BY_LOCALE } from '@/constants/models-seo.constants';
 import { PROMPT_GUIDE_PAGE_SEO_BY_LOCALE } from '@/constants/prompt-guide-seo.constants';
+import { PUBLIC_COMMERCE_POLICY_SEO_BY_LOCALE } from '@/constants/public-commerce-policy-content.constants';
 import { PUBLIC_PAGE_SEO_BY_LOCALE } from '@/constants/public-page-seo.constants';
 import { THREADS_DISCOVERY_SEO_BY_LOCALE } from '@/constants/threads-discovery-seo.constants';
 import { THREADS_PUBLIC_BOARD_SEO_BY_LOCALE } from '@/constants/threads-public-board-seo.constants';
@@ -59,6 +60,7 @@ const CLUSTER_SEO_SOURCES: ReadonlyArray<LocaleSeoSource> = [
   THREADS_PUBLIC_BOARD_SEO_BY_LOCALE,
   FEATURES_CLUSTER_PAGE_SEO_BY_LOCALE,
   PROMPT_GUIDE_PAGE_SEO_BY_LOCALE,
+  PUBLIC_COMMERCE_POLICY_SEO_BY_LOCALE,
 ];
 
 /**

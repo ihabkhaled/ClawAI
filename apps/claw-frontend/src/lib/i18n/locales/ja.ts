@@ -5910,6 +5910,17 @@ export const ja: TranslationDictionary = {
       socialLinkedin: 'LinkedIn',
       socialDiscord: '不和',
       featuresHeading: '機能',
+      companyHeading: '会社情報と規約',
+      linkAbout: '会社概要',
+      linkContact: 'お問い合わせ',
+      linkPrivacy: 'プライバシーポリシー',
+      linkTerms: '利用規約',
+      linkDeliveryShipping: '提供・配送について',
+      linkRefundCancellation: '返金・解約について',
+      linkCookies: 'Cookie ポリシー',
+      linkAcceptableUse: '利用ポリシー',
+      emailLabel: 'メール',
+      addressLabel: '所在地',
     },
     notFound: {
       title: 'ページが見つかりません',
@@ -6030,6 +6041,12 @@ export const ja: TranslationDictionary = {
       errorInvalid: 'フォームを確認して再試行してください。',
       errorRateLimited: 'メッセージが多すぎます。しばらく待ってからもう一度お試しください。',
       errorGeneric: 'メッセージの送信中に問題が発生しました。もう一度試してください。',
+      directHeading: '直接のお問い合わせ',
+      directEmailLabel: 'メール',
+      phoneLabel: '電話',
+      addressLabel: '所在地',
+      addressNote:
+        'ClawAI はオンラインサービスです。来訪者向けのオフィスはありませんので、メールでお問い合わせください。',
     },
     home: {
       codingAgent: {
@@ -6101,6 +6118,8 @@ export const ja: TranslationDictionary = {
         toggleYearly: '毎年',
         linkFaq: '請求について質問がありますか?よくある質問を読む',
         linkUseCases: 'ClawAI を使って人々が何を構築しているかを見てみましょう',
+        linkRefundPolicy: '返金・解約ポリシー',
+        linkDeliveryPolicy: '提供・配送ポリシー',
       },
       enterprise: {
         eyebrow: 'ローカルファーストでプライベート',

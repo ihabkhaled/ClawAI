@@ -5663,6 +5663,17 @@ export const zh: TranslationDictionary = {
       socialLinkedin: '领英',
       socialDiscord: '不和谐',
       featuresHeading: '功能',
+      companyHeading: '公司与法律信息',
+      linkAbout: '关于我们',
+      linkContact: '联系我们',
+      linkPrivacy: '隐私政策',
+      linkTerms: '使用条款',
+      linkDeliveryShipping: '交付与配送',
+      linkRefundCancellation: '退款与取消',
+      linkCookies: 'Cookie 政策',
+      linkAcceptableUse: '可接受使用',
+      emailLabel: '电子邮件',
+      addressLabel: '地址',
     },
     notFound: {
       title: '找不到页面',
@@ -5776,6 +5787,11 @@ export const zh: TranslationDictionary = {
       errorInvalid: '请检查表格并重试。',
       errorRateLimited: '消息太多。请稍等片刻后再重试。',
       errorGeneric: '发送您的消息时出了点问题。请再试一次。',
+      directHeading: '直接联系我们',
+      directEmailLabel: '电子邮件',
+      phoneLabel: '电话',
+      addressLabel: '地址',
+      addressNote: 'ClawAI 是一项在线服务，没有对外接待访客的办公室，请通过电子邮件联系我们。',
     },
     home: {
       codingAgent: {
@@ -5842,6 +5858,8 @@ export const zh: TranslationDictionary = {
         toggleYearly: '每年',
         linkFaq: '计费问题？阅读常见问题解答',
         linkUseCases: '看看人们用 ClawAI 构建了什么',
+        linkRefundPolicy: '退款与取消政策',
+        linkDeliveryPolicy: '交付与配送政策',
       },
       enterprise: {
         eyebrow: '本地优先，私密可控',
