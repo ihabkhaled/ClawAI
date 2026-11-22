@@ -1,3 +1,4 @@
+vi.mock('@myriaddreamin/typst-ts-node-compiler', () => ({ NodeCompiler: { create: vi.fn() } }));
 import { of } from 'rxjs';
 import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
@@ -5,6 +6,7 @@ import { FileGenerationController } from '../file-generation.controller';
 import { InternalFileGenerationController } from '../internal-file-generation.controller';
 import { FileGenerationService } from '../../services/file-generation.service';
 import { FileGenerationEventsService } from '../../services/file-generation-events.service';
+import { PdfRenderService } from '../../services/pdf-render.service';
 
 describe('FileGenerationController', () => {
   let controller: FileGenerationController;
@@ -127,6 +129,7 @@ describe('InternalFileGenerationController', () => {
     retryGeneration: Mock;
   };
   let eventsMock: { subscribe: Mock };
+  let pdfMock: { render: Mock };
 
   beforeEach(async () => {
     serviceMock = {
@@ -135,11 +138,13 @@ describe('InternalFileGenerationController', () => {
       retryGeneration: vi.fn(),
     };
     eventsMock = { subscribe: vi.fn() };
+    pdfMock = { render: vi.fn().mockReturnValue(Buffer.from('%PDF-1.7')) };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [InternalFileGenerationController],
       providers: [
         { provide: FileGenerationService, useValue: serviceMock },
         { provide: FileGenerationEventsService, useValue: eventsMock },
+        { provide: PdfRenderService, useValue: pdfMock },
       ],
     }).compile();
     controller = module.get<InternalFileGenerationController>(InternalFileGenerationController);
@@ -153,6 +158,16 @@ describe('InternalFileGenerationController', () => {
     });
     const result = await controller.generate({ format: 'PDF', content: 'hi' } as never);
     expect(result).toEqual({ generationId: 'g1', status: 'QUEUED', format: 'PDF' });
+  });
+
+  it('render-pdf streams the rendered bytes with no-store and stores nothing', () => {
+    const response = { setHeader: vi.fn(), send: vi.fn() };
+    controller.renderPdf({ content: '# History', title: 'Keynote' }, response as never);
+    expect(pdfMock.render).toHaveBeenCalledWith('# History', 'Keynote');
+    expect(response.setHeader).toHaveBeenCalledWith('Content-Type', 'application/pdf');
+    expect(response.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store');
+    expect(response.send).toHaveBeenCalledWith(Buffer.from('%PDF-1.7'));
+    expect(serviceMock.enqueueGeneration).not.toHaveBeenCalled();
   });
 
   it('getGeneration forwards id', async () => {
