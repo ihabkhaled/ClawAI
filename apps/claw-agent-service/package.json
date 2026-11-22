@@ -35,7 +35,7 @@
     "@nestjs/core": "^12.5.1",
     "@nestjs/platform-express": "^12.5.1",
     "@nestjs/schedule": "^12.0.3",
-    "@nestjs/throttler": "^6.7.1",
+    "@nestjs/throttler": "^6.8.0",
     "@prisma/adapter-pg": "^7.10.1",
     "@prisma/client": "^7.10.1",
     "amqplib": "^2.4.0",
