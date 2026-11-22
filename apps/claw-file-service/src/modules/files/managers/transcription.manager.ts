@@ -63,6 +63,10 @@ import { classifyTranscriptionFailure } from '../utilities/transcription-error.u
 import { waitForTranscriptionBackoff } from '../utilities/transcription-backoff.utility';
 import { openAiTranscriptionModel } from '../utilities/transcription-model.utility';
 import { probeAudioSeconds } from '../utilities/audio-duration.utility';
+import {
+  estimateTranscriptOutputTokens,
+  holdAudioSeconds,
+} from '../utilities/transcription-payg.utility';
 
 /**
  * B6b — turns an uploaded audio file into a transcript, out of band.
@@ -601,6 +605,9 @@ export class TranscriptionManager implements OnModuleInit {
     }
     const config = await this.capabilityClient.fetchConnectorConfig(capability.provider);
     const baseUrl = config.baseUrl ?? this.defaultBaseUrl(capability.provider);
+    if (context.platformPaid === true) {
+      return this.attemptPlatformPaid(context, capability, baseUrl, config.apiKey, model);
+    }
 
     // Charged to the UPLOADER — the job's userId — per attempt. The requestId
     // is per provider CALL (`providerAttempt`), so a second model or the 429
@@ -668,6 +675,34 @@ export class TranscriptionManager implements OnModuleInit {
     }
     await this.meter.finalize(meterHold, result);
     return { status: TranscriptionAttemptStatus.COMPLETED, transcript, result };
+  }
+
+  /**
+   * ADR-221 — one candidate with NO user wallet hold: the platform pays (Live
+   * Intelligence chunk transcription). The output ceiling is the same estimate a
+   * hold would have requested, so a platform-paid call can never ask for more
+   * than a billed one. An empty answer is a RESULT here (the chunk had no
+   * speech), not a failure: retrying a silent six-second chunk on a second paid
+   * model would spend money to hear the same silence. Any other provider error
+   * throws exactly as the metered path does, so the walk classifies it.
+   */
+  private async attemptPlatformPaid(
+    context: TranscriptionRequestContext,
+    capability: TranscriptionCapability,
+    baseUrl: string,
+    apiKey: string,
+    model: string,
+  ): Promise<TranscriptionAttemptOutcome> {
+    const seconds = holdAudioSeconds(context.sizeBytes, context.audioSeconds);
+    const result = await this.callProvider(
+      capability.provider,
+      baseUrl,
+      apiKey,
+      context,
+      model,
+      estimateTranscriptOutputTokens(seconds),
+    );
+    return { status: TranscriptionAttemptStatus.COMPLETED, transcript: result.text.trim(), result };
   }
 
   private async callProvider(

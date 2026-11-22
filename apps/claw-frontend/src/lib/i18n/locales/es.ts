@@ -6,6 +6,7 @@ import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { FILE_LIBRARY_TRANSLATIONS } from './file-library-translations';
+import { LIVE_TRANSLATIONS } from './live-translations';
 import { MARKETING_VIDEOS_TRANSLATIONS } from './marketing-videos-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
@@ -5033,6 +5034,7 @@ export const es: TranslationDictionary = {
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.es,
   pickedModel: PICKED_MODEL_TRANSLATIONS.es,
   creditFallback: CREDIT_FALLBACK_TRANSLATIONS.es,
+  live: LIVE_TRANSLATIONS.es,
   mediaUi: MEDIA_UI_TRANSLATIONS.es,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.es,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.es,
@@ -5665,6 +5667,7 @@ export const es: TranslationDictionary = {
         ROUTING: 'Enrutamiento',
         TRANSCRIPTION: 'Transcripción',
         TRANSCRIPTION_READ: 'Lectura de transcripción de audio/vídeo',
+        LIVE_INTELLIGENCE: 'Live Intelligence (análisis de transmisiones en directo)',
         VISION_HELPER: 'Asistente de descripción de imágenes',
         THREADS: 'Publicaciones de Threads',
         TTS: 'Lectura en voz alta (texto a voz)',

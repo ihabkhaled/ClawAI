@@ -198,6 +198,7 @@ export class PaygMeter {
         // A Threads call names its job budget so auth sizes the hold to what is left of the cap.
         ...(input.threadJobBudgetId ? { threadJobBudgetId: input.threadJobBudgetId } : {}),
         ...PaygMeter.unitWire(input),
+        ...PaygMeter.fixedCostWire(input.fixedCostMicroUsd),
       });
     } catch (error) {
       if (error instanceof PaygCreditExhaustedError) {
@@ -284,6 +285,7 @@ export class PaygMeter {
           toolCalls: Math.max(0, Math.floor(calls.toolCalls ?? 0)),
           searchCalls: Math.max(0, Math.floor(calls.searchCalls ?? 0)),
           ...PaygMeter.unitWire(calls),
+          ...PaygMeter.fixedCostWire(calls.fixedCostMicroUsd),
         }),
       );
     } catch {
@@ -449,6 +451,18 @@ export class PaygMeter {
       ...(ttsCharacters > 0 ? { ttsCharacters } : {}),
       ...(videoSeconds > 0 ? { videoSeconds } : {}),
     };
+  }
+
+  /**
+   * A fixed price on the wire. Present whenever the caller set one, ZERO
+   * INCLUDED (a free minute is still a stated price, and auth requires the
+   * field on a fixed-price surface); rounded UP so a fraction is never
+   * under-charged. Absent otherwise, so every other call's body is unchanged.
+   */
+  private static fixedCostWire(fixedCostMicroUsd: number | undefined): Record<string, number> {
+    return fixedCostMicroUsd === undefined
+      ? {}
+      : { fixedCostMicroUsd: Math.max(0, Math.ceil(fixedCostMicroUsd)) };
   }
 
   private static narrowReason(reason: string): PaygHold['reason'] {

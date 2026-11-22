@@ -30,6 +30,10 @@ import {
   getLearnTopicSlug,
 } from '@/constants/learn.constants';
 import {
+  LIVE_INTELLIGENCE_MARKETING_PATH,
+  LIVE_INTELLIGENCE_SLUG,
+} from '@/constants/live-intelligence-marketing.constants';
+import {
   MODEL_FIT_HUB_PATH,
   MODEL_FIT_HUB_SLUG,
   MODEL_FIT_REVIEW_DATE,
@@ -342,6 +346,17 @@ const PUBLISHED_CONTENT_CONFIGS: ReadonlyArray<PublishedContentConfig> = [
     structuredDataType: StructuredDataType.FAQ_PAGE,
     relatedSlugs: ['threads/discover', 'features', 'how-it-works', 'pricing'],
     reviewDate: '2026-10-07',
+  },
+  // Live Intelligence (ADR-221): the public introduction. `/live` is the signed-in portal screen.
+  {
+    slug: LIVE_INTELLIGENCE_SLUG,
+    path: LIVE_INTELLIGENCE_MARKETING_PATH,
+    category: ContentCategory.FEATURES,
+    adEligibility: AdEligibility.ELIGIBLE,
+    feedEligibility: FeedEligibility.PUBLISHABLE,
+    structuredDataType: StructuredDataType.FAQ_PAGE,
+    relatedSlugs: ['features', 'how-it-works', 'pricing', 'features/threads'],
+    reviewDate: '2026-11-22',
   },
   // Comparison hub and its rival pages. Ad-ineligible on purpose: a page whose
   // job is to be a fair, checkable comparison of named competitors does not

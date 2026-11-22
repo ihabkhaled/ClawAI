@@ -207,7 +207,7 @@ paid model, rule 1 applies to it like anything else.
     `0`) lets `CreditReservationManager` admit a call the wallet cannot cover, and ONLY then
     (credit first, allowance as the fallback) **for an unlimited allowance; a FINITE allowance is counted FIRST for a user with no purchased credit, and also with the metering switch OFF** (amended 2026-10-02: a Free account must stop at exactly the plan's number, grant or no grant, switch or no switch; no wallet is charged with the switch off). The count is ONE total across all credit connectors per user per UTC month (counter provider key `'*'`). Four things are not optional: (a) only the
     allow-listed token-priced surfaces (`FREE_ALLOWANCE_ELIGIBLE_SURFACES`) with no per-unit
-    quantity are eligible: image, video, transcription (including the billed media read `TRANSCRIPTION_READ`, ADR-216) and TTS never are, because one clip can cost
+    quantity are eligible: image, video, transcription (including the billed media read `TRANSCRIPTION_READ`, ADR-216), TTS and Live Intelligence viewing (`LIVE_INTELLIGENCE`, ADR-221) never are, because one clip can cost
     $1.60; (b) the slot is taken by one atomic `INSERT .. ON CONFLICT .. WHERE used_count < limit`
     on `credit_free_allowance_usage`, never a read-then-write; (c) the output is clamped to
     `min($0.15, plan ceiling / allowance)` so a free request is not an unbounded liability; (d) a
@@ -237,6 +237,16 @@ paid model, rule 1 applies to it like anything else.
     never caches. The caching switch is a per-model catalog row, default OFF, never an
     env var ([ADR-153](../docs/13-adr/adr-153-anthropic-prompt-caching-with-cache-write-billing.md);
     tests: `credit-cache-write.spec.ts`, `cache-write-billing.spec.ts`).
+25. **A fixed-price surface is priced by the caller's versioned policy, never by a rate.**
+    A surface in auth's `FIXED_PRICE_SURFACES` (today only `LIVE_INTELLIGENCE`) reserves
+    and finalizes with `fixedCostMicroUsd` (integer, ≤ $100) and every token, call and
+    unit count 0; it is accepted for no other surface (400 `CREDIT_FIXED_PRICE_NOT_ALLOWED`),
+    required there (400 `CREDIT_FIXED_PRICE_REQUIRED`) and never mixed with counts (400
+    `CREDIT_FIXED_PRICE_MIXED`). Reserve holds exactly that amount with no rate lookup and
+    no connector-policy check (kill switch and admin bypass still apply), never on the free
+    allowance; finalize settles `min(fixedCostMicroUsd, held)`. Fixed-price-ness is read from
+    the surface on the RESERVATION ledger row (ADR-221; tests: `credit-fixed-price.spec.ts`,
+    `payg-meter-fixed-price.spec.ts`, `live-paid-block.manager.spec.ts`).
 
 ## Prohibited patterns
 

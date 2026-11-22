@@ -5,11 +5,13 @@ import { FileChunksRepository } from '../../repositories/file-chunks.repository'
 import { FilesRepository } from '../../repositories/files.repository';
 import { FilesService } from '../../services/files.service';
 import { VideoFramesService } from '../../services/video-frames.service';
+import { TranscriptionChunkService } from '../../services/transcription-chunk.service';
 
 describe('FilesInternalController', () => {
   let controller: FilesInternalController;
   let chunksMock: { findByFileId: Mock };
   let filesRepoMock: { findById: Mock };
+  let chunkServiceMock: { transcribeChunk: Mock };
   let serviceMock: {
     downloadFilePublic: Mock;
     getFileContent: Mock;
@@ -20,6 +22,7 @@ describe('FilesInternalController', () => {
   beforeEach(async () => {
     chunksMock = { findByFileId: vi.fn() };
     filesRepoMock = { findById: vi.fn() };
+    chunkServiceMock = { transcribeChunk: vi.fn() };
     serviceMock = {
       downloadFilePublic: vi.fn(),
       getFileContent: vi.fn(),
@@ -33,6 +36,7 @@ describe('FilesInternalController', () => {
         { provide: FilesRepository, useValue: filesRepoMock },
         { provide: FilesService, useValue: serviceMock },
         { provide: VideoFramesService, useValue: { getFrames: vi.fn() } },
+        { provide: TranscriptionChunkService, useValue: chunkServiceMock },
       ],
     }).compile();
     controller = module.get<FilesInternalController>(FilesInternalController);
@@ -54,6 +58,15 @@ describe('FilesInternalController', () => {
     await expect(controller.deleteInternal('f1', { userId: 'u2' } as never)).rejects.toThrow(
       'Forbidden',
     );
+  });
+
+  // ADR-221: the platform-paid Live Intelligence chunk route is a thin pass-through.
+  it('transcribeChunk delegates the validated body to TranscriptionChunkService', async () => {
+    const body = { contentBase64: 'UklGRg==', mimeType: 'audio/wav', requestId: 'live:r:1' };
+    const result = { text: 'hi', noSpeech: false };
+    chunkServiceMock.transcribeChunk.mockResolvedValue(result);
+    await expect(controller.transcribeChunk(body)).resolves.toBe(result);
+    expect(chunkServiceMock.transcribeChunk).toHaveBeenCalledWith(body);
   });
 
   it('getChunks delegates to FileChunksRepository.findByFileId', async () => {

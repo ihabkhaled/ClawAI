@@ -59,6 +59,9 @@ export const USER_DEFAULT_PERMISSIONS: Permission[] = [
   Permission.COST_ENSEMBLE_USE,
   Permission.ROLE_PACK_USE,
   Permission.FEEDBACK_SUBMIT,
+  // Live Intelligence (ADR-221): every signed-in plan may watch; the plan's free
+  // monthly seconds and the PAYG meter limit it. ADMIN_LIVE_MANAGE is ADMIN-only.
+  Permission.LIVE_USE,
   // Buying PAYG credit is self-service, like every other USER grant here. The
   // credit PACKAGE list is gated on this permission because that list is the
   // purchase entry point — without the grant the top-up page would render an

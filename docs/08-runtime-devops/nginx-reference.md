@@ -133,6 +133,14 @@ All routes are prefixed with `/api/v1/`. Nginx uses dynamic variables for upstre
 | ------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `/api/v1/plugins/*` | `https://plugin-service:4021` | Catalog, installs, consent, credentials, admin. `/api/v1/internal/*` is never routed (closed by the 404 block) |
 
+### Live Service (port 4022)
+
+| Frontend Path                      | Backend Destination         | Notes                                                                                                     |
+| ---------------------------------- | --------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `/api/v1/live/sessions/:id/stream` | `https://live-service:4022` | Server-Sent Events: regex location, `proxy_buffering off`, 86400 s read timeout, placed before the prefix |
+| `/api/v1/live/streams/:id/hls/*`   | `https://live-service:4022` | Same-origin HLS proxy: regex location, `proxy_buffering off`                                              |
+| `/api/v1/live/*`                   | `https://live-service:4022` | Sessions, history, usage, admin. `/api/v1/internal/*` is never routed (closed by the 404 block)           |
+
 ---
 
 ## SSE (Server-Sent Events) Configuration

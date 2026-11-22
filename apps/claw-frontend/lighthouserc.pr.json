@@ -29,7 +29,7 @@
         "http://localhost:3000/en/compare/chatgpt",
         "http://localhost:3000/en/coding-agent",
         "http://localhost:3000/en/coding-agent/install",
-        "http://localhost:3000/en/features/threads",
+        "http://localhost:3000/en/features/live-intelligence",
         "http://localhost:3000/en/learn",
         "http://localhost:3000/en/learn/how-language-models-generate-answers",
         "http://localhost:3000/en/integrations",

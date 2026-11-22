@@ -94,6 +94,7 @@ HOSTS=(
   threads-service
   thread-generation-service
   plugin-service
+  live-service
 )
 
 # Append the user-configured hostname. mkcert handles both DNS names and

@@ -6,4 +6,6 @@ export enum TranscriptionMetricSource {
   VIDEO_AUDIO = 'VIDEO_AUDIO',
   /** The stateless billed read (`POST /files/transcribe-text`): nothing is stored. */
   READ = 'READ',
+  /** ADR-221 — a platform-paid Live Intelligence chunk (`/internal/files/transcribe-chunk`). */
+  LIVE_CHUNK = 'LIVE_CHUNK',
 }

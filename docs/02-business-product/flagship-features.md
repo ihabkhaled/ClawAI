@@ -254,6 +254,26 @@ The ranked improvement backlog (release blockers first) is in
 
 The Threads Board (signed-in browse and search at `/board`, no author names on cards, noindex, language filter defaults to the UI locale) and its public read-only twin for guests at `/threads/board` (same smart search, indexable, every action shows a sign-in prompt) are code in progress and not verified live; see the [Threads product spec](clawai-threads-product-spec.md) and [ADR-178](../13-adr/adr-178-the-board-is-a-portal-surface-seo-stays-on-threads-slug.md).
 
+## 17. Live Intelligence — Partial (built, dev-stack verified 2026-11-22; not deployed)
+
+Live captions, summary cards and highlights for a live stream, with shared processing
+(many viewers, one analysis). Spec: [live-intelligence-spec.md](live-intelligence-spec.md);
+decision: [ADR-221](../13-adr/adr-221-live-intelligence-shared-live-stream-analysis.md).
+
+| Claim on the public page                                                                     | Evidence                                                                                                            | Limit the copy must respect                                                              |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Page at `/features/live-intelligence`, 13 locales, FAQPage data                              | `live-intelligence-overview-page.tsx`, `live-intelligence-marketing-content/`, `live-intelligence-seo.constants.ts` | No screenshots or video yet: the page makes no visual claim until real captures exist    |
+| AI analysis runs on HLS streams the user may analyze; YouTube plays but is never analyzed    | spec, owner decision 1                                                                                              | Never imply YouTube analysis; the page says so in the sources section and the FAQ        |
+| Captions arrive about 7-12 s behind the speech                                               | spec, owner decision 3                                                                                              | Never say real time or instant                                                           |
+| Free minutes a month: Free 30, Starter 120, Plus 300, Pro and above 600; then $0.02 a minute | spec decision 4; `live-intelligence-marketing.constants.ts`                                                         | Seeded defaults, admin-editable; Plus and team/scale/unlimited are owner-unconfirmed (¹) |
+
+Verified on the dev stack 2026-11-22: API smoke 28/28, billing journey 9/9, 100 concurrent viewers on one run, 10 YouTube
+channels (6 played, 4 YouTube "unavailable" with the fallback link), browser desktop and mobile pause, resume and
+captions. Not done: no production deploy, the 3 s caption target is not met by design, no native-speaker translation
+review, marketing media pending. Record: [change](../changes/2026-11-22-live-intelligence.md).
+
+The page ships ahead of the feature's release: confirm the plan minutes against the admin page and
+retake any media before launch.
 ---
 
 ## Known documentation drift found by this audit

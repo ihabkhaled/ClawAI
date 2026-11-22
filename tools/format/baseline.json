@@ -686,8 +686,6 @@
     "docs/11-runbooks/runbook-workspace-automation.md": "cc3add02ab554129daf1f51c6cfe9031c17a50ff0cbb4c5cb9a813786b9cffd2",
     "docs/11-runbooks/troubleshoot-tls.md": "1171a6813a938da00c8b79c84dc541483df9b5a83b3708aab8eaf2fbbbdd3c95",
     "docs/12-reference/api-reference-auth.md": "c25e57c73cd405c95cee3ce08017b106089f576ebacca352b1ff425576179288",
-    "docs/12-reference/api-reference-filegen.md": "ac64ee46d76a68ae1e6f7023708d00d46f2b0902bd5a62f648f4aed7673f02ba",
-    "docs/12-reference/api-reference-files.md": "709a62d23775b8addd4bccff7304747a8f72053f9f0b78d7a77fa8692ec6f0b0",
     "docs/12-reference/api-reference-memory.md": "66fc6d020daa6bc9f9be48e0e6876e188fa5d892af1c2d28b528f39909e5bbbf",
     "docs/12-reference/api-reference-ollama.md": "e5f5d83d02e8dbe1d9c44549c49c062ade14c59f63ef6cc6915366b8fa37d909",
     "docs/12-reference/api-reference-workspace.md": "f5c596bd7aacb94e91a6575a995d4b0851b53c59def031b2f8f789a2d934cd24",

@@ -87,4 +87,7 @@ npm run prisma:generate  # Regenerate Prisma client
   - `FileGenerationOwnerGuard` on `:id/events`, which refuses before a stream
     opens.
 - `internal/file-generations/*` needs the service token (`ServiceTokenGuard`).
+- `POST /api/v1/internal/file-generations/render-pdf` is stateless: body `{ content (1..200000 chars), title? (max 120) }`,
+  returns `application/pdf` (`Cache-Control: private, no-store`), nothing stored, no generation row. A render failure is
+  422 `PDF_RENDER_FAILED`. Caller: live-service history export (ADR-221).
 - Never make a route `@Public()` here.

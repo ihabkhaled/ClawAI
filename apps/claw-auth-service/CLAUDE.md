@@ -110,6 +110,19 @@ are NOT persisted on `weighted_usage_records` (no column) — the ledger amount
 carries the cost. Pinned by `credit-unit-metering.spec.ts`,
 `credit-internal-units.dto.spec.ts`, `clients/__tests__/model-rate.client.spec.ts`.
 
+**Fixed-price surfaces (rule 37 item 25, ADR-221).** `FIXED_PRICE_SURFACES`
+(`credit.constants.ts`, today `LIVE_INTELLIGENCE`) are priced by the CALLER's
+versioned policy: reserve and finalize carry `fixedCostMicroUsd` (integer,
+≤ `CREDIT_FIXED_COST_MICRO_USD_MAX` = $100) with every count 0, enforced in the
+manager by `credit-fixed-price.utility.ts` with coded 400s
+(`CREDIT_FIXED_PRICE_NOT_ALLOWED` / `_REQUIRED` / `_MIXED`). Reserve
+(`reserveFixedPrice`) checks kill switch, admin, idempotency, then holds exactly
+the amount through the same Lua + `persistHold`; no rate lookup, no connector
+policy (the provider is a label, e.g. `CLAW_LIVE`), no free allowance, refusal
+`PAYG_CREDIT_EXHAUSTED` with `requiredMicroUsd`. Finalize reads the surface from
+the RESERVATION ledger row (no schema column) and settles
+`min(fixedCostMicroUsd, held)`. Pinned by `credit-fixed-price.spec.ts`.
+
 **The disabled path is the default path.** It is what a fresh install runs and
 what rollback lever #1 selects, so it needs more testing than the enabled one,
 not less. Test a PAID model with the switch off.

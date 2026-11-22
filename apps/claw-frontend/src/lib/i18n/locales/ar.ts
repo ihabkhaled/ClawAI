@@ -6,6 +6,7 @@ import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { FILE_LIBRARY_TRANSLATIONS } from './file-library-translations';
+import { LIVE_TRANSLATIONS } from './live-translations';
 import { MARKETING_VIDEOS_TRANSLATIONS } from './marketing-videos-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
@@ -4849,6 +4850,7 @@ export const ar: TranslationDictionary = {
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.ar,
   pickedModel: PICKED_MODEL_TRANSLATIONS.ar,
   creditFallback: CREDIT_FALLBACK_TRANSLATIONS.ar,
+  live: LIVE_TRANSLATIONS.ar,
   mediaUi: MEDIA_UI_TRANSLATIONS.ar,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.ar,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.ar,
@@ -5470,6 +5472,7 @@ export const ar: TranslationDictionary = {
         ROUTING: 'توجيه',
         TRANSCRIPTION: 'النسخ الصوتي',
         TRANSCRIPTION_READ: 'قراءة نص الصوت/الفيديو',
+        LIVE_INTELLIGENCE: 'الذكاء المباشر (تحليل البث المباشر)',
         VISION_HELPER: 'مساعد وصف الصور',
         THREADS: 'منشورات ثريدز',
         TTS: 'القراءة بصوت عالٍ (تحويل النص إلى كلام)',

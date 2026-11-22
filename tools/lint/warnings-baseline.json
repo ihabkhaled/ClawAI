@@ -749,9 +749,6 @@
     "apps/claw-file-generation-service/src/modules/health/services/__tests__/health.service.spec.ts": {
       "sort-imports": 1
     },
-    "apps/claw-file-service/src/app/config/app.config.ts": {
-      "@typescript-eslint/prefer-nullish-coalescing": 1
-    },
     "apps/claw-file-service/src/app/guards/auth.guard.ts": {
       "unicorn/prefer-ternary": 1
     },
@@ -1929,9 +1926,6 @@
     },
     "packages/shared-entitlements/src/model-authorization.ts": {
       "unicorn/prefer-ternary": 1
-    },
-    "packages/shared-entitlements/src/payg-meter.ts": {
-      "security/detect-object-injection": 2
     },
     "packages/shared-entitlements/src/permission.guard.ts": {
       "unicorn/prefer-ternary": 1

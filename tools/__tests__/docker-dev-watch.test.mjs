@@ -26,6 +26,7 @@ const BACKEND_SERVICES = [
   'thread-generation-service',
   'threads-service',
   'plugin-service',
+  'live-service',
 ];
 
 const POLLING_SETTINGS = [
@@ -62,7 +63,12 @@ test('every development backend service enables cross-platform polling watchers'
     const manifest = JSON.parse(
       readFileSync(repoPath('apps', `claw-${serviceName}`, 'package.json'), 'utf8'),
     );
-    assert.match(manifest.scripts.dev, /nodemon --legacy-watch --watch src/u);
+    // Without an interval nodemon polls every file each 100 ms; across all services that
+    // saturates Docker Desktop's file share and the dev frontend's compile times out.
+    assert.match(
+      manifest.scripts.dev,
+      /nodemon --legacy-watch --polling-interval 2000 --watch src/u,
+    );
     assert.match(manifest.scripts.dev, /--exec "npm run build && node dist\/main\.js"/u);
     assert.ok(
       block

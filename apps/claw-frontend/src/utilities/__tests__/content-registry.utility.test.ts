@@ -117,6 +117,7 @@ describe('content registry integrity', () => {
       '/delivery-shipping',
       '/faq',
       '/features',
+      '/features/live-intelligence',
       '/features/threads',
       '/how-it-works',
       '/integrations',
@@ -169,6 +170,7 @@ describe('getIndexablePages / getAdEligiblePages defense in depth', () => {
         '/coding-agent/install',
         '/faq',
         '/features',
+        '/features/live-intelligence',
         '/features/threads',
         '/how-it-works',
         '/learn',
@@ -220,10 +222,11 @@ describe('localized publication boundary', () => {
     // per provider + the /model-fit hub + one page per task + one page per
     // /use-cases task (the /use-cases hub itself is already one of the 29
     // launch pages, unchanged by this cluster) + the /compare/models hub +
-    // one page per family pair. 33 = the 31 standalone pages plus the two
-    // commerce policies (/delivery-shipping, /refund-cancellation).
+    // one page per family pair. 34 = the 31 standalone pages plus the two
+    // commerce policies (/delivery-shipping, /refund-cancellation) and
+    // /features/live-intelligence.
     const expectedCount =
-      33 +
+      34 +
       LEARN_TOPIC_ORDER.length +
       1 +
       INTEGRATION_TOPIC_ORDER.length +

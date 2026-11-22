@@ -65,6 +65,10 @@ export enum EventPattern {
   THREAD_GENERATION_FAILED = 'threads.generation_failed',
   // Published once when a job's draft is ready (generation-service -> threads-service).
   THREAD_GENERATION_COMPLETED = 'threads.generation_completed',
+  // Live Intelligence (ADR-221): published once when a shared analysis run
+  // ends (live-service -> audit-service; consumers must tolerate redelivery).
+  // Carries ids, timings and totals only, never transcript or summary text.
+  LIVE_RUN_ENDED = 'live.run_ended',
   // Any service asks auth-service to tell one user something: in-app, email and push.
   USER_NOTIFICATION_REQUESTED = 'user.notification_requested',
   MEMORY_EXTRACTED = 'memory.extracted',

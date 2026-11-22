@@ -97,6 +97,7 @@ export const PAYG_SURFACE_LABEL_KEYS: Record<PaygSurface, string> = {
   [PaygSurface.ROUTING]: 'billing.credit.surface.ROUTING',
   [PaygSurface.TRANSCRIPTION]: 'billing.credit.surface.TRANSCRIPTION',
   [PaygSurface.TRANSCRIPTION_READ]: 'billing.credit.surface.TRANSCRIPTION_READ',
+  [PaygSurface.LIVE_INTELLIGENCE]: 'billing.credit.surface.LIVE_INTELLIGENCE',
   [PaygSurface.VISION_HELPER]: 'billing.credit.surface.VISION_HELPER',
   [PaygSurface.TTS]: 'billing.credit.surface.TTS',
   [PaygSurface.THREADS]: 'billing.credit.surface.THREADS',

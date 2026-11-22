@@ -1178,3 +1178,17 @@ Gemini video is `gemini-omni-1.1-flash` (Interactions API, about $0.10/s, routin
 ## Thread translations (2026-11-02, ADR-217)
 
 A public Thread page reads `?lang=` (an app language only; `readRequestedThreadLanguage`). The text language and the app language are separate: `ThreadLanguageSwitch` changes `?lang` and nothing else, so the interface, comments and reactions stay in the path locale. The in-app Board reader (`/board/<slug>`, `useBoardReader`) reads the same `?lang=` (`threadLanguageFromParam`) and shows the same switch above the article; the source text keeps the shared `publicPage` key so view counts still land. A translated copy canonicalises to `/<lang>/threads/<slug>?lang=<lang>`; the written language keeps its own canonical; `availableLocales` become hreflang alternates. The query key is per language (`queryKeys.threadPublications.publicArticle`). The sitemap family `translated-threads-N.xml` lists each language's copies. The home hero carries the Public Threads card (`home-threads-promo`) under the logo; strings live in `lib/i18n/locales/thread-translation-translations.ts` (13 locales). In the local dev container a source change may not reach `next dev` over the Docker mount: `docker restart claw-frontend` before browser-testing.
+
+## Live Intelligence (2026-11-22, ADR-221)
+
+- Routes: `/live` (`app/(portal)/live`), `/admin/live` (`app/(portal)/admin/live`, staff overview and policy) and the public
+  marketing page `/features/live-intelligence` (13 locales, content in `constants/live-intelligence-marketing-content/`).
+- **hls.js is imported only in `src/utilities/hls.utility.ts`, with a dynamic `import()`**, so the library is its own chunk
+  fetched when the live player opens. Never import it anywhere else. HLS plays through the live-service same-origin proxy
+  (`/api/v1/live/streams/:id/hls/*`), so the CSP stays closed.
+- UI strings: `src/lib/i18n/locales/live-translations.ts` (the `live` dictionary key, 13 locales).
+- Ledger label `billing.credit.surface.LIVE_INTELLIGENCE` (13 locales, `constants/credit.constants.ts`).
+- YouTube is player only: the modal says so. Channel links play through the `live_stream` embed; `@handle` links show
+  the `youtubeHandleError` string.
+- The dev frontend (Turbopack in Docker on Windows) does not see new routes or edits to existing files until
+  `docker restart claw-frontend`.

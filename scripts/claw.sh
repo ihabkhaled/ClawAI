@@ -354,7 +354,7 @@ case "$1" in
     if [ "${CLAW_FORCE:-0}" != "1" ]; then
       echo "This will WIPE every Claw postgres database (auth, chat, connector,"
       echo "routing, memory, files, ollama, images, file-generations, workspace,"
-      echo "agent, research, payments, llamacpp, thread-generation, threads, plugin),"
+      echo "agent, research, payments, llamacpp, thread-generation, threads, plugin, live),"
       echo "MongoDB, and RabbitMQ state."
       echo "That INCLUDES the payment database: subscriptions, invoices and"
       echo "payment history are financial records and are NOT recoverable."
@@ -392,6 +392,7 @@ case "$1" in
       claw_pg-thread-generation-data \
       claw_pg-threads-data \
       claw_pg-plugin-data \
+      claw_pg-live-data \
     ; do
       if docker volume inspect "$vol" >/dev/null 2>&1; then
         docker volume rm "$vol" >/dev/null 2>&1 && echo "  removed: $vol" || echo "  FAILED: $vol (still attached?)"

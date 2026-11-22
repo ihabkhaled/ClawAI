@@ -6,6 +6,7 @@ import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { FILE_LIBRARY_TRANSLATIONS } from './file-library-translations';
+import { LIVE_TRANSLATIONS } from './live-translations';
 import { MARKETING_VIDEOS_TRANSLATIONS } from './marketing-videos-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
@@ -4849,6 +4850,7 @@ export const hi: TranslationDictionary = {
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.hi,
   pickedModel: PICKED_MODEL_TRANSLATIONS.hi,
   creditFallback: CREDIT_FALLBACK_TRANSLATIONS.hi,
+  live: LIVE_TRANSLATIONS.hi,
   mediaUi: MEDIA_UI_TRANSLATIONS.hi,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.hi,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.hi,
@@ -5471,6 +5473,7 @@ export const hi: TranslationDictionary = {
         ROUTING: 'रूटिंग',
         TRANSCRIPTION: 'ट्रांसक्रिप्शन',
         TRANSCRIPTION_READ: 'ऑडियो/वीडियो ट्रांसक्रिप्ट पढ़ना',
+        LIVE_INTELLIGENCE: 'लाइव इंटेलिजेंस (लाइव स्ट्रीम विश्लेषण)',
         VISION_HELPER: 'छवि विवरण सहायक',
         THREADS: 'थ्रेड्स पोस्ट',
         TTS: 'पढ़कर सुनाना (टेक्स्ट-टू-स्पीच)',

@@ -42,3 +42,11 @@ export const exportFileSchema = z.object({
 });
 
 export type ExportFileDto = z.infer<typeof exportFileSchema>;
+
+/** Stateless internal PDF render (no storage): Markdown in, PDF bytes out. */
+export const renderPdfSchema = z.object({
+  content: z.string().min(1).max(EXPORT_MAX_CONTENT_CHARS),
+  title: z.string().trim().max(120).optional(),
+});
+
+export type RenderPdfDto = z.infer<typeof renderPdfSchema>;

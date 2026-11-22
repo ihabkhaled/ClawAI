@@ -147,6 +147,11 @@
       "route": "/features/[capability]"
     },
     {
+      "file": "apps/claw-frontend/src/app/(marketing)/features/live-intelligence/page.tsx",
+      "kind": "page",
+      "route": "/features/live-intelligence"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(marketing)/features/page.tsx",
       "kind": "page",
       "route": "/features"
@@ -305,6 +310,11 @@
       "file": "apps/claw-frontend/src/app/(portal)/admin/feedback/page.tsx",
       "kind": "page",
       "route": "/admin/feedback"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/admin/live/page.tsx",
+      "kind": "page",
+      "route": "/admin/live"
     },
     {
       "file": "apps/claw-frontend/src/app/(portal)/admin/page.tsx",
@@ -590,6 +600,11 @@
       "file": "apps/claw-frontend/src/app/(portal)/files/page.tsx",
       "kind": "page",
       "route": "/files"
+    },
+    {
+      "file": "apps/claw-frontend/src/app/(portal)/live/page.tsx",
+      "kind": "page",
+      "route": "/live"
     },
     {
       "file": "apps/claw-frontend/src/app/(portal)/logs/page.tsx",

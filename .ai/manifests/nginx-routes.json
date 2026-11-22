@@ -242,6 +242,12 @@
       "source": "infra/nginx/locations.conf"
     },
     {
+      "location": "/api/v1/live",
+      "port": 4022,
+      "service": "live-service",
+      "source": "infra/nginx/locations.conf"
+    },
+    {
       "location": "/api/v1/llamacpp/",
       "port": 4017,
       "service": "llamacpp-service",
@@ -419,6 +425,12 @@
       "location": "~",
       "port": 4019,
       "service": "threads-service",
+      "source": "infra/nginx/locations.conf"
+    },
+    {
+      "location": "~",
+      "port": 4022,
+      "service": "live-service",
       "source": "infra/nginx/locations.conf"
     },
     {

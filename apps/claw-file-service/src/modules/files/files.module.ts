@@ -23,6 +23,9 @@ import { VideoStaleRecoveryManager } from './managers/video-stale-recovery.manag
 import { VideoCancellationService } from './services/video-cancellation.service';
 import { TranscriptionReadManager } from './managers/transcription-read.manager';
 import { TranscriptionReadService } from './services/transcription-read.service';
+import { TranscriptionChunkManager } from './managers/transcription-chunk.manager';
+import { TranscriptionChunkService } from './services/transcription-chunk.service';
+import { TranscriptionRateClient } from './clients/transcription-rate.client';
 
 @Module({
   controllers: [FilesController, FileArchiveController, FilesInternalController],
@@ -60,6 +63,9 @@ import { TranscriptionReadService } from './services/transcription-read.service'
     // Stateless BILLED audio/video read (POST /files/transcribe-text).
     TranscriptionReadManager,
     TranscriptionReadService,
+    TranscriptionChunkManager,
+    TranscriptionChunkService,
+    TranscriptionRateClient,
   ],
   exports: [FilesService, FilesRepository, FileChunksRepository],
 })

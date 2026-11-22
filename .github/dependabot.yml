@@ -141,6 +141,10 @@ updates:
     directory: /apps/claw-plugin-service
     schedule:
       interval: weekly
+  - package-ecosystem: docker
+    directory: /apps/claw-live-service
+    schedule:
+      interval: weekly
 
   # GitHub Actions used by .github/workflows/*.yml
   - package-ecosystem: github-actions

@@ -24,6 +24,7 @@ export const PAYMENT_SERVICE_PORT = 4018;
 export const THREADS_SERVICE_PORT = 4019;
 export const THREAD_GENERATION_SERVICE_PORT = 4020;
 export const PLUGIN_SERVICE_PORT = 4021;
+export const LIVE_SERVICE_PORT = 4022;
 
 // ---- Service Names ----
 
@@ -46,6 +47,7 @@ export const PAYMENT_SERVICE = 'payment-service';
 export const THREADS_SERVICE = 'threads-service';
 export const THREAD_GENERATION_SERVICE = 'thread-generation-service';
 export const PLUGIN_SERVICE = 'plugin-service';
+export const LIVE_SERVICE = 'live-service';
 
 // ---- API ----
 

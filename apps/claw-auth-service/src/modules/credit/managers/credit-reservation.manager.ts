@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { PAYG_ENABLED_SETTING_KEY, PAYG_MIN_VIABLE_OUTPUT_TOKENS } from '@claw/shared-constants';
 import {
@@ -16,7 +16,7 @@ import {
   toRawTokenBreakdown,
 } from '@claw/shared-utilities';
 
-import { PaygRejectionException } from '../../../common/errors';
+import { BusinessException, PaygRejectionException } from '../../../common/errors';
 import { RedisService } from '../../../infrastructure/redis/redis.service';
 import {
   CreditLedgerKind,
@@ -54,6 +54,7 @@ import {
 import {
   type CreditBucketSplit,
   type CreditFinalizeInput,
+  type CreditFixedPriceViolation,
   type CreditFreeAllowanceAdmission,
   type CreditFreeAllowancePolicy,
   type CreditReserveInput,
@@ -74,6 +75,11 @@ import {
   isCappedAllowance,
   isFreeAllowanceEligible,
 } from '../utilities/credit-free-allowance.utility';
+import {
+  finalizeFixedPriceViolation,
+  fixedSettlementMicroUsd,
+  reserveFixedPriceViolation,
+} from '../utilities/credit-fixed-price.utility';
 import {
   isExemptProvider,
   isMeteredProvider,
@@ -105,6 +111,11 @@ import {
  *
  * Steps 1–4 short-circuit before the wallet is read: a local chat must not pay
  * for a Postgres round trip it does not need.
+ *
+ * A FIXED-PRICE surface (Live Intelligence, `FIXED_PRICE_SURFACES`) takes a
+ * shorter road: kill switch, administrator, idempotency, then a hold of exactly
+ * the caller's `fixedCostMicroUsd` through the same atomic Lua and durable
+ * write. No rate, no connector policy, no free allowance (see credit.constants).
  */
 @Injectable()
 export class CreditReservationManager {
@@ -131,6 +142,10 @@ export class CreditReservationManager {
     this.logger.debug(
       `reserve: user=${input.userId} provider=${input.provider} model=${input.model}`,
     );
+    CreditReservationManager.assertFixedPriceContract(reserveFixedPriceViolation(input));
+    if (input.fixedCostMicroUsd !== undefined) {
+      return this.reserveFixedPrice(input, input.fixedCostMicroUsd);
+    }
     const classification = await this.classify(input.userId, input.provider, input.model);
     if (!classification.isPayg && classification.reason === 'METERING_DISABLED') {
       return this.enforceCapWhileUnmetered(await this.withPlanCallLimits(input));
@@ -190,6 +205,16 @@ export class CreditReservationManager {
     if (record === null) {
       return CreditReservationManager.notSettled();
     }
+    // Read before anything moves: a fixed-price reservation is known by the
+    // surface on its RESERVATION row, and a finalize that breaks the contract
+    // is refused while the hold is still intact. A free-allowance call has no
+    // such row and is never fixed-price.
+    const attribution = record.isFreeAllowance
+      ? null
+      : await this.ledger.findReservationAttribution(record.reservationId);
+    CreditReservationManager.assertFixedPriceContract(
+      finalizeFixedPriceViolation(input, attribution?.surface ?? null),
+    );
     const breakdown = toRawTokenBreakdown(
       {
         promptTokens: input.promptTokens,
@@ -218,7 +243,15 @@ export class CreditReservationManager {
         videoSeconds: input.videoSeconds,
       },
     );
-    const actualMicroUsd = await this.priceUsage(record, breakdown);
+    // A fixed price is the caller's versioned policy, not a rate: no lookup, and
+    // never more than the hold. The breakdown is all zeros (the contract above).
+    const actualMicroUsd =
+      input.fixedCostMicroUsd === undefined
+        ? await this.priceUsage(record, breakdown)
+        : fixedSettlementMicroUsd(
+            input.fixedCostMicroUsd,
+            record.creditGrantMicroUsd + record.creditPurchasedMicroUsd,
+          );
     const moved = await this.usage.markFinalized({
       reservationId: input.reservationId,
       rawInputTokens: breakdown.inputTokens,
@@ -251,7 +284,7 @@ export class CreditReservationManager {
       await this.threadBudgets.settleForReservation(input.reservationId, 0n);
       return { settled: true, billingMode: PaygBillingMode.UNKNOWN };
     }
-    const settlement = await this.settle(record, actualMicroUsd);
+    const settlement = await this.settle(record, actualMicroUsd, attribution);
     // The job budget counts what the user was CHARGED, not what was held.
     await this.threadBudgets.settleForReservation(input.reservationId, settlement.chargedMicroUsd);
     return this.outcomeFor(record.userId, settlement);
@@ -289,6 +322,69 @@ export class CreditReservationManager {
 
   private static notSettled(): PaygFinalizeOutcome {
     return { settled: false, billingMode: PaygBillingMode.UNKNOWN };
+  }
+
+  // ── fixed-price surfaces (ADR-221) ────────────────────────────────────────
+
+  /** A broken fixed-price contract is the caller's bug: a coded 400, nothing moves. */
+  private static assertFixedPriceContract(violation: CreditFixedPriceViolation | null): void {
+    if (violation !== null) {
+      throw new BusinessException(
+        'fixedCostMicroUsd is required for, and only for, a fixed-price surface, with every count 0',
+        violation,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  /**
+   * Reserves a caller-priced call: exactly `fixedCostMicroUsd`, or the ordinary
+   * credit refusal. The kill switch and the administrator bypass apply as for
+   * every surface. The exempt-provider and connector-policy checks do not: the
+   * provider here is a ledger label (live-service sends `CLAW_LIVE`), not a
+   * connector anybody can toggle, and reading it as "not PAYG" would make every
+   * paid minute free. Never on the free allowance (rule 37 item 22).
+   */
+  private async reserveFixedPrice(
+    input: CreditReserveInput,
+    fixedCostMicroUsd: number,
+  ): Promise<PaygReservationOutcome> {
+    if (!(await this.settings.isEnabled(PAYG_ENABLED_SETTING_KEY, false))) {
+      return {
+        metered: false,
+        reason: 'METERING_DISABLED',
+        maxOutputTokens: input.requestedMaxOutputTokens,
+      };
+    }
+    const user = await this.users.findUserById(input.userId);
+    if (user !== null && user.role === UserRole.ADMIN) {
+      return {
+        metered: false,
+        reason: 'ADMIN_BYPASS',
+        maxOutputTokens: input.requestedMaxOutputTokens,
+      };
+    }
+    const existing = await this.usage.findOpenPaygReservation(input.userId, input.requestId);
+    if (existing !== null) {
+      this.logger.warn(`reserveFixedPrice: reusing hold for repeated request=${input.requestId}`);
+      return this.reuseHold(existing, input.requestedMaxOutputTokens);
+    }
+    const balances = await this.grants.ensureCurrentPeriod(input.userId);
+    const hold = BigInt(fixedCostMicroUsd);
+    if (hold > balances.availableMicroUsd) {
+      // EXHAUSTED, not TOO_EXPENSIVE: there is no prompt to shorten, only credit to add.
+      throw new PaygRejectionException(
+        BillingErrorCode.PAYG_CREDIT_EXHAUSTED,
+        toSafeBalanceNumber(balances.availableMicroUsd),
+        fixedCostMicroUsd,
+      );
+    }
+    // A concurrent request that takes the credit first makes the Lua refuse with
+    // the same PAYG_CREDIT_EXHAUSTED; there is no allowance to fall back on.
+    return this.commitHold(input, balances.wallet, hold, {
+      maxOutputTokens: input.requestedMaxOutputTokens,
+      clamped: false,
+    });
   }
 
   /**
@@ -851,12 +947,13 @@ export class CreditReservationManager {
   private async settle(
     record: WeightedUsageRecord,
     actualMicroUsd: bigint,
+    attribution: { surface: string | null; workflow: string | null } | null,
   ): Promise<CreditSettlement> {
     const wallet = await this.wallets.ensure(record.userId);
-    // Carried forward from the RESERVATION row: the durable reservation record
-    // has no surface column, and a CONSUMPTION line that cannot say where the
-    // money went is the line a customer disputes.
-    const attribution = await this.ledger.findReservationAttribution(record.reservationId);
+    // `attribution` is carried forward from the RESERVATION row (read once, in
+    // finalize): the durable reservation record has no surface column, and a
+    // CONSUMPTION line that cannot say where the money went is the line a
+    // customer disputes.
     const settlement = await this.wallets.applySettlement({
       userId: record.userId,
       walletId: wallet.id,

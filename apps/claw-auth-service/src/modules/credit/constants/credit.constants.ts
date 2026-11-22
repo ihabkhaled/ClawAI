@@ -1,4 +1,5 @@
 import { PAYG_RESERVATION_SWEEP_INTERVAL_MS } from '@claw/shared-constants';
+import { PaygSurface } from '@claw/shared-types';
 
 // ── Internal HTTP: routing-service model prices (ADR-079) ───────────────────
 
@@ -63,6 +64,36 @@ export const CREDIT_AUDIO_SECONDS_MAX = 7_200;
 /** One generated clip is seconds, not minutes; a bound keeps the hold arithmetic honest. */
 export const CREDIT_VIDEO_SECONDS_MAX = 300;
 export const CREDIT_TTS_CHARACTERS_MAX = 100_000;
+
+// ── Fixed-price surfaces (ADR-221, rule 37 item 25) ──────────────────────────
+//
+// A fixed-price surface is priced by the CALLER's own versioned policy, not by
+// a routing-service model rate. Live Intelligence bills a per-minute price the
+// admin sets on live-service's `LivePolicyVersion`; there is no provider model
+// behind it, so a rate lookup can only ever answer "unpriced". The caller sends
+// the amount as `fixedCostMicroUsd` on reserve AND finalize:
+//   - accepted only for a surface in FIXED_PRICE_SURFACES (else 400
+//     CREDIT_FIXED_PRICE_NOT_ALLOWED), and REQUIRED there (400
+//     CREDIT_FIXED_PRICE_REQUIRED);
+//   - every token, call and unit count must be 0 (400 CREDIT_FIXED_PRICE_MIXED),
+//     so one call can never be priced two ways;
+//   - reserve holds exactly that amount with no rate lookup, never on the free
+//     allowance (per-unit, rule 37 item 22), and with no connector-policy or
+//     exempt-provider check (the provider is a ledger label, not a connector);
+//     the kill switch and the administrator bypass still apply;
+//   - finalize charges min(fixedCostMicroUsd, held): settlement never exceeds
+//     the hold. Whether a reservation is fixed-price is derived from the
+//     surface on its RESERVATION ledger row, so no schema change is needed.
+
+/** Surfaces whose price the caller states as `fixedCostMicroUsd`. */
+export const FIXED_PRICE_SURFACES: readonly PaygSurface[] = Object.freeze([
+  PaygSurface.LIVE_INTELLIGENCE,
+]);
+/** $100 in micro-USD: far above one 60-second Live block, low enough to stop a runaway figure. */
+export const CREDIT_FIXED_COST_MICRO_USD_MAX = 100_000_000;
+export const CREDIT_FIXED_PRICE_NOT_ALLOWED = 'CREDIT_FIXED_PRICE_NOT_ALLOWED';
+export const CREDIT_FIXED_PRICE_REQUIRED = 'CREDIT_FIXED_PRICE_REQUIRED';
+export const CREDIT_FIXED_PRICE_MIXED = 'CREDIT_FIXED_PRICE_MIXED';
 export const CREDIT_PACKAGE_ID_MAX_LENGTH = 64;
 export const CREDIT_EVENT_ID_MAX_LENGTH = 200;
 // 19 digits is BIGINT's ceiling. A longer figure could not be stored, so

@@ -952,6 +952,14 @@
       "producers": []
     },
     {
+      "consumers": [],
+      "key": "LIVE_RUN_ENDED",
+      "pattern": "live.run_ended",
+      "producers": [
+        "claw-live-service"
+      ]
+    },
+    {
       "consumers": [
         "claw-audit-service"
       ],
@@ -1387,6 +1395,7 @@
     },
     {
       "consumers": [
+        "claw-live-service",
         "claw-plugin-service",
         "claw-thread-generation-service",
         "claw-threads-service"

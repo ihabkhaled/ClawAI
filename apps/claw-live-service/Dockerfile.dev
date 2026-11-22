@@ -1,0 +1,22 @@
+FROM node:26-bookworm-slim
+RUN node -e "const[a,b,c]=process.versions.node.split('.').map(Number),f={22:[23,4],24:[22,1],26:[12,1]}[a];if(!(a>26||f&&(b>f[0]||b===f[0]&&c>=f[1]))){console.error('Node '+process.version+' is below the CVE-2026-111497 floor');process.exit(1)}"
+# ffmpeg: the chunker, frame sampler and fixture broadcaster spawn it (bounded).
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates ffmpeg \
+  && rm -rf /var/lib/apt/lists/*
+# Fail the build, not the first live run, if the binaries are missing.
+RUN ffmpeg -hide_banner -version >/dev/null && ffprobe -hide_banner -version >/dev/null
+WORKDIR /app
+COPY package.json ./package.json
+COPY tools/typescript/ ./tools/typescript/
+COPY .npmrc ./.npmrc
+COPY packages/ ./packages/
+COPY apps/claw-live-service/ ./apps/claw-live-service/
+RUN npm install --ignore-scripts --legacy-peer-deps
+RUN cd /app/packages/shared-constants && npm run build \
+ && cd /app/packages/shared-types && npm run build \
+ && cd /app/packages/shared-utilities && npm run build \
+ && cd /app/packages/shared-entitlements && npm run build \
+ && cd /app/packages/shared-rabbitmq && npm run build \
+ && cd /app/packages/shared-auth && npm run build
+WORKDIR /app/apps/claw-live-service
+CMD ["sh", "docker-entrypoint.dev.sh"]

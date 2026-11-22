@@ -8,7 +8,7 @@
 
 ## Purpose
 
-In a system with <!-- count:services -->21<!-- /count --> microservices, split Docker Compose files, an Nginx reverse proxy, per-service PostgreSQL databases, RabbitMQ, Redis, Ollama, a CI/CD pipeline, 13 i18n locales, and a shared monorepo — every structural change has ripple effects. This checklist ensures none of them are missed.
+In a system with <!-- count:services -->22<!-- /count --> microservices, split Docker Compose files, an Nginx reverse proxy, per-service PostgreSQL databases, RabbitMQ, Redis, Ollama, a CI/CD pipeline, 13 i18n locales, and a shared monorepo — every structural change has ripple effects. This checklist ensures none of them are missed.
 
 **Adding a whole new service?** The ordered every-place list, with a verify command for each item and a production `.env` section, is [skills/add-a-new-service.md](../../skills/add-a-new-service.md). This checklist covers the per-change items; that skill covers everything a new service touches, including `scripts/prod-required-env.manifest` (the production `.env` the deploy preflight checks).
 

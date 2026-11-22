@@ -83,6 +83,16 @@ export const apiClient = {
     }
   },
 
+  /** A POST whose answer is a file (an export); the body is JSON like any other POST. */
+  async postBlob(path: string, body?: unknown): Promise<ApiResponse<Blob>> {
+    try {
+      const response = await httpClient.post<Blob>(path, body, { responseType: 'blob' });
+      return { data: response.data, status: response.status };
+    } catch (error) {
+      throw toApiClientError(error);
+    }
+  },
+
   async post<T>(
     path: string,
     body?: unknown,

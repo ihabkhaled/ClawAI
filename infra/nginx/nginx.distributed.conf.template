@@ -142,6 +142,7 @@ http {
     map $host $origin_payment         { default "${CLAW_PAYMENT_ORIGIN}"; }
     map $host $origin_threads         { default "${CLAW_THREADS_ORIGIN}"; }
     map $host $origin_plugin          { default "${CLAW_PLUGIN_ORIGIN}"; }
+    map $host $origin_live            { default "${CLAW_LIVE_ORIGIN}"; }
     map $host $origin_chat            { default "${CLAW_CHAT_ORIGIN}"; }
     map $host $origin_connector       { default "${CLAW_CONNECTOR_ORIGIN}"; }
     map $host $origin_routing         { default "${CLAW_ROUTING_ORIGIN}"; }
@@ -327,6 +328,47 @@ http {
         # stays closed.
         location /api/v1/plugins {
             set $backend https://$origin_plugin;
+            proxy_pass $backend;
+        }
+
+        # Live Intelligence (live-service, ADR-221). Public prefix only; /api/v1/internal/ stays closed.
+        # The session event stream (SSE) and the HLS proxy are unbuffered; regex locations come first.
+        location ~ ^/api/v1/live/sessions/[^/]+/stream$ {
+            set $backend https://$origin_live;
+            proxy_pass $backend;
+            proxy_set_header Host              $proxy_host;
+            proxy_set_header X-Real-IP         $remote_addr;
+            proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-Host  $host;
+            proxy_set_header X-Request-ID      $request_id;
+            proxy_set_header Origin            $http_origin;
+            proxy_set_header CF-IPCountry      "";
+            proxy_set_header CF-Connecting-IP  "";
+            proxy_set_header True-Client-IP    "";
+            proxy_set_header Connection "";
+            proxy_read_timeout 86400;
+            proxy_buffering off;
+            proxy_cache off;
+        }
+
+        location ~ ^/api/v1/live/streams/[^/]+/hls/ {
+            set $backend https://$origin_live;
+            proxy_pass $backend;
+            proxy_set_header Host              $proxy_host;
+            proxy_set_header X-Real-IP         $remote_addr;
+            proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-Host  $host;
+            proxy_set_header X-Request-ID      $request_id;
+            proxy_set_header Connection "";
+            proxy_read_timeout 300;
+            proxy_buffering off;
+            proxy_cache off;
+        }
+
+        location /api/v1/live {
+            set $backend https://$origin_live;
             proxy_pass $backend;
         }
 

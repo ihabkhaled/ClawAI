@@ -2,6 +2,11 @@ import type { ModelCostRates, PaygLedgerEntryView, PaygSurface } from '@claw/sha
 import type { clampOutputTokensToBalance } from '@claw/shared-utilities';
 
 import type { CreditLedgerKind, Prisma, UserCreditWallet } from '../../../generated/prisma';
+import type {
+  CREDIT_FIXED_PRICE_MIXED,
+  CREDIT_FIXED_PRICE_NOT_ALLOWED,
+  CREDIT_FIXED_PRICE_REQUIRED,
+} from '../constants/credit.constants';
 
 /** Alias so the movement type below reads without a nested namespace lookup. */
 export type PrismaUserCreditWalletUpdateInput = Prisma.UserCreditWalletUpdateInput;
@@ -55,7 +60,15 @@ export type CreditReserveInput = {
   videoSeconds?: number;
   /** Set only for a Threads call: its job budget, which also bounds the hold. */
   threadJobBudgetId?: string;
+  /** The caller's stated price, only for a FIXED_PRICE_SURFACES call. Held exactly. */
+  fixedCostMicroUsd?: number;
 };
+
+/** The coded 400 a fixed-price contract violation answers with (`credit-fixed-price.utility.ts`). */
+export type CreditFixedPriceViolation =
+  | typeof CREDIT_FIXED_PRICE_NOT_ALLOWED
+  | typeof CREDIT_FIXED_PRICE_REQUIRED
+  | typeof CREDIT_FIXED_PRICE_MIXED;
 
 export type CreditFinalizeInput = {
   reservationId: string;
@@ -72,6 +85,8 @@ export type CreditFinalizeInput = {
   audioSeconds?: number;
   ttsCharacters?: number;
   videoSeconds?: number;
+  /** The caller's stated price for a fixed-price reservation; settles at min(this, held). */
+  fixedCostMicroUsd?: number;
 };
 
 /**

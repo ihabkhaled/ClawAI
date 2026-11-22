@@ -362,6 +362,37 @@
       "type": "nestjs-service"
     },
     {
+      "dir": "apps/claw-live-service",
+      "internalDeps": [
+        "@claw/shared-auth",
+        "@claw/shared-constants",
+        "@claw/shared-entitlements",
+        "@claw/shared-rabbitmq",
+        "@claw/shared-types",
+        "@claw/shared-utilities"
+      ],
+      "name": "claw-live-service",
+      "scripts": [
+        "build",
+        "dev",
+        "format",
+        "format:check",
+        "lint",
+        "lint:strict",
+        "migrate",
+        "migrate:dev",
+        "prisma:generate",
+        "seed",
+        "start",
+        "start:prod",
+        "test",
+        "test:watch",
+        "typecheck"
+      ],
+      "source": "apps/claw-live-service/package.json",
+      "type": "nestjs-service"
+    },
+    {
       "dir": "apps/claw-llamacpp-service",
       "internalDeps": [
         "@claw/shared-auth",

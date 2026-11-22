@@ -156,4 +156,11 @@ export enum Permission {
   // Feedback / ticketing
   FEEDBACK_SUBMIT = 'FEEDBACK_SUBMIT',
   ADMIN_FEEDBACK_MANAGE = 'ADMIN_FEEDBACK_MANAGE',
+
+  // Live Intelligence (ADR-221). LIVE_USE is granted to every signed-in role
+  // (the plan's free monthly seconds and the PAYG meter do the per-tier
+  // limiting); ADMIN_LIVE_MANAGE covers sources, capacity, policy and the
+  // global provider budget, and is ADMIN-only.
+  LIVE_USE = 'LIVE_USE',
+  ADMIN_LIVE_MANAGE = 'ADMIN_LIVE_MANAGE',
 }

@@ -5,7 +5,7 @@
   "generated": true,
   "name": "ClawAI",
   "reverseProxy": "nginx",
-  "serviceCount": 21,
+  "serviceCount": 22,
   "sharedPackageCount": 6,
-  "workspaceCount": 28
+  "workspaceCount": 29
 }

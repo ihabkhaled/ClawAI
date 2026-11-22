@@ -763,6 +763,46 @@ services:
     networks:
       - claw-network
 
+  # ---------------------------------------------------------------------------
+  # Live Service (Live Intelligence, ADR-221). Needs ffmpeg: both Dockerfiles install it.
+  # ---------------------------------------------------------------------------
+  live-service:
+    labels:
+      claw.service: live-service
+    logging: *claw-logging
+    build:
+      context: ..
+      dockerfile: apps/claw-live-service/Dockerfile
+    container_name: claw-live-service
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      # The entrypoint seeds the default live policy (idempotent, version 1 only).
+      SEED_ON_START: 'true'
+    depends_on:
+      pg-live:
+        condition: service_healthy
+    ports:
+      - '127.0.0.1:4022:4022'
+    volumes:
+      - ../certs:/certs:ro
+    # TLS is enabled inside the service container. Its loopback probe accepts
+    # the local certificate and uses Node because this image has no wget.
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "require('node:https').get('https://localhost:4022/api/v1/health', { rejectUnauthorized: false }, (response) => process.exit(response.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    networks:
+      - claw-network
+
   # Frontend
   # ---------------------------------------------------------------------------
   frontend:

@@ -68,6 +68,15 @@ export enum PaygSurface {
   TTS = 'TTS',
   /** Model calls made for a user-capped Threads generation job. */
   THREADS = 'THREADS',
+  /**
+   * Live Intelligence (ADR-221): eligible active AI viewing of a shared live
+   * stream analysis, settled by live-service in 60-second blocks (requestId
+   * `live:<sessionId>:<blockIndex>`) after the plan's free monthly seconds.
+   * The shared provider cost (platform-paid STT and summaries) is recorded once
+   * by live-service and never charged per viewer beyond the per-minute price.
+   * Never free-allowance eligible (per-unit, like TRANSCRIPTION_READ).
+   */
+  LIVE_INTELLIGENCE = 'LIVE_INTELLIGENCE',
 }
 
 // Deliberately NOT a member: RESEARCH. Research enrichment reaches search SaaS

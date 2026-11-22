@@ -1,0 +1,160 @@
+import { Logger } from '@nestjs/common';
+
+import { LiveChunkOutcome } from '../../../common/enums/live-chunk-outcome.enum';
+import { LiveRunEndReason } from '../../../common/enums/live-run-end-reason.enum';
+import { LiveStatusCode } from '../../../common/enums/live-status-code.enum';
+import { LiveRunStatus } from '../../../generated/prisma';
+import {
+  WORKER_DELAYED_AFTER_MS,
+  WORKER_MAX_POLL_FAILURES,
+  WORKER_POLL_MS,
+} from '../constants/processing.constants';
+import { LeaseLostError } from '../errors/processing.errors';
+import type { RunWorkerDeps } from '../types/run-worker.types';
+import type { AudioChunk, ChunkPoll, RunMemory, WorkerContext } from '../types/processing.types';
+import { createRunMemory } from '../utilities/run-memory.utility';
+import type { HlsChunkSource } from './hls-chunk-source';
+
+/**
+ * One claimed run's loop (section 4): renew the lease (fenced) → poll the source →
+ * transcribe each chunk → DELAYED/ACTIVE → background summary, translation, vision and
+ * snapshot (single-flight) → repeat. STOPPING → STOPPED; source end → FINAL card +
+ * ENDED. A LeaseLostError at any point means another worker owns the run: exit silently.
+ * A restarted worker starts at the Live Edge with fresh memory; nothing is back-filled.
+ */
+export class RunWorker {
+  private readonly logger = new Logger(RunWorker.name);
+  private readonly memory: RunMemory = createRunMemory(Date.now());
+  private stopped = false;
+  private status: LiveRunStatus = LiveRunStatus.PENDING;
+  private lastProgressWallAt = Date.now();
+  private pollFailures = 0;
+  private background: Promise<void> | null = null;
+
+  constructor(
+    private readonly deps: RunWorkerDeps,
+    private readonly context: WorkerContext,
+    private readonly source: HlsChunkSource,
+  ) {}
+
+  get runId(): string {
+    return this.context.lease.runId;
+  }
+
+  /** Asks the loop to exit at its next boundary (shutdown). */
+  stop(): void {
+    this.stopped = true;
+  }
+
+  async run(): Promise<void> {
+    try {
+      await this.deps.lifecycle.activate(this.context);
+      while (!this.stopped) {
+        if (await this.iterate()) return;
+        await new Promise((done) => setTimeout(done, WORKER_POLL_MS));
+      }
+    } catch (error: unknown) {
+      await this.onError(error);
+    } finally {
+      await this.background?.catch(() => {});
+      this.deps.translations.dropRun(this.runId);
+      await this.source.dispose();
+    }
+  }
+
+  /** One loop pass; true when the run is over. */
+  async iterate(): Promise<boolean> {
+    this.status = await this.deps.writer.renew(this.context.lease);
+    if (this.status === LiveRunStatus.STOPPING) {
+      await this.finish(LiveRunStatus.STOPPED, LiveRunEndReason.NO_VIEWERS);
+      return true;
+    }
+    const poll = await this.pollSource();
+    for (const chunk of poll.chunks) await this.processChunk(chunk);
+    await this.updateDelay();
+    if (poll.ended) {
+      await this.background?.catch(() => {});
+      await this.deps.translations.flushCaptions(this.context, true);
+      await this.deps.summaries.summarizeFinal(this.context);
+      await this.finish(LiveRunStatus.ENDED, LiveRunEndReason.SOURCE_ENDED);
+      return true;
+    }
+    this.kickBackground(poll.latestSegmentFile);
+    return false;
+  }
+
+  private async pollSource(): Promise<ChunkPoll> {
+    try {
+      const poll = await this.source.poll();
+      this.pollFailures = 0;
+      return poll;
+    } catch (error: unknown) {
+      if (error instanceof LeaseLostError) throw error;
+      this.pollFailures += 1;
+      if (this.pollFailures >= WORKER_MAX_POLL_FAILURES) throw new Error('LIVE_SOURCE_UNREACHABLE');
+      return { chunks: [], ended: false, latestSegmentFile: null };
+    }
+  }
+
+  private async processChunk(chunk: AudioChunk): Promise<void> {
+    const result = await this.deps.transcripts.handleChunk(this.context, this.memory, chunk);
+    if (result.outcome !== LiveChunkOutcome.GAP) this.lastProgressWallAt = Date.now();
+    if (result.line) this.deps.translations.enqueueCaption(this.runId, result.line);
+  }
+
+  private async updateDelay(): Promise<void> {
+    const stale = Date.now() - this.lastProgressWallAt > WORKER_DELAYED_AFTER_MS;
+    if (stale && this.status === LiveRunStatus.ACTIVE) {
+      await this.deps.lifecycle.setStatus(
+        this.context,
+        LiveRunStatus.DELAYED,
+        LiveStatusCode.DELAYED,
+      );
+      this.status = LiveRunStatus.DELAYED;
+    } else if (!stale && this.status === LiveRunStatus.DELAYED) {
+      await this.deps.lifecycle.setStatus(
+        this.context,
+        LiveRunStatus.ACTIVE,
+        LiveStatusCode.ANALYZING,
+      );
+      this.status = LiveRunStatus.ACTIVE;
+    }
+  }
+
+  private kickBackground(segmentFile: string | null): void {
+    if (this.background) return;
+    this.background = this.runBackground(segmentFile)
+      .catch((error: unknown) => {
+        if (error instanceof LeaseLostError) this.stopped = true;
+        else this.logger.warn(`run ${this.runId}: background step failed`);
+      })
+      .finally(() => {
+        this.background = null;
+      });
+  }
+
+  private async runBackground(segmentFile: string | null): Promise<void> {
+    await this.deps.translations.flushCaptions(this.context);
+    if (this.deps.summaries.shouldSummarize(this.memory)) {
+      const changed = await this.deps.summaries.summarize(this.context, this.memory);
+      for (const card of changed)
+        await this.deps.translations.translateCard(this.context, card.target, card.type);
+    }
+    await this.deps.vision.maybeSample(this.context, this.memory, segmentFile);
+    await this.deps.summaries.maybeSnapshot(this.context, this.memory);
+  }
+
+  private async finish(status: LiveRunStatus, reason: LiveRunEndReason): Promise<void> {
+    await this.deps.lifecycle.finish(this.context, status, reason, this.memory.processedMs);
+  }
+
+  private async onError(error: unknown): Promise<void> {
+    if (error instanceof LeaseLostError) {
+      this.logger.log(`run ${this.runId}: lease lost, worker exits`);
+      return;
+    }
+    const code = error instanceof Error ? error.message.slice(0, 60) : 'UNKNOWN';
+    this.logger.warn(`run ${this.runId}: worker failed (${code})`);
+    await this.finish(LiveRunStatus.FAILED, LiveRunEndReason.FAILED).catch(() => {});
+  }
+}

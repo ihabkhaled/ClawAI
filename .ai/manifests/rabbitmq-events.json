@@ -526,6 +526,11 @@
       "source": "packages/shared-types/src/events/event-patterns.ts"
     },
     {
+      "key": "LIVE_RUN_ENDED",
+      "pattern": "live.run_ended",
+      "source": "packages/shared-types/src/events/event-patterns.ts"
+    },
+    {
       "key": "LLAMACPP_BINARY_INSTALLED",
       "pattern": "llamacpp.binary.installed",
       "source": "packages/shared-types/src/events/event-patterns.ts"

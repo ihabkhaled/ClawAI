@@ -6,6 +6,7 @@ import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { FILE_LIBRARY_TRANSLATIONS } from './file-library-translations';
+import { LIVE_TRANSLATIONS } from './live-translations';
 import { MARKETING_VIDEOS_TRANSLATIONS } from './marketing-videos-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
@@ -4961,6 +4962,7 @@ export const ja: TranslationDictionary = {
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.ja,
   pickedModel: PICKED_MODEL_TRANSLATIONS.ja,
   creditFallback: CREDIT_FALLBACK_TRANSLATIONS.ja,
+  live: LIVE_TRANSLATIONS.ja,
   mediaUi: MEDIA_UI_TRANSLATIONS.ja,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.ja,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.ja,
@@ -5590,6 +5592,7 @@ export const ja: TranslationDictionary = {
         ROUTING: 'ルーティング',
         TRANSCRIPTION: '文字起こし',
         TRANSCRIPTION_READ: '音声・動画の文字起こしの読み取り',
+        LIVE_INTELLIGENCE: 'ライブインテリジェンス（ライブ配信の分析）',
         VISION_HELPER: '画像説明ヘルパー',
         THREADS: 'Threads の投稿',
         TTS: '読み上げ（音声合成）',

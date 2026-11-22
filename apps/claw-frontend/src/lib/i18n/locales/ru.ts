@@ -6,6 +6,7 @@ import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { FILE_LIBRARY_TRANSLATIONS } from './file-library-translations';
+import { LIVE_TRANSLATIONS } from './live-translations';
 import { MARKETING_VIDEOS_TRANSLATIONS } from './marketing-videos-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
@@ -5005,6 +5006,7 @@ export const ru: TranslationDictionary = {
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.ru,
   pickedModel: PICKED_MODEL_TRANSLATIONS.ru,
   creditFallback: CREDIT_FALLBACK_TRANSLATIONS.ru,
+  live: LIVE_TRANSLATIONS.ru,
   mediaUi: MEDIA_UI_TRANSLATIONS.ru,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.ru,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.ru,
@@ -5635,6 +5637,7 @@ export const ru: TranslationDictionary = {
         ROUTING: 'Маршрутизация',
         TRANSCRIPTION: 'Транскрипция',
         TRANSCRIPTION_READ: 'Чтение транскрипции аудио/видео',
+        LIVE_INTELLIGENCE: 'Live Intelligence (анализ прямых трансляций)',
         VISION_HELPER: 'Помощник описания изображений',
         THREADS: 'Публикации Threads',
         TTS: 'Чтение вслух (синтез речи)',

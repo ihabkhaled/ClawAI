@@ -37,6 +37,12 @@ admins manage grants via `PUT /api/v1/admin/roles/:id/permissions`.
 `ADMIN_WORKSPACE_AUTOMATION_MANAGE`, `ADMIN_WORKSPACES_VIEW`, `ADMIN_USAGE_VIEW`,
 `ADMIN_LOGS_VIEW`, `ADMIN_SYSTEM_VIEW`
 
+**Live Intelligence (ADR-221)**
+`LIVE_USE` (granted to every signed-in USER by default; the plan's free monthly
+seconds and the PAYG meter on `PaygSurface.LIVE_INTELLIGENCE` do the per-tier
+limiting), `ADMIN_LIVE_MANAGE` (ADMIN-only: sources, capacity, policy, global
+provider budget). Both are seeded in `seed.cjs` and `seed-permissions.cjs`.
+
 `ADMIN_PLANS_MANAGE` is the server-side gate for plan CRUD, immutable price
 versions, subscriber counts, provider-cost and margin dashboards, refunds, and
 manual reconciliation. Hiding the `/admin/billing` or plan-price navigation is
@@ -49,7 +55,8 @@ Seeded from `USER_DEFAULT_PERMISSIONS` in
 `apps/claw-auth-service/src/common/constants/rbac.constants.ts`: `CHAT_USE`,
 `CHAT_READ_OWN`, `CHAT_DELETE_OWN`, `WORKSPACE_VIEW`, `WORKSPACE_APP_CONFIG_VIEW`,
 `WORKSPACE_CONNECT_OWN`, `WORKSPACE_READ_OWN`, `WORKSPACE_SYNC_OWN`,
-`WORKSPACE_ACTION_OWN`, `MODEL_USE_ALLOWED`, `AGENT_USE`, `RESEARCH_USE`.
+`WORKSPACE_ACTION_OWN`, `MODEL_USE_ALLOWED`, `AGENT_USE`, `RESEARCH_USE`,
+`LIVE_USE` (ADR-221), among others. The constant is the full list.
 Everything else (memory/context management pages, files, observability, admin) is
 withheld by default and admin-grantable per role.
 

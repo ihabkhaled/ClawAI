@@ -241,6 +241,21 @@ Only the public `/api/v1/plugins` prefix is routed. The service-to-service route
 live under `/api/v1/internal/` and stay closed by the 404 block. The current,
 authoritative table is `infra/nginx/locations.conf`.
 
+### Live Service (port 4022)
+
+```nginx
+location ~ ^/api/v1/live/sessions/[^/]+/stream$ { ... proxy_buffering off; proxy_read_timeout 86400; }
+location ~ ^/api/v1/live/streams/[^/]+/hls/     { ... proxy_buffering off; }
+location /api/v1/live {
+    set $live_backend https://live-service:4022;
+    proxy_pass $live_backend;
+}
+```
+
+The two regex locations (SSE and the HLS proxy) win over the prefix and sit before it. Only the public
+`/api/v1/live` prefix is routed; `/api/v1/internal/` stays closed. Bind-mounted single file: restart nginx
+after editing. The current, authoritative table is `infra/nginx/locations.conf`.
+
 ### File Generation Service (port 4013)
 
 ```nginx

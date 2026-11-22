@@ -123,4 +123,8 @@ export enum Permission {
   // thereby a buyer, and a buyer must never reach another account's wallet.
   BILLING_CREDIT_TOPUP = 'BILLING_CREDIT_TOPUP',
   ADMIN_CREDIT_MANAGE = 'ADMIN_CREDIT_MANAGE',
+
+  // Live Intelligence (ADR-221): watching with AI, and operating sources, capacity and policy.
+  LIVE_USE = 'LIVE_USE',
+  ADMIN_LIVE_MANAGE = 'ADMIN_LIVE_MANAGE',
 }

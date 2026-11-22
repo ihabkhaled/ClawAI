@@ -30,6 +30,7 @@ import {
   GitBranch,
   Bot,
   Radar,
+  Radio,
   Receipt,
   KeyRound,
   Globe,
@@ -74,6 +75,7 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
   { labelKey: 'nav.dashboard', href: ROUTES.DASHBOARD, icon: LayoutDashboard },
   { labelKey: 'nav.threads', href: ROUTES.THREAD_PUBLICATIONS, icon: Newspaper },
   { labelKey: 'chat.threadBoardNavLabel', href: ROUTES.THREAD_BOARD, icon: LayoutGrid },
+  { labelKey: 'live.nav.live', href: ROUTES.LIVE, icon: Radio },
   {
     labelKey: 'nav.chat',
     href: ROUTES.CHAT,
@@ -246,6 +248,11 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
         labelKey: 'nav.billing',
         href: ROUTES.ADMIN_BILLING,
         icon: Gauge,
+      },
+      {
+        labelKey: 'live.nav.adminLive',
+        href: ROUTES.ADMIN_LIVE,
+        icon: Radio,
       },
       {
         labelKey: 'nav.adminPaymentGateways',

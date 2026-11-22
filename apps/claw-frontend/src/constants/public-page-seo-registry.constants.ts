@@ -2,6 +2,7 @@ import { COMPARE_MODELS_PAGE_SEO_BY_LOCALE } from '@/constants/compare-models-se
 import { FEATURES_CLUSTER_PAGE_SEO_BY_LOCALE } from '@/constants/features-cluster-seo.constants';
 import { INTEGRATIONS_PAGE_SEO_BY_LOCALE } from '@/constants/integrations-seo.constants';
 import { LEARN_PAGE_SEO_BY_LOCALE } from '@/constants/learn-seo.constants';
+import { LIVE_INTELLIGENCE_SEO_BY_LOCALE } from '@/constants/live-intelligence-seo.constants';
 import { MODEL_FIT_PAGE_SEO_BY_LOCALE } from '@/constants/model-fit-seo.constants';
 import { MODELS_PAGE_SEO_BY_LOCALE } from '@/constants/models-seo.constants';
 import { PROMPT_GUIDE_PAGE_SEO_BY_LOCALE } from '@/constants/prompt-guide-seo.constants';
@@ -58,6 +59,7 @@ const CLUSTER_SEO_SOURCES: ReadonlyArray<LocaleSeoSource> = [
   USE_CASES_CLUSTER_PAGE_SEO_BY_LOCALE,
   THREADS_DISCOVERY_SEO_BY_LOCALE,
   THREADS_PUBLIC_BOARD_SEO_BY_LOCALE,
+  LIVE_INTELLIGENCE_SEO_BY_LOCALE,
   FEATURES_CLUSTER_PAGE_SEO_BY_LOCALE,
   PROMPT_GUIDE_PAGE_SEO_BY_LOCALE,
   PUBLIC_COMMERCE_POLICY_SEO_BY_LOCALE,

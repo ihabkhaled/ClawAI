@@ -1,0 +1,404 @@
+// claw_live — Live Intelligence (ADR-221).
+// Contract: docs/03-architecture/live-intelligence-architecture.md
+// Times named *At that describe the stream are media wall-clock epoch ms (BigInt).
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum LiveSourceKind {
+  YOUTUBE
+  HLS
+  FIXTURE
+}
+
+enum LiveCapability {
+  PLAYER_ONLY
+  AUDIO
+  AUDIO_VISION
+}
+
+enum LiveMode {
+  AUDIO
+  AUDIO_VISION
+  SMART_AUTO
+}
+
+enum LiveRunStatus {
+  PENDING
+  ACTIVE
+  DELAYED
+  STOPPING
+  STOPPED
+  ENDED
+  FAILED
+  DELETED
+}
+
+enum LiveSessionState {
+  CONNECTING
+  ACTIVE
+  PAUSED
+  CREDITS_REQUIRED
+  GRACE
+  EXHAUSTED
+  UNSUPPORTED
+  DETACHED
+}
+
+enum LiveFeedEventKind {
+  SUMMARY
+  HIGHLIGHT
+  VISUAL
+  GAP
+  FINAL
+}
+
+enum LiveHighlightType {
+  DECISION
+  ANNOUNCEMENT
+  DEMONSTRATION
+  KEY_STATEMENT
+  QUESTION
+  MILESTONE
+  OTHER
+}
+
+enum LiveTranslationTarget {
+  SEGMENT
+  EVENT
+}
+
+enum LiveChargeKind {
+  FREE
+  PAID
+  GRACE
+  VISION
+  ENHANCEMENT
+  CORRECTION
+}
+
+enum LivePipelineStage {
+  STT
+  SUMMARY
+  TRANSLATION
+  VISION
+  ENHANCEMENT
+}
+
+/// One source the platform knows. YOUTUBE rows exist only for history/player; they never get a run.
+model LiveStream {
+  id             String         @id @default(cuid())
+  sourceKind     LiveSourceKind @map("source_kind")
+  /// sha256 of the normalized source identity (URL without volatile parts, or YouTube video id).
+  sourceIdentity String         @map("source_identity")
+  /// PUBLIC or PRIVATE:<userId> — a private stream's analysis is never shared.
+  accessScope    String         @map("access_scope")
+  /// Normalized source URL. A PRIVATE url may carry a token, so it is never returned to other users.
+  sourceUrl      String         @map("source_url")
+  declaredHost   String?        @map("declared_host")
+  capability     LiveCapability
+  title          String?
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  runs     LiveProcessingRun[]
+  sessions LiveViewerSession[]
+
+  @@unique([sourceIdentity, accessScope])
+  @@map("live_streams")
+}
+
+/// One shared processing pipeline. At most one active run per processingKey (activeKey emulates a partial unique).
+model LiveProcessingRun {
+  id               String        @id @default(cuid())
+  streamId         String        @map("stream_id")
+  processingKey    String        @map("processing_key")
+  /// Equals processingKey while the run is PENDING/ACTIVE/DELAYED/STOPPING, NULL otherwise.
+  activeKey        String?       @unique @map("active_key")
+  mode             LiveMode
+  pipelineVersion  Int           @map("pipeline_version")
+  status           LiveRunStatus @default(PENDING)
+  /// Fencing token: bumped on every lease claim; every worker write must match it.
+  generation       Int           @default(0)
+  leaseOwner       String?       @map("lease_owner")
+  leaseExpiresAt   DateTime?     @map("lease_expires_at")
+  /// Media time (epoch ms) of the last committed chunk end — the durable checkpoint.
+  checkpointAt     BigInt?       @map("checkpoint_at")
+  nextSegmentSeq   Int           @default(0) @map("next_segment_seq")
+  lastCommitAt     DateTime?     @map("last_commit_at")
+  failureCode      String?       @map("failure_code")
+  startedAt        DateTime      @default(now()) @map("started_at")
+  endedAt          DateTime?     @map("ended_at")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+
+  stream    LiveStream              @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  segments  LiveTranscriptSegment[]
+  events    LiveFeedEvent[]
+  snapshots LiveMemorySnapshot[]
+  sessions  LiveViewerSession[]
+  costs     LiveProviderCost[]
+
+  @@index([status, leaseExpiresAt])
+  @@index([streamId, createdAt])
+  @@map("live_processing_runs")
+}
+
+model LiveTranscriptSegment {
+  id          String   @id @default(cuid())
+  runId       String   @map("run_id")
+  seq         Int
+  startAt     BigInt   @map("start_at")
+  endAt       BigInt   @map("end_at")
+  text        String
+  language    String?
+  confidence  Float?
+  uncertain   Boolean  @default(false)
+  provider    String?
+  processedAt DateTime @default(now()) @map("processed_at")
+
+  run LiveProcessingRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@unique([runId, seq])
+  @@index([runId, startAt])
+  @@map("live_transcript_segments")
+}
+
+/// A Smart Feed card. Immutable identity (eventKey); body changes create LiveFeedEventVersion rows.
+model LiveFeedEvent {
+  id            String             @id @default(cuid())
+  runId         String             @map("run_id")
+  eventKey      String             @map("event_key")
+  kind          LiveFeedEventKind
+  highlightType LiveHighlightType? @map("highlight_type")
+  topicKey      String?            @map("topic_key")
+  startAt       BigInt             @map("start_at")
+  endAt         BigInt?            @map("end_at")
+  importance    Int                @default(1)
+  confidence    Float?
+  title         String
+  body          String
+  /// Supporting evidence: segment seqs and short quotes, JSON array.
+  evidence      Json               @default("[]")
+  version       Int                @default(1)
+  isOpen        Boolean            @default(true) @map("is_open")
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+
+  run          LiveProcessingRun      @relation(fields: [runId], references: [id], onDelete: Cascade)
+  versions     LiveFeedEventVersion[]
+  enhancements LiveEnhancement[]
+
+  @@unique([runId, eventKey])
+  @@index([runId, startAt])
+  @@map("live_feed_events")
+}
+
+model LiveFeedEventVersion {
+  id        String   @id @default(cuid())
+  eventId   String   @map("event_id")
+  version   Int
+  title     String
+  body      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  event LiveFeedEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, version])
+  @@map("live_feed_event_versions")
+}
+
+model LiveTranslation {
+  id            String                @id @default(cuid())
+  runId         String                @map("run_id")
+  targetKind    LiveTranslationTarget @map("target_kind")
+  targetId      String                @map("target_id")
+  language      String
+  sourceVersion Int                   @map("source_version")
+  title         String?
+  text          String
+  model         String?
+  createdAt     DateTime              @default(now()) @map("created_at")
+
+  @@unique([targetKind, targetId, language, sourceVersion])
+  @@index([runId])
+  @@map("live_translations")
+}
+
+model LiveMemorySnapshot {
+  id        String   @id @default(cuid())
+  runId     String   @map("run_id")
+  upToAt    BigInt   @map("up_to_at")
+  summary   String
+  keyFacts  Json     @default("[]") @map("key_facts")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  run LiveProcessingRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId, upToAt])
+  @@map("live_memory_snapshots")
+}
+
+model LiveViewerSession {
+  id                  String           @id @default(cuid())
+  userId              String           @map("user_id")
+  streamId            String           @map("stream_id")
+  runId               String?          @map("run_id")
+  language            String
+  mode                LiveMode
+  state               LiveSessionState @default(CONNECTING)
+  rightsAttestedAt    DateTime?        @map("rights_attested_at")
+  paidApprovedAt      DateTime?        @map("paid_approved_at")
+  spendingCapMicroUsd BigInt?          @map("spending_cap_micro_usd")
+  spentMicroUsd       BigInt           @default(0) @map("spent_micro_usd")
+  /// Active AI seconds accrued and not yet settled into a 60 s block.
+  pendingSeconds      Int              @default(0) @map("pending_seconds")
+  billedSeconds       Int              @default(0) @map("billed_seconds")
+  nextBlockIndex      Int              @default(0) @map("next_block_index")
+  lastHeartbeatAt     DateTime?        @map("last_heartbeat_at")
+  lastPlaybackAt      BigInt?          @map("last_playback_at")
+  policyVersion       Int              @map("policy_version")
+  startedAt           DateTime         @default(now()) @map("started_at")
+  detachedAt          DateTime?        @map("detached_at")
+  createdAt           DateTime         @default(now()) @map("created_at")
+  updatedAt           DateTime         @updatedAt @map("updated_at")
+
+  stream       LiveStream            @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  run          LiveProcessingRun?    @relation(fields: [runId], references: [id], onDelete: SetNull)
+  coverage     LiveSessionCoverage[]
+  enhancements LiveEnhancement[]
+
+  @@index([userId, createdAt, id])
+  @@index([runId, state])
+  @@map("live_viewer_sessions")
+}
+
+/// Media-time intervals this session actually played with AI active. History = run events ∩ coverage.
+model LiveSessionCoverage {
+  id        String   @id @default(cuid())
+  sessionId String   @map("session_id")
+  runId     String   @map("run_id")
+  fromAt    BigInt   @map("from_at")
+  toAt      BigInt   @map("to_at")
+  /// True when this interval ended because playback jumped to the Live Edge (a visible gap follows).
+  endsInGap Boolean  @default(false) @map("ends_in_gap")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  session LiveViewerSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, fromAt])
+  @@index([runId])
+  @@map("live_session_coverage")
+}
+
+model LiveEnhancement {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  sessionId    String   @map("session_id")
+  eventId      String   @map("event_id")
+  eventVersion Int      @map("event_version")
+  modelId      String   @map("model_id")
+  body         String
+  costMicroUsd BigInt   @default(0) @map("cost_micro_usd")
+  requestId    String   @unique @map("request_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  session LiveViewerSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  event   LiveFeedEvent     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("live_enhancements")
+}
+
+/// Free seconds used per user per calendar month (UTC, "YYYY-MM").
+model LiveUsageMonth {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  month           String
+  freeSecondsUsed Int      @default(0) @map("free_seconds_used")
+  paidSeconds     Int      @default(0) @map("paid_seconds")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, month])
+  @@map("live_usage_months")
+}
+
+/// Immutable financial ledger. Never deleted by history deletion; corrections are new CORRECTION rows.
+model LiveUsageCharge {
+  id             String         @id @default(cuid())
+  idempotencyKey String         @unique @map("idempotency_key")
+  userId         String         @map("user_id")
+  /// Plain id, not a relation: the charge outlives a deleted session.
+  sessionId      String?        @map("session_id")
+  runId          String?        @map("run_id")
+  kind           LiveChargeKind
+  seconds        Int            @default(0)
+  microUsd       BigInt         @default(0) @map("micro_usd")
+  reservationId  String?        @map("reservation_id")
+  policyVersion  Int            @map("policy_version")
+  correctsId     String?        @map("corrects_id")
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@map("live_usage_charges")
+}
+
+/// Per-user exhaustion/grace state (one 60 s grace per exhaustion episode).
+model LiveBillingState {
+  userId         String    @id @map("user_id")
+  graceStartedAt DateTime? @map("grace_started_at")
+  graceConsumed  Boolean   @default(false) @map("grace_consumed")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  @@map("live_billing_states")
+}
+
+/// What the platform paid a provider. Recorded once per call, shared by every viewer of the run.
+model LiveProviderCost {
+  id             String            @id @default(cuid())
+  idempotencyKey String            @unique @map("idempotency_key")
+  runId          String?           @map("run_id")
+  stage          LivePipelineStage
+  provider       String
+  model          String?
+  units          Int               @default(0)
+  costMicroUsd   BigInt            @default(0) @map("cost_micro_usd")
+  latencyMs      Int?              @map("latency_ms")
+  succeeded      Boolean           @default(true)
+  createdAt      DateTime          @default(now()) @map("created_at")
+
+  run LiveProcessingRun? @relation(fields: [runId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt, stage])
+  @@map("live_provider_costs")
+}
+
+/// Versioned admin policy. Exactly one row has activeKey = 'active'.
+model LivePolicyVersion {
+  id        String   @id @default(cuid())
+  version   Int      @unique
+  activeKey String?  @unique @map("active_key")
+  /// Validated by LivePolicySchema (per-plan free seconds and price, budgets, limits, kill switch, models).
+  config    Json
+  note      String?
+  createdBy String?  @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("live_policy_versions")
+}
+
+/// A run whose data was deleted. A late worker can never recreate rows under it.
+model LiveRunTombstone {
+  runId     String   @id @map("run_id")
+  deletedAt DateTime @default(now()) @map("deleted_at")
+
+  @@map("live_run_tombstones")
+}

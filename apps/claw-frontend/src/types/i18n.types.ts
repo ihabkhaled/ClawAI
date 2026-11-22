@@ -3,6 +3,7 @@ import type { Locale } from '@/enums/locale.enum';
 import type { CostClass } from '@/enums/router-models.enum';
 import type { AdminSessionsSectionTranslation } from '@/types/admin-sessions-i18n.types';
 import type { FeedbackTranslation } from '@/types/i18n-feedback.types';
+import type { LiveLocaleTranslation } from '@/types/live-i18n.types';
 import type { PluginImportLocaleTranslation } from '@/types/plugin-import-i18n.types';
 import type { PluginQaFixesLocaleTranslation } from '@/types/plugin-qa-fixes-i18n.types';
 
@@ -4682,6 +4683,7 @@ export type TranslationDictionary = {
   narration: NarrationLocaleTranslation;
   pickedModel: PickedModelLocaleTranslation;
   creditFallback: CreditFallbackLocaleTranslation;
+  live: LiveLocaleTranslation;
   mediaUi: MediaUiLocaleTranslation;
   threadTranslation: ThreadTranslationLocaleTranslation;
   smartRouterAdmin: SmartRouterAdminLocaleTranslation;
@@ -5428,6 +5430,7 @@ export type TranslationDictionary = {
         ROUTING: string;
         TRANSCRIPTION: string;
         TRANSCRIPTION_READ: string;
+        LIVE_INTELLIGENCE: string;
         VISION_HELPER: string;
         TTS: string;
       };

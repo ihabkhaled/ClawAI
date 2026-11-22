@@ -6,6 +6,7 @@ import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { FILE_LIBRARY_TRANSLATIONS } from './file-library-translations';
+import { LIVE_TRANSLATIONS } from './live-translations';
 import { MARKETING_VIDEOS_TRANSLATIONS } from './marketing-videos-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
@@ -4780,6 +4781,7 @@ export const th: TranslationDictionary = {
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.th,
   pickedModel: PICKED_MODEL_TRANSLATIONS.th,
   creditFallback: CREDIT_FALLBACK_TRANSLATIONS.th,
+  live: LIVE_TRANSLATIONS.th,
   mediaUi: MEDIA_UI_TRANSLATIONS.th,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.th,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.th,
@@ -5393,6 +5395,7 @@ export const th: TranslationDictionary = {
         ROUTING: 'การกำหนดเส้นทาง',
         TRANSCRIPTION: 'การถอดเสียง',
         TRANSCRIPTION_READ: 'การอ่านถอดเสียงจากเสียง/วิดีโอ',
+        LIVE_INTELLIGENCE: 'Live Intelligence (วิเคราะห์การถ่ายทอดสด)',
         VISION_HELPER: 'ผู้ช่วยอธิบายรูปภาพ',
         THREADS: 'โพสต์ Threads',
         TTS: 'อ่านออกเสียง (แปลงข้อความเป็นเสียงพูด)',

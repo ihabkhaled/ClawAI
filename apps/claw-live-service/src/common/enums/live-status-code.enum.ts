@@ -1,0 +1,16 @@
+/** Status codes a viewer can be shown; never a fake success state. */
+export enum LiveStatusCode {
+  CONNECTING = 'CONNECTING',
+  ANALYZING = 'ANALYZING',
+  PAUSED = 'PAUSED',
+  DELAYED = 'DELAYED',
+  RECOVERING = 'RECOVERING',
+  FREE_EXHAUSTED = 'FREE_EXHAUSTED',
+  CREDITS_REQUIRED = 'CREDITS_REQUIRED',
+  GRACE = 'GRACE',
+  EXHAUSTED = 'EXHAUSTED',
+  UNSUPPORTED = 'UNSUPPORTED',
+  CAPACITY = 'CAPACITY',
+  ENDED = 'ENDED',
+  COMPLETED = 'COMPLETED',
+}

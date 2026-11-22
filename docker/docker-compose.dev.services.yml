@@ -930,6 +930,53 @@ services:
       - claw-network
 
   # ---------------------------------------------------------------------------
+  # Live Service (Live Intelligence, ADR-221). Needs ffmpeg: both Dockerfiles install it.
+  # ---------------------------------------------------------------------------
+  live-service:
+    labels:
+      claw.service: live-service
+    logging: *claw-logging
+    build:
+      context: ..
+      dockerfile: apps/claw-live-service/Dockerfile.dev
+    container_name: claw-live-service
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      <<: *development-watch-environment
+    depends_on:
+      pg-live:
+        condition: service_healthy
+    ports:
+      - '4022:4022'
+    volumes:
+      - ../apps/claw-live-service/package.json:/app/apps/claw-live-service/package.json:ro
+      - ../apps/claw-live-service/prisma:/app/apps/claw-live-service/prisma:ro
+      - ../apps/claw-live-service/prisma.config.ts:/app/apps/claw-live-service/prisma.config.ts:ro
+      - ../apps/claw-live-service/tsconfig.json:/app/apps/claw-live-service/tsconfig.json:ro
+      - ../apps/claw-live-service/tsconfig.build.json:/app/apps/claw-live-service/tsconfig.build.json:ro
+      - ../apps/claw-live-service/src:/app/apps/claw-live-service/src
+      - ../apps/claw-live-service/fixtures:/app/apps/claw-live-service/fixtures:ro
+      - ../tools:/app/tools:ro
+      - ../certs:/certs:ro
+    # TLS is enabled inside the service container. Its loopback probe accepts
+    # the local certificate and uses Node because this image has no wget.
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "require('node:https').get('https://localhost:4022/api/v1/health', { rejectUnauthorized: false }, (response) => process.exit(response.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+    networks:
+      - claw-network
+
+  # ---------------------------------------------------------------------------
   frontend:
     labels:
       claw.service: frontend

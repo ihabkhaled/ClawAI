@@ -1,0 +1,1 @@
+export const LIVE_REDIS_CLIENT = 'LIVE_REDIS_CLIENT';

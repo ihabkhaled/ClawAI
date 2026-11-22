@@ -10,5 +10,6 @@ describe('SERVICE_URLS', () => {
 
   it('registers the plugin service on its configured health route', () => {
     expect(SERVICE_URLS['plugin-service']).toBe('https://plugin-service:4021/api/v1/health');
+    expect(SERVICE_URLS['live-service']).toBe('https://live-service:4022/api/v1/health');
   });
 });

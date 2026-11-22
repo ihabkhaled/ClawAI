@@ -25,6 +25,9 @@ import { FileChunksRepository } from '../repositories/file-chunks.repository';
 import { FilesRepository } from '../repositories/files.repository';
 import { FilesService } from '../services/files.service';
 import { VideoFramesService } from '../services/video-frames.service';
+import { TranscriptionChunkService } from '../services/transcription-chunk.service';
+import { type TranscribeChunkDto, transcribeChunkSchema } from '../dto/transcribe-chunk.dto';
+import { type TranscribeChunkResult } from '../types/transcribe-chunk.types';
 import { type VideoFramesDto, videoFramesSchema } from '../dto/video-frames.dto';
 import {
   type StoreGeneratedAudioDto,
@@ -49,7 +52,24 @@ export class FilesInternalController {
     private readonly filesRepository: FilesRepository,
     private readonly filesService: FilesService,
     private readonly videoFramesService: VideoFramesService,
+    private readonly transcriptionChunkService: TranscriptionChunkService,
   ) {}
+
+  /**
+   * ADR-221 — one Live Intelligence audio chunk (≤ 2 MB, ≤ 30 s) read as text
+   * at the PLATFORM's cost: the existing ranked provider walk, no user wallet
+   * hold. 200 with `noSpeech: true` for silence; 502 `TRANSCRIBE_CHUNK_FAILED`
+   * when the walk fails; 503 `TRANSCRIBE_CHUNK_UNAVAILABLE` with no provider.
+   */
+  @Public()
+  @UseGuards(ServiceTokenGuard)
+  @Post('transcribe-chunk')
+  @HttpCode(HttpStatus.OK)
+  async transcribeChunk(
+    @Body(new ZodValidationPipe(transcribeChunkSchema)) body: TranscribeChunkDto,
+  ): Promise<TranscribeChunkResult> {
+    return this.transcriptionChunkService.transcribeChunk(body);
+  }
 
   @Public()
   @UseGuards(ServiceTokenGuard)

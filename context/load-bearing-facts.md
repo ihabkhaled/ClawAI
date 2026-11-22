@@ -38,6 +38,12 @@ home; this page only collects them. Routed from [`AGENTS.md`](../AGENTS.md).
 - **`files.content` is base64 of the uploaded bytes, not extracted text.** The
   readable text is `files.extractedText`
   ([ADR-095](../docs/13-adr/adr-095-attachment-text-extraction-pipeline.md)).
+- **LIVE_INTELLIGENCE is priced by the caller's versioned policy via `fixedCostMicroUsd`, not by a
+  routing rate** (auth `FIXED_PRICE_SURFACES`, [rules/37](../rules/37-payg-credit-integrity.md) item 25).
+- **YouTube is player-only for Live Intelligence; never capture its audio or captions**
+  ([ADR-221](../docs/13-adr/adr-221-live-intelligence-shared-live-stream-analysis.md)).
+- **The dev frontend (Turbopack in Docker on Windows) does not see edits to existing files or new routes until
+  restarted** (`docker restart claw-frontend`).
 - **Shared packages are consumed through their `dist/`.** A dependent compiled
   against an old `dist` proves nothing; the hooks rebuild stale shared packages
   in dependency order ([rules/34](../rules/34-gate-economy-and-machine-resources.md)).

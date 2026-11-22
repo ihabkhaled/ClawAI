@@ -157,6 +157,29 @@
       "database": "postgresql",
       "mongooseModels": [],
       "prismaModels": [
+        "LiveBillingState",
+        "LiveEnhancement",
+        "LiveFeedEvent",
+        "LiveFeedEventVersion",
+        "LiveMemorySnapshot",
+        "LivePolicyVersion",
+        "LiveProcessingRun",
+        "LiveProviderCost",
+        "LiveRunTombstone",
+        "LiveSessionCoverage",
+        "LiveStream",
+        "LiveTranscriptSegment",
+        "LiveTranslation",
+        "LiveUsageCharge",
+        "LiveUsageMonth",
+        "LiveViewerSession"
+      ],
+      "service": "claw-live-service"
+    },
+    {
+      "database": "postgresql",
+      "mongooseModels": [],
+      "prismaModels": [
         "BinaryRelease",
         "FrontierCatalogEntry",
         "HardwareSnapshot",

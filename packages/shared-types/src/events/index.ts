@@ -6,6 +6,7 @@ export type {
   ThreadGenerationFailedPayload,
   ThreadGenerationFailedRole,
 } from './thread-generation-events.types';
+export type { LiveRunEndedPayload } from './live-events.types';
 export type {
   ThreadCommunityNotificationParams,
   UserNotificationRequestedPayload,

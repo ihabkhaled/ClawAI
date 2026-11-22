@@ -36,4 +36,9 @@ describe('ROUTE_PERMISSIONS', () => {
       Permission.ADMIN_SYSTEM_VIEW,
     );
   });
+
+  it('gates Live Intelligence on LIVE_USE and its admin page on ADMIN_LIVE_MANAGE', () => {
+    expect(requiredPermissionForPath(ROUTES.LIVE)).toBe(Permission.LIVE_USE);
+    expect(requiredPermissionForPath(ROUTES.ADMIN_LIVE)).toBe(Permission.ADMIN_LIVE_MANAGE);
+  });
 });

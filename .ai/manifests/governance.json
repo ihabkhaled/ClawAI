@@ -246,7 +246,7 @@
       "file": "rules/36-floating-ui-and-toast-clearance.md"
     },
     {
-      "bytes": 36824,
+      "bytes": 37775,
       "file": "rules/37-payg-credit-integrity.md"
     },
     {
@@ -376,7 +376,7 @@
   ],
   "skills": [
     {
-      "bytes": 38644,
+      "bytes": 38954,
       "file": "skills/00-index.md"
     },
     {
@@ -758,6 +758,10 @@
     {
       "bytes": 5088,
       "file": "skills/run-gates-once-and-land.md"
+    },
+    {
+      "bytes": 4355,
+      "file": "skills/run-live-intelligence-qa.md"
     },
     {
       "bytes": 5899,

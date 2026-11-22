@@ -38,3 +38,9 @@ plugin-service|-|database|claw-pg-plugin
 plugin-service|-|cert-san|plugin-service
 health-service|PLUGIN_SERVICE_URL|literal|https://plugin-service:4021
 plugin-service|PLUGIN_SERVICE_URL|literal|https://plugin-service:4021
+live-service|PG_LIVE_PASSWORD|password|
+live-service|LIVE_DATABASE_URL|derived|postgresql://claw:{PG_LIVE_PASSWORD}@pg-live:5432/claw_live?schema=public
+live-service|-|database|claw-pg-live
+live-service|-|cert-san|live-service
+health-service|LIVE_SERVICE_URL|literal|https://live-service:4022
+live-service|LIVE_SERVICE_URL|literal|https://live-service:4022

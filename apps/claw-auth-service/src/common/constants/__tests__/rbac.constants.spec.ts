@@ -32,6 +32,11 @@ describe('rbac.constants', () => {
       expect(USER_DEFAULT_PERMISSIONS).not.toContain(Permission.PLUGINS_ADMIN);
     });
 
+    it('grants LIVE_USE to every signed-in USER and withholds ADMIN_LIVE_MANAGE (ADR-221)', () => {
+      expect(USER_DEFAULT_PERMISSIONS).toContain(Permission.LIVE_USE);
+      expect(USER_DEFAULT_PERMISSIONS).not.toContain(Permission.ADMIN_LIVE_MANAGE);
+    });
+
     it('does NOT include any ADMIN_* permission (admin-only writes must stay locked)', () => {
       for (const perm of USER_DEFAULT_PERMISSIONS) {
         expect(perm.startsWith('ADMIN_')).toBe(false);
@@ -58,6 +63,12 @@ describe('rbac.constants', () => {
       ]) {
         expect(adminSeed?.permissions).toContain(permission);
       }
+    });
+
+    it('grants ADMIN both Live Intelligence permissions (ADR-221)', () => {
+      const adminSeed = SYSTEM_ROLE_SEED.find((r) => r.slug === 'ADMIN');
+      expect(adminSeed?.permissions).toContain(Permission.LIVE_USE);
+      expect(adminSeed?.permissions).toContain(Permission.ADMIN_LIVE_MANAGE);
     });
 
     it('grants the USER role the USER_DEFAULT_PERMISSIONS set', () => {

@@ -18,6 +18,11 @@ const appConfigSchema = z.object({
   // every service loads the whole root .env via `env_file`, so this needs no
   // new infrastructure entry — only that file-service now declares it.
   CONNECTOR_SERVICE_URL: z.string().min(1).default('http://connector-service:4003'),
+  // ADR-221 — the platform-paid chunk transcription reports what each chunk
+  // cost, priced from routing-service's internal rate card (the same rates the
+  // PAYG meter uses). Already in the root `.env` (chat/threads read it) and
+  // loaded via `env_file`, so no new infrastructure entry.
+  ROUTING_SERVICE_URL: z.string().min(1).default('https://routing-service:4004'),
   // ADR-128 — the free local speech container (speaches, OpenAI-compatible).
   // Image-only, created with the local-ai compose profile. Empty string turns
   // the LOCAL transcription candidate off; the default is the compose service.
@@ -102,6 +107,6 @@ export class AppConfig {
   }
 
   static get(): AppConfigType {
-    return !cachedConfig ? AppConfig.validate() : cachedConfig;
+    return cachedConfig ?? AppConfig.validate();
   }
 }

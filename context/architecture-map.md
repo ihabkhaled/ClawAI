@@ -19,8 +19,8 @@ research work across cloud AI providers and local runtimes (Ollama, llama.cpp,
 ComfyUI, Stable Diffusion), with memory, context packs, workspace connectors,
 and a desktop agent — all behind one authenticated gateway.
 
-It is an **npm-workspace monorepo**: **<!-- count:services -->21<!-- /count --> NestJS microservices + 1 Next.js
-frontend + <!-- count:sharedPackages -->6<!-- /count --> shared packages** = <!-- count:workspaces -->28<!-- /count --> workspaces (each with a `package.json` under
+It is an **npm-workspace monorepo**: **<!-- count:services -->22<!-- /count --> NestJS microservices + 1 Next.js
+frontend + <!-- count:sharedPackages -->6<!-- /count --> shared packages** = <!-- count:workspaces -->29<!-- /count --> workspaces (each with a `package.json` under
 `apps/`/`packages/`; the frontend counts as an app). See
 [workspace-map.md](workspace-map.md).
 
@@ -44,7 +44,7 @@ frontend + <!-- count:sharedPackages -->6<!-- /count --> shared packages** = <!-
                 │  HTTP/HTTPS to service:port
                 ▼
 ┌──────────────────────────────────────────────────────────────────────┐
-│  21 NestJS services (ports 4001-4021)                                  │
+│  22 NestJS services (ports 4001-4022)                                  │
 │  Controller (3-line) → Service (≤30 ln) → Repository (no throw)        │
 │                     ↘ Manager (≤80 ln orchestration)                   │
 │                     ↘ Adapter (wraps vendor SDKs)                       │

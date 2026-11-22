@@ -99,6 +99,24 @@
       "VideoGeneration",
       "VideoGenerationAsset"
     ],
+    "claw-live-service": [
+      "LiveBillingState",
+      "LiveEnhancement",
+      "LiveFeedEvent",
+      "LiveFeedEventVersion",
+      "LiveMemorySnapshot",
+      "LivePolicyVersion",
+      "LiveProcessingRun",
+      "LiveProviderCost",
+      "LiveRunTombstone",
+      "LiveSessionCoverage",
+      "LiveStream",
+      "LiveTranscriptSegment",
+      "LiveTranslation",
+      "LiveUsageCharge",
+      "LiveUsageMonth",
+      "LiveViewerSession"
+    ],
     "claw-llamacpp-service": [
       "BinaryRelease",
       "FrontierCatalogEntry",

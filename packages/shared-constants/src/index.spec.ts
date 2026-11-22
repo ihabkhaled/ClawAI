@@ -3,6 +3,8 @@ import {
   CHAT_SERVICE_PORT,
   EXCHANGE_NAME,
   HEALTH_SERVICE_PORT,
+  LIVE_SERVICE,
+  LIVE_SERVICE_PORT,
   LLAMACPP_SERVICE_PORT,
   PAYMENT_SERVICE_PORT,
   PLUGIN_SERVICE,
@@ -19,14 +21,14 @@ describe('shared-constants', () => {
     expect(RABBITMQ_QUEUE_PREFIX).toBe('claw');
   });
 
-  it('assigns each service a unique port in the 4001-4021 range', () => {
+  it('assigns each service a unique port in the 4001-4022 range', () => {
     const portEntries = Object.entries(constants).filter(([key]) => key.endsWith('_SERVICE_PORT'));
     const ports = portEntries.map(([, value]) => value as number);
 
     expect(ports.length).toBeGreaterThanOrEqual(16);
     for (const port of ports) {
       expect(port).toBeGreaterThanOrEqual(4001);
-      expect(port).toBeLessThanOrEqual(4021);
+      expect(port).toBeLessThanOrEqual(4022);
     }
     expect(new Set(ports).size).toBe(ports.length);
   });
@@ -40,9 +42,14 @@ describe('shared-constants', () => {
     expect(THREADS_SERVICE_PORT).toBe(4019);
     expect(THREAD_GENERATION_SERVICE_PORT).toBe(4020);
     expect(PLUGIN_SERVICE_PORT).toBe(4021);
+    expect(LIVE_SERVICE_PORT).toBe(4022);
   });
 
   it('names the plugin service like its compose service', () => {
     expect(PLUGIN_SERVICE).toBe('plugin-service');
+  });
+
+  it('names the live service like its compose service', () => {
+    expect(LIVE_SERVICE).toBe('live-service');
   });
 });

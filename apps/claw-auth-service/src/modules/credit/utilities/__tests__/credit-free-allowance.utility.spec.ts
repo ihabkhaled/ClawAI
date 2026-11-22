@@ -72,6 +72,8 @@ describe('isFreeAllowanceEligible', () => {
     PaygSurface.TRANSCRIPTION,
     PaygSurface.TTS,
     PaygSurface.VISION_HELPER,
+    PaygSurface.TRANSCRIPTION_READ,
+    PaygSurface.LIVE_INTELLIGENCE,
   ])('excludes %s (per-unit or not a user request)', (surface) => {
     expect(isFreeAllowanceEligible(request({ surface }))).toBe(false);
   });

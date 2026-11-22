@@ -12,7 +12,7 @@ This is a lightweight, stateless aggregator service that calls all other service
 
 ## Behavior
 
-- Calls every other service's health endpoint (`SERVICE_URLS`) in parallel; `plugin-service` (port 4021) joined the platform group in the plugins foundation batch
+- Calls every other service's health endpoint (`SERVICE_URLS`) in parallel; `plugin-service` (port 4021) and `live-service` (port 4022, ADR-221) joined the platform group
 - Returns aggregated status: healthy (all up), degraded (some down), unhealthy (all down)
 - Individual service failures do not crash this service — they are reported as degraded
 

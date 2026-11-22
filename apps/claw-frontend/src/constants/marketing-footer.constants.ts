@@ -7,6 +7,7 @@ export const MARKETING_FOOTER_EXPLORE_PATHS: ReadonlySet<string> = new Set([
   '/coding-agent',
   '/faq',
   '/features',
+  '/features/live-intelligence',
   '/features/threads',
   '/how-it-works',
   '/integrations',

@@ -697,7 +697,7 @@ if ([string]::IsNullOrWhiteSpace($pluginEncryptionKey)) {
 $pgDbKeys = @(
     'AUTH', 'CHAT', 'CONNECTOR', 'ROUTING', 'MEMORY', 'FILES', 'OLLAMA',
     'IMAGES', 'FILE_GENERATIONS', 'WORKSPACE', 'AGENT', 'RESEARCH',
-    'PAYMENTS', 'LLAMACPP', 'THREAD_GENERATION', 'THREADS', 'PLUGIN'
+    'PAYMENTS', 'LLAMACPP', 'THREAD_GENERATION', 'THREADS', 'PLUGIN', 'LIVE'
 )
 $pgPasswords = @{}
 $pgPreservedCount = 0
@@ -1132,6 +1132,10 @@ PG_PLUGIN_USER=claw
 PG_PLUGIN_PASSWORD=$($pgPasswords.PLUGIN)
 PG_PLUGIN_DB=claw_plugin
 PG_PLUGIN_PORT=5459
+PG_LIVE_USER=claw
+PG_LIVE_PASSWORD=$($pgPasswords.LIVE)
+PG_LIVE_DB=claw_live
+PG_LIVE_PORT=5460
 
 # =============================================================================
 # MongoDB
@@ -1470,6 +1474,7 @@ PAYMENT_SERVICE_URL=https://payment-service:4018
 THREADS_SERVICE_URL=https://threads-service:4019
 THREAD_GENERATION_SERVICE_URL=https://thread-generation-service:4020
 PLUGIN_SERVICE_URL=https://plugin-service:4021
+LIVE_SERVICE_URL=https://live-service:4022
 LLAMACPP_SERVICE_URL=https://llamacpp-service:4017
 
 # =============================================================================
@@ -1504,6 +1509,7 @@ PAYMENT_SERVICE_PORT=4018
 THREADS_SERVICE_PORT=4019
 THREAD_GENERATION_SERVICE_PORT=4020
 PLUGIN_SERVICE_PORT=4021
+LIVE_SERVICE_PORT=4022
 LLAMACPP_PORT=4017
 
 # Research service: headless-browser fallback (ADR-094).
@@ -1608,6 +1614,7 @@ LLAMACPP_DATABASE_URL=postgresql://claw:$($pgPasswords.LLAMACPP)@pg-llamacpp:543
 THREAD_GENERATION_DATABASE_URL=postgresql://claw:$($pgPasswords.THREAD_GENERATION)@pg-thread-generation:5432/claw_thread_generation?schema=public
 THREADS_DATABASE_URL=postgresql://claw:$($pgPasswords.THREADS)@pg-threads:5432/claw_threads?schema=public
 PLUGIN_DATABASE_URL=postgresql://claw:$($pgPasswords.PLUGIN)@pg-plugin:5432/claw_plugin?schema=public
+LIVE_DATABASE_URL=postgresql://claw:$($pgPasswords.LIVE)@pg-live:5432/claw_live?schema=public
 
 # claw-llamacpp-service (Local Frontier LLM runtime)
 # Path matches the `llamacpp-data` Docker named volume so binary + weights

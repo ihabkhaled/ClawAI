@@ -77,5 +77,8 @@ export const transcribeWithOpenAi = async (
     text: transcript,
     durationSeconds: response.duration,
     ...(segments.length > 0 ? { segments } : {}),
+    ...(typeof response.language === 'string' && response.language.length > 0
+      ? { language: response.language }
+      : {}),
   };
 };

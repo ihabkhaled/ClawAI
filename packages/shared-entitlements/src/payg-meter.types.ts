@@ -34,6 +34,13 @@ export type PaygReserveInput = {
    */
   cacheWritePromptTokens?: number;
   requestedMaxOutputTokens: number;
+  /**
+   * The caller's stated price in integer micro-USD, ONLY for a fixed-price
+   * surface (Live Intelligence, priced by live-service's versioned policy).
+   * auth holds exactly this, with no rate lookup, and requires every token and
+   * unit count to be 0; any other surface answers 400. Omit otherwise.
+   */
+  fixedCostMicroUsd?: number;
 } & PaygUnitCounts;
 
 /**
@@ -98,6 +105,8 @@ export type PaygFinalizeUsage = {
 export type PaygFinalizeCalls = PaygUnitCounts & {
   toolCalls?: number;
   searchCalls?: number;
+  /** The settled price for a fixed-price hold; auth charges min(this, held). See PaygReserveInput. */
+  fixedCostMicroUsd?: number;
 };
 
 export type PaygReleaseReason = 'PROVIDER_ERROR' | 'CANCELLED' | 'TIMEOUT';

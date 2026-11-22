@@ -2122,6 +2122,11 @@
         "method": "POST",
         "route": "/internal/file-generations/generate",
         "source": "apps/claw-file-generation-service/src/modules/file-generation/controllers/internal-file-generation.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/file-generations/render-pdf",
+        "source": "apps/claw-file-generation-service/src/modules/file-generation/controllers/internal-file-generation.controller.ts"
       }
     ],
     "claw-file-service": [
@@ -2292,6 +2297,11 @@
       },
       {
         "method": "POST",
+        "route": "/internal/files/transcribe-chunk",
+        "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/internal/files/upload-internal",
         "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
       },
@@ -2458,6 +2468,128 @@
         "method": "POST",
         "route": "/videos/:id/retry",
         "source": "apps/claw-image-service/src/modules/video-generation/controllers/video-generation.controller.ts"
+      }
+    ],
+    "claw-live-service": [
+      {
+        "method": "GET",
+        "route": "/health",
+        "source": "apps/claw-live-service/src/modules/health/controllers/health.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/live/admin/overview",
+        "source": "apps/claw-live-service/src/modules/admin/controllers/admin.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/live/admin/policy",
+        "source": "apps/claw-live-service/src/modules/policy/controllers/live-policy-admin.controller.ts"
+      },
+      {
+        "method": "PUT",
+        "route": "/live/admin/policy",
+        "source": "apps/claw-live-service/src/modules/policy/controllers/live-policy-admin.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/live/admin/policy/rollback",
+        "source": "apps/claw-live-service/src/modules/policy/controllers/live-policy-admin.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/live/admin/runs/:runId/stop",
+        "source": "apps/claw-live-service/src/modules/admin/controllers/admin.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/live/events/:eventId/enhance",
+        "source": "apps/claw-live-service/src/modules/enhance/controllers/enhance.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/live/events/:eventId/versions",
+        "source": "apps/claw-live-service/src/modules/history/controllers/history.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/live/history",
+        "source": "apps/claw-live-service/src/modules/deletion/controllers/deletion.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/live/history",
+        "source": "apps/claw-live-service/src/modules/history/controllers/history.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/live/history/:sessionId",
+        "source": "apps/claw-live-service/src/modules/deletion/controllers/deletion.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/live/history/:sessionId/events",
+        "source": "apps/claw-live-service/src/modules/history/controllers/history.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/live/history/:sessionId/export",
+        "source": "apps/claw-live-service/src/modules/history/controllers/history.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/live/sessions",
+        "source": "apps/claw-live-service/src/modules/sessions/controllers/live-sessions.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/live/sessions/:sessionId",
+        "source": "apps/claw-live-service/src/modules/sessions/controllers/live-sessions.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/live/sessions/:sessionId",
+        "source": "apps/claw-live-service/src/modules/sessions/controllers/live-sessions.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/live/sessions/:sessionId/approve-credits",
+        "source": "apps/claw-live-service/src/modules/sessions/controllers/live-sessions.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/live/sessions/:sessionId/close",
+        "source": "apps/claw-live-service/src/modules/sessions/controllers/live-sessions.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/live/sessions/:sessionId/heartbeat",
+        "source": "apps/claw-live-service/src/modules/sessions/controllers/live-sessions.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/live/sessions/:sessionId/stream",
+        "source": "apps/claw-live-service/src/modules/realtime/controllers/live-stream.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/live/sources/resolve",
+        "source": "apps/claw-live-service/src/modules/sessions/controllers/live-sources.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/live/streams/:streamId/hls/:file",
+        "source": "apps/claw-live-service/src/modules/sources/controllers/hls-proxy.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/live/streams/:streamId/hls/p",
+        "source": "apps/claw-live-service/src/modules/sources/controllers/hls-proxy.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/live/usage",
+        "source": "apps/claw-live-service/src/modules/sessions/controllers/live-usage.controller.ts"
       }
     ],
     "claw-llamacpp-service": [
@@ -4914,5 +5046,5 @@
     ]
   },
   "generated": true,
-  "total": 974
+  "total": 1000
 }

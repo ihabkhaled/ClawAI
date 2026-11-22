@@ -612,6 +612,17 @@ export const queryKeys = {
     unpriced: (page: number, pageSize: number, search: string) =>
       [...queryKeys.adminModelCosts.all, 'unpriced', { page, pageSize, search }] as const,
   },
+  // Live Intelligence (ADR-221). The SSE feed is not cached here; only the REST reads are.
+  live: {
+    all: ['live'] as const,
+    usage: () => [...queryKeys.live.all, 'usage'] as const,
+    history: () => [...queryKeys.live.all, 'history'] as const,
+    historyEvents: (sessionId: string) =>
+      [...queryKeys.live.all, 'history-events', sessionId] as const,
+    eventVersions: (eventId: string) => [...queryKeys.live.all, 'event-versions', eventId] as const,
+    adminOverview: (days: number) => [...queryKeys.live.all, 'admin-overview', days] as const,
+    adminPolicy: () => [...queryKeys.live.all, 'admin-policy'] as const,
+  },
   smartRouterAdmin: {
     all: ['smartRouterAdmin'] as const,
     lists: () => [...queryKeys.smartRouterAdmin.all, 'list'] as const,

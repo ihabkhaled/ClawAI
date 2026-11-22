@@ -35,6 +35,7 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<RoutePermission> = [
   { prefix: ROUTES.ADMIN_SMART_ROUTER, permission: Permission.ADMIN_ROUTING_MANAGE },
   { prefix: ROUTES.ADMIN_REFUNDS, permission: Permission.ADMIN_PLANS_MANAGE },
   { prefix: ROUTES.ADMIN_BILLING, permission: Permission.ADMIN_PLANS_MANAGE },
+  { prefix: ROUTES.ADMIN_LIVE, permission: Permission.ADMIN_LIVE_MANAGE },
   { prefix: ROUTES.ADMIN_PAYMENT_GATEWAYS, permission: Permission.ADMIN_PLANS_MANAGE },
   { prefix: ROUTES.ADMIN_PLANS, permission: Permission.ADMIN_PLANS_MANAGE },
   { prefix: ROUTES.ADMIN_ROLES, permission: Permission.ADMIN_PERMISSIONS_MANAGE },
@@ -170,6 +171,7 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<RoutePermission> = [
 
   // Top-level pages and admin landing catch-all.
   { prefix: ROUTES.DASHBOARD, permission: Permission.VIEW_DASHBOARD },
+  { prefix: ROUTES.LIVE, permission: Permission.LIVE_USE },
   { prefix: ROUTES.CONNECTORS, permission: Permission.ADMIN_CONNECTORS_MANAGE },
   { prefix: ROUTES.ROUTING, permission: Permission.ADMIN_ROUTING_MANAGE },
   { prefix: ROUTES.MODELS, permission: Permission.MODELS_CATALOG_VIEW },

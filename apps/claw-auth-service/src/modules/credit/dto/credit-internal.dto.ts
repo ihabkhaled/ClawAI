@@ -4,6 +4,7 @@ import { z } from 'zod';
 import {
   CREDIT_AUDIO_SECONDS_MAX,
   CREDIT_CALL_COUNT_MAX,
+  CREDIT_FIXED_COST_MICRO_USD_MAX,
   CREDIT_IMAGE_UNITS_MAX,
   CREDIT_MAX_OUTPUT_TOKENS_MAX,
   CREDIT_MODEL_MAX_LENGTH,
@@ -32,6 +33,14 @@ const unitCountFields = {
   videoSeconds: z.number().int().min(0).max(CREDIT_VIDEO_SECONDS_MAX).default(0),
 };
 
+// A caller-stated price for a FIXED_PRICE_SURFACES call (Live Intelligence).
+// Integer micro-USD, bounded. Which surfaces may send it, and that it excludes
+// every count, is enforced by the reservation manager with coded 400s
+// (`credit-fixed-price.utility.ts`), so a non-HTTP caller is held to it too.
+const fixedCostField = {
+  fixedCostMicroUsd: z.number().int().min(0).max(CREDIT_FIXED_COST_MICRO_USD_MAX).optional(),
+};
+
 export const reserveCreditSchema = z.object({
   userId: z.string().min(1).max(CREDIT_USER_ID_MAX_LENGTH),
   // The idempotency key for the hold. A retried request reuses its reservation
@@ -52,6 +61,7 @@ export const reserveCreditSchema = z.object({
   threadJobBudgetId: z.string().min(1).max(64).optional(),
   // EXPECTED units: the hold is sized on them.
   ...unitCountFields,
+  ...fixedCostField,
 });
 export type ReserveCreditDto = z.infer<typeof reserveCreditSchema>;
 
@@ -77,6 +87,7 @@ export const finalizeCreditSchema = z.object({
   // MEASURED units: what the call actually produced. A non-token surface
   // settles on these, never on zero tokens.
   ...unitCountFields,
+  ...fixedCostField,
 });
 export type FinalizeCreditDto = z.infer<typeof finalizeCreditSchema>;
 

@@ -73,6 +73,8 @@ export interface TranscriptionProviderResult {
   durationSeconds?: number;
   /** OpenAI `verbose_json` segments, in ms. Absent for Gemini (it has no segment API). */
   segments?: TranscriptSegment[];
+  /** Language the provider detected (OpenAI `verbose_json`). Absent when not reported. */
+  language?: string;
 }
 
 /** A transcription adapter. Every provider implementation has this shape. */
@@ -134,6 +136,12 @@ export interface TranscriptionRequestContext {
   signal?: AbortSignal;
   /** PAYG surface to book the attempts to; absent = TRANSCRIPTION. */
   surface?: PaygSurface;
+  /**
+   * ADR-221 — the PLATFORM pays (Live Intelligence chunks): no wallet hold is
+   * taken, and an empty answer completes with an empty transcript instead of
+   * failing over. `userId` is then a service-scoped label, never a wallet.
+   */
+  platformPaid?: boolean;
 }
 
 /** A readable credit refusal, recorded on the row instead of a transcript. */
@@ -177,7 +185,7 @@ export type TranscriptionReserveOutcome = TranscriptionReserveHeld | Transcripti
 
 export interface TranscriptionAttemptCompleted {
   status: TranscriptionAttemptStatus.COMPLETED;
-  /** Trimmed, non-empty. */
+  /** Trimmed; non-empty except on a platform-paid call that heard no speech. */
   transcript: string;
   result: TranscriptionProviderResult;
 }
@@ -296,6 +304,7 @@ export interface GeminiGenerateContentResponse {
 export interface OpenAiTranscriptionResponse {
   text?: string;
   duration?: number;
+  language?: string;
   segments?: OpenAiTranscriptionSegment[];
 }
 

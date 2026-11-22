@@ -27,6 +27,7 @@ export function toCreditReserveInput(dto: ReserveCreditDto): CreditReserveInput 
     ttsCharacters: dto.ttsCharacters,
     videoSeconds: dto.videoSeconds,
     ...(dto.threadJobBudgetId === undefined ? {} : { threadJobBudgetId: dto.threadJobBudgetId }),
+    ...(dto.fixedCostMicroUsd === undefined ? {} : { fixedCostMicroUsd: dto.fixedCostMicroUsd }),
   };
 }
 
@@ -51,5 +52,6 @@ export function toCreditFinalizeInput(dto: FinalizeCreditDto): CreditFinalizeInp
     audioSeconds: dto.audioSeconds,
     ttsCharacters: dto.ttsCharacters,
     videoSeconds: dto.videoSeconds,
+    ...(dto.fixedCostMicroUsd === undefined ? {} : { fixedCostMicroUsd: dto.fixedCostMicroUsd }),
   };
 }

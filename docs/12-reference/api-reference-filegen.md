@@ -10,12 +10,14 @@ List the current user's file generations.
 
 **Auth**: Bearer token
 **Query Parameters**:
+
 - `page` (int, default: 1)
 - `limit` (int, default: 20, max: 100)
 - `status` (enum) — QUEUED, STARTING, GENERATING_CONTENT, CONVERTING, FINALIZING, COMPLETED, FAILED, TIMED_OUT, CANCELLED
 - `format` (enum) — TXT, MD, PDF, DOCX, CSV, JSON, HTML
 
 **Response 200**:
+
 ```json
 {
   "data": [
@@ -48,6 +50,7 @@ List the current user's file generations.
 ```
 
 **curl**:
+
 ```bash
 curl http://localhost:4000/api/v1/file-generations \
   -H "Authorization: Bearer $TOKEN"
@@ -71,6 +74,7 @@ Retry a failed file generation.
 
 **Auth**: Bearer token (must own generation)
 **Response 200**:
+
 ```json
 {
   "generationId": "clfgen...",
@@ -86,6 +90,7 @@ Stream real-time generation events.
 
 **Auth**: Public (generation ID required)
 **Response**: SSE event stream
+
 ```
 data: {"status":"STARTING","generationId":"clfgen..."}
 data: {"status":"GENERATING_CONTENT","generationId":"clfgen..."}
@@ -104,6 +109,7 @@ Enqueue a new file generation. Used by chat-service.
 
 **Auth**: Public (internal)
 **Request Body**:
+
 ```json
 {
   "userId": "cluser...",
@@ -119,6 +125,7 @@ Enqueue a new file generation. Used by chat-service.
 ```
 
 **Response 201**:
+
 ```json
 {
   "generationId": "clfgen...",
@@ -127,13 +134,33 @@ Enqueue a new file generation. Used by chat-service.
 }
 ```
 
+### POST /internal/file-generations/render-pdf
+
+Stateless Markdown to PDF render. Nothing is stored and no generation row is written. Used by live-service history export
+(ADR-221).
+
+**Auth**: service token (internal)
+**Request Body**:
+
+```json
+{ "content": "# Markdown text", "title": "Optional title" }
+```
+
+`content` is 1 to 200,000 characters; `title` is at most 120 characters.
+
+**Response 200**: `application/pdf` bytes, `Cache-Control: private, no-store`.
+**Errors**: 400 invalid body; 422 `PDF_RENDER_FAILED`.
+
 ### GET /internal/file-generations/:generationId
+
 Get generation status.
 
 ### POST /internal/file-generations/:generationId/retry
+
 Retry generation.
 
 ### GET /internal/file-generations/:generationId/events (SSE)
+
 Stream events.
 
 ---
@@ -154,12 +181,12 @@ The CONVERTING step transforms text into the target format (e.g., Markdown to PD
 
 ## Supported Formats
 
-| Format | MIME Type | Description |
-|--------|-----------|-------------|
-| TXT | text/plain | Plain text |
-| MD | text/markdown | Markdown |
-| PDF | application/pdf | PDF document |
-| DOCX | application/vnd.openxmlformats-officedocument.wordprocessingml.document | Word document |
-| CSV | text/csv | Comma-separated values |
-| JSON | application/json | JSON data |
-| HTML | text/html | HTML document |
+| Format | MIME Type                                                               | Description            |
+| ------ | ----------------------------------------------------------------------- | ---------------------- |
+| TXT    | text/plain                                                              | Plain text             |
+| MD     | text/markdown                                                           | Markdown               |
+| PDF    | application/pdf                                                         | PDF document           |
+| DOCX   | application/vnd.openxmlformats-officedocument.wordprocessingml.document | Word document          |
+| CSV    | text/csv                                                                | Comma-separated values |
+| JSON   | application/json                                                        | JSON data              |
+| HTML   | text/html                                                               | HTML document          |

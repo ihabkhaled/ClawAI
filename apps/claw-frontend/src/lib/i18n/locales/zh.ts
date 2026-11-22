@@ -6,6 +6,7 @@ import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { FILE_LIBRARY_TRANSLATIONS } from './file-library-translations';
+import { LIVE_TRANSLATIONS } from './live-translations';
 import { MARKETING_VIDEOS_TRANSLATIONS } from './marketing-videos-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
@@ -4743,6 +4744,7 @@ export const zh: TranslationDictionary = {
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.zh,
   pickedModel: PICKED_MODEL_TRANSLATIONS.zh,
   creditFallback: CREDIT_FALLBACK_TRANSLATIONS.zh,
+  live: LIVE_TRANSLATIONS.zh,
   mediaUi: MEDIA_UI_TRANSLATIONS.zh,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.zh,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.zh,
@@ -5353,6 +5355,7 @@ export const zh: TranslationDictionary = {
         ROUTING: '路由',
         TRANSCRIPTION: '语音转写',
         TRANSCRIPTION_READ: '读取音频/视频转写',
+        LIVE_INTELLIGENCE: '实时智能（直播分析）',
         VISION_HELPER: '图像描述助手',
         THREADS: 'Threads 文章',
         TTS: '朗读（文本转语音）',

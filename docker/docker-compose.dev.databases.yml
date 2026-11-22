@@ -347,6 +347,29 @@ services:
       retries: 5
     networks:
       - claw-network
+
+  pg-live:
+    labels:
+      claw.service: pg-live
+    logging: *claw-logging
+    image: pgvector/pgvector:pg16
+    container_name: claw-pg-live
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${PG_LIVE_USER:-claw}
+      POSTGRES_PASSWORD: ${PG_LIVE_PASSWORD:-claw_secret}
+      POSTGRES_DB: ${PG_LIVE_DB:-claw_live}
+    ports:
+      - '${PG_LIVE_PORT:-5460}:5432'
+    volumes:
+      - pg-live-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${PG_LIVE_USER:-claw} -d ${PG_LIVE_DB:-claw_live}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - claw-network
   # PostgreSQL (Payment Service)
   #
   # Owns billing customers, subscriptions, checkout sessions, transactions,
@@ -615,6 +638,7 @@ volumes:
   pg-thread-generation-data:
   pg-threads-data:
   pg-plugin-data:
+  pg-live-data:
 
 networks:
   claw-network:

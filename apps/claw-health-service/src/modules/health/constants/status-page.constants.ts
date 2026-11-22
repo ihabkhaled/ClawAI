@@ -38,6 +38,7 @@ export const COMPONENT_MEMBERS: readonly ComponentMembers[] = [
       'threads-service',
       'thread-generation-service',
       'plugin-service',
+      'live-service',
     ],
   },
 ];

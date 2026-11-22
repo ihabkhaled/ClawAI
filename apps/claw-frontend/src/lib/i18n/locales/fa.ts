@@ -6,6 +6,7 @@ import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
 import { FILE_LIBRARY_TRANSLATIONS } from './file-library-translations';
+import { LIVE_TRANSLATIONS } from './live-translations';
 import { MARKETING_VIDEOS_TRANSLATIONS } from './marketing-videos-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
@@ -4953,6 +4954,7 @@ export const fa: TranslationDictionary = {
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.fa,
   pickedModel: PICKED_MODEL_TRANSLATIONS.fa,
   creditFallback: CREDIT_FALLBACK_TRANSLATIONS.fa,
+  live: LIVE_TRANSLATIONS.fa,
   mediaUi: MEDIA_UI_TRANSLATIONS.fa,
   smartRouterAdmin: SMART_ROUTER_ADMIN_TRANSLATIONS.fa,
   adminModelCosts: ADMIN_MODEL_COSTS_TRANSLATIONS.fa,
@@ -5582,6 +5584,7 @@ export const fa: TranslationDictionary = {
         ROUTING: 'مسیریابی',
         TRANSCRIPTION: 'رونویسی صوتی',
         TRANSCRIPTION_READ: 'خواندن متن صوت/ویدیو',
+        LIVE_INTELLIGENCE: 'هوش زنده (تحلیل پخش زنده)',
         VISION_HELPER: 'دستیار توصیف تصویر',
         THREADS: 'نوشته‌های تردز',
         TTS: 'بلندخوانی (تبدیل متن به گفتار)',
