@@ -18,6 +18,8 @@ export interface RunAttachResult {
 export interface RunCoordinatorContract {
   /** Create-or-join the one active run for (stream, mode, pipeline version). Atomic via activeKey. */
   attach(request: RunAttachRequest): Promise<RunAttachResult>;
+  /** BROWSER_CAPTURE: records the one session allowed to push tab audio into the run. */
+  assignCaptureSession(runId: string, sessionId: string): Promise<void>;
   /** Called after any viewer detaches; stops the run immediately when no viewer remains. */
   onViewerDetached(runId: string): Promise<void>;
   /** Refuses new runs over capacity/budget: returns a LiveStatusCode.CAPACITY reason or null. */

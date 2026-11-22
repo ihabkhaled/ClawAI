@@ -45,6 +45,13 @@ export class ProcessingRunRepository {
     });
   }
 
+  async setCaptureSession(runId: string, sessionId: string): Promise<void> {
+    await this.prisma.liveProcessingRun.update({
+      where: { id: runId },
+      data: { captureSessionId: sessionId },
+    });
+  }
+
   countAttachedViewers(runId: string): Promise<number> {
     return this.prisma.liveViewerSession.count({
       where: { runId, state: { in: [...ATTACHED_SESSION_STATES] } },

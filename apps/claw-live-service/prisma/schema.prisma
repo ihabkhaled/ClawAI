@@ -15,12 +15,37 @@ enum LiveSourceKind {
   YOUTUBE
   HLS
   FIXTURE
+  /// Any registry platform other than YouTube (Twitch, Kick, Facebook, ...). The platform is LiveStream.platform.
+  PLATFORM
 }
 
 enum LiveCapability {
   PLAYER_ONLY
   AUDIO
   AUDIO_VISION
+  /// The platform has no embeddable player: the UI links out, no run, no billing.
+  LINK_ONLY
+  /// Analysed from the viewer's own tab audio (getDisplayMedia); the server never fetches the source.
+  BROWSER_CAPTURE
+}
+
+/// Platforms the source registry recognises by URL shape (architecture section 1).
+enum LivePlatform {
+  YOUTUBE
+  TWITCH
+  KICK
+  FACEBOOK
+  TIKTOK
+  INSTAGRAM
+  RUMBLE
+  BIGO
+  LINKEDIN
+  DISCORD
+  TELEGRAM
+  BILIBILI
+  CHZZK
+  SOOP
+  NIMO
 }
 
 enum LiveMode {
@@ -103,6 +128,8 @@ model LiveStream {
   sourceUrl      String         @map("source_url")
   declaredHost   String?        @map("declared_host")
   capability     LiveCapability
+  /// The registry platform of a PLATFORM/YOUTUBE source; null for HLS and FIXTURE.
+  platform       LivePlatform?
   title          String?
   createdAt      DateTime       @default(now()) @map("created_at")
   updatedAt      DateTime       @updatedAt @map("updated_at")
@@ -133,6 +160,8 @@ model LiveProcessingRun {
   nextSegmentSeq   Int           @default(0) @map("next_segment_seq")
   lastCommitAt     DateTime?     @map("last_commit_at")
   failureCode      String?       @map("failure_code")
+  /// BROWSER_CAPTURE runs only: the one viewer session allowed to push tab audio into this run.
+  captureSessionId String?       @map("capture_session_id")
   startedAt        DateTime      @default(now()) @map("started_at")
   endedAt          DateTime?     @map("ended_at")
   createdAt        DateTime      @default(now()) @map("created_at")

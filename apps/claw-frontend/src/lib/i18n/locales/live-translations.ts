@@ -28,9 +28,6 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         'YouTube channel names (@name) can’t be opened here. Open the live stream on YouTube and paste its video link, or the channel’s /channel/UC… link.',
       attestLabel: 'I have the rights to have this stream analyzed.',
       attestHint: 'Required before any AI analysis starts. It applies to you only.',
-      youtubeNoticeTitle: 'AI analysis is not available for YouTube streams',
-      youtubeNotice:
-        'YouTube’s terms do not allow capturing a stream’s audio or captions, so you can watch here but get no captions, summaries or highlights.',
       watchOnly: 'Watch only',
       latencyNote: 'Captions arrive about 7 to 12 seconds after the speech.',
       unsupportedSource: 'This link is not a supported live stream.',
@@ -99,6 +96,49 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       youtubePlayerTitle: 'YouTube live stream',
       watchOnYoutube: 'Watch on YouTube',
       videoLabel: 'Live video',
+    },
+    platform: {
+      recognised: 'Platform: {platform}',
+      captureTitle: 'AI analysis with your browser',
+      captureNotice:
+        '{platform} plays here. For captions, summaries and highlights, press “Analyze with my browser” under the player and share this tab’s audio.',
+      linkOnlyTitle: 'No player here for {platform}',
+      linkOnlyNotice:
+        '{platform} has no player we can show here, so the stream opens on {platform}. Captions and summaries are not available for it.',
+      linkOnlyPanel:
+        'This platform has no embeddable player. Open the stream on {platform} to watch it.',
+      playerOnlyTitle: 'AI analysis is not available for this stream',
+      playerOnly: 'You can watch it here, but it gets no captions, summaries or highlights.',
+      discordPrivate:
+        'Discord Go Live streams run inside a private voice channel and have no public link, so they can’t be opened here.',
+      watchOn: 'Watch on {platform}',
+      playerTitle: '{platform} live stream',
+      tabChat: 'Live chat',
+      chatTitle: '{platform} live chat',
+      openChat: 'Open chat on {platform}',
+      chatError: 'The chat could not be shown here.',
+    },
+    capture: {
+      analyze: 'Analyze with my browser',
+      requesting: 'Pick this tab in the browser prompt and tick “Also share tab audio”.',
+      capturing: 'Analyzing your tab audio',
+      stop: 'Stop analysis',
+      stopped: 'Analysis stopped. Start it again whenever you like.',
+      consentTitle: 'Analyze this stream with your browser',
+      consentDescription: 'Your browser will ask you to share this tab.',
+      consentShare:
+        'You will share this tab. Pick it in the browser prompt and tick “Also share tab audio”.',
+      consentAudioOnly: 'Only its audio is sent, for transcription. The picture is never sent.',
+      consentOwnViewing:
+        'The analysis covers your own viewing only and is never shared with anyone.',
+      consentBilling: 'Minutes are billed as usual while the audio is analyzed.',
+      consentConfirm: 'Share this tab',
+      consentCancel: 'Cancel',
+      errorNoAudio:
+        'No tab audio was shared. Start again and tick “Also share tab audio” in the browser prompt.',
+      errorDenied: 'Tab sharing was cancelled.',
+      errorUnsupported: 'This browser can’t share tab audio. Use Chrome or Edge on a computer.',
+      errorUpload: 'The audio could not be sent, so the analysis stopped.',
     },
     status: {
       connectingTitle: 'Connecting',
@@ -253,9 +293,6 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         'لا يمكن فتح أسماء قنوات يوتيوب (@name) هنا. افتح البث المباشر على يوتيوب والصق رابط الفيديو، أو رابط القناة /channel/UC….',
       attestLabel: 'لدي الحقوق اللازمة لتحليل هذا البث.',
       attestHint: 'مطلوب قبل بدء أي تحليل بالذكاء الاصطناعي. ينطبق عليك أنت فقط.',
-      youtubeNoticeTitle: 'التحليل بالذكاء الاصطناعي غير متاح لبث يوتيوب',
-      youtubeNotice:
-        'لا تسمح شروط يوتيوب بالتقاط صوت البث أو ترجمته النصية، لذا يمكنك المشاهدة هنا دون ترجمة نصية أو ملخصات أو أبرز اللحظات.',
       watchOnly: 'مشاهدة فقط',
       latencyNote: 'تصل الترجمة النصية بعد الكلام بنحو 7 إلى 12 ثانية.',
       unsupportedSource: 'هذا الرابط ليس بثًا مباشرًا مدعومًا.',
@@ -323,6 +360,48 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       youtubePlayerTitle: 'بث يوتيوب المباشر',
       watchOnYoutube: 'شاهد على يوتيوب',
       videoLabel: 'فيديو مباشر',
+    },
+    platform: {
+      recognised: 'المنصة: {platform}',
+      captureTitle: 'تحليل بالذكاء الاصطناعي عبر متصفحك',
+      captureNotice:
+        'يُعرض {platform} هنا. للحصول على الترجمة النصية والملخصات وأبرز اللحظات، اضغط «التحليل عبر متصفحي» أسفل المشغل وشارك صوت علامة التبويب هذه.',
+      linkOnlyTitle: 'لا يوجد مشغل هنا لـ {platform}',
+      linkOnlyNotice:
+        'لا يوفّر {platform} مشغلًا يمكننا عرضه هنا، لذا يُفتح البث على {platform}. الترجمة النصية والملخصات غير متاحة له.',
+      linkOnlyPanel: 'لا تملك هذه المنصة مشغلًا قابلًا للتضمين. افتح البث على {platform} لمشاهدته.',
+      playerOnlyTitle: 'تحليل الذكاء الاصطناعي غير متاح لهذا البث',
+      playerOnly: 'يمكنك مشاهدته هنا، لكن دون ترجمة نصية أو ملخصات أو أبرز اللحظات.',
+      discordPrivate:
+        'بثوث Discord Go Live تجري داخل قناة صوتية خاصة وليس لها رابط عام، لذا لا يمكن فتحها هنا.',
+      watchOn: 'شاهد على {platform}',
+      playerTitle: 'بث {platform} المباشر',
+      tabChat: 'الدردشة المباشرة',
+      chatTitle: 'دردشة {platform} المباشرة',
+      openChat: 'افتح الدردشة على {platform}',
+      chatError: 'تعذّر عرض الدردشة هنا.',
+    },
+    capture: {
+      analyze: 'التحليل عبر متصفحي',
+      requesting: 'اختر علامة التبويب هذه في نافذة المتصفح وفعّل «مشاركة صوت علامة التبويب أيضًا».',
+      capturing: 'جارٍ تحليل صوت علامة التبويب',
+      stop: 'إيقاف التحليل',
+      stopped: 'توقف التحليل. يمكنك بدءه مجددًا متى شئت.',
+      consentTitle: 'حلّل هذا البث عبر متصفحك',
+      consentDescription: 'سيطلب منك المتصفح مشاركة علامة التبويب هذه.',
+      consentShare:
+        'ستشارك علامة التبويب هذه. اخترها في نافذة المتصفح وفعّل «مشاركة صوت علامة التبويب أيضًا».',
+      consentAudioOnly: 'يُرسل صوتها فقط لتحويله إلى نص. لا تُرسل الصورة أبدًا.',
+      consentOwnViewing: 'يغطي التحليل مشاهدتك أنت فقط ولا يُشارك مع أي أحد.',
+      consentBilling: 'تُحتسب الدقائق كالمعتاد أثناء تحليل الصوت.',
+      consentConfirm: 'شارك علامة التبويب هذه',
+      consentCancel: 'إلغاء',
+      errorNoAudio:
+        'لم تتم مشاركة صوت علامة التبويب. ابدأ من جديد وفعّل «مشاركة صوت علامة التبويب أيضًا» في نافذة المتصفح.',
+      errorDenied: 'أُلغيت مشاركة علامة التبويب.',
+      errorUnsupported:
+        'لا يستطيع هذا المتصفح مشاركة صوت علامة التبويب. استخدم Chrome أو Edge على حاسوب.',
+      errorUpload: 'تعذّر إرسال الصوت، لذا توقف التحليل.',
     },
     status: {
       connectingTitle: 'جارٍ الاتصال',
@@ -477,9 +556,6 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         'YouTube-Kanalnamen (@name) lassen sich hier nicht öffnen. Öffne den Livestream auf YouTube und füge den Videolink oder den /channel/UC…-Link des Kanals ein.',
       attestLabel: 'Ich habe die Rechte, diesen Stream analysieren zu lassen.',
       attestHint: 'Erforderlich, bevor eine KI-Analyse startet. Gilt nur für dich.',
-      youtubeNoticeTitle: 'KI-Analyse ist für YouTube-Streams nicht verfügbar',
-      youtubeNotice:
-        'Die Nutzungsbedingungen von YouTube erlauben es nicht, Audio oder Untertitel eines Streams aufzunehmen. Du kannst hier zuschauen, erhältst aber keine Untertitel, Zusammenfassungen oder Highlights.',
       watchOnly: 'Nur ansehen',
       latencyNote: 'Untertitel erscheinen etwa 7 bis 12 Sekunden nach dem Gesprochenen.',
       unsupportedSource: 'Dieser Link ist kein unterstützter Livestream.',
@@ -549,6 +625,52 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       youtubePlayerTitle: 'YouTube-Livestream',
       watchOnYoutube: 'Auf YouTube ansehen',
       videoLabel: 'Live-Video',
+    },
+    platform: {
+      recognised: 'Plattform: {platform}',
+      captureTitle: 'KI-Analyse über deinen Browser',
+      captureNotice:
+        '{platform} läuft hier. Für Untertitel, Zusammenfassungen und Highlights tippe unter dem Player auf „Mit meinem Browser analysieren“ und teile den Ton dieses Tabs.',
+      linkOnlyTitle: 'Kein Player für {platform} verfügbar',
+      linkOnlyNotice:
+        '{platform} bietet keinen Player, den wir hier zeigen können, daher öffnet sich der Stream auf {platform}. Untertitel und Zusammenfassungen gibt es dafür nicht.',
+      linkOnlyPanel:
+        'Diese Plattform hat keinen einbettbaren Player. Öffne den Stream auf {platform}, um ihn anzusehen.',
+      playerOnlyTitle: 'Für diesen Stream gibt es keine KI-Analyse',
+      playerOnly:
+        'Du kannst ihn hier ansehen, aber ohne Untertitel, Zusammenfassungen oder Highlights.',
+      discordPrivate:
+        'Discord-Go-Live-Streams laufen in einem privaten Sprachkanal und haben keinen öffentlichen Link, daher lassen sie sich hier nicht öffnen.',
+      watchOn: 'Auf {platform} ansehen',
+      playerTitle: '{platform}-Livestream',
+      tabChat: 'Live-Chat',
+      chatTitle: '{platform}-Live-Chat',
+      openChat: 'Chat auf {platform} öffnen',
+      chatError: 'Der Chat kann hier nicht angezeigt werden.',
+    },
+    capture: {
+      analyze: 'Mit meinem Browser analysieren',
+      requesting:
+        'Wähle diesen Tab in der Browser-Abfrage und setze das Häkchen bei „Tab-Audio teilen“.',
+      capturing: 'Der Ton deines Tabs wird analysiert',
+      stop: 'Analyse beenden',
+      stopped: 'Analyse beendet. Du kannst sie jederzeit neu starten.',
+      consentTitle: 'Diesen Stream mit deinem Browser analysieren',
+      consentDescription: 'Dein Browser fragt dich, ob du diesen Tab teilen möchtest.',
+      consentShare:
+        'Du teilst diesen Tab. Wähle ihn in der Browser-Abfrage und setze das Häkchen bei „Tab-Audio teilen“.',
+      consentAudioOnly: 'Nur der Ton wird zur Transkription gesendet, niemals das Bild.',
+      consentOwnViewing:
+        'Die Analyse gilt nur für dein eigenes Zuschauen und wird mit niemandem geteilt.',
+      consentBilling: 'Minuten werden wie gewohnt abgerechnet, solange der Ton analysiert wird.',
+      consentConfirm: 'Diesen Tab teilen',
+      consentCancel: 'Abbrechen',
+      errorNoAudio:
+        'Es wurde kein Tab-Ton geteilt. Starte erneut und setze in der Browser-Abfrage das Häkchen bei „Tab-Audio teilen“.',
+      errorDenied: 'Das Teilen des Tabs wurde abgebrochen.',
+      errorUnsupported:
+        'Dieser Browser kann keinen Tab-Ton teilen. Nutze Chrome oder Edge auf einem Computer.',
+      errorUpload: 'Der Ton konnte nicht gesendet werden, daher wurde die Analyse beendet.',
     },
     status: {
       connectingTitle: 'Verbindung wird hergestellt',
@@ -710,9 +832,6 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       attestLabel: 'Tengo los derechos para que se analice esta transmisión.',
       attestHint:
         'Obligatorio antes de que empiece cualquier análisis con IA. Solo te afecta a ti.',
-      youtubeNoticeTitle: 'El análisis con IA no está disponible para transmisiones de YouTube',
-      youtubeNotice:
-        'Las condiciones de YouTube no permiten capturar el audio ni los subtítulos de una transmisión, así que aquí puedes verla, pero sin subtítulos, resúmenes ni momentos destacados.',
       watchOnly: 'Solo ver',
       latencyNote: 'Los subtítulos llegan entre 7 y 12 segundos después de hablar.',
       unsupportedSource: 'Este enlace no es una transmisión en vivo compatible.',
@@ -782,6 +901,50 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       youtubePlayerTitle: 'Transmisión en vivo de YouTube',
       watchOnYoutube: 'Ver en YouTube',
       videoLabel: 'Vídeo en vivo',
+    },
+    platform: {
+      recognised: 'Plataforma: {platform}',
+      captureTitle: 'Análisis con IA desde tu navegador',
+      captureNotice:
+        '{platform} se reproduce aquí. Para subtítulos, resúmenes y momentos destacados, pulsa «Analizar con mi navegador» debajo del reproductor y comparte el audio de esta pestaña.',
+      linkOnlyTitle: 'No hay reproductor para {platform}',
+      linkOnlyNotice:
+        '{platform} no ofrece un reproductor que podamos mostrar aquí, así que la transmisión se abre en {platform}. No hay subtítulos ni resúmenes para ella.',
+      linkOnlyPanel:
+        'Esta plataforma no tiene un reproductor insertable. Abre la transmisión en {platform} para verla.',
+      playerOnlyTitle: 'El análisis con IA no está disponible para esta transmisión',
+      playerOnly: 'Puedes verla aquí, pero sin subtítulos, resúmenes ni momentos destacados.',
+      discordPrivate:
+        'Las transmisiones de Discord Go Live ocurren dentro de un canal de voz privado y no tienen enlace público, así que no se pueden abrir aquí.',
+      watchOn: 'Ver en {platform}',
+      playerTitle: 'Transmisión en vivo de {platform}',
+      tabChat: 'Chat en vivo',
+      chatTitle: 'Chat en vivo de {platform}',
+      openChat: 'Abrir el chat en {platform}',
+      chatError: 'No se pudo mostrar el chat aquí.',
+    },
+    capture: {
+      analyze: 'Analizar con mi navegador',
+      requesting:
+        'Elige esta pestaña en el aviso del navegador y marca «Compartir también el audio de la pestaña».',
+      capturing: 'Analizando el audio de tu pestaña',
+      stop: 'Detener el análisis',
+      stopped: 'Análisis detenido. Puedes iniciarlo de nuevo cuando quieras.',
+      consentTitle: 'Analiza esta transmisión con tu navegador',
+      consentDescription: 'Tu navegador te pedirá compartir esta pestaña.',
+      consentShare:
+        'Compartirás esta pestaña. Elígela en el aviso del navegador y marca «Compartir también el audio de la pestaña».',
+      consentAudioOnly: 'Solo se envía su audio, para transcribirlo. La imagen nunca se envía.',
+      consentOwnViewing: 'El análisis cubre solo lo que tú ves y nunca se comparte con nadie.',
+      consentBilling: 'Los minutos se cobran como siempre mientras se analiza el audio.',
+      consentConfirm: 'Compartir esta pestaña',
+      consentCancel: 'Cancelar',
+      errorNoAudio:
+        'No se compartió el audio de la pestaña. Empieza de nuevo y marca «Compartir también el audio de la pestaña» en el aviso del navegador.',
+      errorDenied: 'Se canceló el uso compartido de la pestaña.',
+      errorUnsupported:
+        'Este navegador no puede compartir el audio de una pestaña. Usa Chrome o Edge en un ordenador.',
+      errorUpload: 'No se pudo enviar el audio, así que el análisis se detuvo.',
     },
     status: {
       connectingTitle: 'Conectando',
@@ -939,9 +1102,6 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         'نام کانال‌های یوتیوب (@name) اینجا باز نمی‌شود. پخش زنده را در یوتیوب باز کنید و پیوند ویدیو یا پیوند /channel/UC… کانال را بچسبانید.',
       attestLabel: 'من حق تحلیل این پخش را دارم.',
       attestHint: 'پیش از شروع هر تحلیل با هوش مصنوعی لازم است. فقط برای شما اعمال می‌شود.',
-      youtubeNoticeTitle: 'تحلیل با هوش مصنوعی برای پخش‌های یوتیوب در دسترس نیست',
-      youtubeNotice:
-        'شرایط یوتیوب اجازه ضبط صدا یا زیرنویس یک پخش را نمی‌دهد؛ بنابراین می‌توانید اینجا تماشا کنید اما زیرنویس، خلاصه یا لحظه برجسته‌ای نخواهید داشت.',
       watchOnly: 'فقط تماشا',
       latencyNote: 'زیرنویس حدود ۷ تا ۱۲ ثانیه پس از گفتار می‌رسد.',
       unsupportedSource: 'این پیوند یک پخش زنده پشتیبانی‌شده نیست.',
@@ -1010,6 +1170,51 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       youtubePlayerTitle: 'پخش زنده یوتیوب',
       watchOnYoutube: 'تماشا در یوتیوب',
       videoLabel: 'ویدیوی زنده',
+    },
+    platform: {
+      recognised: 'سکو: {platform}',
+      captureTitle: 'تحلیل هوش مصنوعی با مرورگر شما',
+      captureNotice:
+        '{platform} اینجا پخش می‌شود. برای زیرنویس، خلاصه و نکات برجسته، زیر پخش‌کننده «تحلیل با مرورگر من» را بزنید و صدای این زبانه را به اشتراک بگذارید.',
+      linkOnlyTitle: 'برای {platform} پخش‌کننده‌ای اینجا نیست',
+      linkOnlyNotice:
+        '{platform} پخش‌کننده‌ای ندارد که بتوانیم اینجا نشان دهیم، پس پخش روی {platform} باز می‌شود. زیرنویس و خلاصه برای آن در دسترس نیست.',
+      linkOnlyPanel:
+        'این سکو پخش‌کنندهٔ قابل جاسازی ندارد. برای تماشا، پخش را روی {platform} باز کنید.',
+      playerOnlyTitle: 'تحلیل هوش مصنوعی برای این پخش در دسترس نیست',
+      playerOnly: 'می‌توانید آن را اینجا تماشا کنید، اما زیرنویس، خلاصه یا نکات برجسته ندارد.',
+      discordPrivate:
+        'پخش‌های Discord Go Live درون یک کانال صوتی خصوصی انجام می‌شوند و پیوند عمومی ندارند، پس اینجا باز نمی‌شوند.',
+      watchOn: 'تماشا در {platform}',
+      playerTitle: 'پخش زندهٔ {platform}',
+      tabChat: 'گفتگوی زنده',
+      chatTitle: 'گفتگوی زندهٔ {platform}',
+      openChat: 'باز کردن گفتگو در {platform}',
+      chatError: 'گفتگو اینجا نمایش داده نشد.',
+    },
+    capture: {
+      analyze: 'تحلیل با مرورگر من',
+      requesting:
+        'در پنجرهٔ مرورگر این زبانه را انتخاب کنید و «اشتراک‌گذاری صدای زبانه» را هم تیک بزنید.',
+      capturing: 'در حال تحلیل صدای زبانهٔ شما',
+      stop: 'توقف تحلیل',
+      stopped: 'تحلیل متوقف شد. هر وقت خواستید دوباره شروعش کنید.',
+      consentTitle: 'این پخش را با مرورگرتان تحلیل کنید',
+      consentDescription: 'مرورگر از شما می‌خواهد این زبانه را به اشتراک بگذارید.',
+      consentShare:
+        'این زبانه را به اشتراک می‌گذارید. آن را در پنجرهٔ مرورگر انتخاب کنید و «اشتراک‌گذاری صدای زبانه» را هم تیک بزنید.',
+      consentAudioOnly: 'فقط صدای آن برای تبدیل به متن فرستاده می‌شود. تصویر هرگز فرستاده نمی‌شود.',
+      consentOwnViewing:
+        'تحلیل فقط تماشای خود شما را پوشش می‌دهد و با هیچ‌کس به اشتراک گذاشته نمی‌شود.',
+      consentBilling: 'تا وقتی صدا تحلیل می‌شود، دقیقه‌ها طبق معمول محاسبه می‌شوند.',
+      consentConfirm: 'اشتراک‌گذاری این زبانه',
+      consentCancel: 'لغو',
+      errorNoAudio:
+        'صدای زبانه به اشتراک گذاشته نشد. دوباره شروع کنید و در پنجرهٔ مرورگر «اشتراک‌گذاری صدای زبانه» را تیک بزنید.',
+      errorDenied: 'اشتراک‌گذاری زبانه لغو شد.',
+      errorUnsupported:
+        'این مرورگر نمی‌تواند صدای زبانه را به اشتراک بگذارد. از Chrome یا Edge روی رایانه استفاده کنید.',
+      errorUpload: 'صدا فرستاده نشد، پس تحلیل متوقف شد.',
     },
     status: {
       connectingTitle: 'در حال اتصال',
@@ -1167,9 +1372,6 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         'Les noms de chaîne YouTube (@name) ne peuvent pas être ouverts ici. Ouvrez le direct sur YouTube et collez le lien de la vidéo, ou le lien /channel/UC… de la chaîne.',
       attestLabel: 'J’ai les droits pour faire analyser ce direct.',
       attestHint: 'Obligatoire avant le début de toute analyse par IA. Cela ne concerne que vous.',
-      youtubeNoticeTitle: 'L’analyse par IA n’est pas disponible pour les directs YouTube',
-      youtubeNotice:
-        'Les conditions de YouTube interdisent de capter l’audio ou les sous-titres d’un direct : vous pouvez le regarder ici, mais sans sous-titres, résumés ni temps forts.',
       watchOnly: 'Regarder seulement',
       latencyNote: 'Les sous-titres arrivent environ 7 à 12 secondes après la parole.',
       unsupportedSource: 'Ce lien n’est pas un direct pris en charge.',
@@ -1239,6 +1441,52 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       youtubePlayerTitle: 'Direct YouTube',
       watchOnYoutube: 'Regarder sur YouTube',
       videoLabel: 'Vidéo en direct',
+    },
+    platform: {
+      recognised: 'Plateforme : {platform}',
+      captureTitle: 'Analyse IA avec votre navigateur',
+      captureNotice:
+        '{platform} est lu ici. Pour les sous-titres, résumés et temps forts, appuyez sur « Analyser avec mon navigateur » sous le lecteur et partagez le son de cet onglet.',
+      linkOnlyTitle: 'Pas de lecteur ici pour {platform}',
+      linkOnlyNotice:
+        '{platform} ne propose pas de lecteur que nous pouvons afficher ici, le direct s’ouvre donc sur {platform}. Sous-titres et résumés ne sont pas disponibles pour lui.',
+      linkOnlyPanel:
+        'Cette plateforme n’a pas de lecteur intégrable. Ouvrez le direct sur {platform} pour le regarder.',
+      playerOnlyTitle: 'L’analyse IA n’est pas disponible pour ce direct',
+      playerOnly: 'Vous pouvez le regarder ici, mais sans sous-titres, résumés ni temps forts.',
+      discordPrivate:
+        'Les directs Discord Go Live ont lieu dans un salon vocal privé et n’ont pas de lien public : ils ne peuvent pas être ouverts ici.',
+      watchOn: 'Regarder sur {platform}',
+      playerTitle: 'Direct {platform}',
+      tabChat: 'Chat en direct',
+      chatTitle: 'Chat en direct {platform}',
+      openChat: 'Ouvrir le chat sur {platform}',
+      chatError: 'Le chat n’a pas pu être affiché ici.',
+    },
+    capture: {
+      analyze: 'Analyser avec mon navigateur',
+      requesting:
+        'Choisissez cet onglet dans la fenêtre du navigateur et cochez « Partager aussi l’audio de l’onglet ».',
+      capturing: 'Analyse du son de votre onglet',
+      stop: 'Arrêter l’analyse',
+      stopped: 'Analyse arrêtée. Relancez-la quand vous voulez.',
+      consentTitle: 'Analyser ce direct avec votre navigateur',
+      consentDescription: 'Votre navigateur va vous demander de partager cet onglet.',
+      consentShare:
+        'Vous allez partager cet onglet. Choisissez-le dans la fenêtre du navigateur et cochez « Partager aussi l’audio de l’onglet ».',
+      consentAudioOnly:
+        'Seul son son est envoyé, pour la transcription. L’image n’est jamais envoyée.',
+      consentOwnViewing:
+        'L’analyse ne couvre que votre propre visionnage et n’est partagée avec personne.',
+      consentBilling: 'Les minutes sont facturées comme d’habitude pendant l’analyse du son.',
+      consentConfirm: 'Partager cet onglet',
+      consentCancel: 'Annuler',
+      errorNoAudio:
+        'Aucun son d’onglet n’a été partagé. Recommencez et cochez « Partager aussi l’audio de l’onglet » dans la fenêtre du navigateur.',
+      errorDenied: 'Le partage de l’onglet a été annulé.',
+      errorUnsupported:
+        'Ce navigateur ne peut pas partager le son d’un onglet. Utilisez Chrome ou Edge sur un ordinateur.',
+      errorUpload: 'Le son n’a pas pu être envoyé, l’analyse s’est donc arrêtée.',
     },
     status: {
       connectingTitle: 'Connexion',
@@ -1396,9 +1644,6 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         'YouTube चैनल नाम (@name) यहाँ नहीं खुलते। YouTube पर लाइव स्ट्रीम खोलें और उसका वीडियो लिंक, या चैनल का /channel/UC… लिंक चिपकाएँ।',
       attestLabel: 'मेरे पास इस स्ट्रीम का विश्लेषण कराने का अधिकार है।',
       attestHint: 'किसी भी AI विश्लेषण से पहले ज़रूरी है। यह केवल आप पर लागू होता है।',
-      youtubeNoticeTitle: 'YouTube स्ट्रीम के लिए AI विश्लेषण उपलब्ध नहीं है',
-      youtubeNotice:
-        'YouTube की शर्तें स्ट्रीम का ऑडियो या कैप्शन कैप्चर करने की अनुमति नहीं देतीं, इसलिए आप यहाँ देख सकते हैं, पर कैप्शन, सारांश या मुख्य अंश नहीं मिलेंगे।',
       watchOnly: 'सिर्फ़ देखें',
       latencyNote: 'कैप्शन बोले जाने के लगभग 7 से 12 सेकंड बाद आते हैं।',
       unsupportedSource: 'यह लिंक समर्थित लाइव स्ट्रीम नहीं है।',
@@ -1467,6 +1712,51 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       youtubePlayerTitle: 'YouTube लाइव स्ट्रीम',
       watchOnYoutube: 'YouTube पर देखें',
       videoLabel: 'लाइव वीडियो',
+    },
+    platform: {
+      recognised: 'प्लैटफ़ॉर्म: {platform}',
+      captureTitle: 'आपके ब्राउज़र से AI विश्लेषण',
+      captureNotice:
+        '{platform} यहाँ चलता है। कैप्शन, सारांश और हाइलाइट के लिए प्लेयर के नीचे “मेरे ब्राउज़र से विश्लेषण करें” दबाएँ और इस टैब की आवाज़ शेयर करें।',
+      linkOnlyTitle: '{platform} के लिए यहाँ कोई प्लेयर नहीं',
+      linkOnlyNotice:
+        '{platform} ऐसा प्लेयर नहीं देता जिसे हम यहाँ दिखा सकें, इसलिए स्ट्रीम {platform} पर खुलती है। इसके लिए कैप्शन और सारांश उपलब्ध नहीं हैं।',
+      linkOnlyPanel:
+        'इस प्लैटफ़ॉर्म में एम्बेड करने लायक प्लेयर नहीं है। देखने के लिए स्ट्रीम {platform} पर खोलें।',
+      playerOnlyTitle: 'इस स्ट्रीम के लिए AI विश्लेषण उपलब्ध नहीं है',
+      playerOnly: 'आप इसे यहाँ देख सकते हैं, लेकिन कैप्शन, सारांश या हाइलाइट नहीं मिलेंगे।',
+      discordPrivate:
+        'Discord Go Live स्ट्रीम एक निजी वॉइस चैनल के अंदर चलती हैं और उनका कोई सार्वजनिक लिंक नहीं होता, इसलिए उन्हें यहाँ नहीं खोला जा सकता।',
+      watchOn: '{platform} पर देखें',
+      playerTitle: '{platform} लाइव स्ट्रीम',
+      tabChat: 'लाइव चैट',
+      chatTitle: '{platform} लाइव चैट',
+      openChat: '{platform} पर चैट खोलें',
+      chatError: 'चैट यहाँ नहीं दिखाई जा सकी।',
+    },
+    capture: {
+      analyze: 'मेरे ब्राउज़र से विश्लेषण करें',
+      requesting: 'ब्राउज़र के संकेत में यह टैब चुनें और “टैब की ऑडियो भी शेयर करें” पर टिक करें।',
+      capturing: 'आपके टैब की आवाज़ का विश्लेषण हो रहा है',
+      stop: 'विश्लेषण रोकें',
+      stopped: 'विश्लेषण रुक गया। जब चाहें फिर शुरू करें।',
+      consentTitle: 'इस स्ट्रीम का विश्लेषण अपने ब्राउज़र से करें',
+      consentDescription: 'आपका ब्राउज़र इस टैब को शेयर करने के लिए पूछेगा।',
+      consentShare:
+        'आप यह टैब शेयर करेंगे। ब्राउज़र के संकेत में इसे चुनें और “टैब की ऑडियो भी शेयर करें” पर टिक करें।',
+      consentAudioOnly:
+        'सिर्फ़ इसकी आवाज़ ट्रांसक्रिप्शन के लिए भेजी जाती है। तस्वीर कभी नहीं भेजी जाती।',
+      consentOwnViewing:
+        'विश्लेषण सिर्फ़ आपके अपने देखने तक सीमित है और किसी के साथ शेयर नहीं होता।',
+      consentBilling: 'आवाज़ का विश्लेषण होने तक मिनट हमेशा की तरह गिने जाते हैं।',
+      consentConfirm: 'यह टैब शेयर करें',
+      consentCancel: 'रद्द करें',
+      errorNoAudio:
+        'टैब की आवाज़ शेयर नहीं हुई। फिर से शुरू करें और ब्राउज़र के संकेत में “टैब की ऑडियो भी शेयर करें” पर टिक करें।',
+      errorDenied: 'टैब शेयर करना रद्द कर दिया गया।',
+      errorUnsupported:
+        'यह ब्राउज़र टैब की आवाज़ शेयर नहीं कर सकता। कंप्यूटर पर Chrome या Edge इस्तेमाल करें।',
+      errorUpload: 'आवाज़ भेजी नहीं जा सकी, इसलिए विश्लेषण रुक गया।',
     },
     status: {
       connectingTitle: 'जुड़ रहे हैं',
@@ -1622,9 +1912,6 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         'I nomi dei canali YouTube (@name) non si possono aprire qui. Apri la diretta su YouTube e incolla il link del video, oppure il link /channel/UC… del canale.',
       attestLabel: 'Ho i diritti per far analizzare questa diretta.',
       attestHint: 'Obbligatorio prima che parta qualsiasi analisi con IA. Vale solo per te.',
-      youtubeNoticeTitle: 'L’analisi con IA non è disponibile per le dirette YouTube',
-      youtubeNotice:
-        'I termini di YouTube non consentono di acquisire l’audio o i sottotitoli di una diretta, quindi qui puoi guardarla ma senza sottotitoli, riassunti o momenti salienti.',
       watchOnly: 'Solo visione',
       latencyNote: 'I sottotitoli arrivano circa 7-12 secondi dopo il parlato.',
       unsupportedSource: 'Questo link non è una diretta supportata.',
@@ -1694,6 +1981,52 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       youtubePlayerTitle: 'Diretta YouTube',
       watchOnYoutube: 'Guarda su YouTube',
       videoLabel: 'Video in diretta',
+    },
+    platform: {
+      recognised: 'Piattaforma: {platform}',
+      captureTitle: 'Analisi IA con il tuo browser',
+      captureNotice:
+        '{platform} viene riprodotto qui. Per sottotitoli, riassunti e momenti salienti, premi «Analizza con il mio browser» sotto il player e condividi l’audio di questa scheda.',
+      linkOnlyTitle: 'Nessun player qui per {platform}',
+      linkOnlyNotice:
+        '{platform} non offre un player che possiamo mostrare qui, quindi la diretta si apre su {platform}. Sottotitoli e riassunti non sono disponibili.',
+      linkOnlyPanel:
+        'Questa piattaforma non ha un player incorporabile. Apri la diretta su {platform} per guardarla.',
+      playerOnlyTitle: 'L’analisi IA non è disponibile per questa diretta',
+      playerOnly: 'Puoi guardarla qui, ma senza sottotitoli, riassunti o momenti salienti.',
+      discordPrivate:
+        'Le dirette Discord Go Live si svolgono in un canale vocale privato e non hanno un link pubblico, quindi non si possono aprire qui.',
+      watchOn: 'Guarda su {platform}',
+      playerTitle: 'Diretta {platform}',
+      tabChat: 'Chat dal vivo',
+      chatTitle: 'Chat dal vivo di {platform}',
+      openChat: 'Apri la chat su {platform}',
+      chatError: 'Non è stato possibile mostrare la chat qui.',
+    },
+    capture: {
+      analyze: 'Analizza con il mio browser',
+      requesting:
+        'Scegli questa scheda nella finestra del browser e spunta «Condividi anche l’audio della scheda».',
+      capturing: 'Analisi dell’audio della tua scheda',
+      stop: 'Interrompi l’analisi',
+      stopped: 'Analisi interrotta. Riavviala quando vuoi.',
+      consentTitle: 'Analizza questa diretta con il tuo browser',
+      consentDescription: 'Il browser ti chiederà di condividere questa scheda.',
+      consentShare:
+        'Condividerai questa scheda. Sceglila nella finestra del browser e spunta «Condividi anche l’audio della scheda».',
+      consentAudioOnly:
+        'Viene inviato solo l’audio, per la trascrizione. L’immagine non viene mai inviata.',
+      consentOwnViewing:
+        'L’analisi riguarda solo la tua visione e non viene condivisa con nessuno.',
+      consentBilling: 'I minuti vengono addebitati come di consueto mentre l’audio è analizzato.',
+      consentConfirm: 'Condividi questa scheda',
+      consentCancel: 'Annulla',
+      errorNoAudio:
+        'Non è stato condiviso l’audio della scheda. Ricomincia e spunta «Condividi anche l’audio della scheda» nella finestra del browser.',
+      errorDenied: 'La condivisione della scheda è stata annullata.',
+      errorUnsupported:
+        'Questo browser non può condividere l’audio di una scheda. Usa Chrome o Edge su un computer.',
+      errorUpload: 'Non è stato possibile inviare l’audio, quindi l’analisi si è interrotta.',
     },
     status: {
       connectingTitle: 'Connessione',
@@ -1850,9 +2183,6 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         'YouTubeのチャンネル名（@name）はここでは開けません。YouTubeでライブ配信を開き、動画のリンクかチャンネルの /channel/UC… リンクを貼り付けてください。',
       attestLabel: 'この配信を分析する権利を持っています。',
       attestHint: 'AI分析を始める前に必須です。あなた自身にのみ適用されます。',
-      youtubeNoticeTitle: 'YouTube配信ではAI分析を利用できません',
-      youtubeNotice:
-        'YouTubeの規約では配信の音声や字幕の取得が認められていないため、ここで視聴はできますが、字幕・要約・ハイライトは表示されません。',
       watchOnly: '視聴のみ',
       latencyNote: '字幕は発話から約7〜12秒後に表示されます。',
       unsupportedSource: 'このリンクは対応しているライブ配信ではありません。',
@@ -1920,6 +2250,50 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       youtubePlayerTitle: 'YouTubeライブ配信',
       watchOnYoutube: 'YouTubeで見る',
       videoLabel: 'ライブ映像',
+    },
+    platform: {
+      recognised: 'プラットフォーム: {platform}',
+      captureTitle: 'ブラウザーで AI 分析',
+      captureNotice:
+        '{platform} はここで再生できます。字幕・要約・ハイライトを使うには、プレーヤーの下の「ブラウザーで分析」を押して、このタブの音声を共有してください。',
+      linkOnlyTitle: '{platform} はここで再生できません',
+      linkOnlyNotice:
+        '{platform} にはここに表示できるプレーヤーがないため、配信は {platform} で開きます。字幕と要約は利用できません。',
+      linkOnlyPanel:
+        'このプラットフォームには埋め込めるプレーヤーがありません。{platform} で配信を開いて視聴してください。',
+      playerOnlyTitle: 'この配信では AI 分析を利用できません',
+      playerOnly: 'ここで視聴はできますが、字幕・要約・ハイライトはありません。',
+      discordPrivate:
+        'Discord の Go Live はプライベートなボイスチャンネル内の配信で公開リンクがないため、ここでは開けません。',
+      watchOn: '{platform} で視聴',
+      playerTitle: '{platform} のライブ配信',
+      tabChat: 'ライブチャット',
+      chatTitle: '{platform} のライブチャット',
+      openChat: '{platform} でチャットを開く',
+      chatError: 'ここにチャットを表示できませんでした。',
+    },
+    capture: {
+      analyze: 'ブラウザーで分析',
+      requesting:
+        'ブラウザーの画面でこのタブを選び、「タブの音声も共有する」にチェックを入れてください。',
+      capturing: 'タブの音声を分析中',
+      stop: '分析を停止',
+      stopped: '分析を停止しました。いつでも再開できます。',
+      consentTitle: 'この配信をブラウザーで分析',
+      consentDescription: 'ブラウザーがこのタブの共有を求めます。',
+      consentShare:
+        'このタブを共有します。ブラウザーの画面でこのタブを選び、「タブの音声も共有する」にチェックを入れてください。',
+      consentAudioOnly: '文字起こしのために音声だけが送信されます。映像は送信されません。',
+      consentOwnViewing: '分析の対象はあなた自身の視聴だけで、誰とも共有されません。',
+      consentBilling: '音声を分析している間、分数は通常どおり課金されます。',
+      consentConfirm: 'このタブを共有',
+      consentCancel: 'キャンセル',
+      errorNoAudio:
+        'タブの音声が共有されませんでした。やり直して、ブラウザーの画面で「タブの音声も共有する」にチェックを入れてください。',
+      errorDenied: 'タブの共有がキャンセルされました。',
+      errorUnsupported:
+        'このブラウザーはタブの音声を共有できません。パソコンの Chrome か Edge を使ってください。',
+      errorUpload: '音声を送信できなかったため、分析を停止しました。',
     },
     status: {
       connectingTitle: '接続中',
@@ -2075,9 +2449,6 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         'Nomes de canal do YouTube (@name) não podem ser abertos aqui. Abra a transmissão no YouTube e cole o link do vídeo ou o link /channel/UC… do canal.',
       attestLabel: 'Tenho os direitos para que esta transmissão seja analisada.',
       attestHint: 'Obrigatório antes de qualquer análise com IA. Vale apenas para você.',
-      youtubeNoticeTitle: 'A análise com IA não está disponível para transmissões do YouTube',
-      youtubeNotice:
-        'Os termos do YouTube não permitem capturar o áudio nem as legendas de uma transmissão, então você pode assistir aqui, mas sem legendas, resumos ou destaques.',
       watchOnly: 'Só assistir',
       latencyNote: 'As legendas chegam cerca de 7 a 12 segundos depois da fala.',
       unsupportedSource: 'Este link não é uma transmissão ao vivo compatível.',
@@ -2147,6 +2518,51 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       youtubePlayerTitle: 'Transmissão ao vivo do YouTube',
       watchOnYoutube: 'Assistir no YouTube',
       videoLabel: 'Vídeo ao vivo',
+    },
+    platform: {
+      recognised: 'Plataforma: {platform}',
+      captureTitle: 'Análise com IA pelo seu navegador',
+      captureNotice:
+        '{platform} é reproduzido aqui. Para legendas, resumos e destaques, toque em “Analisar com meu navegador” abaixo do player e compartilhe o áudio desta aba.',
+      linkOnlyTitle: 'Sem player aqui para {platform}',
+      linkOnlyNotice:
+        '{platform} não oferece um player que possamos mostrar aqui, então a transmissão abre em {platform}. Legendas e resumos não estão disponíveis para ela.',
+      linkOnlyPanel:
+        'Esta plataforma não tem um player incorporável. Abra a transmissão em {platform} para assistir.',
+      playerOnlyTitle: 'A análise com IA não está disponível para esta transmissão',
+      playerOnly: 'Você pode assistir aqui, mas sem legendas, resumos ou destaques.',
+      discordPrivate:
+        'As transmissões do Discord Go Live acontecem dentro de um canal de voz privado e não têm link público, então não podem ser abertas aqui.',
+      watchOn: 'Assistir em {platform}',
+      playerTitle: 'Transmissão ao vivo de {platform}',
+      tabChat: 'Chat ao vivo',
+      chatTitle: 'Chat ao vivo de {platform}',
+      openChat: 'Abrir o chat em {platform}',
+      chatError: 'Não foi possível mostrar o chat aqui.',
+    },
+    capture: {
+      analyze: 'Analisar com meu navegador',
+      requesting:
+        'Escolha esta aba no aviso do navegador e marque “Compartilhar também o áudio da aba”.',
+      capturing: 'Analisando o áudio da sua aba',
+      stop: 'Parar a análise',
+      stopped: 'Análise parada. Inicie de novo quando quiser.',
+      consentTitle: 'Analise esta transmissão com seu navegador',
+      consentDescription: 'Seu navegador vai pedir para compartilhar esta aba.',
+      consentShare:
+        'Você vai compartilhar esta aba. Escolha-a no aviso do navegador e marque “Compartilhar também o áudio da aba”.',
+      consentAudioOnly: 'Só o áudio é enviado, para transcrição. A imagem nunca é enviada.',
+      consentOwnViewing:
+        'A análise cobre apenas o que você assiste e nunca é compartilhada com ninguém.',
+      consentBilling: 'Os minutos são cobrados normalmente enquanto o áudio é analisado.',
+      consentConfirm: 'Compartilhar esta aba',
+      consentCancel: 'Cancelar',
+      errorNoAudio:
+        'O áudio da aba não foi compartilhado. Comece de novo e marque “Compartilhar também o áudio da aba” no aviso do navegador.',
+      errorDenied: 'O compartilhamento da aba foi cancelado.',
+      errorUnsupported:
+        'Este navegador não consegue compartilhar o áudio de uma aba. Use Chrome ou Edge em um computador.',
+      errorUpload: 'Não foi possível enviar o áudio, então a análise parou.',
     },
     status: {
       connectingTitle: 'Conectando',
@@ -2303,9 +2719,6 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         'Имена каналов YouTube (@name) здесь не открываются. Откройте трансляцию на YouTube и вставьте ссылку на видео или ссылку канала /channel/UC….',
       attestLabel: 'У меня есть права на анализ этой трансляции.',
       attestHint: 'Требуется перед запуском любого анализа ИИ. Относится только к вам.',
-      youtubeNoticeTitle: 'Анализ ИИ недоступен для трансляций YouTube',
-      youtubeNotice:
-        'Условия YouTube запрещают захватывать звук и субтитры трансляции, поэтому здесь её можно смотреть, но без субтитров, сводок и ключевых моментов.',
       watchOnly: 'Только просмотр',
       latencyNote: 'Субтитры появляются примерно через 7–12 секунд после речи.',
       unsupportedSource: 'Эта ссылка не ведёт на поддерживаемую трансляцию.',
@@ -2375,6 +2788,51 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       youtubePlayerTitle: 'Прямая трансляция YouTube',
       watchOnYoutube: 'Смотреть на YouTube',
       videoLabel: 'Видео в прямом эфире',
+    },
+    platform: {
+      recognised: 'Платформа: {platform}',
+      captureTitle: 'ИИ-анализ через ваш браузер',
+      captureNotice:
+        '{platform} воспроизводится здесь. Чтобы получить субтитры, сводки и главные моменты, нажмите «Анализировать в моём браузере» под плеером и поделитесь звуком этой вкладки.',
+      linkOnlyTitle: 'Для {platform} здесь нет плеера',
+      linkOnlyNotice:
+        '{platform} не даёт плеер, который можно показать здесь, поэтому трансляция откроется на {platform}. Субтитры и сводки для неё недоступны.',
+      linkOnlyPanel:
+        'У этой платформы нет встраиваемого плеера. Откройте трансляцию на {platform}, чтобы её посмотреть.',
+      playerOnlyTitle: 'ИИ-анализ для этой трансляции недоступен',
+      playerOnly: 'Её можно смотреть здесь, но без субтитров, сводок и главных моментов.',
+      discordPrivate:
+        'Трансляции Discord Go Live идут внутри закрытого голосового канала и не имеют публичной ссылки, поэтому открыть их здесь нельзя.',
+      watchOn: 'Смотреть на {platform}',
+      playerTitle: 'Трансляция {platform}',
+      tabChat: 'Чат',
+      chatTitle: 'Чат трансляции {platform}',
+      openChat: 'Открыть чат на {platform}',
+      chatError: 'Не удалось показать чат здесь.',
+    },
+    capture: {
+      analyze: 'Анализировать в моём браузере',
+      requesting:
+        'Выберите эту вкладку в окне браузера и отметьте «Также поделиться аудио вкладки».',
+      capturing: 'Анализируется звук вашей вкладки',
+      stop: 'Остановить анализ',
+      stopped: 'Анализ остановлен. Запустите его снова, когда захотите.',
+      consentTitle: 'Анализ трансляции через ваш браузер',
+      consentDescription: 'Браузер попросит вас поделиться этой вкладкой.',
+      consentShare:
+        'Вы поделитесь этой вкладкой. Выберите её в окне браузера и отметьте «Также поделиться аудио вкладки».',
+      consentAudioOnly:
+        'Отправляется только звук, для расшифровки. Изображение никогда не отправляется.',
+      consentOwnViewing: 'Анализ касается только вашего просмотра и ни с кем не делится.',
+      consentBilling: 'Пока звук анализируется, минуты списываются как обычно.',
+      consentConfirm: 'Поделиться вкладкой',
+      consentCancel: 'Отмена',
+      errorNoAudio:
+        'Звук вкладки не передан. Начните заново и отметьте «Также поделиться аудио вкладки» в окне браузера.',
+      errorDenied: 'Показ вкладки отменён.',
+      errorUnsupported:
+        'Этот браузер не умеет передавать звук вкладки. Используйте Chrome или Edge на компьютере.',
+      errorUpload: 'Не удалось отправить звук, поэтому анализ остановлен.',
     },
     status: {
       connectingTitle: 'Подключение',
@@ -2531,9 +2989,6 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         'เปิดชื่อช่อง YouTube (@name) ที่นี่ไม่ได้ โปรดเปิดสตรีมสดบน YouTube แล้ววางลิงก์วิดีโอ หรือลิงก์ /channel/UC… ของช่อง',
       attestLabel: 'ฉันมีสิทธิ์ให้วิเคราะห์สตรีมนี้',
       attestHint: 'จำเป็นก่อนเริ่มการวิเคราะห์ด้วย AI ใช้กับคุณเท่านั้น',
-      youtubeNoticeTitle: 'ไม่รองรับการวิเคราะห์ด้วย AI สำหรับสตรีม YouTube',
-      youtubeNotice:
-        'ข้อกำหนดของ YouTube ไม่อนุญาตให้บันทึกเสียงหรือคำบรรยายของสตรีม คุณจึงดูที่นี่ได้ แต่จะไม่มีคำบรรยาย สรุป หรือไฮไลต์',
       watchOnly: 'ดูอย่างเดียว',
       latencyNote: 'คำบรรยายจะมาถึงหลังคำพูดประมาณ 7 ถึง 12 วินาที',
       unsupportedSource: 'ลิงก์นี้ไม่ใช่สตรีมสดที่รองรับ',
@@ -2600,6 +3055,47 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       youtubePlayerTitle: 'สตรีมสด YouTube',
       watchOnYoutube: 'ดูบน YouTube',
       videoLabel: 'วิดีโอสด',
+    },
+    platform: {
+      recognised: 'แพลตฟอร์ม: {platform}',
+      captureTitle: 'วิเคราะห์ด้วย AI ผ่านเบราว์เซอร์ของคุณ',
+      captureNotice:
+        '{platform} เล่นได้ที่นี่ หากต้องการคำบรรยาย สรุป และไฮไลต์ ให้กด “วิเคราะห์ด้วยเบราว์เซอร์ของฉัน” ใต้เครื่องเล่นแล้วแชร์เสียงของแท็บนี้',
+      linkOnlyTitle: 'ไม่มีเครื่องเล่นของ {platform} ที่นี่',
+      linkOnlyNotice:
+        '{platform} ไม่มีเครื่องเล่นที่เราแสดงที่นี่ได้ ไลฟ์จึงเปิดบน {platform} และไม่มีคำบรรยายหรือสรุปสำหรับไลฟ์นี้',
+      linkOnlyPanel: 'แพลตฟอร์มนี้ไม่มีเครื่องเล่นที่ฝังได้ เปิดไลฟ์บน {platform} เพื่อรับชม',
+      playerOnlyTitle: 'ไลฟ์นี้ใช้การวิเคราะห์ด้วย AI ไม่ได้',
+      playerOnly: 'คุณดูได้ที่นี่ แต่จะไม่มีคำบรรยาย สรุป หรือไฮไลต์',
+      discordPrivate:
+        'ไลฟ์ Discord Go Live เกิดขึ้นในช่องเสียงส่วนตัวและไม่มีลิงก์สาธารณะ จึงเปิดที่นี่ไม่ได้',
+      watchOn: 'ดูบน {platform}',
+      playerTitle: 'ไลฟ์สดของ {platform}',
+      tabChat: 'แชตสด',
+      chatTitle: 'แชตสดของ {platform}',
+      openChat: 'เปิดแชตบน {platform}',
+      chatError: 'แสดงแชตที่นี่ไม่ได้',
+    },
+    capture: {
+      analyze: 'วิเคราะห์ด้วยเบราว์เซอร์ของฉัน',
+      requesting: 'เลือกแท็บนี้ในหน้าต่างของเบราว์เซอร์ แล้วติ๊ก “แชร์เสียงในแท็บด้วย”',
+      capturing: 'กำลังวิเคราะห์เสียงจากแท็บของคุณ',
+      stop: 'หยุดวิเคราะห์',
+      stopped: 'หยุดวิเคราะห์แล้ว เริ่มใหม่ได้ทุกเมื่อ',
+      consentTitle: 'วิเคราะห์ไลฟ์นี้ด้วยเบราว์เซอร์ของคุณ',
+      consentDescription: 'เบราว์เซอร์จะขอให้คุณแชร์แท็บนี้',
+      consentShare:
+        'คุณจะแชร์แท็บนี้ เลือกแท็บในหน้าต่างของเบราว์เซอร์ แล้วติ๊ก “แชร์เสียงในแท็บด้วย”',
+      consentAudioOnly: 'ส่งเฉพาะเสียงเพื่อถอดความ ไม่ส่งภาพเลย',
+      consentOwnViewing: 'การวิเคราะห์ครอบคลุมเฉพาะการรับชมของคุณเอง และไม่แชร์กับใคร',
+      consentBilling: 'ระหว่างที่วิเคราะห์เสียง ระบบคิดนาทีตามปกติ',
+      consentConfirm: 'แชร์แท็บนี้',
+      consentCancel: 'ยกเลิก',
+      errorNoAudio:
+        'ไม่ได้แชร์เสียงของแท็บ เริ่มใหม่แล้วติ๊ก “แชร์เสียงในแท็บด้วย” ในหน้าต่างของเบราว์เซอร์',
+      errorDenied: 'ยกเลิกการแชร์แท็บแล้ว',
+      errorUnsupported: 'เบราว์เซอร์นี้แชร์เสียงของแท็บไม่ได้ ใช้ Chrome หรือ Edge บนคอมพิวเตอร์',
+      errorUpload: 'ส่งเสียงไม่ได้ การวิเคราะห์จึงหยุดลง',
     },
     status: {
       connectingTitle: 'กำลังเชื่อมต่อ',
@@ -2754,9 +3250,6 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         '无法在此打开 YouTube 频道名（@name）。请在 YouTube 上打开直播，然后粘贴视频链接或频道的 /channel/UC… 链接。',
       attestLabel: '我有权对这个直播进行分析。',
       attestHint: '开始任何 AI 分析前必须确认，仅对你本人有效。',
-      youtubeNoticeTitle: 'YouTube 直播不支持 AI 分析',
-      youtubeNotice:
-        'YouTube 的条款不允许获取直播的音频或字幕，因此你可以在这里观看，但不会有字幕、摘要或精彩片段。',
       watchOnly: '仅观看',
       latencyNote: '字幕会在说话后约 7 到 12 秒出现。',
       unsupportedSource: '此链接不是受支持的直播。',
@@ -2823,6 +3316,44 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       youtubePlayerTitle: 'YouTube 直播',
       watchOnYoutube: '在 YouTube 上观看',
       videoLabel: '直播视频',
+    },
+    platform: {
+      recognised: '平台：{platform}',
+      captureTitle: '用你的浏览器进行 AI 分析',
+      captureNotice:
+        '{platform} 可在此播放。如需字幕、摘要和精彩片段，请点击播放器下方的“用我的浏览器分析”，并共享此标签页的音频。',
+      linkOnlyTitle: '此处没有 {platform} 播放器',
+      linkOnlyNotice:
+        '{platform} 没有可在此显示的播放器，因此直播会在 {platform} 打开。它不提供字幕和摘要。',
+      linkOnlyPanel: '该平台没有可嵌入的播放器。请在 {platform} 打开直播观看。',
+      playerOnlyTitle: '此直播无法使用 AI 分析',
+      playerOnly: '你可以在这里观看，但没有字幕、摘要或精彩片段。',
+      discordPrivate: 'Discord Go Live 直播在私密语音频道内进行，没有公开链接，因此无法在此打开。',
+      watchOn: '在 {platform} 观看',
+      playerTitle: '{platform} 直播',
+      tabChat: '直播聊天',
+      chatTitle: '{platform} 直播聊天',
+      openChat: '在 {platform} 打开聊天',
+      chatError: '无法在此显示聊天。',
+    },
+    capture: {
+      analyze: '用我的浏览器分析',
+      requesting: '请在浏览器弹窗中选择此标签页，并勾选“同时分享标签页音频”。',
+      capturing: '正在分析你的标签页音频',
+      stop: '停止分析',
+      stopped: '分析已停止。你可以随时重新开始。',
+      consentTitle: '用你的浏览器分析此直播',
+      consentDescription: '浏览器会请你共享此标签页。',
+      consentShare: '你将共享此标签页。请在浏览器弹窗中选择它，并勾选“同时分享标签页音频”。',
+      consentAudioOnly: '只发送音频用于转写，画面永远不会发送。',
+      consentOwnViewing: '分析只涵盖你自己的观看，不会与任何人共享。',
+      consentBilling: '分析音频期间，分钟数照常计费。',
+      consentConfirm: '共享此标签页',
+      consentCancel: '取消',
+      errorNoAudio: '没有共享标签页音频。请重新开始，并在浏览器弹窗中勾选“同时分享标签页音频”。',
+      errorDenied: '已取消共享标签页。',
+      errorUnsupported: '此浏览器无法共享标签页音频。请在电脑上使用 Chrome 或 Edge。',
+      errorUpload: '音频无法发送，因此分析已停止。',
     },
     status: {
       connectingTitle: '正在连接',

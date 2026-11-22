@@ -67,7 +67,10 @@ export class HlsProxyService {
     const stream = session
       ? await this.prisma.liveStream.findUnique({ where: { id: streamId } })
       : null;
-    if (!stream || stream.sourceKind === LiveSourceKind.YOUTUBE) {
+    if (
+      !stream ||
+      (stream.sourceKind !== LiveSourceKind.HLS && stream.sourceKind !== LiveSourceKind.FIXTURE)
+    ) {
       throw new NotFoundException(LiveSourceErrorCode.STREAM_NOT_FOUND);
     }
     return stream;

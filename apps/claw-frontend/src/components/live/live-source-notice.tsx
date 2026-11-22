@@ -1,12 +1,13 @@
-import { Info } from 'lucide-react';
-
+import { LiveNoticeBox } from '@/components/live/live-notice-box';
 import { Checkbox } from '@/components/ui/checkbox';
 import { LiveCapability } from '@/enums/live.enum';
 import type { LiveSourceNoticeProps } from '@/types/live.types';
+import { livePlatformName } from '@/utilities/live-embed.utility';
 
 /**
- * After the link is resolved: YouTube gets the honest "no AI analysis" notice (policy, watch only);
- * an HLS source asks for the viewer's own rights attestation before any processing.
+ * After the link is resolved: a browser-capture platform (YouTube, Twitch, Kick, Facebook) says AI
+ * runs from the viewer's own tab; a link-only platform says it opens on the platform; a player-only
+ * source says it gets no AI; an HLS source asks for the viewer's own rights attestation.
  */
 export function LiveSourceNotice({
   resolution,
@@ -14,20 +15,33 @@ export function LiveSourceNotice({
   onAttestChange,
   t,
 }: LiveSourceNoticeProps): React.ReactElement {
+  const platform = livePlatformName(resolution.platform) ?? '';
+  const recognised = platform === '' ? [] : [t('live.platform.recognised', { platform })];
+  if (resolution.capability === LiveCapability.BROWSER_CAPTURE) {
+    return (
+      <LiveNoticeBox
+        testId="live-capture-notice"
+        title={t('live.platform.captureTitle')}
+        lines={[...recognised, t('live.platform.captureNotice', { platform })]}
+      />
+    );
+  }
+  if (resolution.capability === LiveCapability.LINK_ONLY) {
+    return (
+      <LiveNoticeBox
+        testId="live-link-only-notice"
+        title={t('live.platform.linkOnlyTitle', { platform })}
+        lines={[...recognised, t('live.platform.linkOnlyNotice', { platform })]}
+      />
+    );
+  }
   if (resolution.capability === LiveCapability.PLAYER_ONLY) {
     return (
-      <div
-        role="note"
-        className="border-border bg-muted text-foreground flex gap-3 rounded-md border p-3"
-        data-testid="live-youtube-notice"
-      >
-        <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-        <div className="flex flex-col gap-1 text-sm">
-          <p className="font-medium">{t('live.page.youtubeNoticeTitle')}</p>
-          <p>{t('live.page.youtubeNotice')}</p>
-          <p className="text-muted-foreground">{t('live.page.watchOnly')}</p>
-        </div>
-      </div>
+      <LiveNoticeBox
+        testId="live-player-only-notice"
+        title={t('live.platform.playerOnlyTitle')}
+        lines={[...recognised, t('live.platform.playerOnly'), t('live.page.watchOnly')]}
+      />
     );
   }
   return (

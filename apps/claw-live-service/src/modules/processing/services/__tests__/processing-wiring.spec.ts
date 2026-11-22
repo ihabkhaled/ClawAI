@@ -1,4 +1,9 @@
-import { LiveMode, LiveRunStatus, LiveSourceKind } from '../../../../generated/prisma';
+import {
+  LiveCapability,
+  LiveMode,
+  LiveRunStatus,
+  LiveSourceKind,
+} from '../../../../generated/prisma';
 import { ProcessingRunRepository } from '../../repositories/processing-run.repository';
 import { RunWorker } from '../../workers/run-worker';
 import { RunEventEmitter } from '../run-event-emitter.service';
@@ -17,10 +22,11 @@ describe('RunEventEmitter', () => {
 });
 
 describe('RunWorkerFactory', () => {
-  it('builds a worker with the claimed generation, and none for YouTube or a vanished run', async () => {
+  it('builds a worker with the claimed generation, and none for a no-run source or a vanished run', async () => {
     const runs = { findRunWithStream: vi.fn() };
     const factory = new RunWorkerFactory(
       runs as never,
+      {} as never,
       {} as never,
       {} as never,
       {} as never,
@@ -46,11 +52,56 @@ describe('RunWorkerFactory', () => {
     expect(worker?.runId).toBe('run-1');
     runs.findRunWithStream.mockResolvedValueOnce({
       id: 'y',
-      stream: { sourceKind: LiveSourceKind.YOUTUBE },
+      stream: { sourceKind: LiveSourceKind.YOUTUBE, capability: LiveCapability.PLAYER_ONLY },
     });
     await expect(factory.create({ id: 'y', generation: 1 })).resolves.toBeNull();
+    runs.findRunWithStream.mockResolvedValueOnce({
+      id: 'k',
+      stream: { sourceKind: LiveSourceKind.PLATFORM, capability: LiveCapability.LINK_ONLY },
+    });
+    await expect(factory.create({ id: 'k', generation: 1 })).resolves.toBeNull();
     runs.findRunWithStream.mockResolvedValueOnce(null);
     await expect(factory.create({ id: 'z', generation: 1 })).resolves.toBeNull();
+  });
+
+  it('builds a capture worker for a BROWSER_CAPTURE run that pops the run queue, never HLS', async () => {
+    const runs = { findRunWithStream: vi.fn() };
+    const redis = { lpopBuffer: vi.fn().mockResolvedValue(null) };
+    const fetcher = { fetchObject: vi.fn() };
+    const factory = new RunWorkerFactory(
+      runs as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      fetcher as never,
+      {} as never,
+      redis as never,
+    );
+    runs.findRunWithStream.mockResolvedValueOnce({
+      id: 'run-c',
+      streamId: 'st-c',
+      mode: LiveMode.AUDIO,
+      startedAt: new Date(),
+      stream: {
+        sourceKind: LiveSourceKind.YOUTUBE,
+        capability: LiveCapability.BROWSER_CAPTURE,
+        sourceUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        declaredHost: 'www.youtube.com',
+      },
+    });
+    const worker = await factory.create({ id: 'run-c', generation: 2 });
+    expect(worker).toBeInstanceOf(RunWorker);
+    const source = (worker as unknown as { source: { poll: () => Promise<unknown> } }).source;
+    await expect(source.poll()).resolves.toEqual({
+      chunks: [],
+      ended: false,
+      latestSegmentFile: null,
+    });
+    expect(redis.lpopBuffer).toHaveBeenCalledWith('live:capture:run-c', 20);
+    expect(fetcher.fetchObject).not.toHaveBeenCalled();
   });
 });
 

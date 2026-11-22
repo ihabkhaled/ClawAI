@@ -18,8 +18,6 @@ export type LiveLocaleTranslation = {
     youtubeHandleError: string;
     attestLabel: string;
     attestHint: string;
-    youtubeNoticeTitle: string;
-    youtubeNotice: string;
     watchOnly: string;
     latencyNote: string;
     unsupportedSource: string;
@@ -86,6 +84,42 @@ export type LiveLocaleTranslation = {
     youtubePlayerTitle: string;
     watchOnYoutube: string;
     videoLabel: string;
+  };
+  platform: {
+    recognised: string;
+    captureTitle: string;
+    captureNotice: string;
+    linkOnlyTitle: string;
+    linkOnlyNotice: string;
+    linkOnlyPanel: string;
+    playerOnlyTitle: string;
+    playerOnly: string;
+    discordPrivate: string;
+    watchOn: string;
+    playerTitle: string;
+    tabChat: string;
+    chatTitle: string;
+    openChat: string;
+    chatError: string;
+  };
+  capture: {
+    analyze: string;
+    requesting: string;
+    capturing: string;
+    stop: string;
+    stopped: string;
+    consentTitle: string;
+    consentDescription: string;
+    consentShare: string;
+    consentAudioOnly: string;
+    consentOwnViewing: string;
+    consentBilling: string;
+    consentConfirm: string;
+    consentCancel: string;
+    errorNoAudio: string;
+    errorDenied: string;
+    errorUnsupported: string;
+    errorUpload: string;
   };
   status: {
     connectingTitle: string;

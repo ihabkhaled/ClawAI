@@ -26,6 +26,7 @@ import type {
   ChunkPoll,
   ParsedPlaylist,
   PlaylistSegment,
+  RunChunkSource,
   WorkerContext,
 } from '../types/processing.types';
 import { parsePlaylist } from '../utilities/hls-playlist.utility';
@@ -42,7 +43,7 @@ import { pcmToWav } from '../utilities/wav.utility';
  * A fresh source starts at the Live Edge (the newest segment) and never back-fills.
  * Media time comes from EXT-X-PROGRAM-DATE-TIME, else from capture wall clock.
  */
-export class HlsChunkSource {
+export class HlsChunkSource implements RunChunkSource {
   private nextSequence: number | null = null;
   private mediaUrl: URL | null = null;
   private initSegment: Buffer | null = null;

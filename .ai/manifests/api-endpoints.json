@@ -2558,6 +2558,11 @@
       },
       {
         "method": "POST",
+        "route": "/live/sessions/:sessionId/audio",
+        "source": "apps/claw-live-service/src/modules/sessions/controllers/live-capture.controller.ts"
+      },
+      {
+        "method": "POST",
         "route": "/live/sessions/:sessionId/close",
         "source": "apps/claw-live-service/src/modules/sessions/controllers/live-sessions.controller.ts"
       },
@@ -5046,5 +5051,5 @@
     ]
   },
   "generated": true,
-  "total": 1000
+  "total": 1001
 }

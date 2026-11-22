@@ -1,6 +1,6 @@
 import { API_BASE_URL } from '@/constants/api.constants';
 import { LIVE_API, LIVE_JSON_MIME_TYPE } from '@/constants/live.constants';
-import { LiveHeartbeatState } from '@/enums/live.enum';
+import { LiveHeartbeatState, LiveSourceKind } from '@/enums/live.enum';
 import type { LiveHeartbeatInput, LivePlaybackSnapshot, LiveSession } from '@/types/live.types';
 
 import { isBehindLiveEdge } from './live-reveal.utility';
@@ -31,6 +31,31 @@ export function toLiveHeartbeatInput(snapshot: LivePlaybackSnapshot): LiveHeartb
     atLiveEdge: !isBehindLiveEdge(snapshot.playbackAt, snapshot.liveEdgeAt),
     ...(snapshot.seekable === null ? {} : { seekableFromAt: Math.round(snapshot.seekable.fromAt) }),
   };
+}
+
+/**
+ * The heartbeat of a browser-capture session: there is no player clock, so playback is "now" and
+ * always at the live edge. PLAYING while the tab audio is being shared, PAUSED otherwise.
+ */
+export function toLiveCaptureHeartbeatInput(isCapturing: boolean, now: number): LiveHeartbeatInput {
+  return {
+    state: isCapturing ? LiveHeartbeatState.PLAYING : LiveHeartbeatState.PAUSED,
+    playbackAt: Math.round(now),
+    atLiveEdge: true,
+  };
+}
+
+/** Only an HLS (or fixture) source plays through the proxy; YouTube and platform sources are iframes. */
+export function liveSessionHlsSrc(
+  session: Pick<LiveSession, 'sourceKind' | 'streamId'> | null,
+): string | null {
+  if (
+    session === null ||
+    (session.sourceKind !== LiveSourceKind.HLS && session.sourceKind !== LiveSourceKind.FIXTURE)
+  ) {
+    return null;
+  }
+  return liveHlsUrl(session.streamId);
 }
 
 /** The same-origin proxy playlist URL the player loads. */

@@ -1188,7 +1188,16 @@ A public Thread page reads `?lang=` (an app language only; `readRequestedThreadL
   (`/api/v1/live/streams/:id/hls/*`), so the CSP stays closed.
 - UI strings: `src/lib/i18n/locales/live-translations.ts` (the `live` dictionary key, 13 locales).
 - Ledger label `billing.credit.surface.LIVE_INTELLIGENCE` (13 locales, `constants/credit.constants.ts`).
-- YouTube is player only: the modal says so. Channel links play through the `live_stream` embed; `@handle` links show
-  the `youtubeHandleError` string.
+- Platforms (batch 2): YouTube, Twitch, Kick and Facebook play in one allowlisted iframe (`constants/live-embed.constants.ts`,
+  `utilities/live-embed.utility.ts` adds Twitch `parent` and YouTube chat `embed_domain`). The other 11 platforms are
+  `LINK_ONLY` ("Watch on <Platform>"); Discord is refused. CSP `frame-src` lists exactly those embed origins and nothing
+  else; `www.youtube.com` is allowed in `frame-src` only (live chat).
+- Live chat: a "Live chat" tab when `chatEmbedUrl` passes the allowlist; an "Open chat on <Platform>" link always sits
+  under it (React cannot see a refused cross-origin frame).
+- Browser capture (YouTube and the embeddable platforms): "Analyze with my browser" → consent dialog →
+  `getDisplayMedia` tab audio → `public/worklets/live-capture-processor.js` → 6 s 16 kHz PCM16 WAV →
+  `POST /live/sessions/:id/audio`. The capture code is loaded with a dynamic `import()` after consent (rule 47). The
+  owner accepted the platforms' terms risk (2026-11-22); server-side capture is never built.
+- YouTube channel links play through the `live_stream` embed; `@handle` links show the `youtubeHandleError` string.
 - The dev frontend (Turbopack in Docker on Windows) does not see new routes or edits to existing files until
   `docker restart claw-frontend`.

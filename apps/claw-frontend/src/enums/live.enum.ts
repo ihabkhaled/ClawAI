@@ -54,12 +54,37 @@ export enum LiveSourceKind {
   YOUTUBE = 'YOUTUBE',
   HLS = 'HLS',
   FIXTURE = 'FIXTURE',
+  /** Twitch, Kick, Facebook and the link-only platforms (batch 2); YouTube rows stay YOUTUBE. */
+  PLATFORM = 'PLATFORM',
+}
+
+/** Mirrors claw-live-service `LivePlatform`. Platform names are brands and are never translated. */
+export enum LivePlatform {
+  YOUTUBE = 'YOUTUBE',
+  TWITCH = 'TWITCH',
+  KICK = 'KICK',
+  FACEBOOK = 'FACEBOOK',
+  TIKTOK = 'TIKTOK',
+  INSTAGRAM = 'INSTAGRAM',
+  RUMBLE = 'RUMBLE',
+  BIGO = 'BIGO',
+  LINKEDIN = 'LINKEDIN',
+  DISCORD = 'DISCORD',
+  TELEGRAM = 'TELEGRAM',
+  BILIBILI = 'BILIBILI',
+  CHZZK = 'CHZZK',
+  SOOP = 'SOOP',
+  NIMO = 'NIMO',
 }
 
 export enum LiveCapability {
   PLAYER_ONLY = 'PLAYER_ONLY',
   AUDIO = 'AUDIO',
   AUDIO_VISION = 'AUDIO_VISION',
+  /** No embeddable player: the modal shows a "Watch on <Platform>" button and no AI. */
+  LINK_ONLY = 'LINK_ONLY',
+  /** Plays in an embed; AI runs on the tab audio the viewer's own browser shares. */
+  BROWSER_CAPTURE = 'BROWSER_CAPTURE',
 }
 
 export enum LiveMode {
@@ -101,6 +126,33 @@ export enum LiveFeedTab {
   FEED = 'feed',
   CAPTIONS = 'captions',
   HIGHLIGHTS = 'highlights',
+  CHAT = 'chat',
+}
+
+/** The browser tab-audio capture state machine: idle → requesting → capturing → stopped / error. */
+export enum LiveCaptureState {
+  IDLE = 'IDLE',
+  REQUESTING = 'REQUESTING',
+  CAPTURING = 'CAPTURING',
+  STOPPED = 'STOPPED',
+  ERROR = 'ERROR',
+}
+
+/** Why a capture failed; each has its own message. */
+export enum LiveCaptureError {
+  NO_AUDIO = 'NO_AUDIO',
+  DENIED = 'DENIED',
+  UNSUPPORTED = 'UNSUPPORTED',
+  UPLOAD = 'UPLOAD',
+}
+
+/** Events the capture state machine accepts. */
+export enum LiveCaptureAction {
+  REQUEST = 'REQUEST',
+  STARTED = 'STARTED',
+  STOP = 'STOP',
+  FAIL = 'FAIL',
+  RESET = 'RESET',
 }
 
 /** How loud a status banner is; maps to design-token colours. */

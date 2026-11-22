@@ -112,6 +112,23 @@ export const apiClient = {
     }
   },
 
+  /**
+   * A POST whose body is raw bytes (a Blob) with the caller's own headers, e.g. an `audio/wav` chunk.
+   * The explicit Content-Type replaces the JSON default, and axios passes a Blob through untouched.
+   */
+  async postRaw<T>(
+    path: string,
+    body: Blob,
+    headers: Record<string, string>,
+  ): Promise<ApiResponse<T>> {
+    try {
+      const response = await httpClient.post<T>(path, body, { headers });
+      return { data: response.data, status: response.status };
+    } catch (error) {
+      throw toApiClientError(error);
+    }
+  },
+
   async put<T>(path: string, body?: unknown): Promise<ApiResponse<T>> {
     try {
       const response = await httpClient.put<T>(path, body);

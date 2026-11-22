@@ -5,6 +5,8 @@ export enum LiveSourceErrorCode {
   /** A YouTube @handle or vanity link: paste the stream's video link or the /channel/UC… link. */
   YOUTUBE_HANDLE_UNSUPPORTED = 'LIVE_YOUTUBE_HANDLE_UNSUPPORTED',
   SOURCE_PLAYER_ONLY = 'LIVE_SOURCE_PLAYER_ONLY',
+  /** Discord Go Live streams inside a voice channel and has no public link to watch or analyse. */
+  DISCORD_PRIVATE = 'LIVE_DISCORD_PRIVATE',
   STREAM_NOT_FOUND = 'LIVE_STREAM_NOT_FOUND',
   UPSTREAM_FAILED = 'LIVE_UPSTREAM_FAILED',
   UPSTREAM_TOO_LARGE = 'LIVE_UPSTREAM_TOO_LARGE',

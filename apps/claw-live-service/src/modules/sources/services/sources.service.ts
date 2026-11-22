@@ -8,26 +8,19 @@ import { PrismaService } from '../../../infrastructure/database/prisma/prisma.se
 import {
   FIXTURE_URL_PREFIX,
   HLS_PLAYLIST_EXTENSION,
+  NON_PLATFORM_FIELDS,
   PRIVATE_ACCESS_SCOPE_PREFIX,
   PUBLIC_ACCESS_SCOPE,
-  YOUTUBE_CHANNEL_LIVE_EMBED_URL,
-  YOUTUBE_CHANNEL_URL_BASE,
-  YOUTUBE_DECLARED_HOST,
-  YOUTUBE_EMBED_BASE_URL,
-  YOUTUBE_EMBED_QUERY,
-  YOUTUBE_WATCH_BASE_URL,
 } from '../constants/sources.constants';
+import type { PlatformResolution } from '../types/platform.types';
 import type { SourceResolution } from '../types/source-resolution.types';
+import { resolvePlatformUrl } from '../utilities/platform-registry.utility';
 import { normalizeSourceUrl } from '../utilities/source-url.utility';
-import {
-  extractYoutubeChannelId,
-  extractYoutubeId,
-  isYoutubeHandleUrl,
-} from '../utilities/youtube-url.utility';
+import { isYoutubeHandleUrl } from '../utilities/youtube-url.utility';
 import { FixtureBroadcasterService } from './fixture-broadcaster.service';
 import { SourceUrlGuardService } from './source-url-guard.service';
 
-/** Classifies a pasted URL into a source kind and stores the LiveStream row (section 1). */
+/** Classifies a pasted URL (platform registry, HLS, fixture) and stores the LiveStream row (section 1). */
 @Injectable()
 export class SourcesService {
   constructor(
@@ -45,10 +38,8 @@ export class SourcesService {
     } catch {
       throw new UnprocessableEntityException(LiveSourceErrorCode.SOURCE_UNSUPPORTED);
     }
-    const youtubeId = extractYoutubeId(url);
-    if (youtubeId) return this.resolveYoutube(youtubeId);
-    const channelId = extractYoutubeChannelId(url);
-    if (channelId) return this.resolveYoutubeChannel(channelId);
+    const platform = resolvePlatformUrl(url);
+    if (platform) return this.resolvePlatform(platform, userId);
     if (isYoutubeHandleUrl(url)) {
       throw new UnprocessableEntityException(LiveSourceErrorCode.YOUTUBE_HANDLE_UNSUPPORTED);
     }
@@ -65,6 +56,7 @@ export class SourcesService {
       sourceUrl: resolution.normalizedUrl,
       declaredHost: resolution.declaredHost,
       capability: resolution.capability,
+      platform: resolution.platform,
     };
     return this.prisma.liveStream.upsert({
       where: {
@@ -97,33 +89,40 @@ export class SourcesService {
       declaredHost: null,
       embedUrl: null,
       reasonCode: null,
+      ...NON_PLATFORM_FIELDS,
     };
   }
 
-  private resolveYoutube(videoId: string): SourceResolution {
+  /**
+   * A registry platform (parsing only, no network call). BROWSER_CAPTURE sources are scoped
+   * to the viewer (their own tab audio is never shared); LINK_ONLY never gets a run.
+   */
+  private resolvePlatform(
+    { definition, match }: PlatformResolution,
+    userId: string,
+  ): SourceResolution {
+    if (definition.refusalCode !== null || definition.capability === null) {
+      throw new UnprocessableEntityException(
+        definition.refusalCode ?? LiveSourceErrorCode.SOURCE_UNSUPPORTED,
+      );
+    }
+    const capture = definition.capability === LiveCapability.BROWSER_CAPTURE;
     return {
-      sourceKind: LiveSourceKind.YOUTUBE,
-      capability: LiveCapability.PLAYER_ONLY,
-      sourceIdentity: sha256Hex(`youtube:${videoId}`),
-      accessScope: PUBLIC_ACCESS_SCOPE,
-      normalizedUrl: `${YOUTUBE_WATCH_BASE_URL}${videoId}`,
-      declaredHost: YOUTUBE_DECLARED_HOST,
-      embedUrl: `${YOUTUBE_EMBED_BASE_URL}${videoId}${YOUTUBE_EMBED_QUERY}`,
-      reasonCode: LiveSourceReasonCode.YOUTUBE_ANALYSIS_NOT_PERMITTED,
-    };
-  }
-
-  /** A channel's current live stream, played through YouTube's `live_stream` embed (player only). */
-  private resolveYoutubeChannel(channelId: string): SourceResolution {
-    return {
-      sourceKind: LiveSourceKind.YOUTUBE,
-      capability: LiveCapability.PLAYER_ONLY,
-      sourceIdentity: sha256Hex(`youtube-channel:${channelId}`),
-      accessScope: PUBLIC_ACCESS_SCOPE,
-      normalizedUrl: `${YOUTUBE_CHANNEL_URL_BASE}${channelId}/live`,
-      declaredHost: YOUTUBE_DECLARED_HOST,
-      embedUrl: `${YOUTUBE_CHANNEL_LIVE_EMBED_URL}?channel=${channelId}&autoplay=1&playsinline=1`,
-      reasonCode: LiveSourceReasonCode.YOUTUBE_ANALYSIS_NOT_PERMITTED,
+      sourceKind: definition.sourceKind,
+      capability: definition.capability,
+      sourceIdentity: sha256Hex(`${definition.platform}:${match.id}`),
+      accessScope: capture ? `${PRIVATE_ACCESS_SCOPE_PREFIX}${userId}` : PUBLIC_ACCESS_SCOPE,
+      normalizedUrl: match.watchUrl,
+      declaredHost: new URL(match.watchUrl).host,
+      embedUrl: match.embedUrl,
+      reasonCode: capture
+        ? LiveSourceReasonCode.BROWSER_CAPTURE_AVAILABLE
+        : LiveSourceReasonCode.LINK_ONLY_PLATFORM,
+      platform: definition.platform,
+      chatEmbedUrl: match.chatEmbedUrl,
+      watchUrl: match.watchUrl,
+      embedNeedsParent: definition.embedNeedsParent,
+      chatNeedsEmbedDomain: definition.chatNeedsEmbedDomain && match.chatEmbedUrl !== null,
     };
   }
 
@@ -142,6 +141,7 @@ export class SourcesService {
       declaredHost: parsed.host,
       embedUrl: null,
       reasonCode: null,
+      ...NON_PLATFORM_FIELDS,
     };
   }
 }

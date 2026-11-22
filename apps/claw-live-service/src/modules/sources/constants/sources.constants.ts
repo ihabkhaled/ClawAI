@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 
 // ── Source resolution ────────────────────────────────────────────────────────
 
-/** Hosts whose URLs are YouTube videos (PLAYER_ONLY: never downloaded or analysed). */
+/** Hosts whose URLs are YouTube videos (BROWSER_CAPTURE: the server never downloads them). */
 export const YOUTUBE_HOSTS: ReadonlySet<string> = new Set([
   'youtube.com',
   'www.youtube.com',
@@ -28,7 +28,6 @@ export const YOUTUBE_CHANNEL_ID_PATTERN = /^UC[A-Za-z0-9_-]{22}$/u;
 export const YOUTUBE_HANDLE_PATH_PREFIXES: readonly string[] = ['c', 'user'];
 export const YOUTUBE_EMBED_QUERY = '?autoplay=1&playsinline=1';
 export const YOUTUBE_WATCH_BASE_URL = 'https://www.youtube.com/watch?v=';
-export const YOUTUBE_DECLARED_HOST = 'www.youtube.com';
 
 export const FIXTURE_URL_PREFIX = 'fixture:';
 /** Admin-enabled fixtures: name → file under FIXTURES_DIR. Only these names resolve. */
@@ -39,6 +38,14 @@ export const LIVE_FIXTURE_FILES: Readonly<Record<string, string>> = {
 export const FIXTURES_DIR = resolve(process.cwd(), 'fixtures');
 
 export const HLS_PLAYLIST_EXTENSION = '.m3u8';
+/** The platform fields of an HLS or FIXTURE resolution (no platform, no chat, no URL echoed). */
+export const NON_PLATFORM_FIELDS = {
+  platform: null,
+  chatEmbedUrl: null,
+  watchUrl: '',
+  embedNeedsParent: false,
+  chatNeedsEmbedDomain: false,
+} as const;
 export const PUBLIC_ACCESS_SCOPE = 'PUBLIC';
 export const PRIVATE_ACCESS_SCOPE_PREFIX = 'PRIVATE:';
 

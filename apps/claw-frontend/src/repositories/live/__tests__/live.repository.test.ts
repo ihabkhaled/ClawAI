@@ -5,7 +5,7 @@ import { liveRepository } from '@/repositories/live/live.repository';
 import { apiClient } from '@/services/shared/api-client';
 
 vi.mock('@/services/shared/api-client', () => ({
-  apiClient: { get: vi.fn(), post: vi.fn(), postBlob: vi.fn(), delete: vi.fn() },
+  apiClient: { get: vi.fn(), post: vi.fn(), postBlob: vi.fn(), postRaw: vi.fn(), delete: vi.fn() },
 }));
 
 describe('liveRepository', () => {
@@ -15,6 +15,17 @@ describe('liveRepository', () => {
     vi.mocked(apiClient.post).mockResolvedValue({ data: 'p', status: 200 });
     vi.mocked(apiClient.postBlob).mockResolvedValue({ data: new Blob(['x']), status: 200 });
     vi.mocked(apiClient.delete).mockResolvedValue({ data: undefined, status: 204 });
+  });
+
+  it('posts a tab-audio chunk as a raw audio/wav body with X-Chunk-Start-At', async () => {
+    vi.mocked(apiClient.postRaw).mockResolvedValue({ data: { accepted: true }, status: 202 });
+    const wav = new Blob([new Uint8Array(44)], { type: 'audio/wav' });
+    const result = await liveRepository.uploadAudio('s1', { wav, startAt: 1_700_000_000_000.6 });
+    expect(apiClient.postRaw).toHaveBeenCalledWith('/live/sessions/s1/audio', wav, {
+      'Content-Type': 'audio/wav',
+      'X-Chunk-Start-At': '1700000000001',
+    });
+    expect(result).toEqual({ accepted: true });
   });
 
   it('resolves a source with only the url', async () => {

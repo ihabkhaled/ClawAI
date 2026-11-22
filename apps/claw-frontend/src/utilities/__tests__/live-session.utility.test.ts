@@ -7,7 +7,12 @@ import {
   LiveSourceKind,
 } from '@/enums/live.enum';
 import type { LiveSession } from '@/types/live.types';
-import { sendLiveCloseBeacon, toLiveHeartbeatInput } from '@/utilities/live-session.utility';
+import {
+  liveSessionHlsSrc,
+  sendLiveCloseBeacon,
+  toLiveCaptureHeartbeatInput,
+  toLiveHeartbeatInput,
+} from '@/utilities/live-session.utility';
 
 const SESSION: LiveSession = {
   sessionId: 's1',
@@ -34,6 +39,11 @@ const SESSION: LiveSession = {
     },
   },
   closeToken: 'tok-123',
+  platform: null,
+  chatEmbedUrl: null,
+  watchUrl: 'https://example.com/live.m3u8',
+  embedNeedsParent: false,
+  chatNeedsEmbedDomain: false,
 };
 
 describe('sendLiveCloseBeacon', () => {
@@ -69,5 +79,25 @@ describe('toLiveHeartbeatInput', () => {
         liveEdgeAt: 5000,
       }),
     ).toMatchObject({ state: LiveHeartbeatState.PLAYING, seekableFromAt: 101 });
+  });
+});
+
+describe('toLiveCaptureHeartbeatInput', () => {
+  it('is now, at the live edge, PLAYING only while the tab audio is shared', () => {
+    expect(toLiveCaptureHeartbeatInput(true, 1_700_000_000_000.4)).toEqual({
+      state: LiveHeartbeatState.PLAYING,
+      playbackAt: 1_700_000_000_000,
+      atLiveEdge: true,
+    });
+    expect(toLiveCaptureHeartbeatInput(false, 5).state).toBe(LiveHeartbeatState.PAUSED);
+  });
+});
+
+describe('liveSessionHlsSrc', () => {
+  it('plays only HLS and fixture sources through the proxy', () => {
+    expect(liveSessionHlsSrc(SESSION)).toContain('/live/streams/st1/hls/index.m3u8');
+    expect(liveSessionHlsSrc({ ...SESSION, sourceKind: LiveSourceKind.YOUTUBE })).toBeNull();
+    expect(liveSessionHlsSrc({ ...SESSION, sourceKind: LiveSourceKind.PLATFORM })).toBeNull();
+    expect(liveSessionHlsSrc(null)).toBeNull();
   });
 });

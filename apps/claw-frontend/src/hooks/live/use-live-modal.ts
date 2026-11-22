@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { LIVE_CREDIT_STATUSES, LIVE_SESSION_STATE_STATUS } from '@/constants/live.constants';
-import { LiveCapability, LiveFeedTab, LiveSourceKind } from '@/enums/live.enum';
+import { LiveCapability, LiveFeedTab } from '@/enums/live.enum';
+import { useLiveCapture } from '@/hooks/live/use-live-capture';
+import { useLiveEmbed } from '@/hooks/live/use-live-embed';
 import { useLiveModalPlayback } from '@/hooks/live/use-live-modal-playback';
 import { useLiveSession } from '@/hooks/live/use-live-session';
 import { useLiveStream } from '@/hooks/live/use-live-stream';
 import { useLiveUsage } from '@/hooks/live/use-live-usage';
+import { useLiveWallClock } from '@/hooks/live/use-live-wall-clock';
 import { useTranslation } from '@/lib/i18n';
 import type { LiveCreateSessionInput, LiveUsage, UseLiveModalResult } from '@/types/live.types';
 import { parseLiveFeedTab } from '@/utilities/live-request.utility';
@@ -15,21 +18,22 @@ import {
   resolveLiveDisplayStatus,
   revealLiveEvents,
 } from '@/utilities/live-reveal.utility';
-import { liveHlsUrl } from '@/utilities/live-session.utility';
+import { liveSessionHlsSrc } from '@/utilities/live-session.utility';
 
 /**
  * Controller for the live modal. Everything shown is filtered by playback time: only events with
  * `startAt <= playbackAt` are revealed, so pause freezes the feed and seeking back hides later ones.
+ * A browser-capture session (cross-origin player, no media clock) reveals at `playbackAt = Date.now()`.
  */
 export function useLiveModal(input: LiveCreateSessionInput): UseLiveModalResult {
   const { t, locale } = useTranslation();
   const { session, isCreating, error } = useLiveSession(input);
-  const isPlayerOnly = session?.capability === LiveCapability.PLAYER_ONLY;
+  const isLinkOnly = session?.capability === LiveCapability.LINK_ONLY;
+  const isCapture = session?.capability === LiveCapability.BROWSER_CAPTURE;
+  const isPlayerOnly = session?.capability === LiveCapability.PLAYER_ONLY || isLinkOnly;
   const aiEnabled = session !== null && !isPlayerOnly;
-  const hlsSrc =
-    session === null || session.sourceKind === LiveSourceKind.YOUTUBE
-      ? null
-      : liveHlsUrl(session.streamId);
+  const hlsSrc = liveSessionHlsSrc(session);
+  const embed = useLiveEmbed(session);
   const initialStatus = session === null ? null : LIVE_SESSION_STATE_STATUS[session.state];
   const stream = useLiveStream(
     session?.sessionId ?? null,
@@ -38,13 +42,20 @@ export function useLiveModal(input: LiveCreateSessionInput): UseLiveModalResult 
     initialStatus,
   );
   const { setStatus, setUsage } = stream;
+  const capture = useLiveCapture({
+    sessionId: session?.sessionId ?? null,
+    enabled: isCapture,
+    status: stream.feed.status,
+  });
   const { player, heartbeatError } = useLiveModalPlayback(
     session?.sessionId ?? null,
     hlsSrc,
     aiEnabled,
     setStatus,
     setUsage,
+    { isCapture, isCapturing: capture.isCapturing },
   );
+  const wallClock = useLiveWallClock(isCapture);
   const usageQuery = useLiveUsage();
   const [tab, setTab] = useState<LiveFeedTab>(LiveFeedTab.FEED);
   const [controlsOpen, setControlsOpen] = useState(false);
@@ -54,7 +65,9 @@ export function useLiveModal(input: LiveCreateSessionInput): UseLiveModalResult 
       setStatus(LIVE_SESSION_STATE_STATUS[session.state]);
     }
   }, [session, setStatus]);
-  const { playbackAt, isPaused, liveEdgeAt } = player.snapshot;
+  const { isPaused: isPlayerPaused, liveEdgeAt } = player.snapshot;
+  const playbackAt = isCapture ? wallClock : player.snapshot.playbackAt;
+  const isPaused = !isCapture && isPlayerPaused;
   const { feed } = stream;
   const revealed = useMemo(
     () => ({
@@ -65,7 +78,9 @@ export function useLiveModal(input: LiveCreateSessionInput): UseLiveModalResult 
     }),
     [feed.captionTranslations, feed.captions, feed.cards, feed.highlights, playbackAt],
   );
-  const status = resolveLiveDisplayStatus(feed.status, isPaused && playbackAt > 0, isPlayerOnly);
+  // A capture session that is not sharing audio reads as paused: nothing is analyzed or billed.
+  const showPaused = isCapture ? !capture.isCapturing : isPaused && playbackAt > 0;
+  const status = resolveLiveDisplayStatus(feed.status, showPaused, isPlayerOnly);
   // Freshest first: the last heartbeat's month block, then the create response's, then GET /usage.
   const usage: LiveUsage | null =
     feed.usage?.month ?? session?.usage.month ?? usageQuery.usage ?? null;
@@ -77,6 +92,10 @@ export function useLiveModal(input: LiveCreateSessionInput): UseLiveModalResult 
     sessionError: error,
     isCreating,
     isPlayerOnly,
+    isLinkOnly,
+    isCapture,
+    embed,
+    capture,
     hlsSrc,
     player,
     status,

@@ -8,6 +8,7 @@ import { LiveErrorCode } from '../../../../common/enums/live-error-code.enum';
 import {
   LiveCapability,
   LiveMode,
+  LivePlatform,
   LiveSessionState,
   LiveSourceKind,
 } from '../../../../generated/prisma';
@@ -25,6 +26,12 @@ function resolution(kind: LiveSourceKind, capability: LiveCapability) {
     declaredHost: 'x',
     embedUrl: kind === LiveSourceKind.YOUTUBE ? 'https://www.youtube-nocookie.com/embed/abc' : null,
     reasonCode: null,
+    platform: kind === LiveSourceKind.YOUTUBE ? LivePlatform.YOUTUBE : null,
+    chatEmbedUrl:
+      kind === LiveSourceKind.YOUTUBE ? 'https://www.youtube.com/live_chat?v=abc' : null,
+    watchUrl: kind === LiveSourceKind.YOUTUBE ? 'https://www.youtube.com/watch?v=abc' : '',
+    embedNeedsParent: false,
+    chatNeedsEmbedDomain: kind === LiveSourceKind.YOUTUBE,
   };
 }
 
@@ -40,7 +47,10 @@ function setup(
       resolve: vi.fn().mockResolvedValue(res),
       upsertStream: vi.fn().mockResolvedValue(stream),
     },
-    coordinator: { attach: vi.fn().mockResolvedValue({ runId: 'run1', created: true }) },
+    coordinator: {
+      attach: vi.fn().mockResolvedValue({ runId: 'run1', created: true }),
+      assignCaptureSession: vi.fn(),
+    },
     sessions: {
       create: vi.fn(async ({ data, ...input }: Record<string, unknown>) => ({
         id: 'sess1',
@@ -52,6 +62,7 @@ function setup(
       approve: vi.fn(),
       updateLanguage: vi.fn(),
       switchRun: vi.fn(),
+      findStreamCapability: vi.fn().mockResolvedValue(capability),
     },
     admission: {
       assertFeatureEnabled: vi.fn(),
@@ -104,7 +115,71 @@ describe('LiveSessionsService', () => {
       capability: LiveCapability.AUDIO_VISION,
       embedUrl: null,
       reasonCode: null,
+      platform: null,
+      chatEmbedUrl: null,
+      watchUrl: '',
+      embedNeedsParent: false,
+      chatNeedsEmbedDomain: false,
     });
+  });
+
+  it('records a LINK_ONLY platform as UNSUPPORTED with no run, no admission and no billing', async () => {
+    const { service, sessions, coordinator, admission, billing } = setup(
+      LiveSourceKind.PLATFORM,
+      LiveCapability.LINK_ONLY,
+    );
+    const view = await service.create('u1', body);
+    expect(sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({ state: LiveSessionState.UNSUPPORTED }),
+    );
+    expect(coordinator.attach).not.toHaveBeenCalled();
+    expect(admission.assertLimits).not.toHaveBeenCalled();
+    expect(billing.usage).not.toHaveBeenCalled();
+    expect(view).toMatchObject({ state: LiveSessionState.UNSUPPORTED, runId: null });
+  });
+
+  it('attaches a BROWSER_CAPTURE session to an AUDIO run it owns, with the platform fields', async () => {
+    const { service, sessions, coordinator } = setup(
+      LiveSourceKind.YOUTUBE,
+      LiveCapability.BROWSER_CAPTURE,
+    );
+    const view = await service.create('u1', { ...body, mode: LiveMode.AUDIO_VISION });
+    expect(coordinator.attach).toHaveBeenCalledWith({ streamId: 'stream1', mode: LiveMode.AUDIO });
+    expect(sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runId: 'run1',
+        mode: LiveMode.AUDIO,
+        state: LiveSessionState.ACTIVE,
+      }),
+    );
+    expect(coordinator.assignCaptureSession).toHaveBeenCalledWith('run1', 'sess1');
+    expect(view).toMatchObject({
+      capability: LiveCapability.BROWSER_CAPTURE,
+      platform: LivePlatform.YOUTUBE,
+      chatEmbedUrl: 'https://www.youtube.com/live_chat?v=abc',
+      watchUrl: 'https://www.youtube.com/watch?v=abc',
+      embedNeedsParent: false,
+      chatNeedsEmbedDomain: true,
+      playbackUrl: null,
+    });
+  });
+
+  it('keeps a capture session on AUDIO when the viewer asks for another mode', async () => {
+    const { service, sessions, coordinator } = setup(
+      LiveSourceKind.YOUTUBE,
+      LiveCapability.BROWSER_CAPTURE,
+    );
+    sessions.findOwned.mockResolvedValue({
+      id: 'sess1',
+      streamId: 'stream1',
+      state: LiveSessionState.ACTIVE,
+      mode: LiveMode.AUDIO,
+      language: 'en',
+      runId: 'run1',
+    });
+    await service.update('sess1', 'u1', { mode: LiveMode.AUDIO_VISION });
+    expect(coordinator.attach).not.toHaveBeenCalled();
+    expect(sessions.switchRun).not.toHaveBeenCalled();
   });
 
   it('records a PLAYER_ONLY source as UNSUPPORTED with no run and no admission/billing', async () => {

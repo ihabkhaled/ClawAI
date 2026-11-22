@@ -1,4 +1,5 @@
 import {
+  LIVE_DISCORD_PRIVATE_ERROR_CODE,
   LIVE_EXPORT_FILENAME_PREFIX,
   LIVE_EXPORT_OPTIONS,
   LIVE_SECONDS_PER_MINUTE,
@@ -11,7 +12,7 @@ import {
   YOUTUBE_EMBED_ORIGIN,
   YOUTUBE_EMBED_PATH_PREFIX,
 } from '@/constants/marketing-videos.constants';
-import { LiveFeedTab, LiveMode } from '@/enums/live.enum';
+import { LiveCapability, LiveFeedTab, LiveMode } from '@/enums/live.enum';
 import type { LiveExportFormat } from '@/enums/live.enum';
 import type { LiveUsage } from '@/types/live.types';
 
@@ -95,9 +96,22 @@ export function youtubeWatchUrl(embedUrl: string | null): string | null {
   return id === '' ? null : `${LIVE_YOUTUBE_WATCH_URL}${id}`;
 }
 
-/** The message key for a failed link check: a YouTube @handle link gets its own explanation. */
+function hasLiveErrorCode(error: Error, code: string): boolean {
+  return error.message.includes(code) || ('code' in error && error.code === code);
+}
+
+/** The message key for a failed link check: a YouTube @handle and a Discord link get their own explanation. */
 export function liveResolveErrorKey(error: Error): string {
-  return error.message.includes(LIVE_YOUTUBE_HANDLE_ERROR_CODE)
-    ? 'live.page.youtubeHandleError'
-    : 'live.page.resolveError';
+  if (hasLiveErrorCode(error, LIVE_YOUTUBE_HANDLE_ERROR_CODE)) {
+    return 'live.page.youtubeHandleError';
+  }
+  if (hasLiveErrorCode(error, LIVE_DISCORD_PRIVATE_ERROR_CODE)) {
+    return 'live.platform.discordPrivate';
+  }
+  return 'live.page.resolveError';
+}
+
+/** Server-side analysis of a stream (HLS) needs the viewer's rights attestation; nothing else does. */
+export function liveSourceNeedsAttestation(capability: LiveCapability): boolean {
+  return capability === LiveCapability.AUDIO || capability === LiveCapability.AUDIO_VISION;
 }

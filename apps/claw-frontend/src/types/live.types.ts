@@ -2,12 +2,16 @@ import type { RefObject } from 'react';
 
 import type {
   LiveCapability,
+  LiveCaptureAction,
+  LiveCaptureError,
+  LiveCaptureState,
   LiveExportFormat,
   LiveFeedEventKind,
   LiveFeedTab,
   LiveHeartbeatState,
   LiveHighlightType,
   LiveMode,
+  LivePlatform,
   LivePolicyNumberField,
   LiveSessionState,
   LiveSourceKind,
@@ -22,7 +26,20 @@ import type { TranslateFunction } from '@/types/i18n.types';
 
 export type LiveResolveSourceInput = { url: string };
 
-export type LiveSourceResolution = {
+/**
+ * The platform fields batch 2 adds to resolve and create-session. `watchUrl` is the platform's own
+ * public page; `embedNeedsParent` (Twitch) and `chatNeedsEmbedDomain` (YouTube chat) ask the browser
+ * to append its own hostname, which only the browser knows.
+ */
+export type LivePlatformFields = {
+  platform: LivePlatform | null;
+  chatEmbedUrl: string | null;
+  watchUrl: string;
+  embedNeedsParent: boolean;
+  chatNeedsEmbedDomain: boolean;
+};
+
+export type LiveSourceResolution = LivePlatformFields & {
   sourceKind: LiveSourceKind;
   capability: LiveCapability;
   embedUrl: string | null;
@@ -47,7 +64,7 @@ export type LiveSessionUsage = {
 };
 
 /** `POST /sessions` response. `closeToken` authorises the pagehide beacon. */
-export type LiveSession = {
+export type LiveSession = LivePlatformFields & {
   sessionId: string;
   runId: string | null;
   streamId: string;
@@ -73,6 +90,11 @@ export type LiveHeartbeatResult = {
   statusCode: LiveStatusCode;
   usage: LiveSessionUsage;
 };
+
+/** One tab-audio chunk for `POST /sessions/:id/audio`: a PCM16 mono 16 kHz WAV and its start (epoch ms). */
+export type LiveAudioChunkInput = { wav: Blob; startAt: number };
+
+export type LiveAudioChunkResult = { accepted: boolean };
 
 export type LiveApproveCreditsInput = { spendingCapMicroUsd?: number };
 
@@ -258,6 +280,50 @@ export type LivePlaybackSnapshot = {
   liveEdgeAt: number | null;
 };
 
+/** What the player and side panel show for a session's platform, already allowlisted and with parent/embed_domain. */
+export type LiveEmbedView = {
+  playerUrl: string | null;
+  chatUrl: string | null;
+  watchUrl: string | null;
+  platformName: string | null;
+};
+
+export type LiveCaptureMachine = { state: LiveCaptureState; error: LiveCaptureError | null };
+
+export type LiveCaptureEvent =
+  | { type: LiveCaptureAction.REQUEST }
+  | { type: LiveCaptureAction.STARTED }
+  | { type: LiveCaptureAction.STOP }
+  | { type: LiveCaptureAction.RESET }
+  | { type: LiveCaptureAction.FAIL; error: LiveCaptureError };
+
+export type LiveAudioChunkerOptions = {
+  inputRate: number;
+  outputRate: number;
+  chunkSeconds: number;
+  now: () => number;
+  onChunk: (chunk: LiveAudioChunkInput) => void;
+};
+
+export type LiveAudioChunker = {
+  push: (frame: Float32Array) => void;
+  reset: () => void;
+};
+
+export type LiveTabCaptureOptions = {
+  onChunk: (chunk: LiveAudioChunkInput) => void;
+  onEnded: () => void;
+};
+
+export type LiveTabCaptureHandle = { stop: () => void };
+
+/** `getDisplayMedia` options; the extra hints are newer than some lib.dom versions. */
+export type LiveDisplayMediaOptions = DisplayMediaStreamOptions & {
+  preferCurrentTab?: boolean;
+  selfBrowserSurface?: string;
+  systemAudio?: string;
+};
+
 // ─── Hook results ────────────────────────────────────────────────────────────────
 
 export type UseLiveStartFormResult = {
@@ -402,6 +468,25 @@ export type UseLiveHistoryDetailResult = {
   loadMore: () => void;
 };
 
+export type LiveModalPlaybackCapture = { isCapture: boolean; isCapturing: boolean };
+
+export type UseLiveCaptureOptions = {
+  sessionId: string | null;
+  enabled: boolean;
+  status: LiveStatusCode;
+};
+
+export type UseLiveCaptureResult = {
+  state: LiveCaptureState;
+  error: LiveCaptureError | null;
+  isCapturing: boolean;
+  consentOpen: boolean;
+  openConsent: () => void;
+  closeConsent: () => void;
+  confirm: () => void;
+  stop: () => void;
+};
+
 export type UseLiveModalResult = {
   t: TranslateFunction;
   locale: string;
@@ -409,6 +494,10 @@ export type UseLiveModalResult = {
   sessionError: string | null;
   isCreating: boolean;
   isPlayerOnly: boolean;
+  isLinkOnly: boolean;
+  isCapture: boolean;
+  embed: LiveEmbedView;
+  capture: UseLiveCaptureResult;
   hlsSrc: string | null;
   player: UseLivePlayerResult;
   status: LiveStatusCode;
@@ -475,10 +564,36 @@ export type LiveHistoryDetailDialogProps = {
 export type LiveModalProps = { input: LiveCreateSessionInput; onClose: () => void };
 
 export type LivePlayerProps = {
-  session: LiveSession;
+  embed: LiveEmbedView;
+  isLinkOnly: boolean;
   hlsSrc: string | null;
   player: UseLivePlayerResult;
   caption: LiveRevealedCaption | null;
+  t: TranslateFunction;
+};
+
+export type LiveNoticeBoxProps = { testId: string; title: string; lines: string[] };
+
+export type LiveLinkOnlyPlayerProps = { embed: LiveEmbedView; t: TranslateFunction };
+
+export type LiveWatchLinkProps = { embed: LiveEmbedView; t: TranslateFunction };
+
+export type LiveChatPanelProps = { embed: LiveEmbedView; t: TranslateFunction };
+
+export type LiveChatLinkProps = { embed: LiveEmbedView; t: TranslateFunction };
+
+export type LiveNoAiPanelProps = {
+  embed: LiveEmbedView;
+  isLinkOnly: boolean;
+  t: TranslateFunction;
+};
+
+export type LiveCapturePanelProps = { capture: UseLiveCaptureResult; t: TranslateFunction };
+
+export type LiveCaptureConsentDialogProps = {
+  open: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
   t: TranslateFunction;
 };
 

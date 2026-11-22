@@ -2,9 +2,13 @@ import { Injectable, NotFoundException, UnprocessableEntityException } from '@ne
 
 import { LiveAdmissionRefusal } from '../../../common/enums/live-admission-refusal.enum';
 import { LiveSourceErrorCode } from '../../../common/enums/live-source-error-code.enum';
-import { LiveCapability, type LiveProcessingRun } from '../../../generated/prisma';
+import { type LiveProcessingRun } from '../../../generated/prisma';
 import { LivePolicyService } from '../../policy/services/live-policy.service';
-import { PIPELINE_VERSION, PRISMA_UNIQUE_VIOLATION } from '../constants/processing.constants';
+import {
+  NO_RUN_CAPABILITIES,
+  PIPELINE_VERSION,
+  PRISMA_UNIQUE_VIOLATION,
+} from '../constants/processing.constants';
 import { ProcessingRunRepository } from '../repositories/processing-run.repository';
 import type {
   RunAttachRequest,
@@ -24,7 +28,7 @@ export class RunCoordinatorService implements RunCoordinatorContract {
   async attach(request: RunAttachRequest): Promise<RunAttachResult> {
     const stream = await this.runs.findStream(request.streamId);
     if (!stream) throw new NotFoundException(LiveSourceErrorCode.STREAM_NOT_FOUND);
-    if (stream.capability === LiveCapability.PLAYER_ONLY) {
+    if (NO_RUN_CAPABILITIES.includes(stream.capability)) {
       throw new UnprocessableEntityException(LiveSourceErrorCode.SOURCE_PLAYER_ONLY);
     }
     const key = computeProcessingKey(
@@ -46,6 +50,14 @@ export class RunCoordinatorService implements RunCoordinatorContract {
       return { runId: winner.id, created: false };
     }
     return { runId: created.id, created: true };
+  }
+
+  /**
+   * BROWSER_CAPTURE: the newest session of the viewer owns the run's audio (a second tab of
+   * the same viewer takes the capture over; the older tab's chunks then get 409).
+   */
+  async assignCaptureSession(runId: string, sessionId: string): Promise<void> {
+    await this.runs.setCaptureSession(runId, sessionId);
   }
 
   async onViewerDetached(runId: string): Promise<void> {

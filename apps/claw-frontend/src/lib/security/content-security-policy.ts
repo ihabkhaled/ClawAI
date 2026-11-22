@@ -4,6 +4,7 @@ import {
   ANALYTICS_IMG_HOSTS,
   GTM_HOST,
 } from '@/constants/analytics.constants';
+import { LIVE_FRAME_ORIGINS } from '@/constants/live-embed.constants';
 import { YOUTUBE_EMBED_ORIGIN } from '@/constants/marketing-videos.constants';
 import type { ContentSecurityPolicyOptions } from '@/types/security.types';
 
@@ -165,6 +166,9 @@ export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions
     // Click-to-load Shorts on the marketing pages. The privacy-enhanced host only; the facade
     // makes no request to it until a visitor presses play.
     YOUTUBE_EMBED_ORIGIN,
+    // Live Intelligence players and platform chats (Twitch, Kick, Facebook, YouTube live chat).
+    // frame-src only: none of these hosts is ever allowed to run script or be fetched from this page.
+    ...LIVE_FRAME_ORIGINS.filter((origin) => origin !== YOUTUBE_EMBED_ORIGIN),
     ...(adsenseEnabled ? GOOGLE_AD_FRAME_HOSTS : []),
   ];
 

@@ -1,12 +1,16 @@
 import { useMutation } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 
-import { LiveCapability, LiveMode } from '@/enums/live.enum';
+import { LiveMode } from '@/enums/live.enum';
 import { useTranslation } from '@/lib/i18n';
 import { liveRepository } from '@/repositories/live/live.repository';
 import type { LiveCreateSessionInput, UseLiveStartFormResult } from '@/types/live.types';
 import { showToast } from '@/utilities';
-import { liveResolveErrorKey, parseLiveMode } from '@/utilities/live-request.utility';
+import {
+  liveResolveErrorKey,
+  liveSourceNeedsAttestation,
+  parseLiveMode,
+} from '@/utilities/live-request.utility';
 
 /** The /live form: link, caption language, mode, rights attestation, and the resolve step. */
 export function useLiveStartForm(): UseLiveStartFormResult {
@@ -20,8 +24,10 @@ export function useLiveStartForm(): UseLiveStartFormResult {
     onError: (failure: Error) => showToast.apiError(failure, t(liveResolveErrorKey(failure))),
   });
   const resolution = data ?? null;
-  const isPlayerOnly = resolution?.capability === LiveCapability.PLAYER_ONLY;
-  const canStart = resolution !== null && (isPlayerOnly || attestRights);
+  // Only a server-processed HLS source asks for the rights attestation; YouTube, platform and
+  // link-only sources do not (a browser capture has its own consent dialog in the modal).
+  const needsAttestation = resolution !== null && liveSourceNeedsAttestation(resolution.capability);
+  const canStart = resolution !== null && (!needsAttestation || attestRights);
 
   const setModeValue = useCallback((value: string): void => {
     const next = parseLiveMode(value);
@@ -46,9 +52,9 @@ export function useLiveStartForm(): UseLiveStartFormResult {
   const buildSessionInput = useCallback(
     (): LiveCreateSessionInput | null =>
       canStart
-        ? { url: url.trim(), language, mode, attestRights: !isPlayerOnly && attestRights }
+        ? { url: url.trim(), language, mode, attestRights: needsAttestation && attestRights }
         : null,
-    [attestRights, canStart, isPlayerOnly, language, mode, url],
+    [attestRights, canStart, language, mode, needsAttestation, url],
   );
 
   return {

@@ -1,7 +1,9 @@
-import { LIVE_API } from '@/constants/live.constants';
+import { LIVE_API, LIVE_CHUNK_START_HEADER, LIVE_WAV_MIME_TYPE } from '@/constants/live.constants';
 import { apiClient } from '@/services/shared/api-client';
 import type {
   LiveApproveCreditsInput,
+  LiveAudioChunkInput,
+  LiveAudioChunkResult,
   LiveCardVersion,
   LiveCreateSessionInput,
   LiveCursorPage,
@@ -48,6 +50,19 @@ export const liveRepository = {
       atLiveEdge: input.atLiveEdge,
       ...(input.seekableFromAt === undefined ? {} : { seekableFromAt: input.seekableFromAt }),
     });
+    return response.data;
+  },
+
+  /** One tab-audio chunk: raw `audio/wav` body, its start in epoch ms as `X-Chunk-Start-At` (202). */
+  async uploadAudio(sessionId: string, input: LiveAudioChunkInput): Promise<LiveAudioChunkResult> {
+    const response = await apiClient.postRaw<LiveAudioChunkResult>(
+      LIVE_API.AUDIO(sessionId),
+      input.wav,
+      {
+        'Content-Type': LIVE_WAV_MIME_TYPE,
+        [LIVE_CHUNK_START_HEADER]: String(Math.round(input.startAt)),
+      },
+    );
     return response.data;
   },
 

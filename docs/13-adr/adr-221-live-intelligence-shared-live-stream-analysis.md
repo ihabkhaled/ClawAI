@@ -66,3 +66,17 @@ YouTube grants caption or audio access, a streaming STT vendor is added, or the 
 - **Orphan-run sweeper** (every 300 s, Redis lock) tombstones finished runs that no session or coverage references.
 - Caption latency is recorded as speech end to commit on STT provider-cost rows. Built and verified on the dev stack;
   not deployed.
+
+## Addendum 2026-11-22 (batch 2): platforms, live chat, browser capture
+
+- **Owner decision:** YouTube must get AI. It does so through **viewer tab-audio capture**: the viewer's own browser
+  shares the tab, and only its audio goes to `POST /api/v1/live/sessions/:id/audio` (6 s PCM16 16 kHz WAV). The owner
+  accepts the platforms' terms risk (YouTube Developer Policies III.I.7). Server-side download or capture of any platform
+  is still never built. A capture run is `PRIVATE:<userId>` and never shared.
+- **15 platforms:** YouTube, Twitch, Kick and Facebook embed (capability `BROWSER_CAPTURE`). TikTok LIVE, Instagram,
+  Rumble, BIGO, LinkedIn, Telegram, Bilibili, CHZZK, SOOP and Nimo TV are `LINK_ONLY` ("Watch on <Platform>"). Discord
+  Go Live is refused (`LIVE_DISCORD_PRIVATE`): it has no public link. Links are parsed and never fetched.
+- **Live chat:** official chat embeds for a YouTube video (`live_chat`, `embed_domain`), Twitch (`parent`) and Kick.
+  Every other platform gets an "Open chat on <Platform>" link.
+- Schema: `LiveSourceKind.PLATFORM`, `LiveCapability.LINK_ONLY|BROWSER_CAPTURE`, enum `LivePlatform`,
+  `live_streams.platform`, `live_processing_runs.capture_session_id` (additive migration `20261122120000`).

@@ -126,6 +126,12 @@ export interface ChunkPoll {
   latestSegmentFile: string | null;
 }
 
+/** Where a RunWorker gets its audio: the HLS/fixture puller or the browser-capture queue. */
+export interface RunChunkSource {
+  poll(): Promise<ChunkPoll>;
+  dispose(): Promise<void>;
+}
+
 export type TranscribeReply = z.infer<typeof transcribeReplySchema>;
 export type SummaryReply = z.infer<typeof summaryReplySchema>;
 

@@ -16,17 +16,20 @@ this file disagree, fix one in the same change) - decision:
 - **Foundation.** `GET /api/v1/health` (public); Zod `AppConfig` (`LIVE_DATABASE_URL`, `REDIS_URL`, `RABBITMQ_URL`, the AUTH,
   CHAT, CONNECTOR, FILE and FILE_GENERATION URLs, `INTER_SERVICE_AUTH_TOKEN`, `JWT_SECRET`, `LIVE_ALLOW_HTTP_SOURCES`,
   `LIVE_WORKER_MAX_CONCURRENCY`); global `AuthGuard`, `SessionRevocationGuard` (ADR-112), `RolesGuard`, `ThrottlerGuard`;
-  `PrismaService` and the global ioredis client (`LIVE_REDIS_CLIENT`). Migration `20261122000000_live_init` and the
+  `PrismaService` and the global ioredis client (`LIVE_REDIS_CLIENT`). Migrations `20261122000000_live_init` and `20261122120000_live_platforms_capture` (platforms, capture) and the
   idempotent seeder `prisma/seeders/live-policy.seeder.cjs` (policy version 1 only when the table is empty).
-- **sources** - `POST /live/sources/resolve`, the HLS proxy (`GET /live/streams/:streamId/hls/p` and `/hls/:file`), the
+- **sources** - `POST /live/sources/resolve` (the platform registry: `constants/platform-registry.constants.ts` plus one
+  parser per platform, 15 platforms, parsing only), the HLS proxy (`GET /live/streams/:streamId/hls/p` and `/hls/:file`), the
   SSRF guard (`source-url-guard.service.ts`), the fetcher and the fixture broadcaster (a looped recording served as a
   local HLS window; real source, nothing mocked).
-- **processing** - one run per processing key with a DB lease and generation fence (`run-coordinator`,
+- **processing** - `BROWSER_CAPTURE` runs read the viewer's tab audio from the Redis list `live:capture:<runId>`
+  (`workers/capture-chunk-source.ts`), never the source; every other run pulls HLS. One run per processing key with a DB lease and generation fence (`run-coordinator`,
   `fenced-run-writer`), `run-reconciler` (recovers stale leases), `run-worker` (chunked STT through file-service),
   and the `transcript`, `summary`, `translation` and `vision` managers. Model calls go through connector-service.
   Caption latency is recorded on STT `LiveProviderCost` rows as speech end to commit (`latencyMs`).
 - **realtime** - SSE `GET /live/sessions/:sessionId/stream` with `Last-Event-ID` replay over the Redis event bus.
-- **sessions** - `POST/PATCH/DELETE /live/sessions`, heartbeat, approve-credits, presence, coverage, the reaper (detaches
+- **sessions** - `POST/PATCH/DELETE /live/sessions`, the browser-capture audio route `POST /live/sessions/:id/audio`
+  (`live-capture.controller/service/manager/repository`; raw `audio/wav` parser mounted in `main.ts` for that path only), heartbeat, approve-credits, presence, coverage, the reaper (detaches
   a session whose heartbeats stop) and the `sendBeacon` close (`POST /live/sessions/:id/close`, `@Public()`, signed close
   token); `GET /live/usage`.
 - **billing** - 60 s blocks: free seconds first, then paid only after approval. Paid blocks are priced by the policy
@@ -49,9 +52,15 @@ this file disagree, fix one in the same change) - decision:
   cross-host redirects (architecture section 1).
 - **ffmpeg reads only local files.** The worker downloads segments itself, then runs ffmpeg on the local file with
   `-protocol_whitelist file`, so ffmpeg can never be steered to another host.
-- **YouTube is `PLAYER_ONLY`**: never downloaded or analysed. `/watch`, `youtu.be` and `/channel/UC...` links play (the
-  channel link through the `youtube-nocookie` `live_stream` embed). `@handle` and vanity links are refused with
+- **No server-side capture, ever.** The server never downloads, fetches or captures YouTube or any other platform.
+  YouTube, Twitch, Kick and Facebook are `BROWSER_CAPTURE`: analysed only from the viewer's own tab audio, posted as
+  WAV chunks. That browser capture is an **owner-accepted terms risk (decision 2026-11-22)**; server-side capture stays
+  out. The other registry platforms are `LINK_ONLY` (session `UNSUPPORTED`, no run, no billing, like the old
+  `PLAYER_ONLY`); Discord is refused with `LIVE_DISCORD_PRIVATE`. YouTube `@handle` and vanity links are refused with
   `LIVE_YOUTUBE_HANDLE_UNSUPPORTED`.
+- **A capture run is private and AUDIO only.** Scope `PRIVATE:<userId>`; mode forced to `AUDIO`; `run.captureSessionId`
+  is the only session allowed to push audio (the newest session of the viewer takes it over). No chunk for 20 s →
+  `DELAYED`, so accrual stops.
 - **The staff plan slug `admin` must exist in the policy** (`plans.admin`, seed v1 gives 36000 s); a plan without a row
   falls to `defaultPlan` (0 free seconds).
 - **Dev frontend needs a restart** (`docker restart claw-frontend`) to see new routes or edits to existing files.

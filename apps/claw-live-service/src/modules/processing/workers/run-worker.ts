@@ -11,9 +11,14 @@ import {
 } from '../constants/processing.constants';
 import { LeaseLostError } from '../errors/processing.errors';
 import type { RunWorkerDeps } from '../types/run-worker.types';
-import type { AudioChunk, ChunkPoll, RunMemory, WorkerContext } from '../types/processing.types';
+import type {
+  AudioChunk,
+  ChunkPoll,
+  RunChunkSource,
+  RunMemory,
+  WorkerContext,
+} from '../types/processing.types';
 import { createRunMemory } from '../utilities/run-memory.utility';
-import type { HlsChunkSource } from './hls-chunk-source';
 
 /**
  * One claimed run's loop (section 4): renew the lease (fenced) → poll the source →
@@ -21,6 +26,8 @@ import type { HlsChunkSource } from './hls-chunk-source';
  * snapshot (single-flight) → repeat. STOPPING → STOPPED; source end → FINAL card +
  * ENDED. A LeaseLostError at any point means another worker owns the run: exit silently.
  * A restarted worker starts at the Live Edge with fresh memory; nothing is back-filled.
+ * The source is either the HLS/fixture puller or, for BROWSER_CAPTURE runs, the queue of
+ * the viewer's tab-audio chunks (no fetch, no ffmpeg input); everything after is the same.
  */
 export class RunWorker {
   private readonly logger = new Logger(RunWorker.name);
@@ -34,7 +41,7 @@ export class RunWorker {
   constructor(
     private readonly deps: RunWorkerDeps,
     private readonly context: WorkerContext,
-    private readonly source: HlsChunkSource,
+    private readonly source: RunChunkSource,
   ) {}
 
   get runId(): string {

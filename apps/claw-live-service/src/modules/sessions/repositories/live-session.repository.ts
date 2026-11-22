@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import {
+  type LiveCapability,
   type LiveMode,
   LiveSessionState,
   type LiveViewerSession,
@@ -25,6 +26,14 @@ export class LiveSessionRepository {
 
   findById(sessionId: string): Promise<LiveViewerSession | null> {
     return this.prisma.liveViewerSession.findUnique({ where: { id: sessionId } });
+  }
+
+  async findStreamCapability(streamId: string): Promise<LiveCapability | null> {
+    const stream = await this.prisma.liveStream.findUnique({
+      where: { id: streamId },
+      select: { capability: true },
+    });
+    return stream?.capability ?? null;
   }
 
   countOpen(userId: string): Promise<number> {

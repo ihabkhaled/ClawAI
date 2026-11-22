@@ -1,6 +1,8 @@
 import { ChevronDown, Radio } from 'lucide-react';
 
+import { LiveCapturePanel } from '@/components/live/live-capture-panel';
 import { LiveCreditsPanel } from '@/components/live/live-credits-panel';
+import { LiveNoAiPanel } from '@/components/live/live-no-ai-panel';
 import { LivePlayer } from '@/components/live/live-player';
 import { LiveSidePanel } from '@/components/live/live-side-panel';
 import { LiveStatusBanner } from '@/components/live/live-status-banner';
@@ -46,12 +48,14 @@ export function LiveModal({ input, onClose }: LiveModalProps): React.ReactElemen
           <div className="flex min-h-0 flex-1 flex-col gap-3 md:flex-row">
             <div className="flex min-w-0 flex-col gap-3 md:w-3/5">
               <LivePlayer
-                session={session}
+                embed={modal.embed}
+                isLinkOnly={modal.isLinkOnly}
                 hlsSrc={modal.hlsSrc}
                 player={modal.player}
                 caption={modal.caption}
                 t={t}
               />
+              {modal.isCapture ? <LiveCapturePanel capture={modal.capture} t={t} /> : null}
               <LiveStatusBanner
                 status={modal.status}
                 isReconnecting={modal.isReconnecting}
@@ -115,12 +119,7 @@ export function LiveModal({ input, onClose }: LiveModalProps): React.ReactElemen
             </div>
             <div className="flex min-h-80 min-w-0 flex-col md:min-h-0 md:w-2/5">
               {modal.isPlayerOnly ? (
-                <div className="border-border flex flex-col gap-2 rounded-md border p-4">
-                  <p className="text-foreground text-sm font-medium">
-                    {t('live.page.youtubeNoticeTitle')}
-                  </p>
-                  <p className="text-muted-foreground text-sm">{t('live.page.youtubeNotice')}</p>
-                </div>
+                <LiveNoAiPanel embed={modal.embed} isLinkOnly={modal.isLinkOnly} t={t} />
               ) : (
                 <LiveSidePanel modal={modal} />
               )}

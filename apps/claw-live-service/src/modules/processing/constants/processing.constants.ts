@@ -1,4 +1,4 @@
-import { LiveRunStatus, LiveSessionState } from '../../../generated/prisma';
+import { LiveCapability, LiveRunStatus, LiveSessionState } from '../../../generated/prisma';
 
 // ── Identity ────────────────────────────────────────────────────────────────
 
@@ -32,6 +32,11 @@ export const ATTACHED_SESSION_STATES: readonly LiveSessionState[] = [
   LiveSessionState.GRACE,
 ];
 export const PRISMA_UNIQUE_VIOLATION = 'P2002';
+/** Capabilities that never get a run (no analysis, no billing): the session is UNSUPPORTED. */
+export const NO_RUN_CAPABILITIES: readonly LiveCapability[] = [
+  LiveCapability.PLAYER_ONLY,
+  LiveCapability.LINK_ONLY,
+];
 
 // ── Worker loop ─────────────────────────────────────────────────────────────
 
@@ -60,6 +65,19 @@ export const AUDIO_MIN_FLUSH_BYTES = AUDIO_SAMPLE_RATE * AUDIO_BYTES_PER_SAMPLE;
 /** A media-time jump larger than this between segments restarts the PCM buffer (gap). */
 export const AUDIO_DISCONTINUITY_MS = 1500;
 export const AUDIO_CHUNK_MIME = 'audio/wav';
+
+// ── Browser capture (viewer tab audio, architecture section 4) ──────────────
+
+/** Redis list of pending tab-audio chunks per run: `live:capture:<runId>`. */
+export const LIVE_CAPTURE_QUEUE_KEY_PREFIX = 'live:capture:';
+/** The list keeps only the newest chunks (LTRIM): a stalled worker never back-fills minutes. */
+export const LIVE_CAPTURE_QUEUE_MAX = 20;
+/** A queue nobody drains disappears on its own. */
+export const LIVE_CAPTURE_QUEUE_TTL_SECONDS = 120;
+/** Most chunks one worker tick pops. */
+export const LIVE_CAPTURE_POLL_BATCH = 20;
+/** Queue entry header: startAt and endAt as big-endian int64 epoch ms, then the WAV. */
+export const LIVE_CAPTURE_ENTRY_HEADER_BYTES = 16;
 
 // ── STT (file-service transcribe-chunk) ─────────────────────────────────────
 

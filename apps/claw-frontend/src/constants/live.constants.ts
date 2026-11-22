@@ -1,14 +1,20 @@
 import {
+  LiveCaptureError,
+  LiveCaptureState,
   LiveExportFormat,
   LiveFeedEventKind,
   LiveHighlightType,
   LiveMode,
+  LivePlatform,
   LivePolicyNumberField,
   LiveSessionState,
   LiveStatusCode,
   LiveStatusTone,
 } from '@/enums/live.enum';
 import type {
+  LiveCaptureMachine,
+  LiveDisplayMediaOptions,
+  LiveEmbedView,
   LiveExportOption,
   LiveFeedState,
   LiveModeOption,
@@ -26,6 +32,7 @@ export const LIVE_API = {
   APPROVE_CREDITS: (id: string): string => `/live/sessions/${id}/approve-credits`,
   STREAM: (id: string): string => `/live/sessions/${id}/stream`,
   CLOSE_BEACON: (id: string): string => `/live/sessions/${id}/close`,
+  AUDIO: (id: string): string => `/live/sessions/${id}/audio`,
   HLS_PLAYLIST: (streamId: string): string => `/live/streams/${streamId}/hls/index.m3u8`,
   HISTORY: '/live/history',
   HISTORY_ITEM: (id: string): string => `/live/history/${id}`,
@@ -256,3 +263,87 @@ export const LIVE_YOUTUBE_HANDLE_ERROR_CODE = 'LIVE_YOUTUBE_HANDLE_UNSUPPORTED';
 export const LIVE_YOUTUBE_WATCH_URL = 'https://www.youtube.com/watch?v=';
 export const LIVE_YOUTUBE_CHANNEL_URL = 'https://www.youtube.com/channel/';
 export const LIVE_YOUTUBE_CHANNEL_EMBED_SEGMENT = 'live_stream';
+
+/** live-service refuses Discord links with this code (Go Live streams have no public link). */
+export const LIVE_DISCORD_PRIVATE_ERROR_CODE = 'LIVE_DISCORD_PRIVATE';
+
+/** Platform names are brands: shown as is in every language. */
+export const LIVE_PLATFORM_NAMES: Record<LivePlatform, string> = {
+  [LivePlatform.YOUTUBE]: 'YouTube',
+  [LivePlatform.TWITCH]: 'Twitch',
+  [LivePlatform.KICK]: 'Kick',
+  [LivePlatform.FACEBOOK]: 'Facebook',
+  [LivePlatform.TIKTOK]: 'TikTok',
+  [LivePlatform.INSTAGRAM]: 'Instagram',
+  [LivePlatform.RUMBLE]: 'Rumble',
+  [LivePlatform.BIGO]: 'BIGO LIVE',
+  [LivePlatform.LINKEDIN]: 'LinkedIn',
+  [LivePlatform.DISCORD]: 'Discord',
+  [LivePlatform.TELEGRAM]: 'Telegram',
+  [LivePlatform.BILIBILI]: 'Bilibili',
+  [LivePlatform.CHZZK]: 'CHZZK',
+  [LivePlatform.SOOP]: 'SOOP',
+  [LivePlatform.NIMO]: 'Nimo TV',
+};
+
+// ─── Browser tab-audio capture (batch 2) ─────────────────────────────────────
+
+/** Same-origin AudioWorklet module (public/worklets), registered under this processor name. */
+export const LIVE_CAPTURE_WORKLET_URL = '/worklets/live-capture-processor.js';
+export const LIVE_CAPTURE_PROCESSOR_NAME = 'live-capture-processor';
+
+/** The server takes PCM16 mono 16 kHz WAV chunks of 1 to 8 s, at least 3 s apart. */
+export const LIVE_CAPTURE_SAMPLE_RATE = 16_000;
+export const LIVE_CAPTURE_CHUNK_SECONDS = 6;
+export const LIVE_WAV_HEADER_BYTES = 44;
+export const LIVE_WAV_MIME_TYPE = 'audio/wav';
+export const LIVE_CHUNK_START_HEADER = 'X-Chunk-Start-At';
+
+/** How often the feed reveal clock ticks for a capture session (cross-origin players expose no time). */
+export const LIVE_WALL_CLOCK_TICK_MS = 1000;
+
+/** Raw tab audio: the browser's voice processing would damage speech recognition of a stream. */
+export const LIVE_CAPTURE_DISPLAY_MEDIA_OPTIONS: LiveDisplayMediaOptions = {
+  video: true,
+  audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+  preferCurrentTab: true,
+  selfBrowserSurface: 'include',
+  systemAudio: 'include',
+};
+
+/** A status in this set stops the capture: nothing more would be analyzed or billed. */
+export const LIVE_CAPTURE_STOP_STATUSES: ReadonlySet<LiveStatusCode> = new Set([
+  LiveStatusCode.EXHAUSTED,
+  LiveStatusCode.CREDITS_REQUIRED,
+  LiveStatusCode.FREE_EXHAUSTED,
+  LiveStatusCode.ENDED,
+  LiveStatusCode.COMPLETED,
+  LiveStatusCode.UNSUPPORTED,
+]);
+
+/** Upload answers that mean the session can no longer take audio (stop instead of sending more). */
+export const LIVE_CAPTURE_FATAL_UPLOAD_STATUSES: ReadonlySet<number> = new Set([404, 409, 422]);
+
+export const LIVE_CAPTURE_ERROR_KEYS: Record<LiveCaptureError, string> = {
+  [LiveCaptureError.NO_AUDIO]: 'live.capture.errorNoAudio',
+  [LiveCaptureError.DENIED]: 'live.capture.errorDenied',
+  [LiveCaptureError.UNSUPPORTED]: 'live.capture.errorUnsupported',
+  [LiveCaptureError.UPLOAD]: 'live.capture.errorUpload',
+};
+
+/** The consent dialog's points, in order. */
+export const LIVE_CAPTURE_CONSENT_KEYS: ReadonlyArray<string> = [
+  'live.capture.consentShare',
+  'live.capture.consentAudioOnly',
+  'live.capture.consentOwnViewing',
+  'live.capture.consentBilling',
+];
+
+export const LIVE_CAPTURE_IDLE: LiveCaptureMachine = { state: LiveCaptureState.IDLE, error: null };
+
+export const LIVE_EMPTY_EMBED_VIEW: LiveEmbedView = {
+  playerUrl: null,
+  chatUrl: null,
+  watchUrl: null,
+  platformName: null,
+};

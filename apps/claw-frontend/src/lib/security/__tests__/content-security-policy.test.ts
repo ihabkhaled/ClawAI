@@ -177,29 +177,56 @@ describe('buildContentSecurityPolicy analytics hosts', () => {
     expect(frameSrc).toContain('https://www.googletagmanager.com');
   });
 
-  it('frames the YouTube privacy-enhanced embed host and nothing wider', () => {
+  it('frames the YouTube nocookie player and the YouTube live chat host, nothing wider', () => {
     const csp = buildContentSecurityPolicy(prod);
     const frameSrc = csp.split(';').find((d) => d.trim().startsWith('frame-src')) ?? '';
     const sources = frameSrc.trim().split(/\s+/u).slice(1);
 
     expect(sources).toContain('https://www.youtube-nocookie.com');
-    expect(sources).not.toContain('https://www.youtube.com');
+    // Live chat is only served from www.youtube.com, so it is framed; the bare domain is not.
+    expect(sources).toContain('https://www.youtube.com');
     expect(sources).not.toContain('https://youtube.com');
     expect(sources).not.toContain('https:');
     expect(sources).not.toContain('*');
     expect(sources.filter((source) => source.includes('youtube'))).toEqual([
       'https://www.youtube-nocookie.com',
+      'https://www.youtube.com',
     ]);
   });
 
-  it('does not add the YouTube host to any other fetch directive', () => {
+  it('frames the live platform players and chats by exact origin', () => {
     const csp = buildContentSecurityPolicy(prod);
-    const others = csp
-      .split(';')
-      .filter((d) => !d.trim().startsWith('frame-src'))
-      .join(';');
+    const frameSrc = csp.split(';').find((d) => d.trim().startsWith('frame-src')) ?? '';
+    const sources = frameSrc.trim().split(/\s+/u).slice(1);
 
-    expect(others).not.toContain('youtube');
+    for (const origin of [
+      'https://player.twitch.tv',
+      'https://www.twitch.tv',
+      'https://player.kick.com',
+      'https://kick.com',
+      'https://www.facebook.com',
+    ]) {
+      expect(sources).toContain(origin);
+    }
+    expect(
+      sources.filter((source) => source.includes('*.twitch') || source.includes('*.kick')),
+    ).toEqual([]);
+    expect(new Set(sources).size).toBe(sources.length);
+  });
+
+  it('never lets a live platform host into script-src or connect-src', () => {
+    for (const isDev of [false, true]) {
+      const csp = buildContentSecurityPolicy({ ...prod, isDev });
+      const others = csp
+        .split(';')
+        .filter((d) => !d.trim().startsWith('frame-src'))
+        .join(';');
+
+      expect(others).not.toContain('youtube');
+      expect(others).not.toContain('twitch');
+      expect(others).not.toContain('kick.com');
+      expect(others).not.toContain('facebook');
+    }
   });
 
   it('allows measurement pixels as images', () => {

@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
+import { LiveCapability } from '@/enums/live.enum';
 import {
   liveResolveErrorKey,
+  liveSourceNeedsAttestation,
   safeYoutubeEmbedUrl,
   youtubeWatchUrl,
 } from '@/utilities/live-request.utility';
@@ -37,9 +39,27 @@ describe('liveResolveErrorKey', () => {
     );
   });
 
+  it('explains a Discord link, by message or by API error code', () => {
+    expect(liveResolveErrorKey(new Error('LIVE_DISCORD_PRIVATE'))).toBe(
+      'live.platform.discordPrivate',
+    );
+    const coded = Object.assign(new Error('Unprocessable'), { code: 'LIVE_DISCORD_PRIVATE' });
+    expect(liveResolveErrorKey(coded)).toBe('live.platform.discordPrivate');
+  });
+
   it('falls back to the generic message', () => {
     expect(liveResolveErrorKey(new Error('LIVE_SOURCE_UNSUPPORTED'))).toBe(
       'live.page.resolveError',
     );
+  });
+});
+
+describe('liveSourceNeedsAttestation', () => {
+  it('asks only for server-processed HLS capabilities', () => {
+    expect(liveSourceNeedsAttestation(LiveCapability.AUDIO)).toBe(true);
+    expect(liveSourceNeedsAttestation(LiveCapability.AUDIO_VISION)).toBe(true);
+    expect(liveSourceNeedsAttestation(LiveCapability.BROWSER_CAPTURE)).toBe(false);
+    expect(liveSourceNeedsAttestation(LiveCapability.LINK_ONLY)).toBe(false);
+    expect(liveSourceNeedsAttestation(LiveCapability.PLAYER_ONLY)).toBe(false);
   });
 });

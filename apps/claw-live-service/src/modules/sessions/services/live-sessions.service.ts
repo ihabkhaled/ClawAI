@@ -4,13 +4,14 @@ import type { Request } from 'express';
 import { LiveErrorCode } from '../../../common/enums/live-error-code.enum';
 import {
   LiveCapability,
-  type LiveMode,
+  LiveMode,
   LiveSessionState,
   LiveSourceKind,
   type LiveStream,
   type LiveViewerSession,
 } from '../../../generated/prisma';
 import { BillingService } from '../../billing/services/billing.service';
+import { NO_RUN_CAPABILITIES } from '../../processing/constants/processing.constants';
 import { RunCoordinatorService } from '../../processing/services/run-coordinator.service';
 import { LivePolicyService } from '../../policy/services/live-policy.service';
 import type { ActiveLivePolicy } from '../../policy/types/live-policy.types';
@@ -36,6 +37,7 @@ import { LiveSessionRepository } from '../repositories/live-session.repository';
 import type {
   LiveCloseView,
   LiveHeartbeatView,
+  LivePlatformView,
   LiveSessionCreatedView,
   LiveSessionStateView,
   LiveSourceResolutionView,
@@ -67,6 +69,7 @@ export class LiveSessionsService {
       capability: resolution.capability,
       embedUrl: resolution.embedUrl,
       reasonCode: resolution.reasonCode,
+      ...this.platformView(resolution),
     };
   }
 
@@ -74,7 +77,8 @@ export class LiveSessionsService {
     const policy = await this.policies.active();
     this.admission.assertFeatureEnabled(policy);
     const resolution = await this.sources.resolve(body.url, userId);
-    if (resolution.capability === LiveCapability.PLAYER_ONLY) {
+    // PLAYER_ONLY and LINK_ONLY: recorded as UNSUPPORTED, no run, no admission, no billing.
+    if (NO_RUN_CAPABILITIES.includes(resolution.capability)) {
       const stream = await this.sources.upsertStream(resolution);
       const session = await this.sessions.create({
         userId,
@@ -123,8 +127,9 @@ export class LiveSessionsService {
     if (body.language !== undefined && body.language !== session.language) {
       await this.sessions.updateLanguage(session.id, body.language);
     }
-    if (body.mode !== undefined && body.mode !== session.mode && session.runId !== null) {
-      await this.switchRun(session, body.mode);
+    const modeChange = body.mode !== undefined && body.mode !== session.mode;
+    if (modeChange && session.runId !== null && !(await this.isCapture(session))) {
+      await this.switchRun(session, body.mode ?? session.mode);
     }
     return this.stateView(await this.owned(sessionId, userId));
   }
@@ -160,7 +165,10 @@ export class LiveSessionsService {
     await this.admission.assertLimits(userId, policy);
     await this.admission.assertCapacity();
     const stream = await this.sources.upsertStream(resolution);
-    const { runId } = await this.coordinator.attach({ streamId: stream.id, mode: body.mode });
+    // Tab audio carries no frames: a capture session always runs AUDIO.
+    const capture = resolution.capability === LiveCapability.BROWSER_CAPTURE;
+    const mode = capture ? LiveMode.AUDIO : body.mode;
+    const { runId } = await this.coordinator.attach({ streamId: stream.id, mode });
     const usage = await this.billing.usage(userId);
     const state =
       usage.freeSecondsUsed < usage.freeSecondsTotal
@@ -172,12 +180,13 @@ export class LiveSessionsService {
       streamId: stream.id,
       runId,
       language: body.language,
-      mode: body.mode,
+      mode,
       state,
       rightsAttestedAt: body.attestRights ? now : null,
       policyVersion: policy.version,
       lastHeartbeatAt: now,
     });
+    if (capture) await this.coordinator.assignCaptureSession(runId, session.id);
     await this.presence.touch(runId, session.id, now.getTime());
     return this.created(session, stream, resolution);
   }
@@ -209,6 +218,7 @@ export class LiveSessionsService {
       sourceKind: stream.sourceKind,
       capability: stream.capability,
       embedUrl: resolution.embedUrl,
+      ...this.platformView(resolution),
       playbackUrl: playable
         ? playbackPath(LIVE_PLAYBACK_PATH_PREFIX, stream.id, LIVE_PLAYBACK_PATH_SUFFIX)
         : null,
@@ -216,6 +226,22 @@ export class LiveSessionsService {
       usage: await this.presenter.usage(session),
       closeToken: this.closeTokens.issue(session.id, session.userId),
     };
+  }
+
+  private platformView(resolution: SourceResolution): LivePlatformView {
+    return {
+      platform: resolution.platform,
+      chatEmbedUrl: resolution.chatEmbedUrl,
+      watchUrl: resolution.watchUrl,
+      embedNeedsParent: resolution.embedNeedsParent,
+      chatNeedsEmbedDomain: resolution.chatNeedsEmbedDomain,
+    };
+  }
+
+  /** A capture session's mode is fixed to AUDIO (its run owns the tab audio). */
+  private async isCapture(session: LiveViewerSession): Promise<boolean> {
+    const capability = await this.sessions.findStreamCapability(session.streamId);
+    return capability === LiveCapability.BROWSER_CAPTURE;
   }
 
   private async owned(sessionId: string, userId: string): Promise<LiveViewerSession> {

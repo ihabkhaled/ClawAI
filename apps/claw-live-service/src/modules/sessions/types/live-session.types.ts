@@ -1,6 +1,7 @@
 import type { LiveStatusCode } from '../../../common/enums/live-status-code.enum';
 import type {
   LiveCapability,
+  LivePlatform,
   LiveRunStatus,
   LiveSessionState,
   LiveSourceKind,
@@ -17,14 +18,26 @@ export interface LiveSessionUsageView {
   month: LiveUsageView;
 }
 
-export interface LiveSourceResolutionView {
+/** The platform fields every resolve and session-create answer carries (architecture section 9). */
+export interface LivePlatformView {
+  platform: LivePlatform | null;
+  chatEmbedUrl: string | null;
+  /** Canonical public page ('' for HLS/FIXTURE). */
+  watchUrl: string;
+  /** Twitch: the frontend appends `&parent=<hostname>` to the player and chat URLs. */
+  embedNeedsParent: boolean;
+  /** YouTube: the frontend appends `&embed_domain=<hostname>` to the chat URL. */
+  chatNeedsEmbedDomain: boolean;
+}
+
+export interface LiveSourceResolutionView extends LivePlatformView {
   sourceKind: LiveSourceKind;
   capability: LiveCapability;
   embedUrl: string | null;
   reasonCode: string | null;
 }
 
-export interface LiveSessionCreatedView {
+export interface LiveSessionCreatedView extends LivePlatformView {
   sessionId: string;
   runId: string | null;
   streamId: string;

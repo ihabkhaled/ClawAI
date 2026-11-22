@@ -1,19 +1,22 @@
 import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import type Redis from 'ioredis';
 
-import { LiveSourceKind } from '../../../generated/prisma';
+import { LiveCapability } from '../../../generated/prisma';
+import { LIVE_REDIS_CLIENT } from '../../../infrastructure/redis/constants/redis.constants';
 import { FixtureBroadcasterService } from '../../sources/services/fixture-broadcaster.service';
 import { HlsFetcherService } from '../../sources/services/hls-fetcher.service';
-import { WORKER_TEMP_PREFIX } from '../constants/processing.constants';
+import { NO_RUN_CAPABILITIES, WORKER_TEMP_PREFIX } from '../constants/processing.constants';
 import { RunLifecycleManager } from '../managers/run-lifecycle.manager';
 import { SummaryManager } from '../managers/summary.manager';
 import { TranscriptManager } from '../managers/transcript.manager';
 import { TranslationManager } from '../managers/translation.manager';
 import { VisionManager } from '../managers/vision.manager';
 import { ProcessingRunRepository } from '../repositories/processing-run.repository';
-import type { ClaimedRunRow } from '../types/processing.types';
+import type { ClaimedRunRow, RunChunkSource, WorkerContext } from '../types/processing.types';
+import { CaptureChunkSource } from '../workers/capture-chunk-source';
 import { HlsChunkSource } from '../workers/hls-chunk-source';
 import { RunWorker } from '../workers/run-worker';
 import { FencedRunWriter } from './fenced-run-writer.service';
@@ -31,13 +34,14 @@ export class RunWorkerFactory {
     private readonly vision: VisionManager,
     private readonly fetcher: HlsFetcherService,
     private readonly fixtures: FixtureBroadcasterService,
+    @Inject(LIVE_REDIS_CLIENT) private readonly redis: Redis,
   ) {}
 
-  /** Null when the run vanished or its source can never be processed (YOUTUBE). */
+  /** Null when the run vanished or its source can never be processed (PLAYER_ONLY, LINK_ONLY). */
   async create(claim: ClaimedRunRow): Promise<RunWorker | null> {
     const run = await this.runs.findRunWithStream(claim.id);
-    if (!run || run.stream.sourceKind === LiveSourceKind.YOUTUBE) return null;
-    const context = {
+    if (!run || NO_RUN_CAPABILITIES.includes(run.stream.capability)) return null;
+    const context: WorkerContext = {
       lease: { runId: run.id, generation: claim.generation },
       streamId: run.streamId,
       mode: run.mode,
@@ -46,8 +50,7 @@ export class RunWorkerFactory {
       declaredHost: run.stream.declaredHost,
       startedAt: run.startedAt,
     };
-    const directory = await mkdtemp(join(tmpdir(), WORKER_TEMP_PREFIX));
-    const source = new HlsChunkSource(context, this.fetcher, this.fixtures, directory);
+    const source = await this.source(context, run.stream.capability);
     return new RunWorker(
       {
         writer: this.writer,
@@ -60,5 +63,17 @@ export class RunWorkerFactory {
       context,
       source,
     );
+  }
+
+  /** BROWSER_CAPTURE reads the viewer's tab-audio queue; everything else pulls HLS. */
+  private async source(
+    context: WorkerContext,
+    capability: LiveCapability,
+  ): Promise<RunChunkSource> {
+    if (capability === LiveCapability.BROWSER_CAPTURE) {
+      return new CaptureChunkSource(this.redis, context.lease.runId);
+    }
+    const directory = await mkdtemp(join(tmpdir(), WORKER_TEMP_PREFIX));
+    return new HlsChunkSource(context, this.fetcher, this.fixtures, directory);
   }
 }
