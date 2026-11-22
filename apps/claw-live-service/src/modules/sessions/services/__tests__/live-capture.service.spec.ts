@@ -10,6 +10,8 @@ const target = {
   capability: LiveCapability.BROWSER_CAPTURE,
   runId: 'run1',
   captureSessionId: 'sess1',
+  lastHeartbeatAt: new Date(),
+  startedAt: new Date(),
 };
 const wav = pcmToWav(Buffer.alloc(6 * 32_000), 16_000, 1);
 
@@ -42,10 +44,42 @@ describe('LiveCaptureService', () => {
     expect(capture.enqueue).not.toHaveBeenCalled();
   });
 
+  it('accepts audio in GRACE (grace seconds are tracked like active ones)', async () => {
+    const { service, targets } = setup();
+    targets.findTarget.mockResolvedValue({ ...target, state: LiveSessionState.GRACE });
+    await expect(service.ingest('sess1', 'u1', wav, String(Date.now()))).resolves.toEqual({
+      accepted: true,
+    });
+  });
+
+  it('409 when no heartbeat arrived for over 20 s (silent uploads would be unbilled)', async () => {
+    const { service, targets } = setup();
+    const stale = new Date(Date.now() - 25_000);
+    targets.findTarget.mockResolvedValue({ ...target, lastHeartbeatAt: stale, startedAt: stale });
+    await expect(service.ingest('sess1', 'u1', wav, String(Date.now()))).rejects.toMatchObject({
+      status: HttpStatus.CONFLICT,
+    });
+  });
+
+  it('accepts the first chunk of a just-started session before any heartbeat', async () => {
+    const { service, targets } = setup();
+    targets.findTarget.mockResolvedValue({
+      ...target,
+      lastHeartbeatAt: null,
+      startedAt: new Date(),
+    });
+    await expect(service.ingest('sess1', 'u1', wav, String(Date.now()))).resolves.toEqual({
+      accepted: true,
+    });
+  });
+
   it.each([
     LiveSessionState.DETACHED,
     LiveSessionState.EXHAUSTED,
     LiveSessionState.CREDITS_REQUIRED,
+    LiveSessionState.PAUSED,
+    LiveSessionState.CONNECTING,
+    LiveSessionState.UNSUPPORTED,
   ])('409 when the session is %s', async (state) => {
     const { service, targets } = setup();
     targets.findTarget.mockResolvedValue({ ...target, state });

@@ -15,6 +15,8 @@ export class LiveCaptureRepository {
         id: true,
         state: true,
         runId: true,
+        lastHeartbeatAt: true,
+        startedAt: true,
         stream: { select: { capability: true } },
         run: { select: { captureSessionId: true } },
       },
@@ -26,6 +28,8 @@ export class LiveCaptureRepository {
       capability: session.stream.capability,
       runId: session.runId,
       captureSessionId: session.run?.captureSessionId ?? null,
+      lastHeartbeatAt: session.lastHeartbeatAt,
+      startedAt: session.startedAt,
     };
   }
 }

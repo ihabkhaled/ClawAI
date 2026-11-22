@@ -61,6 +61,9 @@ this file disagree, fix one in the same change) - decision:
 - **A capture run is private and AUDIO only.** Scope `PRIVATE:<userId>`; mode forced to `AUDIO`; `run.captureSessionId`
   is the only session allowed to push audio (the newest session of the viewer takes it over). No chunk for 20 s →
   `DELAYED`, so accrual stops.
+- **Audio is accepted only from a billable, watching session**: state `ACTIVE` or `GRACE` (an allow-list,
+  `LIVE_CAPTURE_ACCEPTING_STATES`) and a heartbeat or session start under 20 s old. A PAUSED or silent session gets 409,
+  so nobody gets free transcription (security review 2026-11-22).
 - **The staff plan slug `admin` must exist in the policy** (`plans.admin`, seed v1 gives 36000 s); a plan without a row
   falls to `defaultPlan` (0 free seconds).
 - **Dev frontend needs a restart** (`docker restart claw-frontend`) to see new routes or edits to existing files.

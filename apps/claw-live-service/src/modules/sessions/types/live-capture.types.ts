@@ -8,6 +8,9 @@ export interface LiveCaptureTarget {
   runId: string | null;
   /** The run's capture owner, or null when the session has no run. */
   captureSessionId: string | null;
+  /** Last heartbeat, or null before the first one. */
+  lastHeartbeatAt: Date | null;
+  startedAt: Date;
 }
 
 /** A validated WAV chunk: the PCM data length decides the media duration. */

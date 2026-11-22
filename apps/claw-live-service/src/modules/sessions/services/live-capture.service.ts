@@ -11,7 +11,8 @@ import {
 import { LiveErrorCode } from '../../../common/enums/live-error-code.enum';
 import { LiveCapability } from '../../../generated/prisma';
 import {
-  LIVE_CAPTURE_INACTIVE_STATES,
+  LIVE_CAPTURE_ACCEPTING_STATES,
+  LIVE_CAPTURE_HEARTBEAT_FRESH_MS,
   LIVE_CAPTURE_MAX_BYTES,
 } from '../constants/live-capture.constants';
 import { LiveCaptureManager } from '../managers/live-capture.manager';
@@ -70,7 +71,9 @@ export class LiveCaptureService {
 
   /** State, capability and capture ownership; returns the run id the chunk goes to. */
   private assertCaptureOwner(target: LiveCaptureTarget): string {
-    if (LIVE_CAPTURE_INACTIVE_STATES.includes(target.state)) {
+    const lastSeen = (target.lastHeartbeatAt ?? target.startedAt).getTime();
+    const watching = Date.now() - lastSeen <= LIVE_CAPTURE_HEARTBEAT_FRESH_MS;
+    if (!LIVE_CAPTURE_ACCEPTING_STATES.includes(target.state) || !watching) {
       throw new ConflictException({
         message: 'Live session is not analysing',
         errorCode: LiveErrorCode.LIVE_CAPTURE_SESSION_INACTIVE,

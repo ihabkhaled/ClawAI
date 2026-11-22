@@ -20,12 +20,20 @@ export const LIVE_CAPTURE_MIN_INTERVAL_MS = 3000;
 export const LIVE_CAPTURE_RATE_KEY_PREFIX = 'live:capture-rate:';
 export const LIVE_CAPTURE_MIN_DURATION_MS = 1000;
 export const LIVE_CAPTURE_MAX_DURATION_MS = 8000;
-/** Session states that refuse audio with 409. */
-export const LIVE_CAPTURE_INACTIVE_STATES: readonly LiveSessionState[] = [
-  LiveSessionState.DETACHED,
-  LiveSessionState.EXHAUSTED,
-  LiveSessionState.CREDITS_REQUIRED,
+/**
+ * The only session states that accept audio: the ones that accrue billable seconds. An allow-list, so a
+ * PAUSED session (heartbeats accrue nothing) cannot push audio for free transcription (security review
+ * 2026-11-22), and a future state is refused until someone decides it should bill.
+ */
+export const LIVE_CAPTURE_ACCEPTING_STATES: readonly LiveSessionState[] = [
+  LiveSessionState.ACTIVE,
+  LiveSessionState.GRACE,
 ];
+/**
+ * Audio is accepted only while the viewer is provably watching: a heartbeat (or the session start) within
+ * this window. Accrual stops after 15 s without a heartbeat, so silent uploads would be unbilled.
+ */
+export const LIVE_CAPTURE_HEARTBEAT_FRESH_MS = 20_000;
 
 // ── WAV header (RIFF, PCM16 mono 16 kHz) ────────────────────────────────────
 
