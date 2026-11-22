@@ -96,7 +96,10 @@ export const ZIP_MAX_FILES = 50;
  * A filename named in the line just before a code block ("`src/app.ts`",
  * "File: main.py").
  */
-export const ZIP_FILENAME_HINT = /[\w./-]*[\w-][\w.-]{0,80}\.[A-Za-z0-9]{1,8}/u;
+export const ZIP_FILENAME_HINT = /[\w-][\w.-]{0,80}\.[A-Za-z0-9]{1,8}/uy;
+/** Directories before the file name, walked in code so no regex repeats a repeating group. */
+export const ZIP_MAX_HINT_DIRECTORIES = 4;
+export const ZIP_DIRECTORY_CHARACTER = /[\w.-]/u;
 export const ZIP_MAX_HINT_LENGTH = 120;
 
 /** File extension for a fenced code block's language. */

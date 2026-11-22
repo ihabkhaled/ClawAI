@@ -96,16 +96,14 @@ export const THREAD_ACCEPTED_GAPS_TRANSLATIONS: Record<
   [Locale.HI]: {
     threadGapsRemedyAccept: 'इन कमियों को स्वीकार करें और ईमानदारी से लिखें',
     threadGapsLegend: 'वे कमियाँ जिन्हें आप स्वीकार करते हैं',
-    threadGapsExplain:
-      'लेख साफ़ बताएगा कि क्या नहीं मिल सका। समीक्षक बाकी सब कुछ पहले की तरह जाँचेंगे।',
+    threadGapsExplain: 'लेख साफ़ बताएगा कि क्या नहीं मिल सका। समीक्षक बाकी सब कुछ पहले की तरह जाँचेंगे।',
     threadGapsPickHint: 'जब तक आप चुनते नहीं, कुछ भी स्वीकार नहीं किया जाता।',
     threadGapsNoticeTitle: 'माँगे गए कुछ स्रोत नहीं मिल सके',
     threadGapsNoticeBody:
       'लेखक ने इन कमियों को स्वीकार किया है। वे «सीमाएँ» अनुभाग में दी गई हैं। इस लेख पर भरोसा करने से पहले उसे पढ़ें।',
     threadGapsStepAccepted: 'लेखक ने इन कमियों को स्वीकार किया',
     threadGapsStepWaived: 'स्वीकार की गई कमियों से जुड़ी रुकावटें अलग रखी गईं।',
-    threadGapsStepMissing:
-      'सीमाओं वाला अनुभाग गायब या अधूरा है। लेखकों से उसे जोड़ने को कहा जा रहा है।',
+    threadGapsStepMissing: 'सीमाओं वाला अनुभाग गायब या अधूरा है। लेखकों से उसे जोड़ने को कहा जा रहा है।',
   },
   [Locale.IT]: {
     threadGapsRemedyAccept: 'Accetta queste lacune e scrivilo con onestà',

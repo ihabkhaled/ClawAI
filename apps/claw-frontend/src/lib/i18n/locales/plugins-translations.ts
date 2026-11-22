@@ -643,8 +643,7 @@ export const PLUGINS_TRANSLATIONS: Record<Locale, PluginsLocaleTranslation> = {
   },
   [Locale.TH]: {
     title: 'ปลั๊กอิน',
-    description:
-      'เครื่องมือที่เพิ่มความสามารถให้ ClawAI ดูว่ามีอะไรให้ใช้บ้างและแต่ละตัวเข้าถึงอะไรได้',
+    description: 'เครื่องมือที่เพิ่มความสามารถให้ ClawAI ดูว่ามีอะไรให้ใช้บ้างและแต่ละตัวเข้าถึงอะไรได้',
     searchLabel: 'ค้นหาปลั๊กอิน',
     categoryLabel: 'หมวดหมู่',
     loading: 'กำลังโหลดปลั๊กอิน',

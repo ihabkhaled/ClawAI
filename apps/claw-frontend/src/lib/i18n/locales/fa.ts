@@ -320,8 +320,7 @@ export const fa: TranslationDictionary = {
     checkEmailResendHint:
       'اگر حسابی در انتظار تأیید با این نشانی وجود داشته باشد، پیوند تازه‌ای در راه است. ممکن است رسیدن آن یک دقیقه طول بکشد و در پوشه هرزنامه یا اسپم شما قرار بگیرد. پیوند پیشین دیگر کار نمی‌کند.',
     checkEmailResendSuccess: 'ایمیل تأیید ارسال شد',
-    checkEmailResendError:
-      'در حال حاضر نتوانستیم ایمیل را بفرستیم. لطفاً کمی بعد دوباره تلاش کنید.',
+    checkEmailResendError: 'در حال حاضر نتوانستیم ایمیل را بفرستیم. لطفاً کمی بعد دوباره تلاش کنید.',
     checkEmailGoToLogin: 'رفتن به صفحه ورود',
     checkEmailWrongAddress: 'استفاده از نشانی دیگر',
     checkEmailFooterNote:
@@ -2420,8 +2419,7 @@ export const fa: TranslationDictionary = {
     unbanAction: 'رفع مسدودیت',
     bannedBadge: 'مسدود',
     banDialogTitle: 'مسدود کردن {username}',
-    banDialogDescription:
-      'کاربر فوراً از همه‌جا خارج می‌شود و تا پایان مسدودیت نمی‌تواند وارد شود.',
+    banDialogDescription: 'کاربر فوراً از همه‌جا خارج می‌شود و تا پایان مسدودیت نمی‌تواند وارد شود.',
     banUnit: 'واحد مدت',
     banAmount: 'مقدار',
     banUnitMinutes: 'دقیقه',
@@ -5926,8 +5924,7 @@ export const fa: TranslationDictionary = {
       qwenStrength: 'تولید کد عالی و طیف گسترده ای از اندازه های مدل.',
       deepseekStrength: 'ریاضیات، الگوریتم ها و استدلال گام به گام.',
       grokStrength: 'پاسخ های مکالمه سریع با آگاهی از رویدادهای جاری.',
-      bedrockStrength:
-        'میزبانی در سطح سازمانی برای تیم هایی که قبلاً در AWS سرمایه گذاری کرده اند.',
+      bedrockStrength: 'میزبانی در سطح سازمانی برای تیم هایی که قبلاً در AWS سرمایه گذاری کرده اند.',
       footnote:
         'در دسترس بودن مدل از برنامه زمانبندی انتشار خود هر ارائه دهنده پیروی می کند.مدل های جدید با ارسال اضافه می شوند.',
     },

@@ -698,8 +698,7 @@ export const PLUGINS_SERVERS_TRANSLATIONS: Record<Locale, PluginsServersLocaleTr
     },
     form: {
       title: 'MCP सर्वर जोड़ें',
-      description:
-        'ClawAI इस पते से जुड़कर उसके टूल की सूची बनाता है, और आप चुनते हैं कौन-से चालू करने हैं।',
+      description: 'ClawAI इस पते से जुड़कर उसके टूल की सूची बनाता है, और आप चुनते हैं कौन-से चालू करने हैं।',
       nameLabel: 'नाम',
       namePlaceholder: 'मेरी टीम के टूल',
       urlLabel: 'सर्वर का पता',
@@ -708,8 +707,7 @@ export const PLUGINS_SERVERS_TRANSLATIONS: Record<Locale, PluginsServersLocaleTr
       headerLabel: 'हेडर का नाम',
       keyLabel: 'कुंजी',
       keyPlaceholder: 'कुंजी पेस्ट करें',
-      keyHelp:
-        'एन्क्रिप्ट करके रखी जाती है और दोबारा नहीं दिखाई जाती। सर्वर को कुंजी न चाहिए तो खाली छोड़ें।',
+      keyHelp: 'एन्क्रिप्ट करके रखी जाती है और दोबारा नहीं दिखाई जाती। सर्वर को कुंजी न चाहिए तो खाली छोड़ें।',
       consentLabel: 'मैं इस सर्वर को जोड़ने का जोखिम समझता/समझती हूँ',
       consentBody:
         'इसके टूल ऐसे सर्वर पर चलते हैं जिसे हम नियंत्रित नहीं करते। जब तक आप अलग तय न करें, इन्हें चीज़ें बदलने में सक्षम माना जाता है, और इनके नतीजे भरोसेमंद नहीं माने जाते।',
@@ -731,8 +729,7 @@ export const PLUGINS_SERVERS_TRANSLATIONS: Record<Locale, PluginsServersLocaleTr
     },
     remove: {
       title: 'यह सर्वर हटाएँ?',
-      description:
-        '{value} और उसकी सहेजी कुंजी मिटा दी जाएँगी। चैट अब इसके टूल इस्तेमाल नहीं कर पाएँगी।',
+      description: '{value} और उसकी सहेजी कुंजी मिटा दी जाएँगी। चैट अब इसके टूल इस्तेमाल नहीं कर पाएँगी।',
       cancel: 'रहने दें',
       confirm: 'हटाएँ',
     },
@@ -830,8 +827,7 @@ export const PLUGINS_SERVERS_TRANSLATIONS: Record<Locale, PluginsServersLocaleTr
   },
   [Locale.TH]: {
     nav: { servers: 'เซิร์ฟเวอร์ของฉัน' },
-    description:
-      'เชื่อมต่อเซิร์ฟเวอร์ MCP ของคุณเอง แล้วใช้เครื่องมือของเซิร์ฟเวอร์เหล่านั้นในแชทได้',
+    description: 'เชื่อมต่อเซิร์ฟเวอร์ MCP ของคุณเอง แล้วใช้เครื่องมือของเซิร์ฟเวอร์เหล่านั้นในแชทได้',
     add: 'เพิ่มเซิร์ฟเวอร์',
     planNone: 'แพ็กเกจของคุณไม่รวมเซิร์ฟเวอร์ MCP ของคุณเอง อัปเกรดเพื่อเพิ่ม',
     seePlans: 'ดูแพ็กเกจ',
@@ -862,8 +858,7 @@ export const PLUGINS_SERVERS_TRANSLATIONS: Record<Locale, PluginsServersLocaleTr
     },
     form: {
       title: 'เพิ่มเซิร์ฟเวอร์ MCP',
-      description:
-        'ClawAI จะเชื่อมต่อกับที่อยู่นี้และแสดงรายการเครื่องมือ แล้วคุณเลือกว่าจะเปิดใช้อันไหน',
+      description: 'ClawAI จะเชื่อมต่อกับที่อยู่นี้และแสดงรายการเครื่องมือ แล้วคุณเลือกว่าจะเปิดใช้อันไหน',
       nameLabel: 'ชื่อ',
       namePlaceholder: 'เครื่องมือของทีมฉัน',
       urlLabel: 'ที่อยู่เซิร์ฟเวอร์',
@@ -884,8 +879,7 @@ export const PLUGINS_SERVERS_TRANSLATIONS: Record<Locale, PluginsServersLocaleTr
       title: 'เครื่องมือของ {value}',
       titleAdded: 'เลือกเครื่องมือที่จะเปิดใช้',
       description: 'ใช้ในแชทได้เฉพาะเครื่องมือที่คุณเปิดไว้',
-      warning:
-        'เซิร์ฟเวอร์อธิบายเครื่องมือของตัวเองและเราตรวจสอบไม่ได้ เครื่องมือจะเริ่มต้นเป็นแบบที่เปลี่ยนแปลงข้อมูลได้',
+      warning: 'เซิร์ฟเวอร์อธิบายเครื่องมือของตัวเองและเราตรวจสอบไม่ได้ เครื่องมือจะเริ่มต้นเป็นแบบที่เปลี่ยนแปลงข้อมูลได้',
       discovering: 'กำลังค้นหาเครื่องมือ',
       none: 'เซิร์ฟเวอร์นี้ไม่ได้แสดงเครื่องมือใด ๆ',
       rediscover: 'ตรวจสอบอีกครั้ง',
@@ -894,8 +888,7 @@ export const PLUGINS_SERVERS_TRANSLATIONS: Record<Locale, PluginsServersLocaleTr
     },
     remove: {
       title: 'ลบเซิร์ฟเวอร์นี้?',
-      description:
-        '{value} และคีย์ที่บันทึกไว้จะถูกลบ แชทจะใช้เครื่องมือของเซิร์ฟเวอร์นี้ไม่ได้อีก',
+      description: '{value} และคีย์ที่บันทึกไว้จะถูกลบ แชทจะใช้เครื่องมือของเซิร์ฟเวอร์นี้ไม่ได้อีก',
       cancel: 'เก็บไว้',
       confirm: 'ลบ',
     },

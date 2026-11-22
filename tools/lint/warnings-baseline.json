@@ -746,9 +746,6 @@
     "apps/claw-file-generation-service/src/modules/file-generation/utilities/typst-document.utility.ts": {
       "security/detect-object-injection": 2
     },
-    "apps/claw-file-generation-service/src/modules/file-generation/utilities/zip-bundle.utility.ts": {
-      "unicorn/prefer-ternary": 1
-    },
     "apps/claw-file-generation-service/src/modules/health/services/__tests__/health.service.spec.ts": {
       "sort-imports": 1
     },

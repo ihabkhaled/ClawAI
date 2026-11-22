@@ -400,13 +400,11 @@ export const THREAD_CHANGE_REQUESTS_TRANSLATIONS: Record<
     threadCrDeclineReason: 'เหตุผลสำหรับผู้เสนอ (ไม่บังคับ)',
     threadCrAcceptTitle: 'ต้องการนำไปใช้อย่างไร',
     threadCrApplyWithAi: 'นำไปใช้พร้อมการตรวจโดย AI',
-    threadCrApplyWithAiHint:
-      'แก้ไขบทความที่นี่โดยคำนึงถึงข้อเสนอ เวอร์ชันใหม่จะผ่านการตรวจอัตโนมัติก่อนเผยแพร่',
+    threadCrApplyWithAiHint: 'แก้ไขบทความที่นี่โดยคำนึงถึงข้อเสนอ เวอร์ชันใหม่จะผ่านการตรวจอัตโนมัติก่อนเผยแพร่',
     threadCrEditMyself: 'ฉันจะแก้ไขเอง',
     threadCrEditMyselfHint:
       'ยอมรับข้อเสนอแล้วเปิดตัวแก้ไข เมื่อเผยแพร่เวอร์ชันใหม่ ข้อเสนอจะถูกทำเครื่องหมายว่านำไปใช้แล้ว',
-    threadCrAcceptedWaiting:
-      'ยอมรับแล้ว จะถูกทำเครื่องหมายว่านำไปใช้แล้วเมื่อคุณเผยแพร่ Thread ที่อัปเดต',
+    threadCrAcceptedWaiting: 'ยอมรับแล้ว จะถูกทำเครื่องหมายว่านำไปใช้แล้วเมื่อคุณเผยแพร่ Thread ที่อัปเดต',
     threadCrStatusDeclined: 'ปฏิเสธแล้ว',
     threadCrStatusApplied: 'นำไปใช้แล้ว',
     threadCrBadge: 'ข้อเสนอที่รอดำเนินการ: {count}',
@@ -425,8 +423,7 @@ export const THREAD_CHANGE_REQUESTS_TRANSLATIONS: Record<
     threadCrErrorOwn: 'คุณไม่สามารถเสนอการแก้ไข Thread ของตัวเองได้',
     threadCrErrorLimit:
       'คุณมีข้อเสนอที่รออยู่ใน Thread นี้ครบ 3 รายการแล้ว หรือ Thread นี้มีข้อเสนอรออยู่มากเกินไป ลองอีกครั้งหลังเจ้าของตอบ',
-    threadCrSectionHint:
-      'ข้อเสนอของผู้อ่านสำหรับ Thread นี้ ยอมรับหรือปฏิเสธทีละรายการ ผู้เสนอจะได้รับแจ้ง',
+    threadCrSectionHint: 'ข้อเสนอของผู้อ่านสำหรับ Thread นี้ ยอมรับหรือปฏิเสธทีละรายการ ผู้เสนอจะได้รับแจ้ง',
   },
   [Locale.FA]: {
     threadCrRequesterUnknown: 'یک خواننده',

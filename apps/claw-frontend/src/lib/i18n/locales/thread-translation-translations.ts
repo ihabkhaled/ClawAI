@@ -104,8 +104,7 @@ export const THREAD_TRANSLATION_TRANSLATIONS: Record<Locale, ThreadTranslationLo
   },
   [Locale.HI]: {
     promoTitle: 'सार्वजनिक Threads',
-    promoBody:
-      'ClawAI से लिखे गए गहन, स्रोत-सहित लेख पढ़ें। हर Thread आपकी अपनी भाषा में खुलता है।',
+    promoBody: 'ClawAI से लिखे गए गहन, स्रोत-सहित लेख पढ़ें। हर Thread आपकी अपनी भाषा में खुलता है।',
     promoCta: 'सार्वजनिक Threads देखें',
     languageLabel: 'यह Thread इस भाषा में पढ़ें',
     translatedNotice: 'अपने-आप अनुवादित। मूल भाषा: {language}।',
@@ -128,8 +127,7 @@ export const THREAD_TRANSLATION_TRANSLATIONS: Record<Locale, ThreadTranslationLo
   },
   [Locale.TH]: {
     promoTitle: 'Threads สาธารณะ',
-    promoBody:
-      'อ่านบทความเชิงลึกพร้อมแหล่งอ้างอิงที่เขียนด้วย ClawAI ทุก Thread เปิดเป็นภาษาของคุณ',
+    promoBody: 'อ่านบทความเชิงลึกพร้อมแหล่งอ้างอิงที่เขียนด้วย ClawAI ทุก Thread เปิดเป็นภาษาของคุณ',
     promoCta: 'เรียกดู Threads สาธารณะ',
     languageLabel: 'อ่าน Thread นี้เป็นภาษา',
     translatedNotice: 'แปลอัตโนมัติ ภาษาต้นฉบับ: {language}',

@@ -9,8 +9,7 @@ export const TH_INTEGRATIONS_CONTENT: IntegrationsDictionary = {
     lastReviewed: 'ตรวจสอบล่าสุด',
     backToHub: 'การเชื่อมต่อทั้งหมด',
     ctaTitle: 'เชื่อมต่อแล้วลองดูด้วยตัวเอง',
-    ctaBody:
-      'ตัวเชื่อมต่อทุกตัวใช้ได้กับทุกแผนแบบเสียเงิน เชื่อมต่อได้จากหน้าตั้งค่าพื้นที่ทำงานของคุณ',
+    ctaBody: 'ตัวเชื่อมต่อทุกตัวใช้ได้กับทุกแผนแบบเสียเงิน เชื่อมต่อได้จากหน้าตั้งค่าพื้นที่ทำงานของคุณ',
     startFree: 'เริ่มด้วยแผนฟรี',
     seeFeatures: 'ดูว่า ClawAI ทำอะไรได้บ้าง',
     capabilitiesHeading: 'สิ่งที่ตัวเชื่อมต่อนี้ทำได้',
@@ -33,10 +32,8 @@ export const TH_INTEGRATIONS_CONTENT: IntegrationsDictionary = {
       'ตัวเชื่อมต่อแต่ละตัวด้านล่างนี้เป็นของจริงและใช้งานได้แล้ว ไม่ใช่แผนงานในอนาคต — สิ่งที่มันอ่านได้ สิ่งที่มันเขียนได้ และมันอัปเดตแบบเรียลไทม์หรือตามรอบเวลา ทั้งหมดดึงมาจากรีจิสทรีเดียวกับที่ตัวผลิตภัณฑ์เองใช้งานอยู่จริง',
     topicsHeading: 'เลือกตัวเชื่อมต่อ',
     cardSummaries: {
-      [IntegrationTopic.GITHUB]:
-        'รีพอสิทอรี อิชชู พูลรีเควสต์ — อ่าน แสดงความคิดเห็น รีวิว อนุมัติ',
-      [IntegrationTopic.GITLAB]:
-        'โปรเจกต์ เมิร์จรีเควสต์ อิชชู — แสดงความคิดเห็น อนุมัติ เสนอการเปลี่ยนแปลง',
+      [IntegrationTopic.GITHUB]: 'รีพอสิทอรี อิชชู พูลรีเควสต์ — อ่าน แสดงความคิดเห็น รีวิว อนุมัติ',
+      [IntegrationTopic.GITLAB]: 'โปรเจกต์ เมิร์จรีเควสต์ อิชชู — แสดงความคิดเห็น อนุมัติ เสนอการเปลี่ยนแปลง',
       [IntegrationTopic.BITBUCKET]: 'รีพอสิทอรีและพูลรีเควสต์ — แสดงความคิดเห็น อนุมัติ แจ้งอิชชู',
       [IntegrationTopic.SLACK]: 'แชนแนลและข้อความ — อ่านบริบท ส่งและตอบกลับข้อความ',
       [IntegrationTopic.JIRA]: 'อิชชูและโปรเจกต์ — สร้างทิกเก็ต อัปเดต แสดงความคิดเห็น',
@@ -58,11 +55,7 @@ export const TH_INTEGRATIONS_CONTENT: IntegrationsDictionary = {
         title: 'การเชื่อมต่อ AI กับ GitHub — ClawAI',
         description:
           'เชื่อม GitHub เข้ากับ ClawAI เพื่ออ่านรีพอสิทอรี อิชชู และพูลรีเควสต์ พร้อมร่างคำอธิบาย PR แสดงความคิดเห็น เสนอการเปลี่ยนแปลง และอนุมัติได้จากบทสนทนาเดียว',
-        keywords: [
-          'เชื่อม AI กับ GitHub',
-          'รีวิวโค้ดด้วย AI บน GitHub',
-          'คุยกับรีพอสิทอรี GitHub ด้วย AI',
-        ],
+        keywords: ['เชื่อม AI กับ GitHub', 'รีวิวโค้ดด้วย AI บน GitHub', 'คุยกับรีพอสิทอรี GitHub ด้วย AI'],
       },
       eyebrow: 'ระบบโฮสต์โค้ด',
       title: 'GitHub',
@@ -101,8 +94,7 @@ export const TH_INTEGRATIONS_CONTENT: IntegrationsDictionary = {
         },
         {
           question: 'ใช้กับรีพอสิทอรีส่วนตัวได้ไหม?',
-          answer:
-            'ได้ ขึ้นอยู่กับสิทธิ์ที่คุณให้ตอนเชื่อมต่อ ClawAI เห็นได้เฉพาะสิ่งที่บัญชีหรือโทเคนที่เชื่อมต่อไว้เห็นเท่านั้น',
+          answer: 'ได้ ขึ้นอยู่กับสิทธิ์ที่คุณให้ตอนเชื่อมต่อ ClawAI เห็นได้เฉพาะสิ่งที่บัญชีหรือโทเคนที่เชื่อมต่อไว้เห็นเท่านั้น',
         },
         {
           question: 'สิ่งนี้แทนที่ Coding Agent ได้ไหม?',
@@ -118,11 +110,7 @@ export const TH_INTEGRATIONS_CONTENT: IntegrationsDictionary = {
         title: 'การเชื่อมต่อ AI กับ GitLab — ClawAI',
         description:
           'เชื่อม GitLab เข้ากับ ClawAI เพื่ออ่านโปรเจกต์ เมิร์จรีเควสต์ และอิชชู พร้อมแสดงความคิดเห็น เสนอการเปลี่ยนแปลง อัปเดตคำอธิบาย และอนุมัติได้จากบทสนทนา',
-        keywords: [
-          'เชื่อม AI กับ GitLab',
-          'รีวิวเมิร์จรีเควสต์ด้วย AI',
-          'ผู้ช่วย AI สำหรับ GitLab',
-        ],
+        keywords: ['เชื่อม AI กับ GitLab', 'รีวิวเมิร์จรีเควสต์ด้วย AI', 'ผู้ช่วย AI สำหรับ GitLab'],
       },
       eyebrow: 'ระบบโฮสต์โค้ด',
       title: 'GitLab',
@@ -177,11 +165,7 @@ export const TH_INTEGRATIONS_CONTENT: IntegrationsDictionary = {
         title: 'การเชื่อมต่อ AI กับ Bitbucket — ClawAI',
         description:
           'เชื่อม Bitbucket Cloud เข้ากับ ClawAI เพื่ออ่านรีพอสิทอรีและพูลรีเควสต์ พร้อมแสดงความคิดเห็น อนุมัติ และแจ้งอิชชูได้จากบทสนทนาเดียว',
-        keywords: [
-          'เชื่อม AI กับ Bitbucket',
-          'ผู้ช่วย AI สำหรับ Bitbucket',
-          'ค้นหารีพอสิทอรีโค้ดด้วย AI',
-        ],
+        keywords: ['เชื่อม AI กับ Bitbucket', 'ผู้ช่วย AI สำหรับ Bitbucket', 'ค้นหารีพอสิทอรีโค้ดด้วย AI'],
       },
       eyebrow: 'ระบบโฮสต์โค้ด',
       title: 'Bitbucket',
@@ -308,11 +292,7 @@ export const TH_INTEGRATIONS_CONTENT: IntegrationsDictionary = {
         title: 'การเชื่อมต่อ AI กับ Confluence — ClawAI',
         description:
           'เชื่อม Confluence เข้ากับ ClawAI เพื่ออ่านหน้าเพจ สเปซ และความคิดเห็น พร้อมสร้างและแก้ไขหน้าเพจได้ ทำให้เอกสารอยู่ห่างแค่บทสนทนาเดียว',
-        keywords: [
-          'ผู้ช่วย AI สำหรับ Confluence',
-          'เชื่อม AI กับ Confluence',
-          'ค้นหาเอกสารด้วย AI',
-        ],
+        keywords: ['ผู้ช่วย AI สำหรับ Confluence', 'เชื่อม AI กับ Confluence', 'ค้นหาเอกสารด้วย AI'],
       },
       eyebrow: 'เอกสาร',
       title: 'Confluence',
@@ -347,11 +327,7 @@ export const TH_INTEGRATIONS_CONTENT: IntegrationsDictionary = {
         title: 'การเชื่อมต่อ AI กับ Figma — ClawAI',
         description:
           'เชื่อม Figma เข้ากับ ClawAI เพื่ออ่านไฟล์และความคิดเห็น โพสต์ความคิดเห็น และส่งต่อความคิดเห็นดีไซน์ไปเป็นทิกเก็ตหรือยูสเซอร์สตอรีใน Jira ได้โดยตรง',
-        keywords: [
-          'ผู้ช่วย AI สำหรับ Figma',
-          'เชื่อม AI กับ Figma',
-          'ระบบอัตโนมัติจาก Figma ไป Jira',
-        ],
+        keywords: ['ผู้ช่วย AI สำหรับ Figma', 'เชื่อม AI กับ Figma', 'ระบบอัตโนมัติจาก Figma ไป Jira'],
       },
       eyebrow: 'ดีไซน์',
       title: 'Figma',
@@ -423,11 +399,7 @@ export const TH_INTEGRATIONS_CONTENT: IntegrationsDictionary = {
         title: 'การเชื่อมต่อ AI กับ Google Drive — ClawAI',
         description:
           'เชื่อม Google Drive เข้ากับ ClawAI เพื่ออ่านเอกสารและสเปรดชีต พร้อมอัปโหลดและย้ายไฟล์ได้ โดยรองรับการซิงก์เฉพาะส่วนที่เปลี่ยนแปลงเท่านั้น',
-        keywords: [
-          'ผู้ช่วย AI สำหรับ Google Drive',
-          'ค้นหาเอกสารด้วย AI',
-          'เชื่อม AI กับ Google Drive',
-        ],
+        keywords: ['ผู้ช่วย AI สำหรับ Google Drive', 'ค้นหาเอกสารด้วย AI', 'เชื่อม AI กับ Google Drive'],
       },
       eyebrow: 'ไฟล์',
       title: 'Google Drive',
@@ -543,11 +515,7 @@ export const TH_INTEGRATIONS_CONTENT: IntegrationsDictionary = {
         title: 'การเชื่อมต่อ AI กับ OneDrive — ClawAI',
         description:
           'เชื่อม Microsoft OneDrive เข้ากับ ClawAI เพื่ออ่านไฟล์และเอกสาร พร้อมอัปโหลดและย้ายไฟล์ได้ โดยรองรับการซิงก์เฉพาะส่วนที่เปลี่ยนแปลงเท่านั้น',
-        keywords: [
-          'ผู้ช่วย AI สำหรับ OneDrive',
-          'เชื่อม AI กับ OneDrive',
-          'ค้นหาไฟล์ Microsoft ด้วย AI',
-        ],
+        keywords: ['ผู้ช่วย AI สำหรับ OneDrive', 'เชื่อม AI กับ OneDrive', 'ค้นหาไฟล์ Microsoft ด้วย AI'],
       },
       eyebrow: 'ไฟล์',
       title: 'Microsoft OneDrive',
@@ -565,9 +533,7 @@ export const TH_INTEGRATIONS_CONTENT: IntegrationsDictionary = {
         {
           id: 'authentication',
           heading: 'วิธีเชื่อมต่อ',
-          paragraphs: [
-            'OneDrive ต้องใช้ Tenant ID ของ Microsoft คู่กับ OAuth เช่นเดียวกับ SharePoint',
-          ],
+          paragraphs: ['OneDrive ต้องใช้ Tenant ID ของ Microsoft คู่กับ OAuth เช่นเดียวกับ SharePoint'],
         },
       ],
       faq: [
@@ -590,11 +556,7 @@ export const TH_INTEGRATIONS_CONTENT: IntegrationsDictionary = {
         title: 'การเชื่อมต่อ AI กับ Google Calendar — ClawAI',
         description:
           'เชื่อม Google Calendar เข้ากับ ClawAI เพื่ออ่านการประชุมและกิจกรรมในปฏิทิน พร้อมสร้างกิจกรรมใหม่ได้จากบทสนทนาเดียว',
-        keywords: [
-          'ผู้ช่วย AI สำหรับ Google Calendar',
-          'เชื่อม AI กับ Google Calendar',
-          'AI นัดหมายประชุม',
-        ],
+        keywords: ['ผู้ช่วย AI สำหรับ Google Calendar', 'เชื่อม AI กับ Google Calendar', 'AI นัดหมายประชุม'],
       },
       eyebrow: 'ปฏิทิน',
       title: 'Google Calendar',

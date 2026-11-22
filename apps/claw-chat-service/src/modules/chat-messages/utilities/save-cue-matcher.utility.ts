@@ -57,6 +57,7 @@ function alternation(words: readonly string[]): string {
  * escaped cue text and the boundary constants, never from user input.
  */
 function compileCuePattern(source: string, flags: string): RegExp {
+  // eslint-disable-next-line security/detect-non-literal-regexp -- source is built above from escaped cue text and boundary constants, never user input
   return RegExp(source, flags);
 }
 

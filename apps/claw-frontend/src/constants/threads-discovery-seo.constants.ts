@@ -47,8 +47,7 @@ export const THREADS_DISCOVERY_SEO_BY_LOCALE: Readonly<
   [Locale.HI]: {
     'threads/discover': {
       title: 'सार्वजनिक Threads | ClawAI',
-      description:
-        'ClawAI समुदाय द्वारा प्रकाशित शोध-आधारित लेख, मार्गदर्शिकाएँ और तकनीकी व्याख्याएँ देखें।',
+      description: 'ClawAI समुदाय द्वारा प्रकाशित शोध-आधारित लेख, मार्गदर्शिकाएँ और तकनीकी व्याख्याएँ देखें।',
       keywords: ['AI शोध लेख', 'AI मार्गदर्शिकाएँ', 'तकनीकी व्याख्याएँ'],
     },
   },
@@ -87,8 +86,7 @@ export const THREADS_DISCOVERY_SEO_BY_LOCALE: Readonly<
   [Locale.TH]: {
     'threads/discover': {
       title: 'Threads สาธารณะ | ClawAI',
-      description:
-        'สำรวจบทความ คู่มือ และคำอธิบายทางเทคนิคที่ผ่านการค้นคว้าและเผยแพร่โดยชุมชน ClawAI',
+      description: 'สำรวจบทความ คู่มือ และคำอธิบายทางเทคนิคที่ผ่านการค้นคว้าและเผยแพร่โดยชุมชน ClawAI',
       keywords: ['บทความวิจัย AI', 'คู่มือ AI', 'คำอธิบายทางเทคนิค'],
     },
   },

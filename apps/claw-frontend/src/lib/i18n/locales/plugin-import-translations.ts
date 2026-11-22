@@ -766,8 +766,7 @@ export const PLUGIN_IMPORT_TRANSLATIONS: Record<Locale, PluginImportLocaleTransl
     },
     warning: {
       hooksNotRun: 'इस प्लगइन में हुक हैं, जिन्हें यहाँ कभी नहीं चलाया जाता।',
-      stdioNotRun:
-        'इस प्लगइन में ऐसे सर्वर हैं जो प्रोग्राम शुरू करते हैं, जिन्हें यहाँ कभी नहीं चलाया जाता।',
+      stdioNotRun: 'इस प्लगइन में ऐसे सर्वर हैं जो प्रोग्राम शुरू करते हैं, जिन्हें यहाँ कभी नहीं चलाया जाता।',
       filesIgnored: 'कुछ फ़ाइलें छोड़ दी गईं क्योंकि ClawAI उन्हें सहेजता नहीं।',
       noManifest: 'इस प्लगइन में मैनिफ़ेस्ट नहीं है। इसका नाम उस जगह से लिया गया है जहाँ यह मिला।',
       nameFromSource: 'इस प्लगइन का कोई नाम नहीं है। इसे उस जगह के नाम पर रखा गया है जहाँ यह मिला।',
@@ -1278,8 +1277,7 @@ export const PLUGIN_IMPORT_TRANSLATIONS: Record<Locale, PluginImportLocaleTransl
       github: 'GitHub',
       upload: 'อัปโหลดไฟล์',
       githubLabel: 'ที่อยู่ GitHub',
-      githubHelp:
-        'รีโพซิทอรี (owner/repo) โฟลเดอร์ภายใน หรือไฟล์มาร์เก็ตเพลส เฉพาะรีโพซิทอรีสาธารณะ',
+      githubHelp: 'รีโพซิทอรี (owner/repo) โฟลเดอร์ภายใน หรือไฟล์มาร์เก็ตเพลส เฉพาะรีโพซิทอรีสาธารณะ',
       uploadLabel: 'ไฟล์ปลั๊กอิน',
       uploadHelp: 'ไฟล์ .zip หรือ .tgz ขนาดไม่เกิน 5 MB',
       preview: 'อ่านปลั๊กอิน',

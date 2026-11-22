@@ -15,7 +15,10 @@ const fakeResponse = (): {
   const res = {
     status,
     send,
-    setHeader: (name: string, value: string) => {
+    type: (value: string) => {
+      headers['content-type'] = value;
+    },
+    set: (name: string, value: string) => {
       headers[name.toLowerCase()] = value;
     },
   } as unknown as Response;
@@ -44,7 +47,8 @@ describe('sendMarkdownDownload (CodeQL js/reflected-xss)', () => {
     const order: string[] = [];
     const res = {
       status: vi.fn(),
-      setHeader: (name: string) => order.push(`header:${name}`),
+      type: () => order.push('header:content-type'),
+      set: (name: string) => order.push(`header:${name}`),
       send: () => order.push('send'),
     } as unknown as Response;
 

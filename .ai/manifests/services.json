@@ -221,7 +221,7 @@
         "FileGenerationAsset",
         "FileGenerationEvent"
       ],
-      "testFiles": 19,
+      "testFiles": 20,
       "testRunner": "vitest"
     },
     {

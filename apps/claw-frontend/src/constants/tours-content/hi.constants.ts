@@ -23,8 +23,7 @@ export const HI_TOURS_CONTENT: TourDictionary = {
     launcherNoneHere: 'इस पेज के लिए अभी कोई टूर नहीं है।',
     launcherStopOffers: 'टूर का सुझाव दोबारा न दें',
     launcherResumeOffers: 'टूर का सुझाव फिर से दें',
-    launcherOffersStopped:
-      'टूर के सुझाव बंद हैं। आप इस पेज का कोई भी टूर यहाँ से फिर देख सकते हैं।',
+    launcherOffersStopped: 'टूर के सुझाव बंद हैं। आप इस पेज का कोई भी टूर यहाँ से फिर देख सकते हैं।',
     missingTarget: 'यह हिस्सा अभी स्क्रीन पर नहीं है। इसे खोलें और टूर फिर शुरू करें।',
   },
   tours: {

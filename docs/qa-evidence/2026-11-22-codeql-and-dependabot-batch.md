@@ -31,6 +31,9 @@ lane is NOT_RUN or FAIL. A fabricated or assumed PASS is a prohibited sentence (
 
 CodeQL CLI 2.27.5 surfaced 20 pre-existing findings that turned main red; all fixed in code, no accept-list entries.
 
+- First CI run on main after the push found 4 more: CodeQL js/reflected-xss still flagged (`res.setHeader` is not read as the content type; switched to Express `res.type`/`res.set`), the new prettier 3.10.1 and eslint-plugin-security 4.2.1 flagged old files (68 files formatted with the repo ratchet; one documented eslint-disable on the cue RegExp builder), and my ReDoS rewrite of the zip-bundle filename hint changed behaviour for `.env.py` and `lib.v1/app.py` (rewritten as a bounded directory walk; 500,000 random inputs now give identical results to the old regex, 30,000-segment adversarial input in 6 ms; specs added).
+- Local host limits: Windows Application Control blocks the impit and typst native binaries, so research-service and file-generation suites run only in Linux CI; the push used --no-verify with the owner's explicit approval after manual typecheck (27/27), frontend build and tooling tests (554/0).
+
 ## Open gaps
 
 None open; 6 typst-dependent file-generation suites run in CI only (host limitation).

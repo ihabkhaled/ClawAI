@@ -47,8 +47,7 @@ export const AR_COMPARISON_CONTENT: ComparisonDictionary = {
       '{cloudProviderCount} مزوّدين سحابيين، إضافةً إلى نماذج مفتوحة الأوزان على أجهزتك',
     [ComparisonDimension.ROUTING]:
       '{routingModeCount} أوضاع توجيه، منها التوجيه التلقائي لكل رسالة',
-    [ComparisonDimension.SIDE_BY_SIDE]:
-      'طلب واحد إلى عدة نماذج دفعة واحدة، والإجابات جنبًا إلى جنب',
+    [ComparisonDimension.SIDE_BY_SIDE]: 'طلب واحد إلى عدة نماذج دفعة واحدة، والإجابات جنبًا إلى جنب',
     [ComparisonDimension.LOCAL_MODELS]:
       'نماذج مفتوحة الأوزان على وحدة معالجتك الرسومية، عبر Ollama أو llama.cpp',
     [ComparisonDimension.SELF_HOSTING]: 'المنظومة كاملة تعمل على خوادمك، والشيفرة على GitHub',
@@ -400,8 +399,7 @@ export const AR_COMPARISON_CONTENT: ComparisonDictionary = {
         'استدلال ورياضيات بسعر قلب السوق، وأوزان مفتوحة على خط النماذج الرئيسي، ونهج بحثي ينشر بدل أن يلمّح — تستطيع أن تقرأ كيف دُرِّبت النماذج.',
       ourDifference:
         'يبقي ClawAI الخيار مفتوحًا مع كل رسالة. السؤال الذي يحتاج استدلالًا ثقيلًا يذهب إلى نموذج استدلال، والسؤال الروتيني إلى نموذج رخيص وسريع، والسؤال الحساس إلى نموذج على أجهزتك، والقرار مسجّل لا مفترض.',
-      chooseRival:
-        'كان عملك في معظمه استدلالًا صعبًا، وتريد أقل سعر له، ولا مانع لديك من مزوّد واحد.',
+      chooseRival: 'كان عملك في معظمه استدلالًا صعبًا، وتريد أقل سعر له، ولا مانع لديك من مزوّد واحد.',
       chooseClaw: 'كان الاستدلال جزءًا من عملك لا كله، وأردت نموذجًا ثانيًا متاحًا ليراجع الأول.',
       cells: {
         [ComparisonDimension.MODEL_CHOICE]: 'نماذج DeepSeek فقط',

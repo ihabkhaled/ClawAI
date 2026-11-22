@@ -17,8 +17,7 @@ export const HI_MODELS_CONTENT: ModelsDictionary = {
     seePricing: 'लाइव कैटलॉग की पुष्टि प्राइसिंग पेज पर करें',
     catalogLiveNote:
       'यह सूची सीधे उन मॉडलों से पढ़ी जाती है जिन पर ClawAI इस समय अनुरोध भेज सकता है, इसलिए प्रदाता जुड़ने या मॉडल बंद होने पर यह बदलती रहती है।',
-    catalogUnavailable:
-      'लाइव मॉडल सूची अस्थायी रूप से उपलब्ध नहीं है। कृपया कुछ देर बाद पुनः प्रयास करें।',
+    catalogUnavailable: 'लाइव मॉडल सूची अस्थायी रूप से उपलब्ध नहीं है। कृपया कुछ देर बाद पुनः प्रयास करें।',
     catalogMore: 'और इस प्रदाता पर {count} अन्य मॉडल उपलब्ध हैं',
     contextWindowLabel: 'संदर्भ',
     capabilityLabels: {
@@ -32,11 +31,7 @@ export const HI_MODELS_CONTENT: ModelsDictionary = {
       title: 'AI मॉडल प्रोवाइडर जिनसे ClawAI जुड़ा है',
       description:
         'हर वह मॉडल प्रोवाइडर जिस तक ClawAI बातचीत रूट कर सकता है — OpenAI, Anthropic, Google Gemini, DeepSeek, xAI Grok, और लोकल, ओपन-वेट मॉडल — गुणात्मक लागत श्रेणियों के साथ, बिना किसी गढ़े हुए बेंचमार्क के।',
-      keywords: [
-        'AI मॉडल प्रोवाइडर',
-        'ClawAI किन AI मॉडलों को सपोर्ट करता है',
-        'AI प्रोवाइडर की तुलना',
-      ],
+      keywords: ['AI मॉडल प्रोवाइडर', 'ClawAI किन AI मॉडलों को सपोर्ट करता है', 'AI प्रोवाइडर की तुलना'],
     },
     eyebrow: 'मॉडल प्रोवाइडर',
     title: 'ClawAI के पीछे मौजूद मॉडल प्रोवाइडर',
@@ -49,8 +44,7 @@ export const HI_MODELS_CONTENT: ModelsDictionary = {
       [ModelProviderPage.GOOGLE]: 'Gemini 2.5 Pro, Flash और Flash-Lite।',
       [ModelProviderPage.DEEPSEEK]: 'DeepSeek Chat और DeepSeek Reasoner।',
       [ModelProviderPage.XAI]: 'xAI के Grok 4 और Grok 3 mini।',
-      [ModelProviderPage.LOCAL_AI]:
-        'ओपन-वेट मॉडल जिन्हें आप खुद चलाते हैं, Ollama या llama.cpp के साथ।',
+      [ModelProviderPage.LOCAL_AI]: 'ओपन-वेट मॉडल जिन्हें आप खुद चलाते हैं, Ollama या llama.cpp के साथ।',
     },
   },
   providers: {
@@ -59,11 +53,7 @@ export const HI_MODELS_CONTENT: ModelsDictionary = {
         title: 'ClawAI में OpenAI मॉडल — GPT-5, o3, और अन्य',
         description:
           'वे OpenAI मॉडल जिन तक ClawAI बातचीत रूट कर सकता है, हर एक किस काम के लिए बना है, और एक गुणात्मक लागत श्रेणी। किसी प्लान को चुनने से पहले लाइव कैटलॉग की पुष्टि करें।',
-        keywords: [
-          'ClawAI में OpenAI मॉडल',
-          'ClawAI में GPT-5',
-          'कौन सा OpenAI मॉडल इस्तेमाल करें',
-        ],
+        keywords: ['ClawAI में OpenAI मॉडल', 'ClawAI में GPT-5', 'कौन सा OpenAI मॉडल इस्तेमाल करें'],
       },
       eyebrow: 'मॉडल प्रोवाइडर',
       title: 'OpenAI',
@@ -229,11 +219,7 @@ export const HI_MODELS_CONTENT: ModelsDictionary = {
         title: 'ClawAI में DeepSeek मॉडल',
         description:
           'वे DeepSeek मॉडल जिन तक ClawAI बातचीत रूट कर सकता है — DeepSeek Chat और DeepSeek Reasoner — हर एक किस काम के लिए बना है, और एक गुणात्मक लागत श्रेणी। किसी प्लान को चुनने से पहले लाइव कैटलॉग की पुष्टि करें।',
-        keywords: [
-          'ClawAI में DeepSeek मॉडल',
-          'ClawAI में DeepSeek',
-          'DeepSeek Chat बनाम Reasoner',
-        ],
+        keywords: ['ClawAI में DeepSeek मॉडल', 'ClawAI में DeepSeek', 'DeepSeek Chat बनाम Reasoner'],
       },
       eyebrow: 'मॉडल प्रोवाइडर',
       title: 'DeepSeek',

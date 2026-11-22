@@ -32,11 +32,9 @@ export const AR_COMPARE_MODELS_CONTENT: CompareModelsDictionary = {
       'لا يرتّب هذا المركز OpenAI أو Anthropic أو Google أو DeepSeek أو xAI بعضها ضد بعض — فذلك سؤال مختلف عن السؤال الذي يجيب عنه موجّه ClawAI فعلياً. ما يفعله الموجّه هو أن يختار، لطلب معيّن، أي عائلة يرسل إليها هذا الطلب، موازناً بين فئة التكلفة، وحجم السياق الذي يحتاجه الطلب، وهل يجب أن يبقى العمل على عتاد تتحكم فيه أنت، ووضع التوجيه الذي اخترته. تشرح كل صفحة أدناه هذا الاختيار لزوج واحد من العائلات، استناداً إلى أوضاع التوجيه الخاصة بـ ClawAI وفئات التكلفة النوعية في كتالوج نماذجها، لا إلى درجة معيار قياس أبداً.',
     pairsHeading: 'اختر زوجاً',
     cardSummaries: {
-      [ModelFamilyPair.OPENAI_VS_ANTHROPIC]:
-        'كيف يوازن الموجّه طلباً بين كتالوجَي OpenAI وAnthropic.',
+      [ModelFamilyPair.OPENAI_VS_ANTHROPIC]: 'كيف يوازن الموجّه طلباً بين كتالوجَي OpenAI وAnthropic.',
       [ModelFamilyPair.OPENAI_VS_GOOGLE]: 'كيف يوازن الموجّه طلباً بين كتالوجَي OpenAI وGoogle.',
-      [ModelFamilyPair.ANTHROPIC_VS_GOOGLE]:
-        'كيف يوازن الموجّه طلباً بين كتالوجَي Anthropic وGoogle.',
+      [ModelFamilyPair.ANTHROPIC_VS_GOOGLE]: 'كيف يوازن الموجّه طلباً بين كتالوجَي Anthropic وGoogle.',
       [ModelFamilyPair.OPENAI_VS_DEEPSEEK]:
         'كيف تغيّر فئة التكلفة اختيار الموجّه بين OpenAI وDeepSeek.',
       [ModelFamilyPair.OPENAI_VS_XAI]: 'كيف يوازن الموجّه طلباً بين كتالوجَي OpenAI وxAI.',

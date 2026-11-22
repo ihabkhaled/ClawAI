@@ -21,8 +21,7 @@ export const CREDIT_FALLBACK_TRANSLATIONS: Record<Locale, CreditFallbackLocaleTr
     topUp: 'Add credit or upgrade your plan to use {original} again.',
   },
   [Locale.AR]: {
-    creditExhausted:
-      'انتهى رصيد الموصّلات لديك، لذلك أجاب {answered} بدلًا منه. لم يُستهلك أي رصيد.',
+    creditExhausted: 'انتهى رصيد الموصّلات لديك، لذلك أجاب {answered} بدلًا منه. لم يُستهلك أي رصيد.',
     freeAllowanceExhausted:
       'استخدمت كل طلباتك المجانية للنماذج المدفوعة هذا الشهر، لذلك أجاب {answered} بدلًا منه. لم يُستهلك أي رصيد.',
     promptTooExpensive:
@@ -134,8 +133,7 @@ export const CREDIT_FALLBACK_TRANSLATIONS: Record<Locale, CreditFallbackLocaleTr
     creditExhausted: 'เครดิตตัวเชื่อมต่อของคุณหมดแล้ว {answered} จึงตอบแทน ไม่มีการใช้เครดิต',
     freeAllowanceExhausted:
       'คุณใช้คำขอฟรีสำหรับโมเดลแบบใช้เครดิตครบแล้วในเดือนนี้ {answered} จึงตอบแทน ไม่มีการใช้เครดิต',
-    promptTooExpensive:
-      '{original} มีค่าใช้จ่ายสูงกว่าเครดิตที่เหลือ {answered} จึงตอบแทน ไม่มีการใช้เครดิต',
+    promptTooExpensive: '{original} มีค่าใช้จ่ายสูงกว่าเครดิตที่เหลือ {answered} จึงตอบแทน ไม่มีการใช้เครดิต',
     modelNotInFreeAllowance:
       '{original} มีต้นทุนสูงกว่าที่แพ็กเกจฟรีครอบคลุม จึงให้ {answered} ตอบแทน ไม่มีการใช้เครดิต',
     topUp: 'เติมเครดิตหรืออัปเกรดแพ็กเกจเพื่อใช้ {original} อีกครั้ง',

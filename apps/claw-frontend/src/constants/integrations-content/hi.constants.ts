@@ -32,26 +32,19 @@ export const HI_INTEGRATIONS_CONTENT: IntegrationsDictionary = {
       'नीचे दिया हर कनेक्टर असली और लाइव है, कोई भविष्य की योजना नहीं — वह क्या पढ़ सकता है, क्या लिख सकता है, और रीयल-टाइम में अपडेट होता है या तय समय पर, यह सब उसी रजिस्ट्री से लिया गया है जिस पर ख़ुद प्रोडक्ट चलता है।',
     topicsHeading: 'एक कनेक्टर चुनें',
     cardSummaries: {
-      [IntegrationTopic.GITHUB]:
-        'रिपॉज़िटरी, इशू, पुल रिक्वेस्ट — पढ़ें, कमेंट करें, रिव्यू करें, अप्रूव करें।',
-      [IntegrationTopic.GITLAB]:
-        'प्रोजेक्ट, मर्ज रिक्वेस्ट, इशू — कमेंट करें, अप्रूव करें, बदलाव सुझाएँ।',
-      [IntegrationTopic.BITBUCKET]:
-        'रिपॉज़िटरी और पुल रिक्वेस्ट — कमेंट करें, अप्रूव करें, इशू दर्ज करें।',
+      [IntegrationTopic.GITHUB]: 'रिपॉज़िटरी, इशू, पुल रिक्वेस्ट — पढ़ें, कमेंट करें, रिव्यू करें, अप्रूव करें।',
+      [IntegrationTopic.GITLAB]: 'प्रोजेक्ट, मर्ज रिक्वेस्ट, इशू — कमेंट करें, अप्रूव करें, बदलाव सुझाएँ।',
+      [IntegrationTopic.BITBUCKET]: 'रिपॉज़िटरी और पुल रिक्वेस्ट — कमेंट करें, अप्रूव करें, इशू दर्ज करें।',
       [IntegrationTopic.SLACK]: 'चैनल और मैसेज — कॉन्टेक्स्ट पढ़ें, मैसेज भेजें और जवाब दें।',
       [IntegrationTopic.JIRA]: 'इशू और प्रोजेक्ट — टिकट बनाएँ, उन्हें अपडेट करें, कमेंट करें।',
       [IntegrationTopic.CONFLUENCE]: 'पेज और स्पेस — डॉक्यूमेंटेशन पढ़ें, पेज बनाएँ और एडिट करें।',
-      [IntegrationTopic.CLICKUP]:
-        'टास्क, स्पेस, फ़ोल्डर — टास्क बनाएँ, अपडेट करें, और उन पर कमेंट करें।',
-      [IntegrationTopic.FIGMA]:
-        'फ़ाइलें और कमेंट — डिज़ाइन पढ़ें, कमेंट पोस्ट करें, Jira को सौंपें।',
-      [IntegrationTopic.GOOGLE_DRIVE]:
-        'फ़ाइलें और फ़ोल्डर — डॉक्यूमेंट और स्प्रेडशीट पढ़ें, फ़ाइलें अपलोड और मूव करें।',
+      [IntegrationTopic.CLICKUP]: 'टास्क, स्पेस, फ़ोल्डर — टास्क बनाएँ, अपडेट करें, और उन पर कमेंट करें।',
+      [IntegrationTopic.FIGMA]: 'फ़ाइलें और कमेंट — डिज़ाइन पढ़ें, कमेंट पोस्ट करें, Jira को सौंपें।',
+      [IntegrationTopic.GOOGLE_DRIVE]: 'फ़ाइलें और फ़ोल्डर — डॉक्यूमेंट और स्प्रेडशीट पढ़ें, फ़ाइलें अपलोड और मूव करें।',
       [IntegrationTopic.GMAIL]: 'थ्रेड और मैसेज — ईमेल पढ़ें, भेजें, जवाब दें, और ड्राफ़्ट बनाएँ।',
       [IntegrationTopic.MICROSOFT_SHAREPOINT]:
         'साइट, डॉक्यूमेंट, लिस्ट — डॉक्यूमेंट पढ़ें और अपलोड करें, लिस्ट आइटम मैनेज करें।',
-      [IntegrationTopic.MICROSOFT_ONEDRIVE]:
-        'फ़ाइलें और फ़ोल्डर — पढ़ें, अपलोड करें, और फ़ाइलें मूव करें।',
+      [IntegrationTopic.MICROSOFT_ONEDRIVE]: 'फ़ाइलें और फ़ोल्डर — पढ़ें, अपलोड करें, और फ़ाइलें मूव करें।',
       [IntegrationTopic.GOOGLE_CALENDAR]: 'मीटिंग और इवेंट — अपना कैलेंडर पढ़ें, इवेंट बनाएँ।',
       [IntegrationTopic.OUTLOOK_CALENDAR]: 'मीटिंग और इवेंट — अपना कैलेंडर पढ़ें, इवेंट बनाएँ।',
     },
@@ -246,8 +239,7 @@ export const HI_INTEGRATIONS_CONTENT: IntegrationsDictionary = {
         },
         {
           question: 'क्या यह बिना पूछे Slack पर पोस्ट कर देगा?',
-          answer:
-            'नहीं। मैसेज भेजना या उसका जवाब देना हमेशा वही साफ़-साफ़ ऐक्शन है जो आप बातचीत में माँगते हैं।',
+          answer: 'नहीं। मैसेज भेजना या उसका जवाब देना हमेशा वही साफ़-साफ़ ऐक्शन है जो आप बातचीत में माँगते हैं।',
         },
       ],
       productNote:
@@ -426,8 +418,7 @@ export const HI_INTEGRATIONS_CONTENT: IntegrationsDictionary = {
       ],
       faq: [
         {
-          question:
-            'क्या Drive कनेक्ट करने से ClawAI को उसमें मौजूद हर चीज़ का एक्सेस मिल जाता है?',
+          question: 'क्या Drive कनेक्ट करने से ClawAI को उसमें मौजूद हर चीज़ का एक्सेस मिल जाता है?',
           answer:
             'सिर्फ़ उतना जितना कनेक्टेड Google अकाउंट OAuth के दौरान एक्सेस देता है — आमतौर पर उन फ़ाइलों तक सीमित जो अकाउंट पहले से खोल सकता है, कोई ऑर्गनाइज़ेशन-वाइड ग्रांट नहीं।',
         },
@@ -480,11 +471,7 @@ export const HI_INTEGRATIONS_CONTENT: IntegrationsDictionary = {
         title: 'AI SharePoint इंटीग्रेशन — ClawAI',
         description:
           'Microsoft SharePoint को ClawAI से जोड़ें ताकि आप डॉक्यूमेंट और साइट लिस्ट पढ़ सकें, और एक बातचीत से डॉक्यूमेंट अपलोड कर सकें और लिस्ट आइटम मैनेज कर सकें।',
-        keywords: [
-          'AI SharePoint असिस्टेंट',
-          'SharePoint AI इंटीग्रेशन',
-          'Microsoft AI डॉक्यूमेंट सर्च',
-        ],
+        keywords: ['AI SharePoint असिस्टेंट', 'SharePoint AI इंटीग्रेशन', 'Microsoft AI डॉक्यूमेंट सर्च'],
       },
       eyebrow: 'फ़ाइलें',
       title: 'Microsoft SharePoint',
@@ -567,11 +554,7 @@ export const HI_INTEGRATIONS_CONTENT: IntegrationsDictionary = {
         title: 'AI Google Calendar इंटीग्रेशन — ClawAI',
         description:
           'Google Calendar को ClawAI से जोड़ें ताकि आप अपनी मीटिंग और इवेंट पढ़ सकें, और एक बातचीत से नया कैलेंडर इवेंट बना सकें।',
-        keywords: [
-          'AI Google Calendar असिस्टेंट',
-          'Google Calendar AI इंटीग्रेशन',
-          'AI मीटिंग शेड्यूल',
-        ],
+        keywords: ['AI Google Calendar असिस्टेंट', 'Google Calendar AI इंटीग्रेशन', 'AI मीटिंग शेड्यूल'],
       },
       eyebrow: 'कैलेंडर',
       title: 'Google Calendar',
@@ -594,8 +577,7 @@ export const HI_INTEGRATIONS_CONTENT: IntegrationsDictionary = {
             'अभी नहीं — कनेक्टर फ़िलहाल नया इवेंट बनाना सपोर्ट करता है, किसी मौजूदा इवेंट को एडिट या दोबारा शेड्यूल करना नहीं।',
         },
         {
-          question:
-            'क्या यह मेरा पूरा कैलेंडर देखता है, उन दूसरे कैलेंडरों समेत जिन तक मेरी पहुँच है?',
+          question: 'क्या यह मेरा पूरा कैलेंडर देखता है, उन दूसरे कैलेंडरों समेत जिन तक मेरी पहुँच है?',
           answer:
             'एक्सेस उतना ही है जितना आप कनेक्ट करते वक़्त देते हैं, जो आमतौर पर आपका प्राइमरी कैलेंडर होता है, जब तक आप साफ़-साफ़ इसे न बढ़ाएँ।',
         },
@@ -608,11 +590,7 @@ export const HI_INTEGRATIONS_CONTENT: IntegrationsDictionary = {
         title: 'AI Outlook Calendar इंटीग्रेशन — ClawAI',
         description:
           'Outlook Calendar को ClawAI से जोड़ें ताकि आप अपनी मीटिंग और इवेंट पढ़ सकें, और एक बातचीत से नया कैलेंडर इवेंट बना सकें।',
-        keywords: [
-          'AI Outlook Calendar असिस्टेंट',
-          'Outlook AI इंटीग्रेशन',
-          'Microsoft AI मीटिंग शेड्यूल',
-        ],
+        keywords: ['AI Outlook Calendar असिस्टेंट', 'Outlook AI इंटीग्रेशन', 'Microsoft AI मीटिंग शेड्यूल'],
       },
       eyebrow: 'कैलेंडर',
       title: 'Outlook Calendar',

@@ -239,9 +239,7 @@ export const FA_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       preheader: 'Thread با ایدهٔ شما به‌روزرسانی شد.',
       heading: 'پیشنهاد شما اعمال شد',
       intro: '«{value}» با تغییر پیشنهادی شما به‌روزرسانی شد.',
-      bodyLines: [
-        'از اینکه به بهتر شدن آن کمک کردید سپاسگزاریم. نام شما در صفحهٔ Thread آمده است.',
-      ],
+      bodyLines: ['از اینکه به بهتر شدن آن کمک کردید سپاسگزاریم. نام شما در صفحهٔ Thread آمده است.'],
       actionLabel: 'باز کردن Thread',
       fallbackNote: 'اگر دکمه کار نکرد، نشانی زیر را در مرورگر خود کپی کنید:',
       expiryNote: null,

@@ -298,8 +298,7 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
     publish: {
       emptySelection: 'اختر إصدار مسودة من تبويب الإصدارات لنشره.',
       notDraftWarning: 'لا يمكن نشر سوى إصدار مسودة. هذا الإصدار بالفعل {status}.',
-      supersedeWarning:
-        'سيؤدي النشر إلى استبدال الإصدار المنشور حاليًا رقم {revision} لهذا النطاق.',
+      supersedeWarning: 'سيؤدي النشر إلى استبدال الإصدار المنشور حاليًا رقم {revision} لهذا النطاق.',
       noCurrentPublished: 'لا يوجد إصدار منشور حاليًا لهذا النطاق — سيكون هذا هو الأول.',
       confirmTitle: 'هل تريد نشر هذا الإصدار؟',
       confirmDescription:
@@ -1106,8 +1105,7 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
     chain: {
       draftInProgress: 'ड्राफ़्ट संशोधन संपादित हो रहा है',
       viewingPublishedReadOnly: 'प्रकाशित चेन देखी जा रही है (केवल पढ़ने योग्य)',
-      createDraftToEdit:
-        'प्रविष्टियाँ जोड़ने, हटाने या पुनः क्रमबद्ध करने के लिए एक ड्राफ़्ट बनाएं।',
+      createDraftToEdit: 'प्रविष्टियाँ जोड़ने, हटाने या पुनः क्रमबद्ध करने के लिए एक ड्राफ़्ट बनाएं।',
       noEntries: 'इस संशोधन में अभी तक कोई चेन प्रविष्टि नहीं है।',
     },
     entryForm: {
@@ -1138,8 +1136,7 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       fileWriterTitle: 'फ़ाइल लेखक',
       fileWriterDescription:
         'वे मॉडल जो AI द्वारा बनाई गई फ़ाइल (PDF, DOCX, स्प्रेडशीट...) की सामग्री लिखते हैं। क्रम से आज़माए जाते हैं; इन्हें बड़ा टोकन बजट दें, क्योंकि फ़ाइल एक पूरा दस्तावेज़ होती है।',
-      fileWriterEmpty:
-        'कोई फ़ाइल लेखक सेट नहीं है: जब तक आप एक नहीं जोड़ते, फ़ाइल अनुरोध विफल होंगे।',
+      fileWriterEmpty: 'कोई फ़ाइल लेखक सेट नहीं है: जब तक आप एक नहीं जोड़ते, फ़ाइल अनुरोध विफल होंगे।',
       visionHelperTitle: 'विज़न सहायक',
       visionHelperDescription:
         'विज़न मॉडल जो संलग्न छवि का वर्णन करते हैं जब चुना गया मॉडल उसे देख नहीं सकता। उत्तर अब भी चुना गया मॉडल ही लिखता है, और उसे बताया जाता है कि विवरण एक सहायक से आया है। क्रम से आज़माए जाते हैं; हर विवरण उपयोगकर्ता से एक अलग मद के रूप में लिया जाता है।',
@@ -1189,8 +1186,7 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
     },
     publish: {
       emptySelection: 'प्रकाशित करने के लिए संशोधन टैब से एक ड्राफ़्ट संशोधन चुनें।',
-      notDraftWarning:
-        'केवल ड्राफ़्ट संशोधन ही प्रकाशित किया जा सकता है। यह संशोधन पहले से ही {status} है।',
+      notDraftWarning: 'केवल ड्राफ़्ट संशोधन ही प्रकाशित किया जा सकता है। यह संशोधन पहले से ही {status} है।',
       supersedeWarning:
         'प्रकाशित करने से इस स्कोप के लिए वर्तमान में प्रकाशित संशोधन {revision} का स्थान ले लिया जाएगा।',
       noCurrentPublished: 'इस स्कोप के लिए वर्तमान में कोई संशोधन प्रकाशित नहीं है — यह पहला होगा।',
@@ -1968,8 +1964,7 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
   },
   [Locale.TH]: {
     title: 'การจัดการสมาร์ทเราเตอร์',
-    description:
-      'จัดการห่วงโซ่การกำหนดค่าของเราเตอร์บนคลาวด์: สร้างฉบับร่าง แก้ไข เผยแพร่ และปรับใช้รีวิชัน',
+    description: 'จัดการห่วงโซ่การกำหนดค่าของเราเตอร์บนคลาวด์: สร้างฉบับร่าง แก้ไข เผยแพร่ และปรับใช้รีวิชัน',
     scopeLabel: 'ขอบเขต',
     tabs: {
       overview: 'ภาพรวม',
@@ -2075,8 +2070,7 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
     publish: {
       emptySelection: 'เลือกรีวิชันฉบับร่างจากแท็บรีวิชันเพื่อเผยแพร่',
       notDraftWarning: 'เผยแพร่ได้เฉพาะรีวิชันฉบับร่างเท่านั้น รีวิชันนี้อยู่ในสถานะ {status} แล้ว',
-      supersedeWarning:
-        'การเผยแพร่จะแทนที่รีวิชัน {revision} ที่เผยแพร่อยู่ในปัจจุบันสำหรับขอบเขตนี้',
+      supersedeWarning: 'การเผยแพร่จะแทนที่รีวิชัน {revision} ที่เผยแพร่อยู่ในปัจจุบันสำหรับขอบเขตนี้',
       noCurrentPublished: 'ขณะนี้ยังไม่มีรีวิชันที่เผยแพร่สำหรับขอบเขตนี้ — นี่จะเป็นรีวิชันแรก',
       confirmTitle: 'เผยแพร่รีวิชันนี้หรือไม่?',
       confirmDescription:

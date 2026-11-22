@@ -68,9 +68,7 @@ export const HI_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       heading: 'पते के इस परिवर्तन की पुष्टि करें',
       intro:
         'आपके ClawAI खाते का ईमेल पता बदलकर {value} करने का अनुरोध किया गया है। आगे बढ़ने के लिए, अपने वर्तमान पते से इसकी पुष्टि करें।',
-      bodyLines: [
-        'यह सत्यापन कोड उसी ब्राउज़र विंडो में दर्ज करें जहाँ आपने यह परिवर्तन आरंभ किया था।',
-      ],
+      bodyLines: ['यह सत्यापन कोड उसी ब्राउज़र विंडो में दर्ज करें जहाँ आपने यह परिवर्तन आरंभ किया था।'],
       actionLabel: null,
       fallbackNote: null,
       expiryNote:
@@ -278,9 +276,7 @@ export const HI_AUTH_EMAIL_DICTIONARY: AuthEmailDictionary = {
       preheader: 'कारण देखने के लिए पेज खोलें।',
       heading: 'आपका MCP सर्वर स्वीकृत नहीं हुआ',
       intro: 'एक एडमिन ने “{value}” को स्वीकृत नहीं किया।',
-      bodyLines: [
-        'कारण देखने के लिए MCP सर्वर पेज खोलें। आप सर्वर हटाकर सुधारा हुआ सर्वर जोड़ सकते हैं।',
-      ],
+      bodyLines: ['कारण देखने के लिए MCP सर्वर पेज खोलें। आप सर्वर हटाकर सुधारा हुआ सर्वर जोड़ सकते हैं।'],
       actionLabel: 'मेरे MCP सर्वर खोलें',
       fallbackNote: 'यदि बटन काम न करे, तो नीचे दिया गया पता अपने ब्राउज़र में कॉपी करें:',
       expiryNote: null,

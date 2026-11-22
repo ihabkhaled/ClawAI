@@ -707,8 +707,7 @@ export const OBSERVABILITY_EXPLORER_TRANSLATIONS: Record<
     costUnpriced: 'कोई मूल्य नहीं',
     costUnmetered: 'बिना मापा (एडमिन)',
     costPricedTip: 'प्रदाता द्वारा बताई गई और निपटाई गई लागत।',
-    costFallbackTip:
-      'अनुमानित लागत: प्रदाता ने कोई लागत नहीं बताई, इसलिए आरक्षण का अनुमान दिखाया गया है।',
+    costFallbackTip: 'अनुमानित लागत: प्रदाता ने कोई लागत नहीं बताई, इसलिए आरक्षण का अनुमान दिखाया गया है।',
     costUnpricedTip: 'इस मॉडल का कोई मूल्य दर्ज नहीं है। लागत अज्ञात है, शून्य नहीं।',
     costUnmeteredTip: 'एडमिन के उपयोग पर शुल्क नहीं लगता।',
     costPartial: 'कुछ अनुरोधों का कोई मूल्य नहीं है, इसलिए यह लागत वास्तविक खर्च से कम दिखाती है।',
@@ -753,8 +752,7 @@ export const OBSERVABILITY_EXPLORER_TRANSLATIONS: Record<
     headingTopModels: 'सबसे अधिक विफलताओं वाले मॉडल',
     breakdownTruncated: 'केवल शीर्ष 50 पंक्तियाँ दिखाई गई हैं।',
     userDialogTitle: 'उपयोगकर्ता की खपत',
-    userDialogDescription:
-      'इस उपयोगकर्ता का उपयोग, लागत और अनुरोध। इसे खोलना ऑडिट लॉग में दर्ज होता है।',
+    userDialogDescription: 'इस उपयोगकर्ता का उपयोग, लागत और अनुरोध। इसे खोलना ऑडिट लॉग में दर्ज होता है।',
     tracingByProvider: 'प्रदाता के अनुसार',
     tracingByModel: 'मॉडल के अनुसार',
     tracingByContext: 'संदर्भ के अनुसार',
@@ -917,15 +915,13 @@ export const OBSERVABILITY_EXPLORER_TRANSLATIONS: Record<
     headingTopModels: 'โมเดลที่มีข้อผิดพลาดมากที่สุด',
     breakdownTruncated: 'แสดงเฉพาะ 50 แถวแรก',
     userDialogTitle: 'การใช้งานของผู้ใช้',
-    userDialogDescription:
-      'การใช้งาน ต้นทุน และคำขอของผู้ใช้รายนี้ การเปิดดูจะถูกบันทึกในบันทึกการตรวจสอบ',
+    userDialogDescription: 'การใช้งาน ต้นทุน และคำขอของผู้ใช้รายนี้ การเปิดดูจะถูกบันทึกในบันทึกการตรวจสอบ',
     tracingByProvider: 'ตามผู้ให้บริการ',
     tracingByModel: 'ตามโมเดล',
     tracingByContext: 'ตามบริบท',
     tracingGroupBy: 'จัดกลุ่มตาม',
     tracingOverall: '{requests} คำขอ ค่ามัธยฐาน {p50} p95 {p95}',
-    tracingErrorRateNote:
-      'อัตราข้อผิดพลาดเป็นค่าโดยประมาณ: ข้อผิดพลาดและคำขอถูกนับในที่เก็บข้อมูลคนละแห่ง',
+    tracingErrorRateNote: 'อัตราข้อผิดพลาดเป็นค่าโดยประมาณ: ข้อผิดพลาดและคำขอถูกนับในที่เก็บข้อมูลคนละแห่ง',
     tracingSignals: 'สัญญาณการสำรอง การลองใหม่ และการจำกัดอัตรา',
     tracingSignalsEmpty: 'ไม่มีเหตุการณ์การสำรอง การลองใหม่ หรือการจำกัดอัตราในช่วงเวลานี้',
     windowHours: '{hours} ชั่วโมงที่ผ่านมา',

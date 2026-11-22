@@ -1041,8 +1041,7 @@ export const PLUGINS_ADMIN_CATALOG_TRANSLATIONS: Record<
     form: {
       createTitle: 'नई चुनी हुई प्रविष्टि',
       editTitle: 'चुनी हुई प्रविष्टि बदलें',
-      description:
-        'प्रविष्टियाँ दूरस्थ MCP सर्वर हैं। प्रकाशित करने से पहले टूल का पूर्वावलोकन करें।',
+      description: 'प्रविष्टियाँ दूरस्थ MCP सर्वर हैं। प्रकाशित करने से पहले टूल का पूर्वावलोकन करें।',
       slug: 'स्लग',
       publisher: 'प्रकाशक',
       category: 'श्रेणी',

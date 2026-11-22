@@ -9,16 +9,14 @@ export const TH_MODELS_CONTENT: ModelsDictionary = {
     lastReviewed: 'ตรวจสอบล่าสุด',
     backToHub: 'ผู้ให้บริการทั้งหมด',
     ctaTitle: 'ลองใช้ดูเองดีกว่าเชื่อคำพูดของเรา',
-    ctaBody:
-      'ClawAI ส่งบทสนทนาไปยังโมเดลที่เหมาะสมที่สุด จากผู้ให้บริการทุกรายด้านล่าง ภายในพื้นที่ทำงานเดียว',
+    ctaBody: 'ClawAI ส่งบทสนทนาไปยังโมเดลที่เหมาะสมที่สุด จากผู้ให้บริการทุกรายด้านล่าง ภายในพื้นที่ทำงานเดียว',
     startFree: 'เริ่มต้นด้วยแผนฟรี',
     seeFeatures: 'ดูว่า ClawAI ทำอะไรได้บ้าง',
     catalogHeading: 'โมเดลที่ ClawAI สามารถส่งคำขอไปได้',
     seePricing: 'ตรวจสอบแคตตาล็อกล่าสุดในหน้าราคา',
     catalogLiveNote:
       'รายการนี้อ่านแบบเรียลไทม์จากโมเดลที่ ClawAI สามารถกำหนดเส้นทางไปได้ในขณะนี้ จึงเปลี่ยนแปลงเมื่อมีการเชื่อมต่อผู้ให้บริการหรือยกเลิกโมเดล',
-    catalogUnavailable:
-      'แคตตาล็อกโมเดลแบบเรียลไทม์ไม่พร้อมใช้งานชั่วคราว กรุณาลองใหม่อีกครั้งในอีกสักครู่',
+    catalogUnavailable: 'แคตตาล็อกโมเดลแบบเรียลไทม์ไม่พร้อมใช้งานชั่วคราว กรุณาลองใหม่อีกครั้งในอีกสักครู่',
     catalogMore: 'และมีโมเดลอีก {count} รายการจากผู้ให้บริการรายนี้',
     contextWindowLabel: 'บริบท',
     capabilityLabels: {
@@ -32,11 +30,7 @@ export const TH_MODELS_CONTENT: ModelsDictionary = {
       title: 'ผู้ให้บริการโมเดล AI ที่ ClawAI เชื่อมต่อด้วย',
       description:
         'ผู้ให้บริการโมเดลทุกรายที่ ClawAI สามารถส่งบทสนทนาไปให้ได้ — OpenAI, Anthropic, Google Gemini, DeepSeek, xAI Grok และโมเดลแบบ open-weight ที่รันในเครื่องของคุณเอง พร้อมระดับต้นทุนเชิงคุณภาพ ไม่มีการอ้างอิงผลทดสอบที่กุขึ้นเอง',
-      keywords: [
-        'ผู้ให้บริการโมเดล AI',
-        'ClawAI รองรับโมเดล AI อะไรบ้าง',
-        'เปรียบเทียบผู้ให้บริการ AI',
-      ],
+      keywords: ['ผู้ให้บริการโมเดล AI', 'ClawAI รองรับโมเดล AI อะไรบ้าง', 'เปรียบเทียบผู้ให้บริการ AI'],
     },
     eyebrow: 'ผู้ให้บริการโมเดล',
     title: 'ผู้ให้บริการโมเดลเบื้องหลัง ClawAI',
@@ -49,8 +43,7 @@ export const TH_MODELS_CONTENT: ModelsDictionary = {
       [ModelProviderPage.GOOGLE]: 'Gemini 2.5 Pro, Flash และ Flash-Lite',
       [ModelProviderPage.DEEPSEEK]: 'DeepSeek Chat และ DeepSeek Reasoner',
       [ModelProviderPage.XAI]: 'Grok 4 และ Grok 3 mini จาก xAI',
-      [ModelProviderPage.LOCAL_AI]:
-        'โมเดลแบบ open-weight ที่คุณรันเองได้ ด้วย Ollama หรือ llama.cpp',
+      [ModelProviderPage.LOCAL_AI]: 'โมเดลแบบ open-weight ที่คุณรันเองได้ ด้วย Ollama หรือ llama.cpp',
     },
   },
   providers: {
@@ -203,8 +196,7 @@ export const TH_MODELS_CONTENT: ModelsDictionary = {
       faq: [
         {
           question: 'ClawAI มีความร่วมมือโดยตรงกับ Google หรือไม่',
-          answer:
-            'ไม่มี ClawAI เชื่อมต่อกับ Gemini API ในลักษณะเดียวกับแอปพลิเคชันอื่นที่ใช้ API key ทั่วไป',
+          answer: 'ไม่มี ClawAI เชื่อมต่อกับ Gemini API ในลักษณะเดียวกับแอปพลิเคชันอื่นที่ใช้ API key ทั่วไป',
         },
         {
           question: 'โมเดล Gemini ตัวไหนจัดการเอกสารยาวได้ดีที่สุด',
@@ -315,8 +307,7 @@ export const TH_MODELS_CONTENT: ModelsDictionary = {
       faq: [
         {
           question: 'ClawAI มีความร่วมมือโดยตรงกับ xAI หรือไม่',
-          answer:
-            'ไม่มี ClawAI เชื่อมต่อกับ API สาธารณะของ xAI ในลักษณะเดียวกับแอปพลิเคชันอื่นที่ใช้ API key ทั่วไป',
+          answer: 'ไม่มี ClawAI เชื่อมต่อกับ API สาธารณะของ xAI ในลักษณะเดียวกับแอปพลิเคชันอื่นที่ใช้ API key ทั่วไป',
         },
         {
           question: 'Grok 4 และ Grok 3 mini ต่างกันอย่างไร',

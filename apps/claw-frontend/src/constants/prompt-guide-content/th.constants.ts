@@ -32,8 +32,7 @@ export const TH_PROMPT_GUIDE_CONTENT: PromptGuideDictionary = {
       [PromptGuideTopic.CHAIN_OF_THOUGHT_PROMPTING]: 'ขอให้โมเดลไล่เรียงขั้นตอนก่อนตอบ',
       [PromptGuideTopic.PROMPTING_FOR_STRUCTURED_OUTPUT]:
         'เขียนพรอมต์ที่ขอ JSON ตาราง หรือรูปแบบตายตัวอื่น ๆ',
-      [PromptGuideTopic.SYSTEM_PROMPTS_VS_USER_PROMPTS]:
-        'สิ่งที่พรอมต์ระบบทำต่างจากสิ่งที่คุณพิมพ์ในแชท',
+      [PromptGuideTopic.SYSTEM_PROMPTS_VS_USER_PROMPTS]: 'สิ่งที่พรอมต์ระบบทำต่างจากสิ่งที่คุณพิมพ์ในแชท',
       [PromptGuideTopic.ITERATING_ON_A_PROMPT]: 'สิ่งที่ควรเปลี่ยนเมื่อคำตอบแรกไม่ถูกต้อง',
       [PromptGuideTopic.PROMPTING_BY_TASK_TYPE]:
         'วิธีที่แนวทางที่เหมาะสมเปลี่ยนไปตามงานเขียนโค้ด งานเขียน และงานวิเคราะห์',

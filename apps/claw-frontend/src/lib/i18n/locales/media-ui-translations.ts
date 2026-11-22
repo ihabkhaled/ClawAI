@@ -1063,17 +1063,14 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       visionHelperFailed: 'चित्र का विवरण विफल रहा, इसलिए केवल उसका टेक्स्ट (OCR) भेजा गया',
       visionHelperRefused:
         'चित्र का विवरण देने के लिए पर्याप्त क्रेडिट नहीं, इसलिए केवल उसका टेक्स्ट (OCR) भेजा गया',
-      helperVisionPlan:
-        'आपके प्लान में चित्र विवरण शामिल नहीं है, इसलिए केवल उसका टेक्स्ट (OCR) भेजा गया',
+      helperVisionPlan: 'आपके प्लान में चित्र विवरण शामिल नहीं है, इसलिए केवल उसका टेक्स्ट (OCR) भेजा गया',
       visionHelperLimit: 'एक संदेश में बहुत सारे चित्र; इस चित्र का विवरण नहीं दिया गया',
       videoPlanLimit: 'आपका प्लान इस वीडियो की अनुमति नहीं देता (बंद है या बहुत लंबा है)',
       videoProcessingCancelled:
         'इसकी प्रोसेसिंग रोक दी गई, इसलिए मॉडल को बताया गया कि इसे प्रोसेस नहीं किया गया',
       videoFramesUnavailable: 'वीडियो फ़्रेम उपलब्ध नहीं थे, इसलिए केवल ट्रांसक्रिप्ट भेजा गया',
-      videoFramesNoHelper:
-        'कोई भी मॉडल वीडियो फ़्रेम का विवरण नहीं दे सका, इसलिए केवल ट्रांसक्रिप्ट भेजा गया',
-      videoFramesHelperPlan:
-        'आपके प्लान में फ़्रेम विवरण शामिल नहीं है, इसलिए केवल ट्रांसक्रिप्ट भेजा गया',
+      videoFramesNoHelper: 'कोई भी मॉडल वीडियो फ़्रेम का विवरण नहीं दे सका, इसलिए केवल ट्रांसक्रिप्ट भेजा गया',
+      videoFramesHelperPlan: 'आपके प्लान में फ़्रेम विवरण शामिल नहीं है, इसलिए केवल ट्रांसक्रिप्ट भेजा गया',
       nativeAudioTranscriptPending: 'मॉडल ने रिकॉर्डिंग सुनी; उसका ट्रांसक्रिप्ट अभी तैयार नहीं था',
       nativeAudioTranscriptFailed: 'मॉडल ने रिकॉर्डिंग सुनी; उसका ट्रांसक्रिप्शन विफल रहा',
       unknown: 'फ़ाइल पूरी तरह नहीं पहुँचाई गई',
@@ -1270,8 +1267,7 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       unsupportedReason: 'ไม่สามารถแนบไฟล์ประเภทนี้ได้',
       remove: 'นำ {name} ออก',
       cancelled: 'ยกเลิกแล้ว',
-      cancelledHint:
-        'หยุดการประมวลผลแล้ว คุณยังส่งไฟล์นี้ได้ และโมเดลจะได้รับแจ้งว่าไฟล์ยังไม่ได้ประมวลผล',
+      cancelledHint: 'หยุดการประมวลผลแล้ว คุณยังส่งไฟล์นี้ได้ และโมเดลจะได้รับแจ้งว่าไฟล์ยังไม่ได้ประมวลผล',
       cancelProcessing: 'หยุดประมวลผล',
       cancelProcessingAria: 'หยุดประมวลผล {name}',
       cancelling: 'กำลังหยุด…',
@@ -1299,8 +1295,7 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       stillProcessing: 'ไฟล์ยังอยู่ระหว่างการประมวลผล',
       failedProcessing: 'ไม่สามารถประมวลผลไฟล์ได้',
       truncated: 'ข้อความยาวเกินไปจึงถูกตัดให้สั้นลง',
-      relevanceFitted:
-        'ไฟล์ใหญ่กว่าหน้าต่างบริบทของโมเดล จึงส่งเฉพาะส่วนต้นและส่วนที่เกี่ยวข้องกับคำถามของคุณมากที่สุด',
+      relevanceFitted: 'ไฟล์ใหญ่กว่าหน้าต่างบริบทของโมเดล จึงส่งเฉพาะส่วนต้นและส่วนที่เกี่ยวข้องกับคำถามของคุณมากที่สุด',
       visionHelperFailed: 'การอธิบายรูปภาพล้มเหลว จึงส่งเฉพาะข้อความในภาพ (OCR)',
       visionHelperRefused: 'เครดิตไม่พอสำหรับอธิบายรูปภาพ จึงส่งเฉพาะข้อความในภาพ (OCR)',
       helperVisionPlan: 'แพ็กเกจของคุณไม่รวมการอธิบายรูปภาพ จึงส่งเฉพาะข้อความในภาพ (OCR)',
@@ -1349,8 +1344,7 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       timedOut: 'การสร้างเสียงหมดเวลา',
       loadFailed: 'ไม่สามารถโหลดเสียงได้',
       loadFailedHint: 'โหลดหน้าใหม่แล้วลองอีกครั้ง',
-      statusUnknown:
-        'เราหยุดตรวจสอบเสียงนี้แล้ว โหลดหน้าใหม่เพื่อดูว่าเสร็จหรือยัง หรือส่งคำขออีกครั้ง',
+      statusUnknown: 'เราหยุดตรวจสอบเสียงนี้แล้ว โหลดหน้าใหม่เพื่อดูว่าเสร็จหรือยัง หรือส่งคำขออีกครั้ง',
     },
   },
   [Locale.FA]: {

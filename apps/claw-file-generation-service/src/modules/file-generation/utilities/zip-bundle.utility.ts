@@ -3,8 +3,10 @@ import JSZip from 'jszip';
 
 import {
   CODE_LANGUAGE_EXTENSIONS,
+  ZIP_DIRECTORY_CHARACTER,
   ZIP_FILENAME_HINT,
   ZIP_MAX_FILES,
+  ZIP_MAX_HINT_DIRECTORIES,
   ZIP_MAX_HINT_LENGTH,
 } from '../constants/document-render.constants';
 import { BlockKind } from '../enums/document-node.enum';
@@ -70,18 +72,56 @@ export function bundleFiles(markdown: string, blocks: DocumentBlock[]): BundleFi
  * none or it is unsafe.
  */
 export function safeBundlePath(hint: string | null): string | null {
-  const match = hint === null ? null : ZIP_FILENAME_HINT.exec(hint.replaceAll('\\', '/'));
-  if (match === null) {
+  const named = hint === null ? null : namedFileInHint(hint.replaceAll('\\', '/'));
+  if (named === null) {
     return null;
   }
-  const segments = match[0].split('/').filter((segment) => segment.length > 0 && segment !== '.');
-  if (
-    segments.length === 0 ||
+  const segments = named.split('/').filter((segment) => segment.length > 0 && segment !== '.');
+  return segments.length === 0 ||
     segments.some((segment) => segment === '..' || segment.startsWith('.'))
-  ) {
-    return null;
+    ? null
+    : segments.join('/');
+}
+
+/**
+ * The first file name in `text` with up to ZIP_MAX_HINT_DIRECTORIES directories before it
+ * ("lib/util.go", "../x.py", "lib.v1/app.py"). Same result as the old single regex
+ * `([\w.-]+/){0,4}name`, but a directory is a deterministic run of path characters, so it is
+ * walked in code and no regex repeats a group that itself repeats (CodeQL js/polynomial-redos).
+ */
+function namedFileInHint(text: string): string | null {
+  for (let start = 0; start < text.length; start += 1) {
+    const found = namedFileAt(text, start);
+    if (found !== null) {
+      return found;
+    }
   }
-  return segments.join('/');
+  return null;
+}
+
+function namedFileAt(text: string, start: number): string | null {
+  const nameStarts = [start];
+  let position = start;
+  while (nameStarts.length <= ZIP_MAX_HINT_DIRECTORIES) {
+    let end = position;
+    while (end < text.length && ZIP_DIRECTORY_CHARACTER.test(text.charAt(end))) {
+      end += 1;
+    }
+    if (end === position || text.charAt(end) !== '/') {
+      break;
+    }
+    position = end + 1;
+    nameStarts.push(position);
+  }
+  // Greedy like the regex: the most directories first, then fewer.
+  for (const nameStart of [...nameStarts].reverse()) {
+    ZIP_FILENAME_HINT.lastIndex = nameStart;
+    const name = ZIP_FILENAME_HINT.exec(text);
+    if (name !== null) {
+      return text.slice(start, nameStart + name[0].length);
+    }
+  }
+  return null;
 }
 
 /** The hinted path, when it names a file of this block's kind. */

@@ -257,8 +257,7 @@ export const PLUGINS_INSTALL_TRANSLATIONS: Record<Locale, PluginsInstallLocaleTr
     },
     admin: {
       title: 'الإضافات',
-      description:
-        'شغّل الإضافات أو أوقفها للجميع، ومَيِّزها، وعطّل أدوات بعينها، واضبط حدود الإضافات.',
+      description: 'شغّل الإضافات أو أوقفها للجميع، ومَيِّزها، وعطّل أدوات بعينها، واضبط حدود الإضافات.',
       tabCatalog: 'الكتالوج',
       tabSettings: 'الإعدادات',
       errorTitle: 'تعذّر تحميل هذا التبويب',
@@ -919,8 +918,7 @@ export const PLUGINS_INSTALL_TRANSLATIONS: Record<Locale, PluginsInstallLocaleTr
     installed: {
       description: 'आपके इंस्टॉल किए हुए प्लगइन। इन्हें चालू या बंद करें, सेटिंग बदलें या हटाएँ।',
       errorTitle: 'आपके प्लगइन लोड नहीं हो सके',
-      errorDescription:
-        'आपके इंस्टॉल किए प्लगइन लोड करते समय कुछ गड़बड़ हुई। थोड़ी देर में फिर कोशिश करें।',
+      errorDescription: 'आपके इंस्टॉल किए प्लगइन लोड करते समय कुछ गड़बड़ हुई। थोड़ी देर में फिर कोशिश करें।',
       emptyTitle: 'कोई प्लगइन इंस्टॉल नहीं है',
       emptyDescription: 'खोजें में से कोई प्लगइन इंस्टॉल करें, वह यहाँ दिखेगा।',
       browse: 'प्लगइन देखें',
@@ -983,8 +981,7 @@ export const PLUGINS_INSTALL_TRANSLATIONS: Record<Locale, PluginsInstallLocaleTr
     },
     admin: {
       title: 'प्लगइन',
-      description:
-        'प्लगइन को सभी के लिए चालू या बंद करें, फ़ीचर करें, अलग-अलग टूल बंद करें और सीमाएँ तय करें।',
+      description: 'प्लगइन को सभी के लिए चालू या बंद करें, फ़ीचर करें, अलग-अलग टूल बंद करें और सीमाएँ तय करें।',
       tabCatalog: 'कैटलॉग',
       tabSettings: 'सेटिंग',
       errorTitle: 'यह टैब लोड नहीं हो सका',
@@ -1648,8 +1645,7 @@ export const PLUGINS_INSTALL_TRANSLATIONS: Record<Locale, PluginsInstallLocaleTr
       browse: 'เรียกดูปลั๊กอิน',
       enabledLabel: 'เปิดหรือปิด {value}',
       updateAvailable: 'มีอัปเดต {value}',
-      unavailableHelp:
-        'ผู้ดูแลระบบปิดปลั๊กอินนี้ไว้ ใช้งานไม่ได้จนกว่าจะเปิดอีกครั้ง แต่คุณยังลบออกได้',
+      unavailableHelp: 'ผู้ดูแลระบบปิดปลั๊กอินนี้ไว้ ใช้งานไม่ได้จนกว่าจะเปิดอีกครั้ง แต่คุณยังลบออกได้',
       settings: 'การตั้งค่า',
       uninstall: 'ถอนการติดตั้ง',
     },

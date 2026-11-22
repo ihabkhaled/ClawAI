@@ -38,8 +38,7 @@ export const AR_MODEL_FIT_CONTENT: ModelFitDictionary = {
       [ModelFitTask.WRITING_AND_EDITING]: 'الصياغة الطويلة، والتحرير، والالتزام بموجز أسلوبي.',
       [ModelFitTask.RESEARCH_WITH_SOURCES]:
         'إجابات مؤسَّسة على مصادر بحث عنها النموذج فعلاً، لا على بيانات التدريب فقط.',
-      [ModelFitTask.PRIVATE_LOCAL_WORKLOADS]:
-        'إبقاء الطلب على عتاد تتحكم فيه بدلاً من مزوّد سحابي.',
+      [ModelFitTask.PRIVATE_LOCAL_WORKLOADS]: 'إبقاء الطلب على عتاد تتحكم فيه بدلاً من مزوّد سحابي.',
     },
   },
   tasks: {

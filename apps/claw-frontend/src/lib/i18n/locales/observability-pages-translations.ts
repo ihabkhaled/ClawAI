@@ -212,8 +212,7 @@ export const OBSERVABILITY_PAGES_TRANSLATIONS: Record<Locale, ObservabilityPages
       backToFirstPage: 'العودة إلى الصفحة الأولى',
       chooseModelHint: 'هذا الرابط لا يحدد النموذج المطلوب عرضه. افتح صفحة النماذج واختر واحدًا.',
       chooseModelTitle: 'اختر نموذجًا',
-      chooseProviderHint:
-        'هذا الرابط لا يحدد المزوّد المطلوب عرضه. افتح صفحة المزوّدين واختر واحدًا.',
+      chooseProviderHint: 'هذا الرابط لا يحدد المزوّد المطلوب عرضه. افتح صفحة المزوّدين واختر واحدًا.',
       chooseProviderTitle: 'اختر مزوّدًا',
       colCurrentPlan: 'الخطة الحالية',
       pastEndNote: 'لا توجد صفوف في هذه الصفحة.',
@@ -1444,8 +1443,7 @@ export const OBSERVABILITY_PAGES_TRANSLATIONS: Record<Locale, ObservabilityPages
     [Locale.HI]: {
       activeDaysHint: '{days} दिन सक्रिय',
       auditAvg: 'औसत विलंबता',
-      auditClamped:
-        'ऑडिट सेवा 30 दिन रखती है, इसलिए ये विलंबता आंकड़े अवधि के अंतिम 30 दिनों को कवर करते हैं।',
+      auditClamped: 'ऑडिट सेवा 30 दिन रखती है, इसलिए ये विलंबता आंकड़े अवधि के अंतिम 30 दिनों को कवर करते हैं।',
       auditErrorRate: 'त्रुटि दर (अनुमानित)',
       auditFailures: 'विफलता घटनाएँ',
       auditMeasured: 'मापी गई विलंबता वाले अनुरोध',
@@ -1536,8 +1534,7 @@ export const OBSERVABILITY_PAGES_TRANSLATIONS: Record<Locale, ObservabilityPages
       detailProviders: 'इस मॉडल को चलाने वाले प्रदाता',
       detailSurfaces: 'सतहें',
       detailTopUsers: 'लागत के अनुसार शीर्ष उपयोगकर्ता',
-      detailTruncated:
-        'एक ब्लॉक अपनी पंक्ति सीमा तक पहुँच गया। बाकी देखने के लिए अवधि या फ़िल्टर सीमित करें।',
+      detailTruncated: 'एक ब्लॉक अपनी पंक्ति सीमा तक पहुँच गया। बाकी देखने के लिए अवधि या फ़िल्टर सीमित करें।',
       estimateAccuracy: 'अनुमान की सटीकता',
       estimateAccuracyHint:
         'निपटाई गई लागत को आरक्षित अनुमान से भाग दिया गया, उन अनुरोधों पर जिनमें दोनों हैं।',
@@ -1570,8 +1567,7 @@ export const OBSERVABILITY_PAGES_TRANSLATIONS: Record<Locale, ObservabilityPages
       navTracing: 'ट्रेसिंग',
       navUsers: 'उपयोगकर्ता',
       noPlan: 'कोई प्लान नहीं',
-      noteModels:
-        'चुनी गई अवधि और फ़िल्टर के लिए हर मॉडल की एक पंक्ति। पूरा ब्योरा देखने के लिए मॉडल खोलें।',
+      noteModels: 'चुनी गई अवधि और फ़िल्टर के लिए हर मॉडल की एक पंक्ति। पूरा ब्योरा देखने के लिए मॉडल खोलें।',
       notePlans:
         'अनुरोध के समय हर प्लान की एक पंक्ति, साथ में बिना प्लान वाले अनुरोध। उसके उपयोगकर्ता देखने के लिए प्लान खोलें।',
       noteProviders:
@@ -1799,8 +1795,7 @@ export const OBSERVABILITY_PAGES_TRANSLATIONS: Record<Locale, ObservabilityPages
     [Locale.TH]: {
       activeDaysHint: 'ใช้งาน {days} วัน',
       auditAvg: 'ความหน่วงเฉลี่ย',
-      auditClamped:
-        'บริการตรวจสอบเก็บข้อมูล 30 วัน ค่าความหน่วงเหล่านี้จึงครอบคลุม 30 วันล่าสุดของช่วงเวลา',
+      auditClamped: 'บริการตรวจสอบเก็บข้อมูล 30 วัน ค่าความหน่วงเหล่านี้จึงครอบคลุม 30 วันล่าสุดของช่วงเวลา',
       auditErrorRate: 'อัตราข้อผิดพลาด (โดยประมาณ)',
       auditFailures: 'เหตุการณ์ล้มเหลว',
       auditMeasured: 'คำขอที่วัดความหน่วงได้',
@@ -1816,8 +1811,7 @@ export const OBSERVABILITY_PAGES_TRANSLATIONS: Record<Locale, ObservabilityPages
       backToFirstPage: 'กลับไปหน้าแรก',
       chooseModelHint: 'ลิงก์นี้ไม่ได้ระบุโมเดลที่จะแสดง เปิดหน้าโมเดลแล้วเลือกหนึ่งรายการ',
       chooseModelTitle: 'เลือกโมเดล',
-      chooseProviderHint:
-        'ลิงก์นี้ไม่ได้ระบุผู้ให้บริการที่จะแสดง เปิดหน้าผู้ให้บริการแล้วเลือกหนึ่งรายการ',
+      chooseProviderHint: 'ลิงก์นี้ไม่ได้ระบุผู้ให้บริการที่จะแสดง เปิดหน้าผู้ให้บริการแล้วเลือกหนึ่งรายการ',
       chooseProviderTitle: 'เลือกผู้ให้บริการ',
       colCurrentPlan: 'แพ็กเกจปัจจุบัน',
       pastEndNote: 'ไม่มีแถวในหน้านี้',
@@ -1835,8 +1829,7 @@ export const OBSERVABILITY_PAGES_TRANSLATIONS: Record<Locale, ObservabilityPages
       cardFirstTimeUsers: 'ผู้ใช้ครั้งแรก',
       cardFirstTimeUsersHint: 'ผู้ใช้ที่คำขอแรกสุดอยู่ในช่วงเวลานี้',
       cardNewSignups: 'สมัครใหม่',
-      cardNewSignupsHint:
-        'บัญชีที่สร้างในช่วงเวลานี้ ไม่ใช้ตัวกรองผู้ให้บริการ โมเดล แพ็กเกจ และเวิร์กโฟลว์',
+      cardNewSignupsHint: 'บัญชีที่สร้างในช่วงเวลานี้ ไม่ใช้ตัวกรองผู้ให้บริการ โมเดล แพ็กเกจ และเวิร์กโฟลว์',
       cardSettleRate: 'อัตราการชำระบัญชี',
       cardSettleRateHint: 'ปล่อยการจอง {released} รายการก่อนเรียกเก็บเงิน',
       change_down: 'ลดลง',
@@ -1921,16 +1914,11 @@ export const OBSERVABILITY_PAGES_TRANSLATIONS: Record<Locale, ObservabilityPages
       navTracing: 'การติดตาม',
       navUsers: 'ผู้ใช้',
       noPlan: 'ไม่มีแพ็กเกจ',
-      noteModels:
-        'หนึ่งแถวต่อหนึ่งโมเดลตามช่วงเวลาและตัวกรองที่เลือก เปิดโมเดลเพื่อดูรายละเอียดทั้งหมด',
-      notePlans:
-        'หนึ่งแถวต่อหนึ่งแพ็กเกจ ณ เวลาที่ส่งคำขอ รวมคำขอที่ไม่มีแพ็กเกจ เปิดแพ็กเกจเพื่อดูผู้ใช้',
-      noteProviders:
-        'หนึ่งแถวต่อหนึ่งผู้ให้บริการตามช่วงเวลาและตัวกรองที่เลือก เปิดผู้ให้บริการเพื่อดูรายละเอียดทั้งหมด',
-      noteSurfaces:
-        'หนึ่งแถวต่อหนึ่งพื้นที่ใช้งานของผลิตภัณฑ์ เช่น แชต เปรียบเทียบ และห้องทดลอง เปิดเพื่อดูผู้ใช้',
-      noteUsers:
-        'ผู้ใช้ทุกคนที่มีการใช้งานในช่วงเวลาและตัวกรองที่เลือก เปิดผู้ใช้เพื่อดูการใช้งานทั้งหมด',
+      noteModels: 'หนึ่งแถวต่อหนึ่งโมเดลตามช่วงเวลาและตัวกรองที่เลือก เปิดโมเดลเพื่อดูรายละเอียดทั้งหมด',
+      notePlans: 'หนึ่งแถวต่อหนึ่งแพ็กเกจ ณ เวลาที่ส่งคำขอ รวมคำขอที่ไม่มีแพ็กเกจ เปิดแพ็กเกจเพื่อดูผู้ใช้',
+      noteProviders: 'หนึ่งแถวต่อหนึ่งผู้ให้บริการตามช่วงเวลาและตัวกรองที่เลือก เปิดผู้ให้บริการเพื่อดูรายละเอียดทั้งหมด',
+      noteSurfaces: 'หนึ่งแถวต่อหนึ่งพื้นที่ใช้งานของผลิตภัณฑ์ เช่น แชต เปรียบเทียบ และห้องทดลอง เปิดเพื่อดูผู้ใช้',
+      noteUsers: 'ผู้ใช้ทุกคนที่มีการใช้งานในช่วงเวลาและตัวกรองที่เลือก เปิดผู้ใช้เพื่อดูการใช้งานทั้งหมด',
       openUsersOf: 'ดูผู้ใช้ของ {name}',
       period24h: '24 ชั่วโมงที่ผ่านมา',
       period30d: '30 วันที่ผ่านมา',

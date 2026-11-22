@@ -13,9 +13,11 @@ import type { Response } from 'express';
  */
 export function sendMarkdownDownload(res: Response, filename: string, markdown: string): void {
   res.status(HttpStatus.OK);
-  res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader(
+  // Express `res.set` / `res.type` (not the raw `setHeader`) are what CodeQL reads as the
+  // response's content type, so the send below is known to be non-HTML.
+  res.type('text/markdown; charset=utf-8');
+  res.set('X-Content-Type-Options', 'nosniff');
+  res.set(
     'Content-Disposition',
     contentDispositionHeader(ContentDispositionType.ATTACHMENT, filename),
   );

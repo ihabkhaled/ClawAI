@@ -215,6 +215,7 @@ describe('zip bundle', () => {
     ['.env.py', 'env.py'],
     ['no file here', null],
     ['see `lib/util.go`', 'lib/util.go'],
+    ['`lib.v1/app.py`', 'lib.v1/app.py'],
   ])('hint %j → %j', (hint, expected) => {
     expect(safeBundlePath(hint)).toBe(expected);
   });

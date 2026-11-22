@@ -12514,7 +12514,7 @@
       },
       "claw-file-generation-service": {
         "runner": "vitest",
-        "testFiles": 19
+        "testFiles": 20
       },
       "claw-file-service": {
         "runner": "vitest",
@@ -13429,7 +13429,7 @@
     "serviceCount": 21,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2908,
+    "totalTestFiles": 2909,
     "workspaceCount": 28
   }
 }

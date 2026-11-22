@@ -791,8 +791,7 @@ export const USAGE_ANALYTICS_TRANSLATIONS: Record<Locale, UsageAnalyticsLocaleTr
       PLUGIN_CALLS: 'प्लगइन कॉल',
     },
     sectionTitle: 'प्लेटफ़ॉर्म उपयोग',
-    sectionDescription:
-      'पूरे प्लेटफ़ॉर्म पर टोकन, प्रदाता लागत, मॉडल, उपयोगकर्ता और टूल। केवल एडमिन के लिए।',
+    sectionDescription: 'पूरे प्लेटफ़ॉर्म पर टोकन, प्रदाता लागत, मॉडल, उपयोगकर्ता और टूल। केवल एडमिन के लिए।',
     hoursLabel: 'घंटे (1 से 168)',
     fromLabel: 'से (UTC तारीख़)',
     toLabel: 'तक (UTC तारीख़, शामिल)',
@@ -971,8 +970,7 @@ export const USAGE_ANALYTICS_TRANSLATIONS: Record<Locale, UsageAnalyticsLocaleTr
       PLUGIN_CALLS: 'การเรียกใช้ปลั๊กอิน',
     },
     sectionTitle: 'การใช้งานแพลตฟอร์ม',
-    sectionDescription:
-      'โทเคน ต้นทุนผู้ให้บริการ โมเดล ผู้ใช้ และเครื่องมือทั่วทั้งแพลตฟอร์ม สำหรับผู้ดูแลระบบเท่านั้น',
+    sectionDescription: 'โทเคน ต้นทุนผู้ให้บริการ โมเดล ผู้ใช้ และเครื่องมือทั่วทั้งแพลตฟอร์ม สำหรับผู้ดูแลระบบเท่านั้น',
     hoursLabel: 'ชั่วโมง (1 ถึง 168)',
     fromLabel: 'ตั้งแต่ (วันที่ UTC)',
     toLabel: 'ถึง (วันที่ UTC รวมวันนี้)',

@@ -363,12 +363,10 @@ export const MODEL_EXPOSURE_UI_TRANSLATIONS: Record<Locale, ModelExposureUiLocal
     exposeOne: 'เปิดให้ใช้',
     unexposeOne: 'ยกเลิกการเปิดให้ใช้',
     unexposeConfirmTitle: 'ยกเลิกการเปิดให้ใช้ {model} หรือไม่',
-    unexposeConfirmDescription:
-      'โมเดลจะถูกนำออกจากทุกแผนที่ใช้อยู่ และผู้ใช้ที่กำลังสนทนาอยู่จะเข้าถึงไม่ได้',
+    unexposeConfirmDescription: 'โมเดลจะถูกนำออกจากทุกแผนที่ใช้อยู่ และผู้ใช้ที่กำลังสนทนาอยู่จะเข้าถึงไม่ได้',
     cancel: 'ยกเลิก',
     emptyTitle: 'ยังไม่มีโมเดลที่ซิงค์',
-    emptyDescription:
-      'ซิงค์ตัวเชื่อมต่อนี้เพื่อนำเข้าโมเดล แล้วเปิดให้ใช้โมเดลที่ผู้ใช้เรียกใช้ได้',
+    emptyDescription: 'ซิงค์ตัวเชื่อมต่อนี้เพื่อนำเข้าโมเดล แล้วเปิดให้ใช้โมเดลที่ผู้ใช้เรียกใช้ได้',
     noMatchTitle: 'ไม่มีโมเดลที่ตรงกับตัวกรองนี้',
     clearFilters: 'ล้างตัวกรอง',
     showMore: 'แสดงเพิ่มเติม',

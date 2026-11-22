@@ -133,8 +133,7 @@ export const PICKED_MODEL_TRANSLATIONS: Record<Locale, PickedModelLocaleTranslat
     chooseAnother: 'Выбрать другую модель',
   },
   [Locale.TH]: {
-    failedMessage:
-      'โมเดลที่คุณเลือกตอบไม่ได้ และโมเดลสำรองที่เราลองก็ตอบไม่ได้เช่นกัน เลือกโมเดลอื่นเพื่อลองอีกครั้ง',
+    failedMessage: 'โมเดลที่คุณเลือกตอบไม่ได้ และโมเดลสำรองที่เราลองก็ตอบไม่ได้เช่นกัน เลือกโมเดลอื่นเพื่อลองอีกครั้ง',
     fallbackNotice: '{original} ล้มเหลว จึงให้ {answered} ตอบแทน',
     costlierNote: '{answered} อาจมีค่าใช้จ่ายสูงกว่า {original}',
     intentOverriddenNotice:

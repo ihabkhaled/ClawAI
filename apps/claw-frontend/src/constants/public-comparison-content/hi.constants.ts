@@ -48,11 +48,9 @@ export const HI_COMPARISON_CONTENT: ComparisonDictionary = {
     [ComparisonDimension.ROUTING]:
       '{routingModeCount} रूटिंग मोड, जिनमें हर संदेश के लिए स्वचालित रूटिंग शामिल है',
     [ComparisonDimension.SIDE_BY_SIDE]: 'एक ही प्रॉम्प्ट कई मॉडलों को एक साथ, जवाब साथ-साथ',
-    [ComparisonDimension.LOCAL_MODELS]:
-      'आपके अपने GPU पर ओपन-वेट मॉडल, Ollama या llama.cpp के ज़रिए',
+    [ComparisonDimension.LOCAL_MODELS]: 'आपके अपने GPU पर ओपन-वेट मॉडल, Ollama या llama.cpp के ज़रिए',
     [ComparisonDimension.SELF_HOSTING]: 'पूरा स्टैक आपके सर्वर पर चलता है, सोर्स GitHub पर',
-    [ComparisonDimension.MEMORY_AND_FILES]:
-      'बातचीत के बीच बनी रहने वाली मेमोरी, साथ में फ़ाइल संदर्भ',
+    [ComparisonDimension.MEMORY_AND_FILES]: 'बातचीत के बीच बनी रहने वाली मेमोरी, साथ में फ़ाइल संदर्भ',
     [ComparisonDimension.CONNECTORS]: '{connectorCount} वर्कस्पेस कनेक्टर',
     [ComparisonDimension.RECEIPTS]: 'हर जवाब अपना मॉडल, लागत और खर्च हुई सीमा दर्ज करता है',
   },
@@ -150,8 +148,7 @@ export const HI_COMPARISON_CONTENT: ComparisonDictionary = {
         'बहुत बड़ी संदर्भ विंडो, इमेज, ऑडियो और वीडियो की मूल हैंडलिंग, तेज़ जवाब, और Gmail, Drive तथा Docs के साथ ऐसा एकीकरण जिसकी बराबरी कोई तीसरा पक्ष नहीं कर सकता।',
       ourDifference:
         'ClawAI न किसी एक ऑफ़िस सुइट से बंधा है, न किसी एक प्रदाता के रोडमैप से। यह एक की जगह बारह कार्य-उपकरणों से जुड़ता है, हर संदेश को काम के हिसाब से रूट करता है, और संवेदनशील काम को लोकल ओपन-वेट मॉडल पर रख सकता है।',
-      chooseRival:
-        'आपका संगठन Google Workspace में रहता है और आप असिस्टेंट को सीधे उसी के भीतर चाहते हैं।',
+      chooseRival: 'आपका संगठन Google Workspace में रहता है और आप असिस्टेंट को सीधे उसी के भीतर चाहते हैं।',
       chooseClaw:
         'आप कई विक्रेताओं के उपकरण इस्तेमाल करते हैं, प्रतिबद्ध होने से पहले मॉडल तुलना करना चाहते हैं, या ऐसी तैनाती चाहिए जिसमें कोई बाहरी कॉल न हो।',
       cells: {

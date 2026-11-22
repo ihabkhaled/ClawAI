@@ -130,8 +130,7 @@ export const hi: TranslationDictionary = {
       emailRequired: 'अपना ईमेल पता दर्ज करें।',
       emailInvalid: 'एक मान्य ईमेल पता दर्ज करें, जैसे name@example.com।',
       emailTooLong: 'ईमेल पता अधिकतम 255 अक्षरों का हो सकता है।',
-      phoneInvalid:
-        'यह फ़ोन नंबर सही नहीं लग रहा। देश और अंक जाँचें, या फ़ील्ड खाली छोड़ दें। यह वैकल्पिक है।',
+      phoneInvalid: 'यह फ़ोन नंबर सही नहीं लग रहा। देश और अंक जाँचें, या फ़ील्ड खाली छोड़ दें। यह वैकल्पिक है।',
       passwordTooShort: 'पासवर्ड कम से कम 8 अक्षरों का होना चाहिए।',
       passwordTooLong: 'पासवर्ड अधिकतम 128 अक्षरों का हो सकता है।',
       passwordNeedsUppercase: 'कम से कम एक बड़ा अक्षर जोड़ें (A-Z)।',
@@ -149,8 +148,7 @@ export const hi: TranslationDictionary = {
       ruleMet: 'पूरा हुआ',
       ruleNotMet: 'अभी नहीं',
       emailTakenTitle: 'इस ईमेल से पहले से एक खाता है',
-      emailTakenDescription:
-        'इसके बजाय इससे साइन इन करें। अगर आप पासवर्ड भूल गए हैं, तो उसे रीसेट कर सकते हैं।',
+      emailTakenDescription: 'इसके बजाय इससे साइन इन करें। अगर आप पासवर्ड भूल गए हैं, तो उसे रीसेट कर सकते हैं।',
       actionSignIn: 'साइन इन करें',
       actionResetPassword: 'पासवर्ड रीसेट करें',
       invalidDetailsTitle: 'कुछ जानकारी ठीक करनी होगी',
@@ -190,8 +188,7 @@ export const hi: TranslationDictionary = {
     tagline: 'ClawAI — हर AI, एक वर्कस्पेस',
     authenticating: 'प्रमाणित किया जा रहा है...',
     mustChangePasswordTitle: 'नया पासवर्ड चुनें',
-    mustChangePasswordBody:
-      'आपका मौजूदा पासवर्ड एक एडमिन ने सेट किया था। आगे बढ़ने से पहले इसे नीचे बदलें।',
+    mustChangePasswordBody: 'आपका मौजूदा पासवर्ड एक एडमिन ने सेट किया था। आगे बढ़ने से पहले इसे नीचे बदलें।',
     verifyEmailPendingTitle: 'आपका लिंक जाँचा जा रहा है',
     verifyEmailPendingBody: 'एक क्षण।',
     verifyEmailVerifiedTitle: 'ईमेल की पुष्टि हो गई',
@@ -223,8 +220,7 @@ export const hi: TranslationDictionary = {
     rememberMe: 'मुझे याद रखें',
     forgotPassword: 'पासवर्ड भूल गए?',
     forgotPasswordComingSoonTitle: 'जल्द आ रहा है',
-    forgotPasswordComingSoonDesc:
-      'पासवर्ड रीसेट विकास में है। फिलहाल कृपया किसी व्यवस्थापक से संपर्क करें।',
+    forgotPasswordComingSoonDesc: 'पासवर्ड रीसेट विकास में है। फिलहाल कृपया किसी व्यवस्थापक से संपर्क करें।',
     showPasswordAria: 'पासवर्ड दिखाएं',
     hidePasswordAria: 'पासवर्ड छिपाएं',
     confirmEmailChangeTitle: 'अपना नया ईमेल सत्यापित करें',
@@ -252,8 +248,7 @@ export const hi: TranslationDictionary = {
     forgotPasswordSubmit: 'लिंक भेजें',
     forgotPasswordBackToLogin: 'लॉगिन पर वापस जाएँ',
     forgotPasswordSuccessTitle: 'अपना ईमेल जांचें',
-    forgotPasswordSuccessDescription:
-      'यदि इस पते पर कोई खाता मौजूद है, तो एक रीसेट लिंक भेजा गया है।',
+    forgotPasswordSuccessDescription: 'यदि इस पते पर कोई खाता मौजूद है, तो एक रीसेट लिंक भेजा गया है।',
     forgotPasswordErrorGeneric: 'एक त्रुटि हुई। कृपया पुनः प्रयास करें।',
     forgotPasswordErrorTitle: 'त्रुटि',
     forgotPasswordSubmitting: 'भेजा जा रहा है...',
@@ -265,8 +260,7 @@ export const hi: TranslationDictionary = {
     resetPasswordSubmitting: 'रीसेट हो रहा है...',
     resetPasswordBackToLogin: 'लॉगिन पर वापस जाएँ',
     resetPasswordSuccessTitle: 'पासवर्ड रीसेट हो गया',
-    resetPasswordSuccessDescription:
-      'आपका पासवर्ड सफलतापूर्वक रीसेट हो गया है। अब आप लॉगिन कर सकते हैं।',
+    resetPasswordSuccessDescription: 'आपका पासवर्ड सफलतापूर्वक रीसेट हो गया है। अब आप लॉगिन कर सकते हैं।',
     resetPasswordErrorGeneric: 'एक त्रुटि हुई। कृपया पुनः प्रयास करें।',
     resetPasswordErrorTitle: 'त्रुटि',
     resetPasswordInvalidTokenTitle: 'अमान्य लिंक',
@@ -324,8 +318,7 @@ export const hi: TranslationDictionary = {
     checkEmailWrongAddress: 'कोई दूसरा पता उपयोग करें',
     checkEmailFooterNote:
       'आप यह पृष्ठ बंद कर सकते हैं। आपके ईमेल में मौजूद पुष्टिकरण लिंक किसी भी डिवाइस और किसी भी ब्राउज़र पर काम करता है।',
-    verifyEmailPendingDetail:
-      'आपने जो लिंक खोला है, हम उसकी जाँच कर रहे हैं। इसमें बस एक पल लगेगा।',
+    verifyEmailPendingDetail: 'आपने जो लिंक खोला है, हम उसकी जाँच कर रहे हैं। इसमें बस एक पल लगेगा।',
     verifyEmailVerifiedDetail:
       'आपका ईमेल पता सत्यापित हो गया है और आपका खाता अब सक्रिय है। आप पंजीकरण के समय चुने गए ईमेल और पासवर्ड से साइन इन कर सकते हैं।',
     verifyEmailVerifiedAction: 'साइन इन पर जाएँ',
@@ -524,8 +517,7 @@ export const hi: TranslationDictionary = {
       viewItems: '{value} आइटम',
       memoryLabel: 'इस चैट में उपयोग हुई मेमोरी देखें',
       memoryTitle: 'इस चैट की मेमोरी',
-      memoryDescription:
-        'असिस्टेंट आपके बारे में क्या याद रखता है और अगले संदेश के लिए क्या उपयोग करेगा।',
+      memoryDescription: 'असिस्टेंट आपके बारे में क्या याद रखता है और अगले संदेश के लिए क्या उपयोग करेगा।',
       memoryOn: 'इस चैट के लिए मेमोरी चालू है।',
       memoryOff: 'इस चैट के लिए मेमोरी बंद है: कुछ भी पढ़ा या सीखा नहीं जाता।',
       memoryNone: 'इस संदेश पर अभी कोई स्मृति लागू नहीं होती।',
@@ -564,8 +556,7 @@ export const hi: TranslationDictionary = {
         review: 'देखें और सहेजें',
         notNow: 'अभी नहीं',
         dialogTitle: 'क्या इसे याद रखें?',
-        dialogDescription:
-          'देखें कि क्या सहेजा जाएगा और जो चाहें बदलें। सहेजें दबाने तक कुछ भी संग्रहीत नहीं होता।',
+        dialogDescription: 'देखें कि क्या सहेजा जाएगा और जो चाहें बदलें। सहेजें दबाने तक कुछ भी संग्रहीत नहीं होता।',
         memorySection: 'मेमोरी',
         memoryType: 'प्रकार',
         memoryText: 'क्या याद रखना है',
@@ -578,8 +569,7 @@ export const hi: TranslationDictionary = {
         packNewName: 'नए पैक का नाम',
         save: 'सहेजें',
         alwaysAuto: 'बिना पूछे हमेशा अपने-आप सहेजें',
-        alwaysAutoHint:
-          'यह तब लागू होता है जब आप सहेजें दबाते हैं। आप इसे कभी भी मेमोरी सेटिंग में बदल सकते हैं।',
+        alwaysAutoHint: 'यह तब लागू होता है जब आप सहेजें दबाते हैं। आप इसे कभी भी मेमोरी सेटिंग में बदल सकते हैं।',
         partialFailed: 'इसका एक हिस्सा सहेजा नहीं गया।',
         saved: 'सहेज लिया गया।',
         failed: 'सहेजा नहीं जा सका। फिर से कोशिश करें।',
@@ -608,8 +598,7 @@ export const hi: TranslationDictionary = {
       unavailable: {
         planDisabled: 'पढ़कर सुनाने की सुविधा आपके प्लान में शामिल नहीं है।',
         noVoice: 'पढ़कर सुनाने की सुविधा अभी सेट नहीं है: कोई आवाज़ कॉन्फ़िगर नहीं है।',
-        temporarilyUnavailable:
-          'पढ़कर सुनाने की सुविधा अस्थायी रूप से उपलब्ध नहीं है। बाद में फिर कोशिश करें।',
+        temporarilyUnavailable: 'पढ़कर सुनाने की सुविधा अस्थायी रूप से उपलब्ध नहीं है। बाद में फिर कोशिश करें।',
       },
       errors: {
         planDisabled: 'आपके प्लान में पढ़कर सुनाने की सुविधा शामिल नहीं है।',
@@ -646,8 +635,7 @@ export const hi: TranslationDictionary = {
       noMatches: 'कोई संदेश मेल नहीं खाता।',
       roleUser: 'आप',
       notLoadedTitle: 'वह संदेश लोड नहीं है',
-      notLoaded:
-        'वह बातचीत में और पीछे है। उसे लोड करने के लिए ऊपर स्क्रॉल करें, फिर दोबारा खोजें।',
+      notLoaded: 'वह बातचीत में और पीछे है। उसे लोड करने के लिए ऊपर स्क्रॉल करें, फिर दोबारा खोजें।',
       roleAssistant: 'असिस्टेंट',
     },
     limits: {
@@ -693,8 +681,7 @@ export const hi: TranslationDictionary = {
     },
     stream: {
       reconnecting: 'उत्तर स्ट्रीम से पुनः कनेक्ट हो रहा है…',
-      connectionLost:
-        'कनेक्शन टूट गया। आपका उत्तर अब भी बन रहा हो सकता है — जाँचने के लिए पुनः लोड करें।',
+      connectionLost: 'कनेक्शन टूट गया। आपका उत्तर अब भी बन रहा हो सकता है — जाँचने के लिए पुनः लोड करें।',
       progress: 'प्रगति',
       estimated: 'अनुमानित',
       liveResponse: 'लाइव प्रतिक्रिया',
@@ -757,8 +744,7 @@ export const hi: TranslationDictionary = {
     threadChooseChat: 'एक चैट चुनें',
     threadBackToList: 'Threads पर वापस जाएँ',
     threadTurnIntoThread: 'सार्वजनिक Thread में बदलें',
-    threadConsentCheckbox:
-      'मैं समझता/समझती हूँ कि यह प्रकाशन सार्वजनिक और इंडेक्स होने योग्य बनाया जाएगा।',
+    threadConsentCheckbox: 'मैं समझता/समझती हूँ कि यह प्रकाशन सार्वजनिक और इंडेक्स होने योग्य बनाया जाएगा।',
     threadCreateDialogDescription:
       'इस बातचीत को स्रोतों वाले लेख में बदलें, जिसकी कई AI मॉडल समीक्षा करते हैं। आपकी मंज़ूरी तक कुछ भी सार्वजनिक नहीं होता।',
     threadTopic: 'विषय या शोध प्रश्न',
@@ -802,8 +788,7 @@ export const hi: TranslationDictionary = {
     threadExportDownloadOne: 'फ़ाइल डाउनलोड करें',
     threadExportDownloadZip: '{count} फ़ाइलें ZIP में डाउनलोड करें',
     threadExportPdf: 'PDF के रूप में सहेजें',
-    threadExportPdfHint:
-      'यह आपके ब्राउज़र की प्रिंट विंडो खोलता है। प्रिंटर के रूप में «PDF के रूप में सहेजें» चुनें।',
+    threadExportPdfHint: 'यह आपके ब्राउज़र की प्रिंट विंडो खोलता है। प्रिंटर के रूप में «PDF के रूप में सहेजें» चुनें।',
     threadExportSelectOne: 'कम से कम एक प्रारूप चुनें।',
     threadExportFailed: 'निर्यात नहीं बन सका। फिर कोशिश करें।',
     threadShareTitle: 'साझा करें',
@@ -892,8 +877,7 @@ export const hi: TranslationDictionary = {
     threadCreateFailed: 'थ्रेड बनाने में विफल',
     threadTeam: {
       title: 'सुझाई गई टीम',
-      summary:
-        'हमने ऐसे मॉडल चुने हैं जो आपके प्लान पर काम करते हैं। खुद चुनना चाहें तभी उन्नत खोलें।',
+      summary: 'हमने ऐसे मॉडल चुने हैं जो आपके प्लान पर काम करते हैं। खुद चुनना चाहें तभी उन्नत खोलें।',
       customised: 'आपने टीम बदल दी है। हमारे चुनाव पर लौटने के लिए सुझाई गई टीम इस्तेमाल करें।',
       none: 'अभी कोई सुझाई गई टीम उपलब्ध नहीं है। उन्नत में मॉडल चुनें।',
       advanced: 'उन्नत: मॉडल चुनें',
@@ -913,8 +897,7 @@ export const hi: TranslationDictionary = {
       spent: 'अब तक खर्च: {amount}',
       includedInPlan: 'आपके प्लान में शामिल',
       includedInPlanTokens: 'आपके प्लान में शामिल · {tokens} टोकन',
-      platformFailureNotice:
-        'समस्या हमारी तरफ़ से थी, आपकी नहीं। आपका मुफ़्त कोटा इस्तेमाल नहीं हुआ।',
+      platformFailureNotice: 'समस्या हमारी तरफ़ से थी, आपकी नहीं। आपका मुफ़्त कोटा इस्तेमाल नहीं हुआ।',
       retryOnUs: 'हमारे खर्च पर दोबारा कोशिश करें',
       selectedTitle: 'आपने क्या चुना',
       fallbacks: 'वैकल्पिक मॉडल: {list}',
@@ -943,10 +926,8 @@ export const hi: TranslationDictionary = {
       failureWhere: '{stage} पर विफल ({role})',
       failureWhereNoRole: '{stage} पर विफल',
       failureHintLabel: 'आप क्या कर सकते हैं',
-      failureRetryable:
-        'आप दोबारा कोशिश कर सकते हैं। चाहें तो पहले विषय, खर्च की सीमा या मॉडल बदलें।',
-      failureNotRetryable:
-        'इसे जैसा है वैसा दोबारा नहीं चलाया जा सकता। अपनी चैट से नया Thread शुरू करें।',
+      failureRetryable: 'आप दोबारा कोशिश कर सकते हैं। चाहें तो पहले विषय, खर्च की सीमा या मॉडल बदलें।',
+      failureNotRetryable: 'इसे जैसा है वैसा दोबारा नहीं चलाया जा सकता। अपनी चैट से नया Thread शुरू करें।',
       needsCredit:
         'यह मॉडल क्रेडिट खर्च करता है। क्रेडिट खत्म होने पर जनरेशन विफल हो जाएगा। सुरक्षित रहने के लिए शामिल मॉडल चुनें।',
       retry: 'दोबारा कोशिश करें',
@@ -959,8 +940,7 @@ export const hi: TranslationDictionary = {
       ownerOnlyNote: 'यह प्रगति केवल आप देख सकते हैं।',
       errorCode: 'कोड: {code}',
       detailsLabel: 'विवरण',
-      pollingErrors:
-        'बार-बार त्रुटि के बाद लाइव अपडेट रोक दिए गए। दोबारा जाँचने के लिए पेज रीलोड करें।',
+      pollingErrors: 'बार-बार त्रुटि के बाद लाइव अपडेट रोक दिए गए। दोबारा जाँचने के लिए पेज रीलोड करें।',
       httpStatus: 'HTTP स्थिति {status}',
       durationUnit: {
         ms: '{value} मि.से.',
@@ -1060,8 +1040,7 @@ export const hi: TranslationDictionary = {
         generationAttemptTimeout: 'यह कोशिश 25 मिनट से ज़्यादा चली, इसलिए इसे रोक दिया गया।',
         modelIdleTimeout: 'एक मॉडल 5 मिनट तक चुप रहा, इसलिए उसे अटका हुआ माना गया।',
         modelHardCeiling: 'एक मॉडल 10 मिनट बाद भी काम कर रहा था, इसलिए कॉल रोक दी गई।',
-        modelReasonedNoAnswer:
-          'एक मॉडल ने अपना पूरा आउटपुट बजट सोचने में लगा दिया और कोई उत्तर नहीं लिखा।',
+        modelReasonedNoAnswer: 'एक मॉडल ने अपना पूरा आउटपुट बजट सोचने में लगा दिया और कोई उत्तर नहीं लिखा।',
         queueExpired:
           'यह जनरेशन कतार में बहुत देर तक इंतज़ार करता रहा, इसलिए शुरू होने से पहले ही रोक दिया गया।',
         fallbackSkippedSameProvider: 'उसी प्रदाता के एक बैकअप मॉडल को छोड़ दिया गया।',
@@ -1069,14 +1048,11 @@ export const hi: TranslationDictionary = {
         paygCapTooLow: 'एक मॉडल कॉल के लिए खर्च सीमा बहुत कम है।',
         paygPriceUnavailable: 'इस मॉडल की अभी कोई कीमत तय नहीं है।',
         healBackoffRetry: 'एक मॉडल व्यस्त था, इसलिए हमने थोड़ा रुककर उससे दोबारा पूछा।',
-        healStrictPrompt:
-          'एक मॉडल ने गलत फ़ॉर्मैट में जवाब दिया, इसलिए हमने ज़्यादा सख़्ती से दोबारा पूछा।',
-        healJsonRepair:
-          'एक मॉडल का जवाब बिगड़ा हुआ था, इसलिए मरम्मत के एक चरण ने उसका फ़ॉर्मैट ठीक किया।',
+        healStrictPrompt: 'एक मॉडल ने गलत फ़ॉर्मैट में जवाब दिया, इसलिए हमने ज़्यादा सख़्ती से दोबारा पूछा।',
+        healJsonRepair: 'एक मॉडल का जवाब बिगड़ा हुआ था, इसलिए मरम्मत के एक चरण ने उसका फ़ॉर्मैट ठीक किया।',
         healRaiseOutputLimit: 'एक मॉडल की जगह खत्म हो गई, इसलिए हमने उसे लिखने के लिए और जगह दी।',
         healCompactOutput: 'एक मॉडल की जगह फिर खत्म हो गई, इसलिए हमने छोटा लेख माँगा।',
-        healLowerOutputLimit:
-          'एक प्रदाता ने अनुरोध ठुकरा दिया, इसलिए हमने छोटे जवाब के साथ उसे दोहराया।',
+        healLowerOutputLimit: 'एक प्रदाता ने अनुरोध ठुकरा दिया, इसलिए हमने छोटे जवाब के साथ उसे दोहराया।',
         healShrinkSource: 'चैट एक मॉडल के लिए बहुत लंबी थी, इसलिए हमने उसे छोटा करके दोबारा पूछा।',
         healCrossProvider: 'एक मॉडल बार-बार विफल होता रहा, इसलिए दूसरे मॉडल ने कमान संभाली।',
         healSafeDefault: 'बाकी मॉडल विफल हो गए, इसलिए सुरक्षित डिफ़ॉल्ट मॉडल ने कमान संभाली।',
@@ -1098,23 +1074,18 @@ export const hi: TranslationDictionary = {
         providerRateLimited: 'एक मिनट रुककर दोबारा कोशिश करें, या कोई दूसरा मॉडल चुनें।',
         outputInvalid: 'फिर कोशिश करें। बार-बार विफल हो तो दूसरा मॉडल चुनें।',
         consensusNotReached: 'फिर कोशिश करें या मॉडल या विषय बदलें।',
-        judgeScoreLow:
-          'ड्राफ़्ट सुधारा जा रहा है। फिर भी विफल हो तो दूसरे जज या लेखक के साथ कोशिश करें।',
-        criticScoreLow:
-          'ड्राफ़्ट सुधारा जा रहा है। फिर भी विफल हो तो दूसरे आलोचक या लेखक के साथ कोशिश करें।',
+        judgeScoreLow: 'ड्राफ़्ट सुधारा जा रहा है। फिर भी विफल हो तो दूसरे जज या लेखक के साथ कोशिश करें।',
+        criticScoreLow: 'ड्राफ़्ट सुधारा जा रहा है। फिर भी विफल हो तो दूसरे आलोचक या लेखक के साथ कोशिश करें।',
         fallbackUsed: 'कुछ करने की ज़रूरत नहीं। जेनरेशन जारी है।',
-        contextWindowExceeded:
-          'बड़ी संदर्भ विंडो वाला मॉडल चुनें या विषय छोटा करें, फिर कोशिश करें।',
+        contextWindowExceeded: 'बड़ी संदर्भ विंडो वाला मॉडल चुनें या विषय छोटा करें, फिर कोशिश करें।',
         modelContextUnavailable: 'थोड़ा रुकें और फिर कोशिश करें।',
         modelCatalogUnreachable: 'थोड़ा रुकें और फिर कोशिश करें।',
         modelCatalogRejected:
           'यह हमारी ओर की सेटअप समस्या है, दोबारा कोशिश से कुछ नहीं बदलेगा। कोई दूसरा मॉडल चुनें या सहायता से संपर्क करें।',
-        contextWindowAssumed:
-          'ज्ञात और बड़ी संदर्भ विंडो वाला मॉडल चुनें या विषय छोटा करें, फिर कोशिश करें।',
+        contextWindowAssumed: 'ज्ञात और बड़ी संदर्भ विंडो वाला मॉडल चुनें या विषय छोटा करें, फिर कोशिश करें।',
         researchUnavailable: 'थोड़ा रुकें और फिर कोशिश करें।',
         researchFailed: 'फिर कोशिश करें। बार-बार विफल हो तो विषय बदलें।',
-        reviewersNotIndependent:
-          'ऐसा समीक्षक मॉडल चुनें जो लेखकों में से न हो, फिर दोबारा कोशिश करें।',
+        reviewersNotIndependent: 'ऐसा समीक्षक मॉडल चुनें जो लेखकों में से न हो, फिर दोबारा कोशिश करें।',
         researchQuery: 'किसी कार्रवाई की ज़रूरत नहीं है।',
         researchQueryFailed: 'शोध बाकी क्वेरी के साथ जारी रहता है।',
         researchQuerySpendCap: 'सभी क्वेरी चलाने के लिए खर्च सीमा बढ़ाएँ।',
@@ -1131,8 +1102,7 @@ export const hi: TranslationDictionary = {
         modelIdleTimeout:
           'दोबारा कोशिश करें या कोई दूसरा मॉडल चुनें। धीमा मॉडल अगर अभी लिख रहा है तो धीमे होने के कारण उसे कभी नहीं रोका जाता।',
         modelHardCeiling: 'तेज़ मॉडल या छोटा विषय चुनें, फिर दोबारा कोशिश करें।',
-        modelReasonedNoAnswer:
-          'दोबारा कोशिश करें, सीधे उत्तर देने वाला मॉडल चुनें या विषय छोटा करें।',
+        modelReasonedNoAnswer: 'दोबारा कोशिश करें, सीधे उत्तर देने वाला मॉडल चुनें या विषय छोटा करें।',
         queueExpired: 'अभी दोबारा कोशिश करें। कतार लंबी हो तो बाद में फिर कोशिश करें।',
         fallbackSkippedSameProvider: 'यह सामान्य है। कुछ करने की ज़रूरत नहीं।',
         cloudProviderUnavailable: 'थोड़ा रुककर फिर कोशिश करें, या दूसरा मॉडल चुनें।',
@@ -1150,8 +1120,7 @@ export const hi: TranslationDictionary = {
         healStoppedSpendCap: 'खर्च सीमा बढ़ाएँ, फिर दोबारा कोशिश करें।',
         healStoppedAttemptBudget: 'इस चरण के लिए दूसरा मॉडल चुनें, फिर दोबारा कोशिश करें।',
         healStoppedOwnerAction: 'नीचे देखें कि आप क्या कर सकते हैं।',
-        providerRequestTooLarge:
-          'बड़ी सीमा वाला मॉडल चुनें या विषय छोटा करें, फिर दोबारा कोशिश करें।',
+        providerRequestTooLarge: 'बड़ी सीमा वाला मॉडल चुनें या विषय छोटा करें, फिर दोबारा कोशिश करें।',
         providerCreditExhausted: 'दूसरा मॉडल चुनें, फिर दोबारा कोशिश करें।',
         paygPricingUnavailable: 'दूसरा मॉडल चुनें, फिर दोबारा कोशिश करें।',
         cloudProviderRequestFailed: 'दूसरे मॉडल के साथ दोबारा कोशिश करें।',
@@ -1168,23 +1137,18 @@ export const hi: TranslationDictionary = {
         authorCountInvalid: '3 से 5 लेखक चुनें।',
         localeInvalid: 'चुनी गई भाषा समर्थित नहीं है। सूची से कोई एक चुनें।',
         publicationTypeInvalid: 'चुना गया प्रकाशन प्रकार समर्थित नहीं है। सूची से कोई एक चुनें।',
-        requestInvalid:
-          'इस अनुरोध की कुछ जानकारी छूटी है या मान्य नहीं है। फ़ॉर्म जाँचें और फिर कोशिश करें।',
+        requestInvalid: 'इस अनुरोध की कुछ जानकारी छूटी है या मान्य नहीं है। फ़ॉर्म जाँचें और फिर कोशिश करें।',
         allowanceUnavailable:
           'आपका Thread कोटा खत्म हो गया है या किसी चल रहे जनरेशन ने उसे रोक रखा है। उसके पूरा होने तक रुकें या प्लान अपग्रेड करें।',
         tooManyActive:
           'आपके पास पहले से अधिकतम जनरेशन चल रहे हैं। किसी एक के पूरा होने तक रुकें या एक को रद्द करें।',
         acceptedGapNotABlocker:
           'स्वीकार की गई कमी समीक्षकों द्वारा बताई गई प्रमाण-कमियों में से एक होनी चाहिए। और शोध करें और फिर कोशिश करें।',
-        idempotencyKeyReused:
-          'यह अनुरोध पहले ही अलग विवरण के साथ भेजा जा चुका है। फ़ॉर्म से दोबारा शुरू करें।',
-        notCancellable:
-          'यह जनरेशन न तो चल रहा है और न कतार में है, इसलिए रद्द करने के लिए कुछ नहीं है।',
-        fallbackSameProvider:
-          'बैकअप मॉडल मुख्य मॉडल से अलग प्रदाता का होना चाहिए। दूसरा प्रदाता चुनें।',
+        idempotencyKeyReused: 'यह अनुरोध पहले ही अलग विवरण के साथ भेजा जा चुका है। फ़ॉर्म से दोबारा शुरू करें।',
+        notCancellable: 'यह जनरेशन न तो चल रहा है और न कतार में है, इसलिए रद्द करने के लिए कुछ नहीं है।',
+        fallbackSameProvider: 'बैकअप मॉडल मुख्य मॉडल से अलग प्रदाता का होना चाहिए। दूसरा प्रदाता चुनें।',
         notPublished: 'यह Thread प्रकाशित नहीं है, इसलिए यह क्रिया उपलब्ध नहीं है।',
-        topicInvalid:
-          'विषय खाली है या उसमें ऐसा वर्ण है जो सहेजा नहीं जा सकता। उसे बदलें और फिर कोशिश करें।',
+        topicInvalid: 'विषय खाली है या उसमें ऐसा वर्ण है जो सहेजा नहीं जा सकता। उसे बदलें और फिर कोशिश करें।',
         textInvalid:
           'किसी टेक्स्ट फ़ील्ड में ऐसा वर्ण है जो सहेजा नहीं जा सकता। असामान्य वर्ण हटाएँ और फिर कोशिश करें।',
       },
@@ -1208,8 +1172,7 @@ export const hi: TranslationDictionary = {
     tryingProvider: 'प्रयासरत',
     allProvidersFailed: 'सभी प्रोवाइडर प्रतिक्रिया उत्पन्न करने में विफल',
     errors: {
-      planTrialExpired:
-        'आपका मुफ़्त परीक्षण समाप्त हो गया है। AI का उपयोग जारी रखने के लिए सशुल्क प्लान चुनें।',
+      planTrialExpired: 'आपका मुफ़्त परीक्षण समाप्त हो गया है। AI का उपयोग जारी रखने के लिए सशुल्क प्लान चुनें।',
       messageNotEditable: 'आप केवल अपना संदेश संपादित कर सकते हैं।',
       messageEditUnchanged: 'संदेश में कोई बदलाव नहीं है।',
       dailyTokenLimitExceeded: 'आपने अपनी दैनिक टोकन सीमा पार कर ली है।',
@@ -1226,12 +1189,10 @@ export const hi: TranslationDictionary = {
         'वीडियो अटैचमेंट केवल-स्थानीय या गोपनीयता-प्रथम मोड में उपलब्ध नहीं हैं, क्योंकि कोई स्थानीय वीडियो-सक्षम मॉडल कॉन्फ़िगर नहीं है।',
       providerCreditExhausted:
         'इस मॉडल के प्रदाता का क्रेडिट अभी समाप्त हो गया है। कोई दूसरा मॉडल चुनें या बाद में फिर से प्रयास करें।',
-      providerModelUnavailable:
-        'यह मॉडल अब अपने प्रदाता के पास उपलब्ध नहीं है। कोई दूसरा मॉडल चुनें।',
+      providerModelUnavailable: 'यह मॉडल अब अपने प्रदाता के पास उपलब्ध नहीं है। कोई दूसरा मॉडल चुनें।',
       providerRateLimited:
         'यह मॉडल अभी अपने प्रदाता पर व्यस्त है। थोड़ी देर में फिर से प्रयास करें या कोई दूसरा मॉडल चुनें।',
-      providerOutputLimit:
-        'यह मॉडल अनुरोधित लंबाई का उत्तर नहीं बना सका। कृपया फिर से प्रयास करें।',
+      providerOutputLimit: 'यह मॉडल अनुरोधित लंबाई का उत्तर नहीं बना सका। कृपया फिर से प्रयास करें।',
     },
     imageGeneration: 'छवि जनरेशन',
     generatedImage: 'जनरेट की गई छवि',
@@ -1278,8 +1239,7 @@ export const hi: TranslationDictionary = {
     maxTokensErrorRange: 'अधिकतम टोकन 1 और 32000 के बीच होना चाहिए।',
     threadSettings: 'थ्रेड सेटिंग्स',
     preferredModel: 'डिफ़ॉल्ट AI मॉडल',
-    preferredModelDescription:
-      'इस थ्रेड के लिए डिफ़ॉल्ट मॉडल। प्रति संदेश ओवरराइड किया जा सकता है।',
+    preferredModelDescription: 'इस थ्रेड के लिए डिफ़ॉल्ट मॉडल। प्रति संदेश ओवरराइड किया जा सकता है।',
     settingsSaved: 'थ्रेड सेटिंग्स सहेजी गईं',
     helpful: 'सहायक',
     notHelpful: 'सहायक नहीं',
@@ -1288,8 +1248,7 @@ export const hi: TranslationDictionary = {
       action: 'मास्क से संपादन',
       actionFor: 'मास्क से संपादन: {name}',
       title: 'मास्क से संपादन',
-      description:
-        'वह हिस्सा रंगें जिसे मॉडल बदल सकता है। जो हिस्सा बिना रंगे रहेगा, वह जैसा है वैसा ही रहेगा।',
+      description: 'वह हिस्सा रंगें जिसे मॉडल बदल सकता है। जो हिस्सा बिना रंगे रहेगा, वह जैसा है वैसा ही रहेगा।',
       canvasLabel: 'मास्क बनाने का क्षेत्र',
       brushSize: 'ब्रश का आकार',
       erase: 'मिटाएँ',
@@ -1369,8 +1328,7 @@ export const hi: TranslationDictionary = {
     weakResponse: 'कमज़ोर प्रतिक्रिया का पता चला',
     qualityScore: 'गुणवत्ता: {score}%',
     judgeReferee: 'जज और रेफरी',
-    judgeRefereeDescription:
-      'उच्च सटीकता के लिए AI-संचालित आलोचना और प्रतिक्रिया सत्यापन सक्षम करें।',
+    judgeRefereeDescription: 'उच्च सटीकता के लिए AI-संचालित आलोचना और प्रतिक्रिया सत्यापन सक्षम करें।',
     judgeVerified: 'सत्यापित',
     judgeUnavailable: 'जज अनुपलब्ध',
     judgeRevised: 'संशोधित',
@@ -1383,8 +1341,7 @@ export const hi: TranslationDictionary = {
     judgeModelDescription: 'अंतिम निर्णय के लिए उपयोग किए जाने वाले लोकल मॉडल को ओवरराइड करें',
     judgeOpenReview: 'जज प्रतिक्रिया देखें',
     judgeReviewTitle: 'जज समीक्षा',
-    judgeReviewDescription:
-      'मूल उत्तर, जज निर्णय और जज द्वारा उत्पन्न प्रतिक्रिया का निरीक्षण करें।',
+    judgeReviewDescription: 'मूल उत्तर, जज निर्णय और जज द्वारा उत्पन्न प्रतिक्रिया का निरीक्षण करें।',
     judgeDecisionLabel: 'निर्णय',
     judgeConfidenceLabel: 'विश्वास',
     judgeSummary: 'जज सारांश',
@@ -1405,8 +1362,7 @@ export const hi: TranslationDictionary = {
     judgeResponseTypeEscalatedAnswer: 'एस्केलेट किया गया उत्तर',
     judgeResponseTypeVerificationNote: 'सत्यापन नोट',
     qualityThreshold: 'गुणवत्ता सीमा',
-    qualityThresholdDescription:
-      'पुन: रूट करने से पहले न्यूनतम गुणवत्ता स्कोर (0 = सभी स्वीकार, 1 = बहुत सख्त)',
+    qualityThresholdDescription: 'पुन: रूट करने से पहले न्यूनतम गुणवत्ता स्कोर (0 = सभी स्वीकार, 1 = बहुत सख्त)',
     maxReRouteAttempts: 'अधिकतम पुन: रूट प्रयास',
     maxReRouteAttemptsDescription: 'प्रति संदेश अधिकतम पुन: रूट प्रयास (0-5)',
     reRouteReasonShort: 'बहुत छोटा',
@@ -1619,8 +1575,7 @@ export const hi: TranslationDictionary = {
   promptLibrary: {
     openLabel: 'प्रॉम्प्ट लाइब्रेरी',
     dialogTitle: 'प्रॉम्प्ट लाइब्रेरी',
-    dialogDescription:
-      'जो प्रॉम्प्ट आप बार-बार इस्तेमाल करते हैं उन्हें सहेजें और अपने संदेश में जोड़ें।',
+    dialogDescription: 'जो प्रॉम्प्ट आप बार-बार इस्तेमाल करते हैं उन्हें सहेजें और अपने संदेश में जोड़ें।',
     searchPlaceholder: 'प्रॉम्प्ट खोजें...',
     searchLabel: 'प्रॉम्प्ट खोजें',
     favoritesOnly: 'पसंदीदा',
@@ -1650,8 +1605,7 @@ export const hi: TranslationDictionary = {
     saveFailed: 'प्रॉम्प्ट सहेजा नहीं जा सका।',
     deleteFailed: 'प्रॉम्प्ट हटाया नहीं जा सका।',
     limitReached: 'आप अधिकतम {max} प्रॉम्प्ट सहेज सकते हैं। नया सहेजने के लिए एक हटाएँ।',
-    nearLimit:
-      'आपने {max} में से {count} प्रॉम्प्ट सहेजे हैं। जगह बनाने के लिए अनुपयोगी प्रॉम्प्ट हटाएँ।',
+    nearLimit: 'आपने {max} में से {count} प्रॉम्प्ट सहेजे हैं। जगह बनाने के लिए अनुपयोगी प्रॉम्प्ट हटाएँ।',
   },
   preview: {
     openLabel: 'संदर्भ पूर्वावलोकन',
@@ -1683,13 +1637,11 @@ export const hi: TranslationDictionary = {
     provider: 'प्रोवाइडर',
     providerHelp: 'वह AI प्रोवाइडर जिससे यह कनेक्टर संवाद करेगा।',
     authType: 'प्रमाणीकरण प्रकार',
-    authTypeHelp:
-      'प्रोवाइडर के साथ प्रमाणीकरण कैसे करें। अधिकांश प्रोवाइडर API Key का उपयोग करते हैं।',
+    authTypeHelp: 'प्रोवाइडर के साथ प्रमाणीकरण कैसे करें। अधिकांश प्रोवाइडर API Key का उपयोग करते हैं।',
     apiKey: 'API Key',
     apiKeyHelp: 'प्रोवाइडर से आपकी गुप्त API Key। इसे विश्रामावस्था में एन्क्रिप्ट किया जाएगा।',
     baseUrl: 'बेस URL',
-    baseUrlHelp:
-      'डिफ़ॉल्ट API एंडपॉइंट को ओवरराइड करें। प्रोवाइडर डिफ़ॉल्ट उपयोग करने के लिए खाली छोड़ दें।',
+    baseUrlHelp: 'डिफ़ॉल्ट API एंडपॉइंट को ओवरराइड करें। प्रोवाइडर डिफ़ॉल्ट उपयोग करने के लिए खाली छोड़ दें।',
     region: 'क्षेत्र',
     regionHelp: 'वह AWS क्षेत्र जहां आपका Bedrock एंडपॉइंट तैनात है।',
     workspaceIdOptional: 'वर्कस्पेस आईडी (वैकल्पिक)',
@@ -1748,8 +1700,7 @@ export const hi: TranslationDictionary = {
     gatewayHeaders: 'गेटवे हेडर (वैकल्पिक)',
     gatewayHeadersHelp:
       'प्रदाता के आगे LLM गेटवे (LiteLLM, Portkey, Helicone) के लिए अतिरिक्त हेडर। मान एन्क्रिप्ट करके सहेजे जाते हैं और फिर कभी नहीं दिखाए जाते। ये कभी API कुंजी की जगह नहीं लेते।',
-    gatewayHeadersEditHelp:
-      'सहेजे गए हेडर बने रहते हैं, जब तक आप नए न जोड़ें — नए सभी की जगह ले लेते हैं।',
+    gatewayHeadersEditHelp: 'सहेजे गए हेडर बने रहते हैं, जब तक आप नए न जोड़ें — नए सभी की जगह ले लेते हैं।',
     gatewayHeaderName: 'हेडर का नाम',
     gatewayHeaderValue: 'हेडर का मान',
     addGatewayHeader: 'हेडर जोड़ें',
@@ -1778,10 +1729,8 @@ export const hi: TranslationDictionary = {
     saveMode: {
       title: 'चैट से सहेजना',
       switchLabel: 'हमेशा अपने-आप सहेजें',
-      descriptionAsk:
-        'बंद: जो बात आपने ClawAI से याद रखने को कही, उसे सहेजने से पहले वह आपसे पुष्टि माँगता है।',
-      descriptionAuto:
-        'चालू: जो बात आप ClawAI से याद रखने को कहते हैं, वह बिना पूछे तुरंत सहेज दी जाती है।',
+      descriptionAsk: 'बंद: जो बात आपने ClawAI से याद रखने को कही, उसे सहेजने से पहले वह आपसे पुष्टि माँगता है।',
+      descriptionAuto: 'चालू: जो बात आप ClawAI से याद रखने को कहते हैं, वह बिना पूछे तुरंत सहेज दी जाती है।',
     },
     title: 'मेमोरी',
     description: 'AI मेमोरी रिकॉर्ड प्रबंधित करें',
@@ -1854,8 +1803,7 @@ export const hi: TranslationDictionary = {
     noFilesDesc: 'AI कॉन्टेक्स्ट के रूप में उपयोग करने के लिए फ़ाइलें अपलोड करें',
     fileUploaded: 'फ़ाइल अपलोड हुई',
     fileUploadFailed: 'फ़ाइल अपलोड करने में विफल',
-    antivirusUnavailable:
-      'वायरस स्कैनर फिर से शुरू हो रहा है। कृपया एक मिनट बाद फिर से कोशिश करें।',
+    antivirusUnavailable: 'वायरस स्कैनर फिर से शुरू हो रहा है। कृपया एक मिनट बाद फिर से कोशिश करें।',
     fileDeleted: 'फ़ाइल हटाई गई',
     fileDeleteFailed: 'फ़ाइल हटाने में विफल',
     uploadFailed: 'फ़ाइल अपलोड करने में विफल',
@@ -1919,8 +1867,7 @@ export const hi: TranslationDictionary = {
         traversal: 'इसमें ऐसे पथ हैं जो संग्रह के बाहर इंगित करते हैं, इसलिए इसे नहीं खोला गया।',
         tooDeep: 'इसमें संग्रह अनुमत सीमा से अधिक गहराई तक एक-दूसरे के अंदर हैं।',
         encrypted: 'यह पासवर्ड से सुरक्षित है। इसे खोलने के लिए पासवर्ड दर्ज करें।',
-        partlyEncrypted:
-          'कुछ फ़ाइलें पासवर्ड से सुरक्षित हैं और छोड़ दी गईं। उन्हें खोलने के लिए पासवर्ड दर्ज करें।',
+        partlyEncrypted: 'कुछ फ़ाइलें पासवर्ड से सुरक्षित हैं और छोड़ दी गईं। उन्हें खोलने के लिए पासवर्ड दर्ज करें।',
         unsupported: 'यह फ़ाइल ऐसे संग्रह प्रारूप में नहीं है जिसे हम खोल सकें।',
         generic: 'इसे खोला नहीं जा सका। संग्रह को फिर से बनाकर दोबारा अपलोड करें।',
       },
@@ -1944,8 +1891,7 @@ export const hi: TranslationDictionary = {
       expiresToday: 'आज समाप्त हो रही है',
     },
     permissions: {
-      denied:
-        'आपको फ़ाइलों तक पहुँचने की अनुमति नहीं है। अपने वर्कस्पेस व्यवस्थापक से संपर्क करें।',
+      denied: 'आपको फ़ाइलों तक पहुँचने की अनुमति नहीं है। अपने वर्कस्पेस व्यवस्थापक से संपर्क करें।',
     },
     lifecycle: {
       uploadStarted: 'अपलोड शुरू हो रहा है…',
@@ -2074,8 +2020,7 @@ export const hi: TranslationDictionary = {
     },
     models: {
       title: 'मॉडल रजिस्ट्री',
-      description:
-        'रूटर को ज्ञात सभी मॉडल ब्राउज़ करें। लागत, जीवनचक्र या रूटिंग फ़्लैग ओवरराइड करें।',
+      description: 'रूटर को ज्ञात सभी मॉडल ब्राउज़ करें। लागत, जीवनचक्र या रूटिंग फ़्लैग ओवरराइड करें।',
       updateSucceeded: 'मॉडल अद्यतन किया गया।',
       updateFailed: 'मॉडल अद्यतन करने में विफल।',
       overrideCleared: 'ओवरराइड हटाया गया।',
@@ -2101,8 +2046,7 @@ export const hi: TranslationDictionary = {
     serviceUnavailable: {
       title: 'मॉडल सेवा उपलब्ध नहीं है',
       checking: 'मॉडल सेवा की उपलब्धता जाँची जा रही है',
-      ollamaDescription:
-        'Ollama सेवा शुरू करें, फिर उसके मॉडल प्रबंधित करने के लिए यह पृष्ठ रीफ़्रेश करें।',
+      ollamaDescription: 'Ollama सेवा शुरू करें, फिर उसके मॉडल प्रबंधित करने के लिए यह पृष्ठ रीफ़्रेश करें।',
       llamacppDescription:
         'llama.cpp सेवा शुरू करें, फिर स्थानीय उन्नत मॉडल प्रबंधित करने के लिए यह पृष्ठ रीफ़्रेश करें।',
     },
@@ -2134,8 +2078,7 @@ export const hi: TranslationDictionary = {
     installedModels: 'स्थापित मॉडल',
     loadingLocalModels: 'लोकल मॉडल लोड हो रहे हैं...',
     noLocalModels: 'कोई लोकल मॉडल स्थापित नहीं',
-    noLocalModelsDesc:
-      'लोकल इन्फ़रेंस के साथ शुरू करने के लिए ऊपर दिए गए फ़ॉर्म का उपयोग करके मॉडल पुल करें।',
+    noLocalModelsDesc: 'लोकल इन्फ़रेंस के साथ शुरू करने के लिए ऊपर दिए गए फ़ॉर्म का उपयोग करके मॉडल पुल करें।',
     colModel: 'मॉडल',
     colRuntime: 'रनटाइम',
     colSize: 'आकार',
@@ -2188,8 +2131,7 @@ export const hi: TranslationDictionary = {
       overallLabel: 'कुल मिलाकर',
       loading: 'सेवाओं की जाँच हो रही है…',
       failedToLoad: 'सेवा स्थिति लोड नहीं हो सकी। यह अपने आप फिर से कोशिश करेगा।',
-      historyUnavailable:
-        'अपटाइम इतिहास अभी उपलब्ध नहीं है। नीचे दी गई मौजूदा स्थिति अब भी लाइव है।',
+      historyUnavailable: 'अपटाइम इतिहास अभी उपलब्ध नहीं है। नीचे दी गई मौजूदा स्थिति अब भी लाइव है।',
       uptime: 'अपटाइम',
       noData: 'कोई डेटा नहीं',
       partialCoverage: 'इस अवधि के {percent} हिस्से के लिए मापा गया',
@@ -2242,8 +2184,7 @@ export const hi: TranslationDictionary = {
     failedToLoad: 'डेटा लोड करने में विफल',
     failedToLoadDesc: 'ऑब्ज़र्वेबिलिटी डेटा प्राप्त नहीं कर सका। कृपया बाद में पुनः प्रयास करें।',
     noDataYet: 'अभी तक कोई ऑब्ज़र्वेबिलिटी डेटा नहीं',
-    noDataDesc:
-      'अनुरोध ऑर्केस्ट्रेशन लेयर से प्रवाहित होने के बाद मेट्रिक्स और प्रदर्शन डेटा यहां भरेगा।',
+    noDataDesc: 'अनुरोध ऑर्केस्ट्रेशन लेयर से प्रवाहित होने के बाद मेट्रिक्स और प्रदर्शन डेटा यहां भरेगा।',
     fullDescription: 'सिस्टम स्वास्थ्य, अनुरोध विलंबता, और मॉडल प्रदर्शन की निगरानी करें',
     totalRequestsLabel: 'कुल अनुरोध',
     acrossProviders: 'सभी प्रोवाइडर में',
@@ -2303,8 +2244,7 @@ export const hi: TranslationDictionary = {
       planTrialNotFound: 'इस उपयोगकर्ता ने कभी निःशुल्क ट्रायल नहीं लिया है।',
       planTrialSuperseded:
         'यह उपयोगकर्ता अब अपने निःशुल्क ट्रायल पर नहीं है। इसके बजाय उसे कुछ दिनों के लिए निःशुल्क प्लान पर सेट करें।',
-      planGrantDurationInvalid:
-        '1 से 3650 के बीच दिनों की, या 1 से 60 के बीच महीनों की पूर्ण संख्या दर्ज करें।',
+      planGrantDurationInvalid: '1 से 3650 के बीच दिनों की, या 1 से 60 के बीच महीनों की पूर्ण संख्या दर्ज करें।',
       planGrantReasonRequired: 'कारण आवश्यक है।',
     },
     title: 'एडमिन',
@@ -2340,8 +2280,7 @@ export const hi: TranslationDictionary = {
 
     editUserTitle: 'उपयोगकर्ता संपादित करें',
 
-    editUserDescription:
-      'इस खाते का नाम और उपयोगकर्ता नाम अपडेट करें, या नया अस्थायी पासवर्ड जारी करें।',
+    editUserDescription: 'इस खाते का नाम और उपयोगकर्ता नाम अपडेट करें, या नया अस्थायी पासवर्ड जारी करें।',
 
     editUserUsername: 'उपयोगकर्ता नाम',
 
@@ -2370,8 +2309,7 @@ export const hi: TranslationDictionary = {
     createUserAdminRestricted: 'केवल सुपर एडमिन ही दूसरा एडमिन बना सकता है।',
     createUserPassword: 'पासवर्ड',
     createUserGeneratePassword: 'जेनरेट करें',
-    createUserPasswordNotice:
-      'यह पासवर्ड आपको स्वयं देना होगा। पहली बार साइन इन करने पर यह बदल जाएगा।',
+    createUserPasswordNotice: 'यह पासवर्ड आपको स्वयं देना होगा। पहली बार साइन इन करने पर यह बदल जाएगा।',
     createUserPasswordStrength: 'पासवर्ड मजबूती',
     createUserPasswordWeak: 'बहुत कमजोर',
     createUserPasswordFair: 'ठीक',
@@ -2447,15 +2385,13 @@ export const hi: TranslationDictionary = {
     setPasswordMode: 'पासवर्ड कैसे सेट करें',
     setPasswordModeGenerate: 'जनरेट करें',
     setPasswordModeManual: 'स्वयं लिखें',
-    setPasswordGenerateHint:
-      'सर्वर पर एक मज़बूत यादृच्छिक पासवर्ड बनता है और केवल एक बार दिखाया जाता है।',
+    setPasswordGenerateHint: 'सर्वर पर एक मज़बूत यादृच्छिक पासवर्ड बनता है और केवल एक बार दिखाया जाता है।',
     setPasswordGenerateConfirm: 'जनरेट करके सेट करें',
     setPasswordManualLabel: 'नया पासवर्ड',
     setPasswordManualHint: 'कम से कम 8 अक्षर, जिनमें एक बड़ा अक्षर, एक छोटा अक्षर और एक संख्या हो।',
     setPasswordConfirm: 'पासवर्ड सेट करें',
     setPasswordGeneratedTitle: 'पासवर्ड सेट हो गया। इसे उपयोगकर्ता को दें:',
-    setPasswordGeneratedWarning:
-      'इसे अभी कॉपी करें। यह केवल एक बार दिखता है और कहीं सहेजा नहीं जाता।',
+    setPasswordGeneratedWarning: 'इसे अभी कॉपी करें। यह केवल एक बार दिखता है और कहीं सहेजा नहीं जाता।',
     setPasswordCopy: 'पासवर्ड कॉपी करें',
     setPasswordDone: 'हो गया',
     setPasswordFailed: 'पासवर्ड सेट नहीं किया जा सका',
@@ -2519,8 +2455,7 @@ export const hi: TranslationDictionary = {
     issueTemporaryPasswordConfirmTitle: 'क्या अस्थायी पासवर्ड जारी करें?',
     issueTemporaryPasswordConfirmBody:
       'उपयोगकर्ता को एक अस्थायी पासवर्ड ईमेल कर दिया जाएगा और सभी सक्रिय सत्रों से साइन आउट कर दिया जाएगा।',
-    temporaryPasswordIssued:
-      'अस्थायी पासवर्ड ईमेल कर दिया गया और सभी सत्रों से साइन आउट कर दिया गया।',
+    temporaryPasswordIssued: 'अस्थायी पासवर्ड ईमेल कर दिया गया और सभी सत्रों से साइन आउट कर दिया गया।',
     temporaryPasswordFailed: 'अस्थायी पासवर्ड जारी करने में विफल।',
     userUsageAction: 'उपयोग और खपत',
     userUsageDialogTitle: 'उपयोग और खपत',
@@ -2675,8 +2610,7 @@ export const hi: TranslationDictionary = {
     confirmPassword: 'पासवर्ड की पुष्टि करें',
     passwordChanged: 'पासवर्ड सफलतापूर्वक बदला गया',
     passwordChangeFailed: 'पासवर्ड बदलने में विफल',
-    passwordRequirements:
-      'पासवर्ड कम से कम 8 अक्षर, अपरकेस, लोअरकेस और एक संख्या के साथ होना चाहिए',
+    passwordRequirements: 'पासवर्ड कम से कम 8 अक्षर, अपरकेस, लोअरकेस और एक संख्या के साथ होना चाहिए',
     preferencesUpdated: 'प्राथमिकताएं सफलतापूर्वक अद्यतन',
     preferencesUpdateFailed: 'प्राथमिकताएं अद्यतन करने में विफल',
     devices: {
@@ -2720,8 +2654,7 @@ export const hi: TranslationDictionary = {
     configureRouting: 'रूटिंग कॉन्फ़िगर करें',
     serviceStatus: 'सेवा स्थिति',
     checkingHealth: 'सेवा स्वास्थ्य की जांच हो रही है...',
-    healthUnreachable:
-      'स्वास्थ्य एग्रीगेटर तक नहीं पहुंच सका। कृपया सत्यापित करें कि स्वास्थ्य सेवा चल रही है।',
+    healthUnreachable: 'स्वास्थ्य एग्रीगेटर तक नहीं पहुंच सका। कृपया सत्यापित करें कि स्वास्थ्य सेवा चल रही है।',
     servicesOperational: '{up} में से {total} सेवाएं चालू',
     responseTimeMs: '{ms}ms',
     unreachable: 'अप्राप्य',
@@ -2783,8 +2716,7 @@ export const hi: TranslationDictionary = {
   },
   replay: {
     title: 'रूटिंग रीप्ले लैब',
-    description:
-      'वर्तमान राउटर के विरुद्ध ऐतिहासिक रूटिंग निर्णय पुन: चलाएं और परिणामों की तुलना करें',
+    description: 'वर्तमान राउटर के विरुद्ध ऐतिहासिक रूटिंग निर्णय पुन: चलाएं और परिणामों की तुलना करें',
     runReplay: 'रीप्ले चलाएं',
     running: 'रीप्ले चल रहा है...',
     totalReplayed: 'कुल पुन: चलाया',
@@ -2900,8 +2832,7 @@ export const hi: TranslationDictionary = {
     copyFailed: 'कॉपी करने में विफल',
     critic: {
       enabled: 'क्रिटिक समीक्षा',
-      enabledHint:
-        'एक दूसरा क्रिटिक LLM जोड़ें जो उत्तर को स्कोर करे और जज के लिए मुद्दे चिह्नित करे।',
+      enabledHint: 'एक दूसरा क्रिटिक LLM जोड़ें जो उत्तर को स्कोर करे और जज के लिए मुद्दे चिह्नित करे।',
       modelLabel: 'क्रिटिक मॉडल',
       modelPlaceholder: 'क्रिटिक मॉडल चुनें',
       notRequested: 'इस समीक्षा के लिए क्रिटिक नहीं मांगा गया था।',
@@ -2962,8 +2893,7 @@ export const hi: TranslationDictionary = {
       'दिखाता है कि मॉडल कहां सहमत हैं और कहां असहमत हैं, ताकि आप केवल उत्तर ही नहीं बल्कि उसके पीछे का विश्वास स्तर भी देख सकें।',
     benefit2:
       'किसी एक मॉडल की गलती या भ्रम पर भरोसा करने का जोखिम घटाता है — कई अलग-अलग मॉडल शायद ही कभी एक जैसी गलती करते हैं।',
-    benefit3:
-      'उच्च-जोखिम या अस्पष्ट प्रश्नों के लिए सर्वोत्तम, जहां दूसरी (और तीसरी) राय परिणाम बदल सकती है।',
+    benefit3: 'उच्च-जोखिम या अस्पष्ट प्रश्नों के लिए सर्वोत्तम, जहां दूसरी (और तीसरी) राय परिणाम बदल सकती है।',
     selectModels: 'मॉडल चुनें',
     minModels: 'कम से कम {min} मॉडल चुनें',
     maxModels: 'अधिकतम {max} मॉडल की अनुमति',
@@ -2999,8 +2929,7 @@ export const hi: TranslationDictionary = {
     description:
       'मॉडल चेन परिभाषित करें — सबसे सस्ता पहले, सबसे शक्तिशाली अंत में। गुणवत्ता कम होने पर AI स्वचालित रूप से एस्केलेट करता है',
     goal: 'पहले तेज़ और सस्ता उत्तर पाएं, और केवल तभी अधिक शक्तिशाली मॉडल के लिए भुगतान करें जब गुणवत्ता की वास्तव में आवश्यकता हो।',
-    benefit1:
-      'सबसे हल्के मॉडल को पहले आज़माकर रोज़मर्रा के प्रश्नों को सस्ता और तेज़ बनाए रखता है।',
+    benefit1: 'सबसे हल्के मॉडल को पहले आज़माकर रोज़मर्रा के प्रश्नों को सस्ता और तेज़ बनाए रखता है।',
     benefit2:
       'उत्तर की गुणवत्ता स्कोर कम होने पर ही स्वचालित रूप से अधिक शक्तिशाली मॉडल पर एस्केलेट करता है — कोई मैन्युअल पुनः प्रयास नहीं।',
     benefit3:
@@ -3081,8 +3010,7 @@ export const hi: TranslationDictionary = {
     description:
       'जटिल कार्यों को उप-कार्यों में तोड़ें, प्रत्येक को सर्वोत्तम मॉडल के साथ निष्पादित करें, फिर परिणामों को संश्लेषित करें।',
     goal: 'एक बड़े, बहु-भाग वाले कार्य को उप-कार्यों में विभाजित करें ताकि प्रत्येक भाग को उसके लिए सबसे उपयुक्त मॉडल संभाले।',
-    benefit1:
-      'अस्पष्ट, बहु-चरणीय अनुरोधों को एक लंबे, अस्पष्ट प्रॉम्प्ट के बजाय ठोस उप-कार्यों में विभाजित करता है।',
+    benefit1: 'अस्पष्ट, बहु-चरणीय अनुरोधों को एक लंबे, अस्पष्ट प्रॉम्प्ट के बजाय ठोस उप-कार्यों में विभाजित करता है।',
     benefit2:
       'प्रत्येक उप-कार्य को उसके लिए सर्वोत्तम मेल खाने वाले मॉडल पर रूट करता है, फिर एक सुसंगत परिणाम में संश्लेषित करता है।',
     benefit3:
@@ -3112,15 +3040,13 @@ export const hi: TranslationDictionary = {
   },
   bestOfN: {
     title: 'बेस्ट-ऑफ़-N उम्मीदवार जनरेशन',
-    description:
-      'कई उम्मीदवार उत्तर उत्पन्न करें और स्वचालित रूप से उच्चतम गुणवत्ता प्रतिक्रिया चुनें।',
+    description: 'कई उम्मीदवार उत्तर उत्पन्न करें और स्वचालित रूप से उच्चतम गुणवत्ता प्रतिक्रिया चुनें।',
     goal: 'जब एक ही जनरेशन पर भरोसा करना बहुत बड़ा जोखिम हो, तो कई उम्मीदवार उत्तर उत्पन्न करें और स्वचालित रूप से सर्वश्रेष्ठ को रखें।',
     benefit1:
       'पहले आउटपुट से संतुष्ट होने के बजाय, एक ही प्रॉम्प्ट को कई बार सैंपल करता है और हर उम्मीदवार को स्कोर करता है।',
     benefit2:
       'इस संभावना को घटाता है कि आप जिस उत्तर पर काम करें वह किसी एक दुर्भाग्यपूर्ण जनरेशन का परिणाम हो।',
-    benefit3:
-      'रचनात्मक या ओपन-एंडेड प्रॉम्प्ट के लिए सर्वोत्तम, जहां आउटपुट की गुणवत्ता हर बार बदलती है।',
+    benefit3: 'रचनात्मक या ओपन-एंडेड प्रॉम्प्ट के लिए सर्वोत्तम, जहां आउटपुट की गुणवत्ता हर बार बदलती है।',
     contentLabel: 'प्रॉम्प्ट',
     contentPlaceholder: 'कई उम्मीदवार उत्पन्न करने के लिए अपना प्रॉम्प्ट दर्ज करें…',
     nCandidates: 'उम्मीदवार (N)',
@@ -3164,17 +3090,14 @@ export const hi: TranslationDictionary = {
     title: 'वेरिफायर',
     description: 'भेजने से पहले एक प्रतिक्रिया उत्पन्न और सत्यापित करें',
     goal: 'प्रतिक्रिया दिखाए जाने से पहले उसकी जांच करें और आवश्यकता होने पर संशोधित करें, ताकि त्रुटियां बातचीत तक पहुंचने से पहले ही पकड़ी जाएं।',
-    benefit1:
-      'एक ड्राफ्ट उत्तर उत्पन्न करता है, फिर आपको दिखाने से पहले उसे प्रॉम्प्ट के विरुद्ध सत्यापित करता है।',
+    benefit1: 'एक ड्राफ्ट उत्तर उत्पन्न करता है, फिर आपको दिखाने से पहले उसे प्रॉम्प्ट के विरुद्ध सत्यापित करता है।',
     benefit2:
       'जब सत्यापनकर्ता को कोई समस्या मिलती है, तो आपकी निर्धारित सीमा तक उत्तर को स्वचालित रूप से संशोधित करता है।',
-    benefit3:
-      'उन प्रश्नों के लिए सर्वोत्तम जहां गलत या अधूरा पहला उत्तर बाद में पकड़ना महंगा पड़ सकता है।',
+    benefit3: 'उन प्रश्नों के लिए सर्वोत्तम जहां गलत या अधूरा पहला उत्तर बाद में पकड़ना महंगा पड़ सकता है।',
     contentLabel: 'आपका प्रॉम्प्ट',
     contentPlaceholder: 'अपना प्रश्न या कार्य दर्ज करें...',
     maxRevisionsLabel: 'अधिकतम संशोधन',
-    maxRevisionsHelper:
-      'सर्वोत्तम उत्तर लौटाने से पहले सत्यापनकर्ता द्वारा किए जा सकने वाले संशोधनों की संख्या।',
+    maxRevisionsHelper: 'सर्वोत्तम उत्तर लौटाने से पहले सत्यापनकर्ता द्वारा किए जा सकने वाले संशोधनों की संख्या।',
     sendPrompt: 'सत्यापित करें और भेजें',
     running: 'सत्यापित हो रहा है...',
     synthesizing: 'प्रतिक्रिया उत्पन्न और सत्यापित हो रही है...',
@@ -3301,8 +3224,7 @@ export const hi: TranslationDictionary = {
     loading: 'मॉडल लोड हो रहे हैं...',
     description:
       'इस लैब के लिए ऑटो, कोई लोकल मॉडल, या कोई भी जुड़ा हुआ क्लाउड प्रदाता चुनें। लोकल मॉडल मुफ़्त और ऑफ़लाइन चलते हैं; क्लाउड मॉडल तब अतिरिक्त क्षमता जोड़ते हैं जब लोकल हार्डवेयर कम पड़ता है।',
-    empty:
-      'अभी तक कोई मॉडल उपलब्ध नहीं है — कोई लोकल मॉडल इंस्टॉल करें या क्लाउड प्रदाता कनेक्ट करें।',
+    empty: 'अभी तक कोई मॉडल उपलब्ध नहीं है — कोई लोकल मॉडल इंस्टॉल करें या क्लाउड प्रदाता कनेक्ट करें।',
   },
   workspaceConnectors: {
     title: 'वर्कस्पेस कनेक्टर',
@@ -3396,16 +3318,14 @@ export const hi: TranslationDictionary = {
   },
   connectorDetail: {
     title: 'कनेक्टर विवरण',
-    description:
-      'इस कनेक्टर के लिए सिंक इतिहास, स्वास्थ्य घटनाएं, और हाल ही में सिंक किए गए ऑब्जेक्ट्स।',
+    description: 'इस कनेक्टर के लिए सिंक इतिहास, स्वास्थ्य घटनाएं, और हाल ही में सिंक किए गए ऑब्जेक्ट्स।',
     loadFailed: 'कनेक्टर लोड करने में विफल।',
     never: 'कभी नहीं',
     lastSync: 'अंतिम सिंक: {value}',
     syncRunsCount: '{count} सिंक रन',
     objectsCount: '{count} ऑब्जेक्ट्स',
     recentObjects: 'हाल के ऑब्जेक्ट्स',
-    noObjects:
-      'अभी तक कोई सिंक किए गए ऑब्जेक्ट्स नहीं। प्रोवाइडर से ऑब्जेक्ट्स खींचने के लिए सिंक ट्रिगर करें।',
+    noObjects: 'अभी तक कोई सिंक किए गए ऑब्जेक्ट्स नहीं। प्रोवाइडर से ऑब्जेक्ट्स खींचने के लिए सिंक ट्रिगर करें।',
     syncHistory: 'सिंक इतिहास',
     noSyncRuns: 'अभी तक कोई सिंक रन नहीं।',
     syncRunLine: '{synced} सिंक · {failed} विफल',
@@ -3442,8 +3362,7 @@ export const hi: TranslationDictionary = {
       description: 'प्रत्येक वर्कस्पेस कनेक्टर पर निर्धारित सिंक जॉब का लाइव दृश्य।',
       error_title: 'सिंक डैशबोर्ड लोड करने में असमर्थ',
       empty_title: 'अभी तक कोई कनेक्टर नहीं',
-      empty_description:
-        'एक बार जब आप वर्कस्पेस टूल कनेक्ट करते हैं, तो उसका सिंक स्वास्थ्य यहां दिखाई देगा।',
+      empty_description: 'एक बार जब आप वर्कस्पेस टूल कनेक्ट करते हैं, तो उसका सिंक स्वास्थ्य यहां दिखाई देगा।',
       scheduler_title: 'शेड्यूलर',
       scheduler_enabled: 'शेड्यूलर सक्षम',
       last_tick: 'अंतिम टिक',
@@ -3510,8 +3429,7 @@ export const hi: TranslationDictionary = {
   approvals: {
     page: {
       title: 'अनुमोदन केंद्र',
-      description:
-        'अपने वर्कस्पेस कनेक्टर पर लंबित AI-ड्राफ्ट क्रियाओं की समीक्षा और अनुमोदन करें।',
+      description: 'अपने वर्कस्पेस कनेक्टर पर लंबित AI-ड्राफ्ट क्रियाओं की समीक्षा और अनुमोदन करें।',
       empty_title: 'कोई लंबित अनुमोदन नहीं',
       empty_description:
         'जब AI आपकी ओर से कोई क्रिया ड्राफ्ट करता है, तो वह समीक्षा के लिए यहां दिखाई देगा।',
@@ -3621,8 +3539,7 @@ export const hi: TranslationDictionary = {
     },
   },
   research: {
-    searchTimedOut:
-      'वेब खोज में बहुत समय लग गया, इसलिए हो सकता है इस उत्तर में कुछ स्रोत छूट गए हों।',
+    searchTimedOut: 'वेब खोज में बहुत समय लग गया, इसलिए हो सकता है इस उत्तर में कुछ स्रोत छूट गए हों।',
     searchFailed: 'वेब खोज विफल रही, इसलिए हो सकता है इस उत्तर में कुछ स्रोत छूट गए हों।',
     toggle: {
       modeLabel: 'वेब रिसर्च मोड',
@@ -3634,8 +3551,7 @@ export const hi: TranslationDictionary = {
         'आपके संदेश से तय करता है: चिपकाया गया लिंक खोलता है, जब उत्तर वर्तमान स्थिति पर निर्भर हो तो खोजता है, अन्यथा वेब छोड़ देता है।',
       tooltipNone: 'कोई वेब रिसर्च नहीं। मॉडल केवल अपने प्रशिक्षण से उत्तर देता है।',
       tooltipSearch: 'वेब खोज चलाएँ और परिणामों के शीर्षक एवं अंश मॉडल को दें।',
-      tooltipSearchFetch:
-        'वेब पर खोजें, फिर शीर्ष पृष्ठ प्राप्त करें और मॉडल को पूर्ण पाठ पर आधारित करें।',
+      tooltipSearchFetch: 'वेब पर खोजें, फिर शीर्ष पृष्ठ प्राप्त करें और मॉडल को पूर्ण पाठ पर आधारित करें।',
       tooltipSearchExtract:
         'वेब पर खोजें, शीर्ष पृष्ठ प्राप्त करें, फिर मॉडल के उत्तर देने से पहले संरचित तथ्य निकालें।',
       lockedUpgrade: 'वेब रिसर्च आपकी योजना में लॉक है। सक्षम करने के लिए अपग्रेड करें।',
@@ -3681,8 +3597,7 @@ export const hi: TranslationDictionary = {
       unhealthy: 'अस्वस्थ',
       loadFailed: 'प्रोवाइडर लोड करने में विफल।',
       emptyTitle: 'कोई रिसर्च प्रोवाइडर नहीं',
-      emptyDescription:
-        'लाइव प्रमाण के साथ चैट को ग्राउंड करना शुरू करने के लिए एक प्रोवाइडर जोड़ें।',
+      emptyDescription: 'लाइव प्रमाण के साथ चैट को ग्राउंड करना शुरू करने के लिए एक प्रोवाइडर जोड़ें।',
       col: {
         name: 'नाम',
         kind: 'प्रकार',
@@ -3791,8 +3706,7 @@ export const hi: TranslationDictionary = {
       testResult: 'टेस्ट परिणाम: {status} ({latency}ms)',
       secretStored: 'सीक्रेट संग्रहीत',
       emptyTitle: 'अभी तक कोई प्रोवाइडर कॉन्फ़िगरेशन नहीं',
-      emptyDescription:
-        'वर्कस्पेस कनेक्टर सक्षम करने के लिए अपने पहले प्रोवाइडर क्रेडेंशियल जोड़ें।',
+      emptyDescription: 'वर्कस्पेस कनेक्टर सक्षम करने के लिए अपने पहले प्रोवाइडर क्रेडेंशियल जोड़ें।',
       loadFailed: 'ऐप कॉन्फ़िगरेशन लोड करने में विफल।',
       fields: {
         secret: '(सीक्रेट)',
@@ -3823,8 +3737,7 @@ export const hi: TranslationDictionary = {
   workspaceChains: {
     page: {
       title: 'स्वचालन',
-      description:
-        'कार्यक्षेत्रों के बीच तैयार स्वचालन चलाएँ, या किसी टेम्पलेट से अपना खुद का बनाएँ।',
+      description: 'कार्यक्षेत्रों के बीच तैयार स्वचालन चलाएँ, या किसी टेम्पलेट से अपना खुद का बनाएँ।',
     },
     templates: {
       heading: 'टेम्पलेट',
@@ -3925,8 +3838,7 @@ export const hi: TranslationDictionary = {
     activityMemory: 'गतिविधि स्मृति',
     activityMemoryDesc: 'आपके उपकरणों से क्लाउड में सिंक की गई गतिविधि प्रविष्टियाँ।',
     noActivity: 'अभी तक कोई गतिविधि प्रविष्टि नहीं',
-    noActivityDesc:
-      'आपके उपकरणों पर लॉग की गई गतिविधि क्लाउड सिंक ऑप्ट-इन के बाद ही यहाँ दिखती है।',
+    noActivityDesc: 'आपके उपकरणों पर लॉग की गई गतिविधि क्लाउड सिंक ऑप्ट-इन के बाद ही यहाँ दिखती है।',
     repos: 'रिपॉजिटरी',
     reposDesc: 'रिपॉजिटरी का पता चला',
     pendingCommands: 'लंबित कमांड',
@@ -4176,8 +4088,7 @@ export const hi: TranslationDictionary = {
         'अभी तक कोई Jira टिकट सिंक नहीं हुए। टिकट लोड करने के लिए अपने Jira कनेक्टर पर सिंक चलाएं।',
       error_title: 'टिकट लोड नहीं हो सके',
       no_connector_title: 'कोई Jira कनेक्टर नहीं मिला',
-      no_connector_description:
-        'अपने टिकट देखना शुरू करने के लिए Workspace Connectors में Jira खाता जोड़ें।',
+      no_connector_description: 'अपने टिकट देखना शुरू करने के लिए Workspace Connectors में Jira खाता जोड़ें।',
     },
     ticket: {
       status: 'स्थिति',
@@ -4205,8 +4116,7 @@ export const hi: TranslationDictionary = {
       title: 'सोर्स कंट्रोल',
       description: 'GitHub, GitLab और Bitbucket से pull requests देखें।',
       empty_title: 'कोई pull request सिंक नहीं हुई',
-      empty_description:
-        'अभी तक कोई pull request सिंक नहीं हुई। सोर्स कंट्रोल कनेक्टर पर सिंक चलाएं।',
+      empty_description: 'अभी तक कोई pull request सिंक नहीं हुई। सोर्स कंट्रोल कनेक्टर पर सिंक चलाएं।',
       error_title: 'Pull requests लोड नहीं हो सकीं',
       no_connector_title: 'कोई सोर्स कंट्रोल कनेक्टर नहीं मिला',
       no_connector_description:
@@ -4244,8 +4154,7 @@ export const hi: TranslationDictionary = {
         'अभी तक कोई Slack संदेश सिंक नहीं हुए। संदेश लोड करने के लिए Slack कनेक्टर पर सिंक चलाएं।',
       error_title: 'संदेश लोड नहीं हो सके',
       no_connector_title: 'कोई Slack कनेक्टर नहीं मिला',
-      no_connector_description:
-        'संदेश देखने के लिए Workspace Connectors में Slack workspace जोड़ें।',
+      no_connector_description: 'संदेश देखने के लिए Workspace Connectors में Slack workspace जोड़ें।',
     },
     message: {
       channel: 'चैनल',
@@ -4266,12 +4175,10 @@ export const hi: TranslationDictionary = {
       title: 'Confluence',
       description: 'सिंक किए गए Confluence पृष्ठ देखें और प्रबंधित करें।',
       empty_title: 'कोई पृष्ठ सिंक नहीं हुए',
-      empty_description:
-        'अभी तक कोई Confluence पृष्ठ सिंक नहीं हुए। Confluence कनेक्टर पर सिंक चलाएं।',
+      empty_description: 'अभी तक कोई Confluence पृष्ठ सिंक नहीं हुए। Confluence कनेक्टर पर सिंक चलाएं।',
       error_title: 'पृष्ठ लोड नहीं हो सके',
       no_connector_title: 'कोई Confluence कनेक्टर नहीं मिला',
-      no_connector_description:
-        'पृष्ठ देखने के लिए Workspace Connectors में Confluence workspace जोड़ें।',
+      no_connector_description: 'पृष्ठ देखने के लिए Workspace Connectors में Confluence workspace जोड़ें।',
     },
     article: {
       space: 'स्पेस',
@@ -4291,11 +4198,9 @@ export const hi: TranslationDictionary = {
   docs: {
     page: {
       title: 'दस्तावेज़',
-      description:
-        'Google Drive, OneDrive और SharePoint से सिंक किए गए दस्तावेज़ देखें और प्रबंधित करें।',
+      description: 'Google Drive, OneDrive और SharePoint से सिंक किए गए दस्तावेज़ देखें और प्रबंधित करें।',
       empty_title: 'कोई दस्तावेज़ सिंक नहीं हुए',
-      empty_description:
-        'अभी तक कोई दस्तावेज़ सिंक नहीं हुए। Drive या SharePoint कनेक्टर पर सिंक चलाएं।',
+      empty_description: 'अभी तक कोई दस्तावेज़ सिंक नहीं हुए। Drive या SharePoint कनेक्टर पर सिंक चलाएं।',
       error_title: 'दस्तावेज़ लोड नहीं हो सके',
       no_connector_title: 'कोई दस्तावेज़ कनेक्टर नहीं मिला',
       no_connector_description:
@@ -4343,8 +4248,7 @@ export const hi: TranslationDictionary = {
   workflow: {
     page: {
       title: 'क्रॉस-वर्कस्पेस वर्कफ़्लो',
-      description:
-        'कई वर्कस्पेस प्रदाताओं से ऑब्जेक्ट चुनें और संयुक्त संदर्भ पर AI क्रियाएँ चलाएँ।',
+      description: 'कई वर्कस्पेस प्रदाताओं से ऑब्जेक्ट चुनें और संयुक्त संदर्भ पर AI क्रियाएँ चलाएँ।',
       empty_title: 'कोई ऑब्जेक्ट नहीं मिला',
       empty_description: 'अभी तक कोई वर्कस्पेस ऑब्जेक्ट सिंक नहीं हुआ है।',
       error_title: 'ऑब्जेक्ट लोड करने में विफल',
@@ -4375,8 +4279,7 @@ export const hi: TranslationDictionary = {
   },
   localFrontier: {
     title: 'स्थानीय फ्रंटियर मॉडल',
-    subtitle:
-      'फ्रंटियर ओपन-वेट LLMs (Kimi K2, GLM-5.1, DeepSeek V3.2/V4) पूरी तरह से स्थानीय रूप से चलाएँ।',
+    subtitle: 'फ्रंटियर ओपन-वेट LLMs (Kimi K2, GLM-5.1, DeepSeek V3.2/V4) पूरी तरह से स्थानीय रूप से चलाएँ।',
     loading: 'कैटलॉग लोड हो रहा है…',
     catalogEmpty: 'कोई मॉडल फ़िल्टर से मेल नहीं खाता।',
     catalogError: 'कैटलॉग लोड नहीं हुआ। claw-llamacpp-service चालू है या नहीं जाँचें।',
@@ -4393,8 +4296,7 @@ export const hi: TranslationDictionary = {
       activateHint:
         'मॉडल सर्वर शुरू करता है। RAM (और उपलब्ध होने पर VRAM) का उपयोग करता है। चैट संदेशों का उत्तर देने से पहले आवश्यक।',
       deactivate: 'निष्क्रिय करें',
-      deactivateHint:
-        'मेमोरी मुक्त करता है। मॉडल डाउनलोड बना रहता है; आप कभी भी पुनः सक्रिय कर सकते हैं।',
+      deactivateHint: 'मेमोरी मुक्त करता है। मॉडल डाउनलोड बना रहता है; आप कभी भी पुनः सक्रिय कर सकते हैं।',
       loading: 'सक्रिय किया जा रहा है…',
       deleteWeights: 'वज़न हटाएँ',
       configure: 'रनटाइम कॉन्फ़िगर',
@@ -4403,12 +4305,10 @@ export const hi: TranslationDictionary = {
       active: 'सक्रिय — चैट ट्रैफ़िक संभाल रहा है',
       activeHint: 'यह मॉडल मेमोरी में लोड है और अभी स्थानीय चैट का जवाब दे रहा है।',
       idle: 'निष्क्रिय — मेमोरी में नहीं',
-      idleHint:
-        'वज़न डिस्क पर हैं लेकिन मॉडल लोड नहीं है। चैट का जवाब देने के लिए इसे सक्रिय करें।',
+      idleHint: 'वज़न डिस्क पर हैं लेकिन मॉडल लोड नहीं है। चैट का जवाब देने के लिए इसे सक्रिय करें।',
       loading: 'सक्रिय किया जा रहा है…',
       crashed: 'क्रैश',
-      crashedHint:
-        'मॉडल प्रक्रिया अप्रत्याशित रूप से बंद हो गई। फिर से सक्रिय करने का प्रयास करें।',
+      crashedHint: 'मॉडल प्रक्रिया अप्रत्याशित रूप से बंद हो गई। फिर से सक्रिय करने का प्रयास करें।',
       notActiveHelp:
         'मेरा चैट इस मॉडल का उपयोग क्यों नहीं कर रहा है? इसे मेमोरी में लोड करने के लिए सक्रिय करें; एक समय में केवल एक स्थानीय फ्रंटियर मॉडल सक्रिय हो सकता है।',
     },
@@ -4608,8 +4508,7 @@ export const hi: TranslationDictionary = {
       'इस फ़ाइल प्रकार के लिए पूर्वावलोकन उपलब्ध नहीं है। इसे स्थानीय रूप से खोलने के लिए डाउनलोड का उपयोग करें।',
     download: 'डाउनलोड',
     close: 'बंद करें',
-    pdfOpensInNewTab:
-      'PDF आपके ब्राउज़र के PDF व्यूअर में एक नए टैब में खुलते हैं। आप फ़ाइल डाउनलोड भी कर सकते हैं।',
+    pdfOpensInNewTab: 'PDF आपके ब्राउज़र के PDF व्यूअर में एक नए टैब में खुलते हैं। आप फ़ाइल डाउनलोड भी कर सकते हैं।',
     openInNewTab: 'नए टैब में खोलें',
   },
   search: {
@@ -4779,8 +4678,7 @@ export const hi: TranslationDictionary = {
   implHandoff: {
     page: {
       title: 'कोडिंग हैंडऑफ़',
-      description:
-        'अनुमोदित IMPL_PROMPT क्रियाएँ जो चैट थ्रेड, एजेंट टर्मिनल या क्लिपबोर्ड तक पहुँचाई गईं।',
+      description: 'अनुमोदित IMPL_PROMPT क्रियाएँ जो चैट थ्रेड, एजेंट टर्मिनल या क्लिपबोर्ड तक पहुँचाई गईं।',
       loading: 'हैंडऑफ़ लोड हो रहे हैं…',
       error: 'हैंडऑफ़ लोड नहीं हो सके।',
       empty: 'अभी तक कोई हैंडऑफ़ नहीं। कतार में IMPL_PROMPT अनुमोदित करें।',
@@ -4906,8 +4804,7 @@ export const hi: TranslationDictionary = {
       reset: 'रीसेट',
       running: 'विश्लेषक चल रहा है…',
       error: 'सिमेंटिक विश्लेषण विफल',
-      emptyHint:
-        'प्रॉम्प्ट दर्ज करें और परिणाम देखने के लिए "सिमेंटिक विश्लेषक चलाएँ" पर क्लिक करें।',
+      emptyHint: 'प्रॉम्प्ट दर्ज करें और परिणाम देखने के लिए "सिमेंटिक विश्लेषक चलाएँ" पर क्लिक करें।',
     },
     result: {
       title: 'सिमेंटिक विश्लेषण परिणाम',
@@ -4936,8 +4833,7 @@ export const hi: TranslationDictionary = {
     refundAction: 'रिफ़ंड जारी करें',
     refunding: 'रिफ़ंड हो रहा है...',
     dialogTitle: 'रिफ़ंड जारी करें',
-    dialogDescription:
-      'भुगतान की मुद्रा में राशि दर्ज करें। यह कार्रवाई बिलिंग लेज़र में दर्ज होगी।',
+    dialogDescription: 'भुगतान की मुद्रा में राशि दर्ज करें। यह कार्रवाई बिलिंग लेज़र में दर्ज होगी।',
     amount: 'राशि',
     maximum: 'अधिकतम',
     reason: 'कारण',
@@ -5098,8 +4994,7 @@ export const hi: TranslationDictionary = {
     updateSucceeded: 'योजना अपडेट हो गई।',
     updateFailed: 'योजना अपडेट नहीं हो सकी।',
     featureAllowCriticReview: 'क्रिटिक समीक्षा',
-    featureAllowCriticReviewHint:
-      'उपयोगकर्ताओं को तुलना मोड के जज रनों में दूसरा क्रिटिक LLM जोड़ने देता है।',
+    featureAllowCriticReviewHint: 'उपयोगकर्ताओं को तुलना मोड के जज रनों में दूसरा क्रिटिक LLM जोड़ने देता है।',
     create: {
       title: 'नई योजना',
       description: 'एक नई सदस्यता योजना बनाएँ।',
@@ -5160,12 +5055,10 @@ export const hi: TranslationDictionary = {
       callLimitCost: 'प्रति कॉल अधिकतम लागत (USD)',
       callLimitCostHelp:
         'प्लेटफ़ॉर्म द्वारा भुगतान की गई एक कॉल की अधिकतम लागत, USD में 6 दशमलव तक। सीमा न रखने के लिए खाली छोड़ें।',
-      callLimitTokensInvalid:
-        '0 से 10000000 तक पूर्ण संख्या दर्ज करें, या सीमा न रखने के लिए खाली छोड़ें।',
+      callLimitTokensInvalid: '0 से 10000000 तक पूर्ण संख्या दर्ज करें, या सीमा न रखने के लिए खाली छोड़ें।',
       isPublic: 'सार्वजनिक रूप से सूचीबद्ध',
       isTrial: 'निःशुल्क परीक्षण वाला प्लान',
-      trialHelp:
-        'ट्रायल एक्सेस प्रति खाता एक बार ही उपयोग किया जा सकता है। इसकी अवधि नीचे तय करें।',
+      trialHelp: 'ट्रायल एक्सेस प्रति खाता एक बार ही उपयोग किया जा सकता है। इसकी अवधि नीचे तय करें।',
       trialDays: 'ट्रायल अवधि (दिन)',
       trialDaysHelp:
         '1 से 3650 तक कोई भी पूर्ण संख्या। नए ट्रायल यहाँ सहेजे गए मान का उपयोग करते हैं; पहले से चल रहे ट्रायल अपनी समाप्ति तिथि बनाए रखते हैं।',
@@ -5322,8 +5215,7 @@ export const hi: TranslationDictionary = {
     creditRemaining: '{remaining} शेष',
     creditUsedOfLimit: '{limit} में से {used}',
     creditPercentUsed: '{percent}% उपयोग किया गया',
-    dualConsumptionHint:
-      'क्लाउड कनेक्टर क्रेडिट और टोकन दोनों उपयोग करते हैं; स्थानीय मॉडल केवल टोकन।',
+    dualConsumptionHint: 'क्लाउड कनेक्टर क्रेडिट और टोकन दोनों उपयोग करते हैं; स्थानीय मॉडल केवल टोकन।',
     title: 'उपयोग',
     description: 'अपनी योजना कोटा के मुकाबले अपने दैनिक टोकन उपयोग को ट्रैक करें।',
     loading: 'उपयोग लोड हो रहा है...',
@@ -5483,8 +5375,7 @@ export const hi: TranslationDictionary = {
       revokeIsNotRemoval:
         'साझा करना बंद करने से आगे की पहुँच रुक जाती है, लेकिन खोज इंजनों या अन्य लोगों के पास पहले से मौजूद प्रतियाँ हटाई नहीं जा सकतीं।',
       futureMessagesPrivate: 'बाद में भेजे गए संदेश निजी रहते हैं।',
-      mustUpdateExplicitly:
-        'नए संदेश प्रकाशित करने के लिए आपको साझा संस्करण स्वयं अद्यतन करना होगा।',
+      mustUpdateExplicitly: 'नए संदेश प्रकाशित करने के लिए आपको साझा संस्करण स्वयं अद्यतन करना होगा।',
       noSensitiveData:
         'कभी भी गुप्त कुंजियाँ, क्रेडेंशियल, व्यक्तिगत डेटा, रोगी डेटा या गोपनीय कंपनी जानकारी साझा न करें।',
     },
@@ -5551,8 +5442,7 @@ export const hi: TranslationDictionary = {
       published: '{date} को प्रकाशित',
       updated: '{date} को अद्यतन',
       messageCount: '{count} संदेश',
-      snapshotDisclaimer:
-        'यह चैट के स्वामी द्वारा प्रकाशित केवल-पढ़ने योग्य प्रति है। यह चालू बातचीत नहीं है।',
+      snapshotDisclaimer: 'यह चैट के स्वामी द्वारा प्रकाशित केवल-पढ़ने योग्य प्रति है। यह चालू बातचीत नहीं है।',
       roleUser: 'उपयोगकर्ता',
       roleAssistant: 'सहायक',
       truncated: 'यह संदेश छोटा किया गया क्योंकि यह असामान्य रूप से लंबा है।',
@@ -5566,8 +5456,7 @@ export const hi: TranslationDictionary = {
   },
   billing: {
     credit: {
-      faceValueNote:
-        'खरीदा गया क्रेडिट अंकित मूल्य पर जुड़ता है — {price} दें, {price} क्रेडिट पाएँ।',
+      faceValueNote: 'खरीदा गया क्रेडिट अंकित मूल्य पर जुड़ता है — {price} दें, {price} क्रेडिट पाएँ।',
       grantShareNote: 'आपके प्लान की कीमत का {percent}% हर महीने कनेक्टर क्रेडिट बनता है।',
       surface: {
         CHAT: 'चैट',
@@ -5658,8 +5547,7 @@ export const hi: TranslationDictionary = {
       PLAN_CALL_LIMIT_EXCEEDED:
         'यह अनुरोध आपके प्लान में एक संदेश के लिए अनुमत सीमा से बड़ा है। इसे छोटा करें या कम खर्चीला मॉडल चुनें।',
       PAYG_MODEL_UNPRICED: 'इस मॉडल की कीमत अभी प्रकाशित नहीं है और इसका शुल्क नहीं लिया जा सकता।',
-      PAYG_PRICING_UNAVAILABLE:
-        'कीमत की जानकारी अस्थायी रूप से अनुपलब्ध है। आपसे कोई शुल्क नहीं लिया गया।',
+      PAYG_PRICING_UNAVAILABLE: 'कीमत की जानकारी अस्थायी रूप से अनुपलब्ध है। आपसे कोई शुल्क नहीं लिया गया।',
       PAYG_MODEL_NOT_IN_FREE_ALLOWANCE:
         'इस मॉडल की लागत आपके मुफ़्त प्लान की सीमा से अधिक है। कम लागत वाला या शामिल मॉडल चुनें, क्रेडिट जोड़ें, या प्लान अपग्रेड करें।',
       PAYG_FREE_ALLOWANCE_EXHAUSTED:
@@ -5681,8 +5569,7 @@ export const hi: TranslationDictionary = {
     gatewayDialog: {
       title: 'सुरक्षित भुगतान',
       paymobDescription: 'ClawAI छोड़े बिना सुरक्षित रूप से भुगतान पूरा करें।',
-      paypalDescription:
-        'PayPal एक सुरक्षित पॉपअप में खुलेगा और यह संवाद भुगतान पूरा होने की पुष्टि करेगा।',
+      paypalDescription: 'PayPal एक सुरक्षित पॉपअप में खुलेगा और यह संवाद भुगतान पूरा होने की पुष्टि करेगा।',
       openPaypal: 'PayPal खोलें',
       openPaymob: 'Paymob खोलें',
       verifying: 'भुगतान सत्यापित हो रहा है…',
@@ -5722,8 +5609,7 @@ export const hi: TranslationDictionary = {
       suspendedTitle: 'आपकी सदस्यता निलंबित है',
       suspendedDescription: 'बिलिंग सुलझने तक सशुल्क सुविधाएँ उपलब्ध नहीं रहेंगी।',
       incompleteTitle: 'आपके भुगतान की पुष्टि अभी बाकी है',
-      incompleteDescription:
-        'इसमें आम तौर पर कुछ ही क्षण लगते हैं। पुष्टि होते ही आपका प्लान शुरू हो जाएगा।',
+      incompleteDescription: 'इसमें आम तौर पर कुछ ही क्षण लगते हैं। पुष्टि होते ही आपका प्लान शुरू हो जाएगा।',
       cancellingTitle: 'आपकी सदस्यता समाप्त होने वाली है',
       cancellingDescription: 'आपने जिसके लिए भुगतान किया है, वह सब {date} तक आपके पास रहेगा।',
       scheduledChangeTitle: 'एक प्लान बदलाव निर्धारित है',
@@ -5731,8 +5617,7 @@ export const hi: TranslationDictionary = {
     },
     summary: {
       freeTitle: 'निःशुल्क प्लान',
-      freeDescription:
-        'आप निःशुल्क प्लान पर हैं। अपनी सीमाएँ बढ़ाने के लिए नीचे कोई सशुल्क प्लान चुनें।',
+      freeDescription: 'आप निःशुल्क प्लान पर हैं। अपनी सीमाएँ बढ़ाने के लिए नीचे कोई सशुल्क प्लान चुनें।',
       price: 'कीमत',
       renewsOn: 'नवीनीकरण तिथि',
     },
@@ -6027,8 +5912,7 @@ export const hi: TranslationDictionary = {
         title: 'ClawAI, VS Code के भीतर काम करता है',
         body: 'आपकी सदस्यता के सभी मॉडल, उसी एडिटर में जो आप पहले से उपयोग करते हैं। एक्सटेंशन एक थिन क्लाइंट है — आपका खाता, कोटा और इतिहास प्लेटफॉर्म पर ही रहते हैं, इसलिए ब्राउज़र में शुरू की गई बातचीत एडिटर में जारी रहती है।',
         point1Title: 'दूसरी सदस्यता नहीं',
-        point1Body:
-          'यह आपके मौजूदा ClawAI खाते और उसी कोटे का उपयोग करता है। अतिरिक्त कुछ खरीदना नहीं है।',
+        point1Body: 'यह आपके मौजूदा ClawAI खाते और उसी कोटे का उपयोग करता है। अतिरिक्त कुछ खरीदना नहीं है।',
         point2Title: 'एडिटर में कोई API कुंजी नहीं',
         point2Body:
           'रूटिंग प्लेटफॉर्म पर होती है, इसलिए एक्सटेंशन कभी किसी मॉडल प्रदाता का क्रेडेंशियल नहीं रखता।',
@@ -6044,8 +5928,7 @@ export const hi: TranslationDictionary = {
         title: 'चैट को शोध-आधारित, स्रोतों वाले सार्वजनिक लेख में बदलें',
         body: 'कई मॉडल इसे लिखते हैं, निर्णायक और आलोचक इसकी समीक्षा करते हैं, और आपकी मंज़ूरी के बिना कुछ सार्वजनिक नहीं होता। Free से शुरू होकर हर प्लान के लिए खुला।',
         step1Title: 'चैट चुनें',
-        step1Body:
-          'किसी भी चैट पर «सार्वजनिक Thread में बदलें» चुनें, या Threads पेज से शुरू करें।',
+        step1Body: 'किसी भी चैट पर «सार्वजनिक Thread में बदलें» चुनें, या Threads पेज से शुरू करें।',
         step2Title: 'मॉडल और खर्च सीमा चुनें',
         step2Body: 'चैट वाले चयनकर्ता से लेखक, निर्णायक और आलोचक चुनें, फिर अधिकतम खर्च तय करें।',
         step3Title: 'ड्राफ़्ट की समीक्षा करें',
@@ -6122,8 +6005,7 @@ export const hi: TranslationDictionary = {
         outro:
           'हर प्रोवाइडर की सेहत लगातार जाँची जाती है, इसलिए जिस प्रोवाइडर का दिन खराब हो उसे छोड़ दिया जाता है, विफल होने नहीं दिया जाता। हर निर्णय के साथ एक कॉन्फिडेंस स्कोर, उसके पीछे के कारण और एक फ़ॉलबैक चेन दर्ज होती है, और हर उत्तर आपको बताता है कि कौन-सा मॉडल और क्यों इस्तेमाल हुआ।',
         modeAutoName: 'ऑटो',
-        modeAutoDesc:
-          'ClawAI संदेश को वर्गीकृत करता है और हर संदेश के लिए आपके लिए प्रोवाइडर व मॉडल चुनता है',
+        modeAutoDesc: 'ClawAI संदेश को वर्गीकृत करता है और हर संदेश के लिए आपके लिए प्रोवाइडर व मॉडल चुनता है',
         modeManualName: 'मैन्युअल',
         modeManualDesc: 'आप एक बातचीत में एक मॉडल पिन करते हैं और हर संदेश उसी को जाता है',
         modeLocalName: 'कम विलंबता',
@@ -6168,8 +6050,7 @@ export const hi: TranslationDictionary = {
         escalationDesc:
           'एक तेज़, सस्ते मॉडल से शुरू करें और गुणवत्ता किसी सीमा से कम पड़ने पर स्वचालित रूप से किसी मज़बूत मॉडल तक बढ़ाएँ।',
         bestOfNName: 'Best-of-N',
-        bestOfNDesc:
-          'कई उम्मीदवार उत्तर उत्पन्न करें और एक स्कोरिंग पास द्वारा सबसे मज़बूत का चयन करें।',
+        bestOfNDesc: 'कई उम्मीदवार उत्तर उत्पन्न करें और एक स्कोरिंग पास द्वारा सबसे मज़बूत का चयन करें।',
         repairName: 'उत्तर मरम्मत',
         repairDesc:
           'किसी पूर्व प्रतिक्रिया में त्रुटियों की विशिष्ट श्रेणियों का पता लगाएँ और उन्हें शुरू से फिर से बनाने के बजाय सुधारें।',
@@ -6284,8 +6165,7 @@ export const hi: TranslationDictionary = {
         point2Body:
           'एडमिन कंसोल से उपयोगकर्ताओं को सक्रिय करें, भूमिकाएँ बदलें, अस्थायी पासवर्ड सेट करें और हर व्यक्ति का उपयोग और प्लान देखें।',
         point3Title: 'ऑडिट ट्रेल',
-        point3Body:
-          'सुरक्षा से जुड़ी कार्रवाइयाँ एक ऑडिट लॉग में दर्ज होती हैं, जिसे एडमिन फ़िल्टर करके देख सकते हैं।',
+        point3Body: 'सुरक्षा से जुड़ी कार्रवाइयाँ एक ऑडिट लॉग में दर्ज होती हैं, जिसे एडमिन फ़िल्टर करके देख सकते हैं।',
         ctaPrimary: 'प्रशासन और एक्सेस नियंत्रण',
         ctaSecondary: 'हमसे बात करें',
       },
@@ -6307,18 +6187,13 @@ export const hi: TranslationDictionary = {
         anthropicDesc:
           'लंबे दस्तावेज़ों पर सावधानीपूर्वक तर्कशक्ति, मज़बूत कोड समीक्षा, और सूची में सबसे विश्वसनीय निर्देश-पालन।',
         openaiDesc: 'उत्कृष्ट टूल उपयोग और भरोसेमंद संरचित आउटपुट के साथ व्यापक सामान्य क्षमता।',
-        geminiDesc:
-          'बहुत बड़ी कॉन्टेक्स्ट विंडो, तेज़ प्रतिक्रियाएँ, और इमेज, ऑडियो व वीडियो की नेटिव हैंडलिंग।',
+        geminiDesc: 'बहुत बड़ी कॉन्टेक्स्ट विंडो, तेज़ प्रतिक्रियाएँ, और इमेज, ऑडियो व वीडियो की नेटिव हैंडलिंग।',
         kimiDesc: 'अग्रणी कीमतों के एक अंश पर लॉन्ग-कॉन्टेक्स्ट विश्लेषण और एजेंटिक काम।',
-        glmDesc:
-          'कठिन समस्याओं के लिए चालू किए जा सकने वाले स्पष्ट थिंकिंग मोड के साथ मज़बूत द्विभाषी तर्कशक्ति।',
-        qwenDesc:
-          'तेज़ से लेकर बहुत बड़े तक, मॉडल आकारों की विस्तृत श्रृंखला में उत्कृष्ट कोड जनरेशन।',
-        deepseekDesc:
-          'गणित, एल्गोरिदम और चरण-दर-चरण व्युत्पत्ति, एक समर्पित रीज़निंग वेरिएंट के साथ।',
+        glmDesc: 'कठिन समस्याओं के लिए चालू किए जा सकने वाले स्पष्ट थिंकिंग मोड के साथ मज़बूत द्विभाषी तर्कशक्ति।',
+        qwenDesc: 'तेज़ से लेकर बहुत बड़े तक, मॉडल आकारों की विस्तृत श्रृंखला में उत्कृष्ट कोड जनरेशन।',
+        deepseekDesc: 'गणित, एल्गोरिदम और चरण-दर-चरण व्युत्पत्ति, एक समर्पित रीज़निंग वेरिएंट के साथ।',
         grokDesc: 'हाल की घटनाओं की जानकारी के साथ तेज़ बातचीत-शैली के उत्तर।',
-        bedrockDesc:
-          'उन संगठनों के लिए AWS-होस्टेड मॉडल जो पहले से Amazon पर अपना वर्कलोड चलाते हैं।',
+        bedrockDesc: 'उन संगठनों के लिए AWS-होस्टेड मॉडल जो पहले से Amazon पर अपना वर्कलोड चलाते हैं।',
         outro:
           'यह सूची हर प्रोवाइडर के रिलीज़ शेड्यूल का पालन करती है। नया अग्रणी मॉडल आते ही आपकी मॉडल सूची में दिखने लगता है — न प्लान बदलना, न नया अनुबंध, न दूसरा बिल।',
       },
@@ -6358,8 +6233,7 @@ export const hi: TranslationDictionary = {
         escalationDesc:
           'एक तेज़, सस्ते मॉडल से शुरू करें और स्वतः एक मज़बूत मॉडल पर बढ़ें, लेकिन तभी जब उत्तर गुणवत्ता की सीमा से नीचे गिरे।',
         bestOfNName: 'बेस्ट-ऑफ़-N',
-        bestOfNDesc:
-          'एक ही प्रॉम्प्ट के लिए कई संभावित उत्तर जनरेट करें और सबसे ज़्यादा स्कोर करने वाले को रखें।',
+        bestOfNDesc: 'एक ही प्रॉम्प्ट के लिए कई संभावित उत्तर जनरेट करें और सबसे ज़्यादा स्कोर करने वाले को रखें।',
         repairName: 'मरम्मत',
         repairDesc:
           'पूरी चीज़ को फिर से जनरेट करने की बजाय, आपके पास मौजूद उत्तर में किसी खास खामी को ठीक करें — एक टूटा कोड ब्लॉक, एक गलत आँकड़ा।',
@@ -6370,8 +6244,7 @@ export const hi: TranslationDictionary = {
         rolePackDesc:
           'भूमिका-विशेषज्ञ मॉडलों की एक छोटी टीम — प्लानर, क्रिटिक, राइटर — के ज़रिए एक प्रॉम्प्ट चलाएँ, हर एक अगले को सौंपते हुए।',
         pipelineName: 'पाइपलाइन',
-        pipelineDesc:
-          'इनमें से कई चरणों को एक नामित वर्कफ़्लो में जोड़ें जिसे आप नए इनपुट पर दोबारा चला सकें।',
+        pipelineDesc: 'इनमें से कई चरणों को एक नामित वर्कफ़्लो में जोड़ें जिसे आप नए इनपुट पर दोबारा चला सकें।',
         judgeName: 'Judge और Critic',
         judgeDesc:
           'एक स्वतंत्र मॉडल स्पष्ट मानदंडों के आधार पर प्रतिक्रिया को स्कोर करता है; एक Critic पास लिखित फ़ीडबैक जोड़ता है कि क्या कमज़ोर है और क्यों।',
@@ -6408,8 +6281,7 @@ export const hi: TranslationDictionary = {
         intro:
           'एक दस्तावेज़ अपलोड करें और उसके बारे में पूछें। ClawAI एक्सट्रैक्शन, चंकिंग और रिट्रीवल संभालता है ताकि मॉडल अपने ट्रेनिंग डेटा से अंदाज़ा लगाने के बजाय आपकी सामग्री से जवाब दे।',
         uploadName: 'अपलोड',
-        uploadDesc:
-          'PDF, DOCX, स्प्रेडशीट, CSV, JSON, Markdown, सादा टेक्स्ट, कोड फ़ाइलें और इमेज।',
+        uploadDesc: 'PDF, DOCX, स्प्रेडशीट, CSV, JSON, Markdown, सादा टेक्स्ट, कोड फ़ाइलें और इमेज।',
         chunkingName: 'चंकिंग और रिट्रीवल',
         chunkingDesc:
           'फ़ाइलों को अंशों में बाँटा और इंडेक्स किया जाता है, ताकि केवल आपके सवाल से जुड़े हिस्से ही प्रॉम्प्ट में खींचे जाएँ।',
@@ -6451,8 +6323,7 @@ export const hi: TranslationDictionary = {
         title: 'इमेज और दस्तावेज़, सिर्फ़ टेक्स्ट नहीं',
         intro: 'ClawAI एक बातचीत से तैयार आर्टिफ़ैक्ट बनाता है, सिर्फ़ चैट जवाब नहीं।',
         imageName: 'इमेज जनरेशन',
-        imageDesc:
-          'एक इमेज का वर्णन करें और उसे थ्रेड में वापस पाएँ, इसे बनाने वाले प्रॉम्प्ट और सेटिंग्स के साथ।',
+        imageDesc: 'एक इमेज का वर्णन करें और उसे थ्रेड में वापस पाएँ, इसे बनाने वाले प्रॉम्प्ट और सेटिंग्स के साथ।',
         documentName: 'दस्तावेज़ निर्यात',
         documentDesc:
           'किसी भी उत्तर, या पूरी बातचीत को, एक फ़ॉर्मैटेड फ़ाइल में बदलें जिसे आप किसी और को दे सकें।',
@@ -6492,8 +6363,7 @@ export const hi: TranslationDictionary = {
         credentialsDesc:
           'प्रोवाइडर और कनेक्टर क्रेडेंशियल AES-256-GCM से एन्क्रिप्ट होकर सहेजे जाते हैं और कभी ब्राउज़र को वापस नहीं भेजे जाते।',
         rateLimitName: 'रेट लिमिटिंग',
-        rateLimitDesc:
-          'प्रति-खाता अनुरोध सीमाएँ आपकी टोकन सीमा और प्लेटफ़ॉर्म दोनों को बेक़ाबू लूप से बचाती हैं।',
+        rateLimitDesc: 'प्रति-खाता अनुरोध सीमाएँ आपकी टोकन सीमा और प्लेटफ़ॉर्म दोनों को बेक़ाबू लूप से बचाती हैं।',
         transportName: 'ट्रांज़िट में एन्क्रिप्शन',
         transportDesc:
           'ब्राउज़र से एज तक TLS, और फिर हर आंतरिक सेवा के बीच फिर से TLS, हर हॉप पर प्रमाणपत्र सत्यापन के साथ।',
@@ -6526,20 +6396,17 @@ export const hi: TranslationDictionary = {
         title: 'पूरी बात आठ चरणों में',
         intro: 'इनमें से हर एक का अपना सेक्शन नीचे है।',
         step1Title: 'एक खाता बनाएँ',
-        step1Desc:
-          'एक ईमेल पता और एक पासवर्ड। निःशुल्क प्लान तुरंत शुरू होता है, बिना किसी कार्ड की ज़रूरत के।',
+        step1Desc: 'एक ईमेल पता और एक पासवर्ड। निःशुल्क प्लान तुरंत शुरू होता है, बिना किसी कार्ड की ज़रूरत के।',
         step2Title: 'एक प्लान चुनें',
         step2Desc:
           'शुरुआत निःशुल्क; पेड प्लान आपकी टोकन सीमा बढ़ाते हैं और बड़े मॉडल व मल्टी-मॉडल मोड अनलॉक करते हैं।',
         step3Title: 'एक बातचीत शुरू करें',
-        step3Desc:
-          'एक संदेश टाइप करें, चाहें तो फ़ाइलें जोड़ें, और या तो एक मॉडल चुनें या इसे Auto पर छोड़ दें।',
+        step3Desc: 'एक संदेश टाइप करें, चाहें तो फ़ाइलें जोड़ें, और या तो एक मॉडल चुनें या इसे Auto पर छोड़ दें।',
         step4Title: 'ClawAI मॉडल चुनता है',
         step4Desc:
           'संदेश वर्गीकृत किया जाता है और उस मॉडल पर राउट किया जाता है जो उस तरह के काम को बख़ूबी संभालता है।',
         step5Title: 'कॉन्टेक्स्ट इकट्ठा किया जाता है',
-        step5Desc:
-          'प्रासंगिक मेमोरी, जुड़े कॉन्टेक्स्ट पैक और आपकी फ़ाइलों के महत्वपूर्ण हिस्से प्रॉम्प्ट में जोड़े जाते हैं।',
+        step5Desc: 'प्रासंगिक मेमोरी, जुड़े कॉन्टेक्स्ट पैक और आपकी फ़ाइलों के महत्वपूर्ण हिस्से प्रॉम्प्ट में जोड़े जाते हैं।',
         step6Title: 'उत्तर वापस स्ट्रीम होता है',
         step6Desc:
           'जैसे-जैसे टेक्स्ट जनरेट होता है वैसे-वैसे आता है, साथ में लाइव टाइमिंग और, जहाँ मॉडल दिखाता है, उसकी तर्क प्रक्रिया।',
@@ -6573,11 +6440,9 @@ export const hi: TranslationDictionary = {
       models: {
         title: 'आप जिन मॉडलों तक पहुँच सकते हैं',
         intro: 'एक वर्कस्पेस, नीचे दिया हर परिवार। आप एक ही बातचीत के भीतर इनके बीच बदल सकते हैं।',
-        anthropicStrength:
-          'सावधानीपूर्वक तर्कशक्ति, लंबे दस्तावेज़, और सूची में सबसे विश्वसनीय कोड समीक्षा।',
+        anthropicStrength: 'सावधानीपूर्वक तर्कशक्ति, लंबे दस्तावेज़, और सूची में सबसे विश्वसनीय कोड समीक्षा।',
         openaiStrength: 'मज़बूत टूल उपयोग और संरचित आउटपुट के साथ व्यापक सामान्य क्षमता।',
-        geminiStrength:
-          'विशाल कॉन्टेक्स्ट विंडो, तेज़ प्रतिक्रियाएँ, और नेटिव इमेज, ऑडियो व वीडियो इनपुट।',
+        geminiStrength: 'विशाल कॉन्टेक्स्ट विंडो, तेज़ प्रतिक्रियाएँ, और नेटिव इमेज, ऑडियो व वीडियो इनपुट।',
         kimiStrength: 'कम लागत में लॉन्ग-कॉन्टेक्स्ट विश्लेषण और एजेंटिक काम।',
         glmStrength: 'स्पष्ट थिंकिंग मोड के साथ मज़बूत द्विभाषी तर्कशक्ति।',
         qwenStrength: 'मॉडल आकारों की विस्तृत श्रृंखला में उत्कृष्ट कोड जनरेशन।',
@@ -6604,8 +6469,7 @@ export const hi: TranslationDictionary = {
         classAnalysisDesc:
           'लंबे इनपुट, स्प्रेडशीट और रिपोर्ट, सबसे बड़ी कॉन्टेक्स्ट विंडो वाले मॉडलों पर राउट किए जाते हैं।',
         classImageName: 'इमेज',
-        classImageDesc:
-          'इमेज बनाने या समझने के अनुरोध उस मॉडल के पास जाते हैं जो वाकई पिक्सेल संभाल सकता है।',
+        classImageDesc: 'इमेज बनाने या समझने के अनुरोध उस मॉडल के पास जाते हैं जो वाकई पिक्सेल संभाल सकता है।',
         classEverydayName: 'रोज़मर्रा के सवाल',
         classEverydayDesc:
           'छोटे तथ्यात्मक सवाल और त्वरित संपादन एक तेज़, सस्ते मॉडल के पास जाते हैं — ज़्यादातर संदेश यहीं आते हैं।',
@@ -6636,8 +6500,7 @@ export const hi: TranslationDictionary = {
       },
       context: {
         title: 'आपके संदेश के अलावा मॉडल को और क्या दिया जाता है',
-        intro:
-          'टिकाऊ कॉन्टेक्स्ट की तीन परतें एक प्रॉम्प्ट में इकट्ठा की जा सकती हैं, ये सभी आपके नियंत्रण में हैं।',
+        intro: 'टिकाऊ कॉन्टेक्स्ट की तीन परतें एक प्रॉम्प्ट में इकट्ठा की जा सकती हैं, ये सभी आपके नियंत्रण में हैं।',
         memoryName: 'मेमोरी',
         memoryDesc:
           'बातचीत के बीच ले जाने लायक तथ्य, पसंद और निर्देश। उम्मीदवार चुपचाप सहेजे जाने के बजाय एक स्वीकृति कतार में जाते हैं।',
@@ -6680,8 +6543,7 @@ export const hi: TranslationDictionary = {
         exampleLightDesc:
           'तेज़, सस्ते मॉडल धीरे-धीरे टोकन सीमा घटाते हैं। छोटे सवालों वाला एक दिन आँकड़े को मुश्किल से हिलाता है।',
         exampleBalancedName: 'मिड-टियर मॉडल',
-        exampleBalancedDesc:
-          'सामान्य-उद्देश्य वाले वर्कहॉर्स बीच में आते हैं। यहीं ज़्यादातर निरंतर काम होता है।',
+        exampleBalancedDesc: 'सामान्य-उद्देश्य वाले वर्कहॉर्स बीच में आते हैं। यहीं ज़्यादातर निरंतर काम होता है।',
         exampleFrontierName: 'अग्रणी मॉडल',
         exampleFrontierDesc:
           'सबसे बड़े तर्कशक्ति वाले मॉडल सबसे तेज़ी से टोकन सीमा घटाते हैं। कठिन समस्याओं के लिए इसके लायक, हल्की-फुल्की बातचीत के लिए फ़िज़ूल — यही वजह है कि Auto राउटिंग इसी के लिए है।',
@@ -6690,8 +6552,7 @@ export const hi: TranslationDictionary = {
         windowDailyDesc:
           'हर 24 घंटे में रीसेट होती है, ताकि एक भारी दिन महीने के बाकी हिस्से को कभी खराब न करे।',
         windowWeeklyName: 'साप्ताहिक',
-        windowWeeklyDesc:
-          'ऊँची श्रेणियों में उछाल को सहज बनाती है, जहाँ अकेली दैनिक सीमा बहुत मोटी पड़ती।',
+        windowWeeklyDesc: 'ऊँची श्रेणियों में उछाल को सहज बनाती है, जहाँ अकेली दैनिक सीमा बहुत मोटी पड़ती।',
         windowMonthlyName: 'मासिक',
         windowMonthlyDesc: 'आपके प्लान का मुख्य आँकड़ा, जो आपकी बिलिंग अवधि के साथ रीसेट होता है।',
         outro:
@@ -6741,28 +6602,24 @@ export const hi: TranslationDictionary = {
         authName: 'ऑथेंटिकेशन',
         authDesc: 'खाते, सत्र, टोकन जारी करना और रीफ़्रेश रोटेशन, भूमिकाएँ और अनुमतियों के सेट।',
         chatName: 'चैट',
-        chatDesc:
-          'बातचीत और संदेश, कॉन्टेक्स्ट असेंबली, स्ट्रीमिंग एक्ज़ीक्यूशन और मल्टी-मॉडल ऑर्केस्ट्रेशन।',
+        chatDesc: 'बातचीत और संदेश, कॉन्टेक्स्ट असेंबली, स्ट्रीमिंग एक्ज़ीक्यूशन और मल्टी-मॉडल ऑर्केस्ट्रेशन।',
         routingName: 'राउटिंग',
         routingDesc:
           'हर संदेश को वर्गीकृत करती है, सक्रिय मोड और किसी भी नीति को लागू करती है, और अपने फ़ॉलबैक चेन के साथ निर्णय दर्ज करती है।',
         connectorName: 'कनेक्टर',
         connectorDesc: 'प्रोवाइडर क्रेडेंशियल, मॉडल कैटलॉग, क्षमता फ़्लैग और निरंतर हेल्थ जाँच।',
         memoryName: 'मेमोरी और कॉन्टेक्स्ट',
-        memoryDesc:
-          'मेमोरी रिकॉर्ड, सुझाव कतार, कॉन्टेक्स्ट पैक और उनके वर्ज़न, और सिमेंटिक रिट्रीवल।',
+        memoryDesc: 'मेमोरी रिकॉर्ड, सुझाव कतार, कॉन्टेक्स्ट पैक और उनके वर्ज़न, और सिमेंटिक रिट्रीवल।',
         fileName: 'फ़ाइलें',
         fileDesc: 'अपलोड, सुरक्षा स्कैनिंग, टेक्स्ट एक्सट्रैक्शन, OCR, चंकिंग और रिटेंशन।',
         researchName: 'रिसर्च',
         researchDesc: 'स्रोतों वाले उत्तरों के लिए वेब खोज, पेज लाना और साक्ष्य असेंबली।',
         workspaceName: 'वर्कस्पेस',
-        workspaceDesc:
-          'बारह तीसरे-पक्ष टूल्स से OAuth कनेक्शन, वेबहुक, शेड्यूल्ड सिंक और क्रॉस-टूल खोज।',
+        workspaceDesc: 'बारह तीसरे-पक्ष टूल्स से OAuth कनेक्शन, वेबहुक, शेड्यूल्ड सिंक और क्रॉस-टूल खोज।',
         imageName: 'इमेज जनरेशन',
         imageDesc: 'इमेज अनुरोध, प्रोवाइडर एडाप्टर और इमेज रेंडर होते समय प्रति-चरण प्रगति।',
         fileGenerationName: 'दस्तावेज़ जनरेशन',
-        fileGenerationDesc:
-          'उत्तरों को PDF, DOCX, CSV, HTML, Markdown, TXT और JSON में रेंडर करना।',
+        fileGenerationDesc: 'उत्तरों को PDF, DOCX, CSV, HTML, Markdown, TXT और JSON में रेंडर करना।',
         paymentName: 'बिलिंग',
         paymentDesc: 'प्लान, सब्सक्रिप्शन, वर्ज़न वाली कीमतें, इनवॉइस और टोकन सीमा प्रवर्तन।',
         auditName: 'ऑडिट',
@@ -6789,8 +6646,7 @@ export const hi: TranslationDictionary = {
         rule3Desc:
           'हर सेवा स्टार्ट-अप पर अपना खुद का डेटाबेस माइग्रेट करती है। कोई वैश्विक माइग्रेशन नहीं है जिसका सबको इंतज़ार करना पड़े।',
         rule4Name: 'विफलताएँ स्थानीय रहती हैं',
-        rule4Desc:
-          'जो डेटाबेस धीमा है या अनुपलब्ध है वह पूरे उत्पाद की बजाय एक क्षमता को घटाता है।',
+        rule4Desc: 'जो डेटाबेस धीमा है या अनुपलब्ध है वह पूरे उत्पाद की बजाय एक क्षमता को घटाता है।',
       },
       lifecycle: {
         title: 'एक अनुरोध का जीवन',
@@ -6864,8 +6720,7 @@ export const hi: TranslationDictionary = {
         metricsDesc:
           'अब तक के टोकन, प्रति सेकंड टोकन, पहले टोकन तक का समय, और समय असल में कहाँ गया — मॉडल लोड, प्रॉम्प्ट मूल्यांकन या जनरेशन।',
         terminalName: 'टर्मिनल इवेंट',
-        terminalDesc:
-          'एक अंतिम उपयोग सारांश, या एक स्पष्ट त्रुटि या रद्दीकरण। स्ट्रीम कभी बस रुकती नहीं।',
+        terminalDesc: 'एक अंतिम उपयोग सारांश, या एक स्पष्ट त्रुटि या रद्दीकरण। स्ट्रीम कभी बस रुकती नहीं।',
       },
       dataLayer: {
         title: 'क्या कहाँ सहेजा जाता है',
@@ -6898,8 +6753,7 @@ export const hi: TranslationDictionary = {
         validationDesc:
           'किसी भी लॉजिक तक पहुँचने से पहले हर अनुरोध बॉडी को स्पष्ट लंबाई और आकार सीमाओं के साथ एक Zod स्कीमा के विरुद्ध सत्यापित किया जाता है।',
         rateLimitName: 'रेट लिमिटिंग',
-        rateLimitDesc:
-          'हर सेवा पर प्रति-खाता थ्रॉटलिंग, ताकि एक क्लाइंट बाकी सबके लिए क्षमता खत्म न कर सके।',
+        rateLimitDesc: 'हर सेवा पर प्रति-खाता थ्रॉटलिंग, ताकि एक क्लाइंट बाकी सबके लिए क्षमता खत्म न कर सके।',
         headersName: 'सुरक्षा हेडर',
         headersDesc:
           'प्रति-अनुरोध नॉन्स के साथ एक सख़्त कंटेंट सिक्योरिटी पॉलिसी, HSTS, और हर प्रतिक्रिया पर मानक हार्डनिंग हेडर।',
@@ -6917,8 +6771,7 @@ export const hi: TranslationDictionary = {
         body1:
           'हर सेवा एक ही रूप में वही संकेत भेजती है, और वे सब कहीं न कहीं क्वेरी करने योग्य जगह पहुँचते हैं। "इस अनुरोध को क्या हुआ" का जवाब देने वाले किसी ऑपरेटर को अठारह लॉग फ़ाइलें खोलने की ज़रूरत नहीं होनी चाहिए।',
         logsName: 'संरचित लॉग',
-        logsDesc:
-          'हर सेवा और ब्राउज़र से JSON लॉग, इवेंट बस के ज़रिए भेजे और एक रोलिंग विंडो पर सुरक्षित।',
+        logsDesc: 'हर सेवा और ब्राउज़र से JSON लॉग, इवेंट बस के ज़रिए भेजे और एक रोलिंग विंडो पर सुरक्षित।',
         correlationName: 'अनुरोध सहसंबंध',
         correlationDesc:
           'एक अनुरोध ID ब्राउज़र में जनरेट होता है और हर सेवा हॉप में साथ ले जाया जाता है, ताकि एक पहचानकर्ता पूरा रास्ता फिर से बना सके।',
@@ -7033,8 +6886,7 @@ export const hi: TranslationDictionary = {
           'लक्ष्य भाषा में मज़बूत मॉडल से अनुवाद करें, फिर एक दूसरे मॉडल से स्रोत के मुकाबले नतीजे की समीक्षा करवाएँ। कॉन्टेक्स्ट पैक आपकी शब्दावली और शैली के नियम हर अनुरोध में साथ ले जाते हैं।',
         translationCapability: 'Compare + कॉन्टेक्स्ट पैक',
         documentsTitle: 'रिपोर्ट और दस्तावेज़',
-        documentsProblem:
-          'उत्तर एक चैट विंडो में है और डिलिवरेबल एक फ़ाइल है जिसे किसी और को खोलना है।',
+        documentsProblem: 'उत्तर एक चैट विंडो में है और डिलिवरेबल एक फ़ाइल है जिसे किसी और को खोलना है।',
         documentsSolution:
           'किसी भी उत्तर, या पूरी बातचीत को, PDF, DOCX, CSV, HTML, Markdown, TXT या JSON के रूप में निर्यात करें — फ़ॉर्मैटेड और भेजने के लिए तैयार।',
         documentsCapability: 'दस्तावेज़ निर्यात',
@@ -7252,17 +7104,14 @@ export const hi: TranslationDictionary = {
         familiesLabel: 'मॉडल परिवार',
         qwenDesc:
           'आकारों की बहुत विस्तृत श्रृंखला में मज़बूत सामान्य और कोडिंग मॉडल — आमतौर पर किसी दिए गए GPU बजट में फ़िट करने वाला सबसे आसान परिवार।',
-        glmDesc:
-          'स्पष्ट थिंकिंग मोड वाले सक्षम द्विभाषी तर्कशक्ति मॉडल, लगभग अग्रणी गुणवत्ता के करीब।',
+        glmDesc: 'स्पष्ट थिंकिंग मोड वाले सक्षम द्विभाषी तर्कशक्ति मॉडल, लगभग अग्रणी गुणवत्ता के करीब।',
         deepseekDesc: 'गणित, एल्गोरिदम और चरण-दर-चरण तर्कशक्ति, समर्पित रीज़निंग वेरिएंट के साथ।',
-        llamaDesc:
-          'परिपक्व टूलिंग और अनुमानित व्यवहार वाले व्यापक रूप से परिनियोजित सामान्य-उद्देश्य मॉडल।',
+        llamaDesc: 'परिपक्व टूलिंग और अनुमानित व्यवहार वाले व्यापक रूप से परिनियोजित सामान्य-उद्देश्य मॉडल।',
         mistralDesc:
           'कुशल मॉडल जो अपने आकार से बढ़कर प्रदर्शन करते हैं, तब उपयोगी जब GPU मेमोरी सबसे बड़ी बाध्यता है।',
         gemmaDesc:
           'छोटे, तेज़ मॉडल जो वर्गीकरण, राउटिंग और उच्च-मात्रा वाले रोज़मर्रा अनुरोधों के लिए बख़ूबी उपयुक्त हैं।',
-        phiDesc:
-          'बहुत छोटे तर्कशक्ति-केंद्रित मॉडल जो सामान्य हार्डवेयर पर चलते हैं, एज परिनियोजन सहित।',
+        phiDesc: 'बहुत छोटे तर्कशक्ति-केंद्रित मॉडल जो सामान्य हार्डवेयर पर चलते हैं, एज परिनियोजन सहित।',
         sizingNote:
           'हम स्कोपिंग के दौरान मॉडल सेट को आपके असल हार्डवेयर के अनुसार तय करते हैं। एक अकेला वर्कस्टेशन GPU और एक्सेलरेटरों का एक रैक बहुत अलग जवाब देते हैं, और हम आपको यह खरीद ऑर्डर के बाद की बजाय पहले बताना पसंद करेंगे।',
       },
@@ -7301,12 +7150,9 @@ export const hi: TranslationDictionary = {
         privateBadge: 'हमसे संपर्क करें',
         privateTitle: 'ClawAI प्राइवेट परिनियोजन',
         privateSubtitle: 'आपके इन्फ़्रास्ट्रक्चर पर, प्रत्येक एंगेजमेंट के अनुसार तय।',
-        privatePoint1:
-          'आपके अपने GPU पर सर्व किए गए ओपन-वेट मॉडल। बिल्कुल कोई बाहरी प्रोवाइडर कॉल नहीं।',
-        privatePoint2:
-          'आपके नेटवर्क के भीतर परिनियोजित, बिना किसी इंटरनेट एग्रेस वाले नेटवर्क सहित।',
-        privatePoint3:
-          'आपका आइडेंटिटी प्रोवाइडर, आपकी भूमिकाएँ, आपके रिटेंशन नियम, आपका ऑडिट ट्रेल।',
+        privatePoint1: 'आपके अपने GPU पर सर्व किए गए ओपन-वेट मॉडल। बिल्कुल कोई बाहरी प्रोवाइडर कॉल नहीं।',
+        privatePoint2: 'आपके नेटवर्क के भीतर परिनियोजित, बिना किसी इंटरनेट एग्रेस वाले नेटवर्क सहित।',
+        privatePoint3: 'आपका आइडेंटिटी प्रोवाइडर, आपकी भूमिकाएँ, आपके रिटेंशन नियम, आपका ऑडिट ट्रेल।',
         privatePoint4: 'मॉडल की गुणवत्ता आपके हार्डवेयर से सीमित है, अग्रणी सीमा से नहीं।',
         privatePoint5: 'हमारी टीम के साथ तय, परिनियोजित और सौंपा गया।',
         footnote:
@@ -7350,8 +7196,7 @@ export const hi: TranslationDictionary = {
         step1Desc:
           'आपकी शर्तें, आपके पास मौजूद या खरीदने की योजना वाला हार्डवेयर, और परिनियोजन को असल में क्या करना है।',
         step2Title: 'हम इसका दायरा तय करते हैं',
-        step2Desc:
-          'एक ठोस प्रस्ताव: मॉडल सेट, इन्फ़्रास्ट्रक्चर आवश्यकताएँ, एकीकरण कार्य, समयसीमा और लागत।',
+        step2Desc: 'एक ठोस प्रस्ताव: मॉडल सेट, इन्फ़्रास्ट्रक्चर आवश्यकताएँ, एकीकरण कार्य, समयसीमा और लागत।',
         step3Title: 'हम परिनियोजित करते हैं और सौंपते हैं',
         step3Desc:
           'इंस्टॉलेशन, कॉन्फ़िगरेशन, आपके वर्कलोड के मुकाबले बेंचमार्किंग, दस्तावेज़ीकरण और आपकी टीम के लिए प्रशिक्षण।',
@@ -7415,8 +7260,7 @@ export const hi: TranslationDictionary = {
       submitting: 'भेजा जा रहा है…',
       nameLabel: 'आपका नाम',
       emailLabel: 'आपका ईमेल',
-      publicDescription:
-        'हमें बताइए आप क्या सोचते हैं। हम हर संदेश पढ़ते हैं और ईमेल से जवाब दे सकते हैं।',
+      publicDescription: 'हमें बताइए आप क्या सोचते हैं। हम हर संदेश पढ़ते हैं और ईमेल से जवाब दे सकते हैं।',
     },
     editor: {
       bold: 'बोल्ड',

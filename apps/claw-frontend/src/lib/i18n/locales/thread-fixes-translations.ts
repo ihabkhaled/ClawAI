@@ -185,8 +185,7 @@ export const THREAD_FIXES_TRANSLATIONS: Record<Locale, ThreadFixesLocaleTranslat
     threadFixQueueWaiting: 'Ожидание свободного обработчика.',
   },
   [Locale.TH]: {
-    threadFixTopicTooShort:
-      'อธิบายหัวข้ออย่างน้อย 10 ตัวอักษรหรือตัวเลข (4 ตัวสำหรับภาษาจีน ญี่ปุ่น หรือเกาหลี)',
+    threadFixTopicTooShort: 'อธิบายหัวข้ออย่างน้อย 10 ตัวอักษรหรือตัวเลข (4 ตัวสำหรับภาษาจีน ญี่ปุ่น หรือเกาหลี)',
     threadFixSafetyTitle: 'พบข้อมูลที่ละเอียดอ่อนในฉบับร่างนี้',
     threadFixSafetyHint:
       'ยังเผยแพร่ไม่ได้จนกว่าจะลบข้อความเหล่านี้ แก้ไขข้อความ ลบส่วนดังกล่าว แล้วบันทึกการแก้ไขเพื่อตรวจสอบอีกครั้ง',

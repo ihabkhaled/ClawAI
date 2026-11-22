@@ -1749,11 +1749,7 @@ export const PUBLIC_PAGE_SEO_BY_LOCALE: Record<
       title: 'VS Code में कोडिंग एजेंट इंस्टॉल करें',
       description:
         'VS Code में ClawAI कोडिंग एजेंट इंस्टॉल करने के चरण: Marketplace या कमांड लाइन से इंस्टॉल, साइन-इन, बैकएंड URL, और आम दिक्कतों के हल।',
-      keywords: [
-        'ClawAI कोडिंग एजेंट इंस्टॉल',
-        'VS Code एक्सटेंशन इंस्टॉल',
-        'AI कोडिंग एक्सटेंशन सेटअप',
-      ],
+      keywords: ['ClawAI कोडिंग एजेंट इंस्टॉल', 'VS Code एक्सटेंशन इंस्टॉल', 'AI कोडिंग एक्सटेंशन सेटअप'],
     },
     'features/threads': {
       title: 'ClawAI Threads: चैट को स्रोतों वाले सार्वजनिक लेख में बदलें',

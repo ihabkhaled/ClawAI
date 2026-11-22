@@ -176,8 +176,7 @@ export const THREAD_EVIDENCE_TRANSLATIONS: Record<Locale, ThreadEvidenceLocaleTr
   },
   [Locale.HI]: {
     threadEvidenceReasonGap: 'समीक्षकों ने ऐसे स्रोत माँगे जो शोध में नहीं मिल सके।',
-    threadEvidenceReasonBlocked:
-      'स्कोर काफ़ी था, पर समीक्षक ने एक अधूरी शर्त के कारण ड्राफ़्ट रोक दिया।',
+    threadEvidenceReasonBlocked: 'स्कोर काफ़ी था, पर समीक्षक ने एक अधूरी शर्त के कारण ड्राफ़्ट रोक दिया।',
     threadEvidenceRemedyResearchMore: 'और शोध करें',
     threadEvidenceRemedyNarrow: 'दावे सीमित करें',
     threadEvidenceBlockedTitle: 'एक अधूरी शर्त के कारण रोका गया',
@@ -185,14 +184,12 @@ export const THREAD_EVIDENCE_TRANSLATIONS: Record<Locale, ThreadEvidenceLocaleTr
     threadEvidenceLowLead: '{reviewer} ने ये समस्याएँ बताईं:',
     threadEvidenceScoreLine: '100 में से {score}, ज़रूरत {min} और कोई रुकावट नहीं',
     threadEvidenceBlockerLabel: 'समीक्षक ने लिखा',
-    threadEvidenceStepBlocked:
-      'स्कोर काफ़ी था, पर समीक्षक ने एक अधूरी शर्त के कारण ड्राफ़्ट रोक दिया।',
+    threadEvidenceStepBlocked: 'स्कोर काफ़ी था, पर समीक्षक ने एक अधूरी शर्त के कारण ड्राफ़्ट रोक दिया।',
     threadEvidenceHintBlocked: 'नीचे उद्धृत रुकावट पढ़ें, फिर और शोध करें या दावे सीमित करें।',
     threadEvidenceStepLooking: 'छूटे हुए स्रोत खोजे जा रहे हैं',
     threadEvidenceStepFound: '{count} नए स्रोत मिले।',
     threadEvidenceStepEmpty: 'कोई नया स्रोत नहीं मिला। अब तक जुटाए स्रोतों के साथ आगे बढ़ रहे हैं।',
-    threadEvidenceStepFailed:
-      'अतिरिक्त शोध सफल नहीं हुआ। अब तक जुटाए स्रोतों के साथ आगे बढ़ रहे हैं।',
+    threadEvidenceStepFailed: 'अतिरिक्त शोध सफल नहीं हुआ। अब तक जुटाए स्रोतों के साथ आगे बढ़ रहे हैं।',
     threadEvidenceStepSpend:
       'अतिरिक्त शोध छोड़ा गया: खर्च सीमा का ज़्यादातर हिस्सा पहले ही इस्तेमाल हो चुका है।',
     threadEvidenceResearchMoreLabel: 'लिखने से पहले और शोध करें',
@@ -315,8 +312,7 @@ export const THREAD_EVIDENCE_TRANSLATIONS: Record<Locale, ThreadEvidenceLocaleTr
     threadEvidenceScoreLine: '{score} จาก 100 ต้องได้ {min} และไม่มีข้อติดขัด',
     threadEvidenceBlockerLabel: 'ผู้ตรวจเขียนว่า',
     threadEvidenceStepBlocked: 'คะแนนผ่านแล้ว แต่ผู้ตรวจระงับฉบับร่างเพราะข้อกำหนดที่ยังไม่ครบ',
-    threadEvidenceHintBlocked:
-      'อ่านข้อติดขัดที่อ้างไว้ด้านล่าง แล้วค้นคว้าเพิ่มหรือจำกัดขอบเขตข้อกล่าวอ้าง',
+    threadEvidenceHintBlocked: 'อ่านข้อติดขัดที่อ้างไว้ด้านล่าง แล้วค้นคว้าเพิ่มหรือจำกัดขอบเขตข้อกล่าวอ้าง',
     threadEvidenceStepLooking: 'กำลังหาแหล่งที่มาที่ขาด',
     threadEvidenceStepFound: 'พบแหล่งที่มาใหม่ {count} แหล่ง',
     threadEvidenceStepEmpty: 'ไม่พบแหล่งที่มาใหม่ ดำเนินการต่อด้วยแหล่งที่มาที่รวบรวมไว้',

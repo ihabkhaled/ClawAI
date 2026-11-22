@@ -561,8 +561,7 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardGuestHomeCta: 'Threads बोर्ड ब्राउज़ करें',
     threadBoardNavLabel: 'बोर्ड',
     threadBoardTitle: 'बोर्ड',
-    threadBoardSubtitle:
-      'समुदाय द्वारा साझा की गई प्रकाशित सामग्री। ब्राउज़ करें, खोजें और चर्चा में शामिल हों।',
+    threadBoardSubtitle: 'समुदाय द्वारा साझा की गई प्रकाशित सामग्री। ब्राउज़ करें, खोजें और चर्चा में शामिल हों।',
     threadBoardSearchLabel: 'बोर्ड में खोजें',
     threadBoardSearchPlaceholder: 'प्रकाशन खोजें...',
     threadBoardSuggestionsLabel: 'सुझाए गए प्रकाशन',
@@ -598,8 +597,7 @@ export const THREAD_BOARD_TRANSLATIONS: Record<Locale, ThreadBoardLocaleTranslat
     threadBoardPrevPage: 'पिछला पृष्ठ',
     threadBoardNextPage: 'अगला पृष्ठ',
     threadBoardPageOf: 'पृष्ठ {page} / {total}',
-    threadBoardReaderEngage:
-      'चर्चा में शामिल होने के लिए इस प्रकाशन को पसंद करें या उस पर टिप्पणी करें।',
+    threadBoardReaderEngage: 'चर्चा में शामिल होने के लिए इस प्रकाशन को पसंद करें या उस पर टिप्पणी करें।',
     threadBoardOpenPublic: 'सार्वजनिक पृष्ठ खोलें',
     threadBoardCopyLink: 'लिंक कॉपी करें',
     threadBoardViewOnBoard: 'बोर्ड पर देखें',
