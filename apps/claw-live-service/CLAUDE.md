@@ -36,7 +36,7 @@ this file disagree, fix one in the same change) - decision:
   and sent to auth-service as `fixedCostMicroUsd` (auth `FIXED_PRICE_SURFACES`, zero tokens and units); one 60 s grace per
   exhaustion episode.
 - **history** - `GET /live/history`, `/history/:id/events`, `/events/:id/versions`, `POST /history/:id/export` (PDF, Markdown,
-  TXT). PDF is rendered by file-generation `POST /api/v1/internal/file-generations/render-pdf`.
+  TXT). PDF is rendered by file-generation `POST /api/v1/internal/file-generations/render-pdf`. The download header is built with `contentDispositionHeader` from `@claw/shared-utilities` (rules/07 §8), never by hand.
 - **enhance** - `POST /live/events/:eventId/enhance` (estimate first, then `confirm=true`, user-picked model, idempotent).
 - **deletion** - `DELETE /live/history` and `/history/:sessionId`, the `user.deleted` consumer, and the orphan-run
   sweeper (every 300 s, Redis lock, 20 runs a pass: tombstones finished runs that no session or coverage references).

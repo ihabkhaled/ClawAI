@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Post, Query, Res, StreamableFile } from '@nestjs/common';
+import { contentDispositionHeader, ContentDispositionType } from '@claw/shared-utilities';
 import type { Response } from 'express';
 import { CurrentUser } from '@claw/shared-auth';
 import { type AuthenticatedUser } from '@claw/shared-types';
@@ -63,7 +64,10 @@ export class HistoryController {
   ): Promise<StreamableFile> {
     const file = await this.exporter.export(user.id, sessionId, body.format);
     response.setHeader('Content-Type', file.mimeType);
-    response.setHeader('Content-Disposition', `attachment; filename="${file.fileName}"`);
+    response.setHeader(
+      'Content-Disposition',
+      contentDispositionHeader(ContentDispositionType.ATTACHMENT, file.fileName),
+    );
     response.setHeader('Cache-Control', 'private, no-store');
     return new StreamableFile(file.body);
   }

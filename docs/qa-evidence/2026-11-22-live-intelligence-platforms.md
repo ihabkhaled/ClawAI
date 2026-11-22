@@ -2,7 +2,7 @@
 
 Batch: live-intelligence-platforms
 Date: 2026-11-22
-Commits: (fill in after committing)
+Commits: 34e626726 (feat), cb679fc7f (capture billing fix)
 Verdict: PARTIAL
 
 Every lane is filled in. PASS needs the command and its real output (or a path, a count, a
