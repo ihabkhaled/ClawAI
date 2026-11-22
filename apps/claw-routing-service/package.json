@@ -5,7 +5,7 @@
   "description": "Claw Routing Service - manages AI routing decisions and policies",
   "license": "UNLICENSED",
   "scripts": {
-    "dev": "nodemon --legacy-watch --watch src --ext ts,json --delay 1500ms --signal SIGTERM --exec \"npm run build && node dist/main.js\"",
+    "dev": "nodemon --legacy-watch --polling-interval 2000 --watch src --ext ts,json --delay 1500ms --signal SIGTERM --exec \"npm run build && node dist/main.js\"",
     "build": "node ../../tools/typescript/run-ts7.mjs -p tsconfig.build.json && node ../../tools/typescript/copy-generated-prisma.mjs && tsc-alias -p tsconfig.build.json -f",
     "start": "node dist/main.js",
     "start:prod": "node dist/main.js",

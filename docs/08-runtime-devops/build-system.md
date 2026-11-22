@@ -74,7 +74,7 @@ Backend services (`apps/claw-auth-service/package.json` is representative):
 
 | Script      | Command                                                                                                                                                          |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `dev`       | `nodemon --legacy-watch --watch src --ext ts,json --delay 1500ms --signal SIGTERM --exec "npm run build && node dist/main.js"`                                   |
+| `dev`       | `nodemon --legacy-watch --polling-interval 2000 --watch src --ext ts,json --delay 1500ms --signal SIGTERM --exec "npm run build && node dist/main.js"`           |
 | `build`     | `node ../../tools/typescript/run-ts7.mjs -p tsconfig.build.json && node ../../tools/typescript/copy-generated-prisma.mjs && tsc-alias -p tsconfig.build.json -f` |
 | `typecheck` | `node ../../tools/typescript/run-ts7.mjs --noEmit --incremental --tsBuildInfoFile node_modules/.cache/tsc/typecheck.tsbuildinfo`                                 |
 | `start`     | `node dist/main.js`                                                                                                                                              |
@@ -82,6 +82,24 @@ Backend services (`apps/claw-auth-service/package.json` is representative):
 `dev` watches `src/` and, on every change, rebuilds and restarts node. The
 1500ms nodemon delay debounces bursts of saves. (Services without Prisma omit the
 `copy-generated-prisma.mjs` step.)
+
+Polling (`--legacy-watch`) is required: on Docker Desktop for Windows, file events
+from a bind-mounted host folder never reach the container (checked with
+`inotifywait`, 2026-11-22). `--polling-interval 2000` is load-bearing. Without it
+nodemon checks every file each 100 ms, and ~7,000 files across all backend services
+saturated Docker's file share: reading the frontend `src` took 147 s instead of
+9 s. Tailwind could not finish `globals.css` within Turbopack's loader deadline,
+so the dev frontend answered every page with a 500 (`postcss ... deadline has
+elapsed`). `tools/__tests__/docker-dev-watch.test.mjs` pins the flag. If that
+500 shows up again, clear the cached failure with
+`docker exec claw-frontend sh -c 'rm -rf /app/apps/claw-frontend/.next/*'` and
+restart the container. Turbopack otherwise keeps serving the old error.
+
+The dev frontend polls the same way. `next.config.mjs` sets
+`watchOptions.pollIntervalMs: 2000` only when `WATCHPACK_POLLING=true`, which only the dev
+compose sets. Without it, Turbopack missed edits to existing files until a restart. The
+config file is baked into the dev image, so changing it needs
+`./scripts/claw.sh --dev service:rebuild frontend`.
 
 **Shared packages** (`packages/*`):
 

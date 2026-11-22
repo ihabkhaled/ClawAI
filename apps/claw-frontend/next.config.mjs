@@ -35,6 +35,11 @@ const nextConfig = {
   // navigation, producing an "infinite loading" UX.
   // localhost stays in the list so dev access via either host works.
   allowedDevOrigins: devOrigins,
+  // In the dev container, file events from the Windows bind mount never arrive, so
+  // Turbopack missed edits to existing files until a restart. Poll instead, only where
+  // the dev compose asks for polling (WATCHPACK_POLLING); keep it slow, since fast
+  // polling saturated Docker's file share (docs/08-runtime-devops/build-system.md §4).
+  ...(process.env.WATCHPACK_POLLING === 'true' ? { watchOptions: { pollIntervalMs: 2000 } } : {}),
   // The `typescript` dependency is aliased to `the TypeScript 7 npm compiler`
   // (the TypeScript 7 compiler, TS 7), which ships the the TypeScript 7 compiler CLI but does NOT expose the TypeScript
   // compiler API Next's built-in type-check needs. SWC handles the TS → JS
