@@ -95,7 +95,9 @@ export class LiveCaptureService {
   }
 
   private assertWav(body: unknown): Buffer {
-    if (!Buffer.isBuffer(body) || body.length === 0) {
+    // `instanceof` (not Buffer.isBuffer) so the type is proven before any `.length` read: a
+    // tampered body (array, string, object) must never reach the size checks (CodeQL js/type-confusion).
+    if (!(body instanceof Buffer) || body.length === 0) {
       throw this.unprocessable(LiveErrorCode.LIVE_CAPTURE_AUDIO_INVALID, 'Invalid audio chunk');
     }
     if (body.length > LIVE_CAPTURE_MAX_BYTES) {

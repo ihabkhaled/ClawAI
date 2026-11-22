@@ -36,7 +36,9 @@ function durationOf(dataBytes: number): CaptureWavInfo | null {
  * Validates a tab-audio chunk: RIFF/WAVE, a PCM "fmt " chunk of 16 kHz mono 16-bit before
  * the "data" chunk, a data chunk that fits the buffer, and 1 to 8 s of audio. Null when invalid.
  */
-export function parseCaptureWav(buffer: Buffer): CaptureWavInfo | null {
+export function parseCaptureWav(buffer: unknown): CaptureWavInfo | null {
+  // Re-proven here so the parser is safe on its own, whatever a caller passes (CodeQL js/type-confusion).
+  if (!(buffer instanceof Buffer)) return null;
   if (buffer.length < WAV_RIFF_HEADER_BYTES + WAV_CHUNK_HEADER_BYTES) return null;
   if (buffer.toString('ascii', 0, 4) !== 'RIFF' || buffer.toString('ascii', 8, 12) !== 'WAVE') {
     return null;

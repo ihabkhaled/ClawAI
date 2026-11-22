@@ -48,7 +48,7 @@ COPY --from=builder /app/node_modules/brace-expansion /usr/local/lib/node_module
 RUN rm -f /app/node_modules/@typescript/typescript-linux-x64/lib/tsc
 # Two more HIGH CVEs with fixed releases: undici inside the bundled npm, and deepmerge-ts that Prisma's config
 # loader pins exactly. Same-major patch for undici; deepmerge-ts 8 keeps the mergeDeep API Prisma uses.
-RUN mkdir /tmp/patch && cd /tmp/patch   && npm pack undici@6.28.1 deepmerge-ts@8.0.0 --silent   && mkdir u d && tar -xzf undici-6.28.1.tgz -C u && tar -xzf deepmerge-ts-8.0.0.tgz -C d   && rm -rf /usr/local/lib/node_modules/npm/node_modules/undici /app/node_modules/deepmerge-ts   && cp -r u/package /usr/local/lib/node_modules/npm/node_modules/undici   && cp -r d/package /app/node_modules/deepmerge-ts   && rm -rf /tmp/patch /root/.npm
+RUN mkdir /tmp/patch && cd /tmp/patch   && npm pack undici@6.29.1 deepmerge-ts@8.0.0 --silent   && mkdir u d && tar -xzf undici-6.29.1.tgz -C u && tar -xzf deepmerge-ts-8.0.0.tgz -C d   && rm -rf /usr/local/lib/node_modules/npm/node_modules/undici /app/node_modules/deepmerge-ts   && cp -r u/package /usr/local/lib/node_modules/npm/node_modules/undici   && cp -r d/package /app/node_modules/deepmerge-ts   && rm -rf /tmp/patch /root/.npm
 RUN chown -R nestjs:nestjs /app/node_modules/@prisma/engines
 COPY --from=builder /app/packages /app/packages
 COPY scripts/docker-entrypoint.prod.sh /app/docker-entrypoint.prod.sh

@@ -5,6 +5,15 @@ const seconds = (value: number): Buffer => Buffer.alloc(Math.round(value * 32_00
 
 describe('parseCaptureWav', () => {
   it.each([
+    ['an array', ['R', 'I', 'F', 'F']],
+    ['a string', 'RIFF....WAVEfmt '],
+    ['an object with a length', { length: 100_000 }],
+    ['null', null],
+  ])('refuses %s instead of trusting its length (type confusion)', (_label, value) => {
+    expect(parseCaptureWav(value)).toBeNull();
+  });
+
+  it.each([
     [1, 1000],
     [6, 6000],
     [8, 8000],

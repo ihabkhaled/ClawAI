@@ -1207,6 +1207,8 @@ A public Thread page reads `?lang=` (an app language only; `readRequestedThreadL
   `getDisplayMedia` tab audio → `public/worklets/live-capture-processor.js` → 6 s 16 kHz PCM16 WAV →
   `POST /live/sessions/:id/audio`. The capture code is loaded with a dynamic `import()` after consent (rule 47). The
   owner accepted the platforms' terms risk (2026-11-22); server-side capture is never built.
+- Locale and marketing-content files with Hindi or Thai text can format differently on Windows and on CI's Linux
+  Prettier (2026-11-22 `format:check` failure). Run `npx prettier --write` on them right before committing.
 - YouTube channel links play through the `live_stream` embed; `@handle` links show the `youtubeHandleError` string.
 - The dev frontend (Turbopack in Docker on Windows) does not see new routes or edits to existing files until
   `docker restart claw-frontend`.

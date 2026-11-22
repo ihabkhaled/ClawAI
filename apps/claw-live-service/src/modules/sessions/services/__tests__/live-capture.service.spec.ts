@@ -44,6 +44,18 @@ describe('LiveCaptureService', () => {
     expect(capture.enqueue).not.toHaveBeenCalled();
   });
 
+  it.each([[['a', 'b']], ['a string body'], [{ length: 1 }]])(
+    '422 for a tampered body %j (never reads its length as audio)',
+    async (body) => {
+      const { service } = setup();
+      await expect(
+        service.ingest('sess1', 'u1', body as never, String(Date.now())),
+      ).rejects.toMatchObject({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+      });
+    },
+  );
+
   it('accepts audio in GRACE (grace seconds are tracked like active ones)', async () => {
     const { service, targets } = setup();
     targets.findTarget.mockResolvedValue({ ...target, state: LiveSessionState.GRACE });
