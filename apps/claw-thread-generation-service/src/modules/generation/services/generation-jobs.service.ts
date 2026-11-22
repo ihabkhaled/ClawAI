@@ -831,6 +831,7 @@ export class GenerationJobsService implements OnModuleInit, OnModuleDestroy {
       topic: request.topic,
       publicationType: request.publicationType,
       formatStage: true,
+      briefStage: true,
     });
   }
 

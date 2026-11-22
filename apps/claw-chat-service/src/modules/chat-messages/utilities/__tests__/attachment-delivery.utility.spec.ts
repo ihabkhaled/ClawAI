@@ -5,7 +5,15 @@ import { FileDeliveryMode } from '../../../../common/enums/file-delivery-mode.en
 import { MediaCapabilityState } from '../../../../common/enums/media-capability-state.enum';
 import { VideoFrameDelivery } from '../../../../common/enums/video-frame-delivery.enum';
 import { VideoProcessingFailureReason } from '@claw/shared-types';
-import { TEXT_BUDGET_SHORTENED_MARKER } from '../../constants/evidence-fit.constants';
+import {
+  FILE_RELEVANCE_FIT_NOTE_PREFIX,
+  TEXT_BUDGET_SHORTENED_MARKER,
+} from '../../constants/evidence-fit.constants';
+import {
+  DELIVERY_REASON_RELEVANCE_FITTED,
+  DELIVERY_REASON_TRUNCATED,
+} from '../../constants/attachment-delivery.constants';
+import { fitFileTextsByRelevance } from '../relevant-chunks.utility';
 import { MAX_FILE_CONTENT_LENGTH } from '../../constants/file-content.constants';
 import type { FileContentResponse } from '../../types/context.types';
 import type { ModelMediaCapabilities } from '../../types/model-capability.types';
@@ -484,6 +492,24 @@ describe('resolveAttachmentDelivery', () => {
       expect(
         one(file({ extractedText: `abc${TEXT_BUDGET_SHORTENED_MARKER}` }), caps(UNKNOWN)).mode,
       ).toBe(FileDeliveryMode.TRUNCATED_TEXT);
+    });
+
+    // ADR-219: a file fitted by relevance is not whole (TRUNCATED_TEXT) but is
+    // not "shortened" either — the reason says the relevant parts were sent.
+    it('records a relevance-fitted file as TRUNCATED_TEXT with the relevance reason', () => {
+      const big = `# Spec\n\nIntro.\n\n${'## Part\n\nfiller words here.\n\n'.repeat(20_000)}`;
+      const fitted = fitFileTextsByRelevance([big], 24_000, MAX_FILE_CONTENT_LENGTH, 'spec');
+      const decision = one(file({ extractedText: fitted.texts[0] ?? '' }), caps(UNKNOWN));
+      expect((fitted.texts[0] ?? '').startsWith(FILE_RELEVANCE_FIT_NOTE_PREFIX)).toBe(true);
+      expect(decision.mode).toBe(FileDeliveryMode.TRUNCATED_TEXT);
+      expect(decision.reason).toBe(DELIVERY_REASON_RELEVANCE_FITTED);
+    });
+
+    it('keeps the plain truncated reason for a head-cut text and none for a whole one', () => {
+      expect(
+        one(file({ extractedText: `abc${TEXT_BUDGET_SHORTENED_MARKER}` }), caps(UNKNOWN)).reason,
+      ).toBe(DELIVERY_REASON_TRUNCATED);
+      expect(one(file({}), caps(UNKNOWN)).reason).toBeUndefined();
     });
 
     it('tells "not yet" and "never" apart for a document with no text', () => {

@@ -11,6 +11,8 @@ import { ConnectorModelsResponseFormat, type ConnectorPreset } from '@claw/share
 import { ModelLifecycle, ModelUsageTier } from '../../../generated/prisma';
 import {
   bareModelListSchema,
+  cloudflareContextWindowSchema,
+  type CloudflareModelEntry,
   cloudflareModelEntrySchema,
   cloudflareModelListSchema,
   cohereModelEntrySchema,
@@ -19,6 +21,7 @@ import {
   openAICompatibleModelEntrySchema,
   openAICompatibleModelListSchema,
 } from '../dto/provider-model-list.dto';
+import { CLOUDFLARE_CONTEXT_WINDOW_PROPERTY_ID } from '../constants/model-context-window.constants';
 import { type NormalizedModel } from '../types/connectors.types';
 import { type PresetModelListEntry } from '../types/provider-api.types';
 import { formatModelDisplayName } from './model-display-name.utility';
@@ -201,7 +204,12 @@ function withIdFallback(row: unknown): unknown {
 
 function fromOpenAIEntry(entry: OpenAICompatibleModelEntry): PresetModelListEntry {
   const contextWindow =
-    entry.context_length ?? entry.context_window ?? entry.metadata?.context_length ?? undefined;
+    entry.context_length ??
+    entry.context_window ??
+    entry.max_context_length ??
+    entry.max_model_len ??
+    entry.metadata?.context_length ??
+    undefined;
   const capabilityObject = Array.isArray(entry.capabilities) ? undefined : entry.capabilities;
   const capabilityList = Array.isArray(entry.capabilities) ? entry.capabilities : [];
   const maxOutputTokens =
@@ -279,9 +287,20 @@ function parseCloudflareEntries(rows: readonly unknown[]): PresetModelListEntry[
             outputModalities: [],
             supportedParameters: [],
             taskName: parsed.data.task?.name ?? undefined,
+            contextWindow: cloudflareContextWindow(parsed.data.properties),
           },
         ];
   });
+}
+
+function cloudflareContextWindow(
+  properties: CloudflareModelEntry['properties'],
+): number | undefined {
+  const raw = properties?.find(
+    (property) => property.property_id === CLOUDFLARE_CONTEXT_WINDOW_PROPERTY_ID,
+  )?.value;
+  const parsed = cloudflareContextWindowSchema.safeParse(raw);
+  return parsed.success ? parsed.data : undefined;
 }
 
 function hasAny(values: readonly string[], wanted: readonly string[]): boolean {

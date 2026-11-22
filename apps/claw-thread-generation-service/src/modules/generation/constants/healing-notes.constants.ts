@@ -10,7 +10,7 @@ export const COMPACT_OUTPUT_NOTE =
 export const LOWER_LIMIT_NOTE = ' Keep the whole reply compact.';
 
 export const SHRINK_SOURCE_NOTE =
-  ' The source conversation was shortened to fit the model: older messages were cut. Rely on researchEvidence for facts.';
+  ' The source conversation was shortened further to fit the model: every message is still there in order, long ones show their beginning and end, and sourceConversation.fitNote says what was omitted. Do not invent the omitted parts.';
 
 export const SHORT_ARTICLE_NOTE =
   'Write a short article: about 60 percent of the usual length, the strongest points only.';

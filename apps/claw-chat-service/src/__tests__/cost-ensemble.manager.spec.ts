@@ -9,6 +9,7 @@ import { type QualityCheckManager } from '../modules/chat-messages/managers/qual
 import { type AdvancedModuleModelSelectionService } from '../modules/chat-messages/services/advanced-module-model-selection.service';
 import { costEnsembleMessageSchema } from '../modules/chat-messages/dto/cost-ensemble-message.dto';
 import type { AdvancedModelSelectionResolution } from '../modules/chat-messages/types/advanced-model-selection.types';
+import { MESSAGE_CONTENT_MAX_CHARS } from '../modules/chat-messages/constants/message-content.constants';
 
 const mockThread = {
   id: 'thread-ce-1',
@@ -304,13 +305,17 @@ describe('CostEnsembleManager', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should reject content longer than 10000 chars', () => {
-      const result = costEnsembleMessageSchema.safeParse({ content: 'x'.repeat(10_001) });
+    it('should reject content longer than MESSAGE_CONTENT_MAX_CHARS chars', () => {
+      const result = costEnsembleMessageSchema.safeParse({
+        content: 'x'.repeat(MESSAGE_CONTENT_MAX_CHARS + 1),
+      });
       expect(result.success).toBe(false);
     });
 
-    it('should accept content of exactly 10000 chars', () => {
-      const result = costEnsembleMessageSchema.safeParse({ content: 'x'.repeat(10_000) });
+    it('should accept content of exactly MESSAGE_CONTENT_MAX_CHARS chars', () => {
+      const result = costEnsembleMessageSchema.safeParse({
+        content: 'x'.repeat(MESSAGE_CONTENT_MAX_CHARS),
+      });
       expect(result.success).toBe(true);
     });
 

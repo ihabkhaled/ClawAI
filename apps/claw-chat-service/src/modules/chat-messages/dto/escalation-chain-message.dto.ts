@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import {
+  MESSAGE_CONTENT_MAX_CHARS,
+  MESSAGE_CONTENT_MAX_ERROR,
+} from '../constants/message-content.constants';
 import { attachmentFields } from './attachment-fields.dto';
 import { contextPackFields } from './context-pack-fields.dto';
 import { pluginFields } from './plugin-fields.dto';
@@ -16,7 +20,7 @@ export const escalationChainMessageSchema = z
   .object({
     threadId: z.string().max(255).optional(),
     // Empty is allowed when files are attached — see requireContentOrAttachments.
-    content: z.string().max(100_000),
+    content: z.string().max(MESSAGE_CONTENT_MAX_CHARS, MESSAGE_CONTENT_MAX_ERROR),
     chain: z.array(escalationStepSchema).min(2).max(5),
     ...attachmentFields,
     ...contextPackFields,

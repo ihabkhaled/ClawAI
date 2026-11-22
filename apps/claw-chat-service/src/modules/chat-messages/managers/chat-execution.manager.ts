@@ -6415,7 +6415,8 @@ export class ChatExecutionManager implements OnModuleInit {
       `callFileGenerationService: starting file generation writer=${fileWriters?.preferred ? `${fileWriters.preferred.provider}/${fileWriters.preferred.model}` : 'list'} localOnly=${String(fileWriters?.localOnly === true)}`,
     );
     const prompt = latestUserTurnText(context.threadMessages) ?? 'generate a file';
-    const format = detectRequestedFileFormat(prompt);
+    // The routed intent's format first (ADR-218): the keyword list misses most languages.
+    const format = fileWriters?.format ?? detectRequestedFileFormat(prompt);
     this.logger.debug(
       `callFileGenerationService: prompt length=${String(prompt.length)} format=${format}`,
     );

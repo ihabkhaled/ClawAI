@@ -385,7 +385,6 @@
     "apps/claw-frontend/src/hooks/context-packs/use-context-pack-detail.ts": "0e9739a08844097f6dfce655b8fa9caefbb530c1e3fedec0adc5f697e6c204b1",
     "apps/claw-frontend/src/hooks/context-packs/use-context-packs.ts": "b6acf0c493ac229cbedc1c03019336e2f9364c4b8310226a4532449ef105cb88",
     "apps/claw-frontend/src/hooks/dashboard/use-dashboard-data.ts": "fcee74095585b12dbc1d1aa9fe84194f5264a53c824993534b48c5412ae861e3",
-    "apps/claw-frontend/src/hooks/files/use-composer-dropzone.ts": "54ab8b9763adead152957ee7a3d82fc961c3cc9366b840532ef5aae1b6b8789b",
     "apps/claw-frontend/src/hooks/files/use-delete-file.ts": "82656f52519e9ec6d6a8c18d5ff891baaf7d24f2a7e8eceb1a56a0e8d8d3fa24",
     "apps/claw-frontend/src/hooks/files/use-file-retention-badge.ts": "b26e124e8a1bcc8998b156df7f859a9b18911d214e294c9998522bc67f8201a7",
     "apps/claw-frontend/src/hooks/layout/use-theme-switcher.ts": "afe337f9a48d9899b97a122c970d3d98cbc1fd7857930974063e63460a0a2a6b",

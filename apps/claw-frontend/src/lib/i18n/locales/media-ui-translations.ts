@@ -74,6 +74,8 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       stillProcessing: 'The file was still being processed',
       failedProcessing: 'The file could not be processed',
       truncated: 'The text was too long and was shortened',
+      relevanceFitted:
+        "The file was larger than the model's window, so its opening and the parts most relevant to your question were sent",
       visionHelperFailed: 'The image description failed, so only its text (OCR) was sent',
       visionHelperRefused:
         'Not enough credit to describe the image, so only its text (OCR) was sent',
@@ -193,6 +195,8 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       stillProcessing: 'كان الملف لا يزال قيد المعالجة',
       failedProcessing: 'تعذّرت معالجة الملف',
       truncated: 'كان النص طويلًا جدًا فتم اختصاره',
+      relevanceFitted:
+        'كان الملف أكبر من نافذة النموذج، لذا أُرسلت بدايته والأجزاء الأكثر صلة بسؤالك',
       visionHelperFailed: 'فشل وصف الصورة، لذا أُرسل نصها المستخرج (OCR) فقط',
       visionHelperRefused: 'الرصيد غير كافٍ لوصف الصورة، لذا أُرسل نصها المستخرج (OCR) فقط',
       helperVisionPlan: 'خطتك لا تتضمن وصف الصور، لذا أُرسل نصها المستخرج (OCR) فقط',
@@ -310,6 +314,8 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       stillProcessing: 'Le fichier était encore en cours de traitement',
       failedProcessing: 'Le fichier n’a pas pu être traité',
       truncated: 'Le texte était trop long et a été raccourci',
+      relevanceFitted:
+        'Le fichier dépassait la fenêtre du modèle : son début et les passages les plus pertinents pour votre question ont été envoyés',
       visionHelperFailed: 'La description de l’image a échoué ; seul son texte (OCR) a été envoyé',
       visionHelperRefused:
         'Crédit insuffisant pour décrire l’image ; seul son texte (OCR) a été envoyé',
@@ -434,6 +440,8 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       stillProcessing: 'Il file era ancora in elaborazione',
       failedProcessing: 'Non è stato possibile elaborare il file',
       truncated: 'Il testo era troppo lungo ed è stato accorciato',
+      relevanceFitted:
+        "Il file superava la finestra del modello: sono stati inviati l'inizio e le parti più pertinenti alla tua domanda",
       visionHelperFailed:
         'La descrizione dell’immagine non è riuscita; è stato inviato solo il testo (OCR)',
       visionHelperRefused:
@@ -558,6 +566,8 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       stillProcessing: 'Die Datei wurde noch verarbeitet',
       failedProcessing: 'Die Datei konnte nicht verarbeitet werden',
       truncated: 'Der Text war zu lang und wurde gekürzt',
+      relevanceFitted:
+        'Die Datei war größer als das Kontextfenster des Modells, daher wurden ihr Anfang und die für deine Frage relevantesten Stellen gesendet',
       visionHelperFailed:
         'Die Bildbeschreibung ist fehlgeschlagen; nur der Text (OCR) wurde gesendet',
       visionHelperRefused:
@@ -682,6 +692,8 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       stillProcessing: 'El archivo todavía se estaba procesando',
       failedProcessing: 'No se pudo procesar el archivo',
       truncated: 'El texto era demasiado largo y se acortó',
+      relevanceFitted:
+        'El archivo superaba la ventana del modelo, así que se enviaron su inicio y las partes más relevantes para tu pregunta',
       visionHelperFailed: 'La descripción de la imagen falló; solo se envió su texto (OCR)',
       visionHelperRefused:
         'No hay crédito suficiente para describir la imagen; solo se envió su texto (OCR)',
@@ -803,6 +815,8 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       stillProcessing: 'Файл ещё обрабатывался',
       failedProcessing: 'Не удалось обработать файл',
       truncated: 'Текст был слишком длинным и был сокращён',
+      relevanceFitted:
+        'Файл был больше окна модели, поэтому отправлены его начало и фрагменты, наиболее относящиеся к вашему вопросу',
       visionHelperFailed: 'Описать изображение не удалось; отправлен только его текст (OCR)',
       visionHelperRefused:
         'Недостаточно средств для описания изображения; отправлен только его текст (OCR)',
@@ -921,6 +935,8 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       stillProcessing: 'O arquivo ainda estava sendo processado',
       failedProcessing: 'Não foi possível processar o arquivo',
       truncated: 'O texto era longo demais e foi encurtado',
+      relevanceFitted:
+        'O arquivo era maior que a janela do modelo, então foram enviados o início e as partes mais relevantes para sua pergunta',
       visionHelperFailed: 'A descrição da imagem falhou; apenas o texto (OCR) foi enviado',
       visionHelperRefused:
         'Crédito insuficiente para descrever a imagem; apenas o texto (OCR) foi enviado',
@@ -1042,6 +1058,8 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       stillProcessing: 'फ़ाइल अभी भी प्रोसेस हो रही थी',
       failedProcessing: 'फ़ाइल प्रोसेस नहीं हो सकी',
       truncated: 'टेक्स्ट बहुत लंबा था, इसलिए छोटा किया गया',
+      relevanceFitted:
+        'फ़ाइल मॉडल की विंडो से बड़ी थी, इसलिए उसकी शुरुआत और आपके प्रश्न से सबसे संबंधित हिस्से भेजे गए',
       visionHelperFailed: 'चित्र का विवरण विफल रहा, इसलिए केवल उसका टेक्स्ट (OCR) भेजा गया',
       visionHelperRefused:
         'चित्र का विवरण देने के लिए पर्याप्त क्रेडिट नहीं, इसलिए केवल उसका टेक्स्ट (OCR) भेजा गया',
@@ -1161,6 +1179,8 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       stillProcessing: 'ファイルはまだ処理中でした',
       failedProcessing: 'ファイルを処理できませんでした',
       truncated: 'テキストが長すぎたため短縮されました',
+      relevanceFitted:
+        'ファイルがモデルのコンテキストウィンドウより大きかったため、冒頭と質問に最も関連する部分を送信しました',
       visionHelperFailed: '画像の説明に失敗したため、テキスト (OCR) のみを送信しました',
       visionHelperRefused:
         '画像の説明に必要なクレジットが不足しているため、テキスト (OCR) のみを送信しました',
@@ -1279,6 +1299,8 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       stillProcessing: 'ไฟล์ยังอยู่ระหว่างการประมวลผล',
       failedProcessing: 'ไม่สามารถประมวลผลไฟล์ได้',
       truncated: 'ข้อความยาวเกินไปจึงถูกตัดให้สั้นลง',
+      relevanceFitted:
+        'ไฟล์ใหญ่กว่าหน้าต่างบริบทของโมเดล จึงส่งเฉพาะส่วนต้นและส่วนที่เกี่ยวข้องกับคำถามของคุณมากที่สุด',
       visionHelperFailed: 'การอธิบายรูปภาพล้มเหลว จึงส่งเฉพาะข้อความในภาพ (OCR)',
       visionHelperRefused: 'เครดิตไม่พอสำหรับอธิบายรูปภาพ จึงส่งเฉพาะข้อความในภาพ (OCR)',
       helperVisionPlan: 'แพ็กเกจของคุณไม่รวมการอธิบายรูปภาพ จึงส่งเฉพาะข้อความในภาพ (OCR)',
@@ -1393,6 +1415,8 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       stillProcessing: 'فایل هنوز در حال پردازش بود',
       failedProcessing: 'پردازش فایل ممکن نشد',
       truncated: 'متن بیش از حد طولانی بود و کوتاه شد',
+      relevanceFitted:
+        'فایل از پنجرهٔ مدل بزرگ‌تر بود، بنابراین ابتدای آن و بخش‌هایی که بیشترین ارتباط را با پرسش شما دارند ارسال شد',
       visionHelperFailed: 'توصیف تصویر ناموفق بود، پس فقط متن آن (OCR) فرستاده شد',
       visionHelperRefused: 'اعتبار برای توصیف تصویر کافی نبود، پس فقط متن آن (OCR) فرستاده شد',
       helperVisionPlan: 'طرح شما شامل توصیف تصویر نیست، پس فقط متن آن (OCR) فرستاده شد',
@@ -1507,6 +1531,7 @@ export const MEDIA_UI_TRANSLATIONS: Record<Locale, MediaUiLocaleTranslation> = {
       stillProcessing: '文件仍在处理中',
       failedProcessing: '无法处理该文件',
       truncated: '文本过长，已被截短',
+      relevanceFitted: '文件超出了模型的上下文窗口，因此只发送了开头部分和与你的问题最相关的段落',
       visionHelperFailed: '图片描述失败，因此只发送了其中的文字（OCR）',
       visionHelperRefused: '余额不足以描述图片，因此只发送了其中的文字（OCR）',
       helperVisionPlan: '您的套餐不包含图片描述，因此只发送了其中的文字（OCR）',

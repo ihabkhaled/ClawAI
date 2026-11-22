@@ -79,6 +79,19 @@ export type ChatModelResponse = z.infer<typeof modelResponseSchema>;
 export class ChatModelClient {
   constructor(private readonly modelContext: ModelContextClient) {}
 
+  /**
+   * The window `generate` checks a prompt against (known or assumed), so the caller can condense
+   * the source to fit before the call. Null when the lookup fails: the caller then sends the
+   * prompt as it is and `generate` reports the real error.
+   */
+  async contextWindowTokens(provider: string, model: string): Promise<number | null> {
+    try {
+      return (await this.modelContext.getWindow(provider, model)).tokens;
+    } catch {
+      return null;
+    }
+  }
+
   async generate(input: ChatModelRequest): Promise<ChatModelResponse> {
     await this.requireContextFit(input);
     const guard = createModelCallGuard({

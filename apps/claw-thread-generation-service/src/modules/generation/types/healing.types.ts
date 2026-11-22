@@ -119,6 +119,8 @@ export type HealerDeps = {
   /** Last successful saved provider/model, when a job resumes. */
   loadSuccessful?: (jobId: string, roleId: string) => Promise<string | null>;
   wait: (ms: number, signal: AbortSignal | undefined) => Promise<void>;
+  /** A model's context window in tokens (null when unknown), so the source is fitted before the call. */
+  windowTokens?: (provider: string, model: string) => Promise<number | null>;
   now: () => number;
   random: () => number;
 };

@@ -1,10 +1,4 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
-import {
-  classifyImageIntent,
-  classifyVideoIntent,
-  MultimodalImageIntent,
-} from '@claw/shared-utilities';
-
 import { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import { ToolChoiceMode } from '../../../common/enums/tool-choice-mode.enum';
 import {
@@ -63,7 +57,11 @@ import type { NormalizedToolCall } from '../types/provider-tool.types';
 import type { ToolTurn } from '../types/tool-turn.types';
 import { claimsMedia, stripMediaClaims } from '../utilities/media-claim.utility';
 import { isAbortedSignal } from '../utilities/media-metadata.utility';
-import { detectAudioKind, detectMediaKind } from '../utilities/media-tool-eligibility.utility';
+import {
+  detectTurnAudioKind,
+  detectTurnMediaKind,
+  isClearMediaRequest,
+} from '../utilities/media-tool-eligibility.utility';
 import { awaitMedia, cancelMedia, startMedia } from '../utilities/media-gateway.utility';
 import {
   buildMediaToolCatalog,
@@ -182,7 +180,8 @@ export class MediaToolLoopManager {
     signal: AbortSignal | undefined,
   ): Promise<{ generations: MediaGenerationRef[]; cancelled: boolean }> {
     const text = latestUserTurnText(context.threadMessages) ?? '';
-    const kind = detectMediaKind(text);
+    // A MODEL intent from routing names the kind in any language (ADR-218); else keywords.
+    const kind = detectTurnMediaKind(context, text);
     const lastUser = this.lastRealUser(context);
     const turnKey = `${context.userId}:${lastUser?.id ?? 'turn'}`;
     if (
@@ -204,7 +203,7 @@ export class MediaToolLoopManager {
     const toolArgs: MediaToolArgs = {
       kind,
       prompt: text.slice(0, MEDIA_PROMPT_MAX_CHARS),
-      audioKind: kind === MediaKind.AUDIO ? detectAudioKind(text) : undefined,
+      audioKind: kind === MediaKind.AUDIO ? detectTurnAudioKind(context, text) : undefined,
     };
     await this.generate(
       {
@@ -239,10 +238,7 @@ export class MediaToolLoopManager {
     options: ExecutionOptions,
     text: string,
   ): Promise<LlmResponse> {
-    const clearRequest =
-      classifyImageIntent(text, false) === MultimodalImageIntent.GENERATE ||
-      classifyVideoIntent(text);
-    return clearRequest
+    return isClearMediaRequest(base, text)
       ? args.planRefusal()
       : this.withoutFalseClaim(await args.callModel({ round: 0, context: base, options }), []);
   }
@@ -685,11 +681,9 @@ export class MediaToolLoopManager {
 
   /** Only a single-lane chat turn with a clear media request swaps the answer for the notice. */
   private showsPlanNotice(args: MediaToolLoopArgs): boolean {
-    if ((args.context.platformSurface ?? ChatSurface.CHAT) !== ChatSurface.CHAT) return false;
-    const text = latestUserTurnText(args.context.threadMessages) ?? '';
     return (
-      classifyImageIntent(text, false) === MultimodalImageIntent.GENERATE ||
-      classifyVideoIntent(text)
+      (args.context.platformSurface ?? ChatSurface.CHAT) === ChatSurface.CHAT &&
+      isClearMediaRequest(args.context, latestUserTurnText(args.context.threadMessages) ?? '')
     );
   }
 

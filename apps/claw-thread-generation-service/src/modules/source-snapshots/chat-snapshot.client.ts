@@ -21,8 +21,14 @@ const snapshotSchema = z
         role: z.enum(['USER', 'ASSISTANT']),
         content: z.string(),
         createdAt: z.string().datetime(),
+        // Optional (2026-11-22): the extracted text of files attached to a user turn. Key order
+        // here is the order chat-service hashes, so it stays after createdAt.
+        attachments: z
+          .array(z.object({ name: z.string(), mimeType: z.string(), text: z.string() }))
+          .optional(),
       }),
     ),
+    attachmentNote: z.string().optional(),
   })
   .refine((snapshot) => snapshot.messageCount === snapshot.messages.length, {
     message: 'Snapshot count does not match its messages',

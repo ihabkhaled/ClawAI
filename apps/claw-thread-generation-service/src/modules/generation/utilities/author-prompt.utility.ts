@@ -6,6 +6,7 @@ import {
   AUTHOR_STRUCTURE_NOTE,
 } from '../constants/author-prompt.constants';
 import { SHORT_ARTICLE_NOTE } from '../constants/healing-notes.constants';
+import { AUTHOR_SOURCE_NOTE } from '../constants/source-prompt.constants';
 import { authorGapsNote } from './accepted-gaps-prompt.utility';
 import { describeContentLanguage } from './review-prompt.utility';
 
@@ -24,6 +25,7 @@ export function buildAuthorSystemPrompt(
   return [
     `Write the requested publication in ${language} (${locale}).`,
     'Use only the supplied source and research evidence.',
+    AUTHOR_SOURCE_NOTE,
     `Return only one JSON object shaped ${AUTHOR_REPLY_SHAPE} with no other keys and no code fences.`,
     '"markdown" is the whole article as one string and the body cites with [evidenceId] markers.',
     '"citations" lists every cited evidence item as an object with its id and url copied exactly from researchEvidence.items; never a bare string.',

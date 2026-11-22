@@ -5,6 +5,7 @@ import type {
   ResolvedSpeed,
   TokenLedgerContext,
   TokenUsageSource,
+  TurnIntentPayload,
 } from '@claw/shared-types';
 import type { AttemptRecord } from './fallback-executor.types';
 import type { FileContentCandidate } from './file-writer.types';
@@ -117,6 +118,9 @@ export type MessageRoutedData = {
   namedModelPrompt?: string;
   // The user named a model that could not be used; the answer says so.
   namedModelNotice?: NamedModelNoticePayload;
+  // ADR-218: what the turn should produce, read by a model in any language. A
+  // MODEL intent replaces the keyword follow-up rules; absent/HEURISTIC keeps them.
+  turnIntent?: TurnIntentPayload;
   // F055 — never on the wire. Set by chat-service itself when the turn's
   // request carried `X-Claw-Zero-Retention: 1`, so the completion event goes
   // out without content and the turn is redacted once it ends.

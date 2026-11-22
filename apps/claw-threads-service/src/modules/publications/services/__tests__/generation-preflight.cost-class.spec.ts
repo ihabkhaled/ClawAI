@@ -67,14 +67,16 @@ describe('GenerationPreflightService on a cost-class plan (ADR-198)', () => {
   it('lets a Free user start with a cheap model, asking routing once per distinct model', async () => {
     const { service, forPlan } = setup(answered);
 
-    await expect(service.assertCanStart('owner-1', requestFor('flash'))).resolves.toBeUndefined();
+    await expect(service.prepareStart('owner-1', requestFor('flash'))).resolves.toMatchObject({
+      topic: expect.any(String),
+    });
     expect(forPlan).toHaveBeenCalledWith(free, [{ provider: 'GEMINI', model: 'flash' }]);
   });
 
   it('refuses a premium model with the plan error', async () => {
     const { service } = setup(answered);
     const failure = await service
-      .assertCanStart('owner-1', requestFor('pro'))
+      .prepareStart('owner-1', requestFor('pro'))
       .catch((error: unknown) => error);
     expect(failure).toBeInstanceOf(ForbiddenException);
     expect((failure as ForbiddenException).getResponse()).toMatchObject({
@@ -84,14 +86,14 @@ describe('GenerationPreflightService on a cost-class plan (ADR-198)', () => {
 
   it('refuses an unpriced model', async () => {
     const { service } = setup(answered);
-    await expect(service.assertCanStart('owner-1', requestFor('unpriced'))).rejects.toBeInstanceOf(
+    await expect(service.prepareStart('owner-1', requestFor('unpriced'))).rejects.toBeInstanceOf(
       ForbiddenException,
     );
   });
 
   it('refuses with 503, not a guess, when routing could not answer', async () => {
     const { service } = setup(new Map());
-    await expect(service.assertCanStart('owner-1', requestFor('flash'))).rejects.toBeInstanceOf(
+    await expect(service.prepareStart('owner-1', requestFor('flash'))).rejects.toBeInstanceOf(
       ServiceUnavailableException,
     );
   });

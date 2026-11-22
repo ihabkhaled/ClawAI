@@ -10,6 +10,7 @@ import { type AdvancedModuleModelSelectionService } from '../modules/chat-messag
 import { bestOfNMessageSchema } from '../modules/chat-messages/dto/best-of-n-message.dto';
 import * as httpClientModule from '../common/utilities/http-client.utility';
 import type { AdvancedModelSelectionResolution } from '../modules/chat-messages/types/advanced-model-selection.types';
+import { MESSAGE_CONTENT_MAX_CHARS } from '../modules/chat-messages/constants/message-content.constants';
 
 vi.mock('../modules/chat-messages/managers/best-of-n.manager', async () => {
   const actual = await vi.importActual<{ BestOfNManager: typeof BestOfNManager }>(
@@ -470,13 +471,19 @@ describe('BestOfNManager', () => {
   });
 
   describe('DTO boundary checks', () => {
-    it('should accept content of exactly 10000 chars', () => {
-      const result = bestOfNMessageSchema.safeParse({ content: 'a'.repeat(10_000), n: 3 });
+    it('should accept content of exactly MESSAGE_CONTENT_MAX_CHARS chars', () => {
+      const result = bestOfNMessageSchema.safeParse({
+        content: 'a'.repeat(MESSAGE_CONTENT_MAX_CHARS),
+        n: 3,
+      });
       expect(result.success).toBe(true);
     });
 
-    it('should reject content exceeding 10000 chars', () => {
-      const result = bestOfNMessageSchema.safeParse({ content: 'a'.repeat(10_001), n: 3 });
+    it('should reject content exceeding MESSAGE_CONTENT_MAX_CHARS chars', () => {
+      const result = bestOfNMessageSchema.safeParse({
+        content: 'a'.repeat(MESSAGE_CONTENT_MAX_CHARS + 1),
+        n: 3,
+      });
       expect(result.success).toBe(false);
     });
 

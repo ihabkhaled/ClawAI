@@ -100,9 +100,9 @@ export interface RouterDecisionPayload {
   reasonCodes: string[];
 }
 
-export interface RouterCoordinatorSuccess {
+export interface RouterCoordinatorSuccess<TDecision = RouterDecisionPayload> {
   ok: true;
-  decision: RouterDecisionPayload;
+  decision: TDecision;
   attempts: RouterAttemptRecord[];
   /** How many entries were passed over before the one that answered. */
   fallbackDepth: number;
@@ -117,7 +117,8 @@ export interface RouterCoordinatorFailure {
   quarantinedDeploymentIds: string[];
 }
 
-export type RouterCoordinatorResult = RouterCoordinatorSuccess | RouterCoordinatorFailure;
+export type RouterCoordinatorResult<TDecision = RouterDecisionPayload> =
+  RouterCoordinatorSuccess<TDecision> | RouterCoordinatorFailure;
 
 /**
  * Result of one chain entry. `stop` distinguishes "this entry is done, try the
@@ -125,8 +126,8 @@ export type RouterCoordinatorResult = RouterCoordinatorSuccess | RouterCoordinat
  * from a failure alone, because cancellation and a plain model error look the
  * same at that level.
  */
-export type RouterEntryOutcome =
-  { ok: true; decision: RouterDecisionPayload } | { ok: false; stop: boolean };
+export type RouterEntryOutcome<TDecision = RouterDecisionPayload> =
+  { ok: true; decision: TDecision } | { ok: false; stop: boolean };
 
 /** Mutable bookkeeping for one chain walk. */
 export interface RouterWalkState {
@@ -150,7 +151,26 @@ export interface DecisionValidationFailure {
 
 export type DecisionValidationResult = DecisionValidationSuccess | DecisionValidationFailure;
 
-export interface RouterCoordinatorOptions {
+/** A validation outcome for any answer shape the coordinator is asked to trust. */
+export type AnswerValidationResult<TDecision> =
+  { valid: true; decision: TDecision } | DecisionValidationFailure;
+
+/**
+ * How the coordinator judges one raw answer. The router's own decision is one
+ * implementation (`routerDecisionValidator`); the turn-intent classifier
+ * (ADR-218) is another. The walk, metering and failure handling stay in one
+ * place, so a second classifier never re-implements them.
+ */
+export interface RouterAnswerValidator<TDecision> {
+  validate(raw: string): AnswerValidationResult<TDecision>;
+  /** Compared against `minConfidence`; below it the answer is LOW_CONFIDENCE. */
+  confidenceOf(decision: TDecision): number;
+  /** The one stricter re-ask after a malformed answer. */
+  repairHint(raw: string): string;
+}
+
+/** Everything a chain walk needs, whatever the answer shape. */
+export interface RouterWalkOptions {
   traceId: string;
   prompt: string;
   /**
@@ -174,6 +194,20 @@ export interface RouterCoordinatorOptions {
   maxAttempts: number;
   /** Below this, a valid decision is rejected as LOW_CONFIDENCE. */
   minConfidence: number;
+}
+
+/** A routing walk: the answer must name one of the eligible deployments. */
+export interface RouterCoordinatorOptions extends RouterWalkOptions {
   /** Deployment ids the decision is allowed to select. */
   eligibleDeploymentIds: readonly string[];
+  /**
+   * Judges each answer. Absent = the router's own decision validation against
+   * `eligibleDeploymentIds`, exactly as before this field existed.
+   */
+  validator?: RouterAnswerValidator<RouterDecisionPayload>;
+}
+
+/** A walk whose answers are judged by the caller's validator (any answer shape). */
+export interface ValidatedWalkOptions<TDecision> extends RouterWalkOptions {
+  validator: RouterAnswerValidator<TDecision>;
 }

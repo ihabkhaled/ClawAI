@@ -17,6 +17,7 @@ export const FILE_DELIVERY_REASON_LABEL_KEYS: ReadonlyMap<string, string> = new 
   ['file_delivery.reason.still_processing', 'mediaUi.deliveryReason.stillProcessing'],
   ['file_delivery.reason.failed_processing', 'mediaUi.deliveryReason.failedProcessing'],
   ['file_delivery.reason.truncated', 'mediaUi.deliveryReason.truncated'],
+  ['file_delivery.reason.relevance_fitted', 'mediaUi.deliveryReason.relevanceFitted'],
   ['file_delivery.reason.vision_helper_failed', 'mediaUi.deliveryReason.visionHelperFailed'],
   ['file_delivery.reason.vision_helper_refused', 'mediaUi.deliveryReason.visionHelperRefused'],
   ['file_delivery.reason.helper_vision_plan', 'mediaUi.deliveryReason.helperVisionPlan'],

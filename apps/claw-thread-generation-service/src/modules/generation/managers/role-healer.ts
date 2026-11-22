@@ -337,6 +337,7 @@ export class RoleHealer {
     let waits = 0;
     let lastReply = '';
     let repairPass = false;
+    const windowTokens = await this.windowOf(candidate);
     for (let attempt = 1; ; attempt += 1) {
       if (attempt > 1) {
         if (this.stopReason(budget, run.counter, run.deadline) !== null) break;
@@ -349,7 +350,7 @@ export class RoleHealer {
       const startedAt = this.deps.now();
       const prompt = repairPass
         ? this.repairPrompt(spec, lastReply)
-        : this.promptFor(spec, note, shrinkLevel);
+        : this.promptFor(spec, note, shrinkLevel, { windowTokens, maxOutputTokens });
       try {
         const response = await this.deps.generate({
           ownerId: input.ownerId,
@@ -504,10 +505,20 @@ export class RoleHealer {
     }
   }
 
+  /** The candidate's window in tokens, or null when unknown; a failed lookup only skips the proactive fit. */
+  private async windowOf(candidate: QueuedCandidate): Promise<number | null> {
+    try {
+      return (await this.deps.windowTokens?.(candidate.provider, candidate.model)) ?? null;
+    } catch {
+      return null;
+    }
+  }
+
   private promptFor(
     spec: RoleCallSpec,
     note: string,
     shrinkLevel: number,
+    fit?: { windowTokens: number | null; maxOutputTokens: number },
   ): { systemPrompt: string; userPrompt: string } {
     const { prompt } = spec;
     const shared = prompt.sharedMaterial;
@@ -515,13 +526,19 @@ export class RoleHealer {
       return { systemPrompt: prompt.systemPrompt, userPrompt: `${prompt.userPrompt}${note}` };
     const shrunkAt = (level: number): string =>
       prompt.userPrompt.replace(shared, shrinkSharedMaterial(shared, level));
-    // Levels the source needs before the prompt fits the gateway at all (0 when it already fits).
+    // The source is condensed before the call, never after a refusal only: a long chat fits the
+    // gateway limit and the model window (prompt plus output room), so a 32k model gets every turn
+    // condensed instead of failing CONTEXT_WINDOW_EXCEEDED and being swapped.
+    const overflows = (text: string): boolean =>
+      text.length + note.length > CHAT_GATEWAY_USER_PROMPT_MAX_CHARS ||
+      (fit !== undefined &&
+        fit.windowTokens !== null &&
+        estimateTextTokens(`${prompt.systemPrompt}\n${text}${note}`) + fit.maxOutputTokens >
+          fit.windowTokens);
+    // Levels the source needs before the prompt fits (0 when it already fits).
     let base = prompt.userPrompt;
     let fitLevel = 0;
-    while (
-      base.length + note.length > CHAT_GATEWAY_USER_PROMPT_MAX_CHARS &&
-      fitLevel < MAX_PROACTIVE_SHRINK_LEVEL
-    ) {
+    while (overflows(base) && fitLevel < MAX_PROACTIVE_SHRINK_LEVEL) {
       fitLevel += 1;
       const shortened = shrunkAt(fitLevel);
       if (shortened.length < base.length) base = shortened;

@@ -102,6 +102,48 @@ describe('ChatSnapshotClient', () => {
     );
   });
 
+  it('accepts attached file text and its note, keeping them through the integrity check', async () => {
+    vi.stubEnv('JWT_SECRET', 'j'.repeat(40));
+    vi.stubEnv('THREAD_GENERATION_DATABASE_URL', 'postgresql://claw:secret@localhost:5432/db');
+    vi.stubEnv('INTER_SERVICE_AUTH_TOKEN', 't'.repeat(40));
+    AppConfig.validate();
+    // The key order chat-service hashes: attachments after createdAt, the note after messages.
+    const body = {
+      schemaVersion: 1,
+      sourceThreadId: 'thread-1',
+      title: null,
+      sourceCreatedAt: '2026-10-01T10:00:00.000Z',
+      messageCount: 1,
+      messages: [
+        {
+          id: 'm1',
+          role: 'USER',
+          content: '',
+          createdAt: '2026-10-01T10:01:00.000Z',
+          attachments: [{ name: 'notes.md', mimeType: 'text/markdown', text: '# Notes' }],
+        },
+      ],
+      attachmentNote: 'Attached file text: 1 attached file(s) had no readable text.',
+    };
+    const byteCount = Buffer.byteLength(JSON.stringify(body), 'utf8');
+    const sha256 = createHash('sha256')
+      .update(JSON.stringify({ ...body, byteCount }))
+      .digest('hex');
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(JSON.stringify({ ...body, byteCount, sha256 }), { status: 200 }),
+        ),
+    );
+
+    const result = await new ChatSnapshotClient().getOwnedSnapshot('owner-1', 'thread-1');
+
+    expect(result.messages[0]?.attachments?.[0]?.text).toBe('# Notes');
+    expect(result.attachmentNote).toContain('no readable text');
+  });
+
   it('rejects a snapshot whose declared message count does not match its content', async () => {
     vi.stubEnv('JWT_SECRET', 'j'.repeat(40));
     vi.stubEnv('THREAD_GENERATION_DATABASE_URL', 'postgresql://claw:secret@localhost:5432/db');

@@ -3,6 +3,7 @@ import type { ChatMessage } from '../../../../generated/prisma';
 import { ContextAssemblyManager } from '../context-assembly.manager';
 import { ContextComposerManager } from '../context-composer.manager';
 import { CrossThreadRetrievalManager } from '../cross-thread-retrieval.manager';
+import { FILE_CONTENT_FETCH_TIMEOUT_MS } from '../../constants/file-content.constants';
 
 vi.mock('../../../../common/utilities', () => ({
   buildInterServiceAuthHeader: vi.fn(() => 'Service test-service-token'),
@@ -108,7 +109,7 @@ describe('ContextAssemblyManager attachment ownership contract', () => {
       url: 'http://file-service:4006/api/v1/internal/files/file-1/content?userId=tenant-user-1',
       method: 'GET',
       headers: { Authorization: 'Service test-service-token' },
-      timeoutMs: 10_000,
+      timeoutMs: FILE_CONTENT_FETCH_TIMEOUT_MS,
     });
     expect(context.fileContents).toEqual([
       expect.objectContaining({ id: 'file-1', filename: 'private.txt' }),

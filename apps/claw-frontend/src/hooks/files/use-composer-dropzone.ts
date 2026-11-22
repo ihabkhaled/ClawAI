@@ -1,13 +1,16 @@
 import { useCallback, useRef, useState } from 'react';
 
-import type {
-  UseComposerDropzoneParams,
-  UseComposerDropzoneReturn,
-} from '@/types';
+import type { UseComposerDropzoneParams, UseComposerDropzoneReturn } from '@/types';
 import { extractFilesFromDataTransfer } from '@/utilities/data-transfer.utility';
+import {
+  buildPastedTextFile,
+  isLargePaste,
+  readClipboardPlainText,
+} from '@/utilities/pasted-text.utility';
 
 // Controller for ComposerDropzone. Owns the drag-active visual state plus the
-// paste / drag / drop event handling. Drag enter/leave are reference-counted so
+// paste / drag / drop event handling, including turning a very large text
+// paste into a text attachment. Drag enter/leave are reference-counted so
 // the overlay does not flicker when the cursor crosses child element borders.
 export function useComposerDropzone({
   onFiles,
@@ -15,6 +18,7 @@ export function useComposerDropzone({
 }: UseComposerDropzoneParams): UseComposerDropzoneReturn {
   const [isDragActive, setIsDragActive] = useState(false);
   const dragDepth = useRef(0);
+  const pastedTextCount = useRef(0);
 
   const emit = useCallback(
     (files: File[]): void => {
@@ -33,6 +37,14 @@ export function useComposerDropzone({
       }
       const files = extractFilesFromDataTransfer(event.clipboardData);
       if (files.length === 0) {
+        // A very large text paste goes in as a "Pasted text N.txt" attachment
+        // through the same upload path, not into the textarea (ADR-219).
+        const text = readClipboardPlainText(event.clipboardData);
+        if (isLargePaste(text)) {
+          event.preventDefault();
+          pastedTextCount.current += 1;
+          emit([buildPastedTextFile(text, pastedTextCount.current)]);
+        }
         return;
       }
       // Only swallow the paste when it actually carried files, so plain-text

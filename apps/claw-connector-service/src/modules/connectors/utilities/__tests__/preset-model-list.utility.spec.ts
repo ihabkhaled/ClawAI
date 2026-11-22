@@ -105,6 +105,50 @@ describe('parsePresetModelList', () => {
     });
   });
 
+  it('reads Mistral max_context_length and vLLM max_model_len as the window', () => {
+    const parsed = parsePresetModelList(ConnectorModelsResponseFormat.OPENAI_LIST, {
+      data: [
+        { id: 'mistral-large-latest', max_context_length: 131_072 },
+        { id: 'meta/llama-3.3-70b-instruct', max_model_len: 65_536 },
+      ],
+    });
+
+    expect(parsed.map((item) => item.contextWindow)).toEqual([131_072, 65_536]);
+    expect(
+      toNormalizedPresetModel(
+        parsed[0] as PresetModelListEntry,
+        getConnectorPreset('MISTRAL') as ConnectorPreset,
+      ).capabilities.maxContextTokens,
+    ).toBe(131_072);
+  });
+
+  it('reads the Cloudflare context_window property and ignores a malformed one', () => {
+    const parsed = parsePresetModelList(ConnectorModelsResponseFormat.CLOUDFLARE_SEARCH, {
+      result: [
+        {
+          name: '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
+          task: { name: 'Text Generation' },
+          properties: [
+            { property_id: 'beta', value: 'false' },
+            { property_id: 'context_window', value: '24000' },
+          ],
+        },
+        {
+          name: '@cf/x/odd',
+          task: { name: 'Text Generation' },
+          properties: [{ property_id: 'context_window', value: 'lots' }],
+        },
+        { name: '@cf/x/bad-properties', properties: 'nope' },
+      ],
+    });
+
+    expect(parsed.map((item) => [item.id, item.contextWindow])).toEqual([
+      ['@cf/meta/llama-3.3-70b-instruct-fp8-fast', 24_000],
+      ['@cf/x/odd', undefined],
+      ['@cf/x/bad-properties', undefined],
+    ]);
+  });
+
   it('treats nullable provider fields as absent', () => {
     const [parsed] = parsePresetModelList(ConnectorModelsResponseFormat.OPENAI_LIST, {
       data: [{ id: 'x', name: null, context_length: null, metadata: null }],

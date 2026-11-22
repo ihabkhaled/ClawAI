@@ -18,6 +18,8 @@ export interface FileContentCandidateOptions {
   preferred?: FileContentCandidate;
   /** LOCAL_ONLY / PRIVACY_FIRST: hosted writers are not allowed. */
   localOnly?: boolean;
+  /** The format a MODEL FILE intent named (ADR-218); wins over the keyword detection. */
+  format?: string;
 }
 
 export interface CachedFileWriterCandidates {

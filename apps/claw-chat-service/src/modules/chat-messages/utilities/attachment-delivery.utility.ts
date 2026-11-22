@@ -10,6 +10,7 @@ import {
   DELIVERY_REASON_NO_IMAGE_BYTES,
   DELIVERY_REASON_NO_VIDEO_INPUT,
   DELIVERY_REASON_NO_VISION,
+  DELIVERY_REASON_RELEVANCE_FITTED,
   DELIVERY_REASON_STILL_PROCESSING,
   DELIVERY_REASON_TRUNCATED,
   DELIVERY_REASON_UNSUPPORTED_MIME,
@@ -20,7 +21,10 @@ import {
   NATIVE_VIDEO_MAX_DURATION_MS,
   NATIVE_VIDEO_MIME_TYPES,
 } from '../constants/video-delivery.constants';
-import { TEXT_BUDGET_SHORTENED_MARKER } from '../constants/evidence-fit.constants';
+import {
+  FILE_RELEVANCE_FIT_NOTE_PREFIX,
+  TEXT_BUDGET_SHORTENED_MARKER,
+} from '../constants/evidence-fit.constants';
 import { MAX_FILE_CONTENT_LENGTH } from '../constants/file-content.constants';
 import { NATIVE_AUDIO_MAX_BYTES } from '../constants/native-audio.constants';
 import {
@@ -125,7 +129,7 @@ function resolveOne(
     return resolveImage(file, capabilities, options);
   }
   return isTextLikeMime(mime) || EXTRACTABLE_DOCUMENT_MIME_EXACT.has(mime)
-    ? decide(file, options, resolveTextMode(file), false)
+    ? decide(file, options, resolveTextMode(file), false, textModeReason(file))
     : decide(file, options, FileDeliveryMode.OMITTED_UNSUPPORTED, false);
 }
 
@@ -307,9 +311,20 @@ function resolveTextMode(file: FileContentResponse): FileDeliveryMode {
       ? FileDeliveryMode.TRUNCATED_TEXT
       : FileDeliveryMode.EXTRACTED_TEXT;
   }
-  return text.length > MAX_FILE_CONTENT_LENGTH || text.includes(TEXT_BUDGET_SHORTENED_MARKER)
+  return text.length > MAX_FILE_CONTENT_LENGTH ||
+    text.includes(TEXT_BUDGET_SHORTENED_MARKER) ||
+    isRelevanceFitted(file)
     ? FileDeliveryMode.TRUNCATED_TEXT
     : FileDeliveryMode.EXTRACTED_TEXT;
+}
+
+/** A relevance-fitted file says so; any other cut keeps the mode's default reason. */
+function textModeReason(file: FileContentResponse): string | undefined {
+  return isRelevanceFitted(file) ? DELIVERY_REASON_RELEVANCE_FITTED : undefined;
+}
+
+function isRelevanceFitted(file: FileContentResponse): boolean {
+  return (file.extractedText ?? '').trimStart().startsWith(FILE_RELEVANCE_FIT_NOTE_PREFIX);
 }
 
 function decide(

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable, Logger } from '@nestjs/common';
-import { LocalModelRole } from '@claw/shared-types';
+import { Injectable, Logger, Optional } from '@nestjs/common';
+import { LocalModelRole, type TurnIntentPayload } from '@claw/shared-types';
 import {
   classifyImageIntent,
   hasAttachedImageMime,
@@ -26,7 +26,14 @@ import { CloudRouterManager } from './cloud-router.manager';
 import { CloudRouterEligibilityManager } from './cloud-router-eligibility.manager';
 import { CloudRouterPromptManager } from './cloud-router-prompt.manager';
 import { NamedModelRequestManager } from './named-model-request.manager';
+import { TurnIntentManager } from './turn-intent.manager';
 import type { NamedModelSlot } from '../types/named-model-request.types';
+import type { PickedModelKind, TurnIntentAnswer, TurnIntentSlot } from '../types/turn-intent.types';
+import { TURN_INTENT_PICK_OVERRIDE_MIN_CONFIDENCE } from '../constants/turn-intent.constants';
+import {
+  heuristicTurnIntentPayload,
+  modelTurnIntentPayload,
+} from '../utilities/turn-intent.utility';
 import type { EligibleDeploymentRecord } from '../types/model-deployment.types';
 import type { RouterDecisionPayload } from '../types/router-inference.types';
 import { PROVIDER_INFERENCE_RULES } from '../constants/provider-inference.constants';
@@ -128,15 +135,20 @@ export class RoutingManager {
     private readonly cloudRouterEligibility: CloudRouterEligibilityManager,
     private readonly cloudRouterPrompt: CloudRouterPromptManager,
     private readonly namedModelRequest: NamedModelRequestManager,
+    // @Optional(): specs that build the manager by hand pass ten arguments, and
+    // a missing classifier means "keywords decide" — today's behaviour.
+    @Optional() private readonly turnIntent?: TurnIntentManager,
   ) {}
 
   async evaluateRoute(context: RoutingContext): Promise<RoutingDecisionResult> {
     const start = Date.now();
     const complexity = this.complexityClassifier.classify(context.message);
     const namedModelSlot: NamedModelSlot = {};
-    const enrichedContext = { ...context, complexity, namedModelSlot };
+    const turnIntentSlot: TurnIntentSlot = {};
+    const enrichedContext = { ...context, complexity, namedModelSlot, turnIntentSlot };
 
-    const result = await this.doEvaluate(enrichedContext);
+    const decided = await this.doEvaluate(enrichedContext);
+    const result = this.withTurnIntent(decided, turnIntentSlot.payload);
 
     return {
       ...result,
@@ -170,12 +182,36 @@ export class RoutingManager {
     return mode;
   }
 
-  private dispatchByMode(
+  /**
+   * Puts the turn intent on the decision (ADR-218) with trace tags. A model
+   * intent drops the `keyword_detected` tag a shared image builder adds.
+   */
+  private withTurnIntent(
+    result: RoutingDecisionResult,
+    payload: TurnIntentPayload | undefined,
+  ): RoutingDecisionResult {
+    if (payload === undefined) return result;
+    const model = payload.source === 'MODEL';
+    const tags = model
+      ? result.reasonTags.filter((tag) => tag !== 'keyword_detected')
+      : result.reasonTags;
+    return {
+      ...result,
+      reasonTags: [
+        ...tags,
+        ...(model ? [`intent_model_${payload.kind.toLowerCase()}`] : []),
+        ...(payload.pickOverridden === undefined ? [] : ['intent_pick_overridden']),
+      ],
+      turnIntent: payload,
+    };
+  }
+
+  private async dispatchByMode(
     mode: RoutingMode,
     context: RoutingContext,
-  ): Promise<RoutingDecisionResult> | RoutingDecisionResult {
+  ): Promise<RoutingDecisionResult> {
     if (mode !== RoutingMode.AUTO) {
-      const fileDecision = this.detectExplicitModeFileRequest(mode, context);
+      const fileDecision = await this.detectExplicitModeFileRequest(mode, context);
       if (fileDecision) return fileDecision;
     }
     const handler = this.modeHandlers.get(mode);
@@ -196,15 +232,18 @@ export class RoutingManager {
    *   through to AUTO, which detects on its own) and Runtime V2 agent runs
    *   are left alone.
    */
-  private detectExplicitModeFileRequest(
+  private async detectExplicitModeFileRequest(
     mode: RoutingMode,
     context: RoutingContext,
-  ): RoutingDecisionResult | null {
+  ): Promise<RoutingDecisionResult | null> {
     const manual = mode === RoutingMode.MANUAL_MODEL;
     const writer = manual ? this.manualFileWriter(context) : null;
+    if (writer !== null && context.runtimeV2 !== true && this.pickedKindOf(writer) !== 'CHAT') {
+      return this.textInsteadOfGenerationPick(context, writer);
+    }
     if (!this.explicitModeMayGenerate(manual, writer, context)) return null;
     const localOnly = mode === RoutingMode.LOCAL_ONLY || mode === RoutingMode.PRIVACY_FIRST;
-    const decision = this.detectExplicitModeArtifact(context, localOnly);
+    const decision = await this.detectExplicitModeArtifact(context, localOnly);
     if (!decision) return null;
     const fileWriter =
       decision.selectedProvider === FILE_GENERATION_PROVIDER ? (writer ?? undefined) : undefined;
@@ -259,15 +298,96 @@ export class RoutingManager {
     if (!manual) return true;
     // A picked video model with an image attached is image-to-video (ADR-137), not an
     // image edit: the user's pick stands and chat-service sends it to video generation.
-    return writer === null
-      ? false
-      : !writer.provider.startsWith('IMAGE_') &&
-          writer.provider !== FILE_GENERATION_PROVIDER &&
-          resolveVideoCapabilityProvider(writer.provider, writer.model) === undefined;
+    return writer === null ? false : this.pickedKindOf(writer) === 'CHAT';
   }
 
-  /** Image first, then file — the order handleAuto uses. */
-  private detectExplicitModeArtifact(
+  /**
+   * What a picked model can produce. Image-output picks were already moved to
+   * `IMAGE_*` by resolveManualPick; a video-output model is recognised by the
+   * shared predicate chat-service applies (ADR-137).
+   */
+  private pickedKindOf(pick: FallbackEntry): PickedModelKind {
+    if (pick.provider.startsWith('IMAGE_')) return 'IMAGE';
+    if (pick.provider === FILE_GENERATION_PROVIDER) return 'FILE';
+    return pick.provider.startsWith('VIDEO_') ||
+      resolveVideoCapabilityProvider(pick.provider, pick.model) !== undefined
+      ? 'VIDEO'
+      : 'CHAT';
+  }
+
+  /**
+   * A generation-only pick (image/video/file model) on a turn the classifier is
+   * sure is TEXT — "Hi", a question. Owner decision (ADR-218): answer in text
+   * through the AUTO text path and say so (`pickOverridden`) instead of drawing
+   * a picture of "Hi". Anything else keeps today's behaviour (the pick stands),
+   * and a contradicting TEXT payload is dropped so the published intent always
+   * matches what routing did.
+   */
+  private async textInsteadOfGenerationPick(
+    context: RoutingContext,
+    pick: FallbackEntry,
+  ): Promise<RoutingDecisionResult | null> {
+    const answer = await this.resolveTurnIntent(context, this.pickedKindOf(pick));
+    const slot = context.turnIntentSlot;
+    if (answer?.intent !== 'TEXT' || answer.confidence < TURN_INTENT_PICK_OVERRIDE_MIN_CONFIDENCE) {
+      if (answer?.intent === 'TEXT' && slot !== undefined) slot.payload = undefined;
+      return null;
+    }
+    const original = {
+      provider: context.forcedProvider ?? pick.provider,
+      model: context.forcedModel ?? pick.model,
+    };
+    this.logger.log(
+      `textInsteadOfGenerationPick: ${original.provider}/${original.model} only generates media; TEXT turn (confidence=${String(answer.confidence)}) → AUTO text model`,
+    );
+    const decision = await this.routeTextTurn({
+      ...context,
+      userMode: RoutingMode.AUTO,
+      forcedProvider: undefined,
+      forcedModel: undefined,
+    });
+    if (slot?.payload !== undefined) slot.payload = { ...slot.payload, pickOverridden: original };
+    return decision;
+  }
+
+  /** The AUTO text path with no generation gates: cloud router, else best available. */
+  private async routeTextTurn(context: RoutingContext): Promise<RoutingDecisionResult> {
+    const cloud = await this.tryCloudRouting(context);
+    if (cloud) return cloud;
+    const state = await this.computeHeuristicState(context);
+    return this.withModalityFit(this.applyHeuristicRules(context, state), context);
+  }
+
+  /**
+   * Image first, then file — the order handleAuto uses. The classifier decides
+   * when it answers (ADR-218): a picked chat model with a TEXT turn is never
+   * redirected, whatever words the message contains. Local-only modes never
+   * consult it: its prompt carries the message, and those modes forbid egress.
+   */
+  private async detectExplicitModeArtifact(
+    context: RoutingContext,
+    localOnly: boolean,
+  ): Promise<RoutingDecisionResult | null> {
+    const pickedKind = context.forcedModel === undefined ? undefined : 'CHAT';
+    const answer = localOnly ? null : await this.resolveTurnIntent(context, pickedKind);
+    if (answer === null) {
+      return this.withHeuristicIntent(context, this.explicitArtifactByKeywords(context, localOnly));
+    }
+    if (answer.intent === 'FILE') {
+      return this.buildFileGenerationDecision(context, 'file_intent_model');
+    }
+    if (answer.intent === 'IMAGE_EDIT' && hasAttachedImageMime(context.attachmentMimeTypes)) {
+      return this.buildImageEditDecision(context, localOnly);
+    }
+    // TEXT, VIDEO, AUDIO_*: the mode's own handler keeps the turn; chat-service
+    // handles video and audio.
+    return answer.intent === 'IMAGE_GENERATE' || answer.intent === 'IMAGE_EDIT'
+      ? this.explicitImageGeneration(context, localOnly)
+      : null;
+  }
+
+  /** Today's keyword detectors: the fallback when the classifier is unavailable. */
+  private explicitArtifactByKeywords(
     context: RoutingContext,
     localOnly: boolean,
   ): RoutingDecisionResult | null {
@@ -275,26 +395,102 @@ export class RoutingManager {
     if (intent === MultimodalImageIntent.EDIT) {
       return this.buildImageEditDecision(context, localOnly);
     }
-    if (intent === MultimodalImageIntent.GENERATE) {
-      if (this.pickedToolModelHandlesMedia(context)) {
-        this.logger.log(
-          `detectExplicitModeArtifact: picked tool-capable model ${context.forcedProvider ?? 'inferred'}/${context.forcedModel ?? ''} keeps the turn; its tool loop generates the image`,
-        );
-        return null;
-      }
-      if (context.forcedModel && context.userMode === RoutingMode.MANUAL_MODEL) {
-        this.logger.log(
-          `detectExplicitModeArtifact: picked chat model ${context.forcedProvider ?? 'inferred'}/${context.forcedModel} cannot generate images → best available image provider`,
-        );
-      }
-      if (!localOnly) return this.buildImageDecisionForBestProvider(context);
-      const local = this.buildImageDecision(IMAGE_PROVIDER_LOCAL, IMAGE_MODEL_SD_LOCAL, context);
-      return {
-        ...local,
-        fallbackChain: local.fallbackChain.filter((e) => e.provider === IMAGE_PROVIDER_LOCAL),
-      };
+    return intent === MultimodalImageIntent.GENERATE
+      ? this.explicitImageGeneration(context, localOnly)
+      : this.detectFileGenerationRequest(context);
+  }
+
+  /** An image generation request outside AUTO. */
+  private explicitImageGeneration(
+    context: RoutingContext,
+    localOnly: boolean,
+  ): RoutingDecisionResult | null {
+    if (this.pickedToolModelHandlesMedia(context)) {
+      this.logger.log(
+        `detectExplicitModeArtifact: picked tool-capable model ${context.forcedProvider ?? 'inferred'}/${context.forcedModel ?? ''} keeps the turn; its tool loop generates the image`,
+      );
+      return null;
     }
-    return this.detectFileGenerationRequest(context);
+    if (context.forcedModel && context.userMode === RoutingMode.MANUAL_MODEL) {
+      this.logger.log(
+        `detectExplicitModeArtifact: picked chat model ${context.forcedProvider ?? 'inferred'}/${context.forcedModel} cannot generate images → best available image provider`,
+      );
+    }
+    if (!localOnly) return this.buildImageDecisionForBestProvider(context);
+    const local = this.buildImageDecision(IMAGE_PROVIDER_LOCAL, IMAGE_MODEL_SD_LOCAL, context);
+    return {
+      ...local,
+      fallbackChain: local.fallbackChain.filter((e) => e.provider === IMAGE_PROVIDER_LOCAL),
+    };
+  }
+
+  /**
+   * The turn's intent from the classifier, asked at most once per request (the
+   * slot memoises it). Null = unavailable, and the caller uses the keywords.
+   * Runtime V2 agent runs are never classified: a file there is a tool call.
+   */
+  private async resolveTurnIntent(
+    context: RoutingContext,
+    pickedModelKind: PickedModelKind | undefined,
+  ): Promise<TurnIntentAnswer | null> {
+    const slot = context.turnIntentSlot;
+    if (slot?.classified === true) return slot.answer ?? null;
+    const answer =
+      this.turnIntent === undefined || context.runtimeV2 === true
+        ? null
+        : await this.turnIntent.classify({
+            message: context.message,
+            userId: context.userId,
+            threadId: context.threadId,
+            previousTurnKind: context.previousTurnKind,
+            attachmentMimeTypes: context.attachmentMimeTypes,
+            pickedModelKind,
+          });
+    if (slot !== undefined) {
+      slot.classified = true;
+      slot.answer = answer;
+      if (answer !== null) {
+        const hasImage = hasAttachedImageMime(context.attachmentMimeTypes);
+        slot.payload = modelTurnIntentPayload(answer, hasImage);
+      }
+    }
+    return answer;
+  }
+
+  /** Records a keyword-made generation as a HEURISTIC intent; nothing found = no intent. */
+  private withHeuristicIntent(
+    context: RoutingContext,
+    decision: RoutingDecisionResult | null,
+  ): RoutingDecisionResult | null {
+    if (decision !== null && context.turnIntentSlot !== undefined) {
+      context.turnIntentSlot.payload = heuristicTurnIntentPayload(decision);
+    }
+    return decision;
+  }
+
+  /**
+   * The AUTO generation gate. A classifier answer decides: TEXT, VIDEO and
+   * AUDIO skip the keyword image/file gates entirely (chat-service handles
+   * video and audio). Only a null answer runs today's keyword detectors.
+   */
+  private async tryGenerationGate(context: RoutingContext): Promise<RoutingDecisionResult | null> {
+    const answer = await this.resolveTurnIntent(context, undefined);
+    if (answer === null) {
+      return this.withHeuristicIntent(context, this.tryImageOrFileGeneration(context));
+    }
+    if (answer.intent === 'FILE') {
+      return this.buildFileGenerationDecision(context, 'file_intent_model');
+    }
+    if (answer.intent === 'IMAGE_EDIT' && hasAttachedImageMime(context.attachmentMimeTypes)) {
+      return this.buildImageEditDecision(context, false);
+    }
+    if (answer.intent === 'IMAGE_GENERATE' || answer.intent === 'IMAGE_EDIT') {
+      return this.buildImageDecisionForBestProvider(context);
+    }
+    this.logger.log(
+      `tryGenerationGate: turn intent ${answer.intent} — keyword image/file gates skipped`,
+    );
+    return null;
   }
 
   /**
@@ -616,7 +812,7 @@ export class RoutingManager {
       if (named) {
         return named;
       }
-      const earlyContent = this.tryImageOrFileGeneration(context);
+      const earlyContent = await this.tryGenerationGate(context);
       if (earlyContent) {
         return earlyContent;
       }
@@ -958,7 +1154,7 @@ export class RoutingManager {
   private async handleAutoHeuristic(context: RoutingContext): Promise<RoutingDecisionResult> {
     this.logger.debug('handleAutoHeuristic: starting heuristic-based routing');
 
-    const earlyContent = this.tryImageOrFileGeneration(context);
+    const earlyContent = await this.tryGenerationGate(context);
     if (earlyContent) {
       return earlyContent;
     }
@@ -1302,14 +1498,21 @@ export class RoutingManager {
     this.logger.log(
       'detectFileGenerationRequest: file generation request detected via keyword heuristic',
     );
+    return this.buildFileGenerationDecision(context, `file_intent_${intent.reason}`);
+  }
 
+  /** A file-generation decision; `reasonTag` names who decided (a keyword reason or the model). */
+  private buildFileGenerationDecision(
+    context: RoutingContext,
+    reasonTag: string,
+  ): RoutingDecisionResult {
     const primary = { provider: FILE_GENERATION_PROVIDER, model: 'auto' };
     return {
       selectedProvider: FILE_GENERATION_PROVIDER,
       selectedModel: 'auto',
       routingMode: RoutingMode.AUTO,
       confidence: 0.95,
-      reasonTags: ['auto', 'file_generation', `file_intent_${intent.reason}`],
+      reasonTags: ['auto', 'file_generation', reasonTag],
       privacyClass: 'cloud',
       costClass: 'medium',
       fallbackChain: this.buildFallbackChain(primary, context),

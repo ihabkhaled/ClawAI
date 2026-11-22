@@ -195,6 +195,8 @@ export type { ChatLimitNotice } from './chat-limit-notice.types';
 export type {
   PickedModelFallbackInfo,
   CreditFallbackInfo,
+  IntentPickOverriddenInfo,
+  IntentPickOverriddenNoticeProps,
   CreditFallbackNoticeProps,
   PickedModelFallbackNoticeProps,
   PickedModelRecoveryProps,

@@ -2,6 +2,7 @@ import {
   type ForbiddenException,
   Inject,
   Injectable,
+  Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import {
@@ -14,7 +15,9 @@ import {
 import type { RetryThreadGenerationDto } from '../dto/retry-thread-generation.dto';
 import type { StartThreadGenerationDto } from '../dto/start-thread-generation.dto';
 import { THREAD_REQUIRED_FEATURES } from '../constants/generation-preflight.constants';
+import type { CostClassIndex } from '../types/model-cost-class.types';
 import type {
+  ModelRef,
   PreflightRole,
   StoredGenerationSelections,
 } from '../types/generation-preflight.types';
@@ -26,11 +29,14 @@ import {
   assertSpendCapAllowed,
   collectPreflightRoles,
   collectRetryRoles,
+  countFallbacks,
   distinctModelRefs,
+  isFallbackOnPlan,
   isNotInPlanDenial,
   missingFeaturesDenial,
   modelKey,
   retrySpendCapMicroUsd,
+  withUsableFallbacks,
 } from '../utilities/generation-preflight.utility';
 import { costClassKey, needsCostClasses } from '../utilities/model-cost-class.utility';
 import { ModelCatalogClient } from './model-catalog.client';
@@ -40,18 +46,52 @@ import { ModelCostClassClient } from './model-cost-class.client';
  * Refuses a generation that cannot succeed before any job, budget or model call exists:
  * a spend cap below the minimum, a role without permission, a model the catalog does not know
  * and a model the caller's plan does not include. It reads the catalog and the plan only; it
- * never calls a paid model. A start and a retry run exactly the same checks (ADR-176).
+ * never calls a paid model. A start and a retry check the same things (ADR-176); a start drops an
+ * unusable fallback instead of refusing, because its request can still be changed before queueing.
  */
 @Injectable()
 export class GenerationPreflightService {
+  private readonly logger = new Logger(GenerationPreflightService.name);
+
   constructor(
     @Inject(ENTITLEMENTS_ADAPTER) private readonly entitlements: EntitlementsAdapter,
     private readonly catalog: ModelCatalogClient,
     private readonly costClasses: ModelCostClassClient,
   ) {}
 
-  async assertCanStart(ownerId: string, input: StartThreadGenerationDto): Promise<void> {
-    await this.assertCanRun(ownerId, collectPreflightRoles(input), input.capMicroUsd);
+  /**
+   * Checks a start and answers the request to queue: the same request with every fallback the
+   * catalog does not know, the plan excludes or no price covers removed. A primary pick is never
+   * dropped; it is refused as before. The client builds fallbacks from its own model list, which
+   * can hold models Threads cannot use (a video detector), and one bad backup must not block a
+   * run whose picks are valid.
+   */
+  async prepareStart(
+    ownerId: string,
+    input: StartThreadGenerationDto,
+  ): Promise<StartThreadGenerationDto> {
+    assertSpendCapAllowed(input.capMicroUsd);
+    const roles = collectPreflightRoles(input);
+    const [entitlements, knownKeys] = await Promise.all([
+      this.loadEntitlements(ownerId),
+      this.loadKnownKeys(roles),
+    ]);
+    assertGenerationPermitted(entitlements);
+    const primaries = roles.filter((role) => !role.isFallback);
+    assertModelsKnown(primaries, knownKeys);
+    const known = withUsableFallbacks(input, (fallback) => knownKeys.has(modelKey(fallback)));
+    const refs = distinctModelRefs(collectPreflightRoles(known));
+    const classes = await this.costClasses.forPlan(entitlements, refs);
+    this.assertPricesRead(entitlements, distinctModelRefs(primaries), classes);
+    assertModelsOnPlan(entitlements, primaries, classes);
+    const usable = withUsableFallbacks(known, (fallback) =>
+      isFallbackOnPlan(entitlements, fallback, classes),
+    );
+    const dropped = countFallbacks(input) - countFallbacks(usable);
+    if (dropped > 0) {
+      this.logger.log(`Dropped ${String(dropped)} unusable fallback model(s) from a Thread start`);
+    }
+    return usable;
   }
 
   /**
@@ -111,13 +151,21 @@ export class GenerationPreflightService {
     // start is refused with a 503 rather than guessed at (fail closed).
     const refs = distinctModelRefs(roles);
     const classes = await this.costClasses.forPlan(entitlements, refs);
+    this.assertPricesRead(entitlements, refs, classes);
+    assertModelsOnPlan(entitlements, roles, classes);
+  }
+
+  private assertPricesRead(
+    entitlements: UserEntitlements,
+    refs: readonly ModelRef[],
+    classes: CostClassIndex,
+  ): void {
     if (
       needsCostClasses(entitlements) &&
       refs.some(({ provider, model }) => !classes.has(costClassKey(provider, model)))
     ) {
       throw new ServiceUnavailableException('Model prices are unavailable');
     }
-    assertModelsOnPlan(entitlements, roles, classes);
   }
 
   /** The plan the account has fallen back to counts: an ended trial is the budget step's call. */

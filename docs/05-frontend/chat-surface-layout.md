@@ -540,3 +540,7 @@ The toolbar under the textarea is `[+] [model] [research chip] [mic/video] … [
 ## The same "+" menu on every composer (2026-10-14)
 
 Compare, in-thread Compare and the seven labs render the chat composer's `ComposerPlusMenu` (Attach / Context / Tools) and, while research is on, `ComposerResearchChip`; the loose Attach, Prompt library, Context and research controls are gone from them (`chat-surface-layout-contract.test.ts` enforces it). A surface with no thread yet passes `draftContextPacks` to get the pack picker; the thread-only rows (what is sent, memory, preview) are absent there. The `@` plugin picker is part of `RichPromptTextarea` (`pluginMentions`).
+
+## Big pastes and the pick-overridden notice (ADR-219, ADR-218, 2026-11-22)
+
+A paste over 20,000 characters (`PASTED_TEXT_ATTACHMENT_THRESHOLD_CHARS`) is not put in the composer: `use-composer-dropzone` turns it into a `Pasted text N.txt` attachment through the normal chunked upload, on every surface that shares the composer. Inline text is capped at `MESSAGE_CONTENT_MAX_CHARS` (100,000). An assistant bubble whose metadata has `intentPickOverridden` shows `IntentPickOverriddenNotice` (13 locales): the picked image/video/file model was replaced by a chat model for a text turn.

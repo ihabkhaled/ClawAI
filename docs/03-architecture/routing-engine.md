@@ -97,9 +97,10 @@ AUTO mode uses a 5-stage pipeline. Each stage can short-circuit the pipeline by 
 Before calling the Ollama router LLM, the engine runs deterministic keyword detection:
 
 1. **Privacy enforcement** (30 keywords) -- forces local, no cloud fallback
-2. **Image detection** (70+ keywords, 5 detection layers) -- routes to image provider
-3. **File generation detection** (7 phrases + 162 verb/format combos) -- routes to FILE_GENERATION
-4. **Category detection** (1650+ keywords across 33 categories) -- routes to category-specific local model
+2. **Turn intent (model)** -- since [ADR-218](../13-adr/adr-218-turn-intent-is-decided-by-a-model-in-any-language.md), `TurnIntentManager` asks the published router chain what the turn should PRODUCE (`TEXT`, `IMAGE_GENERATE`, `IMAGE_EDIT`, `VIDEO`, `AUDIO_SPEECH`, `AUDIO_MUSIC`, `FILE`), in any language, with the previous turn's kind and the attachment types. `IMAGE_*` and `FILE` route to the generator; every other kind skips the keyword gates below. The result rides on `message.routed` as `turnIntent`, and chat-service obeys it ([rule 67](../../rules/67-turn-intent-is-semantic-keywords-are-only-the-fallback.md)). In MANUAL mode a picked chat model keeps a `TEXT` turn, and a picked image/video/file-only model answers a `TEXT` turn through a chat model with `pickOverridden`. Not called for privacy-enforced, LOCAL_ONLY/PRIVACY_FIRST or Runtime V2 turns.
+3. **Image detection** (70+ keywords, 5 detection layers) -- **fallback only**, when the classifier did not answer
+4. **File generation detection** (7 phrases + 162 verb/format combos) -- **fallback only**, same condition
+5. **Category detection** (1650+ keywords across 33 categories) -- routes to category-specific local model
 
 If any of these stages match, the Ollama router is never called, saving 1-10 seconds of latency.
 

@@ -556,3 +556,7 @@ See [routing-engine.md](../03-architecture/routing-engine.md) "A model named in 
 ## Media-output models (2026-10-31)
 
 Connector snapshot `modalitiesOut` now comes from the shared id classifier (`IMAGE_OUTPUT` / `VIDEO_OUTPUT` / `AUDIO_OUTPUT`, plus `mediaKind`). Routing stores it, leaves media models out of text AUTO and execution candidates, and keeps them for pickers and media-tool targets. Migration `20261031120000_media_output_modalities` backfills the registry and adds the xAI `grok-imagine-*` rows; cost seed v15 prices them and the audio models. See the workspace CLAUDE.md files.
+
+## Turn intent classifier (ADR-218, 2026-11-22)
+
+`TurnIntentManager` (`managers/turn-intent.manager.ts`) runs the published router chain through `RouterInferenceCoordinatorManager.runValidated` with its own prompt and Zod schema (`constants/turn-intent.constants.ts`). Input: message head and tail (1,500 + 1,500 characters), `previousTurnKind` from `message.created`, attachment mime types, the picked model's kind. Short deadline; any failure returns null and the keyword detectors decide (`source: HEURISTIC`). PAYG-metered like router calls. Result cached per turn in memory. Not called for privacy-enforced, LOCAL_ONLY/PRIVACY_FIRST or Runtime V2 turns. A generation-only pick with a `TEXT` answer at confidence ≥ 0.7 becomes an AUTO text decision with `pickOverridden`. Reason tags `intent_model_<kind>`, `intent_pick_overridden`. Off whenever the router configuration is disabled. Rule: [67](../../rules/67-turn-intent-is-semantic-keywords-are-only-the-fallback.md).

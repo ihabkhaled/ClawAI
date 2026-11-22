@@ -22,6 +22,7 @@ import { ComplexityClassifierManager } from './managers/complexity-classifier.ma
 import { CapabilityRouterManager } from './managers/capability-router.manager';
 import { ImageDetectionManager } from './managers/image-detection.manager';
 import { NamedModelRequestManager } from './managers/named-model-request.manager';
+import { TurnIntentManager } from './managers/turn-intent.manager';
 import { LlamacppHealthManager } from './managers/llamacpp-health.manager';
 import { RouterAttemptRepository } from './repositories/router-attempt.repository';
 import { RouterConfigurationRepository } from './repositories/router-configuration.repository';
@@ -79,6 +80,8 @@ import { RouterShadowEvaluationManager } from './managers/router-shadow-evaluati
     CapabilityRouterManager,
     ImageDetectionManager,
     NamedModelRequestManager,
+    // ADR-218: model-decided turn intent, on the router's chain and wallet.
+    TurnIntentManager,
     LlamacppHealthManager,
     RoutingPoliciesRepository,
     RoutingDecisionsRepository,

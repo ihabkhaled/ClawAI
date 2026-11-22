@@ -33,11 +33,13 @@ export const NO_WAIT_MS = 0;
 export const HEALTH_WINDOW_MS = 60 * 60_000;
 export const HEALTH_CACHE_TTL_MS = 60_000;
 
-/** Share of the source messages kept when the source is shrunk, per shrink step. */
-export const SHRINK_ELLIPSIS = '\u2026';
-export const SHRINK_KEEP_RATIO = 0.5;
-export const SHRINK_MESSAGE_MAX_CHARS = 1_500;
-export const SHRINK_MIN_MESSAGES = 4;
+/**
+ * Share of the source conversation's characters kept per shrink level (level 2 keeps 1/16). The
+ * conversation is condensed, never head-cut: see `fitConversation`.
+ */
+export const SHRINK_LEVEL_KEEP_RATIO = 0.25;
+/** The condensed conversation never goes below this many characters. */
+export const SHRINK_MIN_BUDGET_CHARS = 2_000;
 /** Mirrors chat-service's internal-generate userPrompt limit. */
 export const CHAT_GATEWAY_USER_PROMPT_MAX_CHARS = 200_000;
 /** Bound source compaction even when the fixed evidence or draft cannot fit. */

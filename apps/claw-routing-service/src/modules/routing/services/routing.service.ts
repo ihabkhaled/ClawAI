@@ -51,6 +51,8 @@ import { type UpdatePolicyDto } from '../dto/update-policy.dto';
 import { type ListPoliciesQueryDto } from '../dto/list-policies-query.dto';
 import { type EvaluateRouteDto } from '../dto/evaluate-route.dto';
 import {
+  type ManualPickFields,
+  type OptionalRoutedFields,
   type RoutingContext,
   type RoutingDecision,
   type RoutingDecisionResult,
@@ -77,6 +79,7 @@ import type {
   RoutingEducationSnapshot,
 } from '../types/routing-education.types';
 import { parseAttachmentModality } from '../utilities/attachment-modality.utility';
+import { parsePreviousTurnKind } from '../utilities/turn-intent.utility';
 
 @Injectable()
 export class RoutingService implements OnModuleInit {
@@ -249,6 +252,7 @@ export class RoutingService implements OnModuleInit {
       localDegradeLatencyMs: config.localDegradeLatencyMs,
       latencyPenaltyStepMs: config.latencyPenaltyStepMs,
       requiresToolCalling: dto.requiresToolCalling,
+      previousTurnKind: dto.previousTurnKind,
     };
 
     const rawDecision = await this.routingManager.evaluateRoute(context);
@@ -481,11 +485,11 @@ export class RoutingService implements OnModuleInit {
   }
 
   /** MANUAL_MODEL only: whether the picked model's registry row says it supports tools. */
-  private async pickedModelSupportsTools(
-    routingMode: string | undefined,
-    forcedProvider: string | undefined,
-    forcedModel: string | undefined,
-  ): Promise<boolean> {
+  private async pickedModelSupportsTools({
+    routingMode,
+    forcedProvider,
+    forcedModel,
+  }: ManualPickFields): Promise<boolean> {
     if (routingMode !== 'MANUAL_MODEL' || !forcedModel || !forcedProvider) return false;
     try {
       const record = await this.modelRegistry.findByProviderAndModelKey(
@@ -534,11 +538,10 @@ export class RoutingService implements OnModuleInit {
       modelAccessAllowAll: modelAccessMode === 'ALLOW_ALL',
       freeModelPriceCap,
       runtimeV2,
-      pickedModelSupportsTools: await this.pickedModelSupportsTools(
-        routingMode,
-        forcedProvider,
-        forcedModel,
-      ),
+      // ADR-218: what the previous assistant turn produced, so "regenerate"
+      // re-does that kind. Unknown values read as absent (older publisher).
+      previousTurnKind: parsePreviousTurnKind(payload['previousTurnKind']),
+      pickedModelSupportsTools: await this.pickedModelSupportsTools(parsed),
       ...attachments,
     };
     const rawDecision = await this.routingManager.evaluateRoute(context);
@@ -1127,6 +1130,14 @@ export class RoutingService implements OnModuleInit {
       // hot path is in effect and DIRECT_LLM is assumed downstream.
       selectedWorkflow: decision.selectedWorkflow ?? null,
       workflowReason: decision.workflowReason ?? null,
+      ...this.optionalRoutedFields(decision),
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  /** The `message.routed` fields that are present only when the decision carries them. */
+  private optionalRoutedFields(decision: RoutingDecisionResult): OptionalRoutedFields {
+    return {
       // F6 (ADR-119) — a manual pick's model writes the file it asked for.
       // Absent on every other decision; chat-service then uses FILE_WRITER.
       ...(decision.fileWriter === undefined ? {} : { fileWriter: decision.fileWriter }),
@@ -1143,8 +1154,10 @@ export class RoutingService implements OnModuleInit {
       ...(decision.namedModelNotice === undefined
         ? {}
         : { namedModelNotice: decision.namedModelNotice }),
-      timestamp: new Date().toISOString(),
-    });
+      // ADR-218: what this turn asks to be produced. Absent = keywords found no
+      // generation; chat-service then keeps its legacy behaviour.
+      ...(decision.turnIntent === undefined ? {} : { turnIntent: decision.turnIntent }),
+    };
   }
 
   // Phase 7 — returns true if the message warrants an auto-judge based

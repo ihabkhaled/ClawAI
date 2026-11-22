@@ -572,9 +572,6 @@
       "security/detect-object-injection": 1,
       "unicorn/prefer-ternary": 3
     },
-    "apps/claw-chat-service/src/modules/chat-messages/utilities/relevant-chunks.utility.ts": {
-      "security/detect-object-injection": 5
-    },
     "apps/claw-chat-service/src/modules/chat-messages/utilities/research-marker-match.utility.ts": {
       "security/detect-non-literal-regexp": 1
     },
@@ -1566,9 +1563,6 @@
       "complexity": 1,
       "unicorn/prefer-ternary": 1
     },
-    "apps/claw-routing-service/src/modules/routing/managers/router-inference-coordinator.manager.ts": {
-      "max-lines-per-function": 1
-    },
     "apps/claw-routing-service/src/modules/routing/managers/router-shadow-evaluation.manager.ts": {
       "unicorn/prefer-ternary": 3
     },
@@ -1585,9 +1579,6 @@
       "unicorn/prefer-ternary": 2
     },
     "apps/claw-routing-service/src/modules/routing/utilities/router-chain-resolution.utility.ts": {
-      "unicorn/prefer-ternary": 1
-    },
-    "apps/claw-routing-service/src/modules/routing/utilities/router-decision-validation.utility.ts": {
       "unicorn/prefer-ternary": 1
     },
     "apps/claw-routing-service/src/modules/routing/utilities/router-error-mapping.utility.ts": {
@@ -1662,18 +1653,9 @@
     "apps/claw-thread-generation-service/src/modules/generation/managers/__tests__/generation-pipeline.manager.spec.ts": {
       "@typescript-eslint/no-shadow": 1
     },
-    "apps/claw-thread-generation-service/src/modules/generation/managers/generation-pipeline.manager.ts": {
-      "@typescript-eslint/explicit-function-return-type": 5,
-      "complexity": 1,
-      "max-lines-per-function": 1
-    },
     "apps/claw-thread-generation-service/src/modules/generation/repositories/generation-jobs.repository.ts": {
       "@typescript-eslint/explicit-function-return-type": 13,
       "@typescript-eslint/prefer-optional-chain": 3
-    },
-    "apps/claw-thread-generation-service/src/modules/generation/services/generation-jobs.service.ts": {
-      "complexity": 4,
-      "max-lines-per-function": 2
     },
     "apps/claw-thread-generation-service/src/modules/generation/services/step-recorder.service.ts": {
       "complexity": 1
@@ -1984,9 +1966,6 @@
     },
     "packages/shared-rabbitmq/src/structured-logger.ts": {
       "sort-imports": 1
-    },
-    "packages/shared-types/src/events/event-payloads.type.ts": {
-      "max-lines": 1
     },
     "packages/shared-utilities/src/effort/effort-resolver.utility.ts": {
       "security/detect-object-injection": 9,

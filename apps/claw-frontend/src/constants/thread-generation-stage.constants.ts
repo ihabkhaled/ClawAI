@@ -12,3 +12,14 @@ export const THREAD_STAGE_LABEL_KEYS: Readonly<Record<ThreadGenerationStage, str
   [ThreadGenerationStage.Revision]: 'chat.threadStageAuthorDrafts',
   [ThreadGenerationStage.ReadyForReview]: 'chat.threadStageReady',
 };
+
+/**
+ * Stages a step row can carry beyond the job's own stages: the step log files the planning call
+ * before research under BRIEF, the formatting pass under FORMAT, and any other service call under
+ * SYSTEM. Mirrors `ROLE_KEY_PREFIXES` / `SYSTEM_STEP_INFO` in claw-thread-generation-service.
+ */
+export const THREAD_STEP_STAGE_LABEL_KEYS: Readonly<Record<string, string>> = {
+  BRIEF: 'chat.threadStageBrief',
+  FORMAT: 'chat.threadStageFormat',
+  SYSTEM: 'chat.threadStageSystem',
+};

@@ -9,7 +9,11 @@ import {
   ROUTER_REPAIR_INSTRUCTION,
   routerDecisionSchema,
 } from '../constants/router-decision-schema.constants';
-import type { DecisionValidationResult } from '../types/router-inference.types';
+import type {
+  DecisionValidationResult,
+  RouterAnswerValidator,
+  RouterDecisionPayload,
+} from '../types/router-inference.types';
 
 /**
  * Extracts the first balanced JSON object from a raw answer.
@@ -96,11 +100,24 @@ export function validateRouterDecision(
     return { valid: false, rejection: DECISION_REJECTION_SCHEMA };
   }
 
-  if (!eligibleDeploymentIds.includes(result.data.deploymentId)) {
-    return { valid: false, rejection: DECISION_REJECTION_INELIGIBLE };
-  }
+  return eligibleDeploymentIds.includes(result.data.deploymentId)
+    ? { valid: true, decision: result.data }
+    : { valid: false, rejection: DECISION_REJECTION_INELIGIBLE };
+}
 
-  return { valid: true, decision: result.data };
+/**
+ * The router's own answer contract as a coordinator validator: strict schema,
+ * eligible deployment, `confidence` field, router repair wording. The default
+ * for every routing walk, so existing callers behave exactly as before.
+ */
+export function routerDecisionValidator(
+  eligibleDeploymentIds: readonly string[],
+): RouterAnswerValidator<RouterDecisionPayload> {
+  return {
+    validate: (raw) => validateRouterDecision(raw, eligibleDeploymentIds),
+    confidenceOf: (decision) => decision.confidence,
+    repairHint: buildRepairHint,
+  };
 }
 
 /**

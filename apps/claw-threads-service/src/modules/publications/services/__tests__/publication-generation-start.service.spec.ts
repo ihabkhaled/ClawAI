@@ -38,9 +38,12 @@ const identity = {
 function setup() {
   const order: string[] = [];
   const preflight = {
-    assertCanStart: vi.fn().mockImplementation(async () => {
-      order.push('preflight');
-    }),
+    prepareStart: vi
+      .fn()
+      .mockImplementation(async (_owner: string, dto: StartThreadGenerationDto) => {
+        order.push('preflight');
+        return dto;
+      }),
     explainBudgetDenial: vi.fn().mockResolvedValue(null),
   };
   const lifecycle = {
@@ -77,7 +80,7 @@ describe('PublicationGenerationStartService', () => {
       status: 'QUEUED',
     });
     expect(order).toEqual(['preflight', 'cap', 'enqueue']);
-    expect(preflight.assertCanStart).toHaveBeenCalledWith('owner-1', input);
+    expect(preflight.prepareStart).toHaveBeenCalledWith('owner-1', input);
     expect(lifecycle.enqueueGeneration).toHaveBeenCalledWith(
       'owner-1',
       { ...input, idempotencyKey: identity.keyHash },
@@ -100,7 +103,7 @@ describe('PublicationGenerationStartService', () => {
 
   it('creates no job and no publication when the preflight refuses', async () => {
     const { service, preflight, lifecycle } = setup();
-    preflight.assertCanStart.mockRejectedValue(new ForbiddenException('no'));
+    preflight.prepareStart.mockRejectedValue(new ForbiddenException('no'));
 
     await expect(service.start('owner-1', input)).rejects.toBeInstanceOf(ForbiddenException);
     expect(lifecycle.enqueueGeneration).not.toHaveBeenCalled();
@@ -130,7 +133,7 @@ describe('PublicationGenerationStartService', () => {
       status: 'RUNNING',
     });
     expect(publications.findStartByKey).toHaveBeenCalledWith('owner-1', identity.keyHash);
-    expect(preflight.assertCanStart).not.toHaveBeenCalled();
+    expect(preflight.prepareStart).not.toHaveBeenCalled();
     expect(activeCap.assertBelowCap).not.toHaveBeenCalled();
     expect(lifecycle.enqueueGeneration).not.toHaveBeenCalled();
   });

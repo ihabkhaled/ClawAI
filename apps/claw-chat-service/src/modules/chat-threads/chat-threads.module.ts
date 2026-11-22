@@ -7,6 +7,7 @@ import { ChatMessagesRepository } from '../chat-messages/repositories/chat-messa
 import { DailyLimitService } from '../chat-messages/services/daily-limit.service';
 import { ThreadSnapshotInternalController } from './controllers/thread-snapshot-internal.controller';
 import { ThreadSnapshotService } from './services/thread-snapshot.service';
+import { AttachmentInfoClient } from '../chat-messages/clients/attachment-info.client';
 
 @Module({
   controllers: [
@@ -17,6 +18,7 @@ import { ThreadSnapshotService } from './services/thread-snapshot.service';
   providers: [
     ChatThreadsService,
     ThreadSnapshotService,
+    AttachmentInfoClient,
     ChatThreadsRepository,
     ChatMessagesRepository,
     DailyLimitService,

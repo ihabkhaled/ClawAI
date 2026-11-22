@@ -50,6 +50,18 @@ export function usableModels(
 }
 
 /**
+ * Backup candidates: only models the service itself listed as available. The general picker list
+ * also holds models Threads cannot run (a video detector, an embedding model); an unlisted model
+ * counts as available for a hand pick, but must never become an automatic fallback.
+ */
+export function fallbackCandidates(
+  models: ModelSelection[],
+  index: ThreadModelAvailabilityIndex,
+): ModelSelection[] {
+  return models.filter((model) => index.get(refKey(model)) === ThreadModelAvailability.Available);
+}
+
+/**
  * The five picker selections for the recommended team, found in the models the picker offers.
  * Null when the team is missing or any seat is not in the picker list (then the caller ranks
  * the usable models itself).

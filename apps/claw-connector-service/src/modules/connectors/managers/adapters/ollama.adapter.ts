@@ -23,7 +23,15 @@ import {
   OLLAMA_CATALOG_USER_AGENT,
   OLLAMA_CLOUD_API_BASE_URL,
   OLLAMA_LOCALHOST_PATTERNS,
+  OLLAMA_SHOW_CACHE_TTL_MS,
+  OLLAMA_SHOW_CONCURRENCY,
+  OLLAMA_SHOW_FAILURE_RETRY_MS,
+  OLLAMA_SHOW_MAX_LOOKUPS_PER_SYNC,
+  OLLAMA_SHOW_SYNC_BUDGET_MS,
+  OLLAMA_SHOW_TIMEOUT_MS,
 } from '../../constants/ollama.constants';
+import { mapWithConcurrency } from '../../utilities/bounded-concurrency.utility';
+import { parseOllamaContextLength } from '../../utilities/ollama-context-length.utility';
 import {
   OLLAMA_TOOL_PROBE_FAILURE_NO_CALL,
   OLLAMA_TOOL_PROBE_FAILURE_REQUEST,
@@ -36,6 +44,7 @@ import {
 } from '../../constants/ollama-tool-probe.constants';
 import { type HealthCheckResult, type NormalizedModel } from '../../types/connectors.types';
 import {
+  type OllamaContextWindowCacheEntry,
   type OllamaModelsResponse,
   type OllamaProbeChatResponse,
 } from '../../types/provider-api.types';
@@ -48,6 +57,9 @@ import {
 @Injectable()
 export class OllamaAdapter implements ProviderAdapter {
   private readonly logger = new Logger(OllamaAdapter.name);
+  // Process-lifetime cache of /api/show windows, keyed by base URL + model.
+  // The adapter is a singleton (adapter-factory), so this spans every sync.
+  private readonly contextWindowCache = new Map<string, OllamaContextWindowCacheEntry>();
 
   async healthCheck(config: ConnectorConfig): Promise<HealthCheckResult> {
     const baseUrl = this.resolveBaseUrl(config.baseUrl);
@@ -88,7 +100,11 @@ export class OllamaAdapter implements ProviderAdapter {
     const baseUrl = this.resolveBaseUrl(config.baseUrl);
     this.logger.log(`syncModels: syncing Ollama models from ${baseUrl}`);
 
-    const cloudModels = await this.fetchCloudModels(baseUrl, config.apiKey);
+    const cloudModels = await this.withProviderContextWindows(
+      baseUrl,
+      config.apiKey,
+      await this.fetchCloudModels(baseUrl, config.apiKey),
+    );
     const publicModels = await this.fetchPublicCatalog(cloudModels);
 
     const merged: NormalizedModel[] = [];
@@ -126,6 +142,106 @@ export class OllamaAdapter implements ProviderAdapter {
       this.logger.warn(`fetchCloudModels: failed - ${msg}`);
       return [];
     }
+  }
+
+  /**
+   * Fills a missing window from the provider's own `/api/show`
+   * (`<arch>.context_length`). The curated table keeps precedence; a model it
+   * already sized is never looked up. Bounded: OLLAMA_SHOW_CONCURRENCY calls in
+   * flight, a short per-call timeout, at most OLLAMA_SHOW_MAX_LOOKUPS_PER_SYNC
+   * network lookups and an overall time budget. Results (and failures, for a
+   * shorter time) are cached. Never throws: an unanswered lookup leaves the
+   * window unknown, so downstream keeps its conservative default.
+   */
+  private async withProviderContextWindows(
+    baseUrl: string,
+    apiKey: string,
+    models: NormalizedModel[],
+  ): Promise<NormalizedModel[]> {
+    const now = Date.now();
+    const deadline = now + OLLAMA_SHOW_SYNC_BUDGET_MS;
+    const known = new Map<string, number | undefined>();
+    const pending = new Set<string>();
+
+    for (const model of models) {
+      if (model.capabilities.maxContextTokens !== undefined || known.has(model.modelKey)) {
+        continue;
+      }
+      const cached = this.contextWindowCache.get(this.contextCacheKey(baseUrl, model.modelKey));
+      if (cached !== undefined && cached.expiresAt > now) {
+        known.set(model.modelKey, cached.tokens);
+      } else {
+        pending.add(model.modelKey);
+      }
+    }
+
+    const cachedCount = known.size;
+    const lookups = [...pending].slice(0, OLLAMA_SHOW_MAX_LOOKUPS_PER_SYNC);
+    // A lookup the budget skips is not cached: it is simply tried next sync.
+    const results = await mapWithConcurrency(
+      lookups,
+      OLLAMA_SHOW_CONCURRENCY,
+      async (modelKey): Promise<[string, number | undefined]> => [
+        modelKey,
+        Date.now() >= deadline
+          ? undefined
+          : await this.lookupContextWindow(baseUrl, apiKey, modelKey),
+      ],
+    );
+    for (const [modelKey, tokens] of results) {
+      known.set(modelKey, tokens);
+    }
+
+    const filled = [...known.values()].filter((tokens) => tokens !== undefined).length;
+    this.logger.log(
+      `withProviderContextWindows: cached=${String(cachedCount)} lookedUp=${String(lookups.length)} overCap=${String(pending.size - lookups.length)} filled=${String(filled)}`,
+    );
+
+    return models.map((model) => {
+      const tokens = known.get(model.modelKey);
+      return model.capabilities.maxContextTokens !== undefined || tokens === undefined
+        ? model
+        : { ...model, capabilities: { ...model.capabilities, maxContextTokens: tokens } };
+    });
+  }
+
+  private async lookupContextWindow(
+    baseUrl: string,
+    apiKey: string,
+    modelKey: string,
+  ): Promise<number | undefined> {
+    let tokens: number | undefined;
+    try {
+      const response = await httpPost<unknown>({
+        url: `${baseUrl}/show`,
+        headers: this.buildHeaders(apiKey),
+        // The base URL comes from an operator-edited connector row, so it is
+        // on no static allowlist; the destination is declared explicitly here.
+        allowedHosts: declaredHost(baseUrl),
+        timeoutMs: OLLAMA_SHOW_TIMEOUT_MS,
+        body: { model: modelKey },
+      });
+      tokens = response.ok ? parseOllamaContextLength(response.data) : undefined;
+      if (!response.ok) {
+        this.logger.debug(
+          `lookupContextWindow: ${modelKey} status=${String(response.status)} — window unknown`,
+        );
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'unknown error';
+      this.logger.debug(`lookupContextWindow: ${modelKey} failed — ${message}`);
+    }
+    this.contextWindowCache.set(this.contextCacheKey(baseUrl, modelKey), {
+      tokens,
+      expiresAt:
+        Date.now() +
+        (tokens === undefined ? OLLAMA_SHOW_FAILURE_RETRY_MS : OLLAMA_SHOW_CACHE_TTL_MS),
+    });
+    return tokens;
+  }
+
+  private contextCacheKey(baseUrl: string, modelKey: string): string {
+    return `${baseUrl}\n${modelKey}`;
   }
 
   getCapabilities(): ProviderCapabilities {

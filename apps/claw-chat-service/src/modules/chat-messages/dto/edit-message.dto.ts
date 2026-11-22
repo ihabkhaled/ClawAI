@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import {
+  MESSAGE_CONTENT_MAX_CHARS,
+  MESSAGE_CONTENT_MAX_ERROR,
+} from '../constants/message-content.constants';
 
 import { stripNulBytes } from '../../../common/utilities/postgres-safe-text.utility';
 import { contextSaveFields } from './context-save-fields.dto';
@@ -20,7 +24,7 @@ export const editMessageSchema = z.object({
       z
         .string()
         .min(1, 'Content must not be empty')
-        .max(100000, 'Content must be at most 100000 characters'),
+        .max(MESSAGE_CONTENT_MAX_CHARS, MESSAGE_CONTENT_MAX_ERROR),
     ),
   // The re-run honours the save mode the user picks now (ADR-168).
   ...contextSaveFields,

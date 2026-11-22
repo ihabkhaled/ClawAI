@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import {
+  MESSAGE_CONTENT_MAX_CHARS,
+  MESSAGE_CONTENT_MAX_ERROR,
+} from '../constants/message-content.constants';
 import { RoutingMode } from '../../../generated/prisma';
 import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import { stripNulBytes } from '../../../common/utilities/postgres-safe-text.utility';
@@ -25,7 +29,7 @@ export const createMessageSchema = z
     content: z
       .string()
       .transform(stripNulBytes)
-      .pipe(z.string().max(100000, 'Content must be at most 100000 characters')),
+      .pipe(z.string().max(MESSAGE_CONTENT_MAX_CHARS, MESSAGE_CONTENT_MAX_ERROR)),
     clientIntent: z
       .string()
       .max(20000, 'Client intent must be at most 20000 characters')

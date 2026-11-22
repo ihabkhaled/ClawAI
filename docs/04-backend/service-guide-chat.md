@@ -134,7 +134,7 @@ Links messages to files via fileId. Types include `document`, `image`, etc.
      user said (`VOICE_NOTE_TRANSCRIPT_FRAME`), never as a generic attached
      document, and never leaks the transcription placeholder itself into the
      prompt as if it were real content.
-5. **Prompt building** -- a hidden platform self-awareness block first (ADR-136: never stored or returned, address from `PUBLIC_SITE_URL`), then system prompt, memories, packs, files, history, with token budget truncation. Before it, a **context-save pre-check** (ADR-134): a save-like message goes to the planner (`askPlanner`), the memory/pack saves run, and the platform note is appended to the system prompt so the model confirms them
+5. **Prompt building** -- a hidden platform self-awareness block first (ADR-136: never stored or returned, address from `PUBLIC_SITE_URL`), then system prompt, memories, packs, files, history, with token budget truncation. An attached file larger than its share of the window is fitted by relevance to the question (opening + most relevant passages, `fitFileTextsByRelevance`), with a note telling the model how much it sees; delivery reason `file_delivery.reason.relevance_fitted` ([ADR-219](../13-adr/adr-219-large-text-is-an-attachment-fitted-by-relevance.md)). A composer paste over 20,000 characters arrives as a `Pasted text N.txt` attachment; inline content is capped at `MESSAGE_CONTENT_MAX_CHARS` (100,000) on every surface. Before it, a **context-save pre-check** (ADR-134): a save-like message goes to the planner (`askPlanner`), the memory/pack saves run, and the platform note is appended to the system prompt so the model confirms them
    - **Attachment-only turns** (rule 42 §18–19). A send may carry files and
      no text (every send schema uses `requireContentOrAttachments`). The row is
      stored with empty `content`; `message.created` carries
@@ -996,7 +996,8 @@ trippedAt, probing }] }`; `DELETE …/provider-breakers/:provider` → 200
 
 ## Attached-image edits (2026-09-26)
 
-Edit intent is the shared `classifyImageIntent` (rule 51 item 18); the
+Edit intent comes from routing's model `turnIntent` (`IMAGE_EDIT`, [ADR-218](../13-adr/adr-218-turn-intent-is-decided-by-a-model-in-any-language.md));
+the shared `classifyImageIntent` (rule 51 item 18) decides only when routing sent no MODEL intent. The
 reference prompt keeps the user's instruction first and verbatim and sends
 `originalPrompt` to image-service (pack §79). Details in
 [`apps/claw-chat-service/CLAUDE.md`](../../apps/claw-chat-service/CLAUDE.md).
@@ -1184,3 +1185,7 @@ Every chat surface reaches research-service through one client, `utilities/resea
 
 - `POST /chat-messages/model-access` entries: `{ provider, model, allowed, costClass?, coveredByAllowance? }` (`types/access-control.types.ts`). `costClass` is the band only (rule 37). `coveredByAllowance` is `allowed` minus models above the free plan's ADR-162 price limit: when the plan has one, chat-service asks routing's internal `POST /internal/router-models/costs/classes` with `freeModelPriceCap` and gets a yes/no per model (`aboveFreeCap`, never the rate; an outage marks nothing dear). The send path stays the gate.
 - `listModelAccess` always fetches the bands (one cached batched call to routing's `POST /internal/router-models/costs/classes`). A failed lookup leaves the fields absent. Never put a rate in this response.
+
+## Turn intent (ADR-218, 2026-11-22)
+
+Routing publishes `turnIntent` on `message.routed`; `turn-intent.utility.ts` parses it. A `MODEL` intent is authoritative: `TEXT` blocks `detectFileGenerationFollowUp`, `detectImageFollowUp`, `detectVideoRequest`, `detectImageFromAttachment` and media-tool creation; `FILE`/`IMAGE_*`/`VIDEO`/`AUDIO_*` need no trigger words. `HEURISTIC` or absent keeps the keyword rules (rule 67). chat-service sends `previousTurnKind` on every `message.created` (new, regenerate, edit-and-rerun). The assistant row stores `turnIntent` and, when a picked generation-only model was replaced by a chat model, `intentPickOverridden` (rendered as a notice). Compare, Consensus, Escalation and labs do not receive `message.routed` and still use the keyword rules.

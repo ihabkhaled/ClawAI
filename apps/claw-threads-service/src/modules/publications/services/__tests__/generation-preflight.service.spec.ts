@@ -84,7 +84,7 @@ describe('GenerationPreflightService', () => {
   it('lets a valid request through and asks the catalog once per distinct model', async () => {
     const { service, adapter, catalog } = setup();
 
-    await expect(service.assertCanStart('owner-1', request)).resolves.toBeUndefined();
+    await expect(service.prepareStart('owner-1', request)).resolves.toEqual(request);
     expect(catalog.isKnown).toHaveBeenCalledTimes(2);
     expect(adapter.getEntitlements).toHaveBeenCalledWith('owner-1', { enforceTrial: false });
   });
@@ -93,7 +93,7 @@ describe('GenerationPreflightService', () => {
     const { service, adapter, catalog } = setup();
 
     await expect(
-      service.assertCanStart('owner-1', { ...request, capMicroUsd: 1 }),
+      service.prepareStart('owner-1', { ...request, capMicroUsd: 1 }),
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(catalog.isKnown).not.toHaveBeenCalled();
     expect(adapter.getEntitlements).not.toHaveBeenCalled();
@@ -102,9 +102,7 @@ describe('GenerationPreflightService', () => {
   it('refuses a made-up model as unknown, not as a plan problem', async () => {
     const { service } = setup({ known: false });
 
-    const failure = await service
-      .assertCanStart('owner-1', request)
-      .catch((error: unknown) => error);
+    const failure = await service.prepareStart('owner-1', request).catch((error: unknown) => error);
 
     expect(failure).toBeInstanceOf(BadRequestException);
     expect((failure as BadRequestException).getResponse()).toMatchObject({
@@ -116,7 +114,7 @@ describe('GenerationPreflightService', () => {
     const { service } = setup();
     const groq = { ...request, judge: role('judge', 'GROQ', 'llama-3.3-70b') };
 
-    const failure = await service.assertCanStart('owner-1', groq).catch((error: unknown) => error);
+    const failure = await service.prepareStart('owner-1', groq).catch((error: unknown) => error);
 
     expect(failure).toBeInstanceOf(ForbiddenException);
     expect((failure as ForbiddenException).getResponse()).toMatchObject({
@@ -130,9 +128,7 @@ describe('GenerationPreflightService', () => {
   it('refuses an account whose role lacks the permission', async () => {
     const { service } = setup({ entitlements: freeEntitlements({ permissions: [] }) });
 
-    const failure = await service
-      .assertCanStart('owner-1', request)
-      .catch((error: unknown) => error);
+    const failure = await service.prepareStart('owner-1', request).catch((error: unknown) => error);
 
     expect((failure as ForbiddenException).getResponse()).toMatchObject({
       code: 'THREAD_GENERATION_NOT_PERMITTED',
@@ -143,7 +139,7 @@ describe('GenerationPreflightService', () => {
     const { service, adapter } = setup();
     adapter.getEntitlements.mockRejectedValue(new Error('auth down'));
 
-    await expect(service.assertCanStart('owner-1', request)).rejects.toBeInstanceOf(
+    await expect(service.prepareStart('owner-1', request)).rejects.toBeInstanceOf(
       ServiceUnavailableException,
     );
   });
@@ -154,7 +150,7 @@ describe('GenerationPreflightService', () => {
       new ServiceUnavailableException('Model catalog is unavailable'),
     );
 
-    await expect(service.assertCanStart('owner-1', request)).rejects.toBeInstanceOf(
+    await expect(service.prepareStart('owner-1', request)).rejects.toBeInstanceOf(
       ServiceUnavailableException,
     );
   });

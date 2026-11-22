@@ -8,7 +8,14 @@ import {
   RELEVANT_CHUNK_STOPWORDS,
   TERM_SEPARATOR,
 } from '../constants/relevant-chunks.constants';
-import type { ScoredChunk } from '../types/relevant-chunks.types';
+import {
+  FILE_RELEVANCE_FIT_NOTE_BODY,
+  FILE_RELEVANCE_FIT_NOTE_PREFIX,
+  FILE_RELEVANCE_FIT_NOTE_RESERVE_CHARS,
+  TEXT_BUDGET_MIN_ITEM_CHARS,
+  TEXT_BUDGET_SHORTENED_MARKER,
+} from '../constants/evidence-fit.constants';
+import type { PartialChunk, ScoredChunk } from '../types/relevant-chunks.types';
 import type { TextBudgetResult } from '../types/evidence-fit.types';
 import { fitTextsToBudget } from './text-budget.utility';
 
@@ -84,11 +91,11 @@ function scoreChunks(
   const candidates: Array<{ textIndex: number; chunkIndex: number; terms: Set<string> }> = [];
   for (const [textIndex, chunks] of chunked.entries()) {
     for (
-      let chunkIndex = firstCandidate[textIndex] ?? 0;
+      let chunkIndex = firstCandidate.at(textIndex) ?? 0;
       chunkIndex < chunks.length;
       chunkIndex += 1
     ) {
-      candidates.push({ textIndex, chunkIndex, terms: termsOf(chunks[chunkIndex] ?? '') });
+      candidates.push({ textIndex, chunkIndex, terms: termsOf(chunks.at(chunkIndex) ?? '') });
     }
   }
   const documentFrequency = new Map<string, number>();
@@ -111,15 +118,19 @@ function assemble(
   chunks: readonly string[],
   preamble: { text: string; count: number },
   selected: readonly number[],
+  partial: PartialChunk | undefined,
 ): string {
   let out = preamble.text;
   let previous = preamble.count - 1;
-  for (const index of [...selected].sort((a, b) => a - b)) {
-    if (index !== previous + 1) out += RELEVANT_CHUNK_GAP_MARKER;
-    out += chunks[index] ?? '';
+  let cut = false;
+  const indexes = partial === undefined ? [...selected] : [...selected, partial.chunkIndex];
+  for (const index of indexes.sort((a, b) => a - b)) {
+    if (cut || index !== previous + 1) out += RELEVANT_CHUNK_GAP_MARKER;
+    cut = index === partial?.chunkIndex;
+    out += cut ? (partial?.text ?? '') : (chunks.at(index) ?? '');
     previous = index;
   }
-  if (previous < chunks.length - 1) out += RELEVANT_CHUNK_GAP_MARKER;
+  if (cut || previous < chunks.length - 1) out += RELEVANT_CHUNK_GAP_MARKER;
   return out;
 }
 
@@ -155,19 +166,125 @@ export function fitTextsByRelevance(
   ).sort((a, b) => b.score - a.score || a.textIndex - b.textIndex || a.chunkIndex - b.chunkIndex);
 
   const selected = chunked.map((): number[] => []);
+  let firstSkipped: ScoredChunk | undefined;
   for (const candidate of ranked) {
     const cost =
-      (chunked[candidate.textIndex]?.[candidate.chunkIndex]?.length ?? 0) +
+      (chunked.at(candidate.textIndex)?.at(candidate.chunkIndex)?.length ?? 0) +
       RELEVANT_CHUNK_GAP_MARKER.length;
-    if (used + cost > maxChars) continue;
-    selected[candidate.textIndex]?.push(candidate.chunkIndex);
+    if (used + cost > maxChars) {
+      firstSkipped ??= candidate;
+      continue;
+    }
+    selected.at(candidate.textIndex)?.push(candidate.chunkIndex);
     used += cost;
   }
+  const partial = fillRemainingRoom(chunked, firstSkipped, maxChars - used);
 
   return {
     texts: chunked.map((chunks, index) =>
-      assemble(chunks, preambles[index] ?? { text: '', count: 0 }, selected[index] ?? []),
+      assemble(
+        chunks,
+        preambles.at(index) ?? { text: '', count: 0 },
+        selected.at(index) ?? [],
+        partial?.textIndex === index ? partial : undefined,
+      ),
     ),
     dropped: 0,
   };
+}
+
+/**
+ * The head of the best chunk that did not fit whole, cut to the room left.
+ * Whole chunks alone leave up to one chunk of the budget unused, and a caller
+ * that later refits to the full share (a compare lane, helper vision) then
+ * finds the prompt bigger than the composer planned for.
+ */
+function fillRemainingRoom(
+  chunked: readonly string[][],
+  candidate: ScoredChunk | undefined,
+  room: number,
+): PartialChunk | undefined {
+  const usable = room - RELEVANT_CHUNK_GAP_MARKER.length;
+  if (candidate === undefined || usable < TEXT_BUDGET_MIN_ITEM_CHARS) return undefined;
+  const chunk = chunked.at(candidate.textIndex)?.at(candidate.chunkIndex) ?? '';
+  return {
+    textIndex: candidate.textIndex,
+    chunkIndex: candidate.chunkIndex,
+    text: chunk.slice(0, usable),
+  };
+}
+
+/**
+ * Fits attached files' texts: whole when they fit, otherwise by relevance.
+ *
+ * Each file is first fitted on its own to `perFileMaxChars` over its WHOLE
+ * text, so a per-file cap never head-cuts away the passage the question is
+ * about (ADR-219); then all files together to `totalMaxChars`. A file that
+ * did not arrive whole opens with the honest note saying how much of it the
+ * model sees. A file the fit could only head-cut (budget below its preamble)
+ * keeps `TEXT_BUDGET_SHORTENED_MARKER` and gets no relevance note.
+ */
+export function fitFileTextsByRelevance(
+  texts: readonly string[],
+  totalMaxChars: number,
+  perFileMaxChars: number,
+  query: string,
+): TextBudgetResult {
+  const reserve = FILE_RELEVANCE_FIT_NOTE_RESERVE_CHARS;
+  const perFile = texts.map((text) =>
+    text.length <= perFileMaxChars
+      ? text
+      : (fitTextsByRelevance([text], Math.max(perFileMaxChars - reserve, 0), query).texts[0] ?? ''),
+  );
+  const fitted = fitTogether(perFile, totalMaxChars, reserve, query);
+  return {
+    texts: fitted.texts.map((text, index) => {
+      const original = texts.at(index) ?? '';
+      return text === original || text.length === 0 || text.includes(TEXT_BUDGET_SHORTENED_MARKER)
+        ? text
+        : `${relevanceFitNote(text.length, original.length)}${text}`;
+    }),
+    dropped: fitted.dropped,
+  };
+}
+
+/**
+ * Files no bigger than an even share of the budget stay whole; the larger ones
+ * share what is left, by relevance. Without this a short file beside a huge one
+ * lost its unmatched paragraphs to the huge file's passages.
+ */
+function fitTogether(
+  texts: readonly string[],
+  maxChars: number,
+  reserve: number,
+  query: string,
+): TextBudgetResult {
+  const total = texts.reduce((sum, text) => sum + text.length, 0);
+  if (total <= maxChars || texts.length === 0) return { texts: [...texts], dropped: 0 };
+  const evenShare = Math.floor(maxChars / texts.length);
+  const largeIndexes = texts.flatMap((text, index) => (text.length > evenShare ? [index] : []));
+  const smallChars = texts.reduce(
+    (sum, text) => (text.length > evenShare ? sum : sum + text.length),
+    0,
+  );
+  const large = fitTextsByRelevance(
+    largeIndexes.map((index) => texts.at(index) ?? ''),
+    Math.max(maxChars - smallChars - reserve * largeIndexes.length, 0),
+    query,
+  );
+  const positionOf = new Map(largeIndexes.map((index, position) => [index, position]));
+  const out = texts.map((text, index) => {
+    const position = positionOf.get(index);
+    return position === undefined ? text : (large.texts.at(position) ?? '');
+  });
+  // A large file the fit dropped entirely stays in place as '' so positions
+  // still line up with the caller's files.
+  return { texts: out, dropped: largeIndexes.length - large.texts.length };
+}
+
+function relevanceFitNote(shown: number, total: number): string {
+  return `${FILE_RELEVANCE_FIT_NOTE_PREFIX}${FILE_RELEVANCE_FIT_NOTE_BODY.replace(
+    '{SHOWN}',
+    shown.toLocaleString('en-US'),
+  ).replace('{TOTAL}', total.toLocaleString('en-US'))}`;
 }

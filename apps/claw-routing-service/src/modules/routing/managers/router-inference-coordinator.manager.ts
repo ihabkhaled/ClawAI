@@ -13,12 +13,11 @@ import type {
   RouterInferenceProvider,
   RouterInferenceRequest,
   RouterInferenceResponse,
+  RouterWalkOptions,
   RouterWalkState,
+  ValidatedWalkOptions,
 } from '../types/router-inference.types';
-import {
-  buildRepairHint,
-  validateRouterDecision,
-} from '../utilities/router-decision-validation.utility';
+import { routerDecisionValidator } from '../utilities/router-decision-validation.utility';
 import { estimateRouterPromptTokens } from '../utilities/router-token-estimate.utility';
 import {
   isRetryableRouterError,
@@ -64,6 +63,26 @@ export class RouterInferenceCoordinatorManager {
     options: RouterCoordinatorOptions,
     now: () => number = Date.now,
   ): Promise<RouterCoordinatorResult> {
+    return this.runValidated(
+      providers,
+      {
+        ...options,
+        validator: options.validator ?? routerDecisionValidator(options.eligibleDeploymentIds),
+      },
+      now,
+    );
+  }
+
+  /**
+   * The same walk for any answer shape (ADR-218 turn intent): the caller's
+   * validator decides what a trustworthy answer is, while the deadline, retry,
+   * repair, provider-skip and PAYG metering rules stay exactly the router's.
+   */
+  async runValidated<TDecision>(
+    providers: ReadonlyMap<RouterProvider, RouterInferenceProvider>,
+    options: ValidatedWalkOptions<TDecision>,
+    now: () => number = Date.now,
+  ): Promise<RouterCoordinatorResult<TDecision>> {
     const state: RouterWalkState = {
       attempts: [],
       quarantined: [],
@@ -127,13 +146,13 @@ export class RouterInferenceCoordinatorManager {
   }
 
   /** Runs one chain entry, including its retries and its single repair. */
-  private async runEntry(
+  private async runEntry<TDecision>(
     adapter: RouterInferenceProvider,
     entry: RouterChainEntryInput,
-    options: RouterCoordinatorOptions,
+    options: ValidatedWalkOptions<TDecision>,
     state: RouterWalkState,
     now: () => number,
-  ): Promise<RouterEntryOutcome> {
+  ): Promise<RouterEntryOutcome<TDecision>> {
     let attemptNumber = 0;
     let repairsUsed = 0;
     let repairHint: string | undefined;
@@ -191,25 +210,16 @@ export class RouterInferenceCoordinatorManager {
         return { ok: false, stop: false };
       }
 
-      const validation = validateRouterDecision(response.raw, options.eligibleDeploymentIds);
+      const validation = options.validator.validate(response.raw);
       if (!validation.valid) {
-        this.record(
-          state,
-          entry,
-          attemptNumber,
-          {
-            ok: false,
-            code: RouterErrorCode.MALFORMED_STRUCTURED_OUTPUT,
-            safeMessage: validation.rejection,
-            latencyMs: response.latencyMs,
-          },
-          wasRepair,
-        );
-        state.lastCode = RouterErrorCode.MALFORMED_STRUCTURED_OUTPUT;
+        const malformed = RouterErrorCode.MALFORMED_STRUCTURED_OUTPUT;
+        const failure = this.failure(malformed, validation.rejection, response.latencyMs);
+        this.record(state, entry, attemptNumber, failure, wasRepair);
+        state.lastCode = malformed;
 
         if (repairsUsed < MAX_STRUCTURED_OUTPUT_REPAIRS) {
           repairsUsed += 1;
-          repairHint = buildRepairHint(response.raw);
+          repairHint = options.validator.repairHint(response.raw);
           continue;
         }
         return { ok: false, stop: false };
@@ -217,36 +227,20 @@ export class RouterInferenceCoordinatorManager {
 
       // A valid decision nobody trusts is not a provider failure, so it is
       // recorded as its own outcome and the chain continues to a stronger entry.
-      if (validation.decision.confidence < options.minConfidence) {
-        this.record(
-          state,
-          entry,
-          attemptNumber,
-          {
-            ok: false,
-            code: RouterErrorCode.LOW_CONFIDENCE,
-            safeMessage: `confidence ${validation.decision.confidence.toFixed(2)} below ${options.minConfidence.toFixed(2)}`,
-            latencyMs: response.latencyMs,
-          },
-          wasRepair,
+      const confidence = options.validator.confidenceOf(validation.decision);
+      if (confidence < options.minConfidence) {
+        const safeMessage = `confidence ${confidence.toFixed(2)} below ${options.minConfidence.toFixed(2)}`;
+        const failure = this.failure(
+          RouterErrorCode.LOW_CONFIDENCE,
+          safeMessage,
+          response.latencyMs,
         );
+        this.record(state, entry, attemptNumber, failure, wasRepair);
         state.lastCode = RouterErrorCode.LOW_CONFIDENCE;
         return { ok: false, stop: false };
       }
 
-      state.attempts.push({
-        entryId: entry.entryId,
-        order: entry.order,
-        attemptNumber,
-        provider: entry.provider,
-        providerModelId: entry.providerModelId,
-        deploymentId: entry.deploymentId,
-        outcome: 'SUCCESS',
-        code: null,
-        safeMessage: null,
-        latencyMs: response.latencyMs,
-        wasRepair,
-      });
+      this.recordSuccess(state, entry, attemptNumber, response.latencyMs, wasRepair);
       return { ok: true, decision: validation.decision };
     }
 
@@ -274,7 +268,7 @@ export class RouterInferenceCoordinatorManager {
   private async invokeMetered(
     adapter: RouterInferenceProvider,
     entry: RouterChainEntryInput,
-    options: RouterCoordinatorOptions,
+    options: RouterWalkOptions,
     attemptNumber: number,
     request: RouterInferenceRequest,
   ): Promise<RouterInferenceResponse> {
@@ -367,7 +361,7 @@ export class RouterInferenceCoordinatorManager {
     // across a method boundary. The reservation contract requires a real user.
     userId: string,
     entry: RouterChainEntryInput,
-    options: RouterCoordinatorOptions,
+    options: RouterWalkOptions,
     attemptNumber: number,
     request: RouterInferenceRequest,
   ): Promise<Awaited<ReturnType<PaygMeter['reserve']>> | null> {
@@ -395,6 +389,37 @@ export class RouterInferenceCoordinatorManager {
       );
       return null;
     }
+  }
+
+  private recordSuccess(
+    state: RouterWalkState,
+    entry: RouterChainEntryInput,
+    attemptNumber: number,
+    latencyMs: number,
+    wasRepair: boolean,
+  ): void {
+    state.attempts.push({
+      entryId: entry.entryId,
+      order: entry.order,
+      attemptNumber,
+      provider: entry.provider,
+      providerModelId: entry.providerModelId,
+      deploymentId: entry.deploymentId,
+      outcome: 'SUCCESS',
+      code: null,
+      safeMessage: null,
+      latencyMs,
+      wasRepair,
+    });
+  }
+
+  /** A failure outcome for an answer that arrived but cannot be trusted. */
+  private failure(
+    code: RouterErrorCode,
+    safeMessage: string,
+    latencyMs: number,
+  ): Extract<RouterInferenceResponse, { ok: false }> {
+    return { ok: false, code, safeMessage, latencyMs };
   }
 
   private record(

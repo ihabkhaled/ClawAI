@@ -206,6 +206,9 @@ export const DOCUMENT_MIME_DOCX =
 
 export const IMAGE_MIME_PREFIX = 'image/';
 
+// Per-file ceiling on attachment text in one prompt. A longer file is fitted to
+// it by relevance over its whole text (fitFileTextsByRelevance, ADR-219), never
+// head-cut first.
 // file-service packs an attached archive's manifest to exactly this length
 // (ARCHIVE_MANIFEST_MAX_CHARS) so it is cut at an entry boundary with the
 // omissions stated, not sliced here mid-file. Change the two together.
@@ -229,3 +232,7 @@ export const MAX_FILE_CONTENT_LENGTH = 100_000;
 // simply send again.
 export const FILE_INGESTION_WAIT_TIMEOUT_MS = 12_000;
 export const FILE_INGESTION_POLL_INTERVAL_MS = 400;
+
+// Per-file timeout for GET /internal/files/:id/content. A multi-million-character
+// text file is its bytes plus its extracted text on the wire (ADR-219).
+export const FILE_CONTENT_FETCH_TIMEOUT_MS = 30_000;

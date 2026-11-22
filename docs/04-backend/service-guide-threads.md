@@ -214,3 +214,7 @@ Format passes: only `FORMATTED` counts toward the 3-a-day limit; skips and failu
 ## Translations (ADR-217)
 
 `publication-translations` module: table `thread_publication_translations`, a 30 s reconciler (`PublicationTranslationWorkerService`), `TranslationModelClient` (free Gemma models on the Gemini API, then Ollama cloud, platform-paid, no user wallet) and a repository with the due query, the atomic claim and the sitemap lists. Public read: `GET /thread-publications/public/:slug?lang=xx`; sitemap: `scope=translated&locale=xx`. Operate it by reading `Translation ... failed (<code>)` warnings and the table (`status`, `failure_code`, `attempts`); a stuck `RUNNING` row is taken over after 15 minutes; set a row to `PENDING` to retry at once.
+
+## Start check drops bad backups (ADR-220, 2026-11-22)
+
+`prepareStart` (was `assertCanStart`) returns a cleaned request: a fallback model that is not in the Threads catalog, not on the plan or unpriced is dropped and logged instead of failing the run with `THREAD_MODEL_UNKNOWN`. A bad primary pick is still refused. Retry still validates stored backups strictly.

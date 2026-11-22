@@ -6,6 +6,7 @@ import type { ThreadGenerationRequest } from '@/utilities/thread-generation-requ
 
 import {
   availabilityOf,
+  fallbackCandidates,
   isRecommendedSelection,
   teamToSelections,
   toAvailabilityIndex,
@@ -134,5 +135,32 @@ describe('withSeatFallbacks', () => {
       { provider: 'GROK', model: 'g4' },
       { provider: 'GEMINI', model: 'flash' },
     ]);
+  });
+});
+
+describe('fallbackCandidates (production 2026-11-22: THREAD_MODEL_UNKNOWN on a fallback)', () => {
+  const detector = sel('NVIDIANIM', 'nvidia/ai-synthetic-video-detector');
+  const glm = sel('NVIDIANIM', 'z-ai/glm-5.2');
+  const kimi = sel('NVIDIANIM', 'moonshotai/kimi-k3');
+  const nemotron = sel('NVIDIANIM', 'nvidia/nemotron-3-super');
+  const index = toAvailabilityIndex({
+    planName: 'Pro',
+    team: null,
+    models: [glm, kimi, nemotron].map(({ provider, model }) => ({
+      provider,
+      model,
+      status: ThreadModelAvailability.Available,
+    })),
+  });
+
+  it('never offers a model the service did not list, such as the NVIDIANIM video detector', () => {
+    const pool = fallbackCandidates([detector, glm, kimi, nemotron], index);
+
+    expect(pool).not.toContainEqual(detector);
+    expect(pool.map(({ model }) => model)).toEqual([glm.model, kimi.model, nemotron.model]);
+  });
+
+  it('is empty without a service answer, so no unchecked backup is sent', () => {
+    expect(fallbackCandidates([detector, glm], toAvailabilityIndex(undefined))).toEqual([]);
   });
 });

@@ -1,4 +1,8 @@
-import type { NamedModelNoticePayload, RequiredModality } from '@claw/shared-types';
+import type {
+  NamedModelNoticePayload,
+  RequiredModality,
+  TurnIntentPayload,
+} from '@claw/shared-types';
 import {
   type Prisma,
   type ComplexityClass as PrismaComplexityClass,
@@ -12,12 +16,20 @@ import type { ComplexityClassification } from './complexity.types';
 import type { RoutingExplanation } from './explanation.types';
 import type { NamedModelSlot } from './named-model-request.types';
 import type { PickedModelSubstitute } from './picked-model-substitute.types';
+import type { PreviousTurnKind, TurnIntentSlot } from './turn-intent.types';
 import type { WorkflowAvailability } from '../../workflows/types/live-workflow-selector.types';
 
 export interface RoutingContext {
   message: string;
   /** Written by the named-model step; read by evaluateRoute to attach a notice. */
   namedModelSlot?: NamedModelSlot;
+  /** Written by the turn-intent step (ADR-218); read by evaluateRoute to attach `turnIntent`. */
+  turnIntentSlot?: TurnIntentSlot;
+  /**
+   * What the previous assistant turn produced (chat-service `previousTurnKind`,
+   * ADR-218), so "regenerate" re-does that kind. Absent = unknown.
+   */
+  previousTurnKind?: PreviousTurnKind;
   threadId?: string;
   threadHistory?: string[];
   memory?: string[];
@@ -155,6 +167,12 @@ export interface RoutingDecisionResult {
   namedModelPrompt?: string;
   /** Set when the user named a model that could not answer (never a silent fallback). */
   namedModelNotice?: NamedModelNoticePayload;
+  /**
+   * What this turn asks to be produced (ADR-218): MODEL when the classifier
+   * answered, HEURISTIC when keywords decided a generation. Absent = keywords
+   * found nothing, and chat-service keeps its legacy behaviour.
+   */
+  turnIntent?: TurnIntentPayload;
 }
 
 export type MultiIntentResult = {
@@ -276,3 +294,16 @@ export type RoutingDecisionWithOutcomes = RoutingDecision & { outcomes: RoutingO
 export type { RoutingDecision, RoutingPolicy, RoutingMode };
 export type { ComplexityClassification } from './complexity.types';
 export type { RoutingExplanation, ExplanationFactor, RejectedEntry } from './explanation.types';
+
+/** The `message.routed` fields present only when a decision carries them. */
+export type OptionalRoutedFields = Pick<
+  RoutingDecisionResult,
+  'fileWriter' | 'pickedModelSubstitutes' | 'namedModelPrompt' | 'namedModelNotice' | 'turnIntent'
+>;
+
+/** What a `message.created` says about a manual pick. */
+export interface ManualPickFields {
+  routingMode: string | undefined;
+  forcedProvider: string | undefined;
+  forcedModel: string | undefined;
+}

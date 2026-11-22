@@ -1,4 +1,12 @@
-import { chunkMarkdown, fitTextsByRelevance } from '../relevant-chunks.utility';
+import {
+  chunkMarkdown,
+  fitFileTextsByRelevance,
+  fitTextsByRelevance,
+} from '../relevant-chunks.utility';
+import {
+  FILE_RELEVANCE_FIT_NOTE_PREFIX,
+  TEXT_BUDGET_SHORTENED_MARKER,
+} from '../../constants/evidence-fit.constants';
 import { RELEVANT_CHUNK_GAP_MARKER } from '../../constants/relevant-chunks.constants';
 
 const PREAMBLE = [
@@ -135,5 +143,51 @@ describe('fitTextsByRelevance (owner bug 5)', () => {
       fitTextsByRelevance([arabic], 3_000, 'ما هو الخطأ عندما يكون تاريخ التوثيق في المستقبل؟')
         .texts[0] ?? '';
     expect(kept).toContain('لا يمكن أن يكون تاريخ التوثيق في المستقبل.');
+  });
+});
+
+describe('fitFileTextsByRelevance (ADR-219 large attachments)', () => {
+  const QUESTION = 'What is the exact error when Documentation Date is in the future?';
+
+  it('delivers a file that fits whole, with no note', () => {
+    const small = bigSpec(20_000);
+    const result = fitFileTextsByRelevance([small], 24_000, 100_000, QUESTION);
+    expect(result.texts).toEqual([small]);
+    expect(result.dropped).toBe(0);
+  });
+
+  it('keeps the middle passage and the opening of a 2M-char file, and says so honestly', () => {
+    const huge = bigSpec(2_000_000);
+    expect(huge.length).toBeGreaterThanOrEqual(2_000_000);
+    const result = fitFileTextsByRelevance([huge], 24_000, 100_000, QUESTION);
+    const kept = result.texts[0] ?? '';
+    expect(kept.length).toBeLessThanOrEqual(24_000);
+    expect(kept).toContain('`Documentation Date cannot be in the future.`');
+    expect(kept).toContain('# MYONCARE QA CONTEXT PACK');
+    expect(kept).toContain("The user's name is Ihab");
+    expect(kept.startsWith(FILE_RELEVANCE_FIT_NOTE_PREFIX)).toBe(true);
+    expect(kept).toContain(`of ${huge.length.toLocaleString('en-US')} characters`);
+    expect(kept).toContain('Do not claim to have read the whole file');
+    expect(kept).not.toContain(TEXT_BUDGET_SHORTENED_MARKER);
+  });
+
+  it('fits by relevance over the WHOLE text before the per-file cap (no head-cut first)', () => {
+    const huge = bigSpec(400_000);
+    // A big window: the file share is larger than the per-file cap.
+    const result = fitFileTextsByRelevance([huge], 1_000_000, 100_000, QUESTION);
+    const kept = result.texts[0] ?? '';
+    expect(kept.length).toBeLessThanOrEqual(100_000);
+    expect(huge.slice(0, 100_000)).not.toContain('Documentation Date cannot be in the future.');
+    expect(kept).toContain('`Documentation Date cannot be in the future.`');
+  });
+
+  it('keeps a small file whole beside a huge one', () => {
+    const huge = bigSpec(500_000);
+    const small = '# Notes\n\nThe launch is on Tuesday.\n\nNothing else matters here.\n';
+    const result = fitFileTextsByRelevance([huge, small], 24_000, 100_000, QUESTION);
+    expect(result.texts[1]).toBe(small);
+    expect(result.texts[0]).toContain('`Documentation Date cannot be in the future.`');
+    const total = result.texts.reduce((sum, text) => sum + text.length, 0);
+    expect(total).toBeLessThanOrEqual(24_000);
   });
 });

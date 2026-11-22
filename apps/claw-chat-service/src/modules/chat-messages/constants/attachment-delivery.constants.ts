@@ -10,6 +10,13 @@ export const DELIVERY_REASON_NO_IMAGE_BYTES = 'file_delivery.reason.no_image_byt
 export const DELIVERY_REASON_STILL_PROCESSING = 'file_delivery.reason.still_processing';
 export const DELIVERY_REASON_FAILED_PROCESSING = 'file_delivery.reason.failed_processing';
 export const DELIVERY_REASON_TRUNCATED = 'file_delivery.reason.truncated';
+/**
+ * The file was larger than the model's window, so its opening and the passages
+ * most relevant to the question were sent (ADR-219). Still TRUNCATED_TEXT —
+ * the model did not get it whole — but "shortened" would misdescribe a
+ * relevance pick.
+ */
+export const DELIVERY_REASON_RELEVANCE_FITTED = 'file_delivery.reason.relevance_fitted';
 /** A no-vision image whose helper description failed; the lane got OCR + the honest note. */
 export const DELIVERY_REASON_VISION_HELPER_FAILED = 'file_delivery.reason.vision_helper_failed';
 /** The helper call was refused for credit (rule 37 item 18); no second helper was tried. */

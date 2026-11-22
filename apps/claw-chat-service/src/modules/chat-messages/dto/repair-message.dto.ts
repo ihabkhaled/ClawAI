@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import {
+  MESSAGE_CONTENT_MAX_CHARS,
+  MESSAGE_CONTENT_MAX_ERROR,
+} from '../constants/message-content.constants';
 import { advancedModelSelectionFields } from './advanced-model-selection-fields.dto';
 import { attachmentFields } from './attachment-fields.dto';
 import { contextPackFields } from './context-pack-fields.dto';
@@ -10,7 +14,7 @@ import { RepairType } from '../../../common/enums/repair-type.enum';
 export const repairMessageSchema = z
   .object({
     messageId: z.string().max(255).optional(),
-    content: z.string().max(50_000).optional(),
+    content: z.string().max(MESSAGE_CONTENT_MAX_CHARS, MESSAGE_CONTENT_MAX_ERROR).optional(),
     threadId: z.string().max(255).optional(),
     repairTypes: z.array(z.nativeEnum(RepairType)).min(1).max(4),
     targetProvider: z.string().max(50).optional(),

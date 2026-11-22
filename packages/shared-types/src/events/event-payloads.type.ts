@@ -4,7 +4,6 @@ import {
   type ConnectorProvider,
   type ConnectorStatus,
   type ContextPackScope,
-  type FileIngestionStatus,
   type LogLevel,
   type MemoryAuditAction,
   type MemoryScope,
@@ -14,11 +13,64 @@ import {
   type RequiredModality,
   type RoutingMode,
   type UserRole,
-  type VideoAudioStatus,
-  type VideoProcessingFailureReason,
-  type WorkspaceConnectorStatus,
-  type WorkspaceProvider,
 } from '../enums';
+import type {
+  FileArchiveExpandedPayload,
+  FileChunkedPayload,
+  FileDeletedPayload,
+  FileDownloadedPayload,
+  FileExtractionFailedPayload,
+  FileFailedPayload,
+  FileOcrCompletedPayload,
+  FileOcrFailedPayload,
+  FileOcrStartedPayload,
+  FileRetentionExpiredPayload,
+  FileTranscribeCompletedPayload,
+  FileTranscribeFailedPayload,
+  FileTranscribeRequestedPayload,
+  FileUploadCompletedPayload,
+  FileUploadedPayload,
+  FileUploadStartedPayload,
+  FileVideoProcessCompletedPayload,
+  FileVideoProcessFailedPayload,
+  FileVideoProcessRequestedPayload,
+  ImageFailedPayload,
+} from './file-event-payloads.type';
+import type {
+  AgentCommandCancelledPayload,
+  AgentCommandStreamedPayload,
+  AgentDevicePairedPayload,
+  AgentDeviceRevokedPayload,
+  AgentPolicyViolatedPayload,
+  AgentTokenReuseDetectedPayload,
+  AgentTokenRotatedPayload,
+  WorkspaceActionApprovedPayload,
+  WorkspaceActionBulkApprovedPayload,
+  WorkspaceActionDraftedPayload,
+  WorkspaceActionEditedPayload,
+  WorkspaceActionExecutedPayload,
+  WorkspaceActionFailedPayload,
+  WorkspaceActionRejectedPayload,
+  WorkspaceActionStaleBlockedPayload,
+  WorkspaceConnectorCreatedPayload,
+  WorkspaceConnectorDeletedPayload,
+  WorkspaceConnectorHealthCheckedPayload,
+  WorkspaceConnectorSyncedPayload,
+  WorkspaceConnectorUpdatedPayload,
+  WorkspaceObjectSyncedPayload,
+  WorkspaceSyncDlqSentPayload,
+  WorkspaceSyncManualTriggeredPayload,
+  WorkspaceSyncPausedPayload,
+  WorkspaceSyncRateLimitedPayload,
+  WorkspaceSyncResumedPayload,
+  WorkspaceSyncRunCompletedPayload,
+  WorkspaceSyncRunFailedPayload,
+  WorkspaceSyncRunStartedPayload,
+  WorkspaceSyncStaleDetectedPayload,
+} from './workspace-agent-event-payloads.type';
+
+export type * from './file-event-payloads.type';
+export type * from './workspace-agent-event-payloads.type';
 
 // ---- Base ----
 
@@ -132,6 +184,30 @@ export interface NamedModelNoticePayload {
   reason: NamedModelNoticeReason;
 }
 
+/**
+ * What the user asked this turn to PRODUCE, decided by a model that reads the
+ * message in any language (ADR-218). Research and planning are TEXT turns: the
+ * research gate decides web use on its own.
+ */
+export type TurnIntentKind =
+  'TEXT' | 'IMAGE_GENERATE' | 'IMAGE_EDIT' | 'VIDEO' | 'AUDIO_SPEECH' | 'AUDIO_MUSIC' | 'FILE';
+
+/** MODEL = the intent classifier answered; HEURISTIC = it was unavailable and keywords decided. */
+export type TurnIntentSource = 'MODEL' | 'HEURISTIC';
+
+export interface TurnIntentPayload {
+  kind: TurnIntentKind;
+  /** Requested file format for FILE ("pdf", "docx", "txt"…), when the user named one. */
+  fileFormat?: string;
+  confidence: number;
+  source: TurnIntentSource;
+  /**
+   * Set when the user picked a generation-only model (image/video/file) but the
+   * turn is TEXT: the turn was answered by a chat model instead, and the UI says so.
+   */
+  pickOverridden?: { provider: string; model: string };
+}
+
 export interface MessageRoutedPayload extends BaseEventPayload {
   messageId: string;
   threadId: string;
@@ -148,6 +224,8 @@ export interface MessageRoutedPayload extends BaseEventPayload {
   namedModelPrompt?: string;
   /** Set when the user named a model that could not be used (see the reason). */
   namedModelNotice?: NamedModelNoticePayload;
+  /** The semantic intent of this turn (ADR-218). Absent = an older publisher: keep legacy behaviour. */
+  turnIntent?: TurnIntentPayload;
 }
 
 export interface MessageCompletedPayload extends BaseEventPayload {
@@ -247,220 +325,6 @@ export interface RoutingDecisionMadePayload extends BaseEventPayload {
   selectedModelId: string;
   reason: string;
   candidateCount: number;
-}
-
-// ---- File Events ----
-
-export interface FileUploadedPayload extends BaseEventPayload {
-  fileId: string;
-  threadId: string;
-  userId: string;
-  fileName: string;
-  mimeType: string;
-  sizeBytes: number;
-}
-
-export interface FileChunkedPayload extends BaseEventPayload {
-  fileId: string;
-  chunkCount: number;
-  status: FileIngestionStatus;
-}
-
-export type FileFailureStage = 'EXTRACTION' | 'CHUNKING' | 'UPLOAD' | 'OTHER';
-
-export interface FileFailedPayload extends BaseEventPayload {
-  fileId: string;
-  userId: string;
-  filename: string;
-  errorMessage: string;
-  failureStage: FileFailureStage;
-}
-
-export interface FileRetentionExpiredPayload extends BaseEventPayload {
-  fileId: string;
-  userId: string;
-  filename: string;
-  retentionExpiresAt: string;
-  sizeBytes: number;
-}
-
-export interface FileArchiveExpandedPayload extends BaseEventPayload {
-  parentFileId: string;
-  userId: string;
-  parentFilename: string;
-  childFileCount: number;
-  totalExtractedBytes: number;
-}
-
-// ---- Slice D — File lifecycle + OCR events ----
-
-export type FileExtractionFailureStage = 'PARSE' | 'CHUNK' | 'OCR';
-export type FileDownloadMethod = 'BROWSER' | 'INTERNAL_API';
-export type FileDeletionReason = 'USER' | 'RETENTION' | 'ADMIN';
-export type FileOcrFailureStage = 'WORKER_INIT' | 'PROCESSING' | 'TIMEOUT';
-
-export interface FileUploadStartedPayload extends BaseEventPayload {
-  fileId: string;
-  userId: string;
-  filename: string;
-  mimeType: string;
-  sizeBytes: number;
-}
-
-/**
- * Emitted when the upload + ingestion pipeline finishes successfully. Shape
- * mirrors the legacy {@link FileUploadedPayload} so existing consumers can be
- * migrated without code changes; once the deprecated FILE_UPLOADED pattern is
- * retired this type may diverge.
- */
-export type FileUploadCompletedPayload = FileUploadedPayload;
-
-export interface FileExtractionFailedPayload extends BaseEventPayload {
-  fileId: string;
-  userId: string;
-  filename: string;
-  errorMessage: string;
-  failureStage: FileExtractionFailureStage;
-}
-
-export interface FileDownloadedPayload extends BaseEventPayload {
-  fileId: string;
-  userId: string;
-  downloadedBy: string;
-  downloadMethod: FileDownloadMethod;
-}
-
-export interface FileDeletedPayload extends BaseEventPayload {
-  fileId: string;
-  userId: string;
-  filename: string;
-  deletedBy: string;
-  reason: FileDeletionReason;
-}
-
-export interface FileOcrStartedPayload extends BaseEventPayload {
-  fileId: string;
-  userId: string;
-  mimeType: string;
-  isImageFile: boolean;
-  isScannedPdf: boolean;
-}
-
-export interface FileOcrCompletedPayload extends BaseEventPayload {
-  fileId: string;
-  userId: string;
-  extractedTextLength: number;
-  confidence: number;
-  durationMs: number;
-}
-
-export interface FileOcrFailedPayload extends BaseEventPayload {
-  fileId: string;
-  userId: string;
-  errorMessage: string;
-  failureStage: FileOcrFailureStage;
-}
-
-// ---- B6b — audio transcription (file-service, RabbitMQ job) ----
-
-/**
- * Why the transcription of an audio upload did not produce a transcript.
- *
- * `NO_CAPABLE_CONNECTOR` is deliberately its own class rather than folded into
- * `PROVIDER_ERROR`: it is not a fault, it is a configuration answer, and the
- * agreed rule is that it becomes a clear refusal the user can read instead of a
- * silent success with a placeholder that looks like content.
- */
-export type FileTranscribeFailureReasonCode =
-  | 'NO_CAPABLE_CONNECTOR'
-  | 'PROVIDER_ERROR'
-  | 'EMPTY_TRANSCRIPT'
-  | 'FILE_NOT_FOUND'
-  | 'AUDIO_UNREADABLE'
-  /** Longer than `MAX_TRANSCRIBABLE_AUDIO_BYTES` — a cost ceiling, not a storage one. */
-  | 'AUDIO_TOO_LARGE'
-  /** The uploader's PAYG credit cannot cover the transcription (402, or a clamped hold). */
-  | 'INSUFFICIENT_CREDIT'
-  /** The credit check itself could not run (meter unreachable, model unpriced). Fails closed. */
-  | 'CREDIT_CHECK_UNAVAILABLE';
-
-/** The job. Carries only identifiers — the bytes are read from the row. */
-export interface FileTranscribeRequestedPayload extends BaseEventPayload {
-  fileId: string;
-  userId: string;
-  filename: string;
-  mimeType: string;
-}
-
-export interface FileTranscribeCompletedPayload extends BaseEventPayload {
-  fileId: string;
-  userId: string;
-  provider: string;
-  model: string;
-  /** Length of the transcript actually written to `files.extracted_text`. */
-  characters: number;
-  durationMs: number;
-}
-
-export interface FileTranscribeFailedPayload extends BaseEventPayload {
-  fileId: string;
-  userId: string;
-  /** Human-readable; this is also what lands in `files.extraction_error`. */
-  reason: string;
-  reasonCode: FileTranscribeFailureReasonCode;
-  /** Absent when the failure happened before a provider was chosen. */
-  provider?: string;
-  model?: string;
-}
-
-// ---- Multimodal batch 7 — video processing (file-service, RabbitMQ job) ----
-
-/** The job. Carries only identifiers — the bytes are read from the row. */
-export interface FileVideoProcessRequestedPayload extends BaseEventPayload {
-  fileId: string;
-  userId: string;
-  filename: string;
-  mimeType: string;
-}
-
-/** The timestamped document landed on the row. No transcript text on the wire. */
-export interface FileVideoProcessCompletedPayload extends BaseEventPayload {
-  fileId: string;
-  userId: string;
-  durationMs: number;
-  hasAudio: boolean;
-  audioStatus: VideoAudioStatus;
-  transcriptSegmentCount: number;
-  /** Wall-clock time the job took, probe through write. */
-  processingMs: number;
-}
-
-export interface FileVideoProcessFailedPayload extends BaseEventPayload {
-  fileId: string;
-  userId: string;
-  reasonCode: VideoProcessingFailureReason;
-  /** Human-readable; this is also what lands in `files.extraction_error`. */
-  reason: string;
-}
-
-// ---- Image generation (image-service) ----
-
-/**
- * `image.failed`. `supersededById` is present only when AUTO mode already
- * created and linked a fallback successor for this generation (it is created
- * BEFORE the failure is published), so a consumer can tell "this attempt
- * failed, generation continues as <id>" from a terminal failure. Optional:
- * a consumer built before the field existed is unaffected.
- */
-export interface ImageFailedPayload extends BaseEventPayload {
-  generationId: string;
-  userId: string;
-  provider: string;
-  model: string;
-  prompt: string;
-  errorCode: string;
-  errorMessage: string;
-  supersededById?: string;
 }
 
 // ---- Memory Events ----
@@ -662,286 +526,6 @@ export interface ServerLogPayload extends BaseEventPayload {
   errorMessage?: string;
   errorStack?: string;
   metadata?: Record<string, unknown>;
-}
-
-// ---- Workspace Connector Events ----
-
-export interface WorkspaceConnectorCreatedPayload extends BaseEventPayload {
-  connectorId: string;
-  provider: WorkspaceProvider;
-  name: string;
-  userId: string;
-}
-
-export interface WorkspaceConnectorUpdatedPayload extends BaseEventPayload {
-  connectorId: string;
-  provider: WorkspaceProvider;
-  changes: Record<string, unknown>;
-  userId: string;
-}
-
-export interface WorkspaceConnectorDeletedPayload extends BaseEventPayload {
-  connectorId: string;
-  provider: WorkspaceProvider;
-  userId: string;
-}
-
-export interface WorkspaceConnectorSyncedPayload extends BaseEventPayload {
-  connectorId: string;
-  provider: WorkspaceProvider;
-  objectsDiscovered: number;
-  objectsSynced: number;
-  userId: string;
-}
-
-export interface WorkspaceConnectorHealthCheckedPayload extends BaseEventPayload {
-  connectorId: string;
-  provider: WorkspaceProvider;
-  status: WorkspaceConnectorStatus;
-  latencyMs?: number;
-}
-
-export interface WorkspaceObjectSyncedPayload extends BaseEventPayload {
-  connectorId: string;
-  provider: WorkspaceProvider;
-  userId: string;
-  objectCount: number;
-  deltaUsed: boolean;
-}
-
-// ---- Workspace Sync Lifecycle Events (Stream 01 Phase 5) ----
-
-export type WorkspaceSyncTriggeredBy = 'cron' | 'manual' | 'priority' | 'dlq_retry';
-export type WorkspaceSyncErrorClass =
-  | 'RateLimitedException'
-  | 'OAuthExpiredException'
-  | 'ProviderUnavailableException'
-  | 'AdapterException'
-  | 'UnknownException';
-export type WorkspaceSyncPauseReason =
-  'user_requested' | 'quiet_hours' | 'budget_exceeded' | 'circuit_open' | 'deploy_freeze';
-
-export interface WorkspaceSyncRunStartedPayload extends BaseEventPayload {
-  connectorId: string;
-  provider: WorkspaceProvider;
-  userId: string;
-  runId: string;
-  isDelta: boolean;
-  isDryRun: boolean;
-  cursorIn: string | null;
-  triggeredBy: WorkspaceSyncTriggeredBy;
-  actorUserId: string | null;
-}
-
-export interface WorkspaceSyncRunCompletedPayload extends BaseEventPayload {
-  connectorId: string;
-  provider: WorkspaceProvider;
-  userId: string;
-  runId: string;
-  startedAt: string;
-  completedAt: string;
-  durationMs: number;
-  cursorIn: string | null;
-  cursorOut: string | null;
-  objectsFound: number;
-  objectsSynced: number;
-  objectsFailed: number;
-  retryCount: number;
-  triggeredBy: WorkspaceSyncTriggeredBy;
-}
-
-export interface WorkspaceSyncRunFailedPayload extends BaseEventPayload {
-  connectorId: string;
-  provider: WorkspaceProvider;
-  userId: string;
-  runId: string;
-  startedAt: string;
-  failedAt: string;
-  durationMs: number;
-  retryCount: number;
-  terminal: boolean;
-  errorClass: WorkspaceSyncErrorClass;
-  errorMessage: string;
-  dlqPublished: boolean;
-  triggeredBy: WorkspaceSyncTriggeredBy;
-}
-
-export interface WorkspaceSyncStaleDetectedPayload extends BaseEventPayload {
-  connectorId: string;
-  provider: WorkspaceProvider;
-  userId: string;
-  lastSyncAt: string | null;
-  cadenceSeconds: number;
-  overdueSeconds: number;
-  staleMultiplier: number;
-}
-
-export interface WorkspaceSyncManualTriggeredPayload extends BaseEventPayload {
-  connectorId: string;
-  provider: WorkspaceProvider;
-  actorUserId: string;
-  priority: boolean;
-  dryRun: boolean;
-  reusedInFlight: boolean;
-  reusedRunId: string | null;
-}
-
-export interface WorkspaceSyncPausedPayload extends BaseEventPayload {
-  connectorId: string;
-  provider: WorkspaceProvider;
-  actorUserId: string;
-  reason: WorkspaceSyncPauseReason;
-}
-
-export interface WorkspaceSyncResumedPayload extends BaseEventPayload {
-  connectorId: string;
-  provider: WorkspaceProvider;
-  actorUserId: string;
-}
-
-export interface WorkspaceSyncRateLimitedPayload extends BaseEventPayload {
-  connectorId: string;
-  provider: WorkspaceProvider;
-  retryAfterMs: number;
-  strikes: number;
-  endpointHint: string | null;
-}
-
-export interface WorkspaceSyncDlqSentPayload extends BaseEventPayload {
-  connectorId: string;
-  provider: WorkspaceProvider;
-  runId: string;
-  queue: string;
-  errorClass: WorkspaceSyncErrorClass;
-  attemptsConsumed: number;
-}
-
-// ---- Workspace Action Events ----
-
-export interface WorkspaceActionDraftedPayload extends BaseEventPayload {
-  actionId: string;
-  userId: string;
-  connectorId: string;
-  provider: WorkspaceProvider;
-  actionType: string;
-}
-
-export interface WorkspaceActionApprovedPayload extends BaseEventPayload {
-  actionId: string;
-  userId: string;
-  reviewedBy: string;
-}
-
-export interface WorkspaceActionRejectedPayload extends BaseEventPayload {
-  actionId: string;
-  userId: string;
-  reviewedBy: string;
-  reason?: string;
-}
-
-export interface WorkspaceActionExecutedPayload extends BaseEventPayload {
-  actionId: string;
-  userId: string;
-  provider: WorkspaceProvider;
-  actionType: string;
-  externalUrl?: string;
-}
-
-export interface WorkspaceActionFailedPayload extends BaseEventPayload {
-  actionId: string;
-  userId: string;
-  provider: WorkspaceProvider;
-  actionType: string;
-  errorMessage: string;
-}
-
-export interface WorkspaceActionEditedPayload extends BaseEventPayload {
-  actionId: string;
-  userId: string;
-  actorUserId: string;
-  connectorId: string;
-  provider: WorkspaceProvider;
-  actionType: string;
-  previousVersion: number;
-  newVersion: number;
-}
-
-export interface WorkspaceActionBulkApprovedPayload extends BaseEventPayload {
-  bulkGroupId: string;
-  actionIds: string[];
-  actorUserId: string;
-  total: number;
-}
-
-export interface WorkspaceActionStaleBlockedPayload extends BaseEventPayload {
-  actionId: string;
-  userId: string;
-  connectorId: string;
-  provider: WorkspaceProvider;
-  connectorStatus: string;
-  reason: string;
-}
-
-// ---- Agent Device / Auth Events ----
-
-export interface AgentDevicePairedPayload extends BaseEventPayload {
-  deviceId: string;
-  userId: string;
-  scopes: string[];
-  hostname: string;
-  os: string;
-  platform: string;
-  agentVersion: string;
-}
-
-export interface AgentDeviceRevokedPayload extends BaseEventPayload {
-  deviceId: string;
-  userId: string;
-  reason: string;
-  revokedByUserId?: string;
-}
-
-export interface AgentTokenRotatedPayload extends BaseEventPayload {
-  deviceId: string;
-  userId: string;
-  oldJti: string;
-  newJti: string;
-  ipAddress?: string;
-  userAgent?: string;
-}
-
-export interface AgentTokenReuseDetectedPayload extends BaseEventPayload {
-  deviceId: string;
-  userId: string;
-  presentedJti: string;
-  usedAtOriginal?: string;
-  ipAddress?: string;
-}
-
-export interface AgentPolicyViolatedPayload extends BaseEventPayload {
-  commandId: string;
-  sessionId: string;
-  userId: string;
-  matchedPolicyId?: string;
-  matchedPolicyName?: string;
-  riskScore: number;
-  riskLabel: string;
-}
-
-export interface AgentCommandCancelledPayload extends BaseEventPayload {
-  commandId: string;
-  sessionId: string;
-  userId: string;
-  reason: string;
-  requestedByUserId?: string;
-}
-
-export interface AgentCommandStreamedPayload extends BaseEventPayload {
-  commandId: string;
-  sessionId: string;
-  userId: string;
-  bytesStreamed: number;
-  finalChunk: boolean;
 }
 
 // ---- Union type for all payloads ----

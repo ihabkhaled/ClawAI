@@ -32,6 +32,25 @@ describe('snapshot exporters', () => {
     expect(exportSnapshotMarkdown(snapshot)).toContain('Source snapshot');
   });
 
+  it('shows attached file text under its turn and the omission note', () => {
+    const markdown = exportSnapshotMarkdown({
+      ...snapshot,
+      messages: [
+        {
+          id: 'message-1',
+          role: 'USER' as const,
+          content: 'Question with `code`',
+          createdAt: '2026-10-01T12:00:00.000Z',
+          attachments: [{ name: 'notes.md', mimeType: 'text/markdown', text: 'Tag range data' }],
+        },
+      ],
+      attachmentNote: 'Attached file text: 1 attached file(s) had no readable text.',
+    });
+
+    expect(markdown).toContain('### Attached file notes.md\n\nTag range data');
+    expect(markdown).toContain('_Attached file text: 1 attached file(s) had no readable text._');
+  });
+
   it('reports TOON unavailable without claiming a conversion', () => {
     expect(exportSnapshotToon(snapshot)).toEqual({
       available: false,

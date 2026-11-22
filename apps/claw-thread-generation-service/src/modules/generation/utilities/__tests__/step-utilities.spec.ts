@@ -146,6 +146,8 @@ describe('roleStepInfo', () => {
     ['revision-author-author-1', 'REVISION', 'AUTHOR'],
     ['judge', 'JUDGE', 'JUDGE'],
     ['critic', 'CRITIC', 'CRITIC'],
+    ['brief-planner', 'BRIEF', 'SYSTEM'],
+    ['format', 'FORMAT', 'SYSTEM'],
     ['other', 'SYSTEM', 'SYSTEM'],
   ])('maps %s', (key, stage, roleKind) => {
     expect(roleStepInfo(key)).toEqual({ stage, roleKind });

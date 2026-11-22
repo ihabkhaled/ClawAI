@@ -9,6 +9,7 @@ import { ChatSurface } from '../common/enums/chat-surface.enum';
 import { TokenLedgerContext } from '@claw/shared-types';
 import { PAYG_WORKFLOW_ANSWER_REPAIR } from '../modules/chat-messages/constants/payg.constants';
 import type { AdvancedModelSelectionResolution } from '../modules/chat-messages/types/advanced-model-selection.types';
+import { MESSAGE_CONTENT_MAX_CHARS } from '../modules/chat-messages/constants/message-content.constants';
 
 vi.spyOn(AppConfig, 'get').mockReturnValue({
   CHAT_DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
@@ -782,17 +783,17 @@ describe('AnswerRepairManager', () => {
       expect(result.success).toBe(false);
     });
 
-    it('rejects content that exceeds 50000 characters', () => {
+    it('rejects content that exceeds MESSAGE_CONTENT_MAX_CHARS characters', () => {
       const result = repairMessageSchema.safeParse({
-        content: 'x'.repeat(50_001),
+        content: 'x'.repeat(MESSAGE_CONTENT_MAX_CHARS + 1),
         repairTypes: [RepairType.FORMAT],
       });
       expect(result.success).toBe(false);
     });
 
-    it('accepts content at exactly 50000 characters', () => {
+    it('accepts content at exactly MESSAGE_CONTENT_MAX_CHARS characters', () => {
       const result = repairMessageSchema.safeParse({
-        content: 'x'.repeat(50_000),
+        content: 'x'.repeat(MESSAGE_CONTENT_MAX_CHARS),
         repairTypes: [RepairType.FORMAT],
       });
       expect(result.success).toBe(true);

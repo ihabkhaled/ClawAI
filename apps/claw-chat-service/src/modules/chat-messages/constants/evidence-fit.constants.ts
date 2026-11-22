@@ -32,3 +32,25 @@ export const HISTORY_MIN_MESSAGE_CHARS = 200;
  * resolver tells a shortened attachment (TRUNCATED_TEXT) from a whole one.
  */
 export const TEXT_BUDGET_SHORTENED_MARKER = "\n[...shortened to fit the model's context window...]";
+
+/**
+ * Opens a file text that was fitted by relevance because it is larger than the
+ * model's file share (ADR-219). The delivery resolver reads this prefix to
+ * record the file as TRUNCATED_TEXT with the "fitted by relevance" reason, so
+ * keep it stable and distinctive.
+ */
+export const FILE_RELEVANCE_FIT_NOTE_PREFIX = '[ClawAI note — large file: ';
+
+/**
+ * The rest of the note. The model must know it sees part of the file, or it
+ * answers as if it had read everything. {SHOWN} and {TOTAL} are formatted
+ * character counts.
+ */
+export const FILE_RELEVANCE_FIT_NOTE_BODY =
+  "showing about {SHOWN} of {TOTAL} characters. The file is larger than this model's context window, " +
+  'so you see its opening and the passages most relevant to the question, in document order; ' +
+  '"[…]" marks skipped text. Do not claim to have read the whole file: say you used the most relevant ' +
+  'parts, and if the answer is not in them, suggest a more specific question.]\n';
+
+/** Room kept free for the note per file, so the note never pushes a file past its budget. */
+export const FILE_RELEVANCE_FIT_NOTE_RESERVE_CHARS = 512;

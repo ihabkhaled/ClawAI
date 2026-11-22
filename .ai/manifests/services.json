@@ -151,7 +151,7 @@
         "MessageAttachment",
         "PromptTemplate"
       ],
-      "testFiles": 364,
+      "testFiles": 369,
       "testRunner": "vitest"
     },
     {
@@ -198,7 +198,7 @@
         "ConnectorProviderDefinition",
         "ModelSyncRun"
       ],
-      "testFiles": 61,
+      "testFiles": 62,
       "testRunner": "vitest"
     },
     {
@@ -538,7 +538,7 @@
         "SeedExecution",
         "TaxonomyRole"
       ],
-      "testFiles": 122,
+      "testFiles": 126,
       "testRunner": "vitest"
     },
     {
@@ -588,7 +588,7 @@
         "ThreadModelCommunication",
         "ThreadRevisionDraft"
       ],
-      "testFiles": 93,
+      "testFiles": 98,
       "testRunner": "vitest"
     },
     {
@@ -624,7 +624,7 @@
         "ThreadPublicationTranslation",
         "ThreadPublicationView"
       ],
-      "testFiles": 138,
+      "testFiles": 139,
       "testRunner": "vitest"
     },
     {

@@ -9568,7 +9568,11 @@
           "file": "rules/66-every-flagship-feature-ships-a-public-marketing-page.md"
         },
         {
-          "bytes": 9145,
+          "bytes": 1606,
+          "file": "rules/67-turn-intent-is-semantic-keywords-are-only-the-fallback.md"
+        },
+        {
+          "bytes": 9488,
           "file": "rules/README.md"
         }
       ],
@@ -10052,7 +10056,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 6338
+        "value": 6341
       },
       "localeCount": 13,
       "locales": [
@@ -12498,7 +12502,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 364
+        "testFiles": 369
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -12506,7 +12510,7 @@
       },
       "claw-connector-service": {
         "runner": "vitest",
-        "testFiles": 61
+        "testFiles": 62
       },
       "claw-file-generation-service": {
         "runner": "vitest",
@@ -12518,7 +12522,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 1043
+        "testFiles": 1045
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -12554,7 +12558,7 @@
       },
       "claw-routing-service": {
         "runner": "vitest",
-        "testFiles": 122
+        "testFiles": 126
       },
       "claw-server-logs-service": {
         "runner": "vitest",
@@ -12562,11 +12566,11 @@
       },
       "claw-thread-generation-service": {
         "runner": "vitest",
-        "testFiles": 93
+        "testFiles": 98
       },
       "claw-threads-service": {
         "runner": "vitest",
-        "testFiles": 138
+        "testFiles": 139
       },
       "claw-workspace-service": {
         "runner": "vitest",
@@ -13425,7 +13429,7 @@
     "serviceCount": 21,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2885,
+    "totalTestFiles": 2903,
     "workspaceCount": 28
   }
 }

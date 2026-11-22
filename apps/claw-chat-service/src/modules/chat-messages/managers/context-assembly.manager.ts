@@ -13,8 +13,7 @@ import {
   FILE_FIT_BUDGET_SHARE,
   MEMORY_FIT_BUDGET_SHARE,
 } from '../constants/evidence-fit.constants';
-import { fitTextsToBudget } from '../utilities/text-budget.utility';
-import { fitTextsByRelevance } from '../utilities/relevant-chunks.utility';
+import { fitFileTextsByRelevance, fitTextsByRelevance } from '../utilities/relevant-chunks.utility';
 import {
   CONTEXT_PACK_BLOCK_HEADER,
   MEMORY_BLOCK_HEADER,
@@ -74,6 +73,7 @@ import {
 import { type ResearchOptions } from '../types/research-options.types';
 import { type ResearchRunResponse } from '../types/research.types';
 import {
+  FILE_CONTENT_FETCH_TIMEOUT_MS,
   FILE_INGESTION_POLL_INTERVAL_MS,
   FILE_INGESTION_WAIT_TIMEOUT_MS,
   MAX_FILE_CONTENT_LENGTH,
@@ -1471,7 +1471,10 @@ ${RESEARCH_GROUNDING_REMINDER}`;
           url,
           method: 'GET',
           headers: { Authorization: buildInterServiceAuthHeader() },
-          timeoutMs: 10_000,
+          // A multi-million-character text file crosses the wire as its bytes
+          // plus its extracted text (ADR-219); 10 s was tight for that, and a
+          // timeout drops every attachment of the turn.
+          timeoutMs: FILE_CONTENT_FETCH_TIMEOUT_MS,
         });
 
         // A file extracted from an archive has `content = null` (only direct
@@ -1737,9 +1740,15 @@ ${RESEARCH_GROUNDING_REMINDER}`;
       }));
 
     const textFiles = files.filter((file) => (file.extractedText ?? '').length > 0);
-    const fileTexts = fitTextsToBudget(
+    // Files that fit arrive whole. A larger one is fitted by RELEVANCE over its
+    // whole text — opening kept, best passages to the question, an honest note
+    // of how much the model sees — before the per-file cap, so neither the cap
+    // nor the window head-cuts away the part the question is about (ADR-219).
+    const fileTexts = fitFileTextsByRelevance(
       textFiles.map((file) => file.extractedText ?? ''),
       Math.floor(windowChars * FILE_FIT_BUDGET_SHARE),
+      MAX_FILE_CONTENT_LENGTH,
+      question,
     );
     const fittedFileTextValues = fileTexts.texts[Symbol.iterator]();
     for (const file of textFiles) {

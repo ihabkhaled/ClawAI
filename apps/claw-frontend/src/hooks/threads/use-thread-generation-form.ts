@@ -27,6 +27,7 @@ import {
   rankThreadModels,
 } from '@/utilities/thread-model-defaults.utility';
 import {
+  fallbackCandidates,
   isRecommendedSelection,
   teamToSelections,
   toAvailabilityIndex,
@@ -60,6 +61,11 @@ export function useThreadGenerationForm({
   const modelAvailability = useMemo(() => toAvailabilityIndex(recommendation), [recommendation]);
   const usablePool = useMemo(
     () => rankThreadModels(usableModels(availableModels, modelAvailability)),
+    [availableModels, modelAvailability],
+  );
+  // Automatic backups come only from models the service listed as usable for Threads.
+  const fallbackPool = useMemo(
+    () => rankThreadModels(fallbackCandidates(availableModels, modelAvailability)),
     [availableModels, modelAvailability],
   );
   const recommendedTeam = recommendation?.team ?? null;
@@ -133,11 +139,11 @@ export function useThreadGenerationForm({
         contentLocale,
         spendCapUsd: Number(spendCapUsd),
         models: selectedModels,
-        fallbackPool: usablePool,
+        fallbackPool,
         idempotencyKey: crypto.randomUUID(),
         correlationId: crypto.randomUUID(),
       });
-      const request = withSeatFallbacks(baseRequest, selectedModels, recommendedTeam, usablePool);
+      const request = withSeatFallbacks(baseRequest, selectedModels, recommendedTeam, fallbackPool);
       setRequestError(false);
       start.mutate(request);
     } catch {

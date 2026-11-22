@@ -26,6 +26,8 @@ export const ROLE_KEY_PREFIXES: ReadonlyArray<{ prefix: string; info: RoleStepIn
   { prefix: 'revision-author-', info: { stage: 'REVISION', roleKind: 'AUTHOR' } },
   { prefix: 'author-', info: { stage: 'AUTHOR_DRAFTS', roleKind: 'AUTHOR' } },
   { prefix: 'format', info: { stage: 'FORMAT', roleKind: 'SYSTEM' } },
+  // The planning call before research (`BRIEF_ROLE_ID`); its rows read "Planning the article".
+  { prefix: 'brief', info: { stage: 'BRIEF', roleKind: 'SYSTEM' } },
   { prefix: 'judge', info: { stage: 'JUDGE', roleKind: 'JUDGE' } },
   { prefix: 'critic', info: { stage: 'CRITIC', roleKind: 'CRITIC' } },
 ];

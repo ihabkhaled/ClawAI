@@ -78,8 +78,10 @@ describe('GenerationPreflightService same-provider fallback (ADR-181)', () => {
     const { service, catalog } = setup();
 
     await expect(
-      service.assertCanStart('owner-1', request([{ provider: 'GEMINI', model: 'm2' }])),
-    ).resolves.toBeUndefined();
+      service.prepareStart('owner-1', request([{ provider: 'GEMINI', model: 'm2' }])),
+    ).resolves.toMatchObject({
+      authors: [{}, { fallbacks: [{ provider: 'GEMINI', model: 'm2' }] }, {}],
+    });
     // The fallback is looked up and plan-checked like any other model.
     expect(catalog.isKnown).toHaveBeenCalledWith({ provider: 'GEMINI', model: 'm2' });
   });
@@ -88,19 +90,38 @@ describe('GenerationPreflightService same-provider fallback (ADR-181)', () => {
     const { service } = setup();
 
     await expect(
-      service.assertCanStart('owner-1', request([{ provider: 'OPENAI', model: 'm2' }])),
-    ).resolves.toBeUndefined();
+      service.prepareStart('owner-1', request([{ provider: 'OPENAI', model: 'm2' }])),
+    ).resolves.toMatchObject({
+      authors: [{}, { fallbacks: [{ provider: 'OPENAI', model: 'm2' }] }, {}],
+    });
   });
 
-  it('still refuses a fallback the catalog does not know, same provider or not', async () => {
+  it('drops a fallback the catalog does not know instead of refusing the start', async () => {
     const { service, catalog } = setup();
     catalog.isKnown.mockImplementation(({ model }: { model: string }) =>
       Promise.resolve(model !== 'nope'),
     );
 
-    await expect(
-      service.assertCanStart('owner-1', request([{ provider: 'GEMINI', model: 'nope' }])),
-    ).rejects.toMatchObject({ response: { code: 'THREAD_MODEL_UNKNOWN' } });
+    const usable = await service.prepareStart(
+      'owner-1',
+      request([
+        { provider: 'GEMINI', model: 'nope' },
+        { provider: 'GEMINI', model: 'm2' },
+      ]),
+    );
+
+    expect(usable.authors[1]?.fallbacks).toEqual([{ provider: 'GEMINI', model: 'm2' }]);
+  });
+
+  it('still refuses a primary the catalog does not know', async () => {
+    const { service, catalog } = setup();
+    catalog.isKnown.mockImplementation(({ provider }: { provider: string }) =>
+      Promise.resolve(provider !== 'OPENAI'),
+    );
+
+    await expect(service.prepareStart('owner-1', request([]))).rejects.toMatchObject({
+      response: { code: 'THREAD_MODEL_UNKNOWN', role: 'author', roleId: 'author-3' },
+    });
   });
 
   it('accepts the same on a retry', async () => {

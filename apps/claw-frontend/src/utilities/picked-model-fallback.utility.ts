@@ -8,6 +8,7 @@ import { CreditFallbackReason, RoutingMode } from '@/enums';
 import type { ModelPickerGroup } from '@/types/component.types';
 import type {
   CreditFallbackInfo,
+  IntentPickOverriddenInfo,
   PickedModelFallbackInfo,
   SuggestedModelChoice,
   SuggestedModelRef,
@@ -142,4 +143,20 @@ export function readCreditFallback(
     return null;
   }
   return { originalProvider, originalModel, reason: known };
+}
+
+/**
+ * `metadata.intentPickOverridden`, or null when the picked model answered (or
+ * the stored value is malformed — a half-filled notice would name no model).
+ */
+export function readIntentPickOverridden(
+  metadata: Record<string, unknown> | null,
+): IntentPickOverriddenInfo | null {
+  const record = asRecord(metadata?.['intentPickOverridden']);
+  if (record === null) {
+    return null;
+  }
+  const provider = record['provider'];
+  const model = record['model'];
+  return nonEmpty(provider) && nonEmpty(model) ? { provider, model } : null;
 }

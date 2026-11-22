@@ -53,6 +53,7 @@ import {
 } from '../utilities/deterministic-generation.error';
 import { parseStepError } from '../utilities/parse-step-error.utility';
 import { buildAuthorSystemPrompt } from '../utilities/author-prompt.utility';
+import { buildSharedMaterial } from '../utilities/shared-material.utility';
 import { createHealingBudget, isOverSpendCeiling } from '../utilities/healing-budget.utility';
 import { splitBlockers } from '../utilities/classify-blocker.utility';
 import {
@@ -73,7 +74,13 @@ import {
   sanitizeGapForPrompt,
 } from '../utilities/accepted-gaps-prompt.utility';
 import { combineQueryResults } from '../utilities/research-bundle.utility';
-import { buildEvidenceGapQueries, buildResearchQueries } from '../utilities/research-query.utility';
+import {
+  buildBriefResearchQueries,
+  buildEvidenceGapQueries,
+  buildFallbackResearchQueries,
+  buildResearchQueries,
+} from '../utilities/research-query.utility';
+import { conversationSeed } from '../utilities/article-brief-prompt.utility';
 import { researchQueryStep } from '../utilities/research-query-step.utility';
 import { runResearchQueries } from '../utilities/research-runner.utility';
 import { mergeEvidenceBundles } from '../utilities/evidence-merge.utility';
@@ -83,6 +90,7 @@ import { citationTable } from '../utilities/citation-table.utility';
 import { RoleHealer } from './role-healer';
 import type { ResearchPassBase } from '../types/research-queries.types';
 import { ArticleFormatter } from './article-formatter';
+import { ArticleBriefPlanner } from './article-brief-planner';
 import type { CandidateHealth, RolePrompt } from '../types/healing.types';
 import {
   NON_RETRYABLE_STEP_CODES,
@@ -123,6 +131,9 @@ export class GenerationPipelineManager {
   private readonly logger = new Logger(GenerationPipelineManager.name);
   private readonly healer: RoleHealer;
   private readonly formatter: ArticleFormatter;
+  private readonly briefPlanner: ArticleBriefPlanner;
+  /** The article subject the planner named, per job attempt, for the evidence-gap queries. */
+  private readonly researchSubjects = new WeakMap<GenerationPipelineInput, string>();
   /** The model that really answered each review, per job attempt: a fallback is named, not hidden. */
   private readonly reviewerModels = new WeakMap<
     GenerationPipelineInput,
@@ -147,12 +158,17 @@ export class GenerationPipelineManager {
       loadDemoted: (jobId, roleId) => this.loadDemoted(jobId, roleId),
       loadSuccessful: (jobId, roleId) => this.loadSuccessful(jobId, roleId),
       wait: waitBeforeRetry,
+      windowTokens: (provider, model) => this.models.contextWindowTokens(provider, model),
       now: () => Date.now(),
       random: () => Math.random(),
     });
     this.formatter = new ArticleFormatter({
       call: (input, budget, spec) => this.healer.call(input, budget, spec),
       record: (jobId, step) => this.recorder.record(jobId, step),
+      spentMicroUsd: (jobId) => this.jobs.readSpentMicroUsd(jobId),
+    });
+    this.briefPlanner = new ArticleBriefPlanner({
+      call: (input, budget, spec) => this.healer.call(input, budget, spec),
       spentMicroUsd: (jobId) => this.jobs.readSpentMicroUsd(jobId),
     });
   }
@@ -224,13 +240,7 @@ export class GenerationPipelineManager {
       job,
       evidence,
       evidenceItems,
-      sharedMaterial: JSON.stringify({
-        version: 1,
-        topic: job.topic,
-        publicationType: job.publicationType,
-        sourceSnapshot: job.sourceSnapshot,
-        researchEvidence: evidence.bundle,
-      }),
+      sharedMaterial: buildSharedMaterial(job, evidence.bundle),
     };
   }
 
@@ -264,7 +274,8 @@ export class GenerationPipelineManager {
     const startedAt = Date.now();
     let found: ResearchEvidence;
     try {
-      found = await this.collectResearch(job, buildEvidenceGapQueries(job.topic, gaps), {
+      const subject = this.researchSubjects.get(job) ?? job.topic;
+      found = await this.collectResearch(job, buildEvidenceGapQueries(subject, gaps), {
         ...base,
         checkBudget: true,
       });
@@ -561,13 +572,7 @@ export class GenerationPipelineManager {
     candidates: AuthorDraft[],
   ): Promise<AuthorConsensusResult> {
     const { job, evidence } = context;
-    const voteMaterial = JSON.stringify({
-      version: 1,
-      topic: job.topic,
-      publicationType: job.publicationType,
-      sourceSnapshot: job.sourceSnapshot,
-      researchEvidence: evidence.bundle,
-    });
+    const voteMaterial = buildSharedMaterial(job, evidence.bundle);
     await this.enterStage(job, ThreadGenerationStage.CONSENSUS, round);
     const voteResults = await Promise.allSettled(
       job.authors.map((role) =>
@@ -648,12 +653,7 @@ export class GenerationPipelineManager {
     const evidenceItems = this.evidenceItems(evidenceBundle);
     await this.checkCitations(job, 1, [draft], evidenceItems);
     const draftHash = revisionDraftHash(draft);
-    const sharedMaterial = JSON.stringify({
-      version: 1,
-      topic: job.topic,
-      publicationType: job.publicationType,
-      sourceSnapshot: job.sourceSnapshot,
-      researchEvidence: evidenceBundle,
+    const sharedMaterial = buildSharedMaterial(job, evidenceBundle, {
       exactCandidateHash: draftHash,
     });
     const authorVotes = await Promise.allSettled(
@@ -718,13 +718,29 @@ export class GenerationPipelineManager {
     });
   }
 
+  /**
+   * What the first research pass searches for. With the planning stage on, the planner names the
+   * subject from the topic box and the conversation together; without an answer, the box's queries
+   * and the conversation's are both used. The box alone is searched only when planning is off.
+   */
+  private async firstResearchQueries(job: GenerationPipelineInput): Promise<string[]> {
+    if (job.briefStage !== true) return buildResearchQueries(job.topic);
+    const brief = await this.briefPlanner.plan(job);
+    if (brief === null) {
+      return buildFallbackResearchQueries(job.topic, conversationSeed(job.sourceSnapshot));
+    }
+    this.researchSubjects.set(job, brief.subject);
+    return buildBriefResearchQueries(job.topic, brief);
+  }
+
   private async runResearch(job: GenerationPipelineInput): Promise<ResearchEvidence> {
     const base = { stage: ThreadGenerationStage.RESEARCH, roleKind: 'RESEARCH' as const };
+    const queries = await this.firstResearchQueries(job);
     for (let attempt = 1; ; attempt += 1) {
       const startedAt = Date.now();
       await this.recorder.record(job.jobId, { ...base, outcome: 'STARTED' });
       try {
-        const evidence = await this.collectResearch(job, buildResearchQueries(job.topic), base);
+        const evidence = await this.collectResearch(job, queries, base);
         await this.recorder.record(job.jobId, {
           ...base,
           outcome: 'SUCCEEDED',

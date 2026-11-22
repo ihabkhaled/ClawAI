@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import {
+  MESSAGE_CONTENT_MAX_CHARS,
+  MESSAGE_CONTENT_MAX_ERROR,
+} from '../constants/message-content.constants';
 import { attachmentFields } from './attachment-fields.dto';
 import { contextPackFields } from './context-pack-fields.dto';
 import { pluginFields } from './plugin-fields.dto';
@@ -9,7 +13,7 @@ export const consensusMessageSchema = z
   .object({
     threadId: z.string().max(255, 'Thread ID must be at most 255 characters').optional(),
     // Empty is allowed when files are attached — see requireContentOrAttachments.
-    content: z.string().max(100_000, 'Content must be at most 100000 characters'),
+    content: z.string().max(MESSAGE_CONTENT_MAX_CHARS, MESSAGE_CONTENT_MAX_ERROR),
     models: z
       .array(
         z.object({

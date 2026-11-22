@@ -17,7 +17,7 @@ import type { AssembledContext } from '../types/context.types';
 import type { ThreadSettings } from '../types/execution.types';
 import type { MediaFinalStepResult } from '../types/media-tools.types';
 import { claimsMedia, stripMediaClaims } from '../utilities/media-claim.utility';
-import { asksToCreateMedia } from '../utilities/media-tool-eligibility.utility';
+import { turnAsksForMedia } from '../utilities/media-tool-eligibility.utility';
 import { latestUserTurnText } from '../utilities/quoted-turn.utility';
 import { ChatExecutionManager } from './chat-execution.manager';
 
@@ -99,7 +99,7 @@ export class MediaFinalStepManager {
     if (stopSignal?.aborted === true) return { content: MEDIA_STOPPED_TEXT };
     const userText = latestUserTurnText(context.threadMessages) ?? '';
     // A turn that did not ask for media is left exactly as the orchestration produced it.
-    if (!asksToCreateMedia(userText)) return { content: answer };
+    if (!turnAsksForMedia(context, userText)) return { content: answer };
     const clean = this.withoutClaims(answer);
     if (!modelCanCallMediaTools(provider, model)) {
       return this.directMedia(context, clean, stopSignal);

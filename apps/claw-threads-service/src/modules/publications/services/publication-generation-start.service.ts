@@ -45,12 +45,13 @@ export class PublicationGenerationStartService {
     };
     const replay = await this.replayStartedGeneration(ownerId, identity);
     if (replay) return replay;
-    await this.preflight.assertCanStart(ownerId, input);
+    // The queued request carries only fallbacks that can run; the fingerprint stays the client's.
+    const usable = await this.preflight.prepareStart(ownerId, input);
     await this.activeCap.assertBelowCap(ownerId);
     try {
       return await this.lifecycle.enqueueGeneration(
         ownerId,
-        { ...input, idempotencyKey: identity.keyHash },
+        { ...usable, idempotencyKey: identity.keyHash },
         identity,
       );
     } catch (error: unknown) {

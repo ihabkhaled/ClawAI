@@ -14,6 +14,8 @@ vi.mock('../../../app/config/app.config', () => ({
 vi.mock('../../../common/utilities/http.utility', () => ({
   httpGet: vi.fn(),
   httpGetText: vi.fn(),
+  // /api/show window lookups (models the curated table does not size).
+  httpPost: vi.fn().mockResolvedValue({ ok: false, status: 404, data: {} }),
 }));
 
 const mockedHttpGet = httpGet as MockedFunction<typeof httpGet>;

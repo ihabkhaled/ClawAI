@@ -20,7 +20,10 @@ export function exportSnapshotMarkdown(snapshot: ThreadSnapshot): string {
   const title = trimmedTitle.length > 0 ? trimmedTitle : 'Untitled conversation';
   const entries = snapshot.messages.map((message) => {
     const role = message.role === 'USER' ? 'User' : 'Assistant';
-    return `## ${role} · ${message.createdAt}\n\n${message.content}`;
+    const attached = (message.attachments ?? []).map(
+      (attachment) => `\n\n### Attached file ${attachment.name}\n\n${attachment.text}`,
+    );
+    return `## ${role} · ${message.createdAt}\n\n${message.content}${attached.join('')}`;
   });
   return [
     `# ${title}`,
@@ -28,6 +31,7 @@ export function exportSnapshotMarkdown(snapshot: ThreadSnapshot): string {
     `Source snapshot: \`${snapshot.sha256}\` · ${String(snapshot.messageCount)} messages`,
     '',
     ...entries.flatMap((entry) => [entry, '']),
+    ...(snapshot.attachmentNote === undefined ? [] : [`_${snapshot.attachmentNote}_`, '']),
   ].join('\n');
 }
 

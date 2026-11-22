@@ -53,12 +53,16 @@ export const EXTRACT_TEXT_SCANNED_PAGE_MIN_CHARS = 20;
 /**
  * Most characters one office document may return.
  *
- * The parsers bound what they inflate (128 MB), which is far more than a model
- * reads and more than should cross the wire for one call. A longer text is cut
- * on a line boundary and ends with a line saying so, so the reader never takes a
- * cut document for a whole one.
+ * The parsers bound what they inflate (128 MB). 20M characters (~40 MB as a JS
+ * string) lets a multi-million-character document be stored WHOLE: chat-service
+ * no longer head-cuts it, it picks the passages relevant to each question
+ * (ADR-219), so text thrown away here could never be found. Was 1M. A longer
+ * text is still cut on a line boundary and ends with a line saying so, so the
+ * reader never takes a cut document for a whole one. PDFs are also bounded by
+ * PDF_TEXT_MAX_PAGES and PDF_TEXT_TIMEOUT_MS. Plain-text uploads were never cut
+ * here: they are decoded whole, bounded only by the 50 MB upload limit.
  */
-export const DOCUMENT_TEXT_MAX_CHARS = 1_000_000;
+export const DOCUMENT_TEXT_MAX_CHARS = 20_000_000;
 
 /**
  * Most PDF pages whose text is read in one pass, on upload and on extract-text.

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { RoutingMode } from '../../../generated/prisma';
+import { PREVIOUS_TURN_KINDS } from '../constants/turn-intent.constants';
 
 export const evaluateRouteSchema = z.object({
   messageContent: z
@@ -14,6 +15,9 @@ export const evaluateRouteSchema = z.object({
   // lane, which needs a model that can emit native tool calls. Optional so
   // every existing caller keeps working unchanged; absent means false.
   requiresToolCalling: z.boolean().optional(),
+  // ADR-218: what the previous assistant turn produced, so "regenerate" can
+  // re-do that kind. Optional; absent = unknown.
+  previousTurnKind: z.enum(PREVIOUS_TURN_KINDS).optional(),
 });
 
 export type EvaluateRouteDto = z.infer<typeof evaluateRouteSchema>;

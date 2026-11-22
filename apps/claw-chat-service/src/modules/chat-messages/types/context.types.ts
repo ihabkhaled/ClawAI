@@ -13,6 +13,7 @@ import type { FileMediaSummary } from './video-delivery.types';
 import type { ThreadSettings } from './execution.types';
 import type { ResearchOptions } from './research-options.types';
 import type { ResearchRunResponse } from './research.types';
+import type { TurnIntentPayload } from '@claw/shared-types';
 
 export type FileChunkResponse = {
   id: string;
@@ -186,6 +187,12 @@ export type AssembledContext = {
    * media tools; this call may.
    */
   mediaFinalStep?: boolean;
+  /**
+   * What routing's intent classifier decided this turn should produce (ADR-218). Set by
+   * normal chat from message.routed; read by the media-tool eligibility so a MODEL intent
+   * replaces the keyword lists. Absent on every surface without a routing decision.
+   */
+  turnIntent?: TurnIntentPayload;
   /**
    * Completed Runtime V2 tool rounds, oldest first.
    *

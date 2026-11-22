@@ -3,6 +3,7 @@ import { isGenerationProvider } from './generation-provider.utility';
 import { splitBufferedReasoning } from './buffered-reasoning.utility';
 import { ROUTING_TO_CHAT_PROVIDER } from '../constants/file-writer.constants';
 import type { MessageRoutedData } from '../types/execution.types';
+import { intentFileFormat } from './turn-intent.utility';
 import type {
   FileContentCandidate,
   FileContentCandidateOptions,
@@ -53,9 +54,12 @@ export function toFileContentCandidates(
  * in LOCAL_ONLY / PRIVACY_FIRST.
  */
 export function fileWriterOptionsFor(
-  payload: Pick<MessageRoutedData, 'routingMode' | 'fileWriter'>,
+  payload: Pick<MessageRoutedData, 'routingMode' | 'fileWriter' | 'turnIntent'>,
 ): FileContentCandidateOptions {
+  // A model read the format in any language ("ملف pdf", "PDFで"); keywords miss most of those.
+  const format = intentFileFormat(payload.turnIntent);
   return {
+    ...(format === undefined ? {} : { format }),
     ...(payload.fileWriter === undefined ? {} : { preferred: payload.fileWriter }),
     ...(LOCAL_ONLY_ROUTING_MODES.has(payload.routingMode) ? { localOnly: true } : {}),
   };

@@ -6,3 +6,10 @@ export type ScoredChunk = {
   /** Rarity-weighted overlap with the question; 0 = no shared terms. */
   score: number;
 };
+
+/** The head of one more chunk that fills the room the whole chunks left. */
+export type PartialChunk = {
+  textIndex: number;
+  chunkIndex: number;
+  text: string;
+};

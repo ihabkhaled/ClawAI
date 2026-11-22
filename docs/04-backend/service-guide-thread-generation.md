@@ -321,3 +321,7 @@ Legacy articles are normalised before a preview pass (`[address, id]` markers be
 The merged research bundle (`EVIDENCE_BUNDLE_MAX_CHARS`, 100,000 characters) is the one part of a
 role prompt the healer cannot shrink, so it stays under half of chat-service's 200,000-character
 `userPrompt` limit. A larger bundle makes every model answer HTTP 400 `VALIDATION_FAILED`.
+
+## Chat source and author instructions (ADR-220, 2026-11-22)
+
+A Thread from a chat gets the chat as `sourceConversation` (fitted per role model window: duplicates once, all turns in order, beginning+end of long messages, an omission note, attachment text included) and the topic box as `authorInstructions`. A planning call reads both in any language and names the subject and research queries before research; its failure falls back to searching the box and the chat. See [ADR-220](../13-adr/adr-220-a-thread-from-a-chat-is-sourced-from-the-whole-chat.md).

@@ -70,6 +70,12 @@ export type OllamaModelEntry = {
   };
 };
 
+/** One cached `/api/show` window lookup; `tokens` undefined = the provider gave none. */
+export type OllamaContextWindowCacheEntry = {
+  tokens: number | undefined;
+  expiresAt: number;
+};
+
 // Minimal slice of a native Ollama /api/chat response — only what the tool
 // probe reads. Deliberately narrow: the probe is a yes/no mechanical check and
 // has no business depending on the rest of the payload.

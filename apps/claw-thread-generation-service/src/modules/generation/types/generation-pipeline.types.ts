@@ -125,6 +125,12 @@ export type GenerationPipelineInput = {
   acceptedEvidenceGaps?: string[];
   /** Runs the optional FORMAT stage after the reviews pass (ADR-189); off for an owner's own edit. */
   formatStage?: boolean;
+  /**
+   * Runs the planning call before the first research pass: the topic box is read with the
+   * conversation to name the article subject (2026-11-22). Off for an owner's own edit and in specs
+   * that script every model reply.
+   */
+  briefStage?: boolean;
   /** Set by the pipeline for one attempt: the counters that bound healing. */
   healingBudget?: HealingBudget;
   isCancellationRequested?: () => Promise<boolean>;

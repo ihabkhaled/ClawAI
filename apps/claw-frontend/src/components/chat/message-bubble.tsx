@@ -21,6 +21,7 @@ import { FileGenerationBubble } from '@/components/chat/file-generation-bubble';
 import { FileLimitNotice } from '@/components/chat/file-limit-notice';
 import { ImageGenerationBubble } from '@/components/chat/image-generation-bubble';
 import { ImageMaskRefusalNotice } from '@/components/chat/image-mask-refusal-notice';
+import { IntentPickOverriddenNotice } from '@/components/chat/intent-pick-overridden-notice';
 import { JudgeRefereeDetails } from '@/components/chat/judge-referee-details';
 import { MediaGenerationCards } from '@/components/chat/media-generation-cards';
 import { MessageAttachments } from '@/components/chat/message-attachments';
@@ -73,6 +74,7 @@ import { getStoredNarration } from '@/utilities/narration.utility';
 import {
   offersPickedModelRecovery,
   readCreditFallback,
+  readIntentPickOverridden,
   readPickedModelFallback,
   readSuggestedModels,
 } from '@/utilities/picked-model-fallback.utility';
@@ -154,6 +156,7 @@ function MessageBubbleBase({
   const storedErrorText = resolveStoredErrorMessage(metadata, t);
   const pickedModelFallback = isUser ? null : readPickedModelFallback(metadata);
   const creditFallback = isUser ? null : readCreditFallback(metadata);
+  const intentPickOverridden = isUser ? null : readIntentPickOverridden(metadata);
   const showPickedModelRecovery =
     !isUser &&
     onRegenerate !== undefined &&
@@ -259,6 +262,11 @@ function MessageBubbleBase({
             answeredModel={message.model ?? 'unknown'}
             t={t}
           />
+        )}
+
+        {/* The picked model only makes media, so a chat model answered in text. */}
+        {intentPickOverridden === null ? null : (
+          <IntentPickOverriddenNotice info={intentPickOverridden} t={t} />
         )}
 
         {/* The work log that led to this answer, ABOVE it and outside it: the

@@ -19,6 +19,7 @@ import {
   Permission,
   type RouterTraceEvent,
   TokenLedgerContext,
+  type TurnIntentKind,
 } from '@claw/shared-types';
 import {
   allowedModelKeys,
@@ -209,6 +210,15 @@ import {
   withNamedModelPrompt,
 } from '../utilities/named-model.utility';
 import { fileWriterField, rerouteFileFollowUp } from '../utilities/file-writer.utility';
+import {
+  authoritativeTurnIntent,
+  buildTurnIntentMetaPart,
+  previousTurnKind,
+  turnIntentField,
+  withTurnIntent,
+} from '../utilities/turn-intent.utility';
+import { IMAGE_TURN_INTENTS, PREVIOUS_TURN_LOOKBACK } from '../constants/turn-intent.constants';
+import type { PreviousTurnAnchor, PreviousTurnKind } from '../types/turn-intent.types';
 import {
   redactProviderText,
   sanitizeUserFacingErrorMessage,
@@ -427,8 +437,37 @@ export class ChatMessagesService implements OnModuleInit {
     const modality = await this.resolveAttachmentModality(userId, dto.fileIds, async () =>
       Promise.resolve(this.planHasVision(entitlements)),
     );
+    const previous = await this.previousTurnKindField(message);
     return (): void =>
-      this.publishMessageCreatedForPlan(message, userId, routing, entitlements, modality);
+      this.publishMessageCreatedForPlan(message, userId, routing, entitlements, {
+        ...modality,
+        ...previous,
+      });
+  }
+
+  /**
+   * `{ previousTurnKind }` for message.created (ADR-218): what the answer before this user
+   * turn was, so routing's intent model reads "make it blue" after a picture as an edit.
+   * `{}` when it cannot be read: routing then decides from the message alone.
+   */
+  private async previousTurnKindField(
+    turn: PreviousTurnAnchor,
+  ): Promise<{ previousTurnKind?: PreviousTurnKind }> {
+    try {
+      const recent = await this.chatMessagesRepository.findRecentByThreadId(
+        turn.threadId,
+        PREVIOUS_TURN_LOOKBACK,
+      );
+      const before = recent
+        .filter((row) => row.id !== turn.id && row.createdAt <= turn.createdAt)
+        .reverse();
+      return { previousTurnKind: previousTurnKind(before) };
+    } catch (error: unknown) {
+      this.logger.warn(
+        `previousTurnKindField: not read for ${turn.id} - ${error instanceof Error ? error.message : 'error'}`,
+      );
+      return {};
+    }
   }
 
   private publishMessageCreatedForPlan(
@@ -436,7 +475,7 @@ export class ChatMessagesService implements OnModuleInit {
     userId: string,
     routing: ResolvedMessageRouting,
     entitlements: UserEntitlements | null,
-    modality: AttachmentModalityFields,
+    modality: AttachmentModalityFields & { previousTurnKind?: PreviousTurnKind },
   ): void {
     this.publishMessageCreated(
       message,
@@ -1252,6 +1291,7 @@ export class ChatMessagesService implements OnModuleInit {
     // Stored BEFORE the event goes out: the re-run reads the mode from the row.
     await this.applyContextSaveMode(target, dto.contextSaveMode);
     const modality = await this.resolveRerunAttachmentModality(userId, target);
+    const previous = await this.previousTurnKindField(target);
     void this.rabbitMQService.publish(EventPattern.MESSAGE_CREATED, {
       messageId: target.id,
       threadId: target.threadId,
@@ -1268,6 +1308,7 @@ export class ChatMessagesService implements OnModuleInit {
       allowedCostClasses: entitlements?.allowedCostClasses ?? [],
       regenerate: true,
       ...modality,
+      ...previous,
       timestamp: new Date().toISOString(),
     });
 
@@ -1427,6 +1468,7 @@ export class ChatMessagesService implements OnModuleInit {
     // Stored BEFORE the event goes out: the re-run reads the mode from the row.
     const rerun = await this.applyContextSaveMode(message, contextSaveMode);
     const modality = await this.resolveRerunAttachmentModality(userId, message);
+    const previous = await this.previousTurnKindField(message);
     void this.rabbitMQService.publish(EventPattern.MESSAGE_CREATED, {
       messageId: message.id,
       threadId: message.threadId,
@@ -1442,6 +1484,7 @@ export class ChatMessagesService implements OnModuleInit {
       // turn against the daily message ceiling, because it is the same turn.
       regenerate: true,
       ...modality,
+      ...previous,
       timestamp: new Date().toISOString(),
     });
   }
@@ -1578,7 +1621,7 @@ export class ChatMessagesService implements OnModuleInit {
     // could not be used is announced by the answer, never swapped silently.
     return withPluginRefs(
       withNamedModelNotice(
-        withNamedModelPrompt(context, payload.namedModelPrompt),
+        withNamedModelPrompt(withTurnIntent(context, payload.turnIntent), payload.namedModelPrompt),
         payload.namedModelNotice,
       ),
       pluginRefsFor(undefined, latestUserMetadata),
@@ -1692,8 +1735,13 @@ export class ChatMessagesService implements OnModuleInit {
     thread: ChatThread | null,
     chronologicalMessages: ChatMessage[],
   ): Promise<MessageRoutedData> {
-    let effectivePayload = this.detectImageOutputModel(payload);
-    effectivePayload = this.detectVideoOutputModel(effectivePayload);
+    // Routing already swapped a picked generation model for a chat model because the
+    // turn is TEXT (ADR-218): redirecting it back to the generator would undo that.
+    const pickOverridden = authoritativeTurnIntent(payload.turnIntent)?.pickOverridden;
+    let effectivePayload =
+      pickOverridden === undefined
+        ? this.detectVideoOutputModel(this.detectImageOutputModel(payload))
+        : payload;
     effectivePayload = await this.detectVideoRequest(
       effectivePayload,
       chronologicalMessages,
@@ -1951,6 +1999,8 @@ export class ChatMessagesService implements OnModuleInit {
       ...pickedModelSubstitutesField(payload['pickedModelSubstitutes']),
       // "use grok to …": the task without the directive, or why the named model was not used.
       ...namedModelFields(payload['namedModelPrompt'], payload['namedModelNotice']),
+      // ADR-218: what the turn should produce; absent from an older routing-service.
+      ...turnIntentField(payload['turnIntent']),
     };
   }
 
@@ -2299,7 +2349,7 @@ export class ChatMessagesService implements OnModuleInit {
       ...this.buildTruncationMetaPart(llmResponse),
       ...this.buildFileDeliveryMetaPart(llmResponse),
       ...this.buildPaygMetaPart(llmResponse),
-      ...this.buildFallbackMetaPart(llmResponse),
+      ...this.buildFallbackMetaPart(llmResponse, payload),
       ...this.buildToolTranscriptMetaPart(llmResponse),
       ...buildToolMetaPart(llmResponse),
       ...(!hasVisibleContent ? { emptyContent: true } : {}),
@@ -2311,9 +2361,15 @@ export class ChatMessagesService implements OnModuleInit {
   }
 
   // A substitute answered for the user's picked model, or a credit model was
-  // refused and an included one answered: the bubble says so.
-  private buildFallbackMetaPart(llmResponse: LlmResponse): Record<string, unknown> {
+  // refused and an included one answered: the bubble says so. Also the turn's
+  // intent (ADR-218): `turnIntent` for observability, and `intentPickOverridden`
+  // when a chat model answered a TEXT turn instead of the picked generator.
+  private buildFallbackMetaPart(
+    llmResponse: LlmResponse,
+    payload: MessageRoutedData,
+  ): Record<string, unknown> {
     return {
+      ...buildTurnIntentMetaPart(payload.turnIntent),
       ...(llmResponse.pickedModelFallback === undefined
         ? {}
         : { pickedModelFallback: llmResponse.pickedModelFallback }),
@@ -3047,7 +3103,7 @@ export class ChatMessagesService implements OnModuleInit {
     allowedModels: string[],
     modelAccessMode: string | undefined,
     freeModelPriceCap: number | null,
-    modality: AttachmentModalityFields,
+    modality: AttachmentModalityFields & { previousTurnKind?: PreviousTurnKind },
   ): void {
     void this.rabbitMQService.publish(EventPattern.MESSAGE_CREATED, {
       messageId: message.id,
@@ -3175,6 +3231,10 @@ export class ChatMessagesService implements OnModuleInit {
     if (payload.selectedProvider.startsWith('IMAGE_')) return null;
     const lastProvider = thread?.lastProvider;
     if (!lastProvider?.startsWith('IMAGE_')) return null;
+    // A MODEL intent decides in any language (ADR-218): "Keep it cat as it is" read as
+    // TEXT stays a chat answer; an image intent needs no follow-up prefix word.
+    const intent = authoritativeTurnIntent(payload.turnIntent);
+    if (intent !== undefined) return IMAGE_TURN_INTENTS.has(intent.kind) ? lastProvider : null;
     const lower = this.extractLatestUserText(messages);
     return lower === null || !this.matchesFollowUp(lower, IMAGE_FOLLOW_UP_PREFIXES)
       ? null
@@ -3244,8 +3304,7 @@ export class ChatMessagesService implements OnModuleInit {
     ) {
       return payload;
     }
-    const text = this.extractLatestUserText(messages);
-    if (text === null || !(await this.asksForVideo(text, messages, userId))) {
+    if (!(await this.turnAsksForVideo(payload, messages, userId))) {
       return payload;
     }
     const provider = VIDEO_AUTO_PROVIDER_ORDER.at(0);
@@ -3255,6 +3314,18 @@ export class ChatMessagesService implements OnModuleInit {
     }
     this.logger.log(`Video request detected in AUTO → ${provider}/${model}`);
     return { ...payload, selectedProvider: provider, selectedModel: model };
+  }
+
+  /** A MODEL intent decides (ADR-218); without one, the keyword classifier over the text. */
+  private async turnAsksForVideo(
+    payload: MessageRoutedData,
+    messages: ChatMessage[],
+    userId: string | undefined,
+  ): Promise<boolean> {
+    const intent = authoritativeTurnIntent(payload.turnIntent);
+    if (intent !== undefined) return intent.kind === 'VIDEO';
+    const text = this.extractLatestUserText(messages);
+    return text !== null && (await this.asksForVideo(text, messages, userId));
   }
 
   /**
@@ -3289,13 +3360,23 @@ export class ChatMessagesService implements OnModuleInit {
     const meta = lastAssistant?.metadata as Record<string, unknown> | null;
     if (meta?.['type'] !== 'file_generation') return payload;
     const lower = this.extractLatestUserText(messages);
-    if (lower === null || !this.matchesFollowUp(lower, FILE_FOLLOW_UP_PREFIXES)) {
-      return payload;
-    }
+    if (!this.isFileFollowUp(payload, lower)) return payload;
     this.logger.log(
       `File generation follow-up detected: "${lower}" → re-routing to FILE_GENERATION`,
     );
     return rerouteFileFollowUp(payload);
+  }
+
+  /**
+   * A MODEL intent decides (ADR-218): "don't generate file, just answer me" read as TEXT
+   * stays a chat answer even though it starts with a follow-up word; a FILE intent needs
+   * no prefix word in any language. Without one, the follow-up prefix list.
+   */
+  private isFileFollowUp(payload: MessageRoutedData, lower: string | null): boolean {
+    const intent = authoritativeTurnIntent(payload.turnIntent);
+    return intent === undefined
+      ? lower !== null && this.matchesFollowUp(lower, FILE_FOLLOW_UP_PREFIXES)
+      : intent.kind === 'FILE';
   }
 
   /**
@@ -3319,8 +3400,11 @@ export class ChatMessagesService implements OnModuleInit {
     const turn = this.latestAttachmentTurn(messages);
     if (turn === null) return payload;
     if (keepsRoutedImageProvider(payload.selectedProvider, turn.hasMask)) return payload;
+    // A MODEL intent other than an image one is a question about the picture (ADR-218).
+    const turnIntent = authoritativeTurnIntent(payload.turnIntent);
+    if (turnIntent !== undefined && !IMAGE_TURN_INTENTS.has(turnIntent.kind)) return payload;
     const mimeTypes = await this.attachmentMimeTypesOf(userId, turn.fileIds);
-    const intent = classifyImageIntent(turn.text, hasAttachedImageMime(mimeTypes));
+    const intent = this.attachmentImageIntent(turnIntent?.kind, turn.text, mimeTypes);
     // A drawn mask needs a provider that can apply one (Gemini/SD cannot).
     const editor = selectImageEditor(turn.hasMask);
     if (intent !== MultimodalImageIntent.EDIT || editor === undefined) return payload;
@@ -3328,6 +3412,18 @@ export class ChatMessagesService implements OnModuleInit {
       `Image edit of an attachment: ${String(turn.fileIds.length)} files → ${editor.provider}/${editor.editModel}`,
     );
     return { ...payload, selectedProvider: editor.provider, selectedModel: editor.editModel };
+  }
+
+  /** A MODEL IMAGE_EDIT intent over a real image is an edit; otherwise the shared classifier. */
+  private attachmentImageIntent(
+    kind: TurnIntentKind | undefined,
+    text: string,
+    mimeTypes: string[],
+  ): MultimodalImageIntent {
+    const hasImage = hasAttachedImageMime(mimeTypes);
+    return kind === 'IMAGE_EDIT' && hasImage
+      ? MultimodalImageIntent.EDIT
+      : classifyImageIntent(text, hasImage);
   }
 
   /** The latest user turn's text and attachments, or null when it has none. */

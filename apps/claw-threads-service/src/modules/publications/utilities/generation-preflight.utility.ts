@@ -15,7 +15,7 @@ import {
   MIN_THREAD_SPEND_CAP_MICRO_USD,
 } from '../constants/generation-preflight.constants';
 import type { StartThreadGenerationDto } from '../dto/start-thread-generation.dto';
-import { costClassOf, NO_COST_CLASSES } from './model-cost-class.utility';
+import { costClassOf, needsCostClasses, NO_COST_CLASSES } from './model-cost-class.utility';
 import type { CostClassIndex } from '../types/model-cost-class.types';
 import type {
   ModelRef,
@@ -67,6 +67,52 @@ export function distinctModelRefs(roles: readonly PreflightRole[]): ModelRef[] {
     byKey.set(modelKey({ provider, model }), { provider, model });
   }
   return [...byKey.values()];
+}
+
+function seatWithFallbacks(
+  role: PreflightRoleRequest,
+  keep: (fallback: ModelRef) => boolean,
+): PreflightRoleRequest {
+  return { ...role, fallbacks: role.fallbacks.filter((fallback) => keep(fallback)) };
+}
+
+/**
+ * The start request with only the fallbacks `keep` accepts; every primary is left as it is.
+ * A fallback is a backup the client proposed, so one that cannot run is dropped rather than
+ * refusing a run whose picked models are fine.
+ */
+export function withUsableFallbacks(
+  input: StartThreadGenerationDto,
+  keep: (fallback: ModelRef) => boolean,
+): StartThreadGenerationDto {
+  return {
+    ...input,
+    authors: input.authors.map((author) => seatWithFallbacks(author, keep)),
+    judge: seatWithFallbacks(input.judge, keep),
+    critic: seatWithFallbacks(input.critic, keep),
+  };
+}
+
+/** How many fallbacks the request names, so a drop can be counted. */
+export function countFallbacks(input: StartThreadGenerationDto): number {
+  return [...input.authors, input.judge, input.critic].reduce(
+    (total, role) => total + role.fallbacks.length,
+    0,
+  );
+}
+
+/** True when a fallback may run: priced (when the plan decides by price) and allowed as a fallback. */
+export function isFallbackOnPlan(
+  entitlements: UserEntitlements,
+  { provider, model }: ModelRef,
+  costClasses: CostClassIndex,
+): boolean {
+  const costClass = costClassOf(costClasses, provider, model);
+  const unpriced = needsCostClasses(entitlements) && costClass === undefined;
+  return (
+    !unpriced &&
+    isModelAllowedForUsage(entitlements, provider, model, ModelUsageType.FALLBACK, costClass)
+  );
 }
 
 /** "Author 2", "Judge", "Critic": how the seat is named in a message. */

@@ -6,6 +6,8 @@ import {
   RESEARCH_QUERIES_MAX,
   RESEARCH_SHORT_TOPIC_CHARS,
 } from '../constants/research-queries.constants';
+import { BRIEF_QUERIES_MAX } from '../constants/article-brief.constants';
+import type { ArticleBrief } from '../types/article-brief.types';
 import { extractRepositories, extractSourceHints } from './research-hints.utility';
 import { clampQuery, significantWords, topicSubject } from './research-text.utility';
 
@@ -66,4 +68,40 @@ export function buildEvidenceGapQueries(topic: string, blockers: readonly string
     ...fromBlockers,
     topicSubject(flat),
   ]);
+}
+
+/**
+ * The first research pass when a planner derived the article subject (2026-11-22): the source
+ * hints and repositories the topic box names, then the planner's queries, then the subject
+ * itself. The box text is never sent as a query here: it may be an instruction ("write it very
+ * long"), and research about that is research about nothing the article covers.
+ */
+export function buildBriefResearchQueries(topic: string, brief: ArticleBrief): string[] {
+  const flat = topic.trim();
+  return uniqueQueries([
+    ...extractSourceHints(flat),
+    ...repositoryQueries(flat),
+    ...brief.researchQueries.slice(0, BRIEF_QUERIES_MAX),
+    topicSubject(brief.subject),
+  ]);
+}
+
+/**
+ * The first research pass when the planner did not answer: the topic box's queries and the
+ * conversation's, interleaved, so neither a subject typed in the box nor the chat's own subject
+ * is lost whichever the box turns out to be.
+ */
+export function buildFallbackResearchQueries(topic: string, conversationSeed: string): string[] {
+  const fromTopic = buildResearchQueries(topic);
+  const fromConversation =
+    conversationSeed.trim() === '' ? [] : buildResearchQueries(conversationSeed);
+  const interleaved: string[] = [];
+  const rounds = Math.max(fromTopic.length, fromConversation.length);
+  for (let index = 0; index < rounds; index += 1) {
+    for (const list of [fromTopic, fromConversation]) {
+      const query = list.at(index);
+      if (query !== undefined) interleaved.push(query);
+    }
+  }
+  return uniqueQueries(interleaved);
 }

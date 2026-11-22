@@ -144,4 +144,7 @@ export type {
   HealthCheckPayload,
   ServerLogPayload,
   EventPayload,
+  TurnIntentKind,
+  TurnIntentSource,
+  TurnIntentPayload,
 } from './event-payloads.type';

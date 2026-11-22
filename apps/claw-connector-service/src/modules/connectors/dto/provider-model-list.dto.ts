@@ -16,6 +16,10 @@ export const openAICompatibleModelEntrySchema = z.object({
   type: z.string().max(50).nullish(),
   context_length: z.number().int().positive().nullish(),
   context_window: z.number().int().positive().nullish(),
+  // Mistral names its window `max_context_length`; vLLM-served lists
+  // (self-hosted NIM, vLLM gateways) `max_model_len`.
+  max_context_length: z.number().int().positive().nullish(),
+  max_model_len: z.number().int().positive().nullish(),
   // Groq publishes the output ceiling at the top level; OpenRouter under
   // `top_provider` (ADR-125).
   max_completion_tokens: z.number().int().positive().nullish(),
@@ -67,7 +71,21 @@ export const cohereModelListSchema = z.object({ models: z.array(z.unknown()) });
 export const cloudflareModelEntrySchema = z.object({
   name: z.string().min(1).max(300),
   task: z.object({ name: z.string().nullish() }).nullish(),
+  // Cloudflare publishes facts as `{ property_id, value }` pairs; the window
+  // is `property_id: "context_window"`, its value a decimal string.
+  properties: z
+    .array(z.object({ property_id: z.string().max(100), value: z.unknown() }))
+    .nullish()
+    .catch(undefined),
 });
+
+export const cloudflareContextWindowSchema = z.union([
+  z.number().int().positive(),
+  z
+    .string()
+    .regex(/^[1-9]\d{0,9}$/u)
+    .transform(Number),
+]);
 
 export const cloudflareModelListSchema = z.object({ result: z.array(z.unknown()) });
 

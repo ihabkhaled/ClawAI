@@ -896,3 +896,7 @@ cap are unchanged. New dependencies mean the image needs a rebuild (`service:reb
 - Money: the existing transcription meter, booked to `PaygSurface.TRANSCRIPTION_READ`, requestId `transcription-read:{userId}:{uuid}:{provider}`. The ranked provider walk is the one above (Gemini, OpenAI, free LOCAL last). A read does NOT count against the day/week/month token windows (rule 46: those are chat tokens enforced by chat-service) and is never free-allowance eligible (rule 37 item 22).
 - Files: `managers/transcription-read.manager.ts`, `services/transcription-read.service.ts`, `dto/transcribe-text.dto.ts`, `constants/transcribe-read.constants.ts` (design record), `utilities/transcribe-read-media.utility.ts`.
 - Honest gaps: unit tests only, not run against a live stack or real ffmpeg; no per-endpoint ffmpeg concurrency limit; audio duration is not capped beyond 12 MB (hold bounded at 7,200 s).
+
+## Extraction cap (ADR-219, 2026-11-22)
+
+`DOCUMENT_TEXT_MAX_CHARS` is 20,000,000 (was 1,000,000) so multi-million-character documents are extracted whole; chat-service fits them to the model window by relevance. Plain text was never capped here.

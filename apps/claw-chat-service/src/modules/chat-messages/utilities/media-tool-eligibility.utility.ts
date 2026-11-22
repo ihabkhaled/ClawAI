@@ -23,10 +23,15 @@ import {
   MEDIA_TOOL_CUE_WORDS,
   MEDIA_TOOL_SURFACES,
 } from '../constants/media-tools.constants';
+import {
+  AUDIO_KIND_BY_TURN_INTENT,
+  MEDIA_KIND_BY_TURN_INTENT,
+} from '../constants/turn-intent.constants';
 import type { AssembledContext } from '../types/context.types';
 import type { ExecutionOptions } from '../types/execution-options.types';
 import { isGenerationProvider } from './generation-provider.utility';
 import { latestUserTurnText } from './quoted-turn.utility';
+import { authoritativeTurnIntent } from './turn-intent.utility';
 
 /**
  * True when this model call should be offered the media tools. Pure and synchronous, so the
@@ -50,12 +55,62 @@ export function wantsMediaTools(
   // A many-candidate surface offers the tools only on its one final-answer call.
   if (!MEDIA_EVERY_CALL_SURFACES.has(surface) && context.mediaFinalStep !== true) return false;
   if ((options?.toolCatalog?.length ?? 0) > 0 || (context.toolTurns?.length ?? 0) > 0) return false;
-  if (isGenerationProvider(provider)) return false;
+  const text = latestUserTurnText(context.threadMessages);
   // The ONE shared predicate (A1, shared-utilities): provider dialect AND a chat model id; the
   // registry supports_tools column is deliberately not consulted (unpopulated for most models).
-  if (!modelCanCallMediaTools(provider, model)) return false;
-  const text = latestUserTurnText(context.threadMessages);
-  return text !== undefined && asksToCreateMedia(text);
+  return (
+    !isGenerationProvider(provider) &&
+    modelCanCallMediaTools(provider, model) &&
+    turnAsksForMedia(context, text)
+  );
+}
+
+/**
+ * Whether this turn asks for new media. A MODEL intent from routing decides, in any language
+ * (ADR-218): TEXT and FILE turns are answers, never media. Without one, the keyword reading.
+ */
+export function turnAsksForMedia(
+  context: Pick<AssembledContext, 'turnIntent'>,
+  text: string | undefined,
+): boolean {
+  const intent = authoritativeTurnIntent(context.turnIntent);
+  return intent === undefined
+    ? text !== undefined && asksToCreateMedia(text)
+    : MEDIA_KIND_BY_TURN_INTENT[intent.kind] !== undefined;
+}
+
+/**
+ * A clear media request (it earns the plan-upgrade notice instead of a text answer): a MODEL
+ * media intent, else the shared image/video classifiers.
+ */
+export function isClearMediaRequest(
+  context: Pick<AssembledContext, 'turnIntent'>,
+  text: string,
+): boolean {
+  const intent = authoritativeTurnIntent(context.turnIntent);
+  return intent === undefined
+    ? classifyImageIntent(text, false) === MultimodalImageIntent.GENERATE ||
+        classifyVideoIntent(text)
+    : MEDIA_KIND_BY_TURN_INTENT[intent.kind] !== undefined;
+}
+
+/** The media kind this turn asks for: the MODEL intent's, else the keyword `detectMediaKind`. */
+export function detectTurnMediaKind(
+  context: Pick<AssembledContext, 'turnIntent'>,
+  text: string,
+): MediaKind | undefined {
+  const intent = authoritativeTurnIntent(context.turnIntent);
+  return intent === undefined ? detectMediaKind(text) : MEDIA_KIND_BY_TURN_INTENT[intent.kind];
+}
+
+/** Speech or music: the MODEL intent's, else the keyword `detectAudioKind`. */
+export function detectTurnAudioKind(
+  context: Pick<AssembledContext, 'turnIntent'>,
+  text: string,
+): 'SPEECH' | 'MUSIC' {
+  const intent = authoritativeTurnIntent(context.turnIntent);
+  const fromIntent = intent === undefined ? undefined : AUDIO_KIND_BY_TURN_INTENT[intent.kind];
+  return fromIntent ?? detectAudioKind(text);
 }
 
 /** Whether the text names media at all: a whole cue word, or a cue stem anywhere in it. */

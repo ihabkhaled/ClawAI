@@ -366,7 +366,11 @@
       "file": "rules/66-every-flagship-feature-ships-a-public-marketing-page.md"
     },
     {
-      "bytes": 9145,
+      "bytes": 1606,
+      "file": "rules/67-turn-intent-is-semantic-keywords-are-only-the-fallback.md"
+    },
+    {
+      "bytes": 9488,
       "file": "rules/README.md"
     }
   ],

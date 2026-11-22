@@ -702,6 +702,9 @@ export type TranslationDictionary = {
     threadStageConsensus: string;
     threadStageJudge: string;
     threadStageCritic: string;
+    threadStageBrief: string;
+    threadStageFormat: string;
+    threadStageSystem: string;
     threadStageReady: string;
     threadStageRound: string;
     threadExportPanelTitle: string;
@@ -6931,6 +6934,7 @@ export type PickedModelLocaleTranslation = {
   failedMessage: string;
   fallbackNotice: string;
   costlierNote: string;
+  intentOverriddenNotice: string;
   suggestionsTitle: string;
   tryModel: string;
   chooseAnother: string;
@@ -7681,6 +7685,7 @@ export type MediaUiLocaleTranslation = {
     stillProcessing: string;
     failedProcessing: string;
     truncated: string;
+    relevanceFitted: string;
     visionHelperFailed: string;
     visionHelperRefused: string;
     helperVisionPlan: string;

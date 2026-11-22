@@ -14,6 +14,21 @@ export type PickedModelFallbackInfo = {
   costlier: boolean;
 };
 
+/**
+ * `metadata.intentPickOverridden`, written by chat-service when the user picked
+ * a model that only makes images, videos or files, but the turn asked for text:
+ * a chat model answered in text instead of the picked one.
+ */
+export type IntentPickOverriddenInfo = {
+  provider: string;
+  model: string;
+};
+
+export type IntentPickOverriddenNoticeProps = {
+  info: IntentPickOverriddenInfo;
+  t: TranslateFunction;
+};
+
 /** A provider/model pair offered as a one-click retry. */
 export type SuggestedModelRef = {
   provider: string;
