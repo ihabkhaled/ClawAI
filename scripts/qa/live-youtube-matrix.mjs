@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Live Intelligence: real YouTube news channels through the resolver (ADR-221).
 // Channel-id links play via YouTube's live_stream embed; @handle links are refused
-// with LIVE_YOUTUBE_HANDLE_UNSUPPORTED; nothing is analysed (player only).
+// with LIVE_YOUTUBE_HANDLE_UNSUPPORTED; analysis comes only from the viewer's tab audio.
 //   NODE_EXTRA_CA_CERTS=certs/rootCA.pem node --env-file=.env scripts/qa/live-youtube-matrix.mjs
 const BASE = process.env.LIVE_QA_BASE ?? 'https://claw.local/api/v1';
 const CHANNELS = {
@@ -35,7 +35,7 @@ for (const [name, [channelId, handle]] of Object.entries(CHANNELS)) {
   });
   const okChannel =
     channel.status < 300 &&
-    channel.data.capability === 'PLAYER_ONLY' &&
+    channel.data.capability === 'BROWSER_CAPTURE' &&
     channel.data.embedUrl?.includes(`live_stream?channel=${channelId}`);
   const byHandle = await post('/live/sources/resolve', {
     url: `https://www.youtube.com/${handle}/live`,

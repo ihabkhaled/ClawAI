@@ -89,8 +89,8 @@ async function main() {
     url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
   });
   check(
-    'YouTube resolves PLAYER_ONLY with a reason',
-    yt.status < 300 && yt.data.capability === 'PLAYER_ONLY' && Boolean(yt.data.reasonCode),
+    'YouTube resolves BROWSER_CAPTURE (analysed from the viewer tab audio)',
+    yt.status < 300 && yt.data.capability === 'BROWSER_CAPTURE' && yt.data.platform === 'YOUTUBE',
     JSON.stringify(yt.data),
   );
   for (const url of [
