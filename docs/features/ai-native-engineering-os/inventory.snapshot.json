@@ -12924,7 +12924,7 @@
       },
       "claw-research-service": {
         "runner": "vitest",
-        "testFiles": 74
+        "testFiles": 75
       },
       "claw-routing-service": {
         "runner": "vitest",
@@ -13830,7 +13830,7 @@
     "serviceCount": 22,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 3026,
+    "totalTestFiles": 3027,
     "workspaceCount": 29
   }
 }

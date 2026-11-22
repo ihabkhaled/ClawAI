@@ -530,7 +530,7 @@
         "SearchProvider",
         "SearchRun"
       ],
-      "testFiles": 74,
+      "testFiles": 75,
       "testRunner": "vitest"
     },
     {

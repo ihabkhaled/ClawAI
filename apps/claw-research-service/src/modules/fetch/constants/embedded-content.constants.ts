@@ -3,8 +3,15 @@
  * bound here keeps a hostile or huge page from costing more than a parse.
  */
 
-/** Every `<script …>…</script>` element (attributes, body). */
-export const SCRIPT_BLOCK_RE = /<script\b([^>]*)>([\s\S]*?)<\/script>/giu;
+/**
+ * Script blocks are found with a linear indexOf scan (script-blocks.utility), never a lazy regex over
+ * the raw page: many `<script` openers and no `</script>` made `[\s\S]*?` quadratic (security review
+ * 2026-11-23). These caps bound the work on any page.
+ */
+export const EMBEDDED_HTML_SCAN_MAX_CHARS = 5_000_000;
+export const EMBEDDED_MAX_SCRIPT_BLOCKS = 500;
+export const SCRIPT_OPEN_TAG = '<script';
+export const SCRIPT_CLOSE_TAG = '</script';
 
 /** `type="application/json"` or `type="application/ld+json"` on a script tag. */
 export const JSON_SCRIPT_TYPE_RE = /type\s*=\s*["']?application\/(?:ld\+)?json/iu;
@@ -13,8 +20,8 @@ export const LD_JSON_TYPE_RE = /application\/ld\+json/iu;
 export const NEXT_DATA_ID_RE = /id\s*=\s*["']?__NEXT_DATA__/u;
 export const NUXT_DATA_ID_RE = /id\s*=\s*["']?__NUXT_DATA__/u;
 
-/** One React Router turbo-stream chunk: the JS string literal passed to `enqueue`. */
-export const REACT_ROUTER_ENQUEUE_RE = /streamController\.enqueue\(("(?:[^"\\]|\\.)*")\)/gu;
+/** The call that carries one React Router turbo-stream chunk (a JS string literal, read linearly). */
+export const REACT_ROUTER_ENQUEUE_CALL = 'streamController.enqueue(';
 
 /**
  * Global names pages assign their server state to, read as `name = {…}` with

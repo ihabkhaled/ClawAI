@@ -1,17 +1,41 @@
 import {
+  EMBEDDED_HTML_SCAN_MAX_CHARS,
+  EMBEDDED_MAX_SCRIPT_BLOCKS,
   EMBEDDED_SCRIPT_MAX_CHARS,
-  SCRIPT_BLOCK_RE,
+  SCRIPT_CLOSE_TAG,
+  SCRIPT_OPEN_TAG,
 } from '../constants/embedded-content.constants';
 import type { ScriptBlock } from '../types/embedded-content.types';
 
-/** Every `<script>` element of a page, in document order. */
+/**
+ * Every `<script>` element of a page, in document order. One linear pass with indexOf over a
+ * lower-cased copy (tags are case-insensitive), capped in input size and block count, so a hostile
+ * page cannot make the scan super-linear. An opener with no closer ends the scan.
+ */
 export function listScriptBlocks(html: string): ScriptBlock[] {
+  const source =
+    html.length > EMBEDDED_HTML_SCAN_MAX_CHARS ? html.slice(0, EMBEDDED_HTML_SCAN_MAX_CHARS) : html;
+  const lower = source.toLowerCase();
   const blocks: ScriptBlock[] = [];
-  for (const match of html.matchAll(SCRIPT_BLOCK_RE)) {
-    const body = match[2] ?? '';
-    if (body.length > 0 && body.length <= EMBEDDED_SCRIPT_MAX_CHARS) {
-      blocks.push({ attributes: match[1] ?? '', body });
+  let cursor = 0;
+  while (blocks.length < EMBEDDED_MAX_SCRIPT_BLOCKS) {
+    const open = lower.indexOf(SCRIPT_OPEN_TAG, cursor);
+    if (open === -1) break;
+    const afterName = open + SCRIPT_OPEN_TAG.length;
+    const next = lower.charAt(afterName);
+    if (next !== '>' && next.trim() !== '') {
+      cursor = afterName; // `<scripts`, `<script-x`: not a script tag
+      continue;
     }
+    const tagEnd = lower.indexOf('>', afterName);
+    if (tagEnd === -1) break;
+    const close = lower.indexOf(SCRIPT_CLOSE_TAG, tagEnd + 1);
+    if (close === -1) break;
+    const body = source.slice(tagEnd + 1, close);
+    if (body.length > 0 && body.length <= EMBEDDED_SCRIPT_MAX_CHARS) {
+      blocks.push({ attributes: source.slice(afterName, tagEnd), body });
+    }
+    cursor = close + SCRIPT_CLOSE_TAG.length;
   }
   return blocks;
 }

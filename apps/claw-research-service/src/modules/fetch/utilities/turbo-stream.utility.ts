@@ -1,4 +1,8 @@
-import { PROSE_MAX_NODES, REACT_ROUTER_ENQUEUE_RE } from '../constants/embedded-content.constants';
+import {
+  EMBEDDED_HTML_SCAN_MAX_CHARS,
+  PROSE_MAX_NODES,
+  REACT_ROUTER_ENQUEUE_CALL,
+} from '../constants/embedded-content.constants';
 import { parseJsonSafely } from './script-blocks.utility';
 
 /**
@@ -14,17 +18,40 @@ import { parseJsonSafely } from './script-blocks.utility';
  */
 export function decodeReactRouterStream(html: string): unknown {
   const chunks: string[] = [];
-  for (const match of html.matchAll(REACT_ROUTER_ENQUEUE_RE)) {
-    const literal = parseJsonSafely(match[1] ?? '');
+  const source =
+    html.length > EMBEDDED_HTML_SCAN_MAX_CHARS ? html.slice(0, EMBEDDED_HTML_SCAN_MAX_CHARS) : html;
+  let cursor = 0;
+  for (;;) {
+    const call = source.indexOf(REACT_ROUTER_ENQUEUE_CALL, cursor);
+    if (call === -1) break;
+    const start = call + REACT_ROUTER_ENQUEUE_CALL.length;
+    const end = readStringLiteralEnd(source, start);
+    if (end === -1) break;
+    const literal = parseJsonSafely(source.slice(start, end));
     if (typeof literal === 'string') {
       chunks.push(literal);
     }
+    cursor = end;
   }
   const firstLine = chunks.join('').split('\n')[0] ?? '';
   const values = parseJsonSafely(firstLine);
   return Array.isArray(values) && values.length > 0
     ? new TurboStreamHydrator(values).hydrate(0)
     : null;
+}
+
+/** End index (exclusive) of the double-quoted JS string literal starting at `start`, or -1. Linear. */
+function readStringLiteralEnd(text: string, start: number): number {
+  if (text.charAt(start) !== '"') return -1;
+  for (let index = start + 1; index < text.length; index += 1) {
+    const char = text.charAt(index);
+    if (char === '\\') {
+      index += 1;
+    } else if (char === '"') {
+      return index + 1;
+    }
+  }
+  return -1;
 }
 
 class TurboStreamHydrator {

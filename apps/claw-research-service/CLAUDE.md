@@ -182,3 +182,5 @@ a caught fetch error uses `describeFetchFailure(error)`
 code. The strategy attempt record carries `httpStatus`, so "No fetch strategy could serve
 /x" ends with `direct=NOT_FOUND HTTP 404`. Do not read `.message` off a caught
 `BusinessException` for user-visible text (rule 41: every failed web step is SAID).
+
+- **Embedded-data scans are linear and capped** (security review 2026-11-23): script blocks and React Router stream chunks are found with `indexOf`, never a lazy regex over the raw page; input is capped at 5,000,000 chars and 500 script blocks (`embedded-content.constants.ts`).
