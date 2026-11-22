@@ -179,6 +179,15 @@ export const agentKeys = {
   is sized to its content — which is how a 288px grid laid out a 350px card and
   scrolled `main` sideways. Write `grid grid-cols-1 ...`; `grid-flow-*`,
   `auto-cols-*` and `grid-rows-*` are the deliberate exceptions.
+- **No relative `@import` in `globals.css`.** In `next dev`, Turbopack runs
+  Tailwind without a file path, so `@import '../styles/x.css'` resolves from the
+  app root and a build-error overlay covers every page; production builds hide
+  it. Import plain CSS from `app/layout.tsx` (`import '@/styles/animations.css'`).
+  Package imports (`tailwindcss`, `highlight.js/...`) are fine (2026-11-22).
+- **A picker row's extra tags must be able to shrink.** The desktop Compare list
+  is ~260px wide, so a row with name, cost mark and "Not on your plan" overflowed
+  sideways. The tag that is least important takes `truncate-fixed min-w-0` plus
+  a `title`, never `shrink-0` (2026-11-22).
 
 ---
 

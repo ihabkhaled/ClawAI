@@ -57,4 +57,12 @@ describe('ParallelModelRowView cost mark', () => {
     fireEvent.click(row);
     expect(onToggle).not.toHaveBeenCalled();
   });
+
+  it('lets the locked tag shrink with its full text as a tooltip', () => {
+    renderRow({ costClass: CostClass.PREMIUM, isLocked: true });
+    const tag = screen.getByText('Locked');
+    expect(tag).toHaveAttribute('title', 'Locked');
+    expect(tag).toHaveClass('truncate-fixed', 'min-w-0');
+    expect(tag).not.toHaveClass('shrink-0');
+  });
 });

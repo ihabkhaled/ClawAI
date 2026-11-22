@@ -1,7 +1,7 @@
 /*
  * UI/UX refactor — phase 1 animation keyframes.
  *
- * Imported once from app/globals.css so every component (skeleton shimmer,
+ * Imported once from app/layout.tsx so every component (skeleton shimmer,
  * status pulse-ring, sidebar active-indicator slide) shares the same motion
  * vocabulary. Reduced-motion users are already protected by the global
  * media query in globals.css.

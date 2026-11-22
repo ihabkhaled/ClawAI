@@ -12,6 +12,7 @@ import { buildRootMetadata } from '@/lib/seo/root-metadata';
 import { getDirection, getHtmlLanguage, isSupportedLocale } from '@/utilities/locale.utility';
 
 import { editorialDisplay, editorialMono, inter } from './fonts';
+import '@/styles/animations.css';
 import './globals.css';
 import { Providers } from './providers';
 

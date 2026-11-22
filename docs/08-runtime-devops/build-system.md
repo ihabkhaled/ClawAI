@@ -101,6 +101,13 @@ compose sets. Without it, Turbopack missed edits to existing files until a resta
 config file is baked into the dev image, so changing it needs
 `./scripts/claw.sh --dev service:rebuild frontend`.
 
+In `next dev`, Turbopack runs Tailwind on `globals.css` without a file path, so a
+relative `@import` in that file resolves from the app root. It fails with
+`Can't resolve '../styles/animations.css'` and shows a build-error overlay on
+every page; production builds are fine. Keep plain CSS out of `globals.css`
+imports: `app/layout.tsx` imports `@/styles/animations.css` directly. Package
+imports such as `highlight.js/styles/github.css` and `tailwindcss` still work.
+
 **Shared packages** (`packages/*`):
 
 | Script      | Command                                                                                                                          |

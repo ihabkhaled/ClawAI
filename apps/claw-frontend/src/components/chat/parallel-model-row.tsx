@@ -55,8 +55,13 @@ export function ParallelModelRowView({
             outsideAllowance={row.model.outsideAllowance}
           />
         ) : null}
+        {/* The desktop Compare column is ~260px: name, cost mark and this tag do not all fit,
+            so the tag is the one that shrinks (ellipsis, full text in the tooltip). */}
         {row.model.isLocked === true ? (
-          <span className="border-border bg-muted text-muted-foreground shrink-0 rounded border px-1.5 py-0.5 text-[10px] leading-none">
+          <span
+            title={lockedLabel}
+            className="border-border bg-muted text-muted-foreground truncate-fixed min-w-0 shrink rounded border px-1.5 py-0.5 text-[10px] leading-none"
+          >
             {lockedLabel}
           </span>
         ) : null}
