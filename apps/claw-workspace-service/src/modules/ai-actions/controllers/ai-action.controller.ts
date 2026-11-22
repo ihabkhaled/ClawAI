@@ -1,5 +1,6 @@
-import { Body, Controller, Header, HttpCode, HttpStatus, Post, Query } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Query, Res } from '@nestjs/common';
 import { CurrentUser } from '@claw/shared-auth';
+import type { Response } from 'express';
 
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
 import { AiActionApprovalManager } from '../managers/ai-action-approval.manager';
@@ -12,6 +13,8 @@ import {
 } from '../dto/multi-model-review.dto';
 import { type ResolveAiActionDto, resolveAiActionSchema } from '../dto/resolve-ai-action.dto';
 import { renderReviewMarkdown } from '../utilities/multi-model-review-markdown.utility';
+import { sendMarkdownDownload } from '../utilities/markdown-download.utility';
+import { MULTI_MODEL_REVIEW_BUNDLE_FILENAME } from '../constants/ai-action-routes.constants';
 import {
   type RunAiActionDto,
   type RunAiActionQueryDto,
@@ -76,20 +79,22 @@ export class AiActionController {
   // contained markdown document the user can paste into a PR description,
   // attach to a Jira ticket, or save as .md. Sets Content-Disposition so
   // browser fetch + a download attribute writes the file straight to disk.
+  // @Res() so the text/markdown + nosniff headers sit on the response that
+  // sends the user-supplied content (CodeQL js/reflected-xss).
   @Post('multi-model-review/bundle')
   @HttpCode(HttpStatus.OK)
-  @Header('Content-Type', 'text/markdown; charset=utf-8')
-  @Header('Content-Disposition', 'attachment; filename="multi-model-review.md"')
   async multiModelReviewBundle(
     @CurrentUser() user: AuthenticatedUser,
     @Body(new ZodValidationPipe(multiModelReviewRequestSchema)) dto: MultiModelReviewRequestDto,
-  ): Promise<string> {
+    @Res() res: Response,
+  ): Promise<void> {
     const result = await this.multiModelReview.run({ ...dto, userId: user.id });
-    return renderReviewMarkdown({
+    const markdown = renderReviewMarkdown({
       title: 'Multi-model code review',
       content: dto.content,
       result,
     });
+    sendMarkdownDownload(res, MULTI_MODEL_REVIEW_BUNDLE_FILENAME, markdown);
   }
 
   private async runOrQueue(

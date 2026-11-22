@@ -34,9 +34,14 @@ export function sniffReferenceImageMime(base64: string): string | undefined {
   return isWebp ? 'image/webp' : undefined;
 }
 
-/** Decoded size of a base64 string, computed without decoding it. */
+/**
+ * Decoded size of a base64 string, computed without decoding it. The trailing
+ * `=` padding is counted by a loop: CodeQL js/polynomial-redos flagged `/=+$/u`,
+ * which re-scans a long run of `=` not at the end from every position.
+ */
 export function base64DecodedLength(base64: string): number {
-  const padding = base64.length - base64.replace(/=+$/u, '').length;
+  let padding = 0;
+  while (base64.charAt(base64.length - 1 - padding) === '=') padding += 1;
   return Math.floor((base64.length * 3) / 4) - padding;
 }
 

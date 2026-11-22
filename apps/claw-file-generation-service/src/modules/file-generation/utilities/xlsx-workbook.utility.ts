@@ -13,7 +13,7 @@ import {
   XLSX_MAX_SHEETS,
   XLSX_MIN_COLUMN_WIDTH,
   XLSX_SHEET_NAME_FORBIDDEN,
-  XML_INVALID_CHARS,
+  XML_INVALID_CODE_POINTS,
 } from '../constants/document-render.constants';
 import { BlockKind } from '../enums/document-node.enum';
 import type { DocumentBlock, DocumentMeta, TableBlock } from '../types/markdown-document.types';
@@ -121,7 +121,10 @@ function uniqueNames(sheets: SheetSpec[]): SheetSpec[] {
 
 function xml(value: string): string {
   return value
-    .replaceAll(XML_INVALID_CHARS, '')
+
+    .split('')
+    .filter((char) => !XML_INVALID_CODE_POINTS.has(char.charCodeAt(0)))
+    .join('')
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
@@ -133,7 +136,10 @@ function worksheet(sheet: SheetSpec): string {
   const widths = Array.from({ length: columns }, (_, column) =>
     Math.min(
       XLSX_MAX_COLUMN_WIDTH,
-      Math.max(XLSX_MIN_COLUMN_WIDTH, ...sheet.rows.map((row) => (row[column] ?? '').length + 2)),
+      Math.max(
+        XLSX_MIN_COLUMN_WIDTH,
+        ...sheet.rows.map((row) => (row.at(column) ?? '').length + 2),
+      ),
     ),
   );
   const cols = widths
@@ -161,10 +167,9 @@ function worksheet(sheet: SheetSpec): string {
 
 function cell(reference: string, value: string, header: boolean): string {
   const style = header ? ' s="1"' : '';
-  if (!header && isPlainNumber(value)) {
-    return `<c r="${reference}"${style}><v>${value.trim()}</v></c>`;
-  }
-  return `<c r="${reference}" t="inlineStr"${style}><is><t xml:space="preserve">${xml(value)}</t></is></c>`;
+  return !header && isPlainNumber(value)
+    ? `<c r="${reference}"${style}><v>${value.trim()}</v></c>`
+    : `<c r="${reference}" t="inlineStr"${style}><is><t xml:space="preserve">${xml(value)}</t></is></c>`;
 }
 
 function workbook(sheets: SheetSpec[]): string {

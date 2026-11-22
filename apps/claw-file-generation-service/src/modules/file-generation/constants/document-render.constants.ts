@@ -64,7 +64,9 @@ export const DOCX_NUMBERING_REFERENCE = 'claw-numbered';
  * text cell gets a leading apostrophe. Plain numbers such as "-5" are exempt.
  */
 export const FORMULA_TRIGGER = /^[=+\-@\t\r]/u;
-export const PLAIN_NUMBER = /^-?(?:0|[1-9]\d{0,14})(?:\.\d{1,15})?$/u;
+/** A plain number is an integer part plus an optional fraction, each checked on its own (linear, no nested repetition). */
+export const PLAIN_NUMBER_INTEGER = /^-?(?:0|[1-9]\d{0,14})$/u;
+export const PLAIN_NUMBER_FRACTION = /^\d{1,15}$/u;
 
 /** Excel refuses these in sheet names, and names longer than 31 characters. */
 export const XLSX_SHEET_NAME_FORBIDDEN = /[[\]:*?/\\]/gu;
@@ -74,10 +76,14 @@ export const XLSX_MAX_SHEETS = 50;
 export const XLSX_MIN_COLUMN_WIDTH = 8;
 export const XLSX_MAX_COLUMN_WIDTH = 60;
 /** XML 1.0 forbids these control characters; they are dropped. */
-export const XML_INVALID_CHARS = new RegExp(
-  `[${String.fromCharCode(0)}-${String.fromCharCode(8)}${String.fromCharCode(11)}${String.fromCharCode(12)}${String.fromCharCode(14)}-${String.fromCharCode(31)}\\uFFFE\\uFFFF]`,
-  'gu',
-);
+export const XML_INVALID_CODE_POINTS: ReadonlySet<number> = new Set([
+  ...Array.from({ length: 9 }, (_, index) => index),
+  0x0b,
+  0x0c,
+  ...Array.from({ length: 18 }, (_, index) => 0x0e + index),
+  0xfffe,
+  0xffff,
+]);
 
 /** A slide shows at most this many paragraphs before continuing on the next. */
 export const PPTX_MAX_LINES_PER_SLIDE = 9;
@@ -90,7 +96,7 @@ export const ZIP_MAX_FILES = 50;
  * A filename named in the line just before a code block ("`src/app.ts`",
  * "File: main.py").
  */
-export const ZIP_FILENAME_HINT = /([\w.-]+\/){0,4}[\w-][\w.-]{0,80}\.[A-Za-z0-9]{1,8}/u;
+export const ZIP_FILENAME_HINT = /[\w./-]*[\w-][\w.-]{0,80}\.[A-Za-z0-9]{1,8}/u;
 export const ZIP_MAX_HINT_LENGTH = 120;
 
 /** File extension for a fenced code block's language. */
@@ -144,8 +150,12 @@ export const CODE_LANGUAGE_EXTENSIONS: Readonly<Record<string, string>> = {
 /** A line of a pipe table: starts and ends with `|`. */
 export const PIPE_TABLE_LINE = /^\s*\|.*\|\s*$/u;
 
-/** A pipe table's separator row: `|---|:--:|`. */
-export const PIPE_TABLE_SEPARATOR = /^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)*\|?\s*$/u;
+/**
+ * One trimmed cell of a pipe table's separator row (`|---|:--:|`). The row is split on `|` in
+ * code, not matched whole: the one-regex form was flagged by CodeQL js/polynomial-redos (its
+ * optional `|` between two `\s*` made a long run of blanks cost the square of its length).
+ */
+export const PIPE_TABLE_SEPARATOR_CELL = /^:?-{3,}:?$/u;
 
 /** A fenced code block's opening or closing line. */
 export const CODE_FENCE_LINE = /^\s*(?:```|~~~)/u;

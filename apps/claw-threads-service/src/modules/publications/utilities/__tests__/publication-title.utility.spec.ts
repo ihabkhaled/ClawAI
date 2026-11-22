@@ -51,9 +51,7 @@ describe('derivePublicationSlug keeps combining marks (every script)', () => {
 
   it('never leaves a lone hyphen between the letters of one word', () => {
     expect(derivePublicationSlug('कृत्रिम', unique)).toBe('कृत्रिम-abcd1234');
-    expect(derivePublicationSlug('कृत्रिम', unique)).not.toMatch(
-      /[\u0900-\u097F]-[\u0900-\u097F]/u,
-    );
+    expect(derivePublicationSlug('कृत्रिम', unique)).not.toMatch(/[\u0900-\u097F]-[\u0900-\u097F]/u);
   });
 
   it('cuts a long title between characters, never inside a cluster, and stays bounded', () => {
@@ -75,5 +73,30 @@ describe('derivePublicationSlug keeps combining marks (every script)', () => {
 
   it('is null for marks and symbols alone', () => {
     expect(derivePublicationSlug('\u0947\u094d !!', unique)).toBeNull();
+  });
+});
+
+// CodeQL js/polynomial-redos: the heading and the links are read by linear scans.
+describe('derivePublicationTitle scans', () => {
+  it.each([
+    ['# Title #', 'Title'],
+    ['#  \n\nBody text.', 'Body text.'],
+    ['####### seven\n\n## Six', 'Six'],
+    ['[link](http://x) and ![img](y.png) text.', 'link and img text.'],
+    ['[a[b](c) d', 'a[b d'],
+    ['[open](no close', '[open](no close'],
+  ])('reads %j as %j', (markdown, title) => {
+    expect(derivePublicationTitle(markdown)).toBe(title);
+  });
+
+  it.each([
+    ['50,000 blanks in a heading', `# a${' \t'.repeat(50_000)}!`, 'a !'],
+    ['50,000 unclosed "["', `${'['.repeat(50_000)}x`, '['.repeat(120)],
+  ])('stays linear on %s', (_label, markdown, title) => {
+    const started = performance.now();
+    const derived = derivePublicationTitle(markdown);
+
+    expect(performance.now() - started).toBeLessThan(1000);
+    expect(derived).toBe(title);
   });
 });

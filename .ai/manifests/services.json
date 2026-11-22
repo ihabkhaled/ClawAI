@@ -221,7 +221,7 @@
         "FileGenerationAsset",
         "FileGenerationEvent"
       ],
-      "testFiles": 18,
+      "testFiles": 19,
       "testRunner": "vitest"
     },
     {
@@ -560,7 +560,7 @@
       "port": null,
       "portSource": "env-only (no constant)",
       "prismaModels": [],
-      "testFiles": 11,
+      "testFiles": 12,
       "testRunner": "vitest"
     },
     {
@@ -588,7 +588,7 @@
         "ThreadModelCommunication",
         "ThreadRevisionDraft"
       ],
-      "testFiles": 98,
+      "testFiles": 99,
       "testRunner": "vitest"
     },
     {
@@ -673,7 +673,7 @@
         "WorkspaceProviderDefinition",
         "WorkspaceSyncRun"
       ],
-      "testFiles": 108,
+      "testFiles": 110,
       "testRunner": "vitest"
     }
   ]

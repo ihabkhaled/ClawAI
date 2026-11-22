@@ -1,8 +1,14 @@
 export const URL_PATTERN = /https?:\/\/[^\s)\]>"'<]+/giu;
-export const HEADING_PATTERN = /^(#{1,6})\s+(.+?)\s*#*\s*$/u;
+/** ATX heading marks run from `#` to `######`; `parseHeadingLine` reads a heading line. */
+export const HEADING_MAX_LEVEL = 6;
 export const LIST_ITEM_PATTERN = /^\s*(?:[-*+]|\d+[.)])\s+/u;
 export const FENCE_PATTERN = /^\s*(?:```|~~~)/u;
-export const TRAILING_URL_PUNCTUATION = /[.,;:!?]+$/u;
+/** Stripped from a url's end by a loop (CodeQL js/polynomial-redos flagged `/[.,;:!?]+$/u`). */
+export const TRAILING_URL_PUNCTUATION_CHARACTERS = '.,;:!?';
+/** One whitespace character, as `\s` reads it. */
+export const WHITESPACE_CHARACTER = /^\s$/u;
+/** One character the regex `.` does not match (a line terminator). */
+export const LINE_TERMINATOR_CHARACTER = /^[\n\r\u2028\u2029]$/u;
 export const TABLE_CELL_PATTERN = /^\s*:?-{3,}:?\s*$/u;
 export const PARAGRAPH_BREAK_PATTERN = /\n\s*\n/u;
 export const HEADING_MARK_PATTERN = /^\s*#{1,6}\s*/u;
@@ -12,7 +18,12 @@ export const HEADING_NUMBERING_PATTERN = /^\d+[.)]\s+/u;
 export const DIGIT_BLOCKS: readonly number[] = [0x0660, 0x06f0, 0x0966, 0x0e50];
 export const DIGITS_PER_BLOCK = 10;
 
-export const RAW_HTML_PATTERN = /<\/?[a-z][^>]*>/iu;
+/**
+ * The first letter of a tag name after `<` or `</`; `containsRawHtml` scans for `<name ... >`. The
+ * one regex it replaces, `<\/?[a-z][^>]*>`, was flagged by CodeQL js/polynomial-redos: a text of
+ * many `<a` with no `>` was re-scanned to its end from every `<`.
+ */
+export const HTML_TAG_NAME_START = /^[a-z]$/iu;
 /** A 16-hex evidence id in brackets that is not a link label; ids are matched with a minimum length. */
 export const UNKNOWN_MARKER_PATTERN = /\[([0-9a-f]{8,})\](?!\()/giu;
 export const NUMBER_PATTERN = /\d[\d.,]*/gu;

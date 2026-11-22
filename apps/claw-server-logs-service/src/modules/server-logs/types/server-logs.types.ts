@@ -99,3 +99,10 @@ export interface BatchCreateServerLogsResponse {
 
 /** Fields every row shipped from a container carries, whatever its format. */
 export type ContainerLogBase = Pick<CreateServerLogInput, 'serviceName' | 'action' | 'metadata'>;
+
+/** The three captures of a Nest pretty line: level word, `[Context]` and the message. */
+export interface NestPrettyParts {
+  word: string;
+  context: string;
+  message: string;
+}

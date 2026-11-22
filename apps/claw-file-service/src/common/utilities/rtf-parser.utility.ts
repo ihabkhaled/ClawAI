@@ -212,9 +212,29 @@ function skipFallbackCharacter(rtf: string, from: number): number {
   return rtf.at(from) === undefined ? from : from + 1;
 }
 
+/**
+ * Drops the spaces and tabs at the end of every line but the last. A loop, not
+ * `/[ \t]+\n/g`: CodeQL js/polynomial-redos flagged that regex, because a long
+ * run of blanks with no newline after it is re-scanned from every position.
+ */
+function stripLineEndBlanks(text: string): string {
+  const lines = text.split('\n');
+  return lines
+    .map((line, index) => {
+      if (index === lines.length - 1) {
+        return line;
+      }
+      let end = line.length;
+      while (end > 0 && (line.charAt(end - 1) === ' ' || line.charAt(end - 1) === '\t')) {
+        end -= 1;
+      }
+      return line.slice(0, end);
+    })
+    .join('\n');
+}
+
 function collapseBlankLines(text: string): string {
-  return text
-    .replaceAll(/[ \t]+\n/g, '\n')
+  return stripLineEndBlanks(text)
     .replaceAll(/\n{3,}/g, '\n\n')
     .trim();
 }

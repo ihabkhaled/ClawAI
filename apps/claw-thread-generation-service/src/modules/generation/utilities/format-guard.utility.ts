@@ -8,7 +8,6 @@ import {
   MARKUP_CHARACTERS_PATTERN,
   NUMBER_PATTERN,
   PERCENT,
-  RAW_HTML_PATTERN,
   TRAILING_NUMBER_PUNCTUATION,
   UNKNOWN_MARKER_PATTERN,
 } from '../constants/format-scan.constants';
@@ -18,6 +17,7 @@ import type {
   FormatViolation as FormatViolationCode,
 } from '../types/format-guard.types';
 import {
+  containsRawHtml,
   countTables,
   extractUrls,
   foldDigits,
@@ -165,7 +165,7 @@ export function validateFormatted(input: FormatGuardInput): FormatViolationCode 
   if (input.after.trim().length === 0) {
     return FormatViolation.EMPTY;
   }
-  return RAW_HTML_PATTERN.test(input.after) && !RAW_HTML_PATTERN.test(input.before)
+  return containsRawHtml(input.after) && !containsRawHtml(input.before)
     ? FormatViolation.RAW_HTML
     : (citationViolation(input) ??
         numbersViolation(input) ??

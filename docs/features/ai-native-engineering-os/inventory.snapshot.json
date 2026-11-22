@@ -12514,7 +12514,7 @@
       },
       "claw-file-generation-service": {
         "runner": "vitest",
-        "testFiles": 18
+        "testFiles": 19
       },
       "claw-file-service": {
         "runner": "vitest",
@@ -12562,11 +12562,11 @@
       },
       "claw-server-logs-service": {
         "runner": "vitest",
-        "testFiles": 11
+        "testFiles": 12
       },
       "claw-thread-generation-service": {
         "runner": "vitest",
-        "testFiles": 98
+        "testFiles": 99
       },
       "claw-threads-service": {
         "runner": "vitest",
@@ -12574,7 +12574,7 @@
       },
       "claw-workspace-service": {
         "runner": "vitest",
-        "testFiles": 108
+        "testFiles": 110
       }
     },
     "workspaces": [
@@ -13429,7 +13429,7 @@
     "serviceCount": 21,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2903,
+    "totalTestFiles": 2908,
     "workspaceCount": 28
   }
 }

@@ -142,10 +142,6 @@
       "@typescript-eslint/explicit-function-return-type": 7,
       "@typescript-eslint/prefer-nullish-coalescing": 1
     },
-    "apps/claw-audit-service/src/modules/feedback/sanitizers/feedback-markdown.sanitizer.ts": {
-      "security/detect-unsafe-regex": 1,
-      "unicorn/prefer-ternary": 1
-    },
     "apps/claw-audit-service/src/modules/feedback/utilities/client-ip.utility.ts": {
       "security/detect-object-injection": 1
     },
@@ -738,10 +734,6 @@
     "apps/claw-file-generation-service/src/modules/file-generation/adapters/pdf.adapter.ts": {
       "security/detect-non-literal-fs-filename": 1
     },
-    "apps/claw-file-generation-service/src/modules/file-generation/constants/document-render.constants.ts": {
-      "security/detect-non-literal-regexp": 1,
-      "security/detect-unsafe-regex": 3
-    },
     "apps/claw-file-generation-service/src/modules/file-generation/constants/file-asset.constants.ts": {
       "security/detect-non-literal-regexp": 2
     },
@@ -753,10 +745,6 @@
     },
     "apps/claw-file-generation-service/src/modules/file-generation/utilities/typst-document.utility.ts": {
       "security/detect-object-injection": 2
-    },
-    "apps/claw-file-generation-service/src/modules/file-generation/utilities/xlsx-workbook.utility.ts": {
-      "security/detect-object-injection": 1,
-      "unicorn/prefer-ternary": 1
     },
     "apps/claw-file-generation-service/src/modules/file-generation/utilities/zip-bundle.utility.ts": {
       "unicorn/prefer-ternary": 1
@@ -1628,9 +1616,6 @@
     "apps/claw-server-logs-service/src/modules/health/services/__tests__/health.service.spec.ts": {
       "sort-imports": 1
     },
-    "apps/claw-server-logs-service/src/modules/server-logs/constants/container-log.constants.ts": {
-      "security/detect-non-literal-regexp": 1
-    },
     "apps/claw-server-logs-service/src/modules/server-logs/managers/__tests__/server-log-event.manager.spec.ts": {
       "sort-imports": 1
     },
@@ -1639,10 +1624,6 @@
     },
     "apps/claw-server-logs-service/src/modules/server-logs/services/__tests__/server-logs.service.spec.ts": {
       "sort-imports": 1
-    },
-    "apps/claw-server-logs-service/src/modules/server-logs/utilities/container-log.utility.ts": {
-      "security/detect-object-injection": 2,
-      "unicorn/prefer-ternary": 1
     },
     "apps/claw-thread-generation-service/src/app/pipes/zod-validation.pipe.ts": {
       "security/detect-object-injection": 1
@@ -1735,9 +1716,6 @@
       "sort-imports": 1
     },
     "apps/claw-workspace-service/src/modules/ai-actions/services/__tests__/automation-preference.service.spec.ts": {
-      "sort-imports": 1
-    },
-    "apps/claw-workspace-service/src/modules/ai-actions/utilities/__tests__/cloud-generation-client.utility.spec.ts": {
       "sort-imports": 1
     },
     "apps/claw-workspace-service/src/modules/ai-actions/utilities/multi-model-review-markdown.utility.ts": {

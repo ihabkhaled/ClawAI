@@ -208,4 +208,55 @@ describe('ChunkedUploadManager', () => {
       ).toThrow(/not found/i);
     });
   });
+
+  describe('path guard (CodeQL js/path-injection)', () => {
+    const traversalIds = [
+      '../../etc/passwd',
+      '..',
+      'not-a-uuid',
+      `${'a'.repeat(8)}-aaaa-aaaa-aaaa-${'a'.repeat(11)}/`,
+      '/abs/path',
+      String.raw`..\..\windows`,
+    ];
+
+    it.each(traversalIds)('rejects upload id %j before any fs access', (badId) => {
+      expect(() => manager.getStatus('user-1', badId)).toThrow(/invalid upload id/i);
+      expect(() =>
+        manager.receiveChunk('user-1', badId, 0, Buffer.from('x').toString('base64')),
+      ).toThrow(/invalid upload id/i);
+      expect(() => manager.reassemble('user-1', badId)).toThrow(/invalid upload id/i);
+      expect(() => manager.cleanup(badId)).toThrow(/invalid upload id/i);
+      expect(manager.abort('user-1', badId)).toEqual({ uploadId: badId, aborted: false });
+    });
+
+    it('rejects a non-integer or negative chunk index without writing a file', () => {
+      const session = manager.init('user-1', {
+        filename: 'a.webm',
+        mimeType: 'audio/webm',
+        sizeBytes: 4,
+        totalChunks: 2,
+      });
+      const chunk = Buffer.from('x').toString('base64');
+      const send = (badIndex: number) => () =>
+        manager.receiveChunk('user-1', session.uploadId, badIndex, chunk);
+      expect(send(0.5)).toThrow(/not a non-negative integer/i);
+      expect(send(Number.NaN)).toThrow(/not a non-negative integer/i);
+      expect(send(-1)).toThrow(/outside session bounds/i);
+      const dir = path.join(storageRoot, '.chunk-sessions', session.uploadId);
+      expect(fs.readdirSync(dir)).toEqual(['manifest.json']);
+    });
+
+    it('a sweep skips a stray non-session directory instead of reading through it', () => {
+      fs.mkdirSync(path.join(storageRoot, '.chunk-sessions', 'stray'), { recursive: true });
+      expect(() =>
+        manager.init('user-1', {
+          filename: 'a',
+          mimeType: 'audio/webm',
+          sizeBytes: 1,
+          totalChunks: 1,
+        }),
+      ).not.toThrow();
+      expect(fs.existsSync(path.join(storageRoot, '.chunk-sessions', 'stray'))).toBe(true);
+    });
+  });
 });

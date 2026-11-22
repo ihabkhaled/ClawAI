@@ -99,3 +99,21 @@ describe('rtf-parser.utility', () => {
     expect(() => extractTextFromRtf(rtf('{\\rtf1 text\\'))).not.toThrow();
   });
 });
+
+// CodeQL js/polynomial-redos: line-end blanks are trimmed by a loop, not `/[ \t]+\n/g`.
+describe('rtf-parser.utility line-end blanks', () => {
+  it('drops the blanks before a line break but keeps the ones inside a line', () => {
+    const text = extractTextFromRtf(rtf(String.raw`{\rtf1 one  \tab \par two  three}`));
+
+    expect(text).toBe('one\ntwo  three');
+  });
+
+  it('stays linear on 50,000 tabs with no line break after them', () => {
+    const tabs = String.raw`\tab `.repeat(50_000);
+    const started = performance.now();
+    const text = extractTextFromRtf(rtf(`${String.raw`{\rtf1 a`}${tabs}b}`));
+
+    expect(performance.now() - started).toBeLessThan(1000);
+    expect(text).toBe(`a${'\t'.repeat(50_000)}b`);
+  });
+});

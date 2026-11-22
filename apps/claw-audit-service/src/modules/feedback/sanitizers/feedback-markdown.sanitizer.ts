@@ -102,6 +102,58 @@ function escapeMarkupCharacters(value: string): string {
   return output;
 }
 
+// Index of the `)` that closes a link target starting at `from`, or -1. The target may hold one
+// level of nested parentheses; it ends at the first top-level `)` and fails at an unclosed `(`.
+function linkTargetEnd(value: string, from: number): number {
+  let index = from;
+  while (index < value.length) {
+    const character = value.charAt(index);
+    if (character === ')') return index;
+    if (character === '(') {
+      let inner = index + 1;
+      while (inner < value.length && value.charAt(inner) !== '(' && value.charAt(inner) !== ')') {
+        inner += 1;
+      }
+      if (value.charAt(inner) !== ')') return -1;
+      index = inner;
+    }
+    index += 1;
+  }
+  return -1;
+}
+
+// Collapses every `[text](target)` / `![text](target)` whose target is not provably safe to its
+// text. CodeQL js/polynomial-redos: the earlier single regex re-scanned to the first `]` from
+// every `[`, so a body of `[` cost the square of its length. This scan finds the same matches
+// (leftmost first, same text and target) with each `]` and each target looked up once.
+function collapseUnsafeLinks(value: string): string {
+  const targetEnds = new Map<number, number>();
+  let output = '';
+  let copied = 0;
+  let open = value.indexOf('[');
+  let close = -1;
+  while (open >= 0) {
+    if (close < open) close = value.indexOf(']', open + 1);
+    if (close < 0) break;
+    let end = targetEnds.get(close);
+    if (end === undefined) {
+      end = value.charAt(close + 1) === '(' ? linkTargetEnd(value, close + 2) : -1;
+      targetEnds.set(close, end);
+    }
+    if (end < 0) {
+      open = value.indexOf('[', open + 1);
+      continue;
+    }
+    const start = open - 1 >= copied && value.charAt(open - 1) === '!' ? open - 1 : open;
+    const target = value.slice(close + 2, end);
+    output += value.slice(copied, start);
+    output += isSafeLinkTarget(target) ? value.slice(start, end + 1) : value.slice(open + 1, close);
+    copied = end + 1;
+    open = value.indexOf('[', copied);
+  }
+  return output + value.slice(copied);
+}
+
 export function sanitizeFeedbackMarkdown(input: string): string {
   if (input.length === 0) {
     return '';
@@ -116,11 +168,7 @@ export function sanitizeFeedbackMarkdown(input: string): string {
   // The target pattern allows one level of nested parentheses. `[^)]+` stopped
   // at the first `)`, so `[x](javascript:alert(1))` left a stray `)` behind in
   // the output — and a URL that legitimately contains brackets was mangled.
-  result = result.replaceAll(
-    /(!?)\[([^\]]*)\]\(((?:[^()]|\([^()]*\))*)\)/g,
-    (match: string, _bang: string, text: string, target: string) =>
-      isSafeLinkTarget(target) ? match : text,
-  );
+  result = collapseUnsafeLinks(result);
 
   // Neutralise the markup metacharacters instead of trying to remove tags.
   //
@@ -160,8 +208,7 @@ export function toSearchText(markdown: string): string {
 // stored ticket is inert — not just the body. React escapes on render, but the
 // server is the authority here, and a ticket is read by more than one client.
 export function sanitizeFeedbackPlainText(input: string, maxLength: number): string {
-  if (input.length === 0) {
-    return '';
-  }
-  return escapeMarkupCharacters(stripControlCharacters(input.normalize('NFC'))).slice(0, maxLength);
+  return input.length === 0
+    ? ''
+    : escapeMarkupCharacters(stripControlCharacters(input.normalize('NFC'))).slice(0, maxLength);
 }

@@ -2,6 +2,7 @@ import { type Mock, vi } from 'vitest';
 import { PaygSurface } from '@claw/shared-types';
 
 import { AppConfig } from '../../../../app/config/app.config';
+import { GENERATION_TIMEOUT_MAX_MS } from '../../constants/generation-timeout.constants';
 import { callCloudGenerate } from '../cloud-generation-client.utility';
 
 global.fetch = vi.fn();
@@ -135,5 +136,13 @@ describe('callCloudGenerate — PAYG attribution (U8/U9/U10)', () => {
     const failure = await callCloudGenerate(input()).catch((e: unknown) => e);
 
     expect((failure as Error).message).toBe('Cloud generation failed (HTTP 400)');
+  });
+  it('clamps a caller-supplied timeout before arming the abort timer', async () => {
+    fetchMock().mockResolvedValue(okResponse({ content: 'done' }));
+    const timerSpy = vi.spyOn(global, 'setTimeout');
+
+    await callCloudGenerate({ ...input(), timeoutMs: Number.MAX_SAFE_INTEGER });
+
+    expect(timerSpy).toHaveBeenCalledWith(expect.any(Function), GENERATION_TIMEOUT_MAX_MS);
   });
 });

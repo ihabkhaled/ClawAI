@@ -34,3 +34,6 @@ export const AI_ACTION_PREFERS_LOCAL: Record<AiActionKind, boolean> = {
   [AiActionKind.ESTIMATE]: true,
   [AiActionKind.IMPL_PROMPT]: false,
 };
+
+/** Download name of the POST /workspace/ai-actions/multi-model-review/bundle markdown file. */
+export const MULTI_MODEL_REVIEW_BUNDLE_FILENAME = 'multi-model-review.md';

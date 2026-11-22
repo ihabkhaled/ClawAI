@@ -1,17 +1,75 @@
 import {
+  HEADING_BLANK,
+  HEADING_CLOSING,
+  MAX_HEADING_LEVEL,
   MAX_PUBLICATION_SLUG_LENGTH,
   MAX_PUBLICATION_TITLE_LENGTH,
+  MULTILINE_LINE_BREAK,
   RESERVED_PUBLICATION_SLUGS,
   UNTITLED_PUBLICATION_TITLE,
 } from '../constants/publication-title.constants';
 
+/**
+ * `[text](target)` and `![text](target)` become their text. CodeQL js/polynomial-redos: the
+ * earlier regex re-scanned to the first `]` from every `[`, so a run of `[` cost the square of its
+ * length. Same matches, leftmost first, with each `]` and `)` looked up once.
+ */
+function dropLinkTargets(text: string): string {
+  let output = '';
+  let copied = 0;
+  let close = -1;
+  let paren = -1;
+  let open = text.indexOf('[');
+  while (open >= 0) {
+    if (close < open) close = text.indexOf(']', open + 1);
+    if (close < 0) break;
+    if (text.charAt(close + 1) !== '(') {
+      open = text.indexOf('[', open + 1);
+      continue;
+    }
+    if (paren < close + 2) paren = text.indexOf(')', close + 2);
+    if (paren < 0) break;
+    const start = open - 1 >= copied && text.charAt(open - 1) === '!' ? open - 1 : open;
+    output += text.slice(copied, start) + text.slice(open + 1, close);
+    copied = paren + 1;
+    open = text.indexOf('[', copied);
+  }
+  return output + text.slice(copied);
+}
+
 /** Strips inline markdown marks so a title reads as plain text. */
 function plain(text: string): string {
-  return text
-    .replaceAll(/!?\[([^\]]*)\]\([^)]*\)/gu, '$1')
+  return dropLinkTargets(text)
     .replaceAll(/[*_`~>#]/gu, '')
     .replaceAll(/\s+/gu, ' ')
     .trim();
+}
+
+/**
+ * The text of one ATX heading line (`## Title ##`), or undefined: the same capture as the earlier
+ * `^#{1,6}[ \t]+(.+?)[ \t#]*$` with the `m` flag, which CodeQL js/polynomial-redos flagged (the
+ * lazy text and the closing run overlap, so a long run of blanks cost the square of its length).
+ */
+function headingTextOf(line: string): string | undefined {
+  let hashes = 0;
+  while (line.charAt(hashes) === '#') hashes += 1;
+  if (hashes < 1 || hashes > MAX_HEADING_LEVEL) return undefined;
+  let textStart = hashes;
+  while (HEADING_BLANK.test(line.charAt(textStart))) textStart += 1;
+  if (textStart === hashes) return undefined;
+  let closingStart = line.length;
+  while (closingStart > 0 && HEADING_CLOSING.test(line.charAt(closingStart - 1))) closingStart -= 1;
+  if (textStart < line.length) return line.slice(textStart, Math.max(closingStart, textStart + 1));
+  // Only blanks follow the marks: the regex gave its last blank back as a one-character text.
+  return textStart - hashes > 1 ? line.at(-1) : undefined;
+}
+
+function firstHeadingText(markdown: string): string | undefined {
+  for (const line of markdown.split(MULTILINE_LINE_BREAK)) {
+    const text = headingTextOf(line);
+    if (text !== undefined) return text;
+  }
+  return undefined;
 }
 
 /**
@@ -19,7 +77,7 @@ function plain(text: string): string {
  * text, and only a text with nothing readable in it is called "Untitled draft".
  */
 export function derivePublicationTitle(markdown: string): string {
-  const heading = /^#{1,6}[ \t]+(.+?)[ \t#]*$/mu.exec(markdown)?.[1];
+  const heading = firstHeadingText(markdown);
   const fromHeading = heading ? plain(heading) : '';
   if (fromHeading) return fromHeading.slice(0, MAX_PUBLICATION_TITLE_LENGTH);
   const body = plain(markdown.replaceAll(/```[\s\S]*?```/gu, ' '));

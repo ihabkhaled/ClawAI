@@ -1,7 +1,7 @@
 import {
   CODE_FENCE_LINE,
   PIPE_TABLE_LINE,
-  PIPE_TABLE_SEPARATOR,
+  PIPE_TABLE_SEPARATOR_CELL,
 } from '../constants/document-render.constants';
 
 /**
@@ -27,6 +27,17 @@ export function repairPipeTables(markdown: string): string {
   return out.join('\n');
 }
 
+/**
+ * A separator row: optional outer `|`s around cells of three or more dashes with optional
+ * alignment colons. `trim` strips exactly the characters `\s` matches.
+ */
+function isPipeTableSeparator(line: string): boolean {
+  let row = line.trim();
+  if (row.startsWith('|')) row = row.slice(1);
+  if (row.endsWith('|')) row = row.slice(0, -1);
+  return row.split('|').every((cell) => PIPE_TABLE_SEPARATOR_CELL.test(cell.trim()));
+}
+
 /** The header line of a pipe table that has no separator row under it. */
 function startsPipeTable(lines: readonly string[], index: number): boolean {
   const line = lines.at(index) ?? '';
@@ -36,8 +47,8 @@ function startsPipeTable(lines: readonly string[], index: number): boolean {
     PIPE_TABLE_LINE.test(line) &&
     next !== undefined &&
     PIPE_TABLE_LINE.test(next) &&
-    !PIPE_TABLE_SEPARATOR.test(next) &&
-    !PIPE_TABLE_SEPARATOR.test(line) &&
+    !isPipeTableSeparator(next) &&
+    !isPipeTableSeparator(line) &&
     (previous === undefined || !PIPE_TABLE_LINE.test(previous))
   );
 }

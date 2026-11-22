@@ -25,7 +25,7 @@ change type needs (`rules/23-git-commits-hooks-and-release-gates.md`, gate matri
 - Prisma models: none
 - Mongoose models: ServerLog
 - API endpoints: 11 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 11 (vitest)
+- Test files: 12 (vitest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

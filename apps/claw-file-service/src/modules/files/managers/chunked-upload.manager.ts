@@ -5,6 +5,8 @@ import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { AppConfig } from '../../../app/config/app.config';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
 import {
+  CHUNKED_UPLOAD_ID_PATTERN,
+  CHUNKED_UPLOAD_MANIFEST_FILE,
   CHUNKED_UPLOAD_MAX_CHUNK_BYTES,
   CHUNKED_UPLOAD_SESSION_DIR,
   CHUNKED_UPLOAD_SESSION_TTL_MS,
@@ -38,21 +40,54 @@ export class ChunkedUploadManager {
   private readonly logger = new Logger(ChunkedUploadManager.name);
 
   private sessionsRoot(): string {
-    return path.join(AppConfig.get().FILE_STORAGE_PATH, CHUNKED_UPLOAD_SESSION_DIR);
+    return path.resolve(AppConfig.get().FILE_STORAGE_PATH, CHUNKED_UPLOAD_SESSION_DIR);
+  }
+
+  /**
+   * The ONE place a filesystem path is built from request data (upload id,
+   * chunk index). Every fs call in this class takes its path from here.
+   *
+   * The DTO already checks the upload id, but CodeQL js/path-injection (and a
+   * future caller that skips the DTO) cannot see that, so the guard lives next
+   * to the fs call: a strict id/index shape first, then path.resolve plus a
+   * startsWith(root + sep) check on the exact value handed to fs.
+   */
+  private resolveSessionPath(uploadId: string, fileName?: string): string {
+    if (!CHUNKED_UPLOAD_ID_PATTERN.test(uploadId)) {
+      throw new BusinessException('Invalid upload id', 'INVALID_UPLOAD_ID', HttpStatus.BAD_REQUEST);
+    }
+    const root = this.sessionsRoot();
+    const resolved =
+      fileName === undefined
+        ? path.resolve(root, uploadId)
+        : path.resolve(root, uploadId, fileName);
+    if (!resolved.startsWith(root + path.sep)) {
+      throw new BusinessException(
+        'Upload path escapes the session directory',
+        'INVALID_UPLOAD_PATH',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return resolved;
   }
 
   private sessionDir(uploadId: string): string {
-    // uploadId is validated against CHUNKED_UPLOAD_ID_PATTERN by the DTO before
-    // it ever reaches this class, so a plain join is safe — no ".." is possible.
-    return path.join(this.sessionsRoot(), uploadId);
+    return this.resolveSessionPath(uploadId);
   }
 
   private manifestPath(uploadId: string): string {
-    return path.join(this.sessionDir(uploadId), 'manifest.json');
+    return this.resolveSessionPath(uploadId, CHUNKED_UPLOAD_MANIFEST_FILE);
   }
 
   private chunkPath(uploadId: string, index: number): string {
-    return path.join(this.sessionDir(uploadId), `chunk-${String(index)}.bin`);
+    if (!Number.isSafeInteger(index) || index < 0) {
+      throw new BusinessException(
+        `Chunk index ${String(index)} is not a non-negative integer`,
+        'CHUNK_INDEX_OUT_OF_RANGE',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return this.resolveSessionPath(uploadId, `chunk-${String(index)}.bin`);
   }
 
   private readManifest(uploadId: string): ChunkedUploadManifest {

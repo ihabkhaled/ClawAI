@@ -1,11 +1,11 @@
 import {
-  ANSI_ESCAPES,
+  ANSI_COLOUR_PARAMETER,
+  ANSI_ESCAPE,
   CONTAINER_LOG_ACTION,
   CONTAINER_LOG_MESSAGE_MAX_CHARS,
   CONTAINER_NAME_PREFIX,
   CONTAINER_REPLICA_SUFFIX,
   NEST_LEVELS,
-  NEST_PRETTY_LINE,
   PINO_LEVELS,
   PINO_PRETTY_LEVELS,
   PINO_PRETTY_LINE,
@@ -14,11 +14,32 @@ import {
 } from '../constants/container-log.constants';
 import type { ContainerLogLine } from '../dtos/ingest-container-logs.dto';
 import type { ContainerLogBase, CreateServerLogInput } from '../types/server-logs.types';
+import { parseNestPrettyLine } from './nest-pretty-line.utility';
 
 /** `claw-chat-service-412` -> `chat-service`; `/claw-nginx` -> `nginx`. */
 export function serviceNameFromContainer(container: string): string {
   const bare = container.replace(/^\//u, '').replace(CONTAINER_REPLICA_SUFFIX, '');
   return bare.startsWith(CONTAINER_NAME_PREFIX) ? bare.slice(CONTAINER_NAME_PREFIX.length) : bare;
+}
+
+/** Removes every ESC `[` <digits and `;`> `m` colour code; any other ESC is kept. */
+function stripAnsiColours(text: string): string {
+  let output = '';
+  let copied = 0;
+  let escape = text.indexOf(ANSI_ESCAPE);
+  while (escape >= 0) {
+    let end = escape + 1;
+    if (text.charAt(end) === '[') {
+      end += 1;
+      while (ANSI_COLOUR_PARAMETER.test(text.charAt(end))) end += 1;
+      if (text.charAt(end) === 'm') {
+        output += text.slice(copied, escape);
+        copied = end + 1;
+      }
+    }
+    escape = text.indexOf(ANSI_ESCAPE, Math.max(escape + 1, copied));
+  }
+  return output + text.slice(copied);
 }
 
 /**
@@ -30,7 +51,7 @@ export function serviceNameFromContainer(container: string): string {
  * from stdout can be joined to the request line of the same call.
  */
 export function toServerLogInput(line: ContainerLogLine): CreateServerLogInput | null {
-  const text = line.message.replace(ANSI_ESCAPES, '').trim();
+  const text = stripAnsiColours(line.message).trim();
   if (text.length === 0) {
     return null;
   }
@@ -83,14 +104,14 @@ function fromPino(text: string, base: ContainerLogBase): CreateServerLogInput | 
 }
 
 function fromNest(text: string, base: ContainerLogBase): CreateServerLogInput | null {
-  const match = NEST_PRETTY_LINE.exec(text);
-  if (match === null) {
+  const parts = parseNestPrettyLine(text);
+  if (parts === null) {
     return null;
   }
-  const [, word = 'LOG', context = '', message = ''] = match;
+  const { word, context, message } = parts;
   return {
     ...base,
-    level: NEST_LEVELS[word] ?? 'INFO',
+    level: NEST_LEVELS.get(word) ?? 'INFO',
     module: context.slice(0, 200),
     message: clip(message),
   };
@@ -102,7 +123,7 @@ function fromPinoPretty(text: string, base: ContainerLogBase): CreateServerLogIn
     return null;
   }
   const [, word = 'INFO', message = ''] = match;
-  return { ...base, level: PINO_PRETTY_LEVELS[word] ?? 'INFO', message: clip(message) };
+  return { ...base, level: PINO_PRETTY_LEVELS.get(word) ?? 'INFO', message: clip(message) };
 }
 
 function fromPlain(
@@ -117,10 +138,7 @@ function plainLevel(text: string, stream: string | undefined): string {
   if (PLAIN_ERROR_WORDS.test(text)) {
     return 'ERROR';
   }
-  if (PLAIN_WARN_WORDS.test(text) || stream === 'stderr') {
-    return 'WARN';
-  }
-  return 'INFO';
+  return PLAIN_WARN_WORDS.test(text) || stream === 'stderr' ? 'WARN' : 'INFO';
 }
 
 function clip(text: string): string {

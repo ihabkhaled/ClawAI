@@ -10,6 +10,7 @@ import type {
 import { buildAuthHeader } from '../../../common/utilities/file-service-client.utility';
 import { CloudGenerationError } from './cloud-generation-error';
 import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
+import { clampGenerationTimeoutMs } from './generation-timeout.utility';
 
 const logger = new Logger('CloudGenerationClient');
 
@@ -34,7 +35,7 @@ const logger = new Logger('CloudGenerationClient');
 export async function callCloudGenerate(input: CloudGenerateInput): Promise<CloudGenerateOutput> {
   const url = `${input.chatServiceUrl}/api/v1/internal/chat/generate`;
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), input.timeoutMs);
+  const timer = setTimeout(() => controller.abort(), clampGenerationTimeoutMs(input.timeoutMs));
   try {
     const response = await guardedFetch(input.chatServiceUrl, url, {
       method: 'POST',

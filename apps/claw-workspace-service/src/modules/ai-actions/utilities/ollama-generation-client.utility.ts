@@ -7,6 +7,7 @@ import type {
 } from '../types/ai-action.types';
 import { guardedFetch } from '../../../common/utilities/guarded-fetch.utility';
 import { buildAuthHeader } from '../../../common/utilities/file-service-client.utility';
+import { clampGenerationTimeoutMs } from './generation-timeout.utility';
 
 const logger = new Logger('OllamaGenerationClient');
 
@@ -15,7 +16,7 @@ export async function callOllamaGenerate(
 ): Promise<OllamaGenerateOutput> {
   const url = `${input.baseUrl}/api/v1/ollama/generate`;
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), input.timeoutMs);
+  const timer = setTimeout(() => controller.abort(), clampGenerationTimeoutMs(input.timeoutMs));
   const started = Date.now();
   try {
     const response = await guardedFetch(input.baseUrl, url, {

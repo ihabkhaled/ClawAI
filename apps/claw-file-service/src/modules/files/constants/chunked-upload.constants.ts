@@ -21,5 +21,9 @@ export const CHUNKED_UPLOAD_SESSION_TTL_MS = 24 * 60 * 60 * 1000; // 24h
 /** Subdirectory of FILE_STORAGE_PATH that holds in-progress chunk sessions. */
 export const CHUNKED_UPLOAD_SESSION_DIR = '.chunk-sessions';
 
-/** uploadId shape emitted by init and required by every other endpoint. */
-export const CHUNKED_UPLOAD_ID_PATTERN = /^[a-f0-9-]{36}$/;
+/** uploadId shape emitted by init (crypto.randomUUID) and required by every other endpoint. */
+export const CHUNKED_UPLOAD_ID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+/** Name of the per-session manifest file inside `<session dir>/`. */
+export const CHUNKED_UPLOAD_MANIFEST_FILE = 'manifest.json';

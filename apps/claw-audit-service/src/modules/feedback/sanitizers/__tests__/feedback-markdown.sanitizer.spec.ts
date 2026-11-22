@@ -232,3 +232,31 @@ describe('link targets containing parentheses', () => {
     expect(sanitizeFeedbackMarkdown(input)).toBe(input);
   });
 });
+
+// CodeQL js/polynomial-redos: links are found by a linear scan, not a regex
+// that re-scanned to the first `]` from every `[`.
+describe('sanitizeFeedbackMarkdown link scan', () => {
+  const BACKSLASH = String.fromCodePoint(92);
+
+  it.each([
+    ['see [a](javascript:alert(1)) and [c](/d)', 'see a and [c](/d)'],
+    ['![b](https://x.test/i.png)', '![b](https://x.test/i.png)'],
+    ['!![x](javascript:1)', '!x'],
+    ['[a[b](javascript:x)', 'a[b'],
+    ['[open](javascript:x', '[open](javascript:x'],
+    ['[n](javascript:f(a)(b))', 'n'],
+  ])('collapses %j to %j as before', (input, expected) => {
+    expect(sanitizeFeedbackMarkdown(input)).toBe(expected);
+  });
+
+  it.each([
+    ['"[" then 50,000 "[\\"', `[${`[${BACKSLASH}`.repeat(50_000)}`],
+    ['50,000 "[" sharing one "](" and no ")"', `${'['.repeat(50_000)}](${'a'.repeat(50_000)}`],
+  ])('stays linear on %s', (_label, input) => {
+    const started = performance.now();
+    const output = sanitizeFeedbackMarkdown(input);
+
+    expect(performance.now() - started).toBeLessThan(1000);
+    expect(output).toBe(input.slice(0, FEEDBACK_MAX_CONTENT_LENGTH));
+  });
+});

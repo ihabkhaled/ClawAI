@@ -49,3 +49,24 @@ describe('image-reference-mime utility', () => {
     expect(referenceFilename('img-9', 'image/x-unknown')).toBe('image-reference-img-9.bin');
   });
 });
+
+// CodeQL js/polynomial-redos: the padding is counted by a loop, not `/=+$/u`.
+describe('base64DecodedLength padding', () => {
+  it.each([
+    ['QQ==', 1],
+    ['QUI=', 2],
+    ['QUJD', 3],
+    ['', 0],
+  ])('%j decodes to %i bytes', (base64, expected) => {
+    expect(base64DecodedLength(base64)).toBe(expected);
+  });
+
+  it('stays linear on 50,000 "=" that are not at the end', () => {
+    const base64 = `${'='.repeat(50_000)}A`;
+    const started = performance.now();
+    const length = base64DecodedLength(base64);
+
+    expect(performance.now() - started).toBeLessThan(1000);
+    expect(length).toBe(Math.floor((base64.length * 3) / 4));
+  });
+});
