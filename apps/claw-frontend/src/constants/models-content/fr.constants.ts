@@ -116,7 +116,7 @@ export const FR_MODELS_CONTENT: ModelsDictionary = {
         keywords: [
           'modèles Claude ClawAI',
           'Anthropic dans ClawAI',
-          'Claude Opus vs Sonnet vs Haiku',
+          'comparatif Claude Opus, Sonnet et Haiku',
         ],
       },
       eyebrow: 'Fournisseur de modèles',
@@ -225,7 +225,11 @@ export const FR_MODELS_CONTENT: ModelsDictionary = {
         title: 'Les modèles DeepSeek dans ClawAI',
         description:
           'Les modèles DeepSeek vers lesquels ClawAI peut router une conversation — DeepSeek Chat et DeepSeek Reasoner —, à quoi chacun sert, et un niveau de coût qualitatif. Vérifiez le catalogue en direct avant de choisir un plan.',
-        keywords: ['modèles DeepSeek ClawAI', 'DeepSeek dans ClawAI', 'DeepSeek Chat vs Reasoner'],
+        keywords: [
+          'modèles DeepSeek ClawAI',
+          'DeepSeek dans ClawAI',
+          'comparatif DeepSeek Chat et Reasoner',
+        ],
       },
       eyebrow: 'Fournisseur de modèles',
       title: 'DeepSeek',

@@ -73,3 +73,16 @@ mobile-title column (the Model name on Model Prices) disappeared from the
 desktop table in every DataTable consumer. `ResponsiveTable` now takes
 `tableColumns` (all columns) separately from `columns` (card body). Cards are
 `position: relative`, so `sr-only` spans no longer stretch the document.
+
+## Kind column and "Why hidden?" (2026-11-22)
+
+- Each row shows its **kind** (`ModelKindCell`: Chat / Tool / Embedding / Audio / Reranker). A kind the chat
+  picker never shows (`isChatPickerKind`: CHAT, or AUDIO that generates audio) adds "Not offered in chat" and the
+  reason the sync recorded (`kindReason`), or a generic sentence for rows not re-synced since.
+- **"Why hidden?"** (`ModelVisibilityButton`, under the model name, table and card) opens
+  `ModelVisibilityDialog`, which fetches `GET /connectors/model-visibility` only while open
+  (`useModelVisibility`, key `connectors.modelVisibility`) and lists every gate with Pass / Fail / Unknown /
+  Skipped, the backend's evidence (English data, shown in `<bdi>`), and the sync trail.
+- After an expose, keys the server returns in `notInPicker` show a warning above the bulk bar
+  (`notInPickerKeys`). The expose itself is allowed: it serves tool use.
+- Copy: `adminConnectors.visibility.*` in `locales/model-visibility-translations.ts` (13 locales).

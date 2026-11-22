@@ -317,7 +317,7 @@ Wayback (content starts "Archived copy, captured <date>", `archivedAt` set).
 `classifyBlockSignal` reads each result; `isStrategyEligible` decides what may
 still run — 401/451 stop, captcha/429/404/dead host go archive-only,
 FlareSolverr only after a JS interstitial, and a short static page is served
-as it is (a "shell" needs script-driven markup). ≤ 6 attempts, ≤ 60 s total,
+as it is (a "shell" is decided by `isThinContent`, see below). ≤ 6 attempts, ≤ 60 s total,
 one request per host per second. `HostStrategyMemory` puts a host's last
 winning tier first (≤ 7 days; never the reader/archive).
 
@@ -331,7 +331,44 @@ network where research-service is the only ClawAI container.
 **One extraction for every tier.** `extractPageContent` = `extractHtml`
 (links, canonical/hreflang/OG/JSON-LD, feed autodiscovery) + Readability on
 linkedom + Turndown → the article as Markdown, or the plain text when there is
-no article.
+no article. Then (2026-11-22): a **site adapter** from the one table
+`SITE_ADAPTERS` (`constants/site-adapters.constants.ts`: `chatgpt-share`,
+`youtube-watch`) wins when it matches the final URL and finds the page's own
+structured data; otherwise, when the visible text is under 500 chars, the
+**generic embedded-state extractor** (`extractEmbeddedStateText`: JSON-LD,
+`__NEXT_DATA__`, `__NUXT_DATA__`, other JSON script blocks,
+`window.__INITIAL_STATE__`-style JSON assignments, the React Router
+turbo-stream) supplies the prose strings it ships. Both read only the HTML the
+chain already fetched: no request, no script evaluation (strict `JSON.parse`),
+identifier keys (ids, URLs, tokens) skipped. `FetchResult.extraction`
+(`READABLE` | `PAGE_TEXT` | `EMBEDDED_STATE` | `SITE_ADAPTER`) and
+`siteAdapter` record which one, and travel on `ToolFetchView` and
+`EvidenceItem.fetch` (additive).
+
+**Thin content is not a read page (2026-11-22).** Production bug: a ChatGPT
+share link "read 1 page" and the model said the page needed JavaScript. Cause:
+chatgpt.com answers a bot User-Agent with a 2.8 KB link-preview page (og: tags,
+one `<a>`, no `<script>`), 39 chars of text; the old shell rule required
+script markup, so `HTTP_PLAIN` served it as `NONE`. `isThinContent` now flags
+a 2xx/3xx HTML result as `EMPTY_JS_SHELL` when its final extracted text is
+(1) < 200 chars on script-driven markup, (2) < 200 chars on a social-card stub,
+(3) a JS-wall sentence ("enable JavaScript") under 2 000 chars, or
+(4) < 1 000 chars on 150 KB+ of script markup. The chain then escalates to a
+rendering tier (headless / Crawl4AI / Firecrawl). If every tier stays thin, the
+longest live text is returned labelled by `markThinResult`: a
+`[Page content not readable]` notice in front (a sign-in variant when the text
+asks to log in), `thinContent: true`, and evidence `fetch.thin: true`; a user
+link also gets a warning. 3xx counts because a sidecar reports the first
+response's status. example.com-style static pages are still served as they are.
+
+**Boundaries (unchanged, restated).** Public content only. No credential,
+cookie or session token is ever sent; adapters only parse HTML already fetched.
+Login walls, paywalls and captchas are never defeated: 401/451 still stop the
+chain, captchas still go archive-only, and a page that needs sign-in is
+labelled as such, never presented as read. robots.txt and the SSRF guards run
+exactly as before (a robots Disallow, e.g. reddit.com and x.com today, is a
+403 before anything is fetched). No new identity: rendering uses the browser
+tiers that already existed.
 
 **Headless (ADR-094, now tier 30).** One shared Patchright Chromium, one
 throwaway context per fetch, a desktop Chrome User-Agent (no "HeadlessChrome"),

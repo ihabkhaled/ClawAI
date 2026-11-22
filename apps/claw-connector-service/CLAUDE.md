@@ -35,6 +35,7 @@ Controller -> Service -> Repository
 - Connector
 - ConnectorModel
 - ConnectorHealthEvent
+- ConnectorModelEvent (`connector_model_events`: what syncs changed on a model)
 - ModelSyncRun
 
 ## Commands
@@ -243,8 +244,8 @@ only when chat-service gains a `/v1/responses` client. ADR-151 addendum.
 
 `ModelKind` = `CHAT | EMBEDDING | RERANKER | TOOL | AUDIO`. Only `CHAT` reaches the picker,
 the catalog and the router (`findExposedForCatalog`, `findExposedPairs`, routing
-`exposed-models`). Both repository upsert paths spread `nonChatKind(modelKey)` on create AND
-update, so one resync repairs existing rows. Rules live in `constants/model-kind.constants.ts`
+`exposed-models`). Both repository upsert paths spread `syncKindFields` (id rule + adapter verdict + reason) on create
+AND update, so one resync repairs existing rows. Rules live in `constants/model-kind.constants.ts`
 (word-boundary id patterns: tts, transcribe, whisper, realtime, live, native-audio, lyria,
 embed, rerank, moderation, computer-use, deep-research, aqa, multi-agent, and the id suffix
 `-streaming-preview`: Gemini WebSocket-only models 400 on chat). `gpt-4o-audio-preview`
@@ -312,3 +313,29 @@ Migration `20261031150000_expose_priced_media_models` missed Veo x3 (kind TOOL),
 Prod check 2026-11-01: Veo x3 and `chatgpt-image-latest` were lifecycle REMOVED (the provider's model list omits models that still work). v2 now also restores REMOVED rows of the priced list to ACTIVE + EXPOSED. Sync (`replaceMany`) no longer marks a known priced media model REMOVED when the provider list omits it, and brings an already-removed one back; omitted chat models are still REMOVED. `available-models` reads these rows from the database, with no live provider list call. SUNSET rows (retired after repeated "model unavailable" answers) are not restored.
 
 Shut-down models (2026-11-01 check of Google's deprecations page): Veo 3.1 Lite/Fast/Standard (shut down 2026-10-22, replaced by `gemini-omni-1.1-flash`) and the Gemini 3.1 Flash Image / 3 Pro Image previews (2026-06-25) are listed in `RETIRED_MEDIA_MODEL_KEYS_BY_PROVIDER`; `isPricedMediaModel` returns false for them, so sync lets them go REMOVED and never restores them. Migration `20261101150000_retire_shut_down_media_models` retires the existing rows and exposes Omni. A new retirement goes in that list and a migration in the same change.
+
+## Model visibility: kind reason, sync trail, "Why hidden?" (2026-11-22)
+
+Production trap: `models/gemini-decision-1` (Google lists only `createDecision`, `outputTokenLimit` 1) was
+correctly synced as TOOL, yet the admin list showed it Exposed / Credit / Active with no hint why chat hid it, an
+owner re-exposed it as a "bug", and the earlier CHAT to TOOL flip had left no trail.
+
+- **`connector_models.kind_reason`** (nullable): written with every non-CHAT kind a sync writes.
+  `utilities/sync-kind-fields.utility.ts` (`syncKindFields`) is the ONE place both repository upsert paths take
+  kind, reason and the adapter unexpose from: id rule (`nonChatKind`, reason "Model id matches the X name pattern")
+  overridden by the adapter (`NormalizedModel.kindReason`; Gemini `geminiKindReason` = "Google lists only: ...",
+  OpenAI `openAiKindReason`). Never spread `nonChatKind` / `adapterKindFields` separately again.
+- **`connector_model_events`**: `ConnectorsManager.syncModels` runs `detectSyncModelEvents` (rows before the sync
+  plus `syncKindFields`) after `replaceMany` and writes `KIND_CHANGED` / `UNEXPOSED_BY_SYNC` with before/after.
+  Best effort; never fails a sync. Migration `20261122120000_connector_model_kind_reason_and_events` (additive).
+- **Exposing a non-chat model is allowed**; `PUT /connectors/:id/models/exposure` returns `notInPicker`
+  (kind + reason) and the admin page warns. `utilities/picker-kind.utility.ts` (`isPickerKind`: CHAT, or AUDIO
+  that generates audio) is shared by `getAvailableModels`, this warning and the diagnostic.
+- **`GET /connectors/model-visibility?provider=&modelKey=`** (`ADMIN_CONNECTORS_MANAGE`, `ModelVisibilityService`)
+  walks EXISTS, CONNECTOR_ENABLED, LIFECYCLE_ACTIVE, EXPOSED, KIND_CHAT, IN_ROUTING_REGISTRY, NOT_ROUTER_ONLY,
+  PRICED and returns each gate's PASS/FAIL/UNKNOWN/SKIPPED with a reason plus the model's last 10 trail events.
+  The routing gates come from routing-service `GET /internal/router-models/visibility` (`RoutingVisibilityManager`,
+  service token, 3 s timeout, failure = UNKNOWN) via `ROUTING_SERVICE_URL`: the shared `.env` value, defaulted,
+  no new variable. Plan access is per user and not judged.
+- The admin Model exposure panel shows a Kind column, "Not offered in chat" + reason, and a "Why hidden?" dialog
+  per row (`docs/05-frontend/admin-model-billing-and-exposure.md`).

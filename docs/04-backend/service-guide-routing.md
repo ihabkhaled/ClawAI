@@ -137,6 +137,11 @@ The `RoutingDecision` record stores `complexityClass`, a structured `explanation
 | GET    | /education/model-profiles | Learned model profiles                             |
 | GET    | /education/topic-profiles | Learned topic profiles                             |
 
+`GET /internal/router-models/visibility?provider=&model=` (service token, 2026-11-22) answers
+`{ provider, modelKey, inRegistry, lifecycle, isRouterOnly, costClass }` for one model: the registry row (or none),
+its router-only flag and the cost class from `resolveCostClasses` (null = unpriced; a band, never a rate). Its only
+caller is connector-service's admin "Why hidden?" diagnostic (`GET /connectors/model-visibility`).
+
 ## Events
 
 | Event                        | Direction | Notes                                |

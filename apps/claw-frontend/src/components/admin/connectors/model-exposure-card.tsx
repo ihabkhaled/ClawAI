@@ -4,7 +4,9 @@ import type { ReactElement } from 'react';
 
 import { ModelExposureChip } from '@/components/admin/connectors/model-exposure-chip';
 import { ModelExposureRowActions } from '@/components/admin/connectors/model-exposure-row-actions';
+import { ModelKindCell } from '@/components/admin/connectors/model-kind-cell';
 import { ModelLifecycleChip } from '@/components/admin/connectors/model-lifecycle-chip';
+import { ModelVisibilityButton } from '@/components/admin/connectors/model-visibility-button';
 import { ModelBillingBadge } from '@/components/admin/model-billing/model-billing-badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { ModelExposureCardProps } from '@/types/model-exposure.types';
@@ -36,6 +38,7 @@ export function ModelExposureCard({
           <p className="text-sm font-medium break-words">{view.row.displayName}</p>
           <p className="text-muted-foreground font-mono text-xs break-all">{view.row.modelKey}</p>
           <p className="text-muted-foreground text-xs">{view.providerLabel}</p>
+          <ModelVisibilityButton provider={view.row.provider} modelKey={view.row.modelKey} t={t} />
         </div>
         <ModelExposureRowActions
           view={view}
@@ -50,6 +53,7 @@ export function ModelExposureCard({
         <ModelLifecycleChip view={view} t={t} />
         <ModelBillingBadge billing={view.billing} t={t} />
       </div>
+      <ModelKindCell view={view} t={t} />
       <p className="text-muted-foreground flex flex-wrap gap-1 text-xs">
         <span>{t('adminConnectors.exposure.colLastSeen')}</span>
         <bdi>{view.lastSeenLabel ?? t('adminConnectors.exposure.neverSeen')}</bdi>

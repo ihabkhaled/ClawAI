@@ -1,4 +1,8 @@
-import { classifyGeminiModelKind, readGenerationMethods } from '../gemini-model-kind.utility';
+import {
+  classifyGeminiModelKind,
+  geminiKindReason,
+  readGenerationMethods,
+} from '../gemini-model-kind.utility';
 
 describe('classifyGeminiModelKind', () => {
   it('keeps a generateContent model as CHAT', () => {
@@ -23,6 +27,17 @@ describe('classifyGeminiModelKind', () => {
 
   it('lets generateContent win over an embedding method', () => {
     expect(classifyGeminiModelKind(['embedContent', 'generateContent'])).toBe('CHAT');
+  });
+});
+
+describe('geminiKindReason', () => {
+  it("quotes Google's method list for a non-chat model", () => {
+    expect(geminiKindReason(['createDecision'])).toBe('Google lists only: createDecision');
+  });
+
+  it('is undefined for a chat model or an unreadable list', () => {
+    expect(geminiKindReason(['generateContent', 'countTokens'])).toBeUndefined();
+    expect(geminiKindReason(undefined)).toBeUndefined();
   });
 });
 

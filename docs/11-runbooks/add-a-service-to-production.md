@@ -125,6 +125,30 @@ $COMPOSE restart $($COMPOSE config --services | grep -E -- '(-service|^frontend|
 If you cannot take the window, deploy anyway: the preflight stops the rollout
 until the name is present, which is the safe outcome.
 
+**No-window alternative (used for live-service, 2026-11-22).** Production's `claw.crt` was the
+self-signed root itself (`cmp certs/claw.crt certs/rootCA.pem` is equal), and every component trusts
+`rootCA.pem`. A **leaf signed by that root** with the old names plus the new one verifies everywhere,
+the root and its trust never change, and nothing has to restart: running services keep the old cert
+in memory (still trusted), and each service picks up the leaf on its next boot. Re-signing the root
+itself with an extra name does **not** work (OpenSSL error 18: a self-signed cert that differs from
+the trust anchor). Steps, as root, keeping backups:
+
+```bash
+cd /srv/clawai/certs; T=$(mktemp -d); TS=$(date -u +%Y%m%dT%H%M%SZ)
+SAN=$(openssl x509 -in claw.crt -noout -ext subjectAltName | tail -1 | sed 's/ //g; s/IPAddress:/IP:/g')
+printf '[ext]\nbasicConstraints=critical,CA:FALSE\nkeyUsage=critical,digitalSignature,keyEncipherment\nextendedKeyUsage=serverAuth,clientAuth\nsubjectAltName=%s,DNS:<name>-service\n' "$SAN" > $T/ext.cnf
+openssl genrsa -out $T/leaf.key 2048
+openssl req -new -key $T/leaf.key -subj "/O=ClawAI Local/CN=claw-services" -out $T/leaf.csr
+openssl x509 -req -in $T/leaf.csr -CA claw.crt -CAkey claw.key -CAcreateserial -CAserial $T/ca.srl -days 1095 -sha256 -extfile $T/ext.cnf -extensions ext -out $T/leaf.crt
+for h in <name>-service chat-service nginx; do openssl verify -CAfile rootCA.pem -verify_hostname $h $T/leaf.crt; done
+sudo cp -p claw.crt claw.crt.bak-$TS; sudo cp -p claw.key claw.key.bak-$TS
+[ -f rootCA.key ] || { sudo cp -p claw.key rootCA.key; sudo chmod 600 rootCA.key; }   # keep the root's key
+sudo cp $T/leaf.crt claw.crt; sudo cp $T/leaf.key claw.key; sudo chown deploy:deploy claw.crt claw.key rootCA.key
+```
+
+From then on `claw.key` is the leaf key and the root key lives in `rootCA.key` (mode 600): sign the
+next leaf with `-CA rootCA.pem -CAkey rootCA.key`.
+
 ### 4. Deploy
 
 Trigger the normal deploy. The preflight now passes and prints:

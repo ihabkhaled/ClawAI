@@ -118,7 +118,11 @@ export const PT_PROMPT_GUIDE_CONTENT: PromptGuideDictionary = {
         title: 'Few-shot prompting: dando exemplos a um modelo',
         description:
           'Como usar um ou mais exemplos num prompt para mostrar a um modelo o padrão desejado, em vez de apenas descrevê-lo — com orientação sobre quantos exemplos ajudam e quando zero-shot já é suficiente.',
-        keywords: ['few-shot prompting', 'exemplos em prompts', 'one-shot vs few-shot prompting'],
+        keywords: [
+          'few-shot prompting',
+          'exemplos em prompts',
+          'prompts com um exemplo ou com vários exemplos',
+        ],
       },
       eyebrow: 'Guias de prompts',
       title: 'Few-shot prompting: dando exemplos a um modelo',
@@ -173,7 +177,7 @@ export const PT_PROMPT_GUIDE_CONTENT: PromptGuideDictionary = {
         description:
           'O que é o chain-of-thought prompting, quando pedir a um modelo que trabalhe os passos antes de responder realmente ajuda, e por que isso não garante um resultado correto.',
         keywords: [
-          'chain-of-thought prompting',
+          'prompts de cadeia de pensamento',
           'prompting passo a passo',
           'técnica de prompt de raciocínio de IA',
         ],

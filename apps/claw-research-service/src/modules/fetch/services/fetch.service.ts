@@ -128,6 +128,8 @@ export class FetchService {
       links: result.links,
       servedBy: result.servedBy ?? null,
       archivedAt: result.archivedAt ?? null,
+      extraction: result.extraction ?? null,
+      thinContent: result.thinContent === true,
     };
   }
 

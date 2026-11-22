@@ -10,6 +10,7 @@ import { LIVE_TRANSLATIONS } from './live-translations';
 import { MARKETING_VIDEOS_TRANSLATIONS } from './marketing-videos-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
+import { MODEL_VISIBILITY_TRANSLATIONS } from './model-visibility-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
@@ -5050,6 +5051,7 @@ export const fa: TranslationDictionary = {
       impactWarning: 'لغو ارائه این مدل‌ها را از هر طرحی که از آن‌ها استفاده می‌کند حذف می‌کند:',
     },
     exposureUi: MODEL_EXPOSURE_UI_TRANSLATIONS.fa,
+    visibility: MODEL_VISIBILITY_TRANSLATIONS.fa,
   },
   adminPlans: {
     intervalDiscounts: {

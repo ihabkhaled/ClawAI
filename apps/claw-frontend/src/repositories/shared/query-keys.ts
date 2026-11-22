@@ -97,6 +97,8 @@ export const queryKeys = {
     detail: (id: string) => [...queryKeys.connectors.all, 'detail', id] as const,
     models: (id: string) => [...queryKeys.connectors.all, 'models', id] as const,
     availableModels: () => [...queryKeys.connectors.all, 'available-models'] as const,
+    modelVisibility: (provider: string, modelKey: string) =>
+      [...queryKeys.connectors.all, 'model-visibility', provider, modelKey] as const,
   },
   models: {
     all: ['models'] as const,

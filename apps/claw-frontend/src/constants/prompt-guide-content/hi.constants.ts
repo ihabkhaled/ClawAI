@@ -160,7 +160,7 @@ export const HI_PROMPT_GUIDE_CONTENT: PromptGuideDictionary = {
         title: 'Chain-of-thought prompting: मॉडल से चरण-दर-चरण सोचने के लिए कहना',
         description:
           'Chain-of-thought prompting क्या है, कब मॉडल से जवाब देने से पहले चरणों में सोचने के लिए कहना वाकई मदद करता है, और यह सही नतीजे की गारंटी क्यों नहीं देता।',
-        keywords: ['chain-of-thought prompting', 'चरण-दर-चरण prompting', 'AI तर्क prompting तकनीक'],
+        keywords: ['चेन-ऑफ़-थॉट प्रॉम्प्टिंग', 'चरण-दर-चरण prompting', 'AI तर्क prompting तकनीक'],
       },
       eyebrow: 'प्रॉम्प्ट गाइड',
       title: 'Chain-of-thought prompting: मॉडल से चरण-दर-चरण सोचने के लिए कहना',
@@ -214,7 +214,7 @@ export const HI_PROMPT_GUIDE_CONTENT: PromptGuideDictionary = {
         title: 'संरचित (structured) आउटपुट माँगने वाला प्रॉम्प्ट कैसे लिखें',
         description:
           'JSON, एक टेबल, या किसी और तय फ़ॉर्मैट को भरोसेमंद तरीके से माँगने वाला प्रॉम्प्ट लिखने के लिए व्यावहारिक मार्गदर्शन — structured AI outputs क्या हैं इसका साथी लेख, और सिर्फ़ prompting संरचना की गारंटी क्यों नहीं देती।',
-        keywords: ['JSON आउटपुट के लिए प्रॉम्प्ट', 'structured output prompting', 'AI से टेबल कैसे माँगें'],
+        keywords: ['JSON आउटपुट के लिए प्रॉम्प्ट', 'संरचित आउटपुट के लिए प्रॉम्प्टिंग', 'AI से टेबल कैसे माँगें'],
       },
       eyebrow: 'प्रॉम्प्ट गाइड',
       title: 'संरचित (structured) आउटपुट माँगने वाला प्रॉम्प्ट कैसे लिखें',

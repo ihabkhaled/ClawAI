@@ -46,7 +46,7 @@
     },
     "claw-connector-service": {
       "runner": "vitest",
-      "testFiles": 62
+      "testFiles": 67
     },
     "claw-file-generation-service": {
       "runner": "vitest",
@@ -58,7 +58,7 @@
     },
     "claw-frontend": {
       "runner": "vitest",
-      "testFiles": 1067
+      "testFiles": 1072
     },
     "claw-health-service": {
       "runner": "vitest",
@@ -94,11 +94,11 @@
     },
     "claw-research-service": {
       "runner": "vitest",
-      "testFiles": 71
+      "testFiles": 74
     },
     "claw-routing-service": {
       "runner": "vitest",
-      "testFiles": 126
+      "testFiles": 127
     },
     "claw-server-logs-service": {
       "runner": "vitest",
@@ -118,5 +118,5 @@
     }
   },
   "generated": true,
-  "total": 3012
+  "total": 3026
 }

@@ -42,6 +42,16 @@ export type ThinCandidate = {
   result: FetchResult;
 };
 
+/** Mutable state of one `fetchWithEscalation` run. */
+export type EscalationRun = {
+  host: string;
+  deadline: number;
+  observed: Set<BlockSignalKind>;
+  excluded: Set<FetchStrategyKind>;
+  attempts: FetchStrategyAttempt[];
+  bestThin: ThinCandidate | null;
+};
+
 /** How a caller shapes one escalation run. */
 export type EscalationOptions = {
   /**

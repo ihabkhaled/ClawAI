@@ -380,6 +380,11 @@ export class ResearchManager {
       pushFetchToolMarker(toolsUsed, result);
       toolsUsed.push('web_fetch:user_url');
       const evidence = { ...this.directFetchResultToEvidence(result), fetchStatus: 'OK' as const };
+      if (result.thinContent === true) {
+        warnings.push(
+          `The link you provided (${outcome.url}) returned only a page shell even after rendering; its content was not readable and may require sign-in.`,
+        );
+      }
       items.push(evidence);
       if (result.rawHtml !== undefined) {
         rawByUrl.set(evidence.url, result.rawHtml);

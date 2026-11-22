@@ -15,6 +15,8 @@ import { ModelDiscoveryService } from './services/model-discovery.service';
 import { RouterChainSeedService } from './services/router-chain-seed.service';
 import { ModelCostInternalController } from './controllers/model-cost-internal.controller';
 import { ModelContextWindowInternalController } from './controllers/model-context-window-internal.controller';
+import { ModelVisibilityInternalController } from './controllers/model-visibility-internal.controller';
+import { ModelVisibilityService } from './services/model-visibility.service';
 import { ModelCostCatalogService } from './services/model-cost-catalog.service';
 import { ModelCostService } from './services/model-cost.service';
 import { ModelCostSeedService } from './services/model-cost-seed.service';
@@ -28,9 +30,11 @@ import { RouterModelsService } from './services/router-models.service';
     ModelCostController,
     ModelCostInternalController,
     ModelContextWindowInternalController,
+    ModelVisibilityInternalController,
   ],
   providers: [
     RouterModelsService,
+    ModelVisibilityService,
     ModelIntelligenceService,
     ModelCostService,
     ModelCostCatalogService,

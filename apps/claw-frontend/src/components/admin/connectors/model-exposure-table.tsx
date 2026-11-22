@@ -4,7 +4,9 @@ import type { ReactElement } from 'react';
 
 import { ModelExposureChip } from '@/components/admin/connectors/model-exposure-chip';
 import { ModelExposureRowActions } from '@/components/admin/connectors/model-exposure-row-actions';
+import { ModelKindCell } from '@/components/admin/connectors/model-kind-cell';
 import { ModelLifecycleChip } from '@/components/admin/connectors/model-lifecycle-chip';
+import { ModelVisibilityButton } from '@/components/admin/connectors/model-visibility-button';
 import { ModelBillingBadge } from '@/components/admin/model-billing/model-billing-badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { ModelExposureListProps } from '@/types/model-exposure.types';
@@ -30,7 +32,7 @@ export function ModelExposureTable({
       className="touch:hidden relative block max-h-[70vh] overflow-auto overscroll-contain rounded-md border"
       data-testid="model-exposure-table"
     >
-      <table className="w-full min-w-[56rem] text-sm">
+      <table className="w-full min-w-[66rem] text-sm">
         <thead className="bg-muted text-muted-foreground sticky top-0 z-10 text-xs">
           <tr className="text-start">
             <th scope="col" className="w-10 px-3 py-2 text-start">
@@ -45,6 +47,9 @@ export function ModelExposureTable({
             </th>
             <th scope="col" className="w-36 px-3 py-2 text-start font-medium">
               {t('adminConnectors.exposure.colProvider')}
+            </th>
+            <th scope="col" className="w-40 px-3 py-2 text-start font-medium">
+              {t('adminConnectors.visibility.colKind')}
             </th>
             <th scope="col" className="w-28 px-3 py-2 text-start font-medium">
               {t('adminConnectors.exposureUi.colBilling')}
@@ -86,8 +91,16 @@ export function ModelExposureTable({
                 <span className="text-muted-foreground block font-mono text-xs break-all">
                   {view.row.modelKey}
                 </span>
+                <ModelVisibilityButton
+                  provider={view.row.provider}
+                  modelKey={view.row.modelKey}
+                  t={t}
+                />
               </td>
               <td className="px-3 py-2 align-top">{view.providerLabel}</td>
+              <td className="px-3 py-2 align-top">
+                <ModelKindCell view={view} t={t} />
+              </td>
               <td className="px-3 py-2 align-top">
                 <ModelBillingBadge billing={view.billing} t={t} />
               </td>

@@ -5,6 +5,7 @@ import type { ConnectorModelKind } from '../enums/connector-model-kind.enum';
 
 import type { TranslateFunction } from './i18n.types';
 import type { ModelBillingInfo } from './model-billing.types';
+import type { ModelKindView } from './model-visibility.types';
 // model-exposure.types.ts
 // Only exported types — no logic, no runtime code.
 
@@ -26,6 +27,9 @@ export interface ConnectorModelRow {
   lifecycle: string;
   exposure: ConnectorModelExposure;
   kind: ConnectorModelKind;
+  // Why a sync classified the model as non-CHAT ("Google lists only:
+  // createDecision"); null for chat models and rows not re-synced since.
+  kindReason: string | null;
   // Int? and DateTime? in Prisma — a model whose provider never reported a
   // context window, or that has not been seen since the column was added, has
   // no value here rather than a zero.
@@ -48,6 +52,9 @@ export interface SetModelExposureRequest {
 export interface SetModelExposureResponse {
   updated: number;
   previouslyExposed: string[];
+  // Exposed models the chat picker still will not show (non-chat kind). The
+  // expose is allowed (tool use); the admin is told at once.
+  notInPicker?: Array<{ modelKey: string; kind: ConnectorModelKind; kindReason: string | null }>;
 }
 
 export interface ModelExposureFilters {
@@ -76,6 +83,8 @@ export interface UseModelExposureResult {
   // screen can state what is about to be taken away BEFORE the operator
   // confirms rather than after.
   impact: string[];
+  // Keys the last expose made EXPOSED that the chat picker still hides.
+  notInPickerKeys: string[];
   load: () => Promise<void>;
   apply: (exposed: boolean) => Promise<void>;
   // One row's action menu: applies to exactly these keys.
@@ -95,6 +104,7 @@ export type ModelExposureRowView = {
   // null when the lifecycle is a value this build does not know: shown raw.
   lifecycleLabelKey: string | null;
   lifecycleBadgeClass: string;
+  kindView: ModelKindView;
 };
 
 export type UseModelExposureUnexposeConfirmResult = {
@@ -125,6 +135,7 @@ export type UseModelExposurePanelResult = {
   exposedCount: number;
   unexposedCount: number;
   impact: string[];
+  notInPickerKeys: string[];
   isLoading: boolean;
   isSaving: boolean;
   errorMessage: string | null;

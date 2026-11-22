@@ -96,25 +96,36 @@ inference running on their own hardware. The toggle is the lever.
 
 ### ConnectorModel
 
-| Column                   | Type              | Notes                                                                           |
-| ------------------------ | ----------------- | ------------------------------------------------------------------------------- |
-| id                       | String            | CUID primary key                                                                |
-| connectorId              | String            | FK to Connector                                                                 |
-| provider                 | ConnectorProvider | Denormalized for queries                                                        |
-| modelKey                 | String            | API model identifier                                                            |
-| displayName              | String            | Human-readable name                                                             |
-| lifecycle                | ModelLifecycle    | ACTIVE, DEPRECATED, SUNSET                                                      |
-| supportsStreaming        | Boolean           | Streaming capability                                                            |
-| supportsTools            | Boolean           | Function calling support                                                        |
-| supportsVision           | Boolean           | Image input support                                                             |
-| supportsAudio            | Boolean           | Connector can serve speech-to-text / audio input for this model                 |
-| supportsVideoInput       | Boolean           | Native video input (migration `20260925120000_add_connector_model_video_input`) |
-| supportsStructuredOutput | Boolean           | JSON mode support                                                               |
-| maxContextTokens         | Int?              | Context window size                                                             |
+| Column                   | Type              | Notes                                                                                                                             |
+| ------------------------ | ----------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| id                       | String            | CUID primary key                                                                                                                  |
+| connectorId              | String            | FK to Connector                                                                                                                   |
+| provider                 | ConnectorProvider | Denormalized for queries                                                                                                          |
+| modelKey                 | String            | API model identifier                                                                                                              |
+| displayName              | String            | Human-readable name                                                                                                               |
+| lifecycle                | ModelLifecycle    | ACTIVE, DEPRECATED, SUNSET                                                                                                        |
+| supportsStreaming        | Boolean           | Streaming capability                                                                                                              |
+| supportsTools            | Boolean           | Function calling support                                                                                                          |
+| supportsVision           | Boolean           | Image input support                                                                                                               |
+| supportsAudio            | Boolean           | Connector can serve speech-to-text / audio input for this model                                                                   |
+| supportsVideoInput       | Boolean           | Native video input (migration `20260925120000_add_connector_model_video_input`)                                                   |
+| supportsStructuredOutput | Boolean           | JSON mode support                                                                                                                 |
+| maxContextTokens         | Int?              | Context window size                                                                                                               |
+| kind                     | ModelKind         | CHAT, TOOL, EMBEDDING, AUDIO, RERANKER. Only CHAT (and audio-output AUDIO) reaches the picker                                     |
+| kindReason               | String?           | Why a sync said non-CHAT ("Google lists only: createDecision"). Migration `20261122120000_connector_model_kind_reason_and_events` |
 
 ### ConnectorHealthEvent
 
 Records health check results with status, latency, and any error messages. Indexed by `checkedAt` for time-series queries.
+
+### ConnectorModelEvent (`connector_model_events`, 2026-11-22)
+
+The visibility trail. A sync that flips a model's kind (`KIND_CHANGED`) or unexposes it
+(`UNEXPOSED_BY_SYNC`: adapter verdict, or the provider stopped listing it) writes one row with
+`beforeKind`/`afterKind`, `beforeExposure`/`afterExposure` and `reason`. Computed by
+`detectSyncModelEvents` from the rows read before the sync and the same `syncKindFields` the
+repository writes. Best effort: a failed write is logged and never fails the sync.
+`connector_health_events` was not reused: its `status` is a required connector-health enum.
 
 ### ModelSyncRun
 
@@ -134,6 +145,21 @@ Tracks model sync operations with counts of models found, added, and removed per
 | GET    | /:id/models                | Bearer | List models for a connector                             |
 | PUT    | /:id/models/prompt-caching | ADMIN  | Switch Anthropic prompt caching per model (default OFF) |
 | GET    | /:id/health                | Bearer | Get health history                                      |
+| PUT    | /:id/models/exposure       | ADMIN  | Expose/unexpose; answer adds `notInPicker` (see below)  |
+| GET    | /model-visibility          | ADMIN  | "Why is model X not in the picker?" diagnostic          |
+
+**Model visibility (2026-11-22).** `GET /connectors/model-visibility?provider=GEMINI&modelKey=models/gemini-decision-1`
+(`ADMIN_CONNECTORS_MANAGE`; query params because Gemini keys carry a slash) returns
+`{ provider, modelKey, visibleInPicker, firstFailingGate, model: { connectorId, connectorName, displayName, kind, kindReason, exposure, lifecycle } | null, gates: [{ gate, status: PASS|FAIL|UNKNOWN|SKIPPED, detail }], recentEvents: [...] }`.
+Gates in order: `EXISTS`, `CONNECTOR_ENABLED`, `LIFECYCLE_ACTIVE`, `EXPOSED`, `KIND_CHAT` (connector side,
+the `available-models` filter), then `IN_ROUTING_REGISTRY`, `NOT_ROUTER_ONLY`, `PRICED` from routing-service
+`GET /internal/router-models/visibility` (service token; read with the shared `ROUTING_SERVICE_URL`). Routing down
+reads `UNKNOWN`, never an error. A model on several connectors is judged on the row that passes the most connector
+gates. Plan access is per user (auth-service) and not judged.
+
+**Exposing a non-chat model is allowed** (tool use), but `PUT /:id/models/exposure` with `exposed: true` adds
+`notInPicker: [{ modelKey, kind, kindReason }]` for every requested model the picker will still hide, and the admin
+page shows a warning. Unexposing returns `notInPicker: []`.
 
 `PATCH /:id` accepts `isPayAsYouGo` (`ADMIN_CONNECTORS_MANAGE`). Omitting the
 field leaves the current classification alone rather than resetting it to the

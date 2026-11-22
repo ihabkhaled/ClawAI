@@ -3,6 +3,10 @@ import { type Mock, vi } from 'vitest';
 import { BlockSignalKind } from '../../../../common/enums/block-signal-kind.enum';
 import { FetchStrategyKind } from '../../../../generated/prisma';
 import { FETCH_STRATEGY_MAX_ATTEMPTS } from '../../constants/fetch-strategy.constants';
+import {
+  THIN_PAGE_LOGIN_NOTICE,
+  THIN_PAGE_NOTICE_PREFIX,
+} from '../../constants/thin-content.constants';
 import { FetchRenderHint } from '../../enums/fetch-render-hint.enum';
 import { FetchEscalationError } from '../../errors/fetch-escalation.error';
 import { FetchStrategyOrchestratorService } from '../fetch-strategy-orchestrator.service';
@@ -215,7 +219,120 @@ describe('FetchStrategyOrchestratorService', () => {
 
     expect(archive.fetchPage).not.toHaveBeenCalled();
     expect(escalation.winningStrategy).toBe(FetchStrategyKind.HEADLESS_BROWSER);
-    expect(escalation.result.content).toBe('Loaded a bit');
+    // Labelled, never presented as read.
+    expect(escalation.result.content.startsWith(THIN_PAGE_NOTICE_PREFIX)).toBe(true);
+    expect(escalation.result.content.endsWith('Loaded a bit')).toBe(true);
+    expect(escalation.result.thinContent).toBe(true);
+  });
+
+  it('labels a login wall that stayed thin as needing sign-in', async () => {
+    configs.listEnabledByTier.mockResolvedValue([
+      config(FetchStrategyKind.HTTP_PLAIN, 10),
+      config(FetchStrategyKind.HEADLESS_BROWSER, 30),
+    ]);
+    adapter(FetchStrategyKind.HTTP_PLAIN, page(SHELL));
+    adapter(
+      FetchStrategyKind.HEADLESS_BROWSER,
+      page({ ...SHELL, content: 'Please sign in to continue' }),
+    );
+
+    const escalation = await orchestrator.fetchWithEscalation({ url: 'https://example.com/' });
+
+    expect(escalation.result.content).toContain(THIN_PAGE_LOGIN_NOTICE);
+  });
+
+  describe('thin-content escalation', () => {
+    const PREVIEW_STUB = {
+      content: 'Check out this chat Check out this chat',
+      rawHtml:
+        '<html><head><meta property="og:title" content="Check out this chat"></head><body><a href="/">Check out this chat</a></body></html>',
+      metadata: {
+        description: null,
+        robotsDirective: null,
+        canonicalUrl: null,
+        hreflangAlternates: [],
+        openGraph: { title: 'Check out this chat' },
+        twitterCard: {},
+        jsonLd: [],
+        feedUrls: [],
+      },
+    };
+
+    it('does not count a script-free link-preview stub as read: escalates to the renderer', async () => {
+      configs.listEnabledByTier.mockResolvedValue([
+        config(FetchStrategyKind.HTTP_PLAIN, 10),
+        config(FetchStrategyKind.HTTP_TLS_IMPERSONATE, 20),
+        config(FetchStrategyKind.HEADLESS_BROWSER, 30),
+      ]);
+      adapter(FetchStrategyKind.HTTP_PLAIN, page(PREVIEW_STUB));
+      const tls = adapter(FetchStrategyKind.HTTP_TLS_IMPERSONATE, page());
+      adapter(FetchStrategyKind.HEADLESS_BROWSER, page({ content: LONG_TEXT }));
+
+      const escalation = await orchestrator.fetchWithEscalation({
+        url: 'https://chatgpt.com/share/x',
+      });
+
+      expect(escalation.attempts.map((a) => [a.kind, a.blockSignal])).toEqual([
+        [FetchStrategyKind.HTTP_PLAIN, BlockSignalKind.EMPTY_JS_SHELL],
+        [FetchStrategyKind.HEADLESS_BROWSER, BlockSignalKind.NONE],
+      ]);
+      expect(tls.fetchPage).not.toHaveBeenCalled();
+      expect(escalation.result.servedBy).toBe(FetchStrategyKind.HEADLESS_BROWSER);
+      expect(escalation.result.thinContent).toBeUndefined();
+    });
+
+    it('escalates past a "JavaScript is not available" wall longer than the shell floor', async () => {
+      configs.listEnabledByTier.mockResolvedValue([
+        config(FetchStrategyKind.HTTP_PLAIN, 10),
+        config(FetchStrategyKind.CRAWL4AI, 40),
+      ]);
+      const wall = `JavaScript is not available. ${'Please enable it or switch to a supported browser. '.repeat(6)}`;
+      adapter(
+        FetchStrategyKind.HTTP_PLAIN,
+        page({ content: wall, rawHtml: `<noscript>${wall}</noscript>` }),
+      );
+      adapter(FetchStrategyKind.CRAWL4AI, page());
+
+      const escalation = await orchestrator.fetchWithEscalation({
+        url: 'https://x.com/a/status/1',
+      });
+
+      expect(escalation.winningStrategy).toBe(FetchStrategyKind.CRAWL4AI);
+    });
+
+    it('keeps an honest short static page (no scripts, no social card) on the plain tier', async () => {
+      configs.listEnabledByTier.mockResolvedValue([
+        config(FetchStrategyKind.HTTP_PLAIN, 10),
+        config(FetchStrategyKind.HEADLESS_BROWSER, 30),
+      ]);
+      adapter(
+        FetchStrategyKind.HTTP_PLAIN,
+        page({
+          content: 'Example Domain. This domain is for use in examples.',
+          rawHtml: '<p>Example Domain</p>',
+        }),
+      );
+      const headless = adapter(FetchStrategyKind.HEADLESS_BROWSER, page());
+
+      const escalation = await orchestrator.fetchWithEscalation({ url: 'https://example.com/' });
+
+      expect(escalation.winningStrategy).toBe(FetchStrategyKind.HTTP_PLAIN);
+      expect(headless.fetchPage).not.toHaveBeenCalled();
+    });
+
+    it('never escalates past a 401 login refusal', async () => {
+      configs.listEnabledByTier.mockResolvedValue([
+        config(FetchStrategyKind.HTTP_PLAIN, 10),
+        config(FetchStrategyKind.HEADLESS_BROWSER, 30),
+      ]);
+      adapter(FetchStrategyKind.HTTP_PLAIN, page({ httpStatus: 401, content: 'Sign in' }));
+      const headless = adapter(FetchStrategyKind.HEADLESS_BROWSER, page());
+
+      await expect(
+        orchestrator.fetchWithEscalation({ url: 'https://example.com/' }),
+      ).rejects.toBeInstanceOf(FetchEscalationError);
+      expect(headless.fetchPage).not.toHaveBeenCalled();
+    });
   });
 
   describe('render hint (tier ordering only)', () => {

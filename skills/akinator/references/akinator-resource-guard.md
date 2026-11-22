@@ -13,7 +13,7 @@ it.**
 
 - **Context pack before reading**: `python skills/akinator/scripts/akinator_context.py
 pack --for "<task>" [--budget 3000]` returns a ranked reading list with zero
-  subprocesses, cached in `.ai/cache`. `budget` shows the numbers.
+  subprocesses, cached in the runtime .ai cache folder (absent from a clean checkout). `budget` shows the numbers.
 - **Never glob-read the tree.** Read what the pack, `owners` and the brief name.
 - Use the caches; do not recompute what a generated page already holds.
 - No heavy processes for a question a tool answers from files.

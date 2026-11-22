@@ -27,10 +27,11 @@ import {
   type ConnectorPaygPolicyResult,
   type ConnectorWithModels,
   type HealthCheckResult,
+  type NotInPickerModel,
   type SyncModelsResult,
 } from '../types/connectors.types';
 import { paygDefaultForProvider, rollUpPaygPolicy } from '../utilities/payg-policy.utility';
-import { classifyAudioOutputModel } from '@claw/shared-utilities';
+import { isPickerKind } from '../utilities/picker-kind.utility';
 import { snapshotMediaOutputFields } from '../utilities/snapshot-media-output.utility';
 import { formatModelDisplayName } from '../utilities/model-display-name.utility';
 import { ProviderDefinitionsService } from './provider-definitions.service';
@@ -426,8 +427,8 @@ export class ConnectorsService implements OnApplicationBootstrap {
     this.logger.debug('getAvailableModels: listing exposed chat and audio-generation models');
     // Audio-OUTPUT models (tts, music) are kind AUDIO in the catalog, so they are asked for
     // explicitly; input-only audio models (whisper, transcribe, realtime) are dropped below.
-    const rows = (await this.connectorModelsRepository.findExposedForCatalog(true)).filter(
-      (row) => row.kind !== 'AUDIO' || classifyAudioOutputModel(row.modelKey) !== undefined,
+    const rows = (await this.connectorModelsRepository.findExposedForCatalog(true)).filter((row) =>
+      isPickerKind(row.kind, row.modelKey),
     );
     // The display name is re-formatted on READ, exactly as the public catalog
     // does it. Gemini's ids are namespaced (`models/gemini-2.5-pro`) and the
@@ -459,11 +460,17 @@ export class ConnectorsService implements OnApplicationBootstrap {
   // keys are captured before the write so the caller can report what an unexpose
   // actually took away. setExposure only touches rows that already exist and are
   // not REMOVED, so a forged modelKey changes nothing.
+  //
+  // Exposing a non-chat model (TOOL, EMBEDDING, input-only AUDIO) is ALLOWED —
+  // exposure also serves tool use — but the answer names it in `notInPicker`
+  // with its kind and reason, so the admin is told at once that chat will still
+  // not show it. An owner re-exposed `models/gemini-decision-1` (TOOL) believing
+  // chat hid it by mistake (2026-11-22).
   async setModelExposure(
     connectorId: string,
     modelKeys: string[],
     exposed: boolean,
-  ): Promise<{ updated: number; previouslyExposed: string[] }> {
+  ): Promise<{ updated: number; previouslyExposed: string[]; notInPicker: NotInPickerModel[] }> {
     const connector = await this.connectorsRepository.findById(connectorId);
     if (!connector) {
       throw new EntityNotFoundException('Connector', connectorId);
@@ -505,7 +512,21 @@ export class ConnectorsService implements OnApplicationBootstrap {
       updated,
       timestamp: new Date().toISOString(),
     });
-    return { updated, previouslyExposed };
+    const notInPicker = exposed ? await this.findNotInPicker(connectorId, modelKeys) : [];
+    if (notInPicker.length > 0) {
+      this.logger.warn(
+        `setModelExposure: exposed ${String(notInPicker.length)} model(s) the chat picker will not show (non-chat kind): ${notInPicker.map((model) => model.modelKey).join(', ')}`,
+      );
+    }
+    return { updated, previouslyExposed, notInPicker };
+  }
+
+  private async findNotInPicker(
+    connectorId: string,
+    modelKeys: string[],
+  ): Promise<NotInPickerModel[]> {
+    const rows = await this.connectorModelsRepository.findKinds(connectorId, modelKeys);
+    return rows.filter((row) => !isPickerKind(row.kind, row.modelKey));
   }
 
   // F093: administrator switch for Anthropic prompt caching, per model. The

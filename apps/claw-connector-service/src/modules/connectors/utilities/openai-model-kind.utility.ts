@@ -12,3 +12,10 @@ export function classifyOpenAiModelKind(modelId: string): ModelKind {
     ? ModelKind.TOOL
     : ModelKind.CHAT;
 }
+
+/** Why `classifyOpenAiModelKind` said TOOL, for the admin model list. Undefined for chat. */
+export function openAiKindReason(modelId: string): string | undefined {
+  return classifyOpenAiModelKind(modelId) === ModelKind.CHAT
+    ? undefined
+    : 'OpenAI serves this model on /v1/responses only (chat-service calls /v1/chat/completions)';
+}

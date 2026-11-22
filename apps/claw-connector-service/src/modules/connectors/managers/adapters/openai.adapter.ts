@@ -4,7 +4,10 @@ import { ConnectorStatus, ModelLifecycle } from '../../../../generated/prisma';
 import { type HealthCheckResult, type NormalizedModel } from '../../types/connectors.types';
 import { type OpenAIModelsResponse } from '../../types/provider-api.types';
 import { declaredHost } from '@claw/shared-utilities';
-import { classifyOpenAiModelKind } from '../../utilities/openai-model-kind.utility';
+import {
+  classifyOpenAiModelKind,
+  openAiKindReason,
+} from '../../utilities/openai-model-kind.utility';
 import { httpGet } from '../../../../common/utilities/http.utility';
 import {
   type ConnectorConfig,
@@ -126,6 +129,7 @@ export class OpenAIAdapter implements ProviderAdapter {
       lifecycle: isRetiredOpenAiModel(model.id) ? ModelLifecycle.SUNSET : ModelLifecycle.ACTIVE,
       // Responses-only models (*-pro, *-codex) are TOOL: chat-service cannot call them.
       kind: classifyOpenAiModelKind(model.id),
+      kindReason: openAiKindReason(model.id),
       capabilities: {
         supportsStreaming: true,
         supportsTools: true,

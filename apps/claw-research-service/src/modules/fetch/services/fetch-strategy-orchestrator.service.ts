@@ -28,14 +28,15 @@ import {
   summariseAttempts,
 } from '../utilities/escalation-helpers.utility';
 import { HostRateLimiter } from '../utilities/host-rate-limiter.utility';
+import { markThinResult } from '../utilities/thin-content.utility';
 import { FetchStrategyRegistryService } from './fetch-strategy-registry.service';
 import type { FetchStrategyConfig } from '../../../generated/prisma';
 import type {
   EscalationOptions,
+  EscalationRun,
   FetchEscalationResult,
   FetchStrategyAttempt,
   StrategyAttemptOutcome,
-  ThinCandidate,
 } from '../types/fetch-strategy.types';
 import type { FetchRequest, FetchResult } from '../types/fetch.types';
 import type { FetchStrategyAdapter } from '../adapters/fetch-strategy-adapter.interface';
@@ -76,74 +77,104 @@ export class FetchStrategyOrchestratorService {
     request: FetchRequest,
     options: EscalationOptions = {},
   ): Promise<FetchEscalationResult> {
-    const host = hostOf(request.url);
-    const deadline = Date.now() + FETCH_ESCALATION_WALL_CLOCK_MS;
-    const observed = new Set<BlockSignalKind>(options.initialSignals ?? []);
-    const excluded = new Set(options.excludeKinds ?? []);
-    const attempts: FetchStrategyAttempt[] = [];
-    let bestThin: ThinCandidate | null = null;
-
-    const chain = orderChainForHint(await this.buildChain(host), options.renderHint);
+    const run = this.startRun(request, options);
+    const chain = orderChainForHint(await this.buildChain(run.host), options.renderHint);
     for (const config of chain) {
-      if (attempts.length >= FETCH_STRATEGY_MAX_ATTEMPTS || hasTerminalSignal(observed)) {
+      if (run.attempts.length >= FETCH_STRATEGY_MAX_ATTEMPTS || hasTerminalSignal(run.observed)) {
         break;
       }
-      const adapter = this.runnableAdapter(config, request.url, observed, excluded);
+      const adapter = this.runnableAdapter(config, request.url, run.observed, run.excluded);
       if (adapter === null) {
         continue;
       }
-      const remaining = deadline - Date.now();
+      const remaining = run.deadline - Date.now();
       if (remaining < FETCH_ESCALATION_MIN_ATTEMPT_MS) {
-        this.logger.warn(`fetch.budget_exhausted host=${host} attempts=${String(attempts.length)}`);
+        this.logger.warn(
+          `fetch.budget_exhausted host=${run.host} attempts=${String(run.attempts.length)}`,
+        );
         break;
       }
-      if (STRATEGIES_TOUCHING_ORIGIN.has(config.kind)) {
-        await this.rateLimiter.waitForTurn(host, options.minHostIntervalMs ?? null);
-      }
-      const timeoutMs = Math.min(
-        config.timeoutMs,
-        request.timeoutMs ?? config.timeoutMs,
-        remaining,
-      );
-      const attempt = await this.tryStrategy(adapter, config, { ...request, timeoutMs });
-      attempts.push(attempt.record);
-
+      const attempt = await this.runAttempt(adapter, config, request, options, remaining, run.host);
+      run.attempts.push(attempt.record);
       if (attempt.record.outcome === 'SUCCESS') {
-        await this.hostMemory.recordSuccess(host, config.kind);
-        this.logServed(request.url, config, attempts, observed, attempt.result);
-        return {
-          result: {
-            ...attempt.result,
-            servedBy: config.kind,
-            attempts: summariseAttempts(attempts),
-          },
-          winningStrategy: config.kind,
-          attempts,
-        };
+        await this.hostMemory.recordSuccess(run.host, config.kind);
+        return this.served(request.url, config, attempt.result, run);
       }
-      observed.add(attempt.record.blockSignal);
-      if (attempt.record.blockSignal === BlockSignalKind.EMPTY_JS_SHELL) {
-        bestThin = longerThin(bestThin, { config, result: attempt.result });
-        continue;
-      }
-      await this.hostMemory.recordFailure(host, config.kind, attempt.record.blockSignal);
+      await this.recordBlocked(config, attempt, run);
     }
+    return this.finishWithoutSuccess(request.url, run);
+  }
 
-    // Every renderer came back thin too: the page really is short. Its live
-    // text beats both an error and anyone else's copy of it.
-    if (bestThin !== null && !hasTerminalSignal(observed)) {
-      this.logServed(request.url, bestThin.config, attempts, observed, bestThin.result);
-      return {
-        result: {
-          ...bestThin.result,
-          servedBy: bestThin.config.kind,
-          attempts: summariseAttempts(attempts),
-        },
-        winningStrategy: bestThin.config.kind,
-        attempts,
-      };
+  private startRun(request: FetchRequest, options: EscalationOptions): EscalationRun {
+    return {
+      host: hostOf(request.url),
+      deadline: Date.now() + FETCH_ESCALATION_WALL_CLOCK_MS,
+      observed: new Set<BlockSignalKind>(options.initialSignals ?? []),
+      excluded: new Set(options.excludeKinds ?? []),
+      attempts: [],
+      bestThin: null,
+    };
+  }
+
+  /**
+   * Every renderer came back thin too: its live text beats both an error and
+   * anyone else's copy of it, but it is labelled (`markThinResult`) so nobody
+   * presents a shell or a login wall as a page that was read. Otherwise the
+   * escalation failed.
+   */
+  private finishWithoutSuccess(url: string, run: EscalationRun): FetchEscalationResult {
+    const thin = hasTerminalSignal(run.observed) ? null : run.bestThin;
+    return thin === null
+      ? this.failEscalation(url, run)
+      : this.served(url, thin.config, markThinResult(thin.result), run);
+  }
+
+  /** Waits for the host's turn (origin-touching tiers), then runs one clamped attempt. */
+  private async runAttempt(
+    adapter: FetchStrategyAdapter,
+    config: FetchStrategyConfig,
+    request: FetchRequest,
+    options: EscalationOptions,
+    remaining: number,
+    host: string,
+  ): Promise<StrategyAttemptOutcome> {
+    await (STRATEGIES_TOUCHING_ORIGIN.has(config.kind)
+      ? this.rateLimiter.waitForTurn(host, options.minHostIntervalMs ?? null)
+      : Promise.resolve());
+    const timeoutMs = Math.min(config.timeoutMs, request.timeoutMs ?? config.timeoutMs, remaining);
+    return this.tryStrategy(adapter, config, { ...request, timeoutMs });
+  }
+
+  /** A thin result is kept as a fallback; any other block is remembered against the host. */
+  private async recordBlocked(
+    config: FetchStrategyConfig,
+    attempt: StrategyAttemptOutcome,
+    run: EscalationRun,
+  ): Promise<void> {
+    run.observed.add(attempt.record.blockSignal);
+    if (attempt.record.blockSignal === BlockSignalKind.EMPTY_JS_SHELL) {
+      run.bestThin = longerThin(run.bestThin, { config, result: attempt.result });
+      return;
     }
+    await this.hostMemory.recordFailure(run.host, config.kind, attempt.record.blockSignal);
+  }
 
+  private served(
+    url: string,
+    config: FetchStrategyConfig,
+    result: FetchResult,
+    run: EscalationRun,
+  ): FetchEscalationResult {
+    this.logServed(url, config, run.attempts, run.observed, result);
+    return {
+      result: { ...result, servedBy: config.kind, attempts: summariseAttempts(run.attempts) },
+      winningStrategy: config.kind,
+      attempts: run.attempts,
+    };
+  }
+
+  private failEscalation(url: string, run: EscalationRun): never {
+    const { host, attempts, observed } = run;
     const signals = [...observed];
     const trail = attempts
       .map(
@@ -152,10 +183,10 @@ export class FetchStrategyOrchestratorService {
       )
       .join(', ');
     this.logger.warn(
-      `fetch.failed host=${host} path=${loggablePath(request.url)} attempts=${String(attempts.length)} signals=${signals.join('|')} trail=[${trail}]`,
+      `fetch.failed host=${host} path=${loggablePath(url)} attempts=${String(attempts.length)} signals=${signals.join('|')} trail=[${trail}]`,
     );
     throw new FetchEscalationError(
-      `No fetch strategy could serve ${loggablePath(request.url)} (${String(attempts.length)} tried: ${trail || 'none eligible'})`,
+      `No fetch strategy could serve ${loggablePath(url)} (${String(attempts.length)} tried: ${trail || 'none eligible'})`,
       attempts,
       signals,
     );

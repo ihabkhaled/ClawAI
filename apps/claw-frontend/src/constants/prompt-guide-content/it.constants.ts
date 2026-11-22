@@ -116,7 +116,11 @@ export const IT_PROMPT_GUIDE_CONTENT: PromptGuideDictionary = {
         title: 'Prompting few-shot: fornire esempi a un modello',
         description:
           'Come usare uno o più esempi in un prompt per mostrare a un modello lo schema desiderato, anziché limitarsi a descriverlo — con indicazioni su quanti esempi aiutano e quando lo zero-shot è sufficiente.',
-        keywords: ['prompting few-shot', 'esempi nel prompt', 'one-shot vs few-shot prompting'],
+        keywords: [
+          'prompting few-shot',
+          'esempi nel prompt',
+          'prompt con un esempio o con più esempi',
+        ],
       },
       eyebrow: 'Guide sui prompt',
       title: 'Prompting few-shot: fornire esempi a un modello',

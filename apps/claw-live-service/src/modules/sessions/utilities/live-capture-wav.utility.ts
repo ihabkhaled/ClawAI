@@ -38,7 +38,8 @@ function durationOf(dataBytes: number): CaptureWavInfo | null {
  */
 export function parseCaptureWav(buffer: unknown): CaptureWavInfo | null {
   // Re-proven here so the parser is safe on its own, whatever a caller passes (CodeQL js/type-confusion).
-  if (!(buffer instanceof Buffer)) return null;
+  if (Array.isArray(buffer) || typeof buffer === 'string' || !(buffer instanceof Buffer))
+    return null;
   if (buffer.length < WAV_RIFF_HEADER_BYTES + WAV_CHUNK_HEADER_BYTES) return null;
   if (buffer.toString('ascii', 0, 4) !== 'RIFF' || buffer.toString('ascii', 8, 12) !== 'WAVE') {
     return null;

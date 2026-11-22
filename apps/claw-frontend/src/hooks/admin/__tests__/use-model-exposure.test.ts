@@ -27,6 +27,41 @@ const rowsOf = (count: number): ConnectorModelRow[] =>
     lifecycle: 'ACTIVE',
   })) as unknown as ConnectorModelRow[];
 
+describe('useModelExposure — non-chat expose warning', () => {
+  beforeEach(() => {
+    fetchConnectorModels.mockReset();
+    setModelExposure.mockReset();
+  });
+
+  it('collects the exposed keys the server says the chat picker still hides', async () => {
+    fetchConnectorModels.mockResolvedValue(rowsOf(2));
+    setModelExposure.mockResolvedValue({
+      updated: 2,
+      previouslyExposed: [],
+      notInPicker: [{ modelKey: 'openrouter/model-1', kind: 'TOOL', kindReason: null }],
+    });
+
+    const { result } = renderHook(() => useModelExposure('connector-1'));
+    await act(async () => {
+      await result.current.applyTo(['openrouter/model-0', 'openrouter/model-1'], true);
+    });
+
+    expect(result.current.notInPickerKeys).toEqual(['openrouter/model-1']);
+  });
+
+  it('reports nothing when an older server sends no notInPicker field', async () => {
+    fetchConnectorModels.mockResolvedValue(rowsOf(1));
+    setModelExposure.mockResolvedValue({});
+
+    const { result } = renderHook(() => useModelExposure('connector-1'));
+    await act(async () => {
+      await result.current.applyTo(['openrouter/model-0'], true);
+    });
+
+    expect(result.current.notInPickerKeys).toEqual([]);
+  });
+});
+
 describe('useModelExposure — bulk apply', () => {
   beforeEach(() => {
     fetchConnectorModels.mockReset();

@@ -1,5 +1,6 @@
 import type { FetchStrategyKind } from '../../../generated/prisma';
 import type { HtmlMetadata } from '../../../common/types/html-extract.types';
+import type { PageExtractionKind } from '../enums/page-extraction-kind.enum';
 
 export type FetchRequest = {
   url: string;
@@ -28,6 +29,10 @@ export type ToolFetchView = {
   servedBy: FetchStrategyKind | null;
   /** Set only for an archived copy; the content also starts with a visible label. */
   archivedAt: string | null;
+  /** Which extractor produced `content` (null on a cache hit or a non-HTML page). */
+  extraction: PageExtractionKind | null;
+  /** True when the page stayed a thin shell on every tier; `content` starts with a notice. */
+  thinContent: boolean;
 };
 
 /** One escalation attempt, reduced to what may leave the service: which tier, and how it ended. No URL, body or error text. */
@@ -92,4 +97,18 @@ export type FetchResult = {
    * ignores this field can mistake it for the live page.
    */
   archivedAt?: string;
+  /**
+   * Which extractor produced `content` (`extractPageContent`): the visible
+   * article/text, the page's embedded state, or a site adapter. Absent on
+   * cache hits and non-HTML results.
+   */
+  extraction?: PageExtractionKind;
+  /** The site adapter's name, set only when `extraction` is SITE_ADAPTER. */
+  siteAdapter?: string;
+  /**
+   * `true` only when every tier returned a thin shell and the chain fell back
+   * to the live thin text (`markThinResult`): the content starts with a notice
+   * and the page must not be presented as read. Absent otherwise.
+   */
+  thinContent?: true;
 };

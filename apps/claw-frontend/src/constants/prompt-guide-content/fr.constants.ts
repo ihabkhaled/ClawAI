@@ -121,7 +121,7 @@ export const FR_PROMPT_GUIDE_CONTENT: PromptGuideDictionary = {
         keywords: [
           'prompting few-shot',
           'exemples dans un prompt',
-          'one-shot vs few-shot prompting',
+          'prompts à un exemple ou à plusieurs exemples',
         ],
       },
       eyebrow: 'Guides de prompts',

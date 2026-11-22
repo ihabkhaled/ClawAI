@@ -67,6 +67,7 @@ describe('model exposure view helpers', () => {
     lifecycle: 'ACTIVE',
     exposure: ConnectorModelExposure.UNEXPOSED,
     kind: ConnectorModelKind.CHAT,
+    kindReason: null,
     maxContextTokens: null,
     usageTier: 'STANDARD',
     syncedAt: '2026-09-25T11:30:44.256Z',

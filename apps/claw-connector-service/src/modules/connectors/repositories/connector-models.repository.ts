@@ -6,14 +6,18 @@ import {
   ModelUsageTier,
   type Prisma,
 } from '../../../generated/prisma';
-import { type NormalizedModel } from '../types/connectors.types';
+import {
+  type ModelVisibilityRow,
+  type NormalizedModel,
+  type NotInPickerModel,
+} from '../types/connectors.types';
 import {
   MODEL_UNAVAILABLE_RETIRE_THRESHOLD,
   MODEL_UNAVAILABLE_WINDOW_MS,
 } from '../constants/model-unavailable.constants';
 import { isPricedMediaModel } from '@claw/shared-utilities';
-import { adapterKindFields, newMediaModelExposure } from '../utilities/adapter-kind-fields.utility';
-import { nonChatKind } from '../utilities/model-kind.utility';
+import { newMediaModelExposure } from '../utilities/adapter-kind-fields.utility';
+import { syncKindFields } from '../utilities/sync-kind-fields.utility';
 import { isConnectorProvider } from '../utilities/connector-provider.utility';
 
 @Injectable()
@@ -45,8 +49,7 @@ export class ConnectorModelsRepository {
           inputUsdPerMillion: model.usage?.inputUsdPerMillion,
           cachedInputUsdPerMillion: model.usage?.cachedInputUsdPerMillion,
           outputUsdPerMillion: model.usage?.outputUsdPerMillion,
-          ...nonChatKind(model.modelKey),
-          ...adapterKindFields(model, true, provider),
+          ...syncKindFields(model, true, provider),
           syncedAt: new Date(),
         },
         create: {
@@ -67,8 +70,7 @@ export class ConnectorModelsRepository {
           inputUsdPerMillion: model.usage?.inputUsdPerMillion,
           cachedInputUsdPerMillion: model.usage?.cachedInputUsdPerMillion,
           outputUsdPerMillion: model.usage?.outputUsdPerMillion,
-          ...nonChatKind(model.modelKey),
-          ...adapterKindFields(model, false, provider),
+          ...syncKindFields(model, false, provider),
           ...newMediaModelExposure(provider, model.modelKey),
         },
       }),
@@ -128,8 +130,7 @@ export class ConnectorModelsRepository {
             inputUsdPerMillion: model.usage?.inputUsdPerMillion,
             cachedInputUsdPerMillion: model.usage?.cachedInputUsdPerMillion,
             outputUsdPerMillion: model.usage?.outputUsdPerMillion,
-            ...nonChatKind(model.modelKey),
-            ...adapterKindFields(model, true, provider),
+            ...syncKindFields(model, true, provider),
             syncedAt: new Date(),
             lastSeenAt: new Date(),
           },
@@ -151,8 +152,7 @@ export class ConnectorModelsRepository {
             inputUsdPerMillion: model.usage?.inputUsdPerMillion,
             cachedInputUsdPerMillion: model.usage?.cachedInputUsdPerMillion,
             outputUsdPerMillion: model.usage?.outputUsdPerMillion,
-            ...nonChatKind(model.modelKey),
-            ...adapterKindFields(model, false, provider),
+            ...syncKindFields(model, false, provider),
             ...newMediaModelExposure(provider, model.modelKey),
             lastSeenAt: new Date(),
           },
@@ -339,6 +339,47 @@ export class ConnectorModelsRepository {
       data: { promptCaching: enabled },
     });
     return { updated: result.count };
+  }
+
+  // Kind and reason for a bounded set of one connector's models, so an expose can
+  // warn about the ones the chat picker will still not show.
+  async findKinds(connectorId: string, modelKeys: string[]): Promise<NotInPickerModel[]> {
+    return this.prisma.connectorModel.findMany({
+      where: { connectorId, modelKey: { in: modelKeys }, lifecycle: { not: 'REMOVED' } },
+      select: { modelKey: true, kind: true, kindReason: true },
+    });
+  }
+
+  // Every row a (provider, model) pair can mean, on any connector, for the
+  // "why is this model not in the picker" diagnostic. `modelKeys` carries every
+  // catalog spelling (bare, `models/...`). A custom provider is matched by its
+  // definition key, a built-in one by its enum, as findExposedPairs does.
+  async findForVisibility(provider: string, modelKeys: string[]): Promise<ModelVisibilityRow[]> {
+    return this.prisma.connectorModel.findMany({
+      where: {
+        modelKey: { in: modelKeys },
+        ...(isConnectorProvider(provider)
+          ? { provider }
+          : { connector: { providerDefinition: { key: provider } } }),
+      },
+      select: {
+        connectorId: true,
+        provider: true,
+        modelKey: true,
+        displayName: true,
+        kind: true,
+        kindReason: true,
+        exposure: true,
+        lifecycle: true,
+        connector: {
+          select: {
+            name: true,
+            isEnabled: true,
+            providerDefinition: { select: { key: true, isActive: true } },
+          },
+        },
+      },
+    });
   }
 
   // Which of these keys are currently exposed. The caller uses this to show what an

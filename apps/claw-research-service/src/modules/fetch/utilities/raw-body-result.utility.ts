@@ -31,6 +31,8 @@ export function buildResultFromRawBody(input: RawBodyInput): FetchResult {
     latencyMs: Date.now() - input.startedAt,
     rawHtml: RAW_BODY_PRESERVED_MIME_TYPES.has(mime) ? input.body : undefined,
     metadata: extracted.metadata,
+    ...(extracted.extraction === undefined ? {} : { extraction: extracted.extraction }),
+    ...(extracted.siteAdapter === undefined ? {} : { siteAdapter: extracted.siteAdapter }),
   };
 }
 
@@ -45,15 +47,23 @@ function extractBody(
   mimeType: string | null,
   body: string,
   finalUrl: string,
-): Pick<FetchResult, 'title' | 'content' | 'links' | 'metadata'> {
+): Pick<FetchResult, 'title' | 'content' | 'links' | 'metadata' | 'extraction' | 'siteAdapter'> {
   if (mimeType !== null && HTML_MIME_TYPES.has(mimeType)) {
     const page = extractPageContent(body, finalUrl);
-    return { title: page.title, content: page.content, links: page.links, metadata: page.metadata };
+    return {
+      title: page.title,
+      content: page.content,
+      links: page.links,
+      metadata: page.metadata,
+      extraction: page.extraction,
+      siteAdapter: page.siteAdapter,
+    };
   }
-  if (mimeType === 'application/json') {
-    return { title: null, content: prettyJson(body), links: [] };
-  }
-  return { title: null, content: body, links: [] };
+  return {
+    title: null,
+    content: mimeType === 'application/json' ? prettyJson(body) : body,
+    links: [],
+  };
 }
 
 function prettyJson(body: string): string {

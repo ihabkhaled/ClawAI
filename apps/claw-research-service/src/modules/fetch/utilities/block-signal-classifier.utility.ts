@@ -1,12 +1,11 @@
 import { BlockSignalKind } from '../../../common/enums/block-signal-kind.enum';
 import {
-  BLOCK_SIGNAL_EMPTY_SHELL_MIN_CHARS,
   BLOCK_SIGNAL_SCAN_CHARS,
   CAPTCHA_MARKERS,
   DEAD_HOST_ERROR_MARKERS,
   JS_CHALLENGE_MARKERS,
-  SCRIPT_DRIVEN_MARKUP_PATTERN,
 } from '../constants/fetch-strategy.constants';
+import { isThinContent } from './thin-content.utility';
 import type { FetchResult } from '../types/fetch.types';
 
 /**
@@ -20,7 +19,7 @@ import type { FetchResult } from '../types/fetch.types';
  * purpose, not for lack of rendering.
  */
 export function classifyBlockSignal(
-  result: Pick<FetchResult, 'httpStatus' | 'content' | 'mimeType' | 'rawHtml'>,
+  result: Pick<FetchResult, 'httpStatus' | 'content' | 'mimeType' | 'rawHtml' | 'metadata'>,
 ): BlockSignalKind {
   const status = result.httpStatus;
   const lowerContent = result.content.slice(0, BLOCK_SIGNAL_SCAN_CHARS).toLowerCase();
@@ -35,7 +34,7 @@ export function classifyBlockSignal(
   if (status === 503 || containsAnyMarker(lowerContent, JS_CHALLENGE_MARKERS)) {
     return BlockSignalKind.JS_CHALLENGE;
   }
-  if (isThinHtml(result)) {
+  if (isThinContent(result)) {
     return BlockSignalKind.EMPTY_JS_SHELL;
   }
   return status >= 400 ? BlockSignalKind.UNKNOWN_ERROR : BlockSignalKind.NONE;
@@ -79,25 +78,6 @@ function classifyStatus(status: number): BlockSignalKind | null {
       return null;
     }
   }
-}
-
-/**
- * Thin text alone is not a shell — example.com is 130 characters of honest
- * static HTML. A shell is thin text on a page whose markup is script-driven
- * (a `<script>` tag or an SPA mount point), i.e. the text is plausibly still
- * to come. Without raw HTML to look at, a thin page is taken at its word.
- */
-function isThinHtml(
-  result: Pick<FetchResult, 'httpStatus' | 'content' | 'mimeType' | 'rawHtml'>,
-): boolean {
-  const isThin =
-    result.httpStatus >= 200 &&
-    result.httpStatus < 300 &&
-    result.mimeType === 'text/html' &&
-    result.content.trim().length < BLOCK_SIGNAL_EMPTY_SHELL_MIN_CHARS;
-  return (
-    isThin && result.rawHtml !== undefined && SCRIPT_DRIVEN_MARKUP_PATTERN.test(result.rawHtml)
-  );
 }
 
 function containsAnyMarker(haystack: string, markers: readonly string[]): boolean {

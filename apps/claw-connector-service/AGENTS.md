@@ -22,9 +22,9 @@ change type needs (`rules/23-git-commits-hooks-and-release-gates.md`, gate matri
 ## Ownership (generated)
 - Port: 4003
 - Database: postgresql
-- Prisma models: Connector, ConnectorHealthEvent, ConnectorModel, ConnectorProviderDefinition, ModelSyncRun
-- API endpoints: 29 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 62 (vitest)
+- Prisma models: Connector, ConnectorHealthEvent, ConnectorModel, ConnectorModelEvent, ConnectorProviderDefinition, ModelSyncRun
+- API endpoints: 31 (see `.ai/manifests/api-endpoints.json`)
+- Test files: 67 (vitest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-entitlements, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing

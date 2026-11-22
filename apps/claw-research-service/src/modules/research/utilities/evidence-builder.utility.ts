@@ -7,7 +7,7 @@ import {
 import { allocateCharBudget } from './fetch-targets.utility';
 import { sanitizeForLlm } from '../../../common/utilities/content-safety.utility';
 import type { FetchStrategyKind } from '../../../generated/prisma';
-import type { FetchAttemptSummary } from '../../fetch/types/fetch.types';
+import type { FetchAttemptSummary, FetchResult } from '../../fetch/types/fetch.types';
 import type {
   BuildEvidenceInput,
   EvidenceBundle,
@@ -128,10 +128,12 @@ export function pushFetchToolMarker(
  * result carries no `servedBy` (a cache hit): the strategy was not measured
  * this time, so none is claimed. Spread it into the item.
  */
-export function fetchProvenanceOf(result: {
-  servedBy?: FetchStrategyKind;
-  attempts?: readonly FetchAttemptSummary[];
-}): { fetch?: EvidenceFetchProvenance } {
+export function fetchProvenanceOf(
+  result: { servedBy?: FetchStrategyKind; attempts?: readonly FetchAttemptSummary[] } & Pick<
+    FetchResult,
+    'extraction' | 'siteAdapter' | 'thinContent'
+  >,
+): { fetch?: EvidenceFetchProvenance } {
   if (result.servedBy === undefined) {
     return {};
   }
@@ -139,6 +141,9 @@ export function fetchProvenanceOf(result: {
     fetch: {
       strategy: result.servedBy,
       attempts: (result.attempts ?? []).map((a) => ({ kind: a.kind, outcome: a.outcome })),
+      ...(result.extraction === undefined ? {} : { extraction: result.extraction }),
+      ...(result.siteAdapter === undefined ? {} : { siteAdapter: result.siteAdapter }),
+      ...(result.thinContent === true ? { thin: true as const } : {}),
     },
   };
 }

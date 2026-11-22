@@ -114,6 +114,8 @@ export function buildSidecarResult(page: SidecarPage): FetchResult {
     latencyMs: Date.now() - page.startedAt,
     rawHtml: page.html ?? undefined,
     metadata: extracted?.metadata,
+    ...(extracted === null ? {} : { extraction: extracted.extraction }),
+    ...(extracted?.siteAdapter === undefined ? {} : { siteAdapter: extracted.siteAdapter }),
     renderedWithHeadlessBrowser: true,
   };
 }

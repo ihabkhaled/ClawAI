@@ -227,7 +227,7 @@ export const IT_COMPARISON_CONTENT: ComparisonDictionary = {
     [ComparisonRival.COPILOT]: {
       name: 'Microsoft Copilot',
       vendor: 'Microsoft',
-      eyebrow: 'ClawAI vs Microsoft Copilot',
+      eyebrow: 'ClawAI a confronto con Microsoft Copilot',
       intro:
         'Copilot è Microsoft 365 con un assistente intrecciato dentro. ClawAI è uno spazio di lavoro autonomo che raggiunge nove famiglie di modelli e può girare interamente sui tuoi server.',
       theirStrength:

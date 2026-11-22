@@ -65,6 +65,7 @@ export function useModelExposurePanel(connectorId: string): UseModelExposurePane
     exposedCount: exposure.exposedCount,
     unexposedCount: exposure.unexposedCount,
     impact: exposure.impact,
+    notInPickerKeys: exposure.notInPickerKeys,
     isLoading: exposure.isLoading,
     isSaving: exposure.isSaving,
     errorMessage: exposure.errorMessage,

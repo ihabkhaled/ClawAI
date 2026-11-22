@@ -523,6 +523,7 @@ that 403s on every call.
 - Model exposure = cards on `touch:`, sticky-header table on a mouse, 50 rows per
   "Show more", filters in a bottom sheet on touch, sticky bulk bar. Copy lives in
   `adminConnectors.exposureUi` (`locales/model-exposure-ui-translations.ts`).
+- Kind column, "Not offered in chat" + sync reason, and a per-row "Why hidden?" dialog (`GET /connectors/model-visibility`, fetched only while open); an expose that includes non-chat models shows a `notInPicker` warning (2026-11-22). Copy: `adminConnectors.visibility` (`locales/model-visibility-translations.ts`).
 - Doc: `docs/05-frontend/admin-model-billing-and-exposure.md`.
 
 ## Admin per-user statistics modals: `/admin/users` (2026-09-06)

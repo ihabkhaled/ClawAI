@@ -17,6 +17,7 @@ import type {
 } from '@/types/model-exposure.types';
 
 import { resolveModelBilling } from './model-billing.utility';
+import { resolveModelKindView } from './model-visibility.utility';
 
 // Pure — no network, so it is unit tested without a server.
 export function chunkModelKeys(modelKeys: readonly string[]): string[][] {
@@ -157,5 +158,6 @@ export function buildModelExposureRowViews(
     lastSeenLabel: formatModelLastSeen(row.lastSeenAt, locale),
     lifecycleLabelKey: resolveLifecycleLabelKey(row.lifecycle),
     lifecycleBadgeClass: resolveLifecycleBadgeClass(row.lifecycle),
+    kindView: resolveModelKindView(row),
   }));
 }

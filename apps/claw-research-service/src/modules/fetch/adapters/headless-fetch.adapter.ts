@@ -88,6 +88,8 @@ export class HeadlessFetchAdapter implements FetchStrategyAdapter, OnModuleDestr
         latencyMs: Date.now() - start,
         rawHtml: html,
         metadata: extracted.metadata,
+        extraction: extracted.extraction,
+        ...(extracted.siteAdapter === undefined ? {} : { siteAdapter: extracted.siteAdapter }),
         renderedWithHeadlessBrowser: true,
       };
     } finally {

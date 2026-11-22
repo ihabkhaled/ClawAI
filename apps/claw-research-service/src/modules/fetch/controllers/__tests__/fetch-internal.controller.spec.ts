@@ -64,6 +64,8 @@ describe('FetchService.fetchPageForTool', () => {
       links: ['https://www.example.com/b'],
       servedBy: FetchStrategyKind.CRAWL4AI,
       archivedAt: null,
+      extraction: null,
+      thinContent: false,
     });
     expect(JSON.stringify(view)).not.toContain('secret markup');
   });

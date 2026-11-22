@@ -64,6 +64,17 @@ export function ModelExposureSection({
             {panel.errorMessage}
           </p>
         ) : null}
+        {panel.notInPickerKeys.length > 0 ? (
+          <p
+            className="border-warning/30 bg-warning-surface rounded-md border p-2 text-sm"
+            role="status"
+            data-testid="model-exposure-not-in-picker"
+          >
+            {t('adminConnectors.visibility.exposedNotInChatWarning', {
+              models: panel.notInPickerKeys.join(', '),
+            })}
+          </p>
+        ) : null}
         <ModelExposureBulkBar
           selectedCount={panel.selectedCount}
           impact={panel.impact}

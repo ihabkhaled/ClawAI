@@ -53,7 +53,7 @@ export const TH_COMPARE_MODELS_CONTENT: CompareModelsDictionary = {
           'วิธีที่ระบบกำหนดเส้นทางของ ClawAI เลือกระหว่างแคตตาล็อกโมเดลของ OpenAI และ Anthropic สำหรับคำขอหนึ่งๆ — ระดับต้นทุน ความเหมาะสมกับโหมดให้เหตุผล และการปักหมุดด้วยตนเอง ไม่มีการประกาศผู้ชนะ ตรวจสอบแคตตาล็อกจริงก่อนเลือกแผน',
         keywords: [
           'OpenAI กับ Anthropic',
-          'ClawAI router OpenAI Anthropic',
+          'เราเตอร์ ClawAI OpenAI Anthropic',
           'การเลือกระหว่างโมเดล OpenAI กับ Claude',
         ],
       },
@@ -113,7 +113,7 @@ export const TH_COMPARE_MODELS_CONTENT: CompareModelsDictionary = {
           'วิธีที่ระบบกำหนดเส้นทางของ ClawAI เลือกระหว่างแคตตาล็อกโมเดลของ OpenAI และ Google สำหรับคำขอหนึ่งๆ — ระดับต้นทุน ความต้องการบริบท และการปักหมุดด้วยตนเอง ไม่มีการประกาศผู้ชนะ ตรวจสอบแคตตาล็อกจริงก่อนเลือกแผน',
         keywords: [
           'OpenAI กับ Google Gemini',
-          'ClawAI router OpenAI Google',
+          'เราเตอร์ ClawAI OpenAI Google',
           'การเลือกระหว่างโมเดล OpenAI กับ Gemini',
         ],
       },
@@ -173,7 +173,7 @@ export const TH_COMPARE_MODELS_CONTENT: CompareModelsDictionary = {
           'วิธีที่ระบบกำหนดเส้นทางของ ClawAI เลือกระหว่างแคตตาล็อกโมเดลของ Anthropic และ Google สำหรับคำขอหนึ่งๆ — ระดับต้นทุน ความเหมาะสมกับโหมดให้เหตุผล และการปักหมุดด้วยตนเอง ไม่มีการประกาศผู้ชนะ ตรวจสอบแคตตาล็อกจริงก่อนเลือกแผน',
         keywords: [
           'Anthropic กับ Google Gemini',
-          'ClawAI router Anthropic Google',
+          'เราเตอร์ ClawAI Anthropic Google',
           'การเลือกระหว่างโมเดล Claude กับ Gemini',
         ],
       },
@@ -233,7 +233,7 @@ export const TH_COMPARE_MODELS_CONTENT: CompareModelsDictionary = {
           'ระดับต้นทุนเปลี่ยนระบบกำหนดเส้นทางของ ClawAI ระหว่างแคตตาล็อกของ OpenAI และ DeepSeek อย่างไร และโหมด Cost Saver กับ Manual Model เหมาะกับคู่นี้อย่างไร ไม่มีการประกาศผู้ชนะ ตรวจสอบแคตตาล็อกจริงก่อนเลือกแผน',
         keywords: [
           'OpenAI กับ DeepSeek',
-          'ClawAI router OpenAI DeepSeek',
+          'เราเตอร์ ClawAI OpenAI DeepSeek',
           'ทางเลือกโมเดล AI ราคาถูกกว่า OpenAI',
         ],
       },
@@ -353,7 +353,7 @@ export const TH_COMPARE_MODELS_CONTENT: CompareModelsDictionary = {
           'อะไรเปลี่ยนไปเมื่อคำขออยู่บนฮาร์ดแวร์ที่คุณควบคุมแทนที่จะเป็นผู้ให้บริการคลาวด์ และโหมดกำหนดเส้นทาง Local-Only กับ Privacy-First ของ ClawAI เหมาะกับทางเลือกนั้นอย่างไร ไม่มีการประกาศผู้ชนะ ตรวจสอบแคตตาล็อกจริงก่อนเลือกแผน',
         keywords: [
           'AI คลาวด์ กับ AI โลคัล',
-          'ClawAI Local-Only routing',
+          'การกำหนดเส้นทางเฉพาะภายใน ClawAI Local-Only',
           'เมื่อไหร่ควรรันโมเดลในเครื่องท้องถิ่นแทนคลาวด์',
         ],
       },

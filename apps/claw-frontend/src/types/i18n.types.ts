@@ -4930,6 +4930,7 @@ export type TranslationDictionary = {
       impactWarning: string;
     };
     exposureUi: ModelExposureUiLocaleTranslation;
+    visibility: ModelVisibilityLocaleTranslation;
   };
   adminPlans: {
     intervalDiscounts: {
@@ -7758,6 +7759,43 @@ export type MediaUiLocaleTranslation = {
     loadFailedHint: string;
     statusUnknown: string;
   };
+};
+
+/** adminConnectors.visibility — model kind badge and the "Why hidden?" picker diagnostic. */
+export type ModelVisibilityLocaleTranslation = {
+  colKind: string;
+  kindChat: string;
+  kindTool: string;
+  kindEmbedding: string;
+  kindAudio: string;
+  kindReranker: string;
+  notInChat: string;
+  notInChatGeneric: string;
+  whyHidden: string;
+  panelTitle: string;
+  panelDescription: string;
+  loading: string;
+  loadError: string;
+  visibleSummary: string;
+  hiddenSummary: string;
+  statusPass: string;
+  statusFail: string;
+  statusUnknown: string;
+  statusSkipped: string;
+  gateExists: string;
+  gateConnectorEnabled: string;
+  gateLifecycleActive: string;
+  gateExposed: string;
+  gateKindChat: string;
+  gateInRoutingRegistry: string;
+  gateNotRouterOnly: string;
+  gatePriced: string;
+  planNote: string;
+  historyTitle: string;
+  historyEmpty: string;
+  eventKindChanged: string;
+  eventUnexposed: string;
+  exposedNotInChatWarning: string;
 };
 
 /** adminConnectors.exposureUi — the responsive Model exposure panel. */

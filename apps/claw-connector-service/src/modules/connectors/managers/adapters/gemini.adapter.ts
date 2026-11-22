@@ -22,6 +22,7 @@ import { isGeminiAudioCapableModel } from '../../constants/gemini-audio-heuristi
 import { isGeminiVideoCapableModel } from '../../constants/gemini-video-heuristics.constants';
 import {
   classifyGeminiModelKind,
+  geminiKindReason,
   readGenerationMethods,
 } from '../../utilities/gemini-model-kind.utility';
 
@@ -107,6 +108,7 @@ export class GeminiAdapter implements ProviderAdapter {
       // Embedding and aqa models are listed beside chat models but do not
       // support generateContent; classifying them keeps them out of the picker.
       kind: classifyGeminiModelKind(methods.get(model.id)),
+      kindReason: geminiKindReason(methods.get(model.id)),
       capabilities: {
         supportsStreaming: true,
         supportsTools: true,

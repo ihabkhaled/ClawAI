@@ -665,9 +665,6 @@
     "apps/claw-client-logs-service/src/modules/health/services/__tests__/health.service.spec.ts": {
       "sort-imports": 1
     },
-    "apps/claw-connector-service/src/app/config/app.config.ts": {
-      "@typescript-eslint/prefer-nullish-coalescing": 1
-    },
     "apps/claw-connector-service/src/app/guards/roles.guard.ts": {
       "unicorn/prefer-ternary": 1
     },
@@ -1332,10 +1329,6 @@
     "apps/claw-research-service/src/modules/fetch/services/fetch-strategy-bootstrap.service.ts": {
       "security/detect-object-injection": 5
     },
-    "apps/claw-research-service/src/modules/fetch/services/fetch-strategy-orchestrator.service.ts": {
-      "complexity": 1,
-      "max-lines-per-function": 1
-    },
     "apps/claw-research-service/src/modules/fetch/utilities/__tests__/fetch-helpers.utility.spec.ts": {
       "sort-imports": 1
     },
@@ -1347,9 +1340,6 @@
     },
     "apps/claw-research-service/src/modules/fetch/utilities/pinned-fetch.utility.ts": {
       "security/detect-object-injection": 1
-    },
-    "apps/claw-research-service/src/modules/fetch/utilities/raw-body-result.utility.ts": {
-      "unicorn/prefer-ternary": 1
     },
     "apps/claw-research-service/src/modules/fetch/utilities/wayback-snapshot.utility.ts": {
       "security/detect-unsafe-regex": 1

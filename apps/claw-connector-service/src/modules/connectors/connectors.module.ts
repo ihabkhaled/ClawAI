@@ -21,6 +21,9 @@ import { SyncRunsRepository } from './repositories/sync-runs.repository';
 import { ProviderDefinitionsController } from './controllers/provider-definitions.controller';
 import { ProviderDefinitionsService } from './services/provider-definitions.service';
 import { ProviderDefinitionsRepository } from './repositories/provider-definitions.repository';
+import { ModelEventsRepository } from './repositories/model-events.repository';
+import { ModelVisibilityService } from './services/model-visibility.service';
+import { RoutingVisibilityManager } from './managers/routing-visibility.manager';
 
 @Module({
   controllers: [
@@ -48,6 +51,9 @@ import { ProviderDefinitionsRepository } from './repositories/provider-definitio
     HealthEventsRepository,
     SyncRunsRepository,
     ProviderDefinitionsRepository,
+    ModelEventsRepository,
+    ModelVisibilityService,
+    RoutingVisibilityManager,
   ],
   exports: [ConnectorsService],
 })

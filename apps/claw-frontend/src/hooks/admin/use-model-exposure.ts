@@ -25,6 +25,7 @@ export function useModelExposure(connectorId: string): UseModelExposureResult {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [notInPickerKeys, setNotInPickerKeys] = useState<string[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [filters, setFilters] = useState<ModelExposureFilters>({
     ...EMPTY_MODEL_EXPOSURE_FILTERS,
@@ -106,6 +107,7 @@ export function useModelExposure(connectorId: string): UseModelExposureResult {
       }
       setIsSaving(true);
       setErrorMessage(null);
+      setNotInPickerKeys([]);
       // The backend caps one request at MODEL_EXPOSURE_BATCH_SIZE models so a
       // single call can't rewrite an entire catalog unaudited. "Select all
       // shown" can pick far more than that (a connector can carry hundreds
@@ -114,10 +116,14 @@ export function useModelExposure(connectorId: string): UseModelExposureResult {
       const batches = chunkModelKeys(modelKeys);
       let appliedKeys = 0;
       try {
+        const hidden: string[] = [];
         for (const batch of batches) {
-          await setModelExposure(connectorId, { modelKeys: batch, exposed });
+          const response = await setModelExposure(connectorId, { modelKeys: batch, exposed });
+          // A non-chat model may be exposed (tool use), but chat still hides it: say so.
+          hidden.push(...(response.notInPicker ?? []).map((model) => model.modelKey));
           appliedKeys += batch.length;
         }
+        setNotInPickerKeys(hidden);
         // After a successful apply, reload from the server rather than
         // mutating local state, so the screen shows what the server actually
         // did rather than what was requested.
@@ -166,6 +172,7 @@ export function useModelExposure(connectorId: string): UseModelExposureResult {
     exposedCount,
     unexposedCount,
     impact,
+    notInPickerKeys,
     load,
     apply,
     applyTo,

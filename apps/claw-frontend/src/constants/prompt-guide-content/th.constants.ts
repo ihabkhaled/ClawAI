@@ -160,7 +160,7 @@ export const TH_PROMPT_GUIDE_CONTENT: PromptGuideDictionary = {
         description:
           'Chain-of-thought prompting คืออะไร เมื่อไรที่การขอให้โมเดลไล่เรียงขั้นตอนก่อนตอบช่วยได้จริง และทำไมมันจึงไม่รับประกันผลลัพธ์ที่ถูกต้อง',
         keywords: [
-          'chain-of-thought prompting',
+          'การเขียนพรอมต์แบบคิดเป็นขั้นตอน chain-of-thought',
           'การเขียนพรอมต์แบบทีละขั้นตอน',
           'เทคนิคพรอมต์การให้เหตุผลของ AI',
         ],

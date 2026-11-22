@@ -50,6 +50,7 @@ function makeRow(modelKey: string, exposure: ConnectorModelExposure): ConnectorM
     lifecycle: 'ACTIVE',
     exposure,
     kind: ConnectorModelKind.CHAT,
+    kindReason: null,
     maxContextTokens: null,
     usageTier: 'STANDARD',
     syncedAt: '2026-09-25T11:30:44.256Z',
@@ -76,6 +77,12 @@ function makeView(modelKey: string, exposure: ConnectorModelExposure): ModelExpo
     lastSeenLabel: 'Sep 25, 2026, 11:30 AM',
     lifecycleLabelKey: 'adminConnectors.exposureUi.lifecycleActive',
     lifecycleBadgeClass: '',
+    kindView: {
+      labelKey: 'adminConnectors.visibility.kindChat',
+      badgeClass: '',
+      offeredInChat: true,
+      reason: null,
+    },
   };
 }
 
@@ -106,6 +113,7 @@ function makePanel(
     exposedCount: 12,
     unexposedCount: 437,
     impact: [],
+    notInPickerKeys: [],
     isLoading: false,
     isSaving: false,
     errorMessage: null,
@@ -119,6 +127,26 @@ function makePanel(
 
 beforeEach(() => {
   mockPanel.mockReturnValue(makePanel());
+});
+
+describe('ModelExposureSection kind and visibility', () => {
+  it('renders a kind cell and a "Why hidden?" button per row', () => {
+    render(<ModelExposureSection connectorId="c1" />);
+
+    const table = screen.getByTestId('model-exposure-table');
+    expect(within(table).getAllByTestId('model-kind-cell')).toHaveLength(2);
+    expect(within(table).getAllByTestId('model-visibility-button')).toHaveLength(2);
+  });
+
+  it('warns after an expose that the chat picker still hides non-chat models', () => {
+    mockPanel.mockReturnValue(makePanel({ notInPickerKeys: ['models/gemini-decision-1'] }));
+
+    render(<ModelExposureSection connectorId="c1" />);
+
+    expect(screen.getByTestId('model-exposure-not-in-picker')).toHaveTextContent(
+      'adminConnectors.visibility.exposedNotInChatWarning:{"models":"models/gemini-decision-1"}',
+    );
+  });
 });
 
 describe('ModelExposureSection layout switch', () => {

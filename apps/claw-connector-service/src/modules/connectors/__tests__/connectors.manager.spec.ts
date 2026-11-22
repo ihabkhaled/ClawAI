@@ -360,6 +360,48 @@ describe('ConnectorsManager', () => {
     });
   });
 
+  describe('syncModels - visibility trail', () => {
+    const retiredRow = {
+      modelKey: 'retired-chat-model',
+      kind: 'CHAT',
+      exposure: 'EXPOSED',
+      lifecycle: 'ACTIVE',
+    };
+    const managerWithEvents = (modelEvents: { createMany: Mock }): ConnectorsManager =>
+      new ConnectorsManager(
+        connectorsRepo as unknown as ConnectorsRepository,
+        modelsRepo as unknown as ConnectorModelsRepository,
+        healthEventsRepo as unknown as HealthEventsRepository,
+        syncRunsRepo as unknown as SyncRunsRepository,
+        providerDefinitions as unknown as ProviderDefinitionsService,
+        modelEvents as never,
+      );
+
+    it('records a model event when the sync unexposes a model the provider stopped listing', async () => {
+      const modelEvents = { createMany: vi.fn().mockResolvedValue(1) };
+      modelsRepo.findByConnectorId?.mockResolvedValue([retiredRow]);
+
+      await managerWithEvents(modelEvents).syncModels(mockConnector);
+
+      expect(modelEvents.createMany).toHaveBeenCalledWith([
+        expect.objectContaining({
+          connectorId: mockConnector.id,
+          modelKey: 'retired-chat-model',
+          type: 'UNEXPOSED_BY_SYNC',
+        }),
+      ]);
+    });
+
+    it('does not fail the sync when the trail write fails', async () => {
+      const modelEvents = { createMany: vi.fn().mockRejectedValue(new Error('db down')) };
+      modelsRepo.findByConnectorId?.mockResolvedValue([retiredRow]);
+
+      await expect(managerWithEvents(modelEvents).syncModels(mockConnector)).resolves.toMatchObject(
+        { modelsRemoved: 1 },
+      );
+    });
+  });
+
   describe('syncModels - modelsRemoved calculation', () => {
     it('should calculate modelsRemoved when existing models exceed synced models', async () => {
       modelsRepo.findByConnectorId?.mockResolvedValue([

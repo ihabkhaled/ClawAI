@@ -306,3 +306,24 @@ it is.
 
 Doc note: the internal-API section above correctly says `/internal/ollama` is not
 exposed via nginx. That is true, and it is not the exposure that matters here.
+
+## Visibility gates: why a connector model is (not) in the chat picker (2026-11-22)
+
+This page is about the local catalog; cloud and connector models reach the chat picker through
+connector-service `GET /connectors/available-models`, then the picker's plan check
+(`POST /chat-messages/model-access`). A model is offered only if it passes every gate, in this order:
+
+1. **Exists** in `connector_models` (a sync imported it).
+2. **Connector enabled** (and its custom provider definition active).
+3. **Lifecycle ACTIVE** (not DEPRECATED, SUNSET or REMOVED).
+4. **Exposed** by an admin (or by the priced-media policy).
+5. **Kind CHAT** (or an AUDIO model that generates speech or music). TOOL, EMBEDDING, RERANKER and input-only
+   AUDIO never show, **whatever their exposure**. The sync records why in `kind_reason`.
+6. **In the routing registry** (`router_model_registry`, not REMOVED).
+7. **Not router-only**.
+8. **Priced** (has a cost class; an unpriced metered model is refused).
+
+Plan access (cost-class limits, per-model rows) is decided per user afterwards and dims, not hides.
+Admins get the walk for any model from the **"Why hidden?"** button on the connector's Model exposure panel
+(`GET /connectors/model-visibility`); a sync that changes a model's kind or unexposes it is recorded in
+`connector_model_events` and shown in the same panel.

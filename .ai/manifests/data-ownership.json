@@ -114,6 +114,7 @@
         "Connector",
         "ConnectorHealthEvent",
         "ConnectorModel",
+        "ConnectorModelEvent",
         "ConnectorProviderDefinition",
         "ModelSyncRun"
       ],

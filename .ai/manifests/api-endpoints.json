@@ -1952,6 +1952,11 @@
         "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
       },
       {
+        "method": "GET",
+        "route": "/connectors/:id",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
+      },
+      {
         "method": "PATCH",
         "route": "/connectors/:id",
         "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
@@ -1989,6 +1994,11 @@
       {
         "method": "GET",
         "route": "/connectors/available-models",
+        "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/connectors/model-visibility",
         "source": "apps/claw-connector-service/src/modules/connectors/controllers/connectors.controller.ts"
       },
       {
@@ -3817,6 +3827,11 @@
       },
       {
         "method": "GET",
+        "route": "/internal/router-models/visibility",
+        "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-visibility-internal.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/router-models/costs",
         "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-cost.controller.ts"
       },
@@ -5051,5 +5066,5 @@
     ]
   },
   "generated": true,
-  "total": 1001
+  "total": 1004
 }

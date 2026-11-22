@@ -11,6 +11,7 @@ import { ModelsSnapshotManager } from '../managers/models-snapshot.manager';
 import { ConnectorModelsRepository } from '../repositories/connector-models.repository';
 import { type ConnectorsRepository } from '../repositories/connectors.repository';
 import { ConnectorsService } from '../services/connectors.service';
+import { ModelVisibilityService } from '../services/model-visibility.service';
 
 /**
  * F093: the per-model prompt-caching switch. It changes what a request costs (a
@@ -132,7 +133,10 @@ describe('ConnectorsController.setModelPromptCaching', () => {
     const serviceMock = { setModelPromptCaching: vi.fn().mockResolvedValue({ updated: 2 }) };
     const module = await Test.createTestingModule({
       controllers: [ConnectorsController],
-      providers: [{ provide: ConnectorsService, useValue: serviceMock }],
+      providers: [
+        { provide: ConnectorsService, useValue: serviceMock },
+        { provide: ModelVisibilityService, useValue: { diagnose: vi.fn() } },
+      ],
     }).compile();
 
     const result = await module

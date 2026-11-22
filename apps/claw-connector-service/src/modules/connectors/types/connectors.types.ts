@@ -2,8 +2,10 @@ import {
   type Connector,
   type ConnectorAuthType,
   type ConnectorModel,
+  type ConnectorModelEventType,
   type ConnectorProvider,
   type ConnectorStatus,
+  type ModelExposure,
   type ModelKind,
   type ModelLifecycle,
   type ModelSyncStatus,
@@ -78,6 +80,116 @@ export interface NormalizedModel {
   usage?: ModelUsageMetadata;
   /** Set only by adapters that can tell; absent keeps the stored kind (CHAT on create). */
   kind?: ModelKind;
+  /** Why the adapter gave a non-CHAT `kind`, in admin words ("Google lists only: createDecision"). */
+  kindReason?: string;
+}
+
+/** The kind-related columns one sync writes for one model. Empty for a chat model. */
+export interface SyncKindFields {
+  kind?: ModelKind;
+  kindReason?: string;
+  exposure?: 'UNEXPOSED';
+}
+
+/** A row's state before a sync, as far as the visibility trail needs it. */
+export type SyncEventBaseline = Pick<
+  ConnectorModel,
+  'modelKey' | 'kind' | 'exposure' | 'lifecycle'
+>;
+
+export interface CreateModelEventData {
+  connectorId: string;
+  modelKey: string;
+  type: ConnectorModelEventType;
+  beforeKind?: ModelKind;
+  afterKind?: ModelKind;
+  beforeExposure?: ModelExposure;
+  afterExposure?: ModelExposure;
+  reason?: string;
+}
+
+/** One check the chat picker applies, in the order it applies them. */
+export type ModelVisibilityGateName =
+  | 'EXISTS'
+  | 'CONNECTOR_ENABLED'
+  | 'LIFECYCLE_ACTIVE'
+  | 'EXPOSED'
+  | 'KIND_CHAT'
+  | 'IN_ROUTING_REGISTRY'
+  | 'NOT_ROUTER_ONLY'
+  | 'PRICED';
+
+/** UNKNOWN: routing-service did not answer. SKIPPED: an earlier gate already failed. */
+export type ModelVisibilityGateStatus = 'PASS' | 'FAIL' | 'UNKNOWN' | 'SKIPPED';
+
+export interface ModelVisibilityGate {
+  gate: ModelVisibilityGateName;
+  status: ModelVisibilityGateStatus;
+  detail: string;
+}
+
+/** routing-service's answer for one model (`GET internal/router-models/visibility`). */
+export interface RoutingModelVisibility {
+  inRegistry: boolean;
+  lifecycle: string | null;
+  isRouterOnly: boolean | null;
+  costClass: string | null;
+}
+
+/** The connector row the diagnostic judged, plus its connector's switches. */
+export type ModelVisibilityRow = Pick<
+  ConnectorModel,
+  | 'connectorId'
+  | 'provider'
+  | 'modelKey'
+  | 'displayName'
+  | 'kind'
+  | 'kindReason'
+  | 'exposure'
+  | 'lifecycle'
+> & {
+  connector: {
+    name: string;
+    isEnabled: boolean;
+    providerDefinition: { key: string; isActive: boolean } | null;
+  };
+};
+
+export interface ModelVisibilityEvent {
+  type: ConnectorModelEventType;
+  beforeKind: ModelKind | null;
+  afterKind: ModelKind | null;
+  beforeExposure: ModelExposure | null;
+  afterExposure: ModelExposure | null;
+  reason: string | null;
+  createdAt: Date;
+}
+
+/** `GET /connectors/model-visibility`: why a model is (not) in the chat picker. */
+export interface ModelVisibilityReport {
+  provider: string;
+  modelKey: string;
+  visibleInPicker: boolean;
+  /** The first gate that did not pass, or null when every gate passed. */
+  firstFailingGate: ModelVisibilityGateName | null;
+  model: {
+    connectorId: string;
+    connectorName: string;
+    displayName: string;
+    kind: ModelKind;
+    kindReason: string | null;
+    exposure: ModelExposure;
+    lifecycle: string;
+  } | null;
+  gates: ModelVisibilityGate[];
+  recentEvents: ModelVisibilityEvent[];
+}
+
+/** An exposed model the picker still will not show, returned so the admin is told at once. */
+export interface NotInPickerModel {
+  modelKey: string;
+  kind: ModelKind;
+  kindReason: string | null;
 }
 
 export interface ModelUsageMetadata {

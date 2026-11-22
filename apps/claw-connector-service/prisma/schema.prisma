@@ -86,32 +86,32 @@ enum ModelKind {
 // ─── Models ──────────────────────────────────────────────
 
 model Connector {
-  id              String            @id @default(cuid())
-  name            String
-  provider        ConnectorProvider
-  providerDefinitionId String?           @map("provider_definition_id")
-  status          ConnectorStatus   @default(UNKNOWN)
-  authType        ConnectorAuthType @map("auth_type")
-  encryptedConfig String?           @map("encrypted_config")
-  isEnabled       Boolean           @default(true) @map("is_enabled")
-  defaultModelId  String?           @map("default_model_id")
-  baseUrl         String?           @map("base_url")
-  region          String?
+  id                      String            @id @default(cuid())
+  name                    String
+  provider                ConnectorProvider
+  providerDefinitionId    String?           @map("provider_definition_id")
+  status                  ConnectorStatus   @default(UNKNOWN)
+  authType                ConnectorAuthType @map("auth_type")
+  encryptedConfig         String?           @map("encrypted_config")
+  isEnabled               Boolean           @default(true) @map("is_enabled")
+  defaultModelId          String?           @map("default_model_id")
+  baseUrl                 String?           @map("base_url")
+  region                  String?
   // Anthropic identity-linked keys refuse every call unless the request names
   // the workspace it acts in. Kept out of `region` on purpose: that field means
   // an AWS region, and overloading it would make both unreadable.
-  workspaceId     String?           @map("workspace_id")
+  workspaceId             String?           @map("workspace_id")
   // Cloudflare Workers AI scopes every URL to an account: the preset's base and
   // models URLs carry `{ACCOUNT_ID}`, filled from this column. Its own column
   // for the same reason `workspaceId` has one — `region` means an AWS region.
   // Validated as 32 lowercase hex characters before it is written (ADR-117).
-  accountId       String?           @map("account_id")
+  accountId               String?           @map("account_id")
   // LLM-gateway headers (F092) — LiteLLM, Portkey, Helicone, Cloudflare AI
   // Gateway and similar proxies authenticate or route on headers of their own
   // (`x-portkey-api-key`, `Helicone-Auth`, `cf-aig-authorization`). JSON object,
   // AES-encrypted like `encryptedConfig` because the values are credentials.
   // Null means "no gateway headers", never an empty object.
-  encryptedGatewayHeaders String?     @map("encrypted_gateway_headers")
+  encryptedGatewayHeaders String?           @map("encrypted_gateway_headers")
   // Whether inference through this connector costs ClawAI real money and must
   // therefore debit the user's PAYG credit wallet.
   //
@@ -126,14 +126,15 @@ model Connector {
   // copies of a shared package would make the admin toggle unenforceable
   // without a six-container rebuild (ADR-082), so the reservation path reads
   // the rolled-up connector policy from this column instead.
-  isPayAsYouGo    Boolean           @default(false) @map("is_pay_as_you_go")
-  createdAt       DateTime          @default(now()) @map("created_at")
-  updatedAt       DateTime          @updatedAt @map("updated_at")
+  isPayAsYouGo            Boolean           @default(false) @map("is_pay_as_you_go")
+  createdAt               DateTime          @default(now()) @map("created_at")
+  updatedAt               DateTime          @updatedAt @map("updated_at")
 
   providerDefinition ConnectorProviderDefinition? @relation(fields: [providerDefinitionId], references: [id], onDelete: Restrict)
-  models       ConnectorModel[]
-  healthEvents ConnectorHealthEvent[]
-  syncRuns     ModelSyncRun[]
+  models             ConnectorModel[]
+  healthEvents       ConnectorHealthEvent[]
+  syncRuns           ModelSyncRun[]
+  modelEvents        ConnectorModelEvent[]
 
   @@index([provider])
   @@index([status])
@@ -143,36 +144,36 @@ model Connector {
 }
 
 model ConnectorProviderDefinition {
-  id                       String                @id @default(cuid())
-  key                      String                @unique
-  displayName              String                @map("display_name")
-  description              String?
-  adapterFamily             ProviderAdapterFamily @map("adapter_family")
-  defaultBaseUrl            String?               @map("default_base_url")
-  modelsEndpoint            String?               @map("models_endpoint")
-  modelsResponseFormat      String?               @map("models_response_format")
-  healthCheckEndpoint       String?               @map("health_check_endpoint")
-  authType                  ConnectorAuthType?    @map("auth_type")
-  authHeaderName            String                @default("Authorization") @map("auth_header_name")
-  authHeaderScheme          String                @default("Bearer") @map("auth_header_scheme")
-  chatCompletionsPath       String                @default("/chat/completions") @map("chat_completions_path")
-  supportsNativeTools      Boolean               @default(false) @map("supports_native_tools")
-  supportsVision            Boolean               @default(false) @map("supports_vision")
-  registerUrl               String?               @map("register_url")
-  apiKeyUrl                 String?               @map("api_key_url")
-  pricingUrl                String?               @map("pricing_url")
-  docsUrl                   String?               @map("docs_url")
-  defaultIsPayAsYouGo       Boolean               @default(false) @map("default_is_pay_as_you_go")
-  hasFreeTier               Boolean               @default(false) @map("has_free_tier")
-  isActive                  Boolean               @default(true) @map("is_active")
-  isBuiltIn                 Boolean               @default(false) @map("is_built_in")
-  connectorProvider         ConnectorProvider?    @unique @map("connector_provider")
-  everConnected             Boolean               @default(false) @map("ever_connected")
-  capabilityDefaults        Json                  @default("{}") @map("capability_defaults")
-  createdBy                 String?               @map("created_by")
-  updatedBy                 String?               @map("updated_by")
-  createdAt                 DateTime              @default(now()) @map("created_at")
-  updatedAt                 DateTime              @updatedAt @map("updated_at")
+  id                   String                @id @default(cuid())
+  key                  String                @unique
+  displayName          String                @map("display_name")
+  description          String?
+  adapterFamily        ProviderAdapterFamily @map("adapter_family")
+  defaultBaseUrl       String?               @map("default_base_url")
+  modelsEndpoint       String?               @map("models_endpoint")
+  modelsResponseFormat String?               @map("models_response_format")
+  healthCheckEndpoint  String?               @map("health_check_endpoint")
+  authType             ConnectorAuthType?    @map("auth_type")
+  authHeaderName       String                @default("Authorization") @map("auth_header_name")
+  authHeaderScheme     String                @default("Bearer") @map("auth_header_scheme")
+  chatCompletionsPath  String                @default("/chat/completions") @map("chat_completions_path")
+  supportsNativeTools  Boolean               @default(false) @map("supports_native_tools")
+  supportsVision       Boolean               @default(false) @map("supports_vision")
+  registerUrl          String?               @map("register_url")
+  apiKeyUrl            String?               @map("api_key_url")
+  pricingUrl           String?               @map("pricing_url")
+  docsUrl              String?               @map("docs_url")
+  defaultIsPayAsYouGo  Boolean               @default(false) @map("default_is_pay_as_you_go")
+  hasFreeTier          Boolean               @default(false) @map("has_free_tier")
+  isActive             Boolean               @default(true) @map("is_active")
+  isBuiltIn            Boolean               @default(false) @map("is_built_in")
+  connectorProvider    ConnectorProvider?    @unique @map("connector_provider")
+  everConnected        Boolean               @default(false) @map("ever_connected")
+  capabilityDefaults   Json                  @default("{}") @map("capability_defaults")
+  createdBy            String?               @map("created_by")
+  updatedBy            String?               @map("updated_by")
+  createdAt            DateTime              @default(now()) @map("created_at")
+  updatedAt            DateTime              @updatedAt @map("updated_at")
 
   connectors Connector[]
 
@@ -208,6 +209,10 @@ model ConnectorModel {
   syncedAt                 DateTime          @default(now()) @map("synced_at")
   exposure                 ModelExposure     @default(UNEXPOSED)
   kind                     ModelKind         @default(CHAT)
+  // Why a sync classified the model as non-CHAT, in words an admin can act on
+  // ("Google lists only: createDecision"). NULL for chat models and for rows no
+  // sync has classified since the column was added.
+  kindReason               String?           @map("kind_reason")
   lastSeenAt               DateTime?         @map("last_seen_at")
   // Provider answers of "model does not exist" reported by chat-service inside
   // the retire window (ADR-151). A sync never resets it.
@@ -229,6 +234,32 @@ model ConnectorModel {
   @@index([lifecycle])
   @@index([exposure])
   @@map("connector_models")
+}
+
+enum ConnectorModelEventType {
+  KIND_CHANGED
+  UNEXPOSED_BY_SYNC
+}
+
+// What a sync changed on a model without an administrator asking: its kind
+// flipped (it left the chat picker) or it was unexposed. Before this table, a
+// kind flip left no trail at all (2026-11-22, models/gemini-decision-1).
+model ConnectorModelEvent {
+  id             String                  @id @default(cuid())
+  connectorId    String                  @map("connector_id")
+  modelKey       String                  @map("model_key")
+  type           ConnectorModelEventType
+  beforeKind     ModelKind?              @map("before_kind")
+  afterKind      ModelKind?              @map("after_kind")
+  beforeExposure ModelExposure?          @map("before_exposure")
+  afterExposure  ModelExposure?          @map("after_exposure")
+  reason         String?
+  createdAt      DateTime                @default(now()) @map("created_at")
+
+  connector Connector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
+
+  @@index([connectorId, modelKey, createdAt])
+  @@map("connector_model_events")
 }
 
 enum ModelUsageTier {

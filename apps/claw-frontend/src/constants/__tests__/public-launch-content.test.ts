@@ -35,7 +35,9 @@ describe('public launch page content', () => {
         const page = localePages[slug];
         expect(page.eyebrow.trim().length).toBeGreaterThan(0);
         expect(page.sections).toHaveLength(4);
-        expect(page.sections.every((section) => section.body.length > 120)).toBe(true);
+        // Dense scripts (zh, ja, …) say the same in far fewer characters: same floor as the commerce check.
+        const minimum = DENSE_SCRIPT_LOCALES.has(locale) ? 60 : 120;
+        expect(page.sections.every((section) => section.body.length > minimum)).toBe(true);
         expect(new Set(page.sections.map((section) => section.id)).size).toBe(4);
       }
     }

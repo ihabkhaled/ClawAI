@@ -178,7 +178,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-connector-service",
-      "endpointCount": 29,
+      "endpointCount": 31,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -195,10 +195,11 @@
         "Connector",
         "ConnectorHealthEvent",
         "ConnectorModel",
+        "ConnectorModelEvent",
         "ConnectorProviderDefinition",
         "ModelSyncRun"
       ],
-      "testFiles": 62,
+      "testFiles": 67,
       "testRunner": "vitest"
     },
     {
@@ -529,13 +530,13 @@
         "SearchProvider",
         "SearchRun"
       ],
-      "testFiles": 71,
+      "testFiles": 74,
       "testRunner": "vitest"
     },
     {
       "database": "postgresql",
       "dir": "apps/claw-routing-service",
-      "endpointCount": 76,
+      "endpointCount": 77,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -575,7 +576,7 @@
         "SeedExecution",
         "TaxonomyRole"
       ],
-      "testFiles": 126,
+      "testFiles": 127,
       "testRunner": "vitest"
     },
     {

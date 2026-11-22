@@ -62,6 +62,17 @@ Controller → Service → Repository (data access)
 - **Tool fetch (ADR-121 addendum 4).** `POST /internal/research/fetch` (`FetchInternalController`,
   `ServiceTokenGuard`, `{userId, url, render?}`) -> `FetchService.fetchPageForTool`: same chain,
   returns `ToolFetchView` (no raw HTML). Caller is chat-service's `web_fetch` tool.
+- **Thin content is not read (2026-11-22).** `isThinContent` (`thin-content.utility.ts`) marks a
+  2xx/3xx HTML result `EMPTY_JS_SHELL` when its final text is a script shell, a social-card
+  link-preview stub (what chatgpt.com serves a bot), a "enable JavaScript" wall, or tiny text on
+  150 KB+ of scripts; the chain escalates to a rendering tier. All-thin → `markThinResult`
+  (`[Page content not readable]` notice, `thinContent: true`, evidence `fetch.thin`). Never
+  present a thin page as read.
+- **Site adapters + embedded state.** `extractPageContent` tries `SITE_ADAPTERS` (one table,
+  `constants/site-adapters.constants.ts`) and, for thin visible text, `extractEmbeddedStateText`
+  (JSON-LD, `__NEXT_DATA__`, `__NUXT_DATA__`, JSON scripts, `window.__*STATE__` JSON, React Router
+  stream). They parse the HTML already fetched only: no request, no eval, no credentials. Add a
+  site by adding a row; keep it public-data only. `FetchResult.extraction`/`siteAdapter` record it.
 - How to add/enable/prove a tier: `skills/add-a-fetch-strategy.md`.
 - _(future)_ `EvidenceBundle`, `ScrapeProfile`, `CloneJob`.
 

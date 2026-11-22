@@ -170,7 +170,7 @@ exception: say so in one line, do it, record `knowledge delta: none, because ...
 ## Divergences from upstream
 
 - `akinator_context.py` caches to `.ai/local/akinator-context-index.json` (gitignored)
-  instead of `.ai/cache/`, which would be an untracked, non-ignored folder inside a
+  instead of an .ai cache folder (created at runtime, so absent from a clean checkout), which would be an untracked, non-ignored folder inside a
   generated tree.
 - File headers say "vendored" instead of "do not edit by hand".
 - `<skill>` is written `skills/akinator`; example paths in references point at

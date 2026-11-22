@@ -16,6 +16,10 @@ const appConfigSchema = z.object({
   CONNECTOR_PORT: z.coerce.number().int().positive().default(4003),
 
   AUTH_SERVICE_URL: z.string().min(1).default('http://auth-service:4001'),
+  // Read only by the admin "why is this model not in the picker" diagnostic
+  // (registry, router-only and price gates). The shared `.env` value every
+  // service already receives; no new variable.
+  ROUTING_SERVICE_URL: z.string().min(1).default('http://routing-service:4004'),
   // Shared secret for guarded `/api/v1/internal/*` endpoints on sibling
   // services. Required by EntitlementsModule.forRoot because the PAYG credit
   // routes are guarded, unlike the older @Public() internal/quota ones: a
@@ -51,6 +55,6 @@ export class AppConfig {
   }
 
   static get(): AppConfigType {
-    return !cachedConfig ? AppConfig.validate() : cachedConfig;
+    return cachedConfig ?? AppConfig.validate();
   }
 }

@@ -2,6 +2,7 @@ import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { ConnectorsController } from '../connectors.controller';
 import { ConnectorsService } from '../../services/connectors.service';
+import { ModelVisibilityService } from '../../services/model-visibility.service';
 
 describe('ConnectorsController', () => {
   let controller: ConnectorsController;
@@ -31,7 +32,10 @@ describe('ConnectorsController', () => {
     };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ConnectorsController],
-      providers: [{ provide: ConnectorsService, useValue: serviceMock }],
+      providers: [
+        { provide: ConnectorsService, useValue: serviceMock },
+        { provide: ModelVisibilityService, useValue: { diagnose: vi.fn() } },
+      ],
     }).compile();
     controller = module.get<ConnectorsController>(ConnectorsController);
   });

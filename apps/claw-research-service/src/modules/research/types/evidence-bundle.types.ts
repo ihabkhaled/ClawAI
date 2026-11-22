@@ -1,4 +1,5 @@
 import type { FetchStrategyKind } from '../../../generated/prisma';
+import type { PageExtractionKind } from '../../fetch/enums/page-extraction-kind.enum';
 import type { ProviderSelectionMode } from '../../../common/enums/provider-selection-mode.enum';
 import type { ResearchWorkflowKind } from '../../../common/enums/research-workflow-kind.enum';
 import type { AuditFinding } from './audit-finding.types';
@@ -15,6 +16,12 @@ import type {
 export type EvidenceFetchProvenance = {
   strategy: FetchStrategyKind;
   attempts: Array<{ kind: FetchStrategyKind; outcome: 'SUCCESS' | 'BLOCKED' | 'ERROR' }>;
+  /** Which extractor produced the text (visible page, embedded state, site adapter). Additive. */
+  extraction?: PageExtractionKind;
+  /** The site adapter's fixed name from `SITE_ADAPTERS`, when one read the page. Additive. */
+  siteAdapter?: string;
+  /** True when the page stayed a thin shell on every tier: it was NOT read. Additive. */
+  thin?: true;
 };
 
 /** Single citation unit that gets passed to the final answering model. */

@@ -20,12 +20,22 @@ import {
   type AvailableModelEntry,
   type ConnectorWithModels,
   type HealthCheckResult,
+  type ModelVisibilityReport,
+  type NotInPickerModel,
   type SyncModelsResult,
 } from '../types/connectors.types';
+import { ModelVisibilityService } from '../services/model-visibility.service';
+import {
+  type ModelVisibilityQueryDto,
+  modelVisibilityQuerySchema,
+} from '../dto/model-visibility-query.dto';
 
 @Controller('connectors')
 export class ConnectorsController {
-  constructor(private readonly connectorsService: ConnectorsService) {}
+  constructor(
+    private readonly connectorsService: ConnectorsService,
+    private readonly modelVisibilityService: ModelVisibilityService,
+  ) {}
 
   @Post()
   @RequirePermissions(Permission.ADMIN_CONNECTORS_MANAGE)
@@ -50,6 +60,18 @@ export class ConnectorsController {
   @RequirePermissions(Permission.MODEL_USE_ALLOWED)
   async getAvailableModels(): Promise<AvailableModelEntry[]> {
     return this.connectorsService.getAvailableModels();
+  }
+
+  // Admin diagnostic: "why is model X not in the chat picker?" Walks every gate
+  // the picker applies, in order, with pass/fail and the reason. Query params,
+  // not path params: Gemini keys carry a slash (`models/gemini-decision-1`).
+  // MUST stay above @Get(':id').
+  @Get('model-visibility')
+  @RequirePermissions(Permission.ADMIN_CONNECTORS_MANAGE)
+  async getModelVisibility(
+    @Query(new ZodValidationPipe(modelVisibilityQuerySchema)) query: ModelVisibilityQueryDto,
+  ): Promise<ModelVisibilityReport> {
+    return this.modelVisibilityService.diagnose(query.provider, query.modelKey);
   }
 
   @Get(':id')
@@ -113,7 +135,7 @@ export class ConnectorsController {
   async setModelExposure(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(setModelExposureSchema)) dto: SetModelExposureDto,
-  ): Promise<{ updated: number; previouslyExposed: string[] }> {
+  ): Promise<{ updated: number; previouslyExposed: string[]; notInPicker: NotInPickerModel[] }> {
     return this.connectorsService.setModelExposure(id, dto.modelKeys, dto.exposed);
   }
 

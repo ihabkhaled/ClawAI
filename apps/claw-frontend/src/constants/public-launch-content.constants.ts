@@ -1,124 +1,120 @@
 import { PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE } from '@/constants/public-commerce-policy-content.constants';
 import { Locale } from '@/enums/locale.enum';
 import type {
+  PublicLaunchCorePageDictionary,
   PublicLaunchLabels,
+  PublicLaunchLocalizedLabels,
   PublicLaunchPageDictionary,
 } from '@/types/public-launch-content.types';
 
 import {
+  AR_PUBLIC_LAUNCH_LABELS,
+  AR_PUBLIC_LAUNCH_PAGES,
+} from './public-launch-content/ar.constants';
+import {
+  DE_PUBLIC_LAUNCH_LABELS,
+  DE_PUBLIC_LAUNCH_PAGES,
+} from './public-launch-content/de.constants';
+import {
   EN_PUBLIC_LAUNCH_LABELS,
   EN_PUBLIC_LAUNCH_PAGES,
 } from './public-launch-content/en.constants';
+import {
+  ES_PUBLIC_LAUNCH_LABELS,
+  ES_PUBLIC_LAUNCH_PAGES,
+} from './public-launch-content/es.constants';
+import {
+  FA_PUBLIC_LAUNCH_LABELS,
+  FA_PUBLIC_LAUNCH_PAGES,
+} from './public-launch-content/fa.constants';
+import {
+  FR_PUBLIC_LAUNCH_LABELS,
+  FR_PUBLIC_LAUNCH_PAGES,
+} from './public-launch-content/fr.constants';
+import {
+  HI_PUBLIC_LAUNCH_LABELS,
+  HI_PUBLIC_LAUNCH_PAGES,
+} from './public-launch-content/hi.constants';
+import {
+  IT_PUBLIC_LAUNCH_LABELS,
+  IT_PUBLIC_LAUNCH_PAGES,
+} from './public-launch-content/it.constants';
+import {
+  JA_PUBLIC_LAUNCH_LABELS,
+  JA_PUBLIC_LAUNCH_PAGES,
+} from './public-launch-content/ja.constants';
+import {
+  PT_PUBLIC_LAUNCH_LABELS,
+  PT_PUBLIC_LAUNCH_PAGES,
+} from './public-launch-content/pt.constants';
+import {
+  RU_PUBLIC_LAUNCH_LABELS,
+  RU_PUBLIC_LAUNCH_PAGES,
+} from './public-launch-content/ru.constants';
+import {
+  TH_PUBLIC_LAUNCH_LABELS,
+  TH_PUBLIC_LAUNCH_PAGES,
+} from './public-launch-content/th.constants';
+import {
+  ZH_PUBLIC_LAUNCH_LABELS,
+  ZH_PUBLIC_LAUNCH_PAGES,
+} from './public-launch-content/zh.constants';
 
-// The older launch pages (about, pricing, legal) still render the English body
-// in every locale — translating legal text is an open owner item. The two
-// commerce policies (delivery, refund) and the page chrome are translated.
-export const PUBLIC_LAUNCH_CONTENT_BY_LOCALE: Record<Locale, PublicLaunchPageDictionary> = {
-  [Locale.EN]: {
-    ...EN_PUBLIC_LAUNCH_PAGES,
-    ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[Locale.EN].pages,
-  },
-  [Locale.AR]: {
-    ...EN_PUBLIC_LAUNCH_PAGES,
-    ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[Locale.AR].pages,
-  },
-  [Locale.FR]: {
-    ...EN_PUBLIC_LAUNCH_PAGES,
-    ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[Locale.FR].pages,
-  },
-  [Locale.IT]: {
-    ...EN_PUBLIC_LAUNCH_PAGES,
-    ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[Locale.IT].pages,
-  },
-  [Locale.DE]: {
-    ...EN_PUBLIC_LAUNCH_PAGES,
-    ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[Locale.DE].pages,
-  },
-  [Locale.ES]: {
-    ...EN_PUBLIC_LAUNCH_PAGES,
-    ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[Locale.ES].pages,
-  },
-  [Locale.RU]: {
-    ...EN_PUBLIC_LAUNCH_PAGES,
-    ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[Locale.RU].pages,
-  },
-  [Locale.PT]: {
-    ...EN_PUBLIC_LAUNCH_PAGES,
-    ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[Locale.PT].pages,
-  },
-  [Locale.HI]: {
-    ...EN_PUBLIC_LAUNCH_PAGES,
-    ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[Locale.HI].pages,
-  },
-  [Locale.JA]: {
-    ...EN_PUBLIC_LAUNCH_PAGES,
-    ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[Locale.JA].pages,
-  },
-  [Locale.TH]: {
-    ...EN_PUBLIC_LAUNCH_PAGES,
-    ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[Locale.TH].pages,
-  },
-  [Locale.FA]: {
-    ...EN_PUBLIC_LAUNCH_PAGES,
-    ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[Locale.FA].pages,
-  },
-  [Locale.ZH]: {
-    ...EN_PUBLIC_LAUNCH_PAGES,
-    ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[Locale.ZH].pages,
-  },
+type ExtraLabels = Omit<PublicLaunchLabels, keyof PublicLaunchLocalizedLabels>;
+
+/** Every locale's own launch-page bodies (about, pricing, legal, ...). */
+const CORE_PAGES_BY_LOCALE: Record<Locale, PublicLaunchCorePageDictionary> = {
+  [Locale.EN]: EN_PUBLIC_LAUNCH_PAGES,
+  [Locale.AR]: AR_PUBLIC_LAUNCH_PAGES,
+  [Locale.FR]: FR_PUBLIC_LAUNCH_PAGES,
+  [Locale.IT]: IT_PUBLIC_LAUNCH_PAGES,
+  [Locale.DE]: DE_PUBLIC_LAUNCH_PAGES,
+  [Locale.ES]: ES_PUBLIC_LAUNCH_PAGES,
+  [Locale.RU]: RU_PUBLIC_LAUNCH_PAGES,
+  [Locale.PT]: PT_PUBLIC_LAUNCH_PAGES,
+  [Locale.HI]: HI_PUBLIC_LAUNCH_PAGES,
+  [Locale.JA]: JA_PUBLIC_LAUNCH_PAGES,
+  [Locale.TH]: TH_PUBLIC_LAUNCH_PAGES,
+  [Locale.FA]: FA_PUBLIC_LAUNCH_PAGES,
+  [Locale.ZH]: ZH_PUBLIC_LAUNCH_PAGES,
 };
 
-export const PUBLIC_LAUNCH_LABELS_BY_LOCALE: Record<Locale, PublicLaunchLabels> = {
-  [Locale.EN]: {
-    ...EN_PUBLIC_LAUNCH_LABELS,
-    ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[Locale.EN].labels,
-  },
-  [Locale.AR]: {
-    ...EN_PUBLIC_LAUNCH_LABELS,
-    ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[Locale.AR].labels,
-  },
-  [Locale.FR]: {
-    ...EN_PUBLIC_LAUNCH_LABELS,
-    ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[Locale.FR].labels,
-  },
-  [Locale.IT]: {
-    ...EN_PUBLIC_LAUNCH_LABELS,
-    ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[Locale.IT].labels,
-  },
-  [Locale.DE]: {
-    ...EN_PUBLIC_LAUNCH_LABELS,
-    ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[Locale.DE].labels,
-  },
-  [Locale.ES]: {
-    ...EN_PUBLIC_LAUNCH_LABELS,
-    ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[Locale.ES].labels,
-  },
-  [Locale.RU]: {
-    ...EN_PUBLIC_LAUNCH_LABELS,
-    ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[Locale.RU].labels,
-  },
-  [Locale.PT]: {
-    ...EN_PUBLIC_LAUNCH_LABELS,
-    ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[Locale.PT].labels,
-  },
-  [Locale.HI]: {
-    ...EN_PUBLIC_LAUNCH_LABELS,
-    ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[Locale.HI].labels,
-  },
-  [Locale.JA]: {
-    ...EN_PUBLIC_LAUNCH_LABELS,
-    ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[Locale.JA].labels,
-  },
-  [Locale.TH]: {
-    ...EN_PUBLIC_LAUNCH_LABELS,
-    ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[Locale.TH].labels,
-  },
-  [Locale.FA]: {
-    ...EN_PUBLIC_LAUNCH_LABELS,
-    ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[Locale.FA].labels,
-  },
-  [Locale.ZH]: {
-    ...EN_PUBLIC_LAUNCH_LABELS,
-    ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[Locale.ZH].labels,
-  },
+/** Every locale's labels beyond the page chrome (the chrome ships with the commerce policies). */
+const EXTRA_LABELS_BY_LOCALE: Record<Locale, ExtraLabels> = {
+  [Locale.EN]: EN_PUBLIC_LAUNCH_LABELS,
+  [Locale.AR]: AR_PUBLIC_LAUNCH_LABELS,
+  [Locale.FR]: FR_PUBLIC_LAUNCH_LABELS,
+  [Locale.IT]: IT_PUBLIC_LAUNCH_LABELS,
+  [Locale.DE]: DE_PUBLIC_LAUNCH_LABELS,
+  [Locale.ES]: ES_PUBLIC_LAUNCH_LABELS,
+  [Locale.RU]: RU_PUBLIC_LAUNCH_LABELS,
+  [Locale.PT]: PT_PUBLIC_LAUNCH_LABELS,
+  [Locale.HI]: HI_PUBLIC_LAUNCH_LABELS,
+  [Locale.JA]: JA_PUBLIC_LAUNCH_LABELS,
+  [Locale.TH]: TH_PUBLIC_LAUNCH_LABELS,
+  [Locale.FA]: FA_PUBLIC_LAUNCH_LABELS,
+  [Locale.ZH]: ZH_PUBLIC_LAUNCH_LABELS,
 };
+
+// Every launch page (about, pricing, models, security, legal) ships its own
+// translation per locale; the commerce policies (delivery, refund) and the
+// page chrome come from the commerce-policy dictionary.
+export const PUBLIC_LAUNCH_CONTENT_BY_LOCALE = Object.fromEntries(
+  Object.values(Locale).map((locale) => [
+    locale,
+    {
+      ...CORE_PAGES_BY_LOCALE[locale],
+      ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[locale].pages,
+    },
+  ]),
+) as Record<Locale, PublicLaunchPageDictionary>;
+
+export const PUBLIC_LAUNCH_LABELS_BY_LOCALE = Object.fromEntries(
+  Object.values(Locale).map((locale) => [
+    locale,
+    {
+      ...EXTRA_LABELS_BY_LOCALE[locale],
+      ...PUBLIC_COMMERCE_POLICY_CONTENT_BY_LOCALE[locale].labels,
+    },
+  ]),
+) as Record<Locale, PublicLaunchLabels>;

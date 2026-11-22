@@ -8,6 +8,9 @@ home; this page only collects them. Routed from [`AGENTS.md`](../AGENTS.md).
   `npm run build` / `npm run typecheck` wrap it per workspace. ESLint stays on the
   TypeScript 6 API until typescript-eslint supports 7
   ([rules/48](../rules/48-lint-and-test-only-what-changed.md#typescript-runs-side-by-side-deliberately)).
+- **A connector model can be EXPOSED yet hidden from chat** when its kind is not CHAT (TOOL, EMBEDDING, ...;
+  e.g. `models/gemini-decision-1`). Use the admin "Why hidden?" diagnostic; never re-expose it as a "fix"
+  ([connector CLAUDE.md](../apps/claw-connector-service/CLAUDE.md)).
 - **Docker images are `node:26-bookworm-slim`** (glibc), not Alpine — the
   TypeScript 7 compiler and llama.cpp binaries are not musl-compatible.
 - **`./scripts/claw.sh up` is the only supported way to start the stack.** It

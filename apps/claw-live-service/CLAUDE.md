@@ -64,7 +64,8 @@ this file disagree, fix one in the same change) - decision:
 - **Audio is accepted only from a billable, watching session**: state `ACTIVE` or `GRACE` (an allow-list,
   `LIVE_CAPTURE_ACCEPTING_STATES`) and a heartbeat or session start under 20 s old. A PAUSED or silent session gets 409,
   so nobody gets free transcription (security review 2026-11-22). The raw body is proven a `Buffer` with
-  `instanceof` before any `.length` read, in the service and again in the WAV parser (CodeQL js/type-confusion).
+  `instanceof`, after `Array.isArray`/`typeof` checks (the guards CodeQL recognises), before any `.length` read,
+  in the service and again in the WAV parser (CodeQL js/type-confusion).
 - **The staff plan slug `admin` must exist in the policy** (`plans.admin`, seed v1 gives 36000 s); a plan without a row
   falls to `defaultPlan` (0 free seconds).
 - **Dev frontend needs a restart** (`docker restart claw-frontend`) to see new routes or edits to existing files.

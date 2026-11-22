@@ -20,6 +20,17 @@ export function classifyGeminiModelKind(methods: readonly string[] | undefined):
   return embeds ? ModelKind.EMBEDDING : ModelKind.TOOL;
 }
 
+/**
+ * Why `classifyGeminiModelKind` said non-CHAT, quoting Google's own method
+ * list so an admin sees the evidence (`gemini-decision-1`: "Google lists only:
+ * createDecision"). Undefined for a chat model.
+ */
+export function geminiKindReason(methods: readonly string[] | undefined): string | undefined {
+  return classifyGeminiModelKind(methods) === ModelKind.CHAT
+    ? undefined
+    : `Google lists only: ${(methods ?? []).join(', ')}`;
+}
+
 /** Narrows Google's untyped `supportedGenerationMethods` to strings. */
 export function readGenerationMethods(value: unknown): string[] | undefined {
   return Array.isArray(value)

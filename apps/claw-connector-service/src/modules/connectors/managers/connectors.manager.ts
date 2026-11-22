@@ -16,6 +16,8 @@ import { BusinessException } from '../../../common/errors';
 import { ConnectorModelsRepository } from '../repositories/connector-models.repository';
 import { HealthEventsRepository } from '../repositories/health-events.repository';
 import { SyncRunsRepository } from '../repositories/sync-runs.repository';
+import { ModelEventsRepository } from '../repositories/model-events.repository';
+import { detectSyncModelEvents } from '../utilities/sync-model-events.utility';
 import { ConnectorsRepository } from '../repositories/connectors.repository';
 import { withKnownContextWindows } from '../utilities/model-context-window.utility';
 import { parseGatewayHeaders } from '../utilities/gateway-headers.utility';
@@ -29,7 +31,12 @@ import {
   toRuntimeConnectorPreset,
 } from '../utilities/runtime-provider-preset.utility';
 import { type ConnectorConfig, type ProviderAdapter } from './provider-adapter.interface';
-import { type HealthCheckResult, type SyncModelsResult } from '../types/connectors.types';
+import {
+  type HealthCheckResult,
+  type NormalizedModel,
+  type SyncEventBaseline,
+  type SyncModelsResult,
+} from '../types/connectors.types';
 
 @Injectable()
 export class ConnectorsManager {
@@ -41,6 +48,7 @@ export class ConnectorsManager {
     private readonly healthEventsRepository: HealthEventsRepository,
     private readonly syncRunsRepository: SyncRunsRepository,
     @Optional() private readonly providerDefinitionsService?: ProviderDefinitionsService,
+    @Optional() private readonly modelEventsRepository?: ModelEventsRepository,
   ) {}
 
   /**
@@ -130,6 +138,8 @@ export class ConnectorsManager {
         models,
       );
 
+      await this.recordModelEvents(connector, existingModels, models);
+
       const modelsAdded = models.filter((model) => !existingKeys.has(model.modelKey)).length;
       const modelsRemoved = existingModels.filter((model) => !nextKeys.has(model.modelKey)).length;
 
@@ -162,6 +172,31 @@ export class ConnectorsManager {
         completedAt: new Date(),
       });
       throw error;
+    }
+  }
+
+  /**
+   * The visibility trail: a kind flip or an unexpose done by this sync is
+   * written to `connector_model_events` with before/after. Best effort — a
+   * failed write is logged and never fails the sync that already landed.
+   */
+  private async recordModelEvents(
+    connector: Connector,
+    before: SyncEventBaseline[],
+    listed: NormalizedModel[],
+  ): Promise<void> {
+    if (this.modelEventsRepository === undefined) return;
+    const events = detectSyncModelEvents(connector.id, connector.provider, before, listed);
+    if (events.length === 0) return;
+    try {
+      await this.modelEventsRepository.createMany(events);
+      this.logger.log(
+        `syncModels: recorded ${String(events.length)} model event(s) for connector ${connector.id}`,
+      );
+    } catch (error: unknown) {
+      this.logger.warn(
+        `syncModels: model events not recorded for connector ${connector.id} - ${(error as Error).message}`,
+      );
     }
   }
 

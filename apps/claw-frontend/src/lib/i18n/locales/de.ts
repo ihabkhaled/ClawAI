@@ -10,6 +10,7 @@ import { LIVE_TRANSLATIONS } from './live-translations';
 import { MARKETING_VIDEOS_TRANSLATIONS } from './marketing-videos-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
+import { MODEL_VISIBILITY_TRANSLATIONS } from './model-visibility-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
 import { OBSERVABILITY_EXPLORER_TRANSLATIONS } from './observability-explorer-translations';
@@ -5165,6 +5166,7 @@ export const de: TranslationDictionary = {
       impactWarning: 'Das Aufheben entfernt diese Modelle aus jedem Tarif, der sie nutzt:',
     },
     exposureUi: MODEL_EXPOSURE_UI_TRANSLATIONS.de,
+    visibility: MODEL_VISIBILITY_TRANSLATIONS.de,
   },
   adminPlans: {
     intervalDiscounts: {
