@@ -2149,6 +2149,11 @@
           "method": "POST",
           "route": "/internal/file-generations/generate",
           "source": "apps/claw-file-generation-service/src/modules/file-generation/controllers/internal-file-generation.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/file-generations/render-pdf",
+          "source": "apps/claw-file-generation-service/src/modules/file-generation/controllers/internal-file-generation.controller.ts"
         }
       ],
       "claw-file-service": [
@@ -2319,6 +2324,11 @@
         },
         {
           "method": "POST",
+          "route": "/internal/files/transcribe-chunk",
+          "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
+        },
+        {
+          "method": "POST",
           "route": "/internal/files/upload-internal",
           "source": "apps/claw-file-service/src/modules/files/controllers/files-internal.controller.ts"
         },
@@ -2485,6 +2495,133 @@
           "method": "POST",
           "route": "/videos/:id/retry",
           "source": "apps/claw-image-service/src/modules/video-generation/controllers/video-generation.controller.ts"
+        }
+      ],
+      "claw-live-service": [
+        {
+          "method": "GET",
+          "route": "/health",
+          "source": "apps/claw-live-service/src/modules/health/controllers/health.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/live/admin/overview",
+          "source": "apps/claw-live-service/src/modules/admin/controllers/admin.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/live/admin/policy",
+          "source": "apps/claw-live-service/src/modules/policy/controllers/live-policy-admin.controller.ts"
+        },
+        {
+          "method": "PUT",
+          "route": "/live/admin/policy",
+          "source": "apps/claw-live-service/src/modules/policy/controllers/live-policy-admin.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/live/admin/policy/rollback",
+          "source": "apps/claw-live-service/src/modules/policy/controllers/live-policy-admin.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/live/admin/runs/:runId/stop",
+          "source": "apps/claw-live-service/src/modules/admin/controllers/admin.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/live/events/:eventId/enhance",
+          "source": "apps/claw-live-service/src/modules/enhance/controllers/enhance.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/live/events/:eventId/versions",
+          "source": "apps/claw-live-service/src/modules/history/controllers/history.controller.ts"
+        },
+        {
+          "method": "DELETE",
+          "route": "/live/history",
+          "source": "apps/claw-live-service/src/modules/deletion/controllers/deletion.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/live/history",
+          "source": "apps/claw-live-service/src/modules/history/controllers/history.controller.ts"
+        },
+        {
+          "method": "DELETE",
+          "route": "/live/history/:sessionId",
+          "source": "apps/claw-live-service/src/modules/deletion/controllers/deletion.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/live/history/:sessionId/events",
+          "source": "apps/claw-live-service/src/modules/history/controllers/history.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/live/history/:sessionId/export",
+          "source": "apps/claw-live-service/src/modules/history/controllers/history.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/live/sessions",
+          "source": "apps/claw-live-service/src/modules/sessions/controllers/live-sessions.controller.ts"
+        },
+        {
+          "method": "DELETE",
+          "route": "/live/sessions/:sessionId",
+          "source": "apps/claw-live-service/src/modules/sessions/controllers/live-sessions.controller.ts"
+        },
+        {
+          "method": "PATCH",
+          "route": "/live/sessions/:sessionId",
+          "source": "apps/claw-live-service/src/modules/sessions/controllers/live-sessions.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/live/sessions/:sessionId/approve-credits",
+          "source": "apps/claw-live-service/src/modules/sessions/controllers/live-sessions.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/live/sessions/:sessionId/audio",
+          "source": "apps/claw-live-service/src/modules/sessions/controllers/live-capture.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/live/sessions/:sessionId/close",
+          "source": "apps/claw-live-service/src/modules/sessions/controllers/live-sessions.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/live/sessions/:sessionId/heartbeat",
+          "source": "apps/claw-live-service/src/modules/sessions/controllers/live-sessions.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/live/sessions/:sessionId/stream",
+          "source": "apps/claw-live-service/src/modules/realtime/controllers/live-stream.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/live/sources/resolve",
+          "source": "apps/claw-live-service/src/modules/sessions/controllers/live-sources.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/live/streams/:streamId/hls/:file",
+          "source": "apps/claw-live-service/src/modules/sources/controllers/hls-proxy.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/live/streams/:streamId/hls/p",
+          "source": "apps/claw-live-service/src/modules/sources/controllers/hls-proxy.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/live/usage",
+          "source": "apps/claw-live-service/src/modules/sessions/controllers/live-usage.controller.ts"
         }
       ],
       "claw-llamacpp-service": [
@@ -5094,6 +5231,13 @@
       },
       {
         "files": [
+          "docker/docker-compose.dev.services.yml",
+          "docker/docker-compose.prod.services.yml"
+        ],
+        "name": "live-service"
+      },
+      {
+        "files": [
           "docker/docker-compose.dev.gpu-nvidia.yml",
           "docker/docker-compose.dev.gpu-rocm.yml",
           "docker/docker-compose.dev.gpu-vulkan.yml",
@@ -5204,6 +5348,13 @@
           "docker/docker-compose.prod.databases.yml"
         ],
         "name": "pg-images"
+      },
+      {
+        "files": [
+          "docker/docker-compose.dev.databases.yml",
+          "docker/docker-compose.prod.databases.yml"
+        ],
+        "name": "pg-live"
       },
       {
         "files": [
@@ -6034,6 +6185,31 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "LIVE_ALLOW_HTTP_SOURCES"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "LIVE_DATABASE_URL"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "LIVE_SERVICE_PORT"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "LIVE_SERVICE_URL"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "LIVE_WORKER_MAX_CONCURRENCY"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "LLAMACPP_AUTO_INSTALL_BINARY"
       },
       {
@@ -6645,6 +6821,26 @@
         "confidence": "verified",
         "source": ".env.example",
         "value": "PG_IMAGES_USER"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PG_LIVE_DB"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PG_LIVE_PASSWORD"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PG_LIVE_PORT"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "PG_LIVE_USER"
       },
       {
         "confidence": "verified",
@@ -7819,6 +8015,11 @@
         "source": "packages/shared-types/src/events/event-patterns.ts"
       },
       {
+        "key": "LIVE_RUN_ENDED",
+        "pattern": "live.run_ended",
+        "source": "packages/shared-types/src/events/event-patterns.ts"
+      },
+      {
         "key": "LLAMACPP_BINARY_INSTALLED",
         "pattern": "llamacpp.binary.installed",
         "source": "packages/shared-types/src/events/event-patterns.ts"
@@ -8396,6 +8597,11 @@
         "route": "/features/[capability]"
       },
       {
+        "file": "apps/claw-frontend/src/app/(marketing)/features/live-intelligence/page.tsx",
+        "kind": "page",
+        "route": "/features/live-intelligence"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(marketing)/features/page.tsx",
         "kind": "page",
         "route": "/features"
@@ -8559,6 +8765,11 @@
         "file": "apps/claw-frontend/src/app/(portal)/admin/feedback/page.tsx",
         "kind": "page",
         "route": "/admin/feedback"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(portal)/admin/live/page.tsx",
+        "kind": "page",
+        "route": "/admin/live"
       },
       {
         "file": "apps/claw-frontend/src/app/(portal)/admin/page.tsx",
@@ -8854,6 +9065,11 @@
         "file": "apps/claw-frontend/src/app/(portal)/layout.tsx",
         "kind": "layout",
         "route": "/"
+      },
+      {
+        "file": "apps/claw-frontend/src/app/(portal)/live/page.tsx",
+        "kind": "page",
+        "route": "/live"
       },
       {
         "file": "apps/claw-frontend/src/app/(portal)/logs/page.tsx",
@@ -9458,7 +9674,7 @@
           "file": "rules/36-floating-ui-and-toast-clearance.md"
         },
         {
-          "bytes": 36824,
+          "bytes": 37775,
           "file": "rules/37-payg-credit-integrity.md"
         },
         {
@@ -9588,7 +9804,7 @@
       ],
       "skills": [
         {
-          "bytes": 38644,
+          "bytes": 38954,
           "file": "skills/00-index.md"
         },
         {
@@ -9972,6 +10188,10 @@
           "file": "skills/run-gates-once-and-land.md"
         },
         {
+          "bytes": 4355,
+          "file": "skills/run-live-intelligence-qa.md"
+        },
+        {
           "bytes": 5899,
           "file": "skills/run-the-file-model-matrix.md"
         },
@@ -10066,7 +10286,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 6359
+        "value": 6361
       },
       "localeCount": 13,
       "locales": [
@@ -10366,6 +10586,12 @@
         "source": "infra/nginx/locations.conf"
       },
       {
+        "location": "/api/v1/live",
+        "port": 4022,
+        "service": "live-service",
+        "source": "infra/nginx/locations.conf"
+      },
+      {
         "location": "/api/v1/llamacpp/",
         "port": 4017,
         "service": "llamacpp-service",
@@ -10547,6 +10773,12 @@
       },
       {
         "location": "~",
+        "port": 4022,
+        "service": "live-service",
+        "source": "infra/nginx/locations.conf"
+      },
+      {
+        "location": "~",
         "port": 4008,
         "service": "ollama-service",
         "source": "infra/nginx/locations.conf"
@@ -10579,6 +10811,11 @@
         "confidence": "verified",
         "source": "packages/shared-types/src/enums/permission.enum.ts",
         "value": "ADMIN_FEEDBACK_MANAGE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "ADMIN_LIVE_MANAGE"
       },
       {
         "confidence": "verified",
@@ -10749,6 +10986,11 @@
         "confidence": "verified",
         "source": "packages/shared-types/src/enums/permission.enum.ts",
         "value": "JUDGE_USE"
+      },
+      {
+        "confidence": "verified",
+        "source": "packages/shared-types/src/enums/permission.enum.ts",
+        "value": "LIVE_USE"
       },
       {
         "confidence": "verified",
@@ -11081,6 +11323,11 @@
         "confidence": "verified",
         "source": "packages/shared-constants/src/index.ts",
         "value": 4012
+      },
+      "LIVE_SERVICE_PORT": {
+        "confidence": "verified",
+        "source": "packages/shared-constants/src/index.ts",
+        "value": 4022
       },
       "LLAMACPP_SERVICE_PORT": {
         "confidence": "verified",
@@ -11619,6 +11866,95 @@
         "provider": {
           "confidence": "verified",
           "source": "apps/claw-image-service/prisma/schema.prisma",
+          "value": "postgresql"
+        }
+      },
+      "claw-live-service": {
+        "models": [
+          {
+            "confidence": "verified",
+            "source": "apps/claw-live-service/prisma/schema.prisma",
+            "value": "LiveBillingState"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-live-service/prisma/schema.prisma",
+            "value": "LiveEnhancement"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-live-service/prisma/schema.prisma",
+            "value": "LiveFeedEvent"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-live-service/prisma/schema.prisma",
+            "value": "LiveFeedEventVersion"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-live-service/prisma/schema.prisma",
+            "value": "LiveMemorySnapshot"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-live-service/prisma/schema.prisma",
+            "value": "LivePolicyVersion"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-live-service/prisma/schema.prisma",
+            "value": "LiveProcessingRun"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-live-service/prisma/schema.prisma",
+            "value": "LiveProviderCost"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-live-service/prisma/schema.prisma",
+            "value": "LiveRunTombstone"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-live-service/prisma/schema.prisma",
+            "value": "LiveSessionCoverage"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-live-service/prisma/schema.prisma",
+            "value": "LiveStream"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-live-service/prisma/schema.prisma",
+            "value": "LiveTranscriptSegment"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-live-service/prisma/schema.prisma",
+            "value": "LiveTranslation"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-live-service/prisma/schema.prisma",
+            "value": "LiveUsageCharge"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-live-service/prisma/schema.prisma",
+            "value": "LiveUsageMonth"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-live-service/prisma/schema.prisma",
+            "value": "LiveViewerSession"
+          }
+        ],
+        "provider": {
+          "confidence": "verified",
+          "source": "apps/claw-live-service/prisma/schema.prisma",
           "value": "postgresql"
         }
       },
@@ -12484,7 +12820,7 @@
       },
       "@claw/shared-entitlements": {
         "runner": "vitest",
-        "testFiles": 12
+        "testFiles": 13
       },
       "@claw/shared-rabbitmq": {
         "runner": "vitest",
@@ -12508,7 +12844,7 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 227
+        "testFiles": 228
       },
       "claw-chat-service": {
         "runner": "vitest",
@@ -12524,15 +12860,15 @@
       },
       "claw-file-generation-service": {
         "runner": "vitest",
-        "testFiles": 20
+        "testFiles": 21
       },
       "claw-file-service": {
         "runner": "vitest",
-        "testFiles": 86
+        "testFiles": 88
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 1048
+        "testFiles": 1067
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -12541,6 +12877,10 @@
       "claw-image-service": {
         "runner": "vitest",
         "testFiles": 57
+      },
+      "claw-live-service": {
+        "runner": "vitest",
+        "testFiles": 76
       },
       "claw-llamacpp-service": {
         "runner": "vitest",
@@ -12946,6 +13286,37 @@
           "validate"
         ],
         "source": "apps/claw-image-service/package.json",
+        "type": "nestjs-service"
+      },
+      {
+        "dir": "apps/claw-live-service",
+        "internalDeps": [
+          "@claw/shared-auth",
+          "@claw/shared-constants",
+          "@claw/shared-entitlements",
+          "@claw/shared-rabbitmq",
+          "@claw/shared-types",
+          "@claw/shared-utilities"
+        ],
+        "name": "claw-live-service",
+        "scripts": [
+          "build",
+          "dev",
+          "format",
+          "format:check",
+          "lint",
+          "lint:strict",
+          "migrate",
+          "migrate:dev",
+          "prisma:generate",
+          "seed",
+          "start",
+          "start:prod",
+          "test",
+          "test:watch",
+          "typecheck"
+        ],
+        "source": "apps/claw-live-service/package.json",
         "type": "nestjs-service"
       },
       {
@@ -13426,20 +13797,20 @@
   "summary": {
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
-    "dockerServiceCount": 58,
-    "endpointCount": 974,
-    "envVarCount": 386,
-    "eventCount": 190,
-    "frontendRouteCount": 186,
+    "dockerServiceCount": 60,
+    "endpointCount": 1001,
+    "envVarCount": 395,
+    "eventCount": 191,
+    "frontendRouteCount": 189,
     "localeCount": 13,
-    "nginxRouteCount": 73,
-    "permissionCount": 94,
-    "portCount": 19,
+    "nginxRouteCount": 75,
+    "permissionCount": 96,
+    "portCount": 20,
     "portCoverageGapCount": 2,
-    "serviceCount": 21,
+    "serviceCount": 22,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 2912,
-    "workspaceCount": 28
+    "totalTestFiles": 3012,
+    "workspaceCount": 29
   }
 }
