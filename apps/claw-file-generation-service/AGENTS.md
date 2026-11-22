@@ -23,8 +23,8 @@ change type needs (`rules/23-git-commits-hooks-and-release-gates.md`, gate matri
 - Port: 4013
 - Database: postgresql
 - Prisma models: FileGeneration, FileGenerationAsset, FileGenerationEvent
-- API endpoints: 10 (see `.ai/manifests/api-endpoints.json`)
-- Test files: 20 (vitest)
+- API endpoints: 11 (see `.ai/manifests/api-endpoints.json`)
+- Test files: 21 (vitest)
 - Depends on: @claw/shared-auth, @claw/shared-constants, @claw/shared-rabbitmq, @claw/shared-types, @claw/shared-utilities
 
 ## Before editing
