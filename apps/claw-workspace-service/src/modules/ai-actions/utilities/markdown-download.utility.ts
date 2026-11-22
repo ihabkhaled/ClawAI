@@ -1,4 +1,5 @@
 import { HttpStatus } from '@nestjs/common';
+import { contentDispositionHeader, ContentDispositionType } from '@claw/shared-utilities';
 import type { Response } from 'express';
 
 /**
@@ -14,6 +15,9 @@ export function sendMarkdownDownload(res: Response, filename: string, markdown: 
   res.status(HttpStatus.OK);
   res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.setHeader(
+    'Content-Disposition',
+    contentDispositionHeader(ContentDispositionType.ATTACHMENT, filename),
+  );
   res.send(markdown);
 }

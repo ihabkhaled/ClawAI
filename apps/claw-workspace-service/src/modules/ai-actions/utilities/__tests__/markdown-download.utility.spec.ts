@@ -33,7 +33,9 @@ describe('sendMarkdownDownload (CodeQL js/reflected-xss)', () => {
     expect(headers['content-type']).toBe('text/markdown; charset=utf-8');
     expect(headers['content-type']).not.toMatch(/html/i);
     expect(headers['x-content-type-options']).toBe('nosniff');
-    expect(headers['content-disposition']).toBe('attachment; filename="multi-model-review.md"');
+    expect(headers['content-disposition']).toBe(
+      'attachment; filename="multi-model-review.md"; filename*=UTF-8\'\'multi-model-review.md',
+    );
     // The markdown body is delivered verbatim; safety comes from the headers.
     expect(send).toHaveBeenCalledWith(body);
   });
