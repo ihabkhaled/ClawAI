@@ -15,7 +15,7 @@ this file disagree, fix one in the same change) - decision:
 
 - **Foundation.** `GET /api/v1/health` (public); Zod `AppConfig` (`LIVE_DATABASE_URL`, `REDIS_URL`, `RABBITMQ_URL`, the AUTH,
   CHAT, CONNECTOR, FILE and FILE_GENERATION URLs, `INTER_SERVICE_AUTH_TOKEN`, `JWT_SECRET`, `LIVE_ALLOW_HTTP_SOURCES`,
-  `LIVE_WORKER_MAX_CONCURRENCY`); global `AuthGuard`, `SessionRevocationGuard` (ADR-112), `RolesGuard`, `ThrottlerGuard`;
+  `LIVE_WORKER_MAX_CONCURRENCY`, `LIVE_TWITCH_CLIENT_ID` (empty = Twitch server pull off)); global `AuthGuard`, `SessionRevocationGuard` (ADR-112), `RolesGuard`, `ThrottlerGuard`;
   `PrismaService` and the global ioredis client (`LIVE_REDIS_CLIENT`). Migrations `20261122000000_live_init` and `20261122120000_live_platforms_capture` (platforms, capture) and the
   idempotent seeder `prisma/seeders/live-policy.seeder.cjs` (policy version 1 only when the table is empty).
 - **sources** - `POST /live/sources/resolve` (the platform registry: `constants/platform-registry.constants.ts` plus one

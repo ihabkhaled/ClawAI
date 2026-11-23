@@ -1,11 +1,11 @@
 {
   "generated": true,
   "hashes": {
-    ".ai/BOOTSTRAP.md": "bf2273d1",
+    ".ai/BOOTSTRAP.md": "3f63e5d4",
     ".ai/manifests/api-endpoints.json": "fe00d9ad",
     ".ai/manifests/data-ownership.json": "09282300",
     ".ai/manifests/docker-services.json": "cd0958da",
-    ".ai/manifests/environment-variables.json": "0f5bdb34",
+    ".ai/manifests/environment-variables.json": "049294a6",
     ".ai/manifests/event-graph.json": "fd707e30",
     ".ai/manifests/frontend-routes.json": "26328520",
     ".ai/manifests/governance.json": "e6528cf7",

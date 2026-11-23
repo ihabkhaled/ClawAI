@@ -93,7 +93,9 @@ YouTube grants caption or audio access, a streaming STT vendor is added, or the 
   "server-side download or capture of any platform is never built". New capability `SERVER_PULL`: the server reads the
   platform's public playlist the way its own web player does, so one `PUBLIC` run serves every viewer, on any device.
   - **Twitch:** the anonymous playback token Twitch's web player requests (`gql.twitch.tv`, public web client id) and
-    the usher master playlist. A token that says `forbidden` (geo-block, sub-only) is honoured.
+    the usher master playlist. A token that says `forbidden` (geo-block, sub-only) is honoured. The client id lives in
+    `LIVE_TWITCH_CLIENT_ID` (env, empty = off), not in code: gitleaks' provider rule `twitch-api-token` matches it and
+    the repo never allowlists provider rules (owner decision 2026-11-23).
   - **YouTube: not built.** The watch page no longer carries `hlsManifestUrl`; a playlist needs impersonating another
     client to dodge YouTube's attestation (PO tokens). **Kick: not built.** Its API answers servers with
     `403 Request blocked by security policy`. Defeating either protection is circumvention and stays out; both remain

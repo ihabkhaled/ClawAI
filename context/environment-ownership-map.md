@@ -7,32 +7,32 @@ single root `.env` (copy from `.env.example`) drives everything; all services us
 
 ## Variable groups
 
-| Group                     | Examples                                                                                                                                                          |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| General                   | `NODE_ENV`, `CORS_ORIGINS`, `THROTTLE_TTL/LIMIT`, `CLAW_LOCAL_AI`, `CLAW_HOSTNAME`                                                                                |
-| PostgreSQL (×18)          | `PG_<SVC>_USER/PASSWORD/DB/PORT`, `<SVC>_DATABASE_URL`                                                                                                            |
-| MongoDB                   | `MONGO_USER/PASSWORD/DB/PORT`, `AUDIT_MONGODB_URI`, `CLIENT_LOGS_MONGODB_URI`, `SERVER_LOGS_MONGODB_URI`                                                          |
-| Live Intelligence         | `LIVE_SERVICE_URL/PORT`, `LIVE_DATABASE_URL`, `PG_LIVE_*`, `LIVE_ALLOW_HTTP_SOURCES`, `LIVE_WORKER_MAX_CONCURRENCY` (live-service; no secret, policy is a DB row) |
-| Redis / RabbitMQ          | `REDIS_URL/PORT`, `RABBITMQ_USER/PASSWORD/URL/PORT/MANAGEMENT_PORT`                                                                                               |
-| JWT / crypto              | `JWT_SECRET`, `JWT_ACCESS_EXPIRY`, `JWT_REFRESH_EXPIRY`, `ENCRYPTION_KEY`, `INTER_SERVICE_AUTH_TOKEN`                                                             |
-| Grafana (ADR-115)         | `GRAFANA_SECRET_KEY` (Grafana's own encryption key; blank = Grafana default; no Grafana password exists)                                                          |
-| Admin seed                | `ADMIN_EMAIL/USERNAME/PASSWORD`                                                                                                                                   |
-| Frontend                  | `NEXT_PUBLIC_API_URL/APP_NAME/APP_URL`, `FRONTEND_PORT`                                                                                                           |
-| Outbound email            | `CONTACT_EMAIL_ENABLED/PROVIDER/FROM`, `CONTACT_SMTP_HOST/PORT/SECURE/USER/PASS`                                                                                  |
-| Deployment control        | `DEPLOYMENT_STATUS_FILE`, `DEPLOYMENT_AUTOMATION_FILE`, `GITHUB_DEPLOY_TOKEN/REPOSITORY/REF` (auth-service only)                                                  |
-| Payment / billing         | `PAYPAL_*`, `PAYMOB_*`, `PAYMENT_TOKEN_ENCRYPTION_*`, `FX_*`, `PAYMENT_*_INTERVAL_MS`, `PAYMENT_GATEWAY_*`                                                        |
-| Distributed origins       | `CLAW_<SVC>_ORIGIN`, including `CLAW_PAYMENT_ORIGIN`; internal service routes remain private                                                                      |
-| Per-service ports         | `AUTH_PORT`, `CHAT_PORT`, …, `CLIENT_LOGS_PORT`, `SERVER_LOGS_PORT`                                                                                               |
-| Inter-service URLs        | `<SVC>_SERVICE_URL`                                                                                                                                               |
-| TLS                       | `HTTPS_CERT_PATH`, `HTTPS_KEY_PATH`, `NODE_EXTRA_CA_CERTS`                                                                                                        |
-| Ollama / local AI         | `OLLAMA_BASE_URL`, `OLLAMA_API_KEY`, `OLLAMA_ROUTER_MODEL`, `AUTO_PULL_MODELS`, `COMFYUI_BASE_URL`, `STABLE_DIFFUSION_URL`                                        |
-| llama.cpp                 | `LLAMACPP_DATA_PATH`, `LLAMACPP_BINARY_VERSION`, `LLAMACPP_GPU_BACKEND`, `HUGGINGFACE_TOKEN`, …                                                                   |
-| Files / OCR / ZIP         | `FILE_STORAGE_PATH`, `CLAMAV_HOST/PORT/ENABLED`, `OCR_*`, `ZIP_*`, `FILE_RETENTION_*`                                                                             |
-| Memory/Context V2         | `MEMORY_V2_ENABLED`, `CONTEXT_V2_ENABLED`, `RETRIEVAL_V2_ENABLED`, `MEMORY_EXTRACTION_MODEL`, `RETRIEVAL_*`                                                       |
-| Workspace                 | `GITHUB_*`, `GITLAB_*`, `JIRA_*`, `SLACK_*`, `GOOGLE_*`, `*_WEBHOOK_SECRET`, `WORKSPACE_SYNC_*`, `AUTO_SUGGEST_*`                                                 |
-| Routing feature flags     | `ROUTING_*_ENABLED`, `ROUTING_V2_CANARY_PERCENT`, `ROUTER_COMPACT_PROMPT`                                                                                         |
-| Compare/Judge/file attach | `ENABLE_ANTHROPIC_NATIVE_PDF`, `ENABLE_GEMINI_FILES_API`, `GEMINI_FILES_API_*`                                                                                    |
-| Runtime V2 native tools   | `CHAT_NATIVE_TOOL_CALLING_ENABLED`, `CHAT_TOOL_CATALOG_MAX_BYTES`                                                                                                 |
+| Group                     | Examples                                                                                                                                                                                   |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| General                   | `NODE_ENV`, `CORS_ORIGINS`, `THROTTLE_TTL/LIMIT`, `CLAW_LOCAL_AI`, `CLAW_HOSTNAME`                                                                                                         |
+| PostgreSQL (×18)          | `PG_<SVC>_USER/PASSWORD/DB/PORT`, `<SVC>_DATABASE_URL`                                                                                                                                     |
+| MongoDB                   | `MONGO_USER/PASSWORD/DB/PORT`, `AUDIT_MONGODB_URI`, `CLIENT_LOGS_MONGODB_URI`, `SERVER_LOGS_MONGODB_URI`                                                                                   |
+| Live Intelligence         | `LIVE_SERVICE_URL/PORT`, `LIVE_DATABASE_URL`, `PG_LIVE_*`, `LIVE_ALLOW_HTTP_SOURCES`, `LIVE_WORKER_MAX_CONCURRENCY`, `LIVE_TWITCH_CLIENT_ID` (live-service; no secret, policy is a DB row) |
+| Redis / RabbitMQ          | `REDIS_URL/PORT`, `RABBITMQ_USER/PASSWORD/URL/PORT/MANAGEMENT_PORT`                                                                                                                        |
+| JWT / crypto              | `JWT_SECRET`, `JWT_ACCESS_EXPIRY`, `JWT_REFRESH_EXPIRY`, `ENCRYPTION_KEY`, `INTER_SERVICE_AUTH_TOKEN`                                                                                      |
+| Grafana (ADR-115)         | `GRAFANA_SECRET_KEY` (Grafana's own encryption key; blank = Grafana default; no Grafana password exists)                                                                                   |
+| Admin seed                | `ADMIN_EMAIL/USERNAME/PASSWORD`                                                                                                                                                            |
+| Frontend                  | `NEXT_PUBLIC_API_URL/APP_NAME/APP_URL`, `FRONTEND_PORT`                                                                                                                                    |
+| Outbound email            | `CONTACT_EMAIL_ENABLED/PROVIDER/FROM`, `CONTACT_SMTP_HOST/PORT/SECURE/USER/PASS`                                                                                                           |
+| Deployment control        | `DEPLOYMENT_STATUS_FILE`, `DEPLOYMENT_AUTOMATION_FILE`, `GITHUB_DEPLOY_TOKEN/REPOSITORY/REF` (auth-service only)                                                                           |
+| Payment / billing         | `PAYPAL_*`, `PAYMOB_*`, `PAYMENT_TOKEN_ENCRYPTION_*`, `FX_*`, `PAYMENT_*_INTERVAL_MS`, `PAYMENT_GATEWAY_*`                                                                                 |
+| Distributed origins       | `CLAW_<SVC>_ORIGIN`, including `CLAW_PAYMENT_ORIGIN`; internal service routes remain private                                                                                               |
+| Per-service ports         | `AUTH_PORT`, `CHAT_PORT`, …, `CLIENT_LOGS_PORT`, `SERVER_LOGS_PORT`                                                                                                                        |
+| Inter-service URLs        | `<SVC>_SERVICE_URL`                                                                                                                                                                        |
+| TLS                       | `HTTPS_CERT_PATH`, `HTTPS_KEY_PATH`, `NODE_EXTRA_CA_CERTS`                                                                                                                                 |
+| Ollama / local AI         | `OLLAMA_BASE_URL`, `OLLAMA_API_KEY`, `OLLAMA_ROUTER_MODEL`, `AUTO_PULL_MODELS`, `COMFYUI_BASE_URL`, `STABLE_DIFFUSION_URL`                                                                 |
+| llama.cpp                 | `LLAMACPP_DATA_PATH`, `LLAMACPP_BINARY_VERSION`, `LLAMACPP_GPU_BACKEND`, `HUGGINGFACE_TOKEN`, …                                                                                            |
+| Files / OCR / ZIP         | `FILE_STORAGE_PATH`, `CLAMAV_HOST/PORT/ENABLED`, `OCR_*`, `ZIP_*`, `FILE_RETENTION_*`                                                                                                      |
+| Memory/Context V2         | `MEMORY_V2_ENABLED`, `CONTEXT_V2_ENABLED`, `RETRIEVAL_V2_ENABLED`, `MEMORY_EXTRACTION_MODEL`, `RETRIEVAL_*`                                                                                |
+| Workspace                 | `GITHUB_*`, `GITLAB_*`, `JIRA_*`, `SLACK_*`, `GOOGLE_*`, `*_WEBHOOK_SECRET`, `WORKSPACE_SYNC_*`, `AUTO_SUGGEST_*`                                                                          |
+| Routing feature flags     | `ROUTING_*_ENABLED`, `ROUTING_V2_CANARY_PERCENT`, `ROUTER_COMPACT_PROMPT`                                                                                                                  |
+| Compare/Judge/file attach | `ENABLE_ANTHROPIC_NATIVE_PDF`, `ENABLE_GEMINI_FILES_API`, `GEMINI_FILES_API_*`                                                                                                             |
+| Runtime V2 native tools   | `CHAT_NATIVE_TOOL_CALLING_ENABLED`, `CHAT_TOOL_CATALOG_MAX_BYTES`                                                                                                                          |
 
 Ports for **client-logs (`CLIENT_LOGS_PORT`) and server-logs
 (`SERVER_LOGS_PORT`) are env-only** — no shared-constants constant. See

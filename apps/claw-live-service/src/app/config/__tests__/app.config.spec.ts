@@ -41,12 +41,14 @@ describe('AppConfig', () => {
     delete process.env['RABBITMQ_URL'];
     delete process.env['LIVE_ALLOW_HTTP_SOURCES'];
     delete process.env['LIVE_WORKER_MAX_CONCURRENCY'];
+    delete process.env['LIVE_TWITCH_CLIENT_ID'];
 
     const config = AppConfig.validate();
     expect(config.LIVE_SERVICE_PORT).toBe(4022);
     expect(config.RABBITMQ_URL).toBe('amqp://localhost:5672');
     expect(config.LIVE_ALLOW_HTTP_SOURCES).toBe(false);
     expect(config.LIVE_WORKER_MAX_CONCURRENCY).toBe(4);
+    expect(config.LIVE_TWITCH_CLIENT_ID).toBe('');
   });
 
   it('parses the http-source flag and the worker concurrency', () => {

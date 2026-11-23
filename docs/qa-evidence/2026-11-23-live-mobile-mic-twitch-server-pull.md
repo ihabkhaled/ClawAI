@@ -2,7 +2,7 @@
 
 Batch: live-mobile-mic-twitch-server-pull
 Date: 2026-11-23
-Commits: (fill in after committing)
+Commits: 0810091ee (feature), then the gitleaks follow-up (Twitch client id moved to `LIVE_TWITCH_CLIENT_ID`)
 Verdict: PARTIAL
 
 Every lane is filled in. PASS needs the command and its real output (or a path, a count, a
@@ -33,6 +33,10 @@ lane is NOT_RUN or FAIL. A fabricated or assumed PASS is a prohibited sentence (
 - A blocked microphone used to reset silently: now shows MIC_DENIED with how to allow it.
 - The phone notice told users to share a tab: it now says the microphone listens.
 - Twitch audio-only rendition has no frames: with vision on, the worker now picks the lightest rendition with video.
+
+- CI gitleaks (provider rule `twitch-api-token`) flagged the hard-coded public Twitch client id. Owner chose an env var over
+  an allowlist exception: `LIVE_TWITCH_CLIENT_ID` (empty = Twitch pull off, no request; spec). Re-verified after the
+  container recreate: `live-server-pull-smoke.mjs` 10/10 (7 captions, first after 15 s); live-service 675/675 tests.
 
 ## Open gaps
 

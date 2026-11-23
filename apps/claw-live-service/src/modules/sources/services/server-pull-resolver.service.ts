@@ -1,6 +1,7 @@
 import { randomInt } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 
+import { AppConfig } from '../../../app/config/app.config';
 import { pinnedGet } from '../../../common/utilities/pinned-request.utility';
 import { LivePlatform } from '../../../generated/prisma';
 import {
@@ -13,7 +14,6 @@ import {
   TWITCH_TOKEN_MAX_BYTES,
   TWITCH_USHER_BASE_URL,
   TWITCH_USHER_RANDOM_MAX,
-  TWITCH_WEB_CLIENT_ID,
 } from '../constants/server-pull.constants';
 import { HLS_PLAYLIST_MAX_BYTES } from '../constants/sources.constants';
 import { parseTwitchPlaybackToken } from '../utilities/twitch-playback-token.utility';
@@ -32,8 +32,13 @@ export class ServerPullResolverService {
     private readonly fetcher: HlsFetcherService,
   ) {}
 
+  /** Twitch also needs LIVE_TWITCH_CLIENT_ID; without it Twitch stays browser capture (no network call). */
   supports(platform: LivePlatform | null): boolean {
-    return platform !== null && SERVER_PULL_PLATFORMS.includes(platform);
+    return (
+      platform !== null &&
+      SERVER_PULL_PLATFORMS.includes(platform) &&
+      (platform !== LivePlatform.TWITCH || AppConfig.get().LIVE_TWITCH_CLIENT_ID !== '')
+    );
   }
 
   /** Hosts the worker may fetch a pulled stream's playlists and segments from. */
@@ -42,7 +47,9 @@ export class ServerPullResolverService {
   }
 
   async resolvePlaylist(platform: LivePlatform | null, id: string): Promise<URL | null> {
-    return platform === LivePlatform.TWITCH ? this.resolveTwitch(id).catch(() => null) : null;
+    return platform === LivePlatform.TWITCH && this.supports(platform)
+      ? this.resolveTwitch(id).catch(() => null)
+      : null;
   }
 
   /** True when the playlist resolves AND answers (a channel that is offline gets a 404). */
@@ -65,7 +72,10 @@ export class ServerPullResolverService {
       method: 'POST',
       timeoutMs: SERVER_PULL_REQUEST_TIMEOUT_MS,
       maxBytes: TWITCH_TOKEN_MAX_BYTES,
-      headers: { 'client-id': TWITCH_WEB_CLIENT_ID, 'content-type': 'application/json' },
+      headers: {
+        'client-id': AppConfig.get().LIVE_TWITCH_CLIENT_ID,
+        'content-type': 'application/json',
+      },
       body: JSON.stringify({
         operationName: 'PlaybackAccessToken',
         query: TWITCH_PLAYBACK_TOKEN_QUERY,

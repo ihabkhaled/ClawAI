@@ -66,7 +66,7 @@ Full request and response shapes: [architecture section 9](../03-architecture/li
 - YouTube is `BROWSER_CAPTURE` (tab audio on desktop, microphone on phones). `/watch`, `youtu.be` and `/channel/UC...`
   links play (channel links through the `live_stream` embed); `@handle` links are refused with
   `LIVE_YOUTUBE_HANDLE_UNSUPPORTED`.
-- Twitch is `SERVER_PULL` while the channel is live and the policy's `serverPullPlatforms` lists `TWITCH` (default): the
+- Twitch is `SERVER_PULL` while the channel is live, `LIVE_TWITCH_CLIENT_ID` is set and the policy's `serverPullPlatforms` lists `TWITCH` (default): the
   server reads the public playlist itself (`ServerPullResolverService`), one `PUBLIC` run for every viewer. Offline or a
   forbidden token → private `BROWSER_CAPTURE` with `SERVER_PULL_UNAVAILABLE`. Resolve does a token call plus one
   playlist fetch (5 s timeouts each). The worker's pin is a host-suffix list (`ttvnw.net`, `live-video.net`). Device
@@ -94,7 +94,7 @@ Full request and response shapes: [architecture section 9](../03-architecture/li
   The prod block sets `SEED_ON_START=true` so the entrypoint seeds policy version 1.
 - Images: both Dockerfiles install ffmpeg (Debian package) and build every `@claw/shared-*` package the service declares.
 - Environment: `LIVE_SERVICE_PORT`, `LIVE_SERVICE_URL`, `LIVE_DATABASE_URL`, `PG_LIVE_*`, `LIVE_ALLOW_HTTP_SOURCES`,
-  `LIVE_WORKER_MAX_CONCURRENCY`, and the shared `REDIS_URL`, `RABBITMQ_URL`, `AUTH_SERVICE_URL`, `CHAT_SERVICE_URL`,
+  `LIVE_WORKER_MAX_CONCURRENCY`, `LIVE_TWITCH_CLIENT_ID` (Twitch server pull; empty = off), and the shared `REDIS_URL`, `RABBITMQ_URL`, `AUTH_SERVICE_URL`, `CHAT_SERVICE_URL`,
   `CONNECTOR_SERVICE_URL`, `FILE_SERVICE_URL`, `FILE_GENERATION_SERVICE_URL`
   (see [environment-variables](../06-data/environment-variables.md)).
 - Gateway: `location /api/v1/live` plus two regex locations in `infra/nginx/locations.conf` and the distributed template

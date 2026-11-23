@@ -14,8 +14,8 @@ export const SERVER_PULL_DEFAULT_PLATFORMS: readonly LivePlatform[] = [LivePlatf
 
 export const TWITCH_GQL_URL = 'https://gql.twitch.tv/gql';
 export const TWITCH_GQL_HOST_SUFFIXES: readonly string[] = ['gql.twitch.tv'];
-/** Twitch's public web-player client id (shipped in every twitch.tv page; not a secret). */
-export const TWITCH_WEB_CLIENT_ID = 'kimne78kx3ncx6brgo4mv6wki5h1ko';
+// The client id the token call sends is LIVE_TWITCH_CLIENT_ID (env): Twitch's public web-player id.
+// It is not kept in code because the secret scanner's twitch-api-token rule matches it.
 export const TWITCH_PLAYBACK_TOKEN_QUERY =
   'query PlaybackAccessToken($login:String!){streamPlaybackAccessToken(channelName:$login,' +
   'params:{platform:"web",playerBackend:"mediaplayer",playerType:"site"}){value signature}}';

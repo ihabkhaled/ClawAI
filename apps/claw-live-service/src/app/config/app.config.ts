@@ -21,6 +21,8 @@ const appConfigSchema = z.object({
   JWT_SECRET: z.string().min(32),
   LIVE_ALLOW_HTTP_SOURCES: booleanFlag,
   LIVE_WORKER_MAX_CONCURRENCY: z.coerce.number().int().min(1).max(64).default(4),
+  /** Twitch's public web-player client id (server pull, ADR-221 batch 3); empty turns Twitch pull off. */
+  LIVE_TWITCH_CLIENT_ID: z.string().trim().default(''),
   CORS_ORIGINS: z.string().optional(),
   CLAW_HOSTNAME: z.string().default('claw.local'),
 });

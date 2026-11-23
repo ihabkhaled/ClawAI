@@ -1,4 +1,8 @@
-const { pinnedGet } = vi.hoisted(() => ({ pinnedGet: vi.fn() }));
+const { pinnedGet, config } = vi.hoisted(() => ({
+  pinnedGet: vi.fn(),
+  config: { LIVE_TWITCH_CLIENT_ID: 'public-web-player-id' },
+}));
+vi.mock('../../../../app/config/app.config', () => ({ AppConfig: { get: () => config } }));
 vi.mock('../../../../common/utilities/pinned-request.utility', () => ({ pinnedGet }));
 
 import { LivePlatform } from '../../../../generated/prisma';
@@ -20,6 +24,7 @@ describe('ServerPullResolverService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    config.LIVE_TWITCH_CLIENT_ID = 'public-web-player-id';
     guard.assertSafeOnSuffixes.mockResolvedValue(['151.101.1.1']);
   });
 
@@ -48,7 +53,10 @@ describe('ServerPullResolverService', () => {
       Record<string, unknown>,
     ];
     expect(addresses).toEqual(['151.101.1.1']);
-    expect(options).toMatchObject({ method: 'POST' });
+    expect(options).toMatchObject({
+      method: 'POST',
+      headers: expect.objectContaining({ 'client-id': 'public-web-player-id' }),
+    });
     expect(JSON.parse(String(options.body))).toMatchObject({ variables: { login: 'xqc' } });
     expect(url?.origin + (url?.pathname ?? '')).toBe(
       'https://usher.ttvnw.net/api/channel/hls/xqc.m3u8',
@@ -80,5 +88,12 @@ describe('ServerPullResolverService', () => {
     fetcher.fetchObject.mockRejectedValueOnce(new Error('LIVE_UPSTREAM_FAILED'));
     await expect(service.probe(LivePlatform.TWITCH, 'offline')).resolves.toBe(false);
     await expect(service.probe(LivePlatform.KICK, 'xqc')).resolves.toBe(false);
+  });
+
+  it('turns Twitch off with no request when LIVE_TWITCH_CLIENT_ID is empty', async () => {
+    config.LIVE_TWITCH_CLIENT_ID = '';
+    expect(service.supports(LivePlatform.TWITCH)).toBe(false);
+    await expect(service.resolvePlaylist(LivePlatform.TWITCH, 'xqc')).resolves.toBeNull();
+    expect(pinnedGet).not.toHaveBeenCalled();
   });
 });

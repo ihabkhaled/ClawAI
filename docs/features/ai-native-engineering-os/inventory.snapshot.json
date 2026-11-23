@@ -6220,6 +6220,11 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "LIVE_TWITCH_CLIENT_ID"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "LIVE_WORKER_MAX_CONCURRENCY"
       },
       {
@@ -13819,7 +13824,7 @@
     "contradictionCount": 0,
     "dockerServiceCount": 60,
     "endpointCount": 1004,
-    "envVarCount": 395,
+    "envVarCount": 396,
     "eventCount": 191,
     "frontendRouteCount": 189,
     "localeCount": 13,
