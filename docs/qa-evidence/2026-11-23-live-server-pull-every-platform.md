@@ -36,5 +36,5 @@ lane is NOT_RUN or FAIL. A fabricated or assumed PASS is a prohibited sentence (
 ## Open gaps
 
 - L14 RTL browser pass with an Arabic account.
-- Production: the deploy builds the image with yt-dlp; then a real-stream check from production (YouTube + Kick). The active production policy has no stored list, so it defaults to every platform.
+- Production verified after v1.240.0: live-service healthy, yt-dlp 2026.10.26 in the image, a live YouTube channel and a live Kick channel resolve to HLS (`m3u8_native`) from inside the production container. The active production policy has no stored list, so it defaults to every platform. A signed-in production caption run is still open.
 - yt-dlp needs periodic version bumps as platforms change (both ARGs together).
