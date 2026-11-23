@@ -3,7 +3,7 @@
 Batch: auth-web-push-esm-default
 Date: 2026-11-23
 Commits: the auth web-push ESM import fix (this push)
-Verdict: PARTIAL
+Verdict: DONE
 
 Every lane is filled in. PASS needs the command and its real output (or a path, a count, a
 screenshot name). NOT_RUN and NOT_APPLICABLE need a reason. Verdict DONE is allowed only when no
@@ -18,7 +18,7 @@ lane is NOT_RUN or FAIL. A fabricated or assumed PASS is a prohibited sentence (
 | L05  | Automation e2e (a committed or existing spec was run)                   | PASS           | New committed guard test (default-import form) in tools/**tests**/esm-namespace-import-bindings.test.mjs, run 3/3; it runs in pre-push and the ai-native-os CI job.                                                                                                                                                   |
 | L06  | RBAC across roles and plan tiers (admin, paid, FREE)                    | NOT_APPLICABLE | No route, guard or permission changed.                                                                                                                                                                                                                                                                                |
 | L07  | Device matrix (3+ widths, both orientations, RTL)                       | NOT_APPLICABLE | No UI change.                                                                                                                                                                                                                                                                                                         |
-| L08  | UAT (acceptance criteria walked as the user would)                      | NOT_RUN        | Acceptance = the production deploy turns healthy; read after the Release run of this push.                                                                                                                                                                                                                            |
+| L08  | UAT (acceptance criteria walked as the user would)                      | PASS           | Release v1.239.1 deploy success; prod `claw-auth-service` Up (healthy), 0 SyntaxError lines in 10 min, `POST https://claw-ai.co/api/v1/auth/login` with bad creds -> 401 (was 502 while crash-looping).                                                                                                               |
 | L09  | Product verification (it does what the owner asked, edge cases decided) | PASS           | Push behaviour unchanged: same sendNotification call and WebPushError 404/410 -> GONE mapping (spec cases pass).                                                                                                                                                                                                      |
 | L10  | Business verification (money, limits, copy and claims match the code)   | NOT_APPLICABLE | No money, limit or copy change.                                                                                                                                                                                                                                                                                       |
 | L11  | Regression (neighbouring features still work)                           | PASS           | All 86 notification tests pass; the other two ESM guard tests still pass; only web-push was a major bump in the Dependabot batch (throttler minor, vitest/playwright dev).                                                                                                                                            |
@@ -32,6 +32,8 @@ lane is NOT_RUN or FAIL. A fabricated or assumed PASS is a prohibited sentence (
 - web-push 4.0.0 is pure ESM with no default export; the Dependabot batch took it without a boot check and the v1.239.0 deploy rolled back (no data touched).
 - The spec mocked `{ default: ... }`, so unit tests passed against a shape the package no longer has.
 
+- The v1.239.0 rollback did NOT restore auth-service: the rebuilt `:latest` image stayed, so prod auth crash-looped from about 06:58 to 08:40 UTC until v1.239.1. Rollback restores containers, not the previous image.
+
 ## Open gaps
 
-- L08: confirm the production deploy is healthy after this push's release.
+- Deploy rollback should retag and restart the previous image of a failed service (owner decision; not changed here).

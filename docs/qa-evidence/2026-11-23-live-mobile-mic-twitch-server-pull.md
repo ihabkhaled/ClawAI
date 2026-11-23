@@ -38,7 +38,8 @@ lane is NOT_RUN or FAIL. A fabricated or assumed PASS is a prohibited sentence (
   an allowlist exception: `LIVE_TWITCH_CLIENT_ID` (empty = Twitch pull off, no request; spec). Re-verified after the
   container recreate: `live-server-pull-smoke.mjs` 10/10 (7 captions, first after 15 s); live-service 675/675 tests.
 
+- Production (v1.239.1, 2026-11-23): live-service healthy, migration applied, `LIVE_TWITCH_CLIENT_ID` set; from the server's IP the token call works and a live channel's (summit1g) playlist returns 200 (offline channels 404). The datacenter IP is not refused.
+
 ## Open gaps
 
 - L14 RTL browser pass with an Arabic account (owner or next QA run).
-- Production: needs the migration (`ALTER TYPE … ADD VALUE`) at deploy, and a real-stream run from the server's IP. Twitch may treat datacenter IPs differently; resolve then falls back to capture by itself.
