@@ -19,3 +19,6 @@ export interface PlaylistRewriteResult {
   /** URIs that pointed at another host; a non-zero count refuses the playlist. */
   rejected: number;
 }
+
+/** One declared host (HLS sources), or host suffixes of a server-pulled platform's CDN. */
+export type HlsHostPin = string | readonly string[];

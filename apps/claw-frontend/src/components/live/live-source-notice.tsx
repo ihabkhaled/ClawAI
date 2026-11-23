@@ -1,12 +1,15 @@
 import { LiveNoticeBox } from '@/components/live/live-notice-box';
 import { Checkbox } from '@/components/ui/checkbox';
-import { LiveCapability } from '@/enums/live.enum';
+import { LIVE_SERVER_PULL_UNAVAILABLE_REASON } from '@/constants/live.constants';
+import { LiveCapability, LiveCaptureSource } from '@/enums/live.enum';
+import { useLiveCaptureSource } from '@/hooks/live/use-live-capture-source';
 import type { LiveSourceNoticeProps } from '@/types/live.types';
 import { livePlatformName } from '@/utilities/live-embed.utility';
 
 /**
- * After the link is resolved: a browser-capture platform (YouTube, Twitch, Kick, Facebook) says AI
- * runs from the viewer's own tab; a link-only platform says it opens on the platform; a player-only
+ * After the link is resolved: a server-pull platform says AI runs on ClawAI's servers (any device);
+ * a browser-capture platform (YouTube, Twitch, Kick, Facebook) says AI runs from the viewer's own
+ * device (through the microphone on a phone), and why when server pull was tried and failed; a link-only platform says it opens on the platform; a player-only
  * source says it gets no AI; an HLS source asks for the viewer's own rights attestation.
  */
 export function LiveSourceNotice({
@@ -15,14 +18,32 @@ export function LiveSourceNotice({
   onAttestChange,
   t,
 }: LiveSourceNoticeProps): React.ReactElement {
+  const captureSource = useLiveCaptureSource();
   const platform = livePlatformName(resolution.platform) ?? '';
   const recognised = platform === '' ? [] : [t('live.platform.recognised', { platform })];
+  if (resolution.capability === LiveCapability.SERVER_PULL) {
+    return (
+      <LiveNoticeBox
+        testId="live-server-pull-notice"
+        title={t('live.platform.serverPullTitle')}
+        lines={[...recognised, t('live.platform.serverPullNotice')]}
+      />
+    );
+  }
   if (resolution.capability === LiveCapability.BROWSER_CAPTURE) {
+    const fallback =
+      resolution.reasonCode === LIVE_SERVER_PULL_UNAVAILABLE_REASON
+        ? [t('live.platform.serverPullUnavailable')]
+        : [];
+    const captureNoticeKey =
+      captureSource === LiveCaptureSource.MICROPHONE
+        ? 'live.platform.captureNoticeMic'
+        : 'live.platform.captureNotice';
     return (
       <LiveNoticeBox
         testId="live-capture-notice"
         title={t('live.platform.captureTitle')}
-        lines={[...recognised, t('live.platform.captureNotice', { platform })]}
+        lines={[...recognised, ...fallback, t(captureNoticeKey, { platform })]}
       />
     );
   }

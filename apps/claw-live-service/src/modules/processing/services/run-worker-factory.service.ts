@@ -4,10 +4,12 @@ import { join } from 'node:path';
 import { Inject, Injectable } from '@nestjs/common';
 import type Redis from 'ioredis';
 
-import { LiveCapability } from '../../../generated/prisma';
+import { LiveCapability, type LivePlatform } from '../../../generated/prisma';
 import { LIVE_REDIS_CLIENT } from '../../../infrastructure/redis/constants/redis.constants';
 import { FixtureBroadcasterService } from '../../sources/services/fixture-broadcaster.service';
 import { HlsFetcherService } from '../../sources/services/hls-fetcher.service';
+import { ServerPullResolverService } from '../../sources/services/server-pull-resolver.service';
+import { resolvePlatformUrl } from '../../sources/utilities/platform-registry.utility';
 import { NO_RUN_CAPABILITIES, WORKER_TEMP_PREFIX } from '../constants/processing.constants';
 import { RunLifecycleManager } from '../managers/run-lifecycle.manager';
 import { SummaryManager } from '../managers/summary.manager';
@@ -15,7 +17,12 @@ import { TranscriptManager } from '../managers/transcript.manager';
 import { TranslationManager } from '../managers/translation.manager';
 import { VisionManager } from '../managers/vision.manager';
 import { ProcessingRunRepository } from '../repositories/processing-run.repository';
-import type { ClaimedRunRow, RunChunkSource, WorkerContext } from '../types/processing.types';
+import type {
+  ClaimedRunRow,
+  RunChunkSource,
+  ServerPullSource,
+  WorkerContext,
+} from '../types/processing.types';
 import { CaptureChunkSource } from '../workers/capture-chunk-source';
 import { HlsChunkSource } from '../workers/hls-chunk-source';
 import { RunWorker } from '../workers/run-worker';
@@ -34,6 +41,7 @@ export class RunWorkerFactory {
     private readonly vision: VisionManager,
     private readonly fetcher: HlsFetcherService,
     private readonly fixtures: FixtureBroadcasterService,
+    private readonly serverPull: ServerPullResolverService,
     @Inject(LIVE_REDIS_CLIENT) private readonly redis: Redis,
   ) {}
 
@@ -50,7 +58,7 @@ export class RunWorkerFactory {
       declaredHost: run.stream.declaredHost,
       startedAt: run.startedAt,
     };
-    const source = await this.source(context, run.stream.capability);
+    const source = await this.source(context, run.stream.capability, run.stream.platform);
     return new RunWorker(
       {
         writer: this.writer,
@@ -65,15 +73,32 @@ export class RunWorkerFactory {
     );
   }
 
-  /** BROWSER_CAPTURE reads the viewer's tab-audio queue; everything else pulls HLS. */
+  /**
+   * BROWSER_CAPTURE reads the viewer's tab-audio queue; SERVER_PULL pulls the platform's public
+   * playlist (resolved by the worker, token refreshed on failure); everything else pulls HLS.
+   */
   private async source(
     context: WorkerContext,
     capability: LiveCapability,
+    platform: LivePlatform | null,
   ): Promise<RunChunkSource> {
     if (capability === LiveCapability.BROWSER_CAPTURE) {
       return new CaptureChunkSource(this.redis, context.lease.runId);
     }
+    const pull =
+      capability === LiveCapability.SERVER_PULL ? this.serverPullSource(context, platform) : null;
     const directory = await mkdtemp(join(tmpdir(), WORKER_TEMP_PREFIX));
-    return new HlsChunkSource(context, this.fetcher, this.fixtures, directory);
+    return new HlsChunkSource(context, this.fetcher, this.fixtures, directory, pull);
+  }
+
+  /** The stream's watch URL re-parsed for its platform id (the channel login for Twitch). */
+  private serverPullSource(
+    context: WorkerContext,
+    platform: LivePlatform | null,
+  ): ServerPullSource {
+    const id = resolvePlatformUrl(new URL(context.sourceUrl))?.match.id ?? null;
+    const hostSuffixes = this.serverPull.hostSuffixes(platform);
+    if (id === null || hostSuffixes === null) throw new Error('LIVE_SERVER_PULL_UNSUPPORTED');
+    return { hostSuffixes, resolvePlaylist: () => this.serverPull.resolvePlaylist(platform, id) };
   }
 }

@@ -2,7 +2,8 @@ import { rm, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { runBoundedProcess } from '../../../common/utilities/process.utility';
-import { LiveSourceKind } from '../../../generated/prisma';
+import { LiveMode, LiveSourceKind } from '../../../generated/prisma';
+import { SERVER_PULL_REFRESH_MIN_INTERVAL_MS } from '../../sources/constants/server-pull.constants';
 import {
   FIXTURE_URL_PREFIX,
   HLS_PLAYLIST_MAX_BYTES,
@@ -10,6 +11,7 @@ import {
 } from '../../sources/constants/sources.constants';
 import type { FixtureBroadcasterService } from '../../sources/services/fixture-broadcaster.service';
 import type { HlsFetcherService } from '../../sources/services/hls-fetcher.service';
+import type { HlsHostPin } from '../../sources/types/hls-proxy.types';
 import {
   AUDIO_CHANNELS,
   AUDIO_CHUNK_BYTES,
@@ -27,9 +29,10 @@ import type {
   ParsedPlaylist,
   PlaylistSegment,
   RunChunkSource,
+  ServerPullSource,
   WorkerContext,
 } from '../types/processing.types';
-import { parsePlaylist } from '../utilities/hls-playlist.utility';
+import { parsePlaylist, pickPlaylistVariant } from '../utilities/hls-playlist.utility';
 import { pcmToWav } from '../utilities/wav.utility';
 
 /**
@@ -52,12 +55,16 @@ export class HlsChunkSource implements RunChunkSource {
   private expectedNextAt: number | null = null;
   private files: string[] = [];
   private fileCounter = 0;
+  /** Server pull: the resolved master playlist (its token expires) and when it was resolved. */
+  private pulledOrigin: URL | null = null;
+  private pulledAt = 0;
 
   constructor(
     private readonly context: WorkerContext,
     private readonly fetcher: HlsFetcherService,
     private readonly fixtures: FixtureBroadcasterService,
     private readonly directory: string,
+    private readonly pull: ServerPullSource | null = null,
   ) {}
 
   async poll(): Promise<ChunkPoll> {
@@ -88,20 +95,52 @@ export class HlsChunkSource implements RunChunkSource {
       const text = await this.fixtures.readFile(this.fixtureName(), 'index.m3u8');
       return parsePlaylist(text.toString('utf8'));
     }
-    const host = this.requireHost();
-    const url = this.mediaUrl ?? new URL(this.context.sourceUrl);
+    try {
+      return await this.fetchMediaPlaylist();
+    } catch (error: unknown) {
+      this.forgetPulledOrigin();
+      throw error;
+    }
+  }
+
+  private async fetchMediaPlaylist(): Promise<ParsedPlaylist> {
+    const host = this.hostPin();
+    const url = this.mediaUrl ?? (await this.originUrl());
     const fetched = await this.fetcher.fetchObject(url, host, HLS_PLAYLIST_MAX_BYTES);
     const parsed = parsePlaylist(fetched.body.toString('utf8'));
     if (parsed.segments.length > 0 || parsed.variants.length === 0) {
       this.mediaUrl = url;
       return parsed;
     }
-    // Master playlist: audio is what matters, so take the lightest variant.
-    const variant = [...parsed.variants].sort((a, b) => a.bandwidth - b.bandwidth)[0];
+    const variant = pickPlaylistVariant(parsed.variants, this.context.mode !== LiveMode.AUDIO);
     if (!variant) return parsed;
     this.mediaUrl = new URL(variant.uri, url);
     const media = await this.fetcher.fetchObject(this.mediaUrl, host, HLS_PLAYLIST_MAX_BYTES);
     return parsePlaylist(media.body.toString('utf8'));
+  }
+
+  /** The source URL, or for server pull the resolved master playlist (resolved on demand). */
+  private async originUrl(): Promise<URL> {
+    if (this.pull === null) return new URL(this.context.sourceUrl);
+    if (this.pulledOrigin !== null) return this.pulledOrigin;
+    const resolved = await this.pull.resolvePlaylist();
+    if (resolved === null) throw new Error('LIVE_SERVER_PULL_UNAVAILABLE');
+    this.pulledOrigin = resolved;
+    this.pulledAt = Date.now();
+    return resolved;
+  }
+
+  /**
+   * A failed playlist fetch of a pulled stream usually means an expired token: drop it so the next
+   * poll resolves a fresh one, at most once per SERVER_PULL_REFRESH_MIN_INTERVAL_MS. The worker's
+   * poll-failure ceiling still ends a stream that went offline.
+   */
+  private forgetPulledOrigin(): void {
+    if (this.pull === null || Date.now() - this.pulledAt < SERVER_PULL_REFRESH_MIN_INTERVAL_MS) {
+      return;
+    }
+    this.pulledOrigin = null;
+    this.mediaUrl = null;
   }
 
   private selectFresh(playlist: ParsedPlaylist): PlaylistSegment[] {
@@ -124,10 +163,10 @@ export class HlsChunkSource implements RunChunkSource {
     if (this.context.sourceKind === LiveSourceKind.FIXTURE) {
       body = await this.fixtures.readFile(this.fixtureName(), segment.uri);
     } else {
-      const base = this.mediaUrl ?? new URL(this.context.sourceUrl);
+      const base = this.mediaUrl ?? (await this.originUrl());
       const fetched = await this.fetcher.fetchObject(
         new URL(segment.uri, base),
-        this.requireHost(),
+        this.hostPin(),
         HLS_SEGMENT_MAX_BYTES,
       );
       body = fetched.body;
@@ -135,7 +174,7 @@ export class HlsChunkSource implements RunChunkSource {
         this.initSegment ??= (
           await this.fetcher.fetchObject(
             new URL(playlist.mapUri, base),
-            this.requireHost(),
+            this.hostPin(),
             HLS_SEGMENT_MAX_BYTES,
           )
         ).body;
@@ -224,7 +263,9 @@ export class HlsChunkSource implements RunChunkSource {
     return Math.round((bytes / (AUDIO_SAMPLE_RATE * AUDIO_CHANNELS * 2)) * 1000);
   }
 
-  private requireHost(): string {
+  /** Server pull: the platform CDN's host suffixes; HLS: the stream's declared host. */
+  private hostPin(): HlsHostPin {
+    if (this.pull !== null) return this.pull.hostSuffixes;
     if (!this.context.declaredHost) throw new Error('LIVE_SOURCE_HOST_MISSING');
     return this.context.declaredHost;
   }

@@ -166,4 +166,68 @@ describe('HlsChunkSource', () => {
     );
     await expect(source.poll()).resolves.toMatchObject({ chunks: [], ended: false });
   });
+
+  describe('server pull', () => {
+    const suffixes = ['ttvnw.net'];
+    function pulledSource(resolvePlaylist: () => Promise<URL | null>): HlsChunkSource {
+      const context = {
+        lease: { runId: 'r', generation: 1 },
+        streamId: 's',
+        mode: LiveMode.AUDIO,
+        sourceKind: LiveSourceKind.PLATFORM,
+        sourceUrl: 'https://www.twitch.tv/xqc',
+        declaredHost: 'www.twitch.tv',
+        startedAt: new Date(),
+      };
+      return new HlsChunkSource(
+        context,
+        fetcher as never,
+        fixtures as never,
+        mkdtempSync(join(tmpdir(), 'chunk-spec-')),
+        { hostSuffixes: suffixes, resolvePlaylist },
+      );
+    }
+
+    afterEach(() => vi.useRealTimers());
+
+    it('fails the poll (no fetch) when the stream resolves to nothing, e.g. offline', async () => {
+      const source = pulledSource(() => Promise.resolve(null));
+      await expect(source.poll()).rejects.toThrow('LIVE_SERVER_PULL_UNAVAILABLE');
+      expect(fetcher.fetchObject).not.toHaveBeenCalled();
+      await source.dispose();
+    });
+
+    it('fetches on the suffix pin, and re-resolves the token after a failure only past the throttle', async () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(PDT);
+      const first = new URL('https://usher.ttvnw.net/hls/xqc.m3u8?token=1');
+      const second = new URL('https://usher.ttvnw.net/hls/xqc.m3u8?token=2');
+      const resolvePlaylist = vi
+        .fn<() => Promise<URL | null>>()
+        .mockResolvedValueOnce(first)
+        .mockResolvedValueOnce(second);
+      const source = pulledSource(resolvePlaylist);
+      fetcher.fetchObject.mockImplementation((url: URL) =>
+        url.pathname.endsWith('.ts')
+          ? Promise.resolve({ body: Buffer.from('ts') })
+          : Promise.resolve({ body: Buffer.from(playlist(10, 3)) }),
+      );
+      await source.poll();
+      expect(fetcher.fetchObject).toHaveBeenCalledWith(first, suffixes, expect.any(Number));
+
+      // A failure inside the throttle window keeps the token (a blip is not an expiry).
+      fetcher.fetchObject.mockRejectedValueOnce(new Error('LIVE_UPSTREAM_FAILED'));
+      await expect(source.poll()).rejects.toThrow('LIVE_UPSTREAM_FAILED');
+      expect(resolvePlaylist).toHaveBeenCalledTimes(1);
+
+      // Past the throttle, a failure drops the token; the next poll resolves a fresh one.
+      vi.setSystemTime(PDT + 31_000);
+      fetcher.fetchObject.mockRejectedValueOnce(new Error('LIVE_UPSTREAM_FAILED'));
+      await expect(source.poll()).rejects.toThrow('LIVE_UPSTREAM_FAILED');
+      await source.poll();
+      expect(resolvePlaylist).toHaveBeenCalledTimes(2);
+      expect(fetcher.fetchObject).toHaveBeenCalledWith(second, suffixes, expect.any(Number));
+      await source.dispose();
+    });
+  });
 });

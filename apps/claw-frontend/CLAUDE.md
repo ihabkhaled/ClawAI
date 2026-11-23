@@ -1207,7 +1207,12 @@ A public Thread page reads `?lang=` (an app language only; `readRequestedThreadL
 - Browser capture (YouTube and the embeddable platforms): "Analyze with my browser" → consent dialog →
   `getDisplayMedia` tab audio → `public/worklets/live-capture-processor.js` → 6 s 16 kHz PCM16 WAV →
   `POST /live/sessions/:id/audio`. The capture code is loaded with a dynamic `import()` after consent (rule 47). The
-  owner accepted the platforms' terms risk (2026-11-22); server-side capture is never built.
+  owner accepted the platforms' terms risk (2026-11-22). No mobile browser has `getDisplayMedia`: there the source is
+  the **microphone** (`pickLiveCaptureSource()`, `LIVE_CAPTURE_MIC_CONSTRAINTS` with echo cancellation, noise
+  suppression and auto gain OFF), same pipeline, "Analyze using microphone".
+- `SERVER_PULL` (a live Twitch channel, ADR-221 batch 3): official player and chat embeds, the feed reveals by wall
+  clock, no capture panel (a "ClawAI analyzes this stream on its servers" line instead), heartbeats run as playing while
+  the modal is open. Admin `/admin/live` has a "Server pull: Twitch" checkbox (`serverPullPlatforms`).
 - Locale and marketing-content files with Hindi or Thai text can format differently on Windows and on CI's Linux
   Prettier (2026-11-22 `format:check` failure). Run `npx prettier --write` on them right before committing.
 - YouTube channel links play through the `live_stream` embed; `@handle` links show the `youtubeHandleError` string.

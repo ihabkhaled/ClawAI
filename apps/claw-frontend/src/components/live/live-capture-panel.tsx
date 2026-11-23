@@ -5,10 +5,15 @@ import { Button } from '@/components/ui/button';
 import { LIVE_CAPTURE_ERROR_KEYS } from '@/constants/live.constants';
 import { LiveCaptureState } from '@/enums/live.enum';
 import type { LiveCapturePanelProps } from '@/types/live.types';
+import { liveCaptureCopy } from '@/utilities/live-capture-state.utility';
 
-/** "Analyze with my browser" under a browser-capture player: start (after consent), progress, stop, errors. */
+/**
+ * "Analyze with my browser" under a browser-capture player: start (after consent), progress, stop,
+ * errors. On a phone (no tab audio) the same panel captures through the microphone instead.
+ */
 export function LiveCapturePanel({ capture, t }: LiveCapturePanelProps): React.ReactElement {
   const { state } = capture;
+  const copy = liveCaptureCopy(capture.source);
   return (
     <div
       className="border-border flex flex-col gap-2 rounded-md border p-3"
@@ -18,7 +23,7 @@ export function LiveCapturePanel({ capture, t }: LiveCapturePanelProps): React.R
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p role="status" className="text-foreground flex items-center gap-2 text-sm font-medium">
             <AudioLines className="h-4 w-4" aria-hidden="true" />
-            {t('live.capture.capturing')}
+            {t(copy.capturingKey)}
           </p>
           <Button variant="outline" size="sm" onClick={capture.stop}>
             <Square className="h-4 w-4" aria-hidden="true" />
@@ -33,11 +38,14 @@ export function LiveCapturePanel({ capture, t }: LiveCapturePanelProps): React.R
           disabled={state === LiveCaptureState.REQUESTING}
         >
           <AudioLines className="h-4 w-4" aria-hidden="true" />
-          {t('live.capture.analyze')}
+          {t(copy.analyzeKey)}
         </Button>
       )}
+      {copy.hintKey === null ? null : (
+        <p className="text-muted-foreground text-xs">{t(copy.hintKey)}</p>
+      )}
       {state === LiveCaptureState.REQUESTING ? (
-        <p className="text-muted-foreground text-sm">{t('live.capture.requesting')}</p>
+        <p className="text-muted-foreground text-sm">{t(copy.requestingKey)}</p>
       ) : null}
       {state === LiveCaptureState.STOPPED ? (
         <p className="text-muted-foreground text-sm">{t('live.capture.stopped')}</p>
@@ -48,6 +56,7 @@ export function LiveCapturePanel({ capture, t }: LiveCapturePanelProps): React.R
         </p>
       )}
       <LiveCaptureConsentDialog
+        copy={copy}
         open={capture.consentOpen}
         onCancel={capture.closeConsent}
         onConfirm={capture.confirm}

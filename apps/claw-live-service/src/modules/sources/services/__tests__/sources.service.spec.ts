@@ -5,9 +5,21 @@ describe('SourcesService', () => {
   const guard = { assertSafe: vi.fn().mockResolvedValue(['93.184.216.34']) };
   const fixtures = { isFixtureName: vi.fn((name: string) => name === 'live-demo') };
   const prisma = { liveStream: { upsert: vi.fn().mockResolvedValue({ id: 'stream-1' }) } };
-  const service = new SourcesService(prisma as never, guard as never, fixtures as never);
+  const serverPull = { supports: vi.fn().mockReturnValue(false), probe: vi.fn() };
+  const policy = { active: vi.fn().mockResolvedValue({ config: { serverPullPlatforms: [] } }) };
+  const service = new SourcesService(
+    prisma as never,
+    guard as never,
+    fixtures as never,
+    serverPull as never,
+    policy as never,
+  );
 
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    serverPull.supports.mockReturnValue(false);
+    policy.active.mockResolvedValue({ config: { serverPullPlatforms: [] } });
+  });
 
   it('resolves YouTube as BROWSER_CAPTURE with the same nocookie embed, its chat, and no network call', async () => {
     const result = await service.resolve('https://youtu.be/dQw4w9WgXcQ', 'u1');
@@ -168,5 +180,56 @@ describe('SourcesService', () => {
         },
       }),
     );
+  });
+
+  describe('server pull', () => {
+    const enable = (live: boolean): void => {
+      serverPull.supports.mockImplementation((platform: string) => platform === 'TWITCH');
+      serverPull.probe.mockResolvedValue(live);
+      policy.active.mockResolvedValue({ config: { serverPullPlatforms: ['TWITCH'] } });
+    };
+
+    it('resolves a live Twitch channel as SERVER_PULL, PUBLIC so every viewer shares one run', async () => {
+      enable(true);
+      const result = await service.resolve('https://www.twitch.tv/xqc', 'u1');
+      expect(result).toMatchObject({
+        capability: LiveCapability.SERVER_PULL,
+        accessScope: 'PUBLIC',
+        reasonCode: 'SERVER_PULL_AVAILABLE',
+        platform: LivePlatform.TWITCH,
+        watchUrl: 'https://www.twitch.tv/xqc',
+        embedNeedsParent: true,
+      });
+      expect(serverPull.probe).toHaveBeenCalledWith(LivePlatform.TWITCH, 'xqc');
+    });
+
+    it('falls back to private BROWSER_CAPTURE with SERVER_PULL_UNAVAILABLE when the stream cannot be read', async () => {
+      enable(false);
+      const result = await service.resolve('https://www.twitch.tv/offline_channel', 'u1');
+      expect(result).toMatchObject({
+        capability: LiveCapability.BROWSER_CAPTURE,
+        accessScope: 'PRIVATE:u1',
+        reasonCode: 'SERVER_PULL_UNAVAILABLE',
+      });
+    });
+
+    it('makes no network call when the policy turns server pull off (the default-off rollback lever)', async () => {
+      serverPull.supports.mockImplementation((platform: string) => platform === 'TWITCH');
+      const result = await service.resolve('https://www.twitch.tv/xqc', 'u1');
+      expect(result).toMatchObject({
+        capability: LiveCapability.BROWSER_CAPTURE,
+        reasonCode: 'BROWSER_CAPTURE_AVAILABLE',
+      });
+      expect(serverPull.probe).not.toHaveBeenCalled();
+    });
+
+    it('never probes YouTube or Kick (no resolver), even if a policy listed them', async () => {
+      enable(true);
+      const youtube = await service.resolve('https://youtu.be/dQw4w9WgXcQ', 'u1');
+      const kick = await service.resolve('https://kick.com/xqc', 'u1');
+      expect(youtube.capability).toBe(LiveCapability.BROWSER_CAPTURE);
+      expect(kick.capability).toBe(LiveCapability.BROWSER_CAPTURE);
+      expect(serverPull.probe).not.toHaveBeenCalled();
+    });
   });
 });

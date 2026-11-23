@@ -13,7 +13,7 @@ export const JA_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   whatParagraphs: [
     'ライブ配信は、長い、速い、あるいは知らない言語だと追いにくいものです。Live Intelligenceは映像のそばでメモを取ります。あなたの言語に翻訳された字幕、更新され続ける要約、ハイライトの一覧があるので、目を離しても流れを見失いません。',
     'すべてClawAI内のウィンドウで行われ、配信と分析が1つの画面に収まります。開始前に字幕の言語と分析モードを選び、配信が許す範囲で一時停止、再開、シークができます。一時停止するとフィードが止まり、課金も止まります。',
-    '同じ配信を多くの人が見ても、同じ作業に何度も支払う必要はありません。ClawAIは1つの配信を1回だけ処理し、その分析を視聴者全員で共有します。実際に視聴した分析はあなたの履歴に保存され、削除するまで残ります。',
+    '同じ配信を多くの人が見ても、同じ作業に何度も支払う必要はありません。配信中のTwitchチャンネルやHLSリンクのように、ClawAIが自社サーバーで分析する配信は1回だけ処理され、その分析を視聴者全員で共有します。実際に視聴した分析はあなたの履歴に保存され、削除するまで残ります。',
   ],
   stepsTitle: '5つのステップで使う',
   stepsIntro:
@@ -25,7 +25,7 @@ export const JA_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     },
     {
       title: '言語とモードを選ぶ',
-      body: '字幕と要約の言語を選び、音声、音声＋ビジョン、Smart Autoの3つのモードから1つを選びます。開始前に、その配信を分析する権利があることを確認していただきます。',
+      body: '字幕と要約の言語を選び、音声、音声＋ビジョン、Smart Autoの3つのモードから1つを選びます。HLSリンクでは分析する権利があることを確認し、YouTube・Kick・Facebookでは、ClawAIがお使いの端末を通じて音声を聞くことに同意していただきます。',
     },
     {
       title: '字幕・カード・ハイライトで視聴する',
@@ -72,7 +72,7 @@ export const JA_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     },
     {
       title: '共有される処理',
-      body: '多数の視聴者に対して分析は1つ。同じ配信は1回だけ処理して共有されるため、視聴者が増えても作業とコストは増えません。',
+      body: '多数の視聴者に対して分析は1つ。配信中のTwitchチャンネルやHLS配信はClawAIのサーバーで1回だけ処理され、スマートフォンを含むあらゆる端末の視聴者全員で共有されます。ご自身の端末の音声から作られた分析は、あなただけのものです。',
     },
   ],
   modesTitle: '3つの分析モード',
@@ -95,12 +95,12 @@ export const JA_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   sourcesIntro: '配信の途中で気づくより、最初に限界をお伝えするほうがよいと考えています。',
   sources: [
     {
-      title: 'AI分析はHLSライブ配信で動作します',
-      body: 'Live Intelligenceは、分析する権利のあるHLSライブ配信を分析します。開始時に、その権利があることを確認していただきます。',
+      title: '15のプラットフォームとHLSリンク',
+      body: 'ClawAIは15のライブ配信プラットフォームを認識します。配信中のTwitchチャンネルはClawAIのサーバーで分析されるため、共有の操作は不要で、どの端末でも使えます。チャンネルがオフラインの場合は端末の音声を使います。TikTok LIVE、Instagram Live、Rumble、BIGO LIVE、LinkedIn Live、Telegram、Bilibili、CHZZK、SOOP、Nimo TVはそのプラットフォーム上で開き（「… で視聴」）、AIは使えません。Discord Go Liveは公開リンクがないため非対応です。分析する権利のあるHLSリンクは引き続き使え、開始時にその確認を行います。',
     },
     {
-      title: 'YouTubeのリンクは再生できますが、分析はされません',
-      body: 'YouTubeのリンクを貼り付けてClawAI内で視聴できますが、YouTube配信にはAI分析がありません。YouTubeの利用規約は音声や字幕の取得を認めていないため、ClawAIは行わず、ウィンドウにもそう表示されます。',
+      title: 'YouTube・Kick・Facebook：ご自身の端末でAI分析',
+      body: 'これらは公式プレーヤーで再生され、同意をいただいたうえでAIが端末の音声を聞き取ります。パソコンではChromeかEdgeでタブの音声を共有し（「ブラウザーで分析」）、スマートフォンではスピーカーから流れる配信をマイクが拾います（「マイクで分析」）。送信するのは文字起こし用の音声だけなので、音声モードで動作します。ライブチャットはYouTube動画、Twitch、Kickで表示され、その他のプラットフォームには「チャットを開く」リンクが表示されます。',
     },
     {
       title: '字幕は数秒遅れます',
@@ -123,12 +123,12 @@ export const JA_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     {
       question: 'YouTubeのライブ配信でも使えますか？',
       answer:
-        'YouTubeのリンクはClawAI内で視聴できますが、AI分析はありません。YouTubeの利用規約が音声や字幕の取得を認めていないため、YouTube配信には字幕・要約・ハイライトは提供されません。',
+        'はい。YouTube配信は公式プレーヤーで再生され、同意をいただいたうえで、AIはご自身の端末の音声をもとに動作します。パソコンではChromeかEdgeでタブの音声を共有し、スマートフォンではスピーカーから流れる配信をマイクが拾います。送信するのは文字起こし用の音声だけで、字幕はこれまでどおり発話から数秒遅れて届きます。',
     },
     {
       question: 'どの配信を分析できますか？',
       answer:
-        '分析する権利のあるHLSライブ配信です。開始時にその確認を行います。サービスが読み取れない配信は、黙って失敗するのではなく、非対応として表示されます。',
+        '配信中のTwitchチャンネル（ClawAIのサーバーで分析、どの端末でも可）、YouTube・Kick・Facebook（ご自身の端末の音声から分析）、そして分析する権利のあるHLSライブ配信（開始時に確認）です。ほかの10のプラットフォームは、AIなしでそのプラットフォーム上で開きます。サービスが読み取れない配信は、黙って失敗するのではなく、非対応として表示されます。',
     },
     {
       question: '字幕はリアルタイムですか？',
@@ -162,5 +162,5 @@ export const JA_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   ],
   closingTitle: '次のライブ配信を、毎分見なくても追いかけられます',
   closingBody:
-    '分析する権利のあるHLSリンクを貼り付け、言語を選んで開始してください。無料分が用意されています。',
+    'Twitch、YouTube、Kick、Facebookのリンク、または分析する権利のあるHLSリンクを貼り付け、言語を選んで開始してください。無料分が用意されています。',
 };

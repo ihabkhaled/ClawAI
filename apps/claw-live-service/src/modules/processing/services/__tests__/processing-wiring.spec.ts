@@ -1,6 +1,7 @@
 import {
   LiveCapability,
   LiveMode,
+  LivePlatform,
   LiveRunStatus,
   LiveSourceKind,
 } from '../../../../generated/prisma';
@@ -26,6 +27,7 @@ describe('RunWorkerFactory', () => {
     const runs = { findRunWithStream: vi.fn() };
     const factory = new RunWorkerFactory(
       runs as never,
+      {} as never,
       {} as never,
       {} as never,
       {} as never,
@@ -78,6 +80,7 @@ describe('RunWorkerFactory', () => {
       {} as never,
       fetcher as never,
       {} as never,
+      {} as never,
       redis as never,
     );
     runs.findRunWithStream.mockResolvedValueOnce({
@@ -102,6 +105,64 @@ describe('RunWorkerFactory', () => {
     });
     expect(redis.lpopBuffer).toHaveBeenCalledWith('live:capture:run-c', 20);
     expect(fetcher.fetchObject).not.toHaveBeenCalled();
+  });
+
+  it('builds a SERVER_PULL worker that resolves the Twitch playlist and fetches on the CDN suffixes', async () => {
+    const runs = { findRunWithStream: vi.fn() };
+    const master =
+      '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=160000\naudio.m3u8\n' +
+      '#EXT-X-STREAM-INF:BANDWIDTH=230000,RESOLUTION=284x160\nlow.m3u8\n';
+    const fetcher = {
+      fetchObject: vi
+        .fn()
+        .mockResolvedValueOnce({ body: Buffer.from(master) })
+        .mockResolvedValueOnce({ body: Buffer.from('#EXTM3U\n#EXT-X-TARGETDURATION:6\n') }),
+    };
+    const playlist = new URL('https://usher.ttvnw.net/api/channel/hls/xqc.m3u8?sig=s&token=t');
+    const serverPull = {
+      hostSuffixes: vi.fn().mockReturnValue(['ttvnw.net', 'live-video.net']),
+      resolvePlaylist: vi.fn().mockResolvedValue(playlist),
+    };
+    const factory = new RunWorkerFactory(
+      runs as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      fetcher as never,
+      {} as never,
+      serverPull as never,
+      {} as never,
+    );
+    runs.findRunWithStream.mockResolvedValueOnce({
+      id: 'run-p',
+      streamId: 'st-p',
+      mode: LiveMode.AUDIO,
+      startedAt: new Date(),
+      stream: {
+        sourceKind: LiveSourceKind.PLATFORM,
+        capability: LiveCapability.SERVER_PULL,
+        platform: LivePlatform.TWITCH,
+        sourceUrl: 'https://www.twitch.tv/xqc',
+        declaredHost: 'www.twitch.tv',
+      },
+    });
+    const worker = await factory.create({ id: 'run-p', generation: 1 });
+    const source = (worker as unknown as { source: { poll: () => Promise<unknown> } }).source;
+    await expect(source.poll()).resolves.toMatchObject({ chunks: [], ended: false });
+    expect(serverPull.resolvePlaylist).toHaveBeenCalledWith(LivePlatform.TWITCH, 'xqc');
+    const pins = ['ttvnw.net', 'live-video.net'];
+    expect(fetcher.fetchObject).toHaveBeenNthCalledWith(1, playlist, pins, expect.any(Number));
+    // AUDIO mode reads the lightest rendition: the audio-only one.
+    expect(fetcher.fetchObject).toHaveBeenNthCalledWith(
+      2,
+      new URL('https://usher.ttvnw.net/api/channel/hls/audio.m3u8'),
+      pins,
+      expect.any(Number),
+    );
+    await (worker as unknown as { source: { dispose: () => Promise<void> } }).source.dispose();
   });
 });
 

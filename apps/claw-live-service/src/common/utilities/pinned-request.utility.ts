@@ -44,7 +44,7 @@ function readCapped(response: IncomingMessage, maxBytes: number): Promise<Buffer
 }
 
 /**
- * GET over a connection pinned to `addresses` (already checked public), so a second DNS
+ * GET (or POST with `options.body`) over a connection pinned to `addresses` (already checked public), so a second DNS
  * answer can never redirect it (no rebinding). The Host header and TLS SNI stay the URL's
  * host, so certificates verify normally. Redirects are not followed: any non-2xx fails.
  */
@@ -58,10 +58,10 @@ export function pinnedGet(
     const req = send(
       url,
       {
-        method: 'GET',
+        method: options.method ?? 'GET',
         lookup: pinnedLookup(addresses),
         signal: AbortSignal.timeout(options.timeoutMs),
-        headers: { accept: '*/*' },
+        headers: { accept: '*/*', ...options.headers },
       },
       (response) => {
         const status = response.statusCode ?? 0;
@@ -87,6 +87,6 @@ export function pinnedGet(
     req.on('error', (error) =>
       reject(error instanceof PinnedRequestError ? error : new PinnedRequestError('FAILED')),
     );
-    req.end();
+    req.end(options.body);
   });
 }

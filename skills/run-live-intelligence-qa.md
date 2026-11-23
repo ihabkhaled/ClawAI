@@ -13,13 +13,14 @@ Use after any change to `apps/claw-live-service`, the live frontend (`/live`, `/
 
 Run from the repo root: `NODE_EXTRA_CA_CERTS=certs/rootCA.pem node --env-file=.env scripts/qa/<file>`
 
-| Script                        | Proves                                                                                                                                                                                                                                                                                            |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `live-intelligence-smoke.mjs` | API smoke on the real fixture stream: auth refusals, rights attestation, session, HLS proxy, SSE captions, heartbeat accrual, pause, close, history, card versions, admin overview and policy, delete (last run 28/28). `LIVE_QA_WATCH_SECONDS` (default 130), `LIVE_QA_LANGUAGE` (default `ar`). |
-| `live-billing-journey.mjs`    | Free seconds, credits required, approve, 60 s grace, exhausted, reconnect cannot reset grace, top-up, paid block at the policy price (9/9). Creates a throw-away user and restores the FREE plan.                                                                                                 |
-| `live-shared-run-load.mjs`    | `LIVE_QA_VIEWERS=N` viewers join at once and must land on ONE run (100 passed). Raises session limits through a new policy version, then restores.                                                                                                                                                |
-| `live-youtube-matrix.mjs`     | 10 real news channels: `/channel/UC...` plays, `@handle` is refused with `LIVE_YOUTUBE_HANDLE_UNSUPPORTED`. A YouTube-side "unavailable" is not a failure of ours.                                                                                                                                |
-| `live-policy-set-plan.mjs`    | `LIVE_PLAN=admin LIVE_FREE_SECONDS=36000` publishes a new policy version for one plan and proves an invalid config is refused.                                                                                                                                                                    |
+| Script                        | Proves                                                                                                                                                                                                                                                                                                                         |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `live-intelligence-smoke.mjs` | API smoke on the real fixture stream: auth refusals, rights attestation, session, HLS proxy, SSE captions, heartbeat accrual, pause, close, history, card versions, admin overview and policy, delete (last run 28/28). `LIVE_QA_WATCH_SECONDS` (default 130), `LIVE_QA_LANGUAGE` (default `ar`).                              |
+| `live-billing-journey.mjs`    | Free seconds, credits required, approve, 60 s grace, exhausted, reconnect cannot reset grace, top-up, paid block at the policy price (9/9). Creates a throw-away user and restores the FREE plan.                                                                                                                              |
+| `live-shared-run-load.mjs`    | `LIVE_QA_VIEWERS=N` viewers join at once and must land on ONE run (100 passed). Raises session limits through a new policy version, then restores.                                                                                                                                                                             |
+| `live-youtube-matrix.mjs`     | 10 real news channels: `/channel/UC...` plays, `@handle` is refused with `LIVE_YOUTUBE_HANDLE_UNSUPPORTED`. A YouTube-side "unavailable" is not a failure of ours.                                                                                                                                                             |
+| `live-server-pull-smoke.mjs`  | Twitch server pull on a REAL live channel (first live of a popular list, or `LIVE_QA_TWITCH=<login>`): YouTube and Kick stay capture, an offline channel falls back with `SERVER_PULL_UNAVAILABLE`, a live one resolves `SERVER_PULL`, device audio is 422, real captions over SSE (10/10, first caption ~15 s on 2026-11-23). |
+| `live-policy-set-plan.mjs`    | `LIVE_PLAN=admin LIVE_FREE_SECONDS=36000` publishes a new policy version for one plan and proves an invalid config is refused.                                                                                                                                                                                                 |
 
 Each prints `PASS` / `FAIL` per check and exits non-zero on a failure. Passwords are read from `.env` and never printed.
 
@@ -30,6 +31,9 @@ Drive `https://claw.local/live` with Playwright on desktop and a mobile viewport
 ## Traps
 
 - Captions arrive 7-12 s behind speech; do not assert 3 s.
+- Phones have no tab audio: the capture button becomes "Analyze using microphone". Desktop Chromium in Playwright can
+  fake a microphone with `--use-fake-ui-for-media-stream --use-fake-device-for-media-stream`.
+- Server pull needs a channel that is live NOW; an offline Twitch channel correctly resolves to capture, which is not a bug.
 - The billing script shrinks the FREE plan with a new policy version; if it dies half way, restore the previous version from `/admin/live`.
 - A stale dev frontend shows an old page: restart it before judging a UI result.
 - Record the results in `docs/qa-evidence/<date>-<slug>.md` (`npm run qa:evidence:new`).

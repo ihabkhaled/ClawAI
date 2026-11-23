@@ -47,6 +47,8 @@ const DEFAULT_POLICY_CONFIG = {
   visionModelChain: [
     { connector: 'GEMINI', model: 'gemini-3.1-flash-lite', style: 'OPENAI_COMPAT' },
   ],
+  // Server pull (ADR-221 addendum 2026-11-23): the server reads Twitch's public playlist itself.
+  serverPullPlatforms: ['TWITCH'],
   featureEnabled: true,
 };
 

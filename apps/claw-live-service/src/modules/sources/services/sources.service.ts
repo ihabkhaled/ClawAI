@@ -1,10 +1,10 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 
 import { LiveSourceErrorCode } from '../../../common/enums/live-source-error-code.enum';
-import { LiveSourceReasonCode } from '../../../common/enums/live-source-reason-code.enum';
 import { sha256Hex } from '../../../common/utilities/hash.utility';
 import { LiveCapability, LiveSourceKind, type LiveStream } from '../../../generated/prisma';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
+import { LivePolicyService } from '../../policy/services/live-policy.service';
 import {
   FIXTURE_URL_PREFIX,
   HLS_PLAYLIST_EXTENSION,
@@ -12,12 +12,14 @@ import {
   PRIVATE_ACCESS_SCOPE_PREFIX,
   PUBLIC_ACCESS_SCOPE,
 } from '../constants/sources.constants';
+import { ServerPullProbe } from '../../../common/enums/live-server-pull-probe.enum';
 import type { PlatformResolution } from '../types/platform.types';
 import type { SourceResolution } from '../types/source-resolution.types';
-import { resolvePlatformUrl } from '../utilities/platform-registry.utility';
+import { platformReasonCode, resolvePlatformUrl } from '../utilities/platform-registry.utility';
 import { normalizeSourceUrl } from '../utilities/source-url.utility';
 import { isYoutubeHandleUrl } from '../utilities/youtube-url.utility';
 import { FixtureBroadcasterService } from './fixture-broadcaster.service';
+import { ServerPullResolverService } from './server-pull-resolver.service';
 import { SourceUrlGuardService } from './source-url-guard.service';
 
 /** Classifies a pasted URL (platform registry, HLS, fixture) and stores the LiveStream row (section 1). */
@@ -27,6 +29,8 @@ export class SourcesService {
     private readonly prisma: PrismaService,
     private readonly guard: SourceUrlGuardService,
     private readonly fixtures: FixtureBroadcasterService,
+    private readonly serverPull: ServerPullResolverService,
+    private readonly policy: LivePolicyService,
   ) {}
 
   async resolve(rawUrl: string, userId: string): Promise<SourceResolution> {
@@ -39,7 +43,7 @@ export class SourcesService {
       throw new UnprocessableEntityException(LiveSourceErrorCode.SOURCE_UNSUPPORTED);
     }
     const platform = resolvePlatformUrl(url);
-    if (platform) return this.resolvePlatform(platform, userId);
+    if (platform) return this.resolvePlatform(platform, userId, await this.serverPullFor(platform));
     if (isYoutubeHandleUrl(url)) {
       throw new UnprocessableEntityException(LiveSourceErrorCode.YOUTUBE_HANDLE_UNSUPPORTED);
     }
@@ -94,30 +98,47 @@ export class SourcesService {
   }
 
   /**
-   * A registry platform (parsing only, no network call). BROWSER_CAPTURE sources are scoped
-   * to the viewer (their own tab audio is never shared); LINK_ONLY never gets a run.
+   * Whether a browser-capture platform is server-pulled: NOT_ENABLED (policy off or no resolver,
+   * no network call), LIVE (the playlist answers) or UNREACHABLE (offline, refused, blocked).
+   */
+  private async serverPullFor({ definition, match }: PlatformResolution): Promise<ServerPullProbe> {
+    if (definition.capability !== LiveCapability.BROWSER_CAPTURE)
+      return ServerPullProbe.NOT_ENABLED;
+    if (!this.serverPull.supports(definition.platform)) return ServerPullProbe.NOT_ENABLED;
+    const { config } = await this.policy.active();
+    if (!config.serverPullPlatforms.includes(definition.platform))
+      return ServerPullProbe.NOT_ENABLED;
+    const live = await this.serverPull.probe(definition.platform, match.id);
+    return live ? ServerPullProbe.LIVE : ServerPullProbe.UNREACHABLE;
+  }
+
+  /**
+   * A registry platform. SERVER_PULL streams are PUBLIC (one run shared by every viewer);
+   * BROWSER_CAPTURE sources are scoped to the viewer (their own tab audio is never shared);
+   * LINK_ONLY never gets a run.
    */
   private resolvePlatform(
     { definition, match }: PlatformResolution,
     userId: string,
+    probe: ServerPullProbe,
   ): SourceResolution {
     if (definition.refusalCode !== null || definition.capability === null) {
       throw new UnprocessableEntityException(
         definition.refusalCode ?? LiveSourceErrorCode.SOURCE_UNSUPPORTED,
       );
     }
-    const capture = definition.capability === LiveCapability.BROWSER_CAPTURE;
+    const pulled = probe === ServerPullProbe.LIVE;
+    const capability = pulled ? LiveCapability.SERVER_PULL : definition.capability;
+    const capture = capability === LiveCapability.BROWSER_CAPTURE;
     return {
       sourceKind: definition.sourceKind,
-      capability: definition.capability,
+      capability,
       sourceIdentity: sha256Hex(`${definition.platform}:${match.id}`),
       accessScope: capture ? `${PRIVATE_ACCESS_SCOPE_PREFIX}${userId}` : PUBLIC_ACCESS_SCOPE,
       normalizedUrl: match.watchUrl,
       declaredHost: new URL(match.watchUrl).host,
       embedUrl: match.embedUrl,
-      reasonCode: capture
-        ? LiveSourceReasonCode.BROWSER_CAPTURE_AVAILABLE
-        : LiveSourceReasonCode.LINK_ONLY_PLATFORM,
+      reasonCode: platformReasonCode(capability, probe),
       platform: definition.platform,
       chatEmbedUrl: match.chatEmbedUrl,
       watchUrl: match.watchUrl,

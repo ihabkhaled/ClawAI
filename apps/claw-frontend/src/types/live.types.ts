@@ -4,6 +4,7 @@ import type {
   LiveCapability,
   LiveCaptureAction,
   LiveCaptureError,
+  LiveCaptureSource,
   LiveCaptureState,
   LiveExportFormat,
   LiveFeedEventKind,
@@ -311,11 +312,25 @@ export type LiveAudioChunker = {
 };
 
 export type LiveTabCaptureOptions = {
+  /** Where the audio comes from; the rest of the pipeline is the same. */
+  source: LiveCaptureSource;
   onChunk: (chunk: LiveAudioChunkInput) => void;
   onEnded: () => void;
 };
 
 export type LiveTabCaptureHandle = { stop: () => void };
+
+/** i18n keys the capture panel and consent dialog show for one audio source. */
+export type LiveCaptureCopy = {
+  analyzeKey: string;
+  requestingKey: string;
+  capturingKey: string;
+  hintKey: string | null;
+  consentTitleKey: string;
+  consentDescriptionKey: string;
+  consentKeys: ReadonlyArray<string>;
+  consentConfirmKey: string;
+};
 
 /** `getDisplayMedia` options; the extra hints are newer than some lib.dom versions. */
 export type LiveDisplayMediaOptions = DisplayMediaStreamOptions & {
@@ -477,6 +492,8 @@ export type UseLiveCaptureOptions = {
 };
 
 export type UseLiveCaptureResult = {
+  /** Tab audio, the microphone fallback, or null when this browser can capture neither. */
+  source: LiveCaptureSource | null;
   state: LiveCaptureState;
   error: LiveCaptureError | null;
   isCapturing: boolean;
@@ -496,6 +513,8 @@ export type UseLiveModalResult = {
   isPlayerOnly: boolean;
   isLinkOnly: boolean;
   isCapture: boolean;
+  /** ClawAI's server analyzes the stream: no capture panel, the feed follows the wall clock. */
+  isServerPull: boolean;
   embed: LiveEmbedView;
   capture: UseLiveCaptureResult;
   hlsSrc: string | null;
@@ -591,6 +610,7 @@ export type LiveNoAiPanelProps = {
 export type LiveCapturePanelProps = { capture: UseLiveCaptureResult; t: TranslateFunction };
 
 export type LiveCaptureConsentDialogProps = {
+  copy: LiveCaptureCopy;
   open: boolean;
   onCancel: () => void;
   onConfirm: () => void;

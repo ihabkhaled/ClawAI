@@ -1,6 +1,6 @@
 import { LiveHighlightType, LiveMode, LiveSourceKind } from '../../../../generated/prisma';
 import { isDuplicateHighlight } from '../highlight-dedupe.utility';
-import { parsePlaylist } from '../hls-playlist.utility';
+import { parsePlaylist, pickPlaylistVariant } from '../hls-playlist.utility';
 import { extractJsonObject } from '../json-reply.utility';
 import { ollamaBase, openAiCompatBase } from '../model-url.utility';
 import { computeProcessingKey } from '../processing-key.utility';
@@ -64,10 +64,20 @@ describe('parsePlaylist', () => {
     );
     expect(parsed.segments).toEqual([]);
     expect(parsed.variants).toEqual([
-      { uri: 'low.m3u8', bandwidth: 800000 },
-      { uri: 'high.m3u8', bandwidth: 3000000 },
+      { uri: 'low.m3u8', bandwidth: 800000, hasVideo: true },
+      { uri: 'high.m3u8', bandwidth: 3000000, hasVideo: false },
     ]);
     expect(parsePlaylist('#EXTM3U\n#EXTINF:2,\na.ts').segments[0]?.programDateMs).toBeNull();
+  });
+
+  it('picks the lightest variant, or the lightest with video when vision is on', () => {
+    const audio = { uri: 'audio.m3u8', bandwidth: 160_000, hasVideo: false };
+    const low = { uri: 'low.m3u8', bandwidth: 230_000, hasVideo: true };
+    const high = { uri: 'high.m3u8', bandwidth: 3_000_000, hasVideo: true };
+    expect(pickPlaylistVariant([high, low, audio], false)).toBe(audio);
+    expect(pickPlaylistVariant([high, low, audio], true)).toBe(low);
+    expect(pickPlaylistVariant([audio], true)).toBe(audio);
+    expect(pickPlaylistVariant([], true)).toBeNull();
   });
 });
 

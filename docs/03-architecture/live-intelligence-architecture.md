@@ -11,23 +11,24 @@ of them in the same change (rule 63).
 
 YouTube's Developer Policies forbid downloading, caching or separating the audio/video of YouTube
 content (III.E.1, III.I.7) and retrieving data by any means other than the API (III.I.14). The server
-therefore **never** downloads, fetches or captures any platform's media: server-side capture of YouTube or
-any other platform stays out, permanently. Platform streams are analysed only from the **viewer's own
+therefore never downloads, fetches or captures YouTube's media, and never defeats any platform's protection.
+**One exception, owner decision 2026-11-23 (ADR-221 batch 3): Twitch `SERVER_PULL`** — the server reads
+Twitch's public playlist the way its own web player does (section "Server pull" below). Platform streams are analysed only from the **viewer's own
 browser tab audio** (`BROWSER_CAPTURE`, below). Capturing YouTube and other platforms this way is an
 **owner-accepted terms risk (decision 2026-11-22)**: the owner accepted the terms exposure of viewer-side
 capture; it is not a claim that the platforms permit it.
 
-| Source kind | Player                                   | AI                                                    | Access scope                              |
-| ----------- | ---------------------------------------- | ----------------------------------------------------- | ----------------------------------------- |
-| `YOUTUBE`   | `youtube-nocookie` iframe                | `BROWSER_CAPTURE` (viewer tab audio, AUDIO mode only) | `PRIVATE:<userId>`                        |
-| `PLATFORM`  | the platform's official embed, or a link | `BROWSER_CAPTURE`, or none (`LINK_ONLY`)              | capture `PRIVATE:<userId>`, link `PUBLIC` |
-| `HLS`       | hls.js via live-service proxy            | audio, vision                                         | `PUBLIC` or `PRIVATE:<userId>`            |
-| `FIXTURE`   | hls.js via live-service                  | audio, vision                                         | `PUBLIC` (admin-enabled fixture)          |
+| Source kind | Player                                   | AI                                                               | Access scope                                       |
+| ----------- | ---------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------- |
+| `YOUTUBE`   | `youtube-nocookie` iframe                | `BROWSER_CAPTURE` (viewer tab audio, AUDIO mode only)            | `PRIVATE:<userId>`                                 |
+| `PLATFORM`  | the platform's official embed, or a link | `BROWSER_CAPTURE`, `SERVER_PULL` (Twitch), or none (`LINK_ONLY`) | capture `PRIVATE:<userId>`, pull and link `PUBLIC` |
+| `HLS`       | hls.js via live-service proxy            | audio, vision                                                    | `PUBLIC` or `PRIVATE:<userId>`                     |
+| `FIXTURE`   | hls.js via live-service                  | audio, vision                                                    | `PUBLIC` (admin-enabled fixture)                   |
 
 **Platform registry** (`apps/claw-live-service/src/modules/sources`): the data table
 `constants/platform-registry.constants.ts` plus one small parser per platform (`utilities/capture-platform-url.utility.ts`,
 `utilities/link-platform-url.utility.ts`, `utilities/youtube-url.utility.ts`), tried in order. Resolution is **parsing
-only, never a network call**. `sourceIdentity = sha256(<PLATFORM>:<id>)`; `LiveStream.platform` stores the platform.
+only, never a network call**, except the Twitch server-pull probe when the policy enables it. `sourceIdentity = sha256(<PLATFORM>:<id>)`; `LiveStream.platform` stores the platform.
 
 | Platform                                                                                                                                                  | URL shapes                                                                       | Player embed                                                                    | Chat embed                                                    | Capability                                                      |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------- |
@@ -39,7 +40,7 @@ only, never a network call**. `sourceIdentity = sha256(<PLATFORM>:<id>)`; `LiveS
 | TikTok, Instagram, Rumble, BIGO, LinkedIn, Telegram (`?livestream`, `?videochat`, `?voicechat`), Bilibili, CHZZK, SOOP (incl. legacy afreecatv.com), Nimo | see the parsers                                                                  | none                                                                            | none                                                          | LINK_ONLY                                                       |
 | Discord                                                                                                                                                   | `discord.com/…`, `discord.gg/…`                                                  | —                                                                               | —                                                             | refused `422 LIVE_DISCORD_PRIVATE` (Go Live has no public link) |
 
-- `reasonCode`: `BROWSER_CAPTURE_AVAILABLE` or `LINK_ONLY_PLATFORM` (`YOUTUBE_ANALYSIS_NOT_PERMITTED` is kept only so old
+- `reasonCode`: `BROWSER_CAPTURE_AVAILABLE`, `SERVER_PULL_AVAILABLE`, `SERVER_PULL_UNAVAILABLE` or `LINK_ONLY_PLATFORM` (`YOUTUBE_ANALYSIS_NOT_PERMITTED` is kept only so old
   clients still parse). `LINK_ONLY` behaves like the old `PLAYER_ONLY`: session `UNSUPPORTED`, no run, no billing.
 - YouTube `@handle` and vanity links cannot be resolved without the YouTube API and are refused with
   `LIVE_YOUTUBE_HANDLE_UNSUPPORTED` (paste the video link or the `/channel/UC...` link).
@@ -48,6 +49,17 @@ only, never a network call**. `sourceIdentity = sha256(<PLATFORM>:<id>)`; `LiveS
   `PRIVATE:<userId>`, so a viewer's capture is never shared with anyone. The run's `captureSessionId` names the one
   session allowed to push audio; a second session of the same viewer on the same stream takes the capture over (the
   older one then gets 409).
+- **Microphone capture (batch 3):** where tab audio is unavailable (every mobile browser), the browser captures the
+  microphone instead (`getUserMedia`, echo cancellation / noise suppression / auto gain OFF) and posts the same chunks.
+  Frontend only (`utilities/live-capture.utility.ts`, source picked by `pickLiveCaptureSource()`).
+- **Server pull (batch 3, Twitch only):** `services/server-pull-resolver.service.ts` asks `gql.twitch.tv` for the
+  anonymous playback token (honouring `forbidden`) and builds the usher master playlist. Resolve probes it when the
+  policy's `serverPullPlatforms` lists the platform: live → `SERVER_PULL` (`PUBLIC`, one run for every viewer, any
+  device, `reasonCode SERVER_PULL_AVAILABLE`); offline/refused → private `BROWSER_CAPTURE` with
+  `SERVER_PULL_UNAVAILABLE`; policy off → no network call. The worker (`HlsChunkSource` with a `ServerPullSource`)
+  fetches on the host-suffix pin `ttvnw.net`/`live-video.net`, and drops the token after a failed playlist fetch (at
+  most once per 30 s) so the next poll re-resolves. YouTube (needs client impersonation to dodge attestation) and Kick
+  (403 to servers) are not pulled. The player and chat stay the official embeds; the feed reveals by wall clock.
 - `HLS` requires a per-user **rights attestation** (checkbox + timestamp stored on the session) before
   any processing; each viewer attests for themselves, so sharing a run never extends one user's
   attestation to another.

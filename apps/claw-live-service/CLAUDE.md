@@ -19,11 +19,12 @@ this file disagree, fix one in the same change) - decision:
   `PrismaService` and the global ioredis client (`LIVE_REDIS_CLIENT`). Migrations `20261122000000_live_init` and `20261122120000_live_platforms_capture` (platforms, capture) and the
   idempotent seeder `prisma/seeders/live-policy.seeder.cjs` (policy version 1 only when the table is empty).
 - **sources** - `POST /live/sources/resolve` (the platform registry: `constants/platform-registry.constants.ts` plus one
-  parser per platform, 15 platforms, parsing only), the HLS proxy (`GET /live/streams/:streamId/hls/p` and `/hls/:file`), the
+  parser per platform, 15 platforms, parsing only except the Twitch server-pull probe), the HLS proxy (`GET /live/streams/:streamId/hls/p` and `/hls/:file`), the
   SSRF guard (`source-url-guard.service.ts`), the fetcher and the fixture broadcaster (a looped recording served as a
   local HLS window; real source, nothing mocked).
 - **processing** - `BROWSER_CAPTURE` runs read the viewer's tab audio from the Redis list `live:capture:<runId>`
-  (`workers/capture-chunk-source.ts`), never the source; every other run pulls HLS. One run per processing key with a DB lease and generation fence (`run-coordinator`,
+  (`workers/capture-chunk-source.ts`), never the source; `SERVER_PULL` runs pull the resolved Twitch playlist (token
+  re-resolved after a failed playlist fetch, at most once per 30 s); every other run pulls HLS. One run per processing key with a DB lease and generation fence (`run-coordinator`,
   `fenced-run-writer`), `run-reconciler` (recovers stale leases), `run-worker` (chunked STT through file-service),
   and the `transcript`, `summary`, `translation` and `vision` managers. Model calls go through connector-service.
   Caption latency is recorded on STT `LiveProviderCost` rows as speech end to commit (`latencyMs`).
@@ -52,10 +53,13 @@ this file disagree, fix one in the same change) - decision:
   cross-host redirects (architecture section 1).
 - **ffmpeg reads only local files.** The worker downloads segments itself, then runs ffmpeg on the local file with
   `-protocol_whitelist file`, so ffmpeg can never be steered to another host.
-- **No server-side capture, ever.** The server never downloads, fetches or captures YouTube or any other platform.
-  YouTube, Twitch, Kick and Facebook are `BROWSER_CAPTURE`: analysed only from the viewer's own tab audio, posted as
-  WAV chunks. That browser capture is an **owner-accepted terms risk (decision 2026-11-22)**; server-side capture stays
-  out. The other registry platforms are `LINK_ONLY` (session `UNSUPPORTED`, no run, no billing, like the old
+- **Server-side reads: Twitch only (ADR-221 batch 3, owner decision 2026-11-23).** A live Twitch channel is
+  `SERVER_PULL`: `services/server-pull-resolver.service.ts` takes the anonymous web-player token (a `forbidden` token is
+  honoured) and the usher playlist; one `PUBLIC` run serves every viewer; the worker's pin is the host-suffix list
+  `ttvnw.net`/`live-video.net`; policy `serverPullPlatforms: []` turns it off with no network call. **Never pull YouTube
+  or Kick:** that needs defeating their protections (client impersonation past YouTube's attestation; Kick's 403 to
+  servers). YouTube, Kick, Facebook and offline Twitch are `BROWSER_CAPTURE`: the viewer's own tab audio, or its
+  microphone on phones, posted as WAV chunks (owner-accepted terms risk, decision 2026-11-22). The other registry platforms are `LINK_ONLY` (session `UNSUPPORTED`, no run, no billing, like the old
   `PLAYER_ONLY`); Discord is refused with `LIVE_DISCORD_PRIVATE`. YouTube `@handle` and vanity links are refused with
   `LIVE_YOUTUBE_HANDLE_UNSUPPORTED`.
 - **A capture run is private and AUDIO only.** Scope `PRIVATE:<userId>`; mode forced to `AUDIO`; `run.captureSessionId`

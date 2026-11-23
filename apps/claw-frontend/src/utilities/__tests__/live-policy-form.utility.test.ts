@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { LivePlatform } from '@/enums/live.enum';
 import type { LivePolicyConfig } from '@/types/live-admin.types';
 import {
   liveFormValuesToPolicy,
@@ -78,5 +79,25 @@ describe('policy form round trip', () => {
     expect(liveFormValuesToPolicy(budget, CONFIG).invalidField).toBe('dailyBudgetUsd');
     const grace = { ...livePolicyToFormValues(CONFIG), graceSeconds: '1.5' };
     expect(liveFormValuesToPolicy(grace, CONFIG).invalidField).toBe('graceSeconds');
+  });
+});
+
+describe('server pull platforms', () => {
+  it('round-trips Twitch on and off', () => {
+    const on = livePolicyToFormValues({ ...CONFIG, serverPullPlatforms: [LivePlatform.TWITCH] });
+    expect(on.serverPullTwitch).toBe(true);
+    expect(liveFormValuesToPolicy(on, CONFIG).config?.serverPullPlatforms).toEqual([
+      LivePlatform.TWITCH,
+    ]);
+    const off = livePolicyToFormValues({ ...CONFIG, serverPullPlatforms: [] });
+    expect(off.serverPullTwitch).toBe(false);
+    expect(liveFormValuesToPolicy(off, CONFIG).config?.serverPullPlatforms).toEqual([]);
+  });
+
+  it('treats a version saved before the field existed as the default (Twitch on)', () => {
+    const values = livePolicyToFormValues(CONFIG);
+    expect(values.serverPullTwitch).toBe(true);
+    values.serverPullTwitch = false;
+    expect(liveFormValuesToPolicy(values, CONFIG).config?.serverPullPlatforms).toEqual([]);
   });
 });

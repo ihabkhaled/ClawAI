@@ -65,6 +65,28 @@ describe('SourceUrlGuardService', () => {
     ).resolves.toEqual(['93.184.216.34']);
   });
 
+  it('pins a server-pulled fetch to host suffixes, never a look-alike domain or a private address', async () => {
+    const suffixes = ['ttvnw.net', 'live-video.net'];
+    for (const url of [
+      'https://ttvnw.net.evil.example/a.ts',
+      'https://evilttvnw.net/a.ts',
+      'http://x.playlist.ttvnw.net/a.m3u8',
+      'https://user:pw@x.ttvnw.net/a.ts',
+    ]) {
+      await expect(guard.assertSafeOnSuffixes(new URL(url), suffixes)).rejects.toThrow(
+        'LIVE_SOURCE_UNSAFE',
+      );
+    }
+    vi.spyOn(guard, 'resolveHost').mockResolvedValueOnce(['10.0.0.5']);
+    await expect(
+      guard.assertSafeOnSuffixes(new URL('https://x.playlist.ttvnw.net/a.m3u8'), suffixes),
+    ).rejects.toThrow('LIVE_SOURCE_UNSAFE');
+    vi.spyOn(guard, 'resolveHost').mockResolvedValueOnce(['99.84.1.1']);
+    await expect(
+      guard.assertSafeOnSuffixes(new URL('https://a1.j.cloudfront.hls.ttvnw.net/s.ts'), suffixes),
+    ).resolves.toEqual(['99.84.1.1']);
+  });
+
   it('refuses plain http when not allowed, userinfo and odd ports', async () => {
     for (const url of [
       'http://cdn.example.com/a.m3u8',

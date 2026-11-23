@@ -6,4 +6,8 @@ export enum LiveSourceReasonCode {
   BROWSER_CAPTURE_AVAILABLE = 'BROWSER_CAPTURE_AVAILABLE',
   /** The platform has no embeddable player: watch it on the platform. */
   LINK_ONLY_PLATFORM = 'LINK_ONLY_PLATFORM',
+  /** ClawAI's server reads the stream itself: one shared run, works on any device. */
+  SERVER_PULL_AVAILABLE = 'SERVER_PULL_AVAILABLE',
+  /** Server pull is on for the platform but the stream could not be read (offline, refused): browser capture instead. */
+  SERVER_PULL_UNAVAILABLE = 'SERVER_PULL_UNAVAILABLE',
 }

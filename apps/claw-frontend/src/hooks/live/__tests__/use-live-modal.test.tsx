@@ -1,0 +1,128 @@
+import { renderHook } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { LIVE_EMPTY_PLAYBACK } from '@/constants/live.constants';
+import {
+  LiveCapability,
+  LiveCaptureState,
+  LiveMode,
+  LiveSessionState,
+  LiveSourceKind,
+  LiveStatusCode,
+} from '@/enums/live.enum';
+import { useLiveModal } from '@/hooks/live/use-live-modal';
+import type { LiveSession } from '@/types/live.types';
+
+const mocks = vi.hoisted(() => ({
+  session: null as unknown,
+  capture: vi.fn(),
+  playback: vi.fn(),
+  wallClock: vi.fn(),
+}));
+
+vi.mock('@/lib/i18n', () => ({
+  useTranslation: () => ({ t: (key: string) => key, locale: 'en' }),
+}));
+vi.mock('@/hooks/live/use-live-session', () => ({
+  useLiveSession: () => ({ session: mocks.session, isCreating: false, error: null }),
+}));
+vi.mock('@/hooks/live/use-live-embed', () => ({
+  useLiveEmbed: () => ({ playerUrl: null, chatUrl: null, watchUrl: null, platformName: null }),
+}));
+vi.mock('@/hooks/live/use-live-stream', () => ({
+  useLiveStream: () => ({
+    feed: {
+      captions: [],
+      captionTranslations: {},
+      cards: [],
+      highlights: [],
+      status: LiveStatusCode.ANALYZING,
+      usage: null,
+    },
+    setStatus: vi.fn(),
+    setUsage: vi.fn(),
+    isReconnecting: false,
+    isLost: false,
+  }),
+}));
+vi.mock('@/hooks/live/use-live-capture', () => ({
+  useLiveCapture: (options: unknown) => {
+    mocks.capture(options);
+    return { source: null, state: LiveCaptureState.IDLE, error: null, isCapturing: false };
+  },
+}));
+vi.mock('@/hooks/live/use-live-modal-playback', () => ({
+  useLiveModalPlayback: (...args: unknown[]) => {
+    mocks.playback(...args);
+    return {
+      player: { snapshot: { ...LIVE_EMPTY_PLAYBACK, isPaused: true } },
+      heartbeatError: false,
+    };
+  },
+}));
+vi.mock('@/hooks/live/use-live-wall-clock', () => ({
+  useLiveWallClock: (enabled: boolean) => {
+    mocks.wallClock(enabled);
+    return enabled ? 1_700_000_000_000 : 0;
+  },
+}));
+vi.mock('@/hooks/live/use-live-usage', () => ({ useLiveUsage: () => ({ usage: null }) }));
+
+function session(capability: LiveCapability): LiveSession {
+  return {
+    sessionId: 's1',
+    runId: 'r1',
+    streamId: 'st1',
+    sourceKind: LiveSourceKind.PLATFORM,
+    capability,
+    embedUrl: 'https://player.twitch.tv/?channel=shroud',
+    playbackUrl: null,
+    state: LiveSessionState.ACTIVE,
+    usage: {} as LiveSession['usage'],
+    closeToken: 'tok',
+    platform: null,
+    chatEmbedUrl: null,
+    watchUrl: 'https://www.twitch.tv/shroud',
+    embedNeedsParent: true,
+    chatNeedsEmbedDomain: false,
+  };
+}
+
+const INPUT = {
+  url: 'https://www.twitch.tv/shroud',
+  language: 'en',
+  mode: LiveMode.AUDIO,
+  attestRights: false,
+};
+
+describe('useLiveModal', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('SERVER_PULL: wall-clock reveal, no capture, never paused, heartbeats as always playing', () => {
+    mocks.session = session(LiveCapability.SERVER_PULL);
+    const { result } = renderHook(() => useLiveModal(INPUT));
+
+    expect(result.current.isServerPull).toBe(true);
+    expect(result.current.isCapture).toBe(false);
+    expect(result.current.isPlayerOnly).toBe(false);
+    expect(result.current.status).toBe(LiveStatusCode.ANALYZING);
+    expect(mocks.wallClock).toHaveBeenLastCalledWith(true);
+    expect(mocks.capture).toHaveBeenLastCalledWith(expect.objectContaining({ enabled: false }));
+    const playbackArgs = mocks.playback.mock.lastCall ?? [];
+    expect(playbackArgs[2]).toBe(true);
+    expect(playbackArgs[5]).toEqual({ isCapture: true, isCapturing: true });
+  });
+
+  it('BROWSER_CAPTURE: capture on, reads as paused until the viewer shares audio', () => {
+    mocks.session = session(LiveCapability.BROWSER_CAPTURE);
+    const { result } = renderHook(() => useLiveModal(INPUT));
+
+    expect(result.current.isServerPull).toBe(false);
+    expect(result.current.isCapture).toBe(true);
+    expect(result.current.status).toBe(LiveStatusCode.PAUSED);
+    expect(mocks.capture).toHaveBeenLastCalledWith(expect.objectContaining({ enabled: true }));
+    expect(mocks.playback.mock.lastCall?.[5]).toEqual({ isCapture: true, isCapturing: false });
+  });
+});

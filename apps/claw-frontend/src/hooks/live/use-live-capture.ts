@@ -5,10 +5,13 @@ import { LiveCaptureError, LiveCaptureState } from '@/enums/live.enum';
 import { useLiveCaptureControl } from '@/hooks/live/use-live-capture-control';
 import { useLiveCaptureUpload } from '@/hooks/live/use-live-capture-upload';
 import type { UseLiveCaptureOptions, UseLiveCaptureResult } from '@/types/live.types';
+import { pickLiveCaptureSource } from '@/utilities/live-capture-state.utility';
 
 /**
- * "Analyze with my browser": consent first, then the tab-audio capture. Stops on track end, on
- * modal close (unmount) and on a status that ends analysis (EXHAUSTED, CREDITS_REQUIRED, ...).
+ * "Analyze with my browser": consent first, then the capture. The source is this tab's audio where
+ * the browser can share it, else the microphone (phones), else none (UNSUPPORTED on confirm).
+ * Stops on track end, on modal close (unmount) and on a status that ends analysis (EXHAUSTED,
+ * CREDITS_REQUIRED, ...).
  */
 export function useLiveCapture({
   sessionId,
@@ -16,6 +19,8 @@ export function useLiveCapture({
   status,
 }: UseLiveCaptureOptions): UseLiveCaptureResult {
   const [consentOpen, setConsentOpen] = useState(false);
+  // The modal only mounts after a click, never during server rendering, so reading navigator is safe.
+  const [source] = useState(pickLiveCaptureSource);
   // The upload hook needs `fail` before the control hook that owns it exists: bridge with a ref.
   const failRef = useRef<(error: LiveCaptureError) => void>(() => undefined);
   const onFatal = useCallback((): void => failRef.current(LiveCaptureError.UPLOAD), []);
@@ -33,6 +38,7 @@ export function useLiveCapture({
   }, [isCapturing, status, stop]);
 
   return {
+    source,
     state: machine.state,
     error: machine.error,
     isCapturing,
@@ -42,7 +48,7 @@ export function useLiveCapture({
     confirm: () => {
       setConsentOpen(false);
       if (enabled && sessionId !== null) {
-        start();
+        start(source);
       }
     },
     stop,

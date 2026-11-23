@@ -23,13 +23,17 @@ import { liveSessionHlsSrc } from '@/utilities/live-session.utility';
 /**
  * Controller for the live modal. Everything shown is filtered by playback time: only events with
  * `startAt <= playbackAt` are revealed, so pause freezes the feed and seeking back hides later ones.
- * A browser-capture session (cross-origin player, no media clock) reveals at `playbackAt = Date.now()`.
+ * A browser-capture or server-pull session (cross-origin player, no media clock) reveals at
+ * `playbackAt = Date.now()`. Server pull has no capture panel: the server reads the stream, so the
+ * viewer counts as playing while the modal is open (its heartbeats still bill per viewer).
  */
 export function useLiveModal(input: LiveCreateSessionInput): UseLiveModalResult {
   const { t, locale } = useTranslation();
   const { session, isCreating, error } = useLiveSession(input);
   const isLinkOnly = session?.capability === LiveCapability.LINK_ONLY;
   const isCapture = session?.capability === LiveCapability.BROWSER_CAPTURE;
+  const isServerPull = session?.capability === LiveCapability.SERVER_PULL;
+  const isWallClock = isCapture || isServerPull;
   const isPlayerOnly = session?.capability === LiveCapability.PLAYER_ONLY || isLinkOnly;
   const aiEnabled = session !== null && !isPlayerOnly;
   const hlsSrc = liveSessionHlsSrc(session);
@@ -53,9 +57,9 @@ export function useLiveModal(input: LiveCreateSessionInput): UseLiveModalResult 
     aiEnabled,
     setStatus,
     setUsage,
-    { isCapture, isCapturing: capture.isCapturing },
+    { isCapture: isWallClock, isCapturing: isServerPull || capture.isCapturing },
   );
-  const wallClock = useLiveWallClock(isCapture);
+  const wallClock = useLiveWallClock(isWallClock);
   const usageQuery = useLiveUsage();
   const [tab, setTab] = useState<LiveFeedTab>(LiveFeedTab.FEED);
   const [controlsOpen, setControlsOpen] = useState(false);
@@ -66,8 +70,8 @@ export function useLiveModal(input: LiveCreateSessionInput): UseLiveModalResult 
     }
   }, [session, setStatus]);
   const { isPaused: isPlayerPaused, liveEdgeAt } = player.snapshot;
-  const playbackAt = isCapture ? wallClock : player.snapshot.playbackAt;
-  const isPaused = !isCapture && isPlayerPaused;
+  const playbackAt = isWallClock ? wallClock : player.snapshot.playbackAt;
+  const isPaused = !isWallClock && isPlayerPaused;
   const { feed } = stream;
   const revealed = useMemo(
     () => ({
@@ -79,6 +83,7 @@ export function useLiveModal(input: LiveCreateSessionInput): UseLiveModalResult 
     [feed.captionTranslations, feed.captions, feed.cards, feed.highlights, playbackAt],
   );
   // A capture session that is not sharing audio reads as paused: nothing is analyzed or billed.
+  // A server-pull session is never paused by the viewer; only a PAUSED status from the server shows it.
   const showPaused = isCapture ? !capture.isCapturing : isPaused && playbackAt > 0;
   const status = resolveLiveDisplayStatus(feed.status, showPaused, isPlayerOnly);
   // Freshest first: the last heartbeat's month block, then the create response's, then GET /usage.
@@ -94,6 +99,7 @@ export function useLiveModal(input: LiveCreateSessionInput): UseLiveModalResult 
     isPlayerOnly,
     isLinkOnly,
     isCapture,
+    isServerPull,
     embed,
     capture,
     hlsSrc,

@@ -102,6 +102,12 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       captureTitle: 'AI analysis with your browser',
       captureNotice:
         '{platform} plays here. For captions, summaries and highlights, press “Analyze with my browser” under the player and share this tab’s audio.',
+      serverPullTitle: 'AI runs on ClawAI servers',
+      serverPullNotice: 'Works on any device, including phones.',
+      serverPullUnavailable:
+        'ClawAI could not read this stream directly, so AI uses your device’s audio.',
+      captureNoticeMic:
+        'AI listens through your microphone while the {platform} stream plays. Keep its sound on.',
       linkOnlyTitle: 'No player here for {platform}',
       linkOnlyNotice:
         '{platform} has no player we can show here, so the stream opens on {platform}. Captions and summaries are not available for it.',
@@ -119,6 +125,17 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       chatError: 'The chat could not be shown here.',
     },
     capture: {
+      analyzeMic: 'Analyze using microphone',
+      micHint:
+        'Keep the stream’s sound on and the phone near its speaker. Room noise is heard too.',
+      requestingMic: 'Allow microphone access in the browser prompt.',
+      capturingMic: 'Analyzing the sound through your microphone',
+      consentMicTitle: 'Analyze this stream using your microphone',
+      consentMicDescription: 'Your browser will ask to use your microphone.',
+      consentMicAudio: 'Your microphone’s audio is sent for transcription.',
+      consentMicNothingElse: 'Nothing else is recorded or sent from your device.',
+      consentMicBilling: 'Minutes are billed per minute as usual while the audio is analyzed.',
+      consentMicConfirm: 'Use microphone',
       analyze: 'Analyze with my browser',
       requesting: 'Pick this tab in the browser prompt and tick “Also share tab audio”.',
       capturing: 'Analyzing your tab audio',
@@ -137,8 +154,13 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       errorNoAudio:
         'No tab audio was shared. Start again and tick “Also share tab audio” in the browser prompt.',
       errorDenied: 'Tab sharing was cancelled.',
-      errorUnsupported: 'This browser can’t share tab audio. Use Chrome or Edge on a computer.',
+      errorMicDenied:
+        'Microphone access is blocked. Allow it in your browser’s site settings, then try again.',
+      errorUnsupported: 'This browser can’t capture audio. Try Chrome, Edge, Safari or Firefox.',
       errorUpload: 'The audio could not be sent, so the analysis stopped.',
+    },
+    serverPull: {
+      analyzing: 'ClawAI analyzes this stream on its servers. Nothing to share from your device.',
     },
     status: {
       connectingTitle: 'Connecting',
@@ -243,6 +265,10 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         'Every save creates a new version. Finished charges keep their own version.',
       featureEnabled: 'Feature enabled',
       killSwitch: 'Kill switch (stop all analysis)',
+      serverPullTitle: 'Server pull',
+      serverPullHint:
+        'ClawAI reads these platforms on its own servers and shares one analysis with every viewer.',
+      serverPullTwitch: 'Server pull: Twitch',
       plansTitle: 'Minutes and price per plan',
       plan: 'Plan',
       defaultPlan: 'Any other plan',
@@ -366,6 +392,12 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       captureTitle: 'تحليل بالذكاء الاصطناعي عبر متصفحك',
       captureNotice:
         'يُعرض {platform} هنا. للحصول على الترجمة النصية والملخصات وأبرز اللحظات، اضغط «التحليل عبر متصفحي» أسفل المشغل وشارك صوت علامة التبويب هذه.',
+      serverPullTitle: 'يعمل الذكاء الاصطناعي على خوادم ClawAI',
+      serverPullNotice: 'يعمل على أي جهاز، بما في ذلك الهواتف.',
+      serverPullUnavailable:
+        'تعذّر على ClawAI قراءة هذا البث مباشرة، لذا يستخدم الذكاء الاصطناعي صوت جهازك.',
+      captureNoticeMic:
+        'يستمع الذكاء الاصطناعي عبر الميكروفون أثناء تشغيل بث {platform}. أبقِ صوته مفعّلًا.',
       linkOnlyTitle: 'لا يوجد مشغل هنا لـ {platform}',
       linkOnlyNotice:
         'لا يوفّر {platform} مشغلًا يمكننا عرضه هنا، لذا يُفتح البث على {platform}. الترجمة النصية والملخصات غير متاحة له.',
@@ -382,6 +414,16 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       chatError: 'تعذّر عرض الدردشة هنا.',
     },
     capture: {
+      analyzeMic: 'التحليل باستخدام الميكروفون',
+      micHint: 'أبقِ صوت البث مفعّلًا والهاتف قريبًا من مكبّر الصوت. ضجيج الغرفة يُسمع أيضًا.',
+      requestingMic: 'اسمح بالوصول إلى الميكروفون في نافذة المتصفح.',
+      capturingMic: 'جارٍ تحليل الصوت عبر الميكروفون',
+      consentMicTitle: 'حلّل هذا البث باستخدام الميكروفون',
+      consentMicDescription: 'سيطلب متصفحك استخدام الميكروفون.',
+      consentMicAudio: 'يُرسَل صوت الميكروفون لتحويله إلى نص.',
+      consentMicNothingElse: 'لا يُسجَّل أو يُرسَل أي شيء آخر من جهازك.',
+      consentMicBilling: 'تُحتسب الدقائق بالدقيقة كالمعتاد أثناء تحليل الصوت.',
+      consentMicConfirm: 'استخدام الميكروفون',
       analyze: 'التحليل عبر متصفحي',
       requesting: 'اختر علامة التبويب هذه في نافذة المتصفح وفعّل «مشاركة صوت علامة التبويب أيضًا».',
       capturing: 'جارٍ تحليل صوت علامة التبويب',
@@ -399,9 +441,14 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       errorNoAudio:
         'لم تتم مشاركة صوت علامة التبويب. ابدأ من جديد وفعّل «مشاركة صوت علامة التبويب أيضًا» في نافذة المتصفح.',
       errorDenied: 'أُلغيت مشاركة علامة التبويب.',
+      errorMicDenied:
+        'الوصول إلى الميكروفون محظور. اسمح به من إعدادات الموقع في متصفحك، ثم حاول مرة أخرى.',
       errorUnsupported:
-        'لا يستطيع هذا المتصفح مشاركة صوت علامة التبويب. استخدم Chrome أو Edge على حاسوب.',
+        'لا يستطيع هذا المتصفح التقاط الصوت. جرّب Chrome أو Edge أو Safari أو Firefox.',
       errorUpload: 'تعذّر إرسال الصوت، لذا توقف التحليل.',
+    },
+    serverPull: {
+      analyzing: 'يحلّل ClawAI هذا البث على خوادمه. لا شيء تحتاج إلى مشاركته من جهازك.',
     },
     status: {
       connectingTitle: 'جارٍ الاتصال',
@@ -505,6 +552,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       policyDescription: 'كل حفظ ينشئ نسخة جديدة. تحتفظ الرسوم المنتهية بنسختها الخاصة.',
       featureEnabled: 'الميزة مفعّلة',
       killSwitch: 'مفتاح الإيقاف (إيقاف كل التحليل)',
+      serverPullTitle: 'السحب من الخادم',
+      serverPullHint: 'يقرأ ClawAI هذه المنصات على خوادمه ويشارك تحليلًا واحدًا مع كل المشاهدين.',
+      serverPullTwitch: 'السحب من الخادم: Twitch',
       plansTitle: 'الدقائق والسعر لكل خطة',
       plan: 'الخطة',
       defaultPlan: 'أي خطة أخرى',
@@ -631,6 +681,12 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       captureTitle: 'KI-Analyse über deinen Browser',
       captureNotice:
         '{platform} läuft hier. Für Untertitel, Zusammenfassungen und Highlights tippe unter dem Player auf „Mit meinem Browser analysieren“ und teile den Ton dieses Tabs.',
+      serverPullTitle: 'Die KI läuft auf ClawAI-Servern',
+      serverPullNotice: 'Funktioniert auf jedem Gerät, auch auf Smartphones.',
+      serverPullUnavailable:
+        'ClawAI konnte diesen Stream nicht direkt lesen, daher nutzt die KI den Ton deines Geräts.',
+      captureNoticeMic:
+        'Die KI hört über dein Mikrofon mit, während der {platform}-Stream läuft. Lass den Ton an.',
       linkOnlyTitle: 'Kein Player für {platform} verfügbar',
       linkOnlyNotice:
         '{platform} bietet keinen Player, den wir hier zeigen können, daher öffnet sich der Stream auf {platform}. Untertitel und Zusammenfassungen gibt es dafür nicht.',
@@ -649,6 +705,18 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       chatError: 'Der Chat kann hier nicht angezeigt werden.',
     },
     capture: {
+      analyzeMic: 'Mit Mikrofon analysieren',
+      micHint:
+        'Lass den Ton des Streams an und halte das Handy nah an den Lautsprecher. Raumgeräusche werden mit aufgenommen.',
+      requestingMic: 'Erlaube den Mikrofonzugriff in der Browser-Abfrage.',
+      capturingMic: 'Der Ton wird über dein Mikrofon analysiert',
+      consentMicTitle: 'Diesen Stream mit deinem Mikrofon analysieren',
+      consentMicDescription: 'Dein Browser fragt, ob er dein Mikrofon nutzen darf.',
+      consentMicAudio: 'Der Ton deines Mikrofons wird zur Transkription gesendet.',
+      consentMicNothingElse: 'Sonst wird nichts von deinem Gerät aufgenommen oder gesendet.',
+      consentMicBilling:
+        'Minuten werden wie gewohnt pro Minute abgerechnet, solange der Ton analysiert wird.',
+      consentMicConfirm: 'Mikrofon verwenden',
       analyze: 'Mit meinem Browser analysieren',
       requesting:
         'Wähle diesen Tab in der Browser-Abfrage und setze das Häkchen bei „Tab-Audio teilen“.',
@@ -668,9 +736,15 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       errorNoAudio:
         'Es wurde kein Tab-Ton geteilt. Starte erneut und setze in der Browser-Abfrage das Häkchen bei „Tab-Audio teilen“.',
       errorDenied: 'Das Teilen des Tabs wurde abgebrochen.',
+      errorMicDenied:
+        'Der Mikrofonzugriff ist blockiert. Erlaube ihn in den Website-Einstellungen deines Browsers und versuche es erneut.',
       errorUnsupported:
-        'Dieser Browser kann keinen Tab-Ton teilen. Nutze Chrome oder Edge auf einem Computer.',
+        'Dieser Browser kann keinen Ton aufnehmen. Versuche Chrome, Edge, Safari oder Firefox.',
       errorUpload: 'Der Ton konnte nicht gesendet werden, daher wurde die Analyse beendet.',
+    },
+    serverPull: {
+      analyzing:
+        'ClawAI analysiert diesen Stream auf seinen Servern. Von deinem Gerät muss nichts geteilt werden.',
     },
     status: {
       connectingTitle: 'Verbindung wird hergestellt',
@@ -780,6 +854,10 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         'Jedes Speichern erzeugt eine neue Fassung. Abgeschlossene Abrechnungen behalten ihre eigene Fassung.',
       featureEnabled: 'Funktion aktiviert',
       killSwitch: 'Notschalter (gesamte Analyse stoppen)',
+      serverPullTitle: 'Server-Abruf',
+      serverPullHint:
+        'ClawAI liest diese Plattformen auf eigenen Servern und teilt eine Analyse mit allen Zuschauern.',
+      serverPullTwitch: 'Server-Abruf: Twitch',
       plansTitle: 'Minuten und Preis je Tarif',
       plan: 'Tarif',
       defaultPlan: 'Jeder andere Tarif',
@@ -907,6 +985,12 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       captureTitle: 'Análisis con IA desde tu navegador',
       captureNotice:
         '{platform} se reproduce aquí. Para subtítulos, resúmenes y momentos destacados, pulsa «Analizar con mi navegador» debajo del reproductor y comparte el audio de esta pestaña.',
+      serverPullTitle: 'La IA funciona en los servidores de ClawAI',
+      serverPullNotice: 'Funciona en cualquier dispositivo, también en móviles.',
+      serverPullUnavailable:
+        'ClawAI no pudo leer esta transmisión directamente, así que la IA usa el audio de tu dispositivo.',
+      captureNoticeMic:
+        'La IA escucha a través de tu micrófono mientras se reproduce la transmisión de {platform}. Mantén el sonido activado.',
       linkOnlyTitle: 'No hay reproductor para {platform}',
       linkOnlyNotice:
         '{platform} no ofrece un reproductor que podamos mostrar aquí, así que la transmisión se abre en {platform}. No hay subtítulos ni resúmenes para ella.',
@@ -924,6 +1008,18 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       chatError: 'No se pudo mostrar el chat aquí.',
     },
     capture: {
+      analyzeMic: 'Analizar con el micrófono',
+      micHint:
+        'Mantén el sonido de la transmisión activado y el teléfono cerca del altavoz. También se oye el ruido de la sala.',
+      requestingMic: 'Permite el acceso al micrófono en el aviso del navegador.',
+      capturingMic: 'Analizando el sonido a través de tu micrófono',
+      consentMicTitle: 'Analizar esta transmisión con tu micrófono',
+      consentMicDescription: 'Tu navegador te pedirá permiso para usar el micrófono.',
+      consentMicAudio: 'El audio de tu micrófono se envía para transcribirlo.',
+      consentMicNothingElse: 'No se graba ni se envía nada más desde tu dispositivo.',
+      consentMicBilling:
+        'Los minutos se cobran por minuto como siempre mientras se analiza el audio.',
+      consentMicConfirm: 'Usar micrófono',
       analyze: 'Analizar con mi navegador',
       requesting:
         'Elige esta pestaña en el aviso del navegador y marca «Compartir también el audio de la pestaña».',
@@ -942,9 +1038,15 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       errorNoAudio:
         'No se compartió el audio de la pestaña. Empieza de nuevo y marca «Compartir también el audio de la pestaña» en el aviso del navegador.',
       errorDenied: 'Se canceló el uso compartido de la pestaña.',
+      errorMicDenied:
+        'El acceso al micrófono está bloqueado. Permítelo en la configuración del sitio de tu navegador y vuelve a intentarlo.',
       errorUnsupported:
-        'Este navegador no puede compartir el audio de una pestaña. Usa Chrome o Edge en un ordenador.',
+        'Este navegador no puede capturar audio. Prueba Chrome, Edge, Safari o Firefox.',
       errorUpload: 'No se pudo enviar el audio, así que el análisis se detuvo.',
+    },
+    serverPull: {
+      analyzing:
+        'ClawAI analiza esta transmisión en sus servidores. No tienes que compartir nada desde tu dispositivo.',
     },
     status: {
       connectingTitle: 'Conectando',
@@ -1051,6 +1153,10 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         'Cada guardado crea una versión nueva. Los cobros ya cerrados conservan su propia versión.',
       featureEnabled: 'Función activada',
       killSwitch: 'Interruptor de emergencia (detener todo el análisis)',
+      serverPullTitle: 'Lectura en servidor',
+      serverPullHint:
+        'ClawAI lee estas plataformas en sus propios servidores y comparte un único análisis con todos los espectadores.',
+      serverPullTwitch: 'Lectura en servidor: Twitch',
       plansTitle: 'Minutos y precio por tarifa',
       plan: 'Tarifa',
       defaultPlan: 'Cualquier otra tarifa',
@@ -1176,6 +1282,12 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       captureTitle: 'تحلیل هوش مصنوعی با مرورگر شما',
       captureNotice:
         '{platform} اینجا پخش می‌شود. برای زیرنویس، خلاصه و نکات برجسته، زیر پخش‌کننده «تحلیل با مرورگر من» را بزنید و صدای این زبانه را به اشتراک بگذارید.',
+      serverPullTitle: 'هوش مصنوعی روی سرورهای ClawAI اجرا می‌شود',
+      serverPullNotice: 'روی هر دستگاهی، از جمله گوشی، کار می‌کند.',
+      serverPullUnavailable:
+        'ClawAI نتوانست این پخش را مستقیم بخواند، پس هوش مصنوعی از صدای دستگاه شما استفاده می‌کند.',
+      captureNoticeMic:
+        'هوش مصنوعی هنگام پخش استریم {platform} از طریق میکروفون شما گوش می‌دهد. صدای آن را روشن نگه دارید.',
       linkOnlyTitle: 'برای {platform} پخش‌کننده‌ای اینجا نیست',
       linkOnlyNotice:
         '{platform} پخش‌کننده‌ای ندارد که بتوانیم اینجا نشان دهیم، پس پخش روی {platform} باز می‌شود. زیرنویس و خلاصه برای آن در دسترس نیست.',
@@ -1193,6 +1305,18 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       chatError: 'گفتگو اینجا نمایش داده نشد.',
     },
     capture: {
+      analyzeMic: 'تحلیل با میکروفون',
+      micHint:
+        'صدای پخش را روشن نگه دارید و گوشی را نزدیک بلندگو بگذارید. صدای محیط هم شنیده می‌شود.',
+      requestingMic: 'در پیام مرورگر اجازهٔ دسترسی به میکروفون را بدهید.',
+      capturingMic: 'در حال تحلیل صدا از طریق میکروفون شما',
+      consentMicTitle: 'تحلیل این پخش با میکروفون شما',
+      consentMicDescription: 'مرورگر برای استفاده از میکروفون از شما اجازه می‌خواهد.',
+      consentMicAudio: 'صدای میکروفون شما برای تبدیل به متن ارسال می‌شود.',
+      consentMicNothingElse: 'هیچ چیز دیگری از دستگاه شما ضبط یا ارسال نمی‌شود.',
+      consentMicBilling:
+        'تا وقتی صدا تحلیل می‌شود، دقیقه‌ها طبق معمول به‌ازای هر دقیقه محاسبه می‌شوند.',
+      consentMicConfirm: 'استفاده از میکروفون',
       analyze: 'تحلیل با مرورگر من',
       requesting:
         'در پنجرهٔ مرورگر این زبانه را انتخاب کنید و «اشتراک‌گذاری صدای زبانه» را هم تیک بزنید.',
@@ -1212,9 +1336,15 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       errorNoAudio:
         'صدای زبانه به اشتراک گذاشته نشد. دوباره شروع کنید و در پنجرهٔ مرورگر «اشتراک‌گذاری صدای زبانه» را تیک بزنید.',
       errorDenied: 'اشتراک‌گذاری زبانه لغو شد.',
+      errorMicDenied:
+        'دسترسی به میکروفون مسدود است. آن را در تنظیمات سایت مرورگرتان مجاز کنید و دوباره امتحان کنید.',
       errorUnsupported:
-        'این مرورگر نمی‌تواند صدای زبانه را به اشتراک بگذارد. از Chrome یا Edge روی رایانه استفاده کنید.',
+        'این مرورگر نمی‌تواند صدا را ضبط کند. Chrome، Edge، Safari یا Firefox را امتحان کنید.',
       errorUpload: 'صدا فرستاده نشد، پس تحلیل متوقف شد.',
+    },
+    serverPull: {
+      analyzing:
+        'ClawAI این پخش را روی سرورهای خودش تحلیل می‌کند. لازم نیست چیزی از دستگاه‌تان به اشتراک بگذارید.',
     },
     status: {
       connectingTitle: 'در حال اتصال',
@@ -1321,6 +1451,10 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         'هر ذخیره یک نسخه جدید می‌سازد. هزینه‌های نهایی‌شده نسخه خودشان را نگه می‌دارند.',
       featureEnabled: 'قابلیت فعال است',
       killSwitch: 'کلید توقف (توقف همه تحلیل‌ها)',
+      serverPullTitle: 'دریافت از سرور',
+      serverPullHint:
+        'ClawAI این پلتفرم‌ها را روی سرورهای خودش می‌خواند و یک تحلیل را با همهٔ بینندگان به اشتراک می‌گذارد.',
+      serverPullTwitch: 'دریافت از سرور: Twitch',
       plansTitle: 'دقیقه و قیمت برای هر طرح',
       plan: 'طرح',
       defaultPlan: 'هر طرح دیگر',
@@ -1447,6 +1581,12 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       captureTitle: 'Analyse IA avec votre navigateur',
       captureNotice:
         '{platform} est lu ici. Pour les sous-titres, résumés et temps forts, appuyez sur « Analyser avec mon navigateur » sous le lecteur et partagez le son de cet onglet.',
+      serverPullTitle: 'L’IA tourne sur les serveurs de ClawAI',
+      serverPullNotice: 'Fonctionne sur tous les appareils, y compris les téléphones.',
+      serverPullUnavailable:
+        'ClawAI n’a pas pu lire ce flux directement, l’IA utilise donc le son de votre appareil.',
+      captureNoticeMic:
+        'L’IA écoute via votre micro pendant la lecture du flux {platform}. Laissez le son activé.',
       linkOnlyTitle: 'Pas de lecteur ici pour {platform}',
       linkOnlyNotice:
         '{platform} ne propose pas de lecteur que nous pouvons afficher ici, le direct s’ouvre donc sur {platform}. Sous-titres et résumés ne sont pas disponibles pour lui.',
@@ -1464,6 +1604,18 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       chatError: 'Le chat n’a pas pu être affiché ici.',
     },
     capture: {
+      analyzeMic: 'Analyser avec le micro',
+      micHint:
+        'Laissez le son du flux activé et le téléphone près du haut-parleur. Les bruits de la pièce sont aussi captés.',
+      requestingMic: 'Autorisez l’accès au micro dans la demande du navigateur.',
+      capturingMic: 'Analyse du son via votre micro',
+      consentMicTitle: 'Analyser ce flux avec votre micro',
+      consentMicDescription: 'Votre navigateur va demander l’accès à votre micro.',
+      consentMicAudio: 'Le son de votre micro est envoyé pour la transcription.',
+      consentMicNothingElse: 'Rien d’autre n’est enregistré ni envoyé depuis votre appareil.',
+      consentMicBilling:
+        'Les minutes sont facturées à la minute comme d’habitude pendant l’analyse du son.',
+      consentMicConfirm: 'Utiliser le micro',
       analyze: 'Analyser avec mon navigateur',
       requesting:
         'Choisissez cet onglet dans la fenêtre du navigateur et cochez « Partager aussi l’audio de l’onglet ».',
@@ -1484,9 +1636,14 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       errorNoAudio:
         'Aucun son d’onglet n’a été partagé. Recommencez et cochez « Partager aussi l’audio de l’onglet » dans la fenêtre du navigateur.',
       errorDenied: 'Le partage de l’onglet a été annulé.',
+      errorMicDenied:
+        'L’accès au micro est bloqué. Autorisez-le dans les paramètres du site de votre navigateur, puis réessayez.',
       errorUnsupported:
-        'Ce navigateur ne peut pas partager le son d’un onglet. Utilisez Chrome ou Edge sur un ordinateur.',
+        'Ce navigateur ne peut pas capter le son. Essayez Chrome, Edge, Safari ou Firefox.',
       errorUpload: 'Le son n’a pas pu être envoyé, l’analyse s’est donc arrêtée.',
+    },
+    serverPull: {
+      analyzing: 'ClawAI analyse ce flux sur ses serveurs. Rien à partager depuis votre appareil.',
     },
     status: {
       connectingTitle: 'Connexion',
@@ -1594,6 +1751,10 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         'Chaque enregistrement crée une nouvelle révision. Les facturations terminées conservent la leur.',
       featureEnabled: 'Fonction activée',
       killSwitch: 'Coupe-circuit (arrêter toute analyse)',
+      serverPullTitle: 'Lecture côté serveur',
+      serverPullHint:
+        'ClawAI lit ces plateformes sur ses propres serveurs et partage une seule analyse avec tous les spectateurs.',
+      serverPullTwitch: 'Lecture côté serveur : Twitch',
       plansTitle: 'Minutes et prix par offre',
       plan: 'Offre',
       defaultPlan: 'Toute autre offre',
@@ -1717,6 +1878,11 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       captureTitle: 'आपके ब्राउज़र से AI विश्लेषण',
       captureNotice:
         '{platform} यहाँ चलता है। कैप्शन, सारांश और हाइलाइट के लिए प्लेयर के नीचे “मेरे ब्राउज़र से विश्लेषण करें” दबाएँ और इस टैब की आवाज़ शेयर करें।',
+      serverPullTitle: 'AI, ClawAI के सर्वर पर चलता है',
+      serverPullNotice: 'फ़ोन समेत किसी भी डिवाइस पर काम करता है।',
+      serverPullUnavailable:
+        'ClawAI इस स्ट्रीम को सीधे नहीं पढ़ सका, इसलिए AI आपके डिवाइस की आवाज़ इस्तेमाल करता है।',
+      captureNoticeMic: '{platform} स्ट्रीम चलते समय AI आपके माइक्रोफ़ोन से सुनता है। उसकी आवाज़ चालू रखें।',
       linkOnlyTitle: '{platform} के लिए यहाँ कोई प्लेयर नहीं',
       linkOnlyNotice:
         '{platform} ऐसा प्लेयर नहीं देता जिसे हम यहाँ दिखा सकें, इसलिए स्ट्रीम {platform} पर खुलती है। इसके लिए कैप्शन और सारांश उपलब्ध नहीं हैं।',
@@ -1733,6 +1899,16 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       chatError: 'चैट यहाँ नहीं दिखाई जा सकी।',
     },
     capture: {
+      analyzeMic: 'माइक्रोफ़ोन से विश्लेषण करें',
+      micHint: 'स्ट्रीम की आवाज़ चालू रखें और फ़ोन को उसके स्पीकर के पास रखें। कमरे का शोर भी सुनाई देता है।',
+      requestingMic: 'ब्राउज़र के संकेत में माइक्रोफ़ोन की अनुमति दें।',
+      capturingMic: 'आपके माइक्रोफ़ोन से आवाज़ का विश्लेषण हो रहा है',
+      consentMicTitle: 'इस स्ट्रीम का विश्लेषण अपने माइक्रोफ़ोन से करें',
+      consentMicDescription: 'आपका ब्राउज़र माइक्रोफ़ोन इस्तेमाल करने की अनुमति माँगेगा।',
+      consentMicAudio: 'आपके माइक्रोफ़ोन की आवाज़ लिखित रूप में बदलने के लिए भेजी जाती है।',
+      consentMicNothingElse: 'आपके डिवाइस से और कुछ भी रिकॉर्ड या भेजा नहीं जाता।',
+      consentMicBilling: 'आवाज़ का विश्लेषण होने तक मिनट हमेशा की तरह प्रति मिनट गिने जाते हैं।',
+      consentMicConfirm: 'माइक्रोफ़ोन इस्तेमाल करें',
       analyze: 'मेरे ब्राउज़र से विश्लेषण करें',
       requesting: 'ब्राउज़र के संकेत में यह टैब चुनें और “टैब की ऑडियो भी शेयर करें” पर टिक करें।',
       capturing: 'आपके टैब की आवाज़ का विश्लेषण हो रहा है',
@@ -1749,8 +1925,14 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       errorNoAudio:
         'टैब की आवाज़ शेयर नहीं हुई। फिर से शुरू करें और ब्राउज़र के संकेत में “टैब की ऑडियो भी शेयर करें” पर टिक करें।',
       errorDenied: 'टैब शेयर करना रद्द कर दिया गया।',
-      errorUnsupported: 'यह ब्राउज़र टैब की आवाज़ शेयर नहीं कर सकता। कंप्यूटर पर Chrome या Edge इस्तेमाल करें।',
+      errorMicDenied:
+        'माइक्रोफ़ोन की अनुमति ब्लॉक है। अपने ब्राउज़र की साइट सेटिंग में इसकी अनुमति दें, फिर दोबारा कोशिश करें।',
+      errorUnsupported: 'यह ब्राउज़र आवाज़ कैप्चर नहीं कर सकता। Chrome, Edge, Safari या Firefox आज़माएँ।',
       errorUpload: 'आवाज़ भेजी नहीं जा सकी, इसलिए विश्लेषण रुक गया।',
+    },
+    serverPull: {
+      analyzing:
+        'ClawAI इस स्ट्रीम का विश्लेषण अपने सर्वर पर करता है। आपके डिवाइस से कुछ भी शेयर करने की ज़रूरत नहीं।',
     },
     status: {
       connectingTitle: 'जुड़ रहे हैं',
@@ -1854,6 +2036,10 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       policyDescription: 'हर सहेजने पर नया संस्करण बनता है। पूरे हो चुके शुल्क अपना संस्करण रखते हैं।',
       featureEnabled: 'सुविधा चालू है',
       killSwitch: 'किल स्विच (सारा विश्लेषण रोकें)',
+      serverPullTitle: 'सर्वर से पढ़ना',
+      serverPullHint:
+        'ClawAI इन प्लेटफ़ॉर्म को अपने सर्वर पर पढ़ता है और एक ही विश्लेषण सभी दर्शकों के साथ शेयर करता है।',
+      serverPullTwitch: 'सर्वर से पढ़ना: Twitch',
       plansTitle: 'प्रति प्लान मिनट और कीमत',
       plan: 'प्लान',
       defaultPlan: 'कोई भी अन्य प्लान',
@@ -1980,6 +2166,12 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       captureTitle: 'Analisi IA con il tuo browser',
       captureNotice:
         '{platform} viene riprodotto qui. Per sottotitoli, riassunti e momenti salienti, premi «Analizza con il mio browser» sotto il player e condividi l’audio di questa scheda.',
+      serverPullTitle: 'L’IA funziona sui server di ClawAI',
+      serverPullNotice: 'Funziona su qualsiasi dispositivo, anche sui telefoni.',
+      serverPullUnavailable:
+        'ClawAI non è riuscito a leggere direttamente questo stream, quindi l’IA usa l’audio del tuo dispositivo.',
+      captureNoticeMic:
+        'L’IA ascolta tramite il tuo microfono mentre lo stream {platform} è in riproduzione. Tieni l’audio attivo.',
       linkOnlyTitle: 'Nessun player qui per {platform}',
       linkOnlyNotice:
         '{platform} non offre un player che possiamo mostrare qui, quindi la diretta si apre su {platform}. Sottotitoli e riassunti non sono disponibili.',
@@ -1997,6 +2189,18 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       chatError: 'Non è stato possibile mostrare la chat qui.',
     },
     capture: {
+      analyzeMic: 'Analizza con il microfono',
+      micHint:
+        'Tieni attivo l’audio dello stream e il telefono vicino all’altoparlante. Si sentono anche i rumori della stanza.',
+      requestingMic: 'Consenti l’accesso al microfono nella richiesta del browser.',
+      capturingMic: 'Analisi del suono tramite il tuo microfono',
+      consentMicTitle: 'Analizza questo stream con il tuo microfono',
+      consentMicDescription: 'Il browser chiederà di usare il tuo microfono.',
+      consentMicAudio: 'L’audio del microfono viene inviato per la trascrizione.',
+      consentMicNothingElse: 'Nient’altro viene registrato o inviato dal tuo dispositivo.',
+      consentMicBilling:
+        'I minuti vengono addebitati al minuto come di consueto mentre l’audio è analizzato.',
+      consentMicConfirm: 'Usa il microfono',
       analyze: 'Analizza con il mio browser',
       requesting:
         'Scegli questa scheda nella finestra del browser e spunta «Condividi anche l’audio della scheda».',
@@ -2017,9 +2221,15 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       errorNoAudio:
         'Non è stato condiviso l’audio della scheda. Ricomincia e spunta «Condividi anche l’audio della scheda» nella finestra del browser.',
       errorDenied: 'La condivisione della scheda è stata annullata.',
+      errorMicDenied:
+        'L’accesso al microfono è bloccato. Consentilo nelle impostazioni del sito del browser, poi riprova.',
       errorUnsupported:
-        'Questo browser non può condividere l’audio di una scheda. Usa Chrome o Edge su un computer.',
+        'Questo browser non può acquisire l’audio. Prova Chrome, Edge, Safari o Firefox.',
       errorUpload: 'Non è stato possibile inviare l’audio, quindi l’analisi si è interrotta.',
+    },
+    serverPull: {
+      analyzing:
+        'ClawAI analizza questo stream sui suoi server. Non devi condividere nulla dal tuo dispositivo.',
     },
     status: {
       connectingTitle: 'Connessione',
@@ -2126,6 +2336,10 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         'Ogni salvataggio crea una nuova versione. Gli addebiti conclusi mantengono la propria versione.',
       featureEnabled: 'Funzione attiva',
       killSwitch: 'Interruttore di emergenza (ferma tutta l’analisi)',
+      serverPullTitle: 'Lettura dal server',
+      serverPullHint:
+        'ClawAI legge queste piattaforme sui propri server e condivide un’unica analisi con tutti gli spettatori.',
+      serverPullTwitch: 'Lettura dal server: Twitch',
       plansTitle: 'Minuti e prezzo per piano',
       plan: 'Piano',
       defaultPlan: 'Qualsiasi altro piano',
@@ -2249,6 +2463,12 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       captureTitle: 'ブラウザーで AI 分析',
       captureNotice:
         '{platform} はここで再生できます。字幕・要約・ハイライトを使うには、プレーヤーの下の「ブラウザーで分析」を押して、このタブの音声を共有してください。',
+      serverPullTitle: 'AI は ClawAI のサーバーで動作します',
+      serverPullNotice: 'スマートフォンを含むあらゆる端末で使えます。',
+      serverPullUnavailable:
+        'ClawAI はこの配信を直接読み取れなかったため、AI は端末の音声を使います。',
+      captureNoticeMic:
+        '{platform} の配信を再生している間、AI がマイクで音声を聞き取ります。音は出したままにしてください。',
       linkOnlyTitle: '{platform} はここで再生できません',
       linkOnlyNotice:
         '{platform} にはここに表示できるプレーヤーがないため、配信は {platform} で開きます。字幕と要約は利用できません。',
@@ -2266,6 +2486,17 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       chatError: 'ここにチャットを表示できませんでした。',
     },
     capture: {
+      analyzeMic: 'マイクで分析',
+      micHint:
+        '配信の音を出したまま、スマートフォンをスピーカーの近くに置いてください。周囲の音も拾われます。',
+      requestingMic: 'ブラウザの確認画面でマイクへのアクセスを許可してください。',
+      capturingMic: 'マイクで音声を分析中',
+      consentMicTitle: 'この配信をマイクで分析',
+      consentMicDescription: 'ブラウザがマイクの使用許可を求めます。',
+      consentMicAudio: 'マイクの音声が文字起こしのために送信されます。',
+      consentMicNothingElse: 'それ以外に端末から録音・送信されるものはありません。',
+      consentMicBilling: '音声を分析している間、通常どおり分単位で課金されます。',
+      consentMicConfirm: 'マイクを使う',
       analyze: 'ブラウザーで分析',
       requesting:
         'ブラウザーの画面でこのタブを選び、「タブの音声も共有する」にチェックを入れてください。',
@@ -2284,9 +2515,14 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       errorNoAudio:
         'タブの音声が共有されませんでした。やり直して、ブラウザーの画面で「タブの音声も共有する」にチェックを入れてください。',
       errorDenied: 'タブの共有がキャンセルされました。',
+      errorMicDenied:
+        'マイクへのアクセスがブロックされています。ブラウザのサイト設定で許可してから、もう一度お試しください。',
       errorUnsupported:
-        'このブラウザーはタブの音声を共有できません。パソコンの Chrome か Edge を使ってください。',
+        'このブラウザは音声を取り込めません。Chrome、Edge、Safari、Firefox をお試しください。',
       errorUpload: '音声を送信できなかったため、分析を停止しました。',
+    },
+    serverPull: {
+      analyzing: 'ClawAI がこの配信を自社サーバーで分析します。端末から共有するものはありません。',
     },
     status: {
       connectingTitle: '接続中',
@@ -2391,6 +2627,10 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         '保存のたびに新しいバージョンが作られます。確定済みの課金は自分のバージョンを保持します。',
       featureEnabled: '機能を有効化',
       killSwitch: 'キルスイッチ（すべての分析を停止）',
+      serverPullTitle: 'サーバー取得',
+      serverPullHint:
+        'ClawAI はこれらのプラットフォームを自社サーバーで読み取り、1 つの分析をすべての視聴者と共有します。',
+      serverPullTwitch: 'サーバー取得: Twitch',
       plansTitle: 'プランごとの分数と価格',
       plan: 'プラン',
       defaultPlan: 'その他のプラン',
@@ -2517,6 +2757,12 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       captureTitle: 'Análise com IA pelo seu navegador',
       captureNotice:
         '{platform} é reproduzido aqui. Para legendas, resumos e destaques, toque em “Analisar com meu navegador” abaixo do player e compartilhe o áudio desta aba.',
+      serverPullTitle: 'A IA roda nos servidores da ClawAI',
+      serverPullNotice: 'Funciona em qualquer dispositivo, inclusive celulares.',
+      serverPullUnavailable:
+        'A ClawAI não conseguiu ler esta transmissão diretamente, então a IA usa o áudio do seu dispositivo.',
+      captureNoticeMic:
+        'A IA escuta pelo seu microfone enquanto a transmissão do {platform} toca. Mantenha o som ligado.',
       linkOnlyTitle: 'Sem player aqui para {platform}',
       linkOnlyNotice:
         '{platform} não oferece um player que possamos mostrar aqui, então a transmissão abre em {platform}. Legendas e resumos não estão disponíveis para ela.',
@@ -2534,6 +2780,18 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       chatError: 'Não foi possível mostrar o chat aqui.',
     },
     capture: {
+      analyzeMic: 'Analisar com o microfone',
+      micHint:
+        'Mantenha o som da transmissão ligado e o celular perto do alto-falante. O ruído do ambiente também é captado.',
+      requestingMic: 'Permita o acesso ao microfone no aviso do navegador.',
+      capturingMic: 'Analisando o som pelo seu microfone',
+      consentMicTitle: 'Analisar esta transmissão com seu microfone',
+      consentMicDescription: 'Seu navegador vai pedir para usar o microfone.',
+      consentMicAudio: 'O áudio do seu microfone é enviado para transcrição.',
+      consentMicNothingElse: 'Nada mais é gravado ou enviado do seu dispositivo.',
+      consentMicBilling:
+        'Os minutos são cobrados por minuto normalmente enquanto o áudio é analisado.',
+      consentMicConfirm: 'Usar microfone',
       analyze: 'Analisar com meu navegador',
       requesting:
         'Escolha esta aba no aviso do navegador e marque “Compartilhar também o áudio da aba”.',
@@ -2553,9 +2811,15 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       errorNoAudio:
         'O áudio da aba não foi compartilhado. Comece de novo e marque “Compartilhar também o áudio da aba” no aviso do navegador.',
       errorDenied: 'O compartilhamento da aba foi cancelado.',
+      errorMicDenied:
+        'O acesso ao microfone está bloqueado. Permita-o nas configurações do site do seu navegador e tente novamente.',
       errorUnsupported:
-        'Este navegador não consegue compartilhar o áudio de uma aba. Use Chrome ou Edge em um computador.',
+        'Este navegador não consegue capturar áudio. Tente Chrome, Edge, Safari ou Firefox.',
       errorUpload: 'Não foi possível enviar o áudio, então a análise parou.',
+    },
+    serverPull: {
+      analyzing:
+        'A ClawAI analisa esta transmissão nos próprios servidores. Nada para compartilhar do seu dispositivo.',
     },
     status: {
       connectingTitle: 'Conectando',
@@ -2661,6 +2925,10 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         'Cada salvamento cria uma nova versão. As cobranças concluídas mantêm a própria versão.',
       featureEnabled: 'Recurso ativado',
       killSwitch: 'Chave de emergência (parar toda a análise)',
+      serverPullTitle: 'Leitura no servidor',
+      serverPullHint:
+        'A ClawAI lê estas plataformas nos próprios servidores e compartilha uma única análise com todos os espectadores.',
+      serverPullTwitch: 'Leitura no servidor: Twitch',
       plansTitle: 'Minutos e preço por plano',
       plan: 'Plano',
       defaultPlan: 'Qualquer outro plano',
@@ -2787,6 +3055,12 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       captureTitle: 'ИИ-анализ через ваш браузер',
       captureNotice:
         '{platform} воспроизводится здесь. Чтобы получить субтитры, сводки и главные моменты, нажмите «Анализировать в моём браузере» под плеером и поделитесь звуком этой вкладки.',
+      serverPullTitle: 'ИИ работает на серверах ClawAI',
+      serverPullNotice: 'Работает на любом устройстве, включая телефоны.',
+      serverPullUnavailable:
+        'ClawAI не удалось прочитать эту трансляцию напрямую, поэтому ИИ использует звук вашего устройства.',
+      captureNoticeMic:
+        'ИИ слушает через ваш микрофон, пока идёт трансляция {platform}. Не выключайте звук.',
       linkOnlyTitle: 'Для {platform} здесь нет плеера',
       linkOnlyNotice:
         '{platform} не даёт плеер, который можно показать здесь, поэтому трансляция откроется на {platform}. Субтитры и сводки для неё недоступны.',
@@ -2804,6 +3078,17 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       chatError: 'Не удалось показать чат здесь.',
     },
     capture: {
+      analyzeMic: 'Анализировать через микрофон',
+      micHint:
+        'Оставьте звук трансляции включённым и держите телефон рядом с динамиком. Шум в комнате тоже слышен.',
+      requestingMic: 'Разрешите доступ к микрофону в запросе браузера.',
+      capturingMic: 'Звук анализируется через ваш микрофон',
+      consentMicTitle: 'Анализировать эту трансляцию через микрофон',
+      consentMicDescription: 'Браузер попросит разрешение на использование микрофона.',
+      consentMicAudio: 'Звук с микрофона отправляется для расшифровки.',
+      consentMicNothingElse: 'Больше ничего с вашего устройства не записывается и не отправляется.',
+      consentMicBilling: 'Пока звук анализируется, минуты списываются поминутно как обычно.',
+      consentMicConfirm: 'Использовать микрофон',
       analyze: 'Анализировать в моём браузере',
       requesting:
         'Выберите эту вкладку в окне браузера и отметьте «Также поделиться аудио вкладки».',
@@ -2823,9 +3108,15 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       errorNoAudio:
         'Звук вкладки не передан. Начните заново и отметьте «Также поделиться аудио вкладки» в окне браузера.',
       errorDenied: 'Показ вкладки отменён.',
+      errorMicDenied:
+        'Доступ к микрофону заблокирован. Разрешите его в настройках сайта в браузере и попробуйте снова.',
       errorUnsupported:
-        'Этот браузер не умеет передавать звук вкладки. Используйте Chrome или Edge на компьютере.',
+        'Этот браузер не может захватывать звук. Попробуйте Chrome, Edge, Safari или Firefox.',
       errorUpload: 'Не удалось отправить звук, поэтому анализ остановлен.',
+    },
+    serverPull: {
+      analyzing:
+        'ClawAI анализирует эту трансляцию на своих серверах. С вашего устройства ничего передавать не нужно.',
     },
     status: {
       connectingTitle: 'Подключение',
@@ -2932,6 +3223,10 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         'Каждое сохранение создаёт новую версию. Завершённые списания сохраняют свою версию.',
       featureEnabled: 'Функция включена',
       killSwitch: 'Аварийный выключатель (остановить весь анализ)',
+      serverPullTitle: 'Чтение на сервере',
+      serverPullHint:
+        'ClawAI читает эти платформы на своих серверах и делится одним анализом со всеми зрителями.',
+      serverPullTwitch: 'Чтение на сервере: Twitch',
       plansTitle: 'Минуты и цена по тарифам',
       plan: 'Тариф',
       defaultPlan: 'Любой другой тариф',
@@ -3054,6 +3349,10 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       captureTitle: 'วิเคราะห์ด้วย AI ผ่านเบราว์เซอร์ของคุณ',
       captureNotice:
         '{platform} เล่นได้ที่นี่ หากต้องการคำบรรยาย สรุป และไฮไลต์ ให้กด “วิเคราะห์ด้วยเบราว์เซอร์ของฉัน” ใต้เครื่องเล่นแล้วแชร์เสียงของแท็บนี้',
+      serverPullTitle: 'AI ทำงานบนเซิร์ฟเวอร์ของ ClawAI',
+      serverPullNotice: 'ใช้ได้ทุกอุปกรณ์ รวมถึงโทรศัพท์',
+      serverPullUnavailable: 'ClawAI อ่านสตรีมนี้โดยตรงไม่ได้ AI จึงใช้เสียงจากอุปกรณ์ของคุณ',
+      captureNoticeMic: 'AI ฟังผ่านไมโครโฟนของคุณขณะสตรีม {platform} กำลังเล่น เปิดเสียงไว้ด้วย',
       linkOnlyTitle: 'ไม่มีเครื่องเล่นของ {platform} ที่นี่',
       linkOnlyNotice:
         '{platform} ไม่มีเครื่องเล่นที่เราแสดงที่นี่ได้ ไลฟ์จึงเปิดบน {platform} และไม่มีคำบรรยายหรือสรุปสำหรับไลฟ์นี้',
@@ -3069,6 +3368,16 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       chatError: 'แสดงแชตที่นี่ไม่ได้',
     },
     capture: {
+      analyzeMic: 'วิเคราะห์ด้วยไมโครโฟน',
+      micHint: 'เปิดเสียงสตรีมไว้และวางโทรศัพท์ใกล้ลำโพง เสียงรบกวนในห้องก็จะถูกได้ยินด้วย',
+      requestingMic: 'อนุญาตให้เข้าถึงไมโครโฟนในหน้าต่างของเบราว์เซอร์',
+      capturingMic: 'กำลังวิเคราะห์เสียงผ่านไมโครโฟนของคุณ',
+      consentMicTitle: 'วิเคราะห์สตรีมนี้ด้วยไมโครโฟนของคุณ',
+      consentMicDescription: 'เบราว์เซอร์จะขออนุญาตใช้ไมโครโฟนของคุณ',
+      consentMicAudio: 'เสียงจากไมโครโฟนของคุณจะถูกส่งไปถอดเป็นข้อความ',
+      consentMicNothingElse: 'ไม่มีสิ่งอื่นใดจากอุปกรณ์ของคุณถูกบันทึกหรือส่งออกไป',
+      consentMicBilling: 'ระหว่างที่วิเคราะห์เสียง ระบบคิดค่าบริการเป็นรายนาทีตามปกติ',
+      consentMicConfirm: 'ใช้ไมโครโฟน',
       analyze: 'วิเคราะห์ด้วยเบราว์เซอร์ของฉัน',
       requesting: 'เลือกแท็บนี้ในหน้าต่างของเบราว์เซอร์ แล้วติ๊ก “แชร์เสียงในแท็บด้วย”',
       capturing: 'กำลังวิเคราะห์เสียงจากแท็บของคุณ',
@@ -3084,8 +3393,12 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       consentCancel: 'ยกเลิก',
       errorNoAudio: 'ไม่ได้แชร์เสียงของแท็บ เริ่มใหม่แล้วติ๊ก “แชร์เสียงในแท็บด้วย” ในหน้าต่างของเบราว์เซอร์',
       errorDenied: 'ยกเลิกการแชร์แท็บแล้ว',
-      errorUnsupported: 'เบราว์เซอร์นี้แชร์เสียงของแท็บไม่ได้ ใช้ Chrome หรือ Edge บนคอมพิวเตอร์',
+      errorMicDenied: 'การเข้าถึงไมโครโฟนถูกบล็อก อนุญาตในการตั้งค่าเว็บไซต์ของเบราว์เซอร์ แล้วลองอีกครั้ง',
+      errorUnsupported: 'เบราว์เซอร์นี้จับเสียงไม่ได้ ลองใช้ Chrome, Edge, Safari หรือ Firefox',
       errorUpload: 'ส่งเสียงไม่ได้ การวิเคราะห์จึงหยุดลง',
+    },
+    serverPull: {
+      analyzing: 'ClawAI วิเคราะห์สตรีมนี้บนเซิร์ฟเวอร์ของตัวเอง ไม่ต้องแชร์อะไรจากอุปกรณ์ของคุณ',
     },
     status: {
       connectingTitle: 'กำลังเชื่อมต่อ',
@@ -3189,6 +3502,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       policyDescription: 'ทุกครั้งที่บันทึกจะสร้างเวอร์ชันใหม่ ค่าใช้จ่ายที่เสร็จสิ้นแล้วจะคงเวอร์ชันของตัวเองไว้',
       featureEnabled: 'เปิดใช้ฟีเจอร์',
       killSwitch: 'สวิตช์ตัดการทำงาน (หยุดการวิเคราะห์ทั้งหมด)',
+      serverPullTitle: 'ดึงจากเซิร์ฟเวอร์',
+      serverPullHint: 'ClawAI อ่านแพลตฟอร์มเหล่านี้บนเซิร์ฟเวอร์ของตัวเอง และแชร์ผลวิเคราะห์ชุดเดียวกับผู้ชมทุกคน',
+      serverPullTwitch: 'ดึงจากเซิร์ฟเวอร์: Twitch',
       plansTitle: 'นาทีและราคาแยกตามแพ็กเกจ',
       plan: 'แพ็กเกจ',
       defaultPlan: 'แพ็กเกจอื่นทั้งหมด',
@@ -3311,6 +3627,10 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       captureTitle: '用你的浏览器进行 AI 分析',
       captureNotice:
         '{platform} 可在此播放。如需字幕、摘要和精彩片段，请点击播放器下方的“用我的浏览器分析”，并共享此标签页的音频。',
+      serverPullTitle: 'AI 在 ClawAI 服务器上运行',
+      serverPullNotice: '适用于任何设备，包括手机。',
+      serverPullUnavailable: 'ClawAI 无法直接读取此直播，因此 AI 使用你设备的音频。',
+      captureNoticeMic: '{platform} 直播播放时，AI 会通过你的麦克风收听。请保持声音开启。',
       linkOnlyTitle: '此处没有 {platform} 播放器',
       linkOnlyNotice:
         '{platform} 没有可在此显示的播放器，因此直播会在 {platform} 打开。它不提供字幕和摘要。',
@@ -3326,6 +3646,16 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       chatError: '无法在此显示聊天。',
     },
     capture: {
+      analyzeMic: '使用麦克风分析',
+      micHint: '请保持直播声音开启，并将手机靠近扬声器。房间里的噪音也会被收录。',
+      requestingMic: '请在浏览器提示中允许使用麦克风。',
+      capturingMic: '正在通过你的麦克风分析声音',
+      consentMicTitle: '使用麦克风分析此直播',
+      consentMicDescription: '浏览器会请求使用你的麦克风。',
+      consentMicAudio: '麦克风的音频会被发送用于转写。',
+      consentMicNothingElse: '不会录制或发送你设备上的任何其他内容。',
+      consentMicBilling: '分析音频期间，照常按分钟计费。',
+      consentMicConfirm: '使用麦克风',
       analyze: '用我的浏览器分析',
       requesting: '请在浏览器弹窗中选择此标签页，并勾选“同时分享标签页音频”。',
       capturing: '正在分析你的标签页音频',
@@ -3341,8 +3671,12 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       consentCancel: '取消',
       errorNoAudio: '没有共享标签页音频。请重新开始，并在浏览器弹窗中勾选“同时分享标签页音频”。',
       errorDenied: '已取消共享标签页。',
-      errorUnsupported: '此浏览器无法共享标签页音频。请在电脑上使用 Chrome 或 Edge。',
+      errorMicDenied: '麦克风访问已被阻止。请在浏览器的网站设置中允许访问，然后重试。',
+      errorUnsupported: '此浏览器无法采集音频。请试试 Chrome、Edge、Safari 或 Firefox。',
       errorUpload: '音频无法发送，因此分析已停止。',
+    },
+    serverPull: {
+      analyzing: 'ClawAI 在自己的服务器上分析此直播。无需从你的设备分享任何内容。',
     },
     status: {
       connectingTitle: '正在连接',
@@ -3446,6 +3780,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       policyDescription: '每次保存都会创建新版本。已完成的扣费保留各自的版本。',
       featureEnabled: '功能已启用',
       killSwitch: '紧急开关（停止所有分析）',
+      serverPullTitle: '服务器拉取',
+      serverPullHint: 'ClawAI 在自己的服务器上读取这些平台，并与所有观众共享同一份分析。',
+      serverPullTwitch: '服务器拉取：Twitch',
       plansTitle: '各套餐的分钟数和价格',
       plan: '套餐',
       defaultPlan: '其他任何套餐',

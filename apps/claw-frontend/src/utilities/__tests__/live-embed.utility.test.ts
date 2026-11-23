@@ -153,6 +153,12 @@ describe('buildLiveEmbedView', () => {
     });
   });
 
+  it('gives a server-pull session the same player, chat and watch links as browser capture', () => {
+    expect(
+      buildLiveEmbedView({ ...BASE, capability: LiveCapability.SERVER_PULL }, 'claw.local'),
+    ).toEqual(buildLiveEmbedView(BASE, 'claw.local'));
+  });
+
   it('gives an HLS source (no platform) no watch link', () => {
     const view = buildLiveEmbedView(
       {

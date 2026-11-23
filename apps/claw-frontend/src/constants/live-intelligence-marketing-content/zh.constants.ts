@@ -13,7 +13,7 @@ export const ZH_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   whatParagraphs: [
     '直播很长、很快，或者使用你不懂的语言时，很难跟得上。Live Intelligence 在视频旁边帮你做笔记：翻译成你的语言的字幕、持续更新的摘要和一份精彩片段列表，让你移开视线也不会错过内容。',
     '一切都在 ClawAI 内的窗口里完成，直播和分析在同一个屏幕上。开始前你选择字幕语言和分析模式；在直播允许的范围内，可以暂停、继续和拖动进度。暂停时画面冻结，计费也随之停止。',
-    '许多人观看同一场直播，不必为同一份工作重复付费。ClawAI 对同一路直播只处理一次，并把分析结果共享给所有观看者。你实际看过的分析会保存到你的历史记录中，直到你删除为止。',
+    '许多人观看同一场直播，不必为同一份工作重复付费。当 ClawAI 在自己的服务器上分析直播时，例如正在开播的 Twitch 频道或 HLS 链接，同一路直播只处理一次，并把分析结果共享给所有观看者。你实际看过的分析会保存到你的历史记录中，直到你删除为止。',
   ],
   stepsTitle: '五步上手',
   stepsIntro: '从粘贴链接到导出摘要。每一步要么由你完成，要么由 ClawAI 替你完成。',
@@ -24,7 +24,7 @@ export const ZH_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     },
     {
       title: '选择语言和模式',
-      body: '选择字幕与摘要的语言，以及三种分析模式之一：音频、音频 + 视觉或 Smart Auto。开始前，你需要确认自己有权分析这路直播。',
+      body: '选择字幕与摘要的语言，以及三种分析模式之一：音频、音频 + 视觉或 Smart Auto。对于 HLS 链接，你需要确认自己有权分析；对于 YouTube、Kick 或 Facebook，你需要同意 ClawAI 通过你的设备收听。',
     },
     {
       title: '观看字幕、卡片和精彩片段',
@@ -71,7 +71,7 @@ export const ZH_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     },
     {
       title: '共享处理',
-      body: '多位观看者，一份分析。同一路直播只处理一次并共享，工作量和成本不会随观众数量成倍增加。',
+      body: '多位观看者，一份分析。正在开播的 Twitch 频道或 HLS 直播在 ClawAI 的服务器上只处理一次，并共享给所有观看者，任何设备都可以，包括手机。用你自己设备的音频生成的分析只属于你。',
     },
   ],
   modesTitle: '三种分析模式',
@@ -94,12 +94,12 @@ export const ZH_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   sourcesIntro: '我们宁愿现在就告诉你限制，也不想让你在直播途中才发现。',
   sources: [
     {
-      title: 'AI 分析适用于 HLS 直播',
-      body: 'Live Intelligence 分析的是你有权分析的 HLS 直播。开始时，你需要确认自己有这项权利。',
+      title: '15 个平台，外加 HLS 链接',
+      body: 'ClawAI 能识别 15 个直播平台。正在开播的 Twitch 频道由 ClawAI 的服务器直接分析，无需共享任何内容，任何设备都可用；频道未开播时则改用你设备的音频。TikTok LIVE、Instagram Live、Rumble、BIGO LIVE、LinkedIn Live、Telegram、Bilibili、CHZZK、SOOP 和 Nimo TV 会在平台本身打开（“在 … 上观看”），没有 AI。Discord Go Live 没有公开链接，因此不受支持。你有权分析的 HLS 链接仍然可用，开始时由你确认。',
     },
     {
-      title: 'YouTube 链接可以播放，但不做分析',
-      body: '你可以粘贴 YouTube 链接并在 ClawAI 内观看，但 YouTube 直播没有 AI 分析。YouTube 的条款不允许获取其音频或字幕，因此 ClawAI 不会这样做，窗口中也会如实说明。',
+      title: 'YouTube、Kick 和 Facebook：用你自己的设备做 AI 分析',
+      body: '这些平台在官方播放器中播放，经你同意后，AI 会收听你设备的音频。在电脑上，你在 Chrome 或 Edge 中共享标签页音频（“用我的浏览器分析”）；在手机上，麦克风会听取扬声器播放的直播（“使用麦克风分析”）。只发送音频用于转写，因此使用音频模式。YouTube 视频、Twitch 和 Kick 会显示直播聊天，其他平台则提供“打开聊天”链接。',
     },
     {
       title: '字幕会延迟几秒',
@@ -121,12 +121,12 @@ export const ZH_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     {
       question: 'Live Intelligence 能用于 YouTube 直播吗？',
       answer:
-        '你可以在 ClawAI 内观看 YouTube 链接，但没有 AI 分析。YouTube 的条款不允许获取其音频或字幕，因此 YouTube 直播没有字幕、摘要或精彩片段。',
+        '可以。YouTube 直播在官方播放器中播放，经你同意后，AI 会基于你自己设备的音频工作：在电脑上，你在 Chrome 或 Edge 中共享标签页音频；在手机上，麦克风会听取扬声器播放的直播。只发送音频用于转写，字幕仍会比讲话晚几秒到达。',
     },
     {
       question: '它能分析哪些直播？',
       answer:
-        '你有权分析的 HLS 直播。开始时由你确认。服务无法读取的直播会被标记为不支持，而不是悄悄失败。',
+        '正在开播的 Twitch 频道，由 ClawAI 的服务器分析，任何设备都可用；YouTube、Kick 和 Facebook，基于你自己设备的音频；以及你有权分析的 HLS 直播，开始时由你确认。另外十个平台会在平台本身打开，没有 AI。服务无法读取的直播会被标记为不支持，而不是悄悄失败。',
     },
     {
       question: '字幕是实时的吗？',
@@ -158,5 +158,6 @@ export const ZH_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     },
   ],
   closingTitle: '不必每分钟都盯着，也能跟上下一场直播',
-  closingBody: '粘贴一个你有权分析的 HLS 链接，选择语言，开始吧。你的免费分钟已经备好。',
+  closingBody:
+    '粘贴 Twitch、YouTube、Kick 或 Facebook 链接，或你有权分析的 HLS 链接，选择语言，开始吧。你的免费分钟已经备好。',
 };

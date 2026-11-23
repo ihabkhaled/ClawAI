@@ -27,6 +27,8 @@ enum LiveCapability {
   LINK_ONLY
   /// Analysed from the viewer's own tab audio (getDisplayMedia); the server never fetches the source.
   BROWSER_CAPTURE
+  /// The server reads the platform's public playlist itself (Twitch): one shared run for every viewer, any device.
+  SERVER_PULL
 }
 
 /// Platforms the source registry recognises by URL shape (architecture section 1).

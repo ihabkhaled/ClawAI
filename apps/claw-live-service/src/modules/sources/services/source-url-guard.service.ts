@@ -32,6 +32,25 @@ export class SourceUrlGuardService {
         throw this.unsafe();
       }
     }
+    return this.publicAddresses(url);
+  }
+
+  /**
+   * Server-pull fetch: the platform's CDN spreads a stream over many hosts of its own domain, so
+   * the pin is a host suffix list (`ttvnw.net` admits `x.playlist.ttvnw.net`), never one host.
+   */
+  async assertSafeOnSuffixes(url: URL, suffixes: readonly string[]): Promise<string[]> {
+    const shape = sourceUrlShapeError(url, false);
+    if (shape) throw new UnprocessableEntityException(shape);
+    const host = url.hostname.toLowerCase();
+    if (!suffixes.some((suffix) => host === suffix || host.endsWith(`.${suffix}`))) {
+      throw this.unsafe();
+    }
+    return this.publicAddresses(url);
+  }
+
+  /** Every address of the URL's host, all checked public (an IP literal must be public itself). */
+  private async publicAddresses(url: URL): Promise<string[]> {
     const host = unbracketHost(url.hostname);
     if (isIpLiteral(host)) {
       if (!isPublicIpAddress(host)) throw this.unsafe();

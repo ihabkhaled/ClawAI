@@ -1,5 +1,11 @@
 import { z } from 'zod';
 
+import { LivePlatform } from '../../../generated/prisma';
+import {
+  SERVER_PULL_DEFAULT_PLATFORMS,
+  SERVER_PULL_PLATFORMS,
+} from '../../sources/constants/server-pull.constants';
+
 /** Per-plan price and free quota. Money is integer micro-USD (rule 28). */
 export const livePlanPolicySchema = z.object({
   freeSecondsPerMonth: z.number().int().min(0),
@@ -31,4 +37,17 @@ export const livePolicySchema = z.object({
   budgetSoftStopPercent: z.number().int().min(1).max(100),
   summaryModelChain: z.array(liveModelRefSchema),
   visionModelChain: z.array(liveModelRefSchema),
+  /**
+   * Platforms the server reads itself (shared run, any device). Absent in versions saved before
+   * 2026-11-23, so it defaults on; an empty list turns server pull off (browser capture only).
+   */
+  serverPullPlatforms: z
+    .array(z.nativeEnum(LivePlatform))
+    .refine(
+      (platforms) => platforms.every((platform) => SERVER_PULL_PLATFORMS.includes(platform)),
+      {
+        message: 'Only platforms with a server-pull resolver can be enabled',
+      },
+    )
+    .default([...SERVER_PULL_DEFAULT_PLATFORMS]),
 });

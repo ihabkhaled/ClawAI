@@ -1,5 +1,6 @@
 import {
   LiveCaptureError,
+  LiveCaptureSource,
   LiveCaptureState,
   LiveExportFormat,
   LiveFeedEventKind,
@@ -12,6 +13,7 @@ import {
   LiveStatusTone,
 } from '@/enums/live.enum';
 import type {
+  LiveCaptureCopy,
   LiveCaptureMachine,
   LiveDisplayMediaOptions,
   LiveEmbedView,
@@ -311,6 +313,54 @@ export const LIVE_CAPTURE_DISPLAY_MEDIA_OPTIONS: LiveDisplayMediaOptions = {
   systemAudio: 'include',
 };
 
+/**
+ * Raw microphone audio for the phone fallback. Echo cancellation MUST stay off: it would cancel the
+ * stream's own sound coming out of the speaker, which is exactly what is being analyzed.
+ */
+export const LIVE_CAPTURE_MIC_CONSTRAINTS: MediaStreamConstraints = {
+  audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+};
+
+/** The capture panel and consent dialog copy for each audio source. */
+export const LIVE_CAPTURE_COPY: Record<LiveCaptureSource, LiveCaptureCopy> = {
+  [LiveCaptureSource.TAB]: {
+    analyzeKey: 'live.capture.analyze',
+    requestingKey: 'live.capture.requesting',
+    capturingKey: 'live.capture.capturing',
+    hintKey: null,
+    consentTitleKey: 'live.capture.consentTitle',
+    consentDescriptionKey: 'live.capture.consentDescription',
+    consentKeys: [
+      'live.capture.consentShare',
+      'live.capture.consentAudioOnly',
+      'live.capture.consentOwnViewing',
+      'live.capture.consentBilling',
+    ],
+    consentConfirmKey: 'live.capture.consentConfirm',
+  },
+  [LiveCaptureSource.MICROPHONE]: {
+    analyzeKey: 'live.capture.analyzeMic',
+    requestingKey: 'live.capture.requestingMic',
+    capturingKey: 'live.capture.capturingMic',
+    hintKey: 'live.capture.micHint',
+    consentTitleKey: 'live.capture.consentMicTitle',
+    consentDescriptionKey: 'live.capture.consentMicDescription',
+    consentKeys: [
+      'live.capture.consentMicAudio',
+      'live.capture.consentMicNothingElse',
+      'live.capture.consentOwnViewing',
+      'live.capture.consentMicBilling',
+    ],
+    consentConfirmKey: 'live.capture.consentMicConfirm',
+  },
+};
+
+/** A BROWSER_CAPTURE resolution's reasonCode when the server could not read the stream itself. */
+export const LIVE_SERVER_PULL_UNAVAILABLE_REASON = 'SERVER_PULL_UNAVAILABLE';
+
+/** Server pull reads Twitch only (YouTube and Kick refuse server reads without a bypass we do not build). */
+export const LIVE_SERVER_PULL_PLATFORMS: ReadonlyArray<LivePlatform.TWITCH> = [LivePlatform.TWITCH];
+
 /** A status in this set stops the capture: nothing more would be analyzed or billed. */
 export const LIVE_CAPTURE_STOP_STATUSES: ReadonlySet<LiveStatusCode> = new Set([
   LiveStatusCode.EXHAUSTED,
@@ -327,17 +377,10 @@ export const LIVE_CAPTURE_FATAL_UPLOAD_STATUSES: ReadonlySet<number> = new Set([
 export const LIVE_CAPTURE_ERROR_KEYS: Record<LiveCaptureError, string> = {
   [LiveCaptureError.NO_AUDIO]: 'live.capture.errorNoAudio',
   [LiveCaptureError.DENIED]: 'live.capture.errorDenied',
+  [LiveCaptureError.MIC_DENIED]: 'live.capture.errorMicDenied',
   [LiveCaptureError.UNSUPPORTED]: 'live.capture.errorUnsupported',
   [LiveCaptureError.UPLOAD]: 'live.capture.errorUpload',
 };
-
-/** The consent dialog's points, in order. */
-export const LIVE_CAPTURE_CONSENT_KEYS: ReadonlyArray<string> = [
-  'live.capture.consentShare',
-  'live.capture.consentAudioOnly',
-  'live.capture.consentOwnViewing',
-  'live.capture.consentBilling',
-];
 
 export const LIVE_CAPTURE_IDLE: LiveCaptureMachine = { state: LiveCaptureState.IDLE, error: null };
 

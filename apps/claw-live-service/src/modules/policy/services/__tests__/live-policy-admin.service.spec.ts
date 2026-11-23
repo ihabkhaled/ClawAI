@@ -22,6 +22,7 @@ const validConfig = {
   budgetSoftStopPercent: 80,
   summaryModelChain: [],
   visionModelChain: [],
+  serverPullPlatforms: ['TWITCH'],
 };
 
 const row = (version: number, active: boolean, config: unknown = validConfig) => ({
@@ -84,6 +85,22 @@ describe('LivePolicyAdminService', () => {
     );
     expect(repository.createAndActivate).not.toHaveBeenCalled();
     expect(policy.invalidate).not.toHaveBeenCalled();
+  });
+
+  it('defaults server pull to Twitch for a version saved before the field, and refuses a platform with no resolver', async () => {
+    const { service, repository } = build();
+    const { serverPullPlatforms: _omitted, ...legacy } = validConfig;
+    await service.publish('admin1', legacy, undefined);
+    expect(repository.createAndActivate).toHaveBeenCalledWith(validConfig, null, 'admin1');
+    await expect(
+      service.publish('admin1', { ...validConfig, serverPullPlatforms: ['KICK'] }, undefined),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    await service.publish('admin1', { ...validConfig, serverPullPlatforms: [] }, undefined);
+    expect(repository.createAndActivate).toHaveBeenLastCalledWith(
+      { ...validConfig, serverPullPlatforms: [] },
+      null,
+      'admin1',
+    );
   });
 
   it('rolls back by copying the old config as a NEW version', async () => {

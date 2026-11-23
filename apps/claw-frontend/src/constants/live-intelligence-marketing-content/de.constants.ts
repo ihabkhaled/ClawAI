@@ -13,7 +13,7 @@ export const DE_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   whatParagraphs: [
     'Einem Livestream zu folgen ist schwer, wenn er lang, schnell oder in einer Sprache ist, die du nicht sprichst. Live Intelligence sitzt neben dem Video und macht die Notizen: Untertitel in deiner Sprache, eine laufende Zusammenfassung und eine Liste der Highlights, damit du auch mal wegsehen kannst.',
     'Alles läuft in einem Fenster innerhalb von ClawAI, Stream und Analyse sind auf einem Bildschirm. Vor dem Start wählst du die Untertitelsprache und einen Analysemodus. Pausieren, Fortsetzen und Spulen funktionieren dort, wo der Stream es erlaubt. Bei einer Pause friert der Feed ein und die Abrechnung stoppt.',
-    'Viele Personen können denselben Stream sehen, ohne dass dieselbe Arbeit mehrfach bezahlt wird. ClawAI verarbeitet einen Stream einmal und teilt die Analyse mit allen Zuschauern. Die Analyse, die du tatsächlich gesehen hast, wird in deinem Verlauf gespeichert, bis du sie löschst.',
+    'Viele Personen können denselben Stream sehen, ohne dass dieselbe Arbeit mehrfach bezahlt wird. Analysiert ClawAI einen Stream auf seinen eigenen Servern, etwa einen Twitch-Kanal, der gerade live ist, oder einen HLS-Link, wird er einmal verarbeitet und die Analyse mit allen Zuschauern geteilt. Die Analyse, die du tatsächlich gesehen hast, wird in deinem Verlauf gespeichert, bis du sie löschst.',
   ],
   stepsTitle: 'So funktioniert es, in fünf Schritten',
   stepsIntro:
@@ -25,7 +25,7 @@ export const DE_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     },
     {
       title: 'Sprache und Modus wählen',
-      body: 'Wähle die Sprache für Untertitel und Zusammenfassungen und einen von drei Modi: Audio, Audio + Vision oder Smart Auto. Vor dem Start bestätigst du, dass du die Rechte zur Analyse des Streams hast.',
+      body: 'Wähle die Sprache für Untertitel und Zusammenfassungen und einen von drei Modi: Audio, Audio + Vision oder Smart Auto. Bei einem HLS-Link bestätigst du, dass du ihn analysieren darfst; bei YouTube, Kick oder Facebook stimmst du zu, dass ClawAI über dein Gerät mithört.',
     },
     {
       title: 'Ansehen mit Untertiteln, Karten und Highlights',
@@ -72,7 +72,7 @@ export const DE_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     },
     {
       title: 'Geteilte Verarbeitung',
-      body: 'Viele Zuschauer, eine Analyse. Derselbe Stream wird einmal verarbeitet und geteilt, sodass Aufwand und Kosten nicht mit dem Publikum wachsen.',
+      body: 'Viele Zuschauer, eine Analyse. Ein Twitch-Kanal, der live ist, oder ein HLS-Stream wird einmal auf den Servern von ClawAI verarbeitet und mit allen Zuschauern geteilt, auf jedem Gerät, auch auf dem Handy. Eine Analyse aus dem Ton deines eigenen Geräts bleibt privat.',
     },
   ],
   modesTitle: 'Drei Analysemodi',
@@ -97,12 +97,12 @@ export const DE_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     'Wir nennen dir die Grenzen lieber jetzt, als dass du sie mitten im Stream entdeckst.',
   sources: [
     {
-      title: 'KI-Analyse funktioniert bei HLS-Livestreams',
-      body: 'Live Intelligence analysiert HLS-Livestreams, deren Analyse dir erlaubt ist. Beim Start bestätigst du das.',
+      title: '15 Plattformen und dazu HLS-Links',
+      body: 'ClawAI erkennt 15 Live-Plattformen. Ein Twitch-Kanal, der live ist, wird auf den Servern von ClawAI analysiert, ohne dass du etwas teilen musst, und auf jedem Gerät; ist der Kanal offline, wird der Ton deines Geräts genutzt. TikTok LIVE, Instagram Live, Rumble, BIGO LIVE, LinkedIn Live, Telegram, Bilibili, CHZZK, SOOP und Nimo TV öffnen sich auf der Plattform selbst („Auf … ansehen“), ohne KI. Discord Go Live wird nicht unterstützt, weil es keinen öffentlichen Link gibt. HLS-Links, deren Analyse dir erlaubt ist, funktionieren weiterhin; das bestätigst du beim Start.',
     },
     {
-      title: 'YouTube-Links werden abgespielt, aber nicht analysiert',
-      body: 'Du kannst einen YouTube-Link einfügen und ihn in ClawAI ansehen, aber es gibt keine KI-Analyse für YouTube-Streams. Die Nutzungsbedingungen von YouTube erlauben das Erfassen von Audio oder Untertiteln nicht, deshalb tut ClawAI es nicht, und das Fenster sagt es.',
+      title: 'YouTube, Kick und Facebook: KI über dein eigenes Gerät',
+      body: 'Sie laufen im offiziellen Player, und die KI hört nach deiner Zustimmung den Ton deines Geräts. Am Computer teilst du in Chrome oder Edge den Ton des Tabs („Mit meinem Browser analysieren“); am Handy hört das Mikrofon den Stream aus dem Lautsprecher („Mit Mikrofon analysieren“). Gesendet wird nur Audio, zur Transkription, daher gilt hier der Modus Audio. Den Live-Chat gibt es für YouTube-Videos, Twitch und Kick; andere Plattformen bekommen einen Link „Chat öffnen“.',
     },
     {
       title: 'Untertitel hinken einige Sekunden hinterher',
@@ -125,12 +125,12 @@ export const DE_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     {
       question: 'Funktioniert Live Intelligence mit YouTube-Livestreams?',
       answer:
-        'Du kannst einen YouTube-Link in ClawAI ansehen, aber es gibt dafür keine KI-Analyse. Die Bedingungen von YouTube erlauben das Erfassen von Audio oder Untertiteln nicht, daher gibt es für YouTube-Streams keine Untertitel, Zusammenfassungen oder Highlights.',
+        'Ja. Ein YouTube-Stream läuft im offiziellen Player, und die KI arbeitet nach deiner Zustimmung mit dem Ton deines eigenen Geräts: Am Computer teilst du in Chrome oder Edge den Ton des Tabs, am Handy hört das Mikrofon den Stream aus dem Lautsprecher. Gesendet wird nur Audio, zur Transkription, und die Untertitel kommen weiterhin einige Sekunden nach der Sprache.',
     },
     {
       question: 'Welche Streams können analysiert werden?',
       answer:
-        'HLS-Livestreams, zu deren Analyse du berechtigt bist. Das bestätigst du beim Start. Ein Stream, den der Dienst nicht lesen kann, wird als nicht unterstützt gemeldet, statt stillschweigend zu scheitern.',
+        'Twitch-Kanäle, die gerade live sind, analysiert auf den Servern von ClawAI auf jedem Gerät; YouTube, Kick und Facebook über den Ton deines eigenen Geräts; und HLS-Livestreams, zu deren Analyse du berechtigt bist, was du beim Start bestätigst. Zehn weitere Plattformen öffnen sich auf der Plattform selbst, ohne KI. Ein Stream, den der Dienst nicht lesen kann, wird als nicht unterstützt gemeldet, statt stillschweigend zu scheitern.',
     },
     {
       question: 'Sind die Untertitel in Echtzeit?',
@@ -165,5 +165,5 @@ export const DE_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   ],
   closingTitle: 'Verfolge den nächsten Livestream, ohne jede Minute zu sehen',
   closingBody:
-    'Füge einen HLS-Link ein, dessen Analyse dir erlaubt ist, wähle deine Sprache und starte. Deine Freiminuten warten.',
+    'Füge einen Link von Twitch, YouTube, Kick oder Facebook ein oder einen HLS-Link, dessen Analyse dir erlaubt ist, wähle deine Sprache und starte. Deine Freiminuten warten.',
 };

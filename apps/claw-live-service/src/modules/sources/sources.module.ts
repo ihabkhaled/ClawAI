@@ -4,6 +4,7 @@ import { HlsProxyController } from './controllers/hls-proxy.controller';
 import { FixtureBroadcasterService } from './services/fixture-broadcaster.service';
 import { HlsFetcherService } from './services/hls-fetcher.service';
 import { HlsProxyService } from './services/hls-proxy.service';
+import { ServerPullResolverService } from './services/server-pull-resolver.service';
 import { SourceUrlGuardService } from './services/source-url-guard.service';
 import { SourcesService } from './services/sources.service';
 
@@ -16,7 +17,14 @@ import { SourcesService } from './services/sources.service';
     HlsFetcherService,
     HlsProxyService,
     FixtureBroadcasterService,
+    ServerPullResolverService,
   ],
-  exports: [SourcesService, FixtureBroadcasterService, HlsFetcherService, SourceUrlGuardService],
+  exports: [
+    SourcesService,
+    FixtureBroadcasterService,
+    HlsFetcherService,
+    SourceUrlGuardService,
+    ServerPullResolverService,
+  ],
 })
 export class SourcesModule {}

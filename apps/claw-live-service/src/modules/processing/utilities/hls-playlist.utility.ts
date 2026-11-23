@@ -1,4 +1,4 @@
-import type { ParsedPlaylist, PlaylistSegment } from '../types/processing.types';
+import type { ParsedPlaylist, PlaylistSegment, PlaylistVariant } from '../types/processing.types';
 
 function attribute(line: string, name: string): string | null {
   const start = line.indexOf(`${name}=`);
@@ -22,7 +22,7 @@ export function parsePlaylist(text: string): ParsedPlaylist {
   let sequence = 0;
   let duration = 0;
   let programDate: number | null = null;
-  let pendingBandwidth: number | null = null;
+  let pendingVariant: Omit<PlaylistVariant, 'uri'> | null = null;
   for (const raw of text.split(/\r?\n/u)) {
     const line = raw.trim();
     if (line.startsWith('#EXT-X-MEDIA-SEQUENCE:'))
@@ -34,9 +34,12 @@ export function parsePlaylist(text: string): ParsedPlaylist {
     } else if (line.startsWith('#EXT-X-ENDLIST')) result.endList = true;
     else if (line.startsWith('#EXT-X-MAP:')) result.mapUri = attribute(line, 'URI');
     else if (line.startsWith('#EXT-X-STREAM-INF:')) {
-      pendingBandwidth = Number.parseInt(attribute(line, 'BANDWIDTH') ?? '0', 10) || 0;
+      pendingVariant = {
+        bandwidth: Number.parseInt(attribute(line, 'BANDWIDTH') ?? '0', 10) || 0,
+        hasVideo: attribute(line, 'RESOLUTION') !== null,
+      };
     } else if (line !== '' && !line.startsWith('#')) {
-      if (pendingBandwidth === null) {
+      if (pendingVariant === null) {
         const segment: PlaylistSegment = {
           uri: line,
           sequence,
@@ -47,10 +50,23 @@ export function parsePlaylist(text: string): ParsedPlaylist {
         sequence += 1;
         programDate = programDate === null ? null : programDate + segment.durationMs;
       } else {
-        result.variants.push({ uri: line, bandwidth: pendingBandwidth });
-        pendingBandwidth = null;
+        result.variants.push({ uri: line, ...pendingVariant });
+        pendingVariant = null;
       }
     }
   }
   return result;
+}
+
+/**
+ * The variant the worker reads: the lightest one, since audio is what matters. When vision is on,
+ * the lightest one WITH video (an audio-only rendition has no frames to look at).
+ */
+export function pickPlaylistVariant(
+  variants: readonly PlaylistVariant[],
+  wantsVideo: boolean,
+): PlaylistVariant | null {
+  const withVideo = variants.filter((variant) => variant.hasVideo);
+  const pool = wantsVideo && withVideo.length > 0 ? withVideo : variants;
+  return [...pool].sort((a, b) => a.bandwidth - b.bandwidth)[0] ?? null;
 }

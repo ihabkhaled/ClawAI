@@ -80,3 +80,34 @@ YouTube grants caption or audio access, a streaming STT vendor is added, or the 
   Every other platform gets an "Open chat on <Platform>" link.
 - Schema: `LiveSourceKind.PLATFORM`, `LiveCapability.LINK_ONLY|BROWSER_CAPTURE`, enum `LivePlatform`,
   `live_streams.platform`, `live_processing_runs.capture_session_id` (additive migration `20261122120000`).
+
+## Addendum 2026-11-23 (batch 3): microphone capture and Twitch server pull
+
+- **Problem:** no mobile browser implements `getDisplayMedia`, so on a phone "Analyze with my browser" was a dead end
+  ("This browser can't share tab audio").
+- **Microphone capture (owner decision 2026-11-23):** when tab audio is unavailable the viewer's browser captures its
+  **microphone** (`getUserMedia`, echo cancellation, noise suppression and auto gain OFF, or the speaker's own sound is
+  cancelled out) and posts the same 6 s 16 kHz WAV chunks. Frontend only: the server cannot tell the sources apart, and
+  billing is identical. Quality depends on the room; the UI says so.
+- **Server pull (owner decision 2026-11-23, "server pull 100%"):** this **reverses, for Twitch only**, the batch-2 line
+  "server-side download or capture of any platform is never built". New capability `SERVER_PULL`: the server reads the
+  platform's public playlist the way its own web player does, so one `PUBLIC` run serves every viewer, on any device.
+  - **Twitch:** the anonymous playback token Twitch's web player requests (`gql.twitch.tv`, public web client id) and
+    the usher master playlist. A token that says `forbidden` (geo-block, sub-only) is honoured.
+  - **YouTube: not built.** The watch page no longer carries `hlsManifestUrl`; a playlist needs impersonating another
+    client to dodge YouTube's attestation (PO tokens). **Kick: not built.** Its API answers servers with
+    `403 Request blocked by security policy`. Defeating either protection is circumvention and stays out; both remain
+    `BROWSER_CAPTURE` (tab or microphone).
+  - **Owner-accepted terms risk:** Twitch's terms do not grant third-party server access to streams. The owner accepted
+    this exposure; it is not a claim that Twitch permits it. Admin can switch it off per platform
+    (`serverPullPlatforms`, policy field, default `['TWITCH']`; `[]` = browser capture only, no network call).
+- Resolve probes the playlist (token + one playlist fetch, 5 s timeouts). Live → `SERVER_PULL` / `SERVER_PULL_AVAILABLE`;
+  offline or refused → private `BROWSER_CAPTURE` / `SERVER_PULL_UNAVAILABLE`.
+- Every request keeps the SSRF guard and DNS pinning; the CDN pin is a host-suffix list (`ttvnw.net`,
+  `live-video.net`), never a look-alike. A playlist failure drops the token at most once per 30 s, so the next poll
+  resolves a fresh one; the worker's poll-failure ceiling still ends a stream that went offline.
+- Vision on: the lightest rendition **with video** (Twitch `160p30`); audio only: the audio-only rendition.
+- Schema: `LiveCapability.SERVER_PULL` (additive migration `20261123000000_live_server_pull`). Device audio for a
+  `SERVER_PULL` session is refused (`422`).
+- **What would make this stale:** Twitch changing its token flow or blocking server requests (resolve then falls back
+  to capture by itself); YouTube or Kick offering a sanctioned server playlist; the owner withdrawing the terms risk.

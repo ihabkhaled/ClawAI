@@ -56,6 +56,15 @@ export function LiveModal({ input, onClose }: LiveModalProps): React.ReactElemen
                 t={t}
               />
               {modal.isCapture ? <LiveCapturePanel capture={modal.capture} t={t} /> : null}
+              {modal.isServerPull ? (
+                <p
+                  role="status"
+                  className="text-muted-foreground border-border rounded-md border p-3 text-sm"
+                  data-testid="live-server-pull"
+                >
+                  {t('live.serverPull.analyzing')}
+                </p>
+              ) : null}
               <LiveStatusBanner
                 status={modal.status}
                 isReconnecting={modal.isReconnecting}

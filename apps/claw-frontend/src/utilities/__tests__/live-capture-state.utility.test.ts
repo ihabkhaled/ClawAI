@@ -1,9 +1,21 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { LIVE_CAPTURE_IDLE } from '@/constants/live.constants';
-import { LiveCaptureAction, LiveCaptureError, LiveCaptureState } from '@/enums/live.enum';
+import { LIVE_CAPTURE_COPY, LIVE_CAPTURE_IDLE } from '@/constants/live.constants';
+import {
+  LiveCaptureAction,
+  LiveCaptureError,
+  LiveCaptureSource,
+  LiveCaptureState,
+} from '@/enums/live.enum';
 import type { LiveCaptureMachine } from '@/types/live.types';
-import { liveCaptureReducer, toLiveCaptureError } from '@/utilities/live-capture-state.utility';
+import {
+  isLiveMicCaptureSupported,
+  liveCaptureCopy,
+  liveCaptureReducer,
+  pickLiveCaptureSource,
+  toLiveCaptureError,
+  toLiveCaptureFailureEvent,
+} from '@/utilities/live-capture-state.utility';
 
 const at = (state: LiveCaptureState): LiveCaptureMachine => ({ state, error: null });
 
@@ -64,5 +76,73 @@ describe('toLiveCaptureError', () => {
     expect(toLiveCaptureError(denied)).toBe(LiveCaptureError.DENIED);
     expect(toLiveCaptureError(new Error('boom'))).toBe(LiveCaptureError.UNSUPPORTED);
     expect(toLiveCaptureError('weird')).toBe(LiveCaptureError.UNSUPPORTED);
+  });
+});
+
+describe('pickLiveCaptureSource', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('picks tab audio when the browser can share it', () => {
+    vi.stubGlobal('navigator', {
+      mediaDevices: { getDisplayMedia: vi.fn(), getUserMedia: vi.fn() },
+    });
+    vi.stubGlobal('AudioWorkletNode', class {});
+    expect(pickLiveCaptureSource()).toBe(LiveCaptureSource.TAB);
+  });
+
+  it('falls back to the microphone on a phone (no getDisplayMedia)', () => {
+    vi.stubGlobal('navigator', { mediaDevices: { getUserMedia: vi.fn() } });
+    vi.stubGlobal('AudioWorkletNode', class {});
+    expect(isLiveMicCaptureSupported()).toBe(true);
+    expect(pickLiveCaptureSource()).toBe(LiveCaptureSource.MICROPHONE);
+  });
+
+  it('returns null when neither works (no media devices, or no AudioWorklet)', () => {
+    vi.stubGlobal('navigator', {});
+    vi.stubGlobal('AudioWorkletNode', class {});
+    expect(pickLiveCaptureSource()).toBeNull();
+    vi.stubGlobal('navigator', { mediaDevices: { getUserMedia: vi.fn() } });
+    vi.stubGlobal('AudioWorkletNode', undefined);
+    expect(isLiveMicCaptureSupported()).toBe(false);
+    expect(pickLiveCaptureSource()).toBeNull();
+  });
+});
+
+describe('liveCaptureCopy', () => {
+  it('uses the microphone wording for MICROPHONE and the tab wording otherwise', () => {
+    expect(liveCaptureCopy(LiveCaptureSource.MICROPHONE).analyzeKey).toBe(
+      'live.capture.analyzeMic',
+    );
+    expect(liveCaptureCopy(LiveCaptureSource.TAB)).toBe(LIVE_CAPTURE_COPY[LiveCaptureSource.TAB]);
+    expect(liveCaptureCopy(null)).toBe(LIVE_CAPTURE_COPY[LiveCaptureSource.TAB]);
+  });
+});
+
+describe('toLiveCaptureFailureEvent', () => {
+  const refused = Object.assign(new Error('x'), { name: 'NotAllowedError' });
+
+  it('resets in silence when the tab picker is cancelled', () => {
+    expect(toLiveCaptureFailureEvent(refused, LiveCaptureSource.TAB)).toEqual({
+      type: LiveCaptureAction.RESET,
+    });
+  });
+
+  it('fails MIC_DENIED when the microphone is refused', () => {
+    expect(toLiveCaptureFailureEvent(refused, LiveCaptureSource.MICROPHONE)).toEqual({
+      type: LiveCaptureAction.FAIL,
+      error: LiveCaptureError.MIC_DENIED,
+    });
+  });
+
+  it('fails with the reason for anything else, on either source', () => {
+    const noAudio = new Error(LiveCaptureError.NO_AUDIO);
+    for (const source of [LiveCaptureSource.TAB, LiveCaptureSource.MICROPHONE]) {
+      expect(toLiveCaptureFailureEvent(noAudio, source)).toEqual({
+        type: LiveCaptureAction.FAIL,
+        error: LiveCaptureError.NO_AUDIO,
+      });
+    }
   });
 });

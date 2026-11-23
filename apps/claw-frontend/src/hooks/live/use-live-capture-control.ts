@@ -2,21 +2,26 @@ import { useCallback, useEffect, useReducer, useRef } from 'react';
 
 import { LIVE_CAPTURE_IDLE } from '@/constants/live.constants';
 import { LiveCaptureAction, LiveCaptureError } from '@/enums/live.enum';
+import type { LiveCaptureSource } from '@/enums/live.enum';
 import type {
   LiveAudioChunkInput,
   LiveCaptureMachine,
   LiveTabCaptureHandle,
 } from '@/types/live.types';
-import { liveCaptureReducer, toLiveCaptureError } from '@/utilities/live-capture-state.utility';
+import {
+  liveCaptureReducer,
+  toLiveCaptureFailureEvent,
+} from '@/utilities/live-capture-state.utility';
 
 /**
  * Owns the capture handle and its state machine. The pipeline module is imported on demand, only
- * when `start` runs. Unmount (modal close) stops the capture. A cancelled picker returns to idle in
- * silence: declining to share is a decision, not an error.
+ * when `start` runs; with no capturable source it fails UNSUPPORTED without loading it. Unmount
+ * (modal close) stops the capture. A cancelled tab picker returns to idle in silence
+ * (declining to share is a decision); a refused microphone fails MIC_DENIED.
  */
 export function useLiveCaptureControl(onChunk: (chunk: LiveAudioChunkInput) => void): {
   machine: LiveCaptureMachine;
-  start: () => void;
+  start: (source: LiveCaptureSource | null) => void;
   stop: () => void;
   fail: (error: LiveCaptureError) => void;
 } {
@@ -45,34 +50,40 @@ export function useLiveCaptureControl(onChunk: (chunk: LiveAudioChunkInput) => v
     },
     [release],
   );
-  const start = useCallback((): void => {
-    attemptRef.current += 1;
-    const attempt = attemptRef.current;
-    dispatch({ type: LiveCaptureAction.REQUEST });
-    import('@/utilities/live-capture.utility')
-      .then(({ startLiveTabCapture }) =>
-        startLiveTabCapture({ onChunk: (chunk) => chunkRef.current(chunk), onEnded: stop }),
-      )
-      .then((handle) => {
-        if (attempt !== attemptRef.current) {
-          handle.stop();
-          return;
-        }
-        handleRef.current = handle;
-        dispatch({ type: LiveCaptureAction.STARTED });
-      })
-      .catch((error: unknown) => {
-        if (attempt !== attemptRef.current) {
-          return;
-        }
-        const reason = toLiveCaptureError(error);
-        dispatch(
-          reason === LiveCaptureError.DENIED
-            ? { type: LiveCaptureAction.RESET }
-            : { type: LiveCaptureAction.FAIL, error: reason },
-        );
-      });
-  }, [stop]);
+  const start = useCallback(
+    (source: LiveCaptureSource | null): void => {
+      attemptRef.current += 1;
+      const attempt = attemptRef.current;
+      dispatch({ type: LiveCaptureAction.REQUEST });
+      if (source === null) {
+        dispatch({ type: LiveCaptureAction.FAIL, error: LiveCaptureError.UNSUPPORTED });
+        return;
+      }
+      import('@/utilities/live-capture.utility')
+        .then(({ startLiveTabCapture }) =>
+          startLiveTabCapture({
+            source,
+            onChunk: (chunk) => chunkRef.current(chunk),
+            onEnded: stop,
+          }),
+        )
+        .then((handle) => {
+          if (attempt !== attemptRef.current) {
+            handle.stop();
+            return;
+          }
+          handleRef.current = handle;
+          dispatch({ type: LiveCaptureAction.STARTED });
+        })
+        .catch((error: unknown) => {
+          if (attempt !== attemptRef.current) {
+            return;
+          }
+          dispatch(toLiveCaptureFailureEvent(error, source));
+        });
+    },
+    [stop],
+  );
   useEffect(() => release, [release]);
 
   return { machine, start, stop, fail };

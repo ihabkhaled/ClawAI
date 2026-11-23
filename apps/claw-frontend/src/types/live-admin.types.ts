@@ -1,4 +1,5 @@
 import type {
+  LivePlatform,
   LivePlanField,
   LivePolicyFlag,
   LiveMode,
@@ -31,7 +32,12 @@ export type LivePolicyConfig = {
   budgetSoftStopPercent: number;
   summaryModelChain: LiveModelRef[];
   visionModelChain: LiveModelRef[];
+  /** Platforms ClawAI's server reads itself (Twitch only). Absent on a version saved before it existed. */
+  serverPullPlatforms?: LiveServerPullPlatform[];
 };
+
+/** The only platform server pull may read. */
+export type LiveServerPullPlatform = LivePlatform.TWITCH;
 
 /** One `LivePolicyVersion` row as the admin API returns it (GET list, PUT and rollback answer). */
 export type LivePolicyVersion = {
@@ -115,6 +121,7 @@ export type LivePlanFormRow = { plan: string; freeMinutes: string; paidUsdPerMin
 export type LivePolicyFormValues = {
   featureEnabled: boolean;
   killSwitch: boolean;
+  serverPullTwitch: boolean;
   plans: LivePlanFormRow[];
   defaultPlan: LivePlanFormRow;
   graceSeconds: string;

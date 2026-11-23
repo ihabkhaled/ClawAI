@@ -40,6 +40,18 @@ need explicit confirmation, with an optional spending cap.
 unlimited get pro's 600, the highest value the owner named, so nothing is over-granted. These are
 assumptions: the owner should confirm or change them in the admin page.
 
+## Owner decisions (2026-11-23): phones and server pull
+
+- **Phones:** no mobile browser can share tab audio, so on a phone the button reads "Analyze using microphone". The phone's
+  microphone hears the stream from its own speaker; the viewer keeps the sound on. Same price per minute. A blocked
+  microphone says how to allow it.
+- **Server pull ("server pull 100%"):** a live **Twitch** channel is analyzed by ClawAI's servers. Nothing to share, works
+  on any device, and every viewer of that channel shares one analysis. The owner accepted Twitch's terms risk. Admins can
+  turn it off in the policy.
+- **Not possible without breaking a protection, so not built:** server pull for YouTube (needs impersonating another
+  client to get past YouTube's checks) and Kick (blocks server requests). Both stay tab or microphone capture.
+- An offline Twitch channel falls back to capture and says the server could not read it.
+
 ## Acceptance (user journey)
 
 Open a supported stream, pick a language and mode, start, get captions, cards and highlights, pause

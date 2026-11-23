@@ -89,6 +89,10 @@ export type LiveLocaleTranslation = {
     recognised: string;
     captureTitle: string;
     captureNotice: string;
+    captureNoticeMic: string;
+    serverPullTitle: string;
+    serverPullNotice: string;
+    serverPullUnavailable: string;
     linkOnlyTitle: string;
     linkOnlyNotice: string;
     linkOnlyPanel: string;
@@ -104,8 +108,12 @@ export type LiveLocaleTranslation = {
   };
   capture: {
     analyze: string;
+    analyzeMic: string;
+    micHint: string;
     requesting: string;
+    requestingMic: string;
     capturing: string;
+    capturingMic: string;
     stop: string;
     stopped: string;
     consentTitle: string;
@@ -116,10 +124,20 @@ export type LiveLocaleTranslation = {
     consentBilling: string;
     consentConfirm: string;
     consentCancel: string;
+    consentMicTitle: string;
+    consentMicDescription: string;
+    consentMicAudio: string;
+    consentMicNothingElse: string;
+    consentMicBilling: string;
+    consentMicConfirm: string;
     errorNoAudio: string;
     errorDenied: string;
+    errorMicDenied: string;
     errorUnsupported: string;
     errorUpload: string;
+  };
+  serverPull: {
+    analyzing: string;
   };
   status: {
     connectingTitle: string;
@@ -223,6 +241,9 @@ export type LiveLocaleTranslation = {
     policyDescription: string;
     featureEnabled: string;
     killSwitch: string;
+    serverPullTitle: string;
+    serverPullHint: string;
+    serverPullTwitch: string;
     plansTitle: string;
     plan: string;
     defaultPlan: string;

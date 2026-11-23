@@ -3,7 +3,7 @@ import { BadGatewayException, Injectable } from '@nestjs/common';
 import { LiveSourceErrorCode } from '../../../common/enums/live-source-error-code.enum';
 import { pinnedGet, PinnedRequestError } from '../../../common/utilities/pinned-request.utility';
 import { HLS_FETCH_TIMEOUT_MS } from '../constants/sources.constants';
-import type { HlsFetchedObject } from '../types/hls-proxy.types';
+import type { HlsFetchedObject, HlsHostPin } from '../types/hls-proxy.types';
 import { SourceUrlGuardService } from './source-url-guard.service';
 
 /**
@@ -16,8 +16,12 @@ import { SourceUrlGuardService } from './source-url-guard.service';
 export class HlsFetcherService {
   constructor(private readonly guard: SourceUrlGuardService) {}
 
-  async fetchObject(url: URL, pinnedHost: string, maxBytes: number): Promise<HlsFetchedObject> {
-    const addresses = await this.guard.assertSafe(url, pinnedHost);
+  /** `pin` is the stream's declared host, or a host suffix list for a server-pulled platform CDN. */
+  async fetchObject(url: URL, pin: HlsHostPin, maxBytes: number): Promise<HlsFetchedObject> {
+    const addresses =
+      typeof pin === 'string'
+        ? await this.guard.assertSafe(url, pin)
+        : await this.guard.assertSafeOnSuffixes(url, pin);
     try {
       const result = await pinnedGet(url, addresses, { timeoutMs: HLS_FETCH_TIMEOUT_MS, maxBytes });
       return { contentType: result.contentType, body: result.body, url };

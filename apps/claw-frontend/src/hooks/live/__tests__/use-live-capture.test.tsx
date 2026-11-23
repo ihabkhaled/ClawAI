@@ -1,9 +1,14 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactElement, ReactNode } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { LiveCaptureError, LiveCaptureState, LiveStatusCode } from '@/enums/live.enum';
+import {
+  LiveCaptureError,
+  LiveCaptureSource,
+  LiveCaptureState,
+  LiveStatusCode,
+} from '@/enums/live.enum';
 import { useLiveCapture } from '@/hooks/live/use-live-capture';
 import { ApiClientError } from '@/services/shared/api-client';
 import type { LiveTabCaptureOptions } from '@/types/live.types';
@@ -22,6 +27,11 @@ vi.mock('@/repositories/live/live.repository', () => ({
 function wrapper({ children }: { children: ReactNode }): ReactElement {
   const client = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+}
+
+/** Makes this jsdom browser look like a desktop (tab audio) or a phone (microphone only). */
+function stubMediaDevices(devices: Record<string, unknown> | undefined): void {
+  Object.defineProperty(navigator, 'mediaDevices', { value: devices, configurable: true });
 }
 
 function setup(status: LiveStatusCode = LiveStatusCode.ANALYZING) {
@@ -44,6 +54,53 @@ describe('useLiveCapture', () => {
       return Promise.resolve({ stop });
     });
     mockUpload.mockResolvedValue({ accepted: true });
+    vi.stubGlobal('AudioWorkletNode', class {});
+    stubMediaDevices({ getDisplayMedia: vi.fn(), getUserMedia: vi.fn() });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    stubMediaDevices(undefined);
+  });
+
+  it('captures the tab on a desktop browser', async () => {
+    const { result } = setup();
+    expect(result.current.source).toBe(LiveCaptureSource.TAB);
+    act(() => result.current.confirm());
+    await waitFor(() => expect(result.current.state).toBe(LiveCaptureState.CAPTURING));
+    expect(mockStart).toHaveBeenCalledWith(
+      expect.objectContaining({ source: LiveCaptureSource.TAB }),
+    );
+  });
+
+  it('captures the microphone on a phone (no tab audio)', async () => {
+    stubMediaDevices({ getUserMedia: vi.fn() });
+    const { result } = setup();
+    expect(result.current.source).toBe(LiveCaptureSource.MICROPHONE);
+    act(() => result.current.confirm());
+    await waitFor(() => expect(result.current.state).toBe(LiveCaptureState.CAPTURING));
+    expect(mockStart).toHaveBeenCalledWith(
+      expect.objectContaining({ source: LiveCaptureSource.MICROPHONE }),
+    );
+  });
+
+  it('fails UNSUPPORTED without loading the pipeline when nothing can be captured', () => {
+    stubMediaDevices(undefined);
+    const { result } = setup();
+    expect(result.current.source).toBeNull();
+    act(() => result.current.confirm());
+    expect(result.current.state).toBe(LiveCaptureState.ERROR);
+    expect(result.current.error).toBe(LiveCaptureError.UNSUPPORTED);
+    expect(mockStart).not.toHaveBeenCalled();
+  });
+
+  it('fails MIC_DENIED (not a silent reset) when the microphone is refused', async () => {
+    stubMediaDevices({ getUserMedia: vi.fn() });
+    mockStart.mockRejectedValue(Object.assign(new Error('x'), { name: 'NotAllowedError' }));
+    const { result } = setup();
+    act(() => result.current.confirm());
+    await waitFor(() => expect(result.current.state).toBe(LiveCaptureState.ERROR));
+    expect(result.current.error).toBe(LiveCaptureError.MIC_DENIED);
   });
 
   it('asks for consent first, then captures (idle → requesting → capturing)', async () => {

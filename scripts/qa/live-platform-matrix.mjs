@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Live Intelligence platform resolver matrix (ADR-221, batch 2): one real-shaped link
-// per platform through POST /live/sources/resolve. Parsing only: nothing is fetched
-// from any platform.
+// per platform through POST /live/sources/resolve. Parsing only, except the Twitch
+// server-pull probe (ADR-221 batch 3).
 //   NODE_EXTRA_CA_CERTS=certs/rootCA.pem node --env-file=.env scripts/qa/live-platform-matrix.mjs
 const BASE = process.env.LIVE_QA_BASE ?? 'https://claw.local/api/v1';
 const CASES = [
@@ -19,8 +19,9 @@ const CASES = [
     'BROWSER_CAPTURE',
     false,
   ],
-  ['Twitch (Kai Cenat)', 'https://www.twitch.tv/kaicenat', 'TWITCH', 'BROWSER_CAPTURE', true],
-  ['Twitch (xQc)', 'https://twitch.tv/xqc', 'TWITCH', 'BROWSER_CAPTURE', true],
+  // Twitch is SERVER_PULL while live (ADR-221 batch 3), BROWSER_CAPTURE when offline.
+  ['Twitch (Kai Cenat)', 'https://www.twitch.tv/kaicenat', 'TWITCH', 'TWITCH_EITHER', true],
+  ['Twitch (xQc)', 'https://twitch.tv/xqc', 'TWITCH', 'TWITCH_EITHER', true],
   ['Kick (Adin Ross)', 'https://kick.com/adinross', 'KICK', 'BROWSER_CAPTURE', true],
   [
     'Facebook Live',
@@ -73,7 +74,9 @@ for (const [name, url, platform, capability, hasChat] of CASES) {
   const ok =
     r.status === 200 &&
     r.data.platform === platform &&
-    r.data.capability === capability &&
+    (capability === 'TWITCH_EITHER'
+      ? ['SERVER_PULL', 'BROWSER_CAPTURE'].includes(r.data.capability)
+      : r.data.capability === capability) &&
     Boolean(r.data.chatEmbedUrl) === hasChat &&
     typeof r.data.watchUrl === 'string' &&
     r.data.watchUrl.startsWith('https://');

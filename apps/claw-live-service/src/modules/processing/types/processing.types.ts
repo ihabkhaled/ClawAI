@@ -110,6 +110,15 @@ export interface PlaylistSegment {
 export interface PlaylistVariant {
   uri: string;
   bandwidth: number;
+  /** EXT-X-STREAM-INF carries a RESOLUTION (an audio-only rendition has none). */
+  hasVideo: boolean;
+}
+
+/** A server-pulled platform stream: its CDN host suffixes and a fresh-playlist resolver. */
+export interface ServerPullSource {
+  hostSuffixes: readonly string[];
+  /** A fresh master playlist URL (new token), or null when the stream is offline or refused. */
+  resolvePlaylist: () => Promise<URL | null>;
 }
 
 export interface ParsedPlaylist {

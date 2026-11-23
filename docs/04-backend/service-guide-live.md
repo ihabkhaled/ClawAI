@@ -26,7 +26,7 @@ design (about 7-12 s).
 
 | Module        | Owns                                                                                                                                                                                      |
 | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| sources       | URL resolve (YouTube, HLS, fixture), SSRF guard with pinned DNS, HLS fetcher, same-origin HLS proxy, fixture broadcaster                                                                  |
+| sources       | URL resolve (platform registry, HLS, fixture), Twitch server-pull resolver, SSRF guard with pinned DNS (host or host-suffix pin), HLS fetcher, same-origin HLS proxy, fixture broadcaster |
 | processing    | one run per processing key; DB lease with generation fence (`run-coordinator`, `fenced-run-writer`); reconciler (claims expired leases); worker; summary, translation and vision managers |
 | realtime      | SSE stream, Redis event bus and replay buffer (`Last-Event-ID`)                                                                                                                           |
 | sessions      | viewer sessions, presence, heartbeat, coverage, reaper, `sendBeacon` close, usage                                                                                                         |
@@ -63,8 +63,15 @@ Full request and response shapes: [architecture section 9](../03-architecture/li
 - Writes are fenced: a worker commits only while its generation matches the run. A deleted or stale run writes nothing.
 - ffmpeg reads local files only (`-protocol_whitelist file`); the worker fetches playlists and segments itself through the
   SSRF guard and the DNS-pinned connection.
-- YouTube is `PLAYER_ONLY`. `/watch`, `youtu.be` and `/channel/UC...` links play (channel links through the `live_stream`
-  embed); `@handle` links are refused with `LIVE_YOUTUBE_HANDLE_UNSUPPORTED`.
+- YouTube is `BROWSER_CAPTURE` (tab audio on desktop, microphone on phones). `/watch`, `youtu.be` and `/channel/UC...`
+  links play (channel links through the `live_stream` embed); `@handle` links are refused with
+  `LIVE_YOUTUBE_HANDLE_UNSUPPORTED`.
+- Twitch is `SERVER_PULL` while the channel is live and the policy's `serverPullPlatforms` lists `TWITCH` (default): the
+  server reads the public playlist itself (`ServerPullResolverService`), one `PUBLIC` run for every viewer. Offline or a
+  forbidden token → private `BROWSER_CAPTURE` with `SERVER_PULL_UNAVAILABLE`. Resolve does a token call plus one
+  playlist fetch (5 s timeouts each). The worker's pin is a host-suffix list (`ttvnw.net`, `live-video.net`). Device
+  audio for a `SERVER_PULL` session is `422`. YouTube and Kick are never pulled (ADR-221 batch 3). Turning it off:
+  publish a policy with `serverPullPlatforms: []`.
 - Paid blocks are priced by the policy and sent to auth-service as `fixedCostMicroUsd` (auth `FIXED_PRICE_SURFACES`).
 - PDF export calls file-generation `POST /api/v1/internal/file-generations/render-pdf` (stateless, nothing stored).
 - The staff plan slug `admin` must have a row in the policy `plans` map, or staff fall to `defaultPlan` (0 free seconds).
@@ -112,7 +119,8 @@ table is empty, so an administrator's later versions are never overwritten.
 
 Other values: `killSwitch` false, `featureEnabled` true, `visionBilling` `ACTUAL_COST`, `graceSeconds` 60,
 `maxActiveStreams` 20, `maxSessionsPerUser` 3, `sessionsPerUserPerHour` 30, `dailyBudgetMicroUsd` 20000000,
-`budgetSoftStopPercent` 80, empty summary and vision model chains (set by the admin before launch).
+`budgetSoftStopPercent` 80, `serverPullPlatforms` `['TWITCH']` (a version saved before 2026-11-23 reads as
+`['TWITCH']`), empty summary and vision model chains (set by the admin before launch).
 
 ## Upgrading an existing install
 

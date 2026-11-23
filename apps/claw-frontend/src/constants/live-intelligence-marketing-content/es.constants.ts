@@ -13,7 +13,7 @@ export const ES_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   whatParagraphs: [
     'Una transmisión en vivo es difícil de seguir cuando es larga, rápida o está en un idioma que no hablas. Live Intelligence se coloca junto al vídeo y toma las notas: subtítulos traducidos a tu idioma, un resumen continuo y una lista de momentos clave, para que puedas apartar la vista sin perder el hilo.',
     'Todo ocurre en una ventana dentro de ClawAI: la transmisión y el análisis están en una sola pantalla. Antes de empezar eliges el idioma de los subtítulos y un modo de análisis, y puedes pausar, reanudar y avanzar o retroceder donde la transmisión lo permita. Al pausar, la emisión se congela y la facturación se detiene.',
-    'Muchas personas pueden ver la misma transmisión sin pagar muchas veces el mismo trabajo. ClawAI procesa una transmisión una sola vez y comparte ese análisis con todos los espectadores. El análisis que realmente viste se guarda en tu historial y lo conservas hasta que lo borres.',
+    'Muchas personas pueden ver la misma transmisión sin pagar muchas veces el mismo trabajo. Cuando ClawAI analiza una transmisión en sus propios servidores, como un canal de Twitch en directo o un enlace HLS, la procesa una sola vez y comparte ese análisis con todos los espectadores. El análisis que realmente viste se guarda en tu historial y lo conservas hasta que lo borres.',
   ],
   stepsTitle: 'Cómo funciona, en cinco pasos',
   stepsIntro:
@@ -25,7 +25,7 @@ export const ES_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     },
     {
       title: 'Elige idioma y modo',
-      body: 'Elige el idioma de subtítulos y resúmenes y uno de tres modos: Audio, Audio + Visión o Smart Auto. Antes de empezar confirmas que tienes derecho a analizar la transmisión.',
+      body: 'Elige el idioma de subtítulos y resúmenes y uno de tres modos: Audio, Audio + Visión o Smart Auto. Con un enlace HLS confirmas que tienes derecho a analizarlo; con YouTube, Kick o Facebook aceptas que ClawAI escuche a través de tu dispositivo.',
     },
     {
       title: 'Mira con subtítulos, tarjetas y momentos clave',
@@ -72,7 +72,7 @@ export const ES_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     },
     {
       title: 'Procesamiento compartido',
-      body: 'Muchos espectadores, un solo análisis. La misma transmisión se procesa una vez y se comparte, así el trabajo y el coste no se multiplican con la audiencia.',
+      body: 'Muchos espectadores, un solo análisis. Un canal de Twitch en directo o una transmisión HLS se procesa una vez en los servidores de ClawAI y se comparte con todos los que la ven, en cualquier dispositivo, móviles incluidos. El análisis hecho con el audio de tu propio dispositivo es solo tuyo.',
     },
   ],
   modesTitle: 'Tres modos de análisis',
@@ -97,12 +97,12 @@ export const ES_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     'Preferimos contarte los límites ahora que dejar que los descubras en pleno directo.',
   sources: [
     {
-      title: 'El análisis con IA funciona en transmisiones HLS',
-      body: 'Live Intelligence analiza transmisiones HLS en vivo que tienes derecho a analizar. Al empezar, confirmas que es así.',
+      title: '15 plataformas, además de enlaces HLS',
+      body: 'ClawAI reconoce 15 plataformas de directos. Un canal de Twitch en directo se analiza en los servidores de ClawAI, sin compartir nada y en cualquier dispositivo; si el canal está desconectado, se usa el audio de tu dispositivo. TikTok LIVE, Instagram Live, Rumble, BIGO LIVE, LinkedIn Live, Telegram, Bilibili, CHZZK, SOOP y Nimo TV se abren en la propia plataforma («Ver en …»), sin IA. Discord Go Live no es compatible porque no tiene enlace público. Los enlaces HLS que tienes derecho a analizar siguen funcionando; lo confirmas al empezar.',
     },
     {
-      title: 'Los enlaces de YouTube se reproducen, pero no se analizan',
-      body: 'Puedes pegar un enlace de YouTube y verlo dentro de ClawAI, pero no hay análisis con IA para transmisiones de YouTube. Las condiciones de YouTube no permiten capturar su audio ni sus subtítulos, así que ClawAI no lo hace y la ventana lo indica.',
+      title: 'YouTube, Kick y Facebook: IA desde tu propio dispositivo',
+      body: 'Se reproducen en su reproductor oficial y, si das tu permiso, la IA escucha el audio de tu dispositivo. En un ordenador compartes el audio de la pestaña en Chrome o Edge («Analizar con mi navegador»); en un móvil, el micrófono oye la transmisión por el altavoz («Analizar con el micrófono»). Solo se envía audio, para transcribirlo, así que se usa el modo Audio. El chat en directo aparece para vídeos de YouTube, Twitch y Kick; las demás plataformas tienen un enlace «Abrir el chat».',
     },
     {
       title: 'Los subtítulos llegan con unos segundos de retraso',
@@ -125,12 +125,12 @@ export const ES_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     {
       question: '¿Live Intelligence funciona con transmisiones en vivo de YouTube?',
       answer:
-        'Puedes ver un enlace de YouTube dentro de ClawAI, pero no hay análisis con IA. Las condiciones de YouTube no permiten capturar su audio ni sus subtítulos, así que no hay subtítulos, resúmenes ni momentos clave para YouTube.',
+        'Sí. Una transmisión de YouTube se reproduce en su reproductor oficial y la IA trabaja con el audio de tu propio dispositivo cuando das tu permiso: en un ordenador compartes el audio de la pestaña en Chrome o Edge, y en un móvil el micrófono oye la transmisión por el altavoz. Solo se envía audio, para transcribirlo, y los subtítulos siguen llegando unos segundos después de la voz.',
     },
     {
       question: '¿Qué transmisiones puede analizar?',
       answer:
-        'Transmisiones HLS en vivo que tienes derecho a analizar. Lo confirmas al empezar. Una transmisión que el servicio no puede leer se notifica como no compatible, sin fallar en silencio.',
+        'Canales de Twitch en directo, analizados en los servidores de ClawAI en cualquier dispositivo; YouTube, Kick y Facebook, con el audio de tu propio dispositivo; y transmisiones HLS en vivo que tienes derecho a analizar, algo que confirmas al empezar. Otras diez plataformas se abren en la propia plataforma, sin IA. Una transmisión que el servicio no puede leer se notifica como no compatible, sin fallar en silencio.',
     },
     {
       question: '¿Los subtítulos son en tiempo real?',
@@ -165,5 +165,5 @@ export const ES_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   ],
   closingTitle: 'Sigue la próxima transmisión sin ver cada minuto',
   closingBody:
-    'Pega un enlace HLS que tengas derecho a analizar, elige tu idioma y empieza. Tus minutos gratuitos te esperan.',
+    'Pega un enlace de Twitch, YouTube, Kick o Facebook, o un enlace HLS que tengas derecho a analizar, elige tu idioma y empieza. Tus minutos gratuitos te esperan.',
 };

@@ -85,6 +85,8 @@ export enum LiveCapability {
   LINK_ONLY = 'LINK_ONLY',
   /** Plays in an embed; AI runs on the tab audio the viewer's own browser shares. */
   BROWSER_CAPTURE = 'BROWSER_CAPTURE',
+  /** Plays in an embed; ClawAI's server reads the stream itself and shares the analysis with every viewer. */
+  SERVER_PULL = 'SERVER_PULL',
 }
 
 export enum LiveMode {
@@ -138,10 +140,18 @@ export enum LiveCaptureState {
   ERROR = 'ERROR',
 }
 
+/** Where browser capture takes its audio: this tab (desktop) or the microphone (phones). */
+export enum LiveCaptureSource {
+  TAB = 'TAB',
+  MICROPHONE = 'MICROPHONE',
+}
+
 /** Why a capture failed; each has its own message. */
 export enum LiveCaptureError {
   NO_AUDIO = 'NO_AUDIO',
   DENIED = 'DENIED',
+  /** The microphone permission is blocked: unlike a cancelled tab picker, the viewer must act. */
+  MIC_DENIED = 'MIC_DENIED',
   UNSUPPORTED = 'UNSUPPORTED',
   UPLOAD = 'UPLOAD',
 }
@@ -181,4 +191,5 @@ export enum LivePlanField {
 export enum LivePolicyFlag {
   FEATURE_ENABLED = 'featureEnabled',
   KILL_SWITCH = 'killSwitch',
+  SERVER_PULL_TWITCH = 'serverPullTwitch',
 }
