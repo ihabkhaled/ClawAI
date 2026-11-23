@@ -19,6 +19,7 @@ import {
   TWITCH_USHER_RANDOM_MAX,
   YTDLP_ARGS,
   YTDLP_BINARY,
+  YTDLP_MAX_CONCURRENT,
   YTDLP_MAX_OUTPUT_BYTES,
   YTDLP_TIMEOUT_MS,
 } from '../constants/server-pull.constants';
@@ -42,6 +43,7 @@ import { SourceUrlGuardService } from './source-url-guard.service';
 @Injectable()
 export class ServerPullResolverService {
   private readonly cache = new Map<string, { at: number; pull: Promise<ResolvedPull | null> }>();
+  private ytdlpRunning = 0;
 
   constructor(
     private readonly guard: SourceUrlGuardService,
@@ -93,11 +95,18 @@ export class ServerPullResolverService {
     }
   }
 
-  /** yt-dlp prints the chosen HLS format's protocol and URL; no shell, argv only, bounded. */
+  /**
+   * yt-dlp prints the chosen HLS format's protocol and URL; no shell, argv only, bounded in time,
+   * output and concurrency (a full slot table answers null at once: the caller falls back).
+   */
   private async resolveWithYtdlp(watchUrl: string): Promise<ResolvedPull | null> {
+    if (this.ytdlpRunning >= YTDLP_MAX_CONCURRENT) return null;
+    this.ytdlpRunning += 1;
     const result = await runBoundedProcess(YTDLP_BINARY, [...YTDLP_ARGS, '--', watchUrl], {
       timeoutMs: YTDLP_TIMEOUT_MS,
       maxOutputBytes: YTDLP_MAX_OUTPUT_BYTES,
+    }).finally(() => {
+      this.ytdlpRunning -= 1;
     });
     const playlist =
       result.exitCode === 0 ? parseYtdlpStreamLine(result.stdout.toString('utf8')) : null;

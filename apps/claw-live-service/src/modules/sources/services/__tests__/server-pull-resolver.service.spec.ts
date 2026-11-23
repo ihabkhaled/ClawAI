@@ -139,4 +139,24 @@ describe('ServerPullResolverService', () => {
     runBoundedProcess.mockResolvedValueOnce(ytdlpLine('', 1));
     await expect(service.probe(LivePlatform.RUMBLE, youtube)).resolves.toBe(false);
   });
+
+  it('runs at most 4 yt-dlp lookups at once and answers null (fallback) past that', async () => {
+    let release: () => void = () => {};
+    const gate = new Promise<void>((done) => {
+      release = done;
+    });
+    runBoundedProcess.mockImplementation(async () => {
+      await gate;
+      return ytdlpLine('m3u8 https://a.live-video.net/p.m3u8');
+    });
+    const pending = ['a', 'b', 'c', 'd'].map((id) =>
+      service.resolve(LivePlatform.KICK, { ...youtube, id }),
+    );
+    await expect(service.resolve(LivePlatform.KICK, { ...youtube, id: 'e' })).resolves.toBeNull();
+    expect(runBoundedProcess).toHaveBeenCalledTimes(4);
+    release();
+    await Promise.all(pending);
+    await service.resolve(LivePlatform.KICK, { ...youtube, id: 'f' });
+    expect(runBoundedProcess).toHaveBeenCalledTimes(5);
+  });
 });

@@ -72,7 +72,8 @@ Full request and response shapes: [architecture section 9](../03-architecture/li
   A live link-only platform (TikTok, Rumble, …) becomes `SERVER_PULL` with no embed; offline it stays `LINK_ONLY`. Offline or a
   forbidden token → private `BROWSER_CAPTURE` with `SERVER_PULL_UNAVAILABLE`. Resolve does a token call plus one
   playlist fetch (5 s timeouts each). The worker's pin is a host-suffix list (`ttvnw.net`, `live-video.net`). Device
-  audio for a `SERVER_PULL` session is `422`. yt-dlp resolves in ~2 s, 30 s timeout, cached 60 s (ADR-221 batch 4).
+  audio for a `SERVER_PULL` session is `422`. yt-dlp resolves in ~2 s, 30 s timeout, cached 60 s, at most 4 at once per replica (more answer "not
+  readable" at once and fall back) (ADR-221 batch 4).
   Upgrading yt-dlp: change `YTDLP_VERSION` and `YTDLP_SHA256` together in both Dockerfiles. Turning it off: publish a
   policy with `serverPullPlatforms: []`.
 - Paid blocks are priced by the policy and sent to auth-service as `fixedCostMicroUsd` (auth `FIXED_PRICE_SURFACES`).

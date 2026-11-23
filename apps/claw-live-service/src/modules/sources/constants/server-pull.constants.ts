@@ -43,6 +43,8 @@ export const YTDLP_ARGS: readonly string[] = [
 ];
 export const YTDLP_TIMEOUT_MS = 30_000;
 export const YTDLP_MAX_OUTPUT_BYTES = 16 * 1024;
+/** yt-dlp runs at once per replica; past it a resolve fails fast to the capture/link fallback. */
+export const YTDLP_MAX_CONCURRENT = 4;
 /** A resolved stream URL is reused this long (resolve-time probe, then the worker's first poll). */
 export const SERVER_PULL_CACHE_TTL_MS = 60_000;
 export const SERVER_PULL_CACHE_MAX_ENTRIES = 256;

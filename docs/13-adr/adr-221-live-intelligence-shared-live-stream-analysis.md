@@ -133,6 +133,8 @@ YouTube grants caption or audio access, a streaming STT vendor is added, or the 
   probed; a live one is `SERVER_PULL` with no embed (the page shows "Watch on …" plus the analysis feed), an offline or
   unreadable one stays `LINK_ONLY`. YouTube, Kick, Facebook and offline Twitch fall back to `BROWSER_CAPTURE` with
   `SERVER_PULL_UNAVAILABLE`. Discord stays refused. Instagram Live has no yt-dlp live support and stays link-only.
+- At most 4 yt-dlp runs at once per replica (`YTDLP_MAX_CONCURRENT`); past that a resolve answers "not readable" at
+  once and the stream falls back (security review 2026-11-23: unbounded subprocess spawn).
 - A resolved URL is cached 60 s per stream (resolve-time probe and the worker's first poll spawn yt-dlp once); a token
   refresh passes `fresh` and bypasses the cache.
 - **Binary:** the standalone `yt-dlp_linux` release, pinned by version and SHA-256 in both Dockerfiles (`ARG
