@@ -13,7 +13,7 @@ export const PT_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   whatParagraphs: [
     'Uma transmissão ao vivo é difícil de acompanhar quando é longa, rápida ou está num idioma que você não fala. O Live Intelligence fica ao lado do vídeo e faz as anotações: legendas traduzidas para o seu idioma, um resumo contínuo e uma lista de destaques, para você poder desviar o olhar sem perder o fio.',
     'Tudo acontece numa janela dentro do ClawAI: a transmissão e a análise ficam na mesma tela. Antes de começar você escolhe o idioma das legendas e um modo de análise, e pode pausar, retomar e avançar ou voltar onde a transmissão permitir. Ao pausar, a transmissão congela e a cobrança para.',
-    'Muitas pessoas podem assistir à mesma transmissão sem pagar várias vezes pelo mesmo trabalho. Quando o ClawAI analisa uma transmissão nos próprios servidores, como um canal da Twitch ao vivo ou um link HLS, ele a processa uma única vez e compartilha a análise com todos os espectadores. A análise que você realmente assistiu é salva no seu histórico e fica lá até você apagá-la.',
+    'Muitas pessoas podem assistir à mesma transmissão sem pagar várias vezes pelo mesmo trabalho. Quando o ClawAI analisa uma transmissão nos próprios servidores, como uma transmissão ao vivo pública no YouTube, na Twitch, no TikTok LIVE ou em outra plataforma compatível, ou um link HLS, ele a processa uma única vez e compartilha a análise com todos os espectadores. A análise que você realmente assistiu é salva no seu histórico e fica lá até você apagá-la.',
   ],
   stepsTitle: 'Como funciona, em cinco passos',
   stepsIntro:
@@ -25,7 +25,7 @@ export const PT_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     },
     {
       title: 'Escolha idioma e modo',
-      body: 'Escolha o idioma das legendas e dos resumos e um de três modos: Áudio, Áudio + Visão ou Smart Auto. Para um link HLS, você confirma que tem direito de analisá-lo; para YouTube, Kick ou Facebook, você aceita que o ClawAI escute pelo seu dispositivo.',
+      body: 'Escolha o idioma das legendas e dos resumos e um de três modos: Áudio, Áudio + Visão ou Smart Auto. Para um link HLS, você confirma que tem direito de analisá-lo. Se os servidores do ClawAI não conseguirem ler uma transmissão do YouTube, da Twitch, do Kick ou do Facebook, você pode aceitar que o ClawAI escute pelo seu dispositivo.',
     },
     {
       title: 'Assista com legendas, cartões e destaques',
@@ -72,7 +72,7 @@ export const PT_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     },
     {
       title: 'Processamento compartilhado',
-      body: 'Muitos espectadores, uma análise. Um canal da Twitch ao vivo ou uma transmissão HLS é processado uma vez nos servidores do ClawAI e compartilhado com todos que estão assistindo, em qualquer dispositivo, inclusive no celular. A análise feita com o áudio do seu próprio dispositivo fica só com você.',
+      body: 'Muitos espectadores, uma análise. Uma transmissão ao vivo pública que os servidores do ClawAI conseguem ler, ou uma transmissão HLS, é processada uma vez nos servidores do ClawAI e compartilhada com todos que estão assistindo, em qualquer dispositivo, inclusive no celular. A análise feita com o áudio do seu próprio dispositivo fica só com você.',
     },
   ],
   modesTitle: 'Três modos de análise',
@@ -97,12 +97,12 @@ export const PT_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     'Preferimos contar os limites agora a deixar você descobri-los no meio da transmissão.',
   sources: [
     {
-      title: '15 plataformas, além de links HLS',
-      body: 'O ClawAI reconhece 15 plataformas de transmissão ao vivo. Um canal da Twitch ao vivo é analisado nos servidores do ClawAI, sem nada para compartilhar e em qualquer dispositivo; se o canal estiver offline, usa-se o áudio do seu dispositivo. TikTok LIVE, Instagram Live, Rumble, BIGO LIVE, LinkedIn Live, Telegram, Bilibili, CHZZK, SOOP e Nimo TV abrem na própria plataforma (“Assistir em …”), sem IA. O Discord Go Live não é compatível porque não tem link público. Links HLS que você tem direito de analisar continuam funcionando; você confirma isso ao iniciar.',
+      title: '15 plataformas, analisadas nos servidores do ClawAI',
+      body: 'O ClawAI reconhece 15 plataformas de transmissão ao vivo. Quando uma transmissão está ao vivo e é pública, e a plataforma permite, os servidores do ClawAI a leem por conta própria: YouTube, Twitch, Kick, Facebook, TikTok LIVE, Rumble, BIGO LIVE, Bilibili, CHZZK, SOOP, Nimo TV e outras. Não há nada para compartilhar, funciona em qualquer dispositivo, inclusive no celular, e uma única análise é compartilhada com todos os espectadores. O Instagram Live geralmente não pode ser lido pelo servidor. O Discord Go Live não é compatível porque não tem link público. Links HLS que você tem direito de analisar continuam funcionando; você confirma isso ao iniciar.',
     },
     {
-      title: 'YouTube, Kick e Facebook: IA a partir do seu dispositivo',
-      body: 'Eles tocam no player oficial e, com a sua permissão, a IA escuta o áudio do seu dispositivo. No computador, você compartilha o áudio da aba no Chrome ou no Edge (“Analisar com meu navegador”); no celular, o microfone ouve a transmissão pelo alto-falante (“Analisar com o microfone”). Só o áudio é enviado, para transcrição, por isso o modo usado é o Áudio. O chat ao vivo aparece para vídeos do YouTube, Twitch e Kick; as outras plataformas ganham um link “Abrir o chat”.',
+      title: 'Quando o servidor não consegue ler uma transmissão',
+      body: 'Nesse caso, YouTube, Twitch, Kick e Facebook tocam no player oficial e, com a sua permissão, a IA escuta o áudio do seu dispositivo: no computador, você compartilha o áudio da aba no Chrome ou no Edge (“Analisar com meu navegador”); no celular, o microfone ouve a transmissão pelo alto-falante (“Analisar com o microfone”). Só o áudio é enviado, para transcrição, por isso o modo usado é o Áudio. As outras plataformas abrem na própria plataforma (“Assistir em …”), sem IA. O chat ao vivo aparece para vídeos do YouTube, Twitch e Kick; as outras plataformas ganham um link “Abrir o chat”.',
     },
     {
       title: 'As legendas chegam com alguns segundos de atraso',
@@ -125,12 +125,12 @@ export const PT_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     {
       question: 'O Live Intelligence funciona com transmissões ao vivo do YouTube?',
       answer:
-        'Sim. Uma transmissão do YouTube toca no player oficial, e a IA trabalha com o áudio do seu próprio dispositivo depois da sua permissão: no computador, você compartilha o áudio da aba no Chrome ou no Edge; no celular, o microfone ouve a transmissão pelo alto-falante. Só o áudio é enviado, para transcrição, e as legendas continuam chegando alguns segundos depois da fala.',
+        'Sim, quando a transmissão está ao vivo, é pública e o YouTube permite: os servidores do ClawAI a leem, não há nada para compartilhar e funciona em qualquer dispositivo. Se o servidor não conseguir lê-la, a IA trabalha com o áudio do seu próprio dispositivo depois da sua permissão: no computador, você compartilha o áudio da aba no Chrome ou no Edge; no celular, o microfone ouve a transmissão pelo alto-falante. Nos dois casos, as legendas chegam alguns segundos depois da fala.',
     },
     {
       question: 'Quais transmissões ele pode analisar?',
       answer:
-        'Canais da Twitch ao vivo, analisados nos servidores do ClawAI em qualquer dispositivo; YouTube, Kick e Facebook, com o áudio do seu próprio dispositivo; e transmissões HLS ao vivo que você tem direito de analisar, o que você confirma ao iniciar. Outras dez plataformas abrem na própria plataforma, sem IA. Uma transmissão que o serviço não consegue ler é informada como não compatível, sem falhar em silêncio.',
+        'Transmissões ao vivo públicas no YouTube, Twitch, Kick, Facebook, TikTok LIVE, Rumble, BIGO LIVE, Bilibili, CHZZK, SOOP, Nimo TV e outras plataformas compatíveis, analisadas nos servidores do ClawAI em qualquer dispositivo quando a plataforma permite; e transmissões HLS ao vivo que você tem direito de analisar, o que você confirma ao iniciar. Se o servidor não conseguir ler uma transmissão, YouTube, Twitch, Kick e Facebook passam a usar o áudio do seu próprio dispositivo, e as outras plataformas abrem na própria plataforma, sem IA. O Instagram Live geralmente não pode ser lido pelo servidor, e o Discord não é compatível.',
     },
     {
       question: 'As legendas são em tempo real?',
@@ -165,5 +165,5 @@ export const PT_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   ],
   closingTitle: 'Acompanhe a próxima transmissão sem assistir a cada minuto',
   closingBody:
-    'Cole um link da Twitch, do YouTube, do Kick ou do Facebook, ou um link HLS que você tem direito de analisar, escolha seu idioma e comece. Seus minutos grátis estão esperando.',
+    'Cole o link de uma transmissão ao vivo no YouTube, na Twitch, no TikTok LIVE ou em outra plataforma compatível, ou um link HLS que você tem direito de analisar, escolha seu idioma e comece. Seus minutos grátis estão esperando.',
 };

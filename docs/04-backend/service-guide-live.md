@@ -66,12 +66,15 @@ Full request and response shapes: [architecture section 9](../03-architecture/li
 - YouTube is `BROWSER_CAPTURE` (tab audio on desktop, microphone on phones). `/watch`, `youtu.be` and `/channel/UC...`
   links play (channel links through the `live_stream` embed); `@handle` links are refused with
   `LIVE_YOUTUBE_HANDLE_UNSUPPORTED`.
-- Twitch is `SERVER_PULL` while the channel is live, `LIVE_TWITCH_CLIENT_ID` is set and the policy's `serverPullPlatforms` lists `TWITCH` (default): the
-  server reads the public playlist itself (`ServerPullResolverService`), one `PUBLIC` run for every viewer. Offline or a
+- Every platform except Discord is `SERVER_PULL` while the stream is live and the policy's `serverPullPlatforms`
+  lists it (default: all): the server reads the public playlist itself (`ServerPullResolverService`; Twitch natively when
+  `LIVE_TWITCH_CLIENT_ID` is set, everything else through the pinned `yt-dlp` binary), one `PUBLIC` run for every viewer.
+  A live link-only platform (TikTok, Rumble, …) becomes `SERVER_PULL` with no embed; offline it stays `LINK_ONLY`. Offline or a
   forbidden token → private `BROWSER_CAPTURE` with `SERVER_PULL_UNAVAILABLE`. Resolve does a token call plus one
   playlist fetch (5 s timeouts each). The worker's pin is a host-suffix list (`ttvnw.net`, `live-video.net`). Device
-  audio for a `SERVER_PULL` session is `422`. YouTube and Kick are never pulled (ADR-221 batch 3). Turning it off:
-  publish a policy with `serverPullPlatforms: []`.
+  audio for a `SERVER_PULL` session is `422`. yt-dlp resolves in ~2 s, 30 s timeout, cached 60 s (ADR-221 batch 4).
+  Upgrading yt-dlp: change `YTDLP_VERSION` and `YTDLP_SHA256` together in both Dockerfiles. Turning it off: publish a
+  policy with `serverPullPlatforms: []`.
 - Paid blocks are priced by the policy and sent to auth-service as `fixedCostMicroUsd` (auth `FIXED_PRICE_SURFACES`).
 - PDF export calls file-generation `POST /api/v1/internal/file-generations/render-pdf` (stateless, nothing stored).
 - The staff plan slug `admin` must have a row in the policy `plans` map, or staff fall to `defaultPlan` (0 free seconds).
@@ -94,7 +97,7 @@ Full request and response shapes: [architecture section 9](../03-architecture/li
   The prod block sets `SEED_ON_START=true` so the entrypoint seeds policy version 1.
 - Images: both Dockerfiles install ffmpeg (Debian package) and build every `@claw/shared-*` package the service declares.
 - Environment: `LIVE_SERVICE_PORT`, `LIVE_SERVICE_URL`, `LIVE_DATABASE_URL`, `PG_LIVE_*`, `LIVE_ALLOW_HTTP_SOURCES`,
-  `LIVE_WORKER_MAX_CONCURRENCY`, `LIVE_TWITCH_CLIENT_ID` (Twitch server pull; empty = off), and the shared `REDIS_URL`, `RABBITMQ_URL`, `AUTH_SERVICE_URL`, `CHAT_SERVICE_URL`,
+  `LIVE_WORKER_MAX_CONCURRENCY`, `LIVE_TWITCH_CLIENT_ID` (Twitch's native server pull; empty = Twitch goes through yt-dlp), and the shared `REDIS_URL`, `RABBITMQ_URL`, `AUTH_SERVICE_URL`, `CHAT_SERVICE_URL`,
   `CONNECTOR_SERVICE_URL`, `FILE_SERVICE_URL`, `FILE_GENERATION_SERVICE_URL`
   (see [environment-variables](../06-data/environment-variables.md)).
 - Gateway: `location /api/v1/live` plus two regex locations in `infra/nginx/locations.conf` and the distributed template

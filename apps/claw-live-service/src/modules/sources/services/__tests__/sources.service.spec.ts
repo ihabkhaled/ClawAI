@@ -184,9 +184,11 @@ describe('SourcesService', () => {
 
   describe('server pull', () => {
     const enable = (live: boolean): void => {
-      serverPull.supports.mockImplementation((platform: string) => platform === 'TWITCH');
+      serverPull.supports.mockImplementation((platform: string) => platform !== 'DISCORD');
       serverPull.probe.mockResolvedValue(live);
-      policy.active.mockResolvedValue({ config: { serverPullPlatforms: ['TWITCH'] } });
+      policy.active.mockResolvedValue({
+        config: { serverPullPlatforms: ['TWITCH', 'YOUTUBE', 'KICK', 'TIKTOK'] },
+      });
     };
 
     it('resolves a live Twitch channel as SERVER_PULL, PUBLIC so every viewer shares one run', async () => {
@@ -200,7 +202,10 @@ describe('SourcesService', () => {
         watchUrl: 'https://www.twitch.tv/xqc',
         embedNeedsParent: true,
       });
-      expect(serverPull.probe).toHaveBeenCalledWith(LivePlatform.TWITCH, 'xqc');
+      expect(serverPull.probe).toHaveBeenCalledWith(
+        LivePlatform.TWITCH,
+        expect.objectContaining({ id: 'xqc', watchUrl: 'https://www.twitch.tv/xqc' }),
+      );
     });
 
     it('falls back to private BROWSER_CAPTURE with SERVER_PULL_UNAVAILABLE when the stream cannot be read', async () => {
@@ -223,13 +228,40 @@ describe('SourcesService', () => {
       expect(serverPull.probe).not.toHaveBeenCalled();
     });
 
-    it('never probes YouTube or Kick (no resolver), even if a policy listed them', async () => {
+    it('pulls YouTube, Kick and a link-only platform (TikTok) on the server when live', async () => {
       enable(true);
       const youtube = await service.resolve('https://youtu.be/dQw4w9WgXcQ', 'u1');
       const kick = await service.resolve('https://kick.com/xqc', 'u1');
-      expect(youtube.capability).toBe(LiveCapability.BROWSER_CAPTURE);
-      expect(kick.capability).toBe(LiveCapability.BROWSER_CAPTURE);
+      const tiktok = await service.resolve('https://www.tiktok.com/@someone/live', 'u1');
+      for (const result of [youtube, kick, tiktok]) {
+        expect(result).toMatchObject({
+          capability: LiveCapability.SERVER_PULL,
+          accessScope: 'PUBLIC',
+          reasonCode: 'SERVER_PULL_AVAILABLE',
+        });
+      }
+      expect(tiktok.embedUrl).toBeNull();
+    });
+
+    it('keeps an offline link-only platform link-only, and never probes Discord', async () => {
+      enable(false);
+      const tiktok = await service.resolve('https://www.tiktok.com/@someone/live', 'u1');
+      expect(tiktok).toMatchObject({
+        capability: LiveCapability.LINK_ONLY,
+        reasonCode: 'LINK_ONLY_PLATFORM',
+      });
+      serverPull.probe.mockClear();
+      await expect(service.resolve('https://discord.com/channels/1/2', 'u1')).rejects.toBeDefined();
       expect(serverPull.probe).not.toHaveBeenCalled();
+    });
+
+    it('does not pull a platform the policy leaves out', async () => {
+      enable(true);
+      const facebook = await service.resolve(
+        'https://www.facebook.com/NASA/videos/123456789012',
+        'u1',
+      );
+      expect(facebook.capability).toBe(LiveCapability.BROWSER_CAPTURE);
     });
   });
 });

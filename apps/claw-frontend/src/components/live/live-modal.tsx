@@ -49,7 +49,7 @@ export function LiveModal({ input, onClose }: LiveModalProps): React.ReactElemen
             <div className="flex min-w-0 flex-col gap-3 md:w-3/5">
               <LivePlayer
                 embed={modal.embed}
-                isLinkOnly={modal.isLinkOnly}
+                isLinkOnly={modal.isPlayerLinkOut}
                 hlsSrc={modal.hlsSrc}
                 player={modal.player}
                 caption={modal.caption}

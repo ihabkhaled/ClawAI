@@ -12,4 +12,9 @@ export enum TranscriptionResponseIssue {
   TRUNCATED = 'TRUNCATED',
   /** A safety/recitation/policy block (`finishReason` or `promptFeedback.blockReason`). Terminal. */
   BLOCKED = 'BLOCKED',
+  /**
+   * A text-only model answered in words that it cannot hear audio ("I'm sorry, but I cannot process audio
+   * files"). Never a transcript: the walk moves to the next model, as for a modality 400.
+   */
+  REFUSAL = 'REFUSAL',
 }

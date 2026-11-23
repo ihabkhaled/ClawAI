@@ -188,6 +188,23 @@ export const TRANSCRIPTION_QUOTA_EXHAUSTED_CODES: readonly string[] = ['insuffic
 
 /** Thrown by the manager when a provider answers with whitespace. */
 export const TRANSCRIPTION_EMPTY_TRANSCRIPT_ERROR = 'The provider returned an empty transcript.';
+export const TRANSCRIPTION_REFUSAL_ERROR = 'The model answered that it cannot process audio.';
+
+/** A refusal is one or two sentences; a longer answer is speech, however it reads. */
+export const TRANSCRIPTION_REFUSAL_MAX_CHARS = 400;
+/**
+ * How a text-only model says it cannot hear audio. Each pattern names audio as a FILE or INPUT, or the
+ * model's own nature, so a speaker saying "I can't hear the audio" is never mistaken for one.
+ */
+export const TRANSCRIPTION_REFUSAL_PATTERNS: readonly RegExp[] = [
+  /\b(?:cannot|can't|unable to|not able to) (?:process|transcribe|listen to|analyze|analyse|access|interpret) (?:the |this |your )?(?:audio|sound) (?:file|recording|content|input|clip|data)/iu,
+  /\btext-(?:based|only) (?:interaction|model|assistant|input)/iu,
+  /\bas an ai (?:language )?model\b/iu,
+  /\b(?:cannot|can't|unable to) (?:transcribe|process) audio\b/iu,
+];
+/** Whitespace collapsed and curly apostrophes made straight before the patterns run. */
+export const TRANSCRIPTION_REFUSAL_WHITESPACE = /\s+/gu;
+export const TRANSCRIPTION_REFUSAL_CURLY_APOSTROPHE = /\u2019/gu;
 
 // ---- Gemini generation settings and response reading (2026-09-25) ----
 

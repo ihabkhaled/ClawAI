@@ -7,6 +7,7 @@ import {
 
 import { LivePolicyAdminRepository } from '../../repositories/live-policy-admin.repository';
 import { LivePolicyAdminService } from '../live-policy-admin.service';
+import { SERVER_PULL_PLATFORMS } from '../../../sources/constants/server-pull.constants';
 
 const validConfig = {
   featureEnabled: true,
@@ -87,13 +88,18 @@ describe('LivePolicyAdminService', () => {
     expect(policy.invalidate).not.toHaveBeenCalled();
   });
 
-  it('defaults server pull to Twitch for a version saved before the field, and refuses a platform with no resolver', async () => {
+  it('defaults server pull to every platform for a version saved before the field, and refuses Discord', async () => {
     const { service, repository } = build();
     const { serverPullPlatforms: _omitted, ...legacy } = validConfig;
     await service.publish('admin1', legacy, undefined);
-    expect(repository.createAndActivate).toHaveBeenCalledWith(validConfig, null, 'admin1');
+    expect(repository.createAndActivate).toHaveBeenCalledWith(
+      { ...validConfig, serverPullPlatforms: [...SERVER_PULL_PLATFORMS] },
+      null,
+      'admin1',
+    );
+    await service.publish('admin1', { ...validConfig, serverPullPlatforms: ['KICK'] }, undefined);
     await expect(
-      service.publish('admin1', { ...validConfig, serverPullPlatforms: ['KICK'] }, undefined),
+      service.publish('admin1', { ...validConfig, serverPullPlatforms: ['DISCORD'] }, undefined),
     ).rejects.toBeInstanceOf(BadRequestException);
     await service.publish('admin1', { ...validConfig, serverPullPlatforms: [] }, undefined);
     expect(repository.createAndActivate).toHaveBeenLastCalledWith(

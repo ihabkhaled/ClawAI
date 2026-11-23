@@ -48,8 +48,11 @@ assumptions: the owner should confirm or change them in the admin page.
 - **Server pull ("server pull 100%"):** a live **Twitch** channel is analyzed by ClawAI's servers. Nothing to share, works
   on any device, and every viewer of that channel shares one analysis. The owner accepted Twitch's terms risk. Admins can
   turn it off in the policy.
-- **Not possible without breaking a protection, so not built:** server pull for YouTube (needs impersonating another
-  client to get past YouTube's checks) and Kick (blocks server requests). Both stay tab or microphone capture.
+- **Superseded the same day (batch 4, owner decision "for all providers"):** server pull now covers YouTube, Kick,
+  Facebook, TikTok LIVE, Rumble, BIGO, Bilibili, CHZZK, SOOP, Nimo, LinkedIn and Telegram too, through yt-dlp; the owner
+  accepted the terms risk. A live stream is analyzed on the server for every viewer; when the server cannot read it,
+  YouTube/Kick/Facebook fall back to tab or microphone capture and the others to "Watch on …". Discord stays refused;
+  Instagram Live usually cannot be read.
 - An offline Twitch channel falls back to capture and says the server could not read it.
 
 ## Acceptance (user journey)

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { LIVE_SERVER_PULL_PLATFORMS } from '@/constants/live.constants';
 import { LivePlatform } from '@/enums/live.enum';
 import type { LivePolicyConfig } from '@/types/live-admin.types';
 import {
@@ -82,22 +83,23 @@ describe('policy form round trip', () => {
   });
 });
 
-describe('server pull platforms', () => {
-  it('round-trips Twitch on and off', () => {
+describe('server pull switch', () => {
+  it('on stores every server-pull platform (all but Discord); off stores none', () => {
     const on = livePolicyToFormValues({ ...CONFIG, serverPullPlatforms: [LivePlatform.TWITCH] });
-    expect(on.serverPullTwitch).toBe(true);
-    expect(liveFormValuesToPolicy(on, CONFIG).config?.serverPullPlatforms).toEqual([
-      LivePlatform.TWITCH,
-    ]);
+    expect(on.serverPull).toBe(true);
+    const stored = liveFormValuesToPolicy(on, CONFIG).config?.serverPullPlatforms;
+    expect(stored).toEqual([...LIVE_SERVER_PULL_PLATFORMS]);
+    expect(stored).toHaveLength(Object.values(LivePlatform).length - 1);
+    expect(stored).not.toContain(LivePlatform.DISCORD);
     const off = livePolicyToFormValues({ ...CONFIG, serverPullPlatforms: [] });
-    expect(off.serverPullTwitch).toBe(false);
+    expect(off.serverPull).toBe(false);
     expect(liveFormValuesToPolicy(off, CONFIG).config?.serverPullPlatforms).toEqual([]);
   });
 
-  it('treats a version saved before the field existed as the default (Twitch on)', () => {
+  it('treats a version saved before the field existed as the default (on)', () => {
     const values = livePolicyToFormValues(CONFIG);
-    expect(values.serverPullTwitch).toBe(true);
-    values.serverPullTwitch = false;
+    expect(values.serverPull).toBe(true);
+    values.serverPull = false;
     expect(liveFormValuesToPolicy(values, CONFIG).config?.serverPullPlatforms).toEqual([]);
   });
 });

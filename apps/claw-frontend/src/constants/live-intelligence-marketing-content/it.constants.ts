@@ -13,7 +13,7 @@ export const IT_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   whatParagraphs: [
     'Una diretta è difficile da seguire quando è lunga, veloce o in una lingua che non parli. Live Intelligence sta accanto al video e prende appunti: sottotitoli tradotti nella tua lingua, un riepilogo continuo e un elenco di momenti salienti, così puoi distogliere lo sguardo senza perdere il filo.',
     'Tutto avviene in una finestra dentro ClawAI: diretta e analisi sono sullo stesso schermo. Prima di iniziare scegli la lingua dei sottotitoli e una modalità di analisi, e puoi mettere in pausa, riprendere e spostarti dove la diretta lo permette. In pausa il flusso si congela e la fatturazione si ferma.',
-    'Molte persone possono guardare la stessa diretta senza pagare più volte lo stesso lavoro. Quando ClawAI analizza una diretta sui propri server, come un canale Twitch in diretta o un link HLS, la elabora una sola volta e condivide l’analisi con tutti gli spettatori. L’analisi che hai davvero guardato viene salvata nella tua cronologia e resta finché non la elimini.',
+    'Molte persone possono guardare la stessa diretta senza pagare più volte lo stesso lavoro. Quando ClawAI analizza una diretta sui propri server, come una diretta pubblica su YouTube, Twitch, TikTok LIVE o un’altra piattaforma supportata, o un link HLS, la elabora una sola volta e condivide l’analisi con tutti gli spettatori. L’analisi che hai davvero guardato viene salvata nella tua cronologia e resta finché non la elimini.',
   ],
   stepsTitle: 'Come funziona, in cinque passaggi',
   stepsIntro:
@@ -25,7 +25,7 @@ export const IT_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     },
     {
       title: 'Scegli lingua e modalità',
-      body: 'Scegli la lingua di sottotitoli e riassunti e una delle tre modalità: Audio, Audio + Visione o Smart Auto. Per un link HLS confermi di avere il diritto di analizzarlo; per YouTube, Kick o Facebook accetti che ClawAI ascolti tramite il tuo dispositivo.',
+      body: 'Scegli la lingua di sottotitoli e riassunti e una delle tre modalità: Audio, Audio + Visione o Smart Auto. Per un link HLS confermi di avere il diritto di analizzarlo. Se i server di ClawAI non riescono a leggere una diretta di YouTube, Twitch, Kick o Facebook, puoi accettare che ClawAI ascolti invece tramite il tuo dispositivo.',
     },
     {
       title: 'Guarda con sottotitoli, schede e momenti salienti',
@@ -72,7 +72,7 @@ export const IT_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     },
     {
       title: 'Elaborazione condivisa',
-      body: 'Molti spettatori, una sola analisi. Un canale Twitch in diretta o uno stream HLS viene elaborato una volta sui server di ClawAI e condiviso con chiunque lo guardi, su qualsiasi dispositivo, telefono compreso. L’analisi ricavata dall’audio del tuo dispositivo resta privata.',
+      body: 'Molti spettatori, una sola analisi. Una diretta pubblica che i server di ClawAI riescono a leggere, o uno stream HLS, viene elaborata una volta sui server di ClawAI e condivisa con chiunque la guardi, su qualsiasi dispositivo, telefono compreso. L’analisi ricavata dall’audio del tuo dispositivo resta privata.',
     },
   ],
   modesTitle: 'Tre modalità di analisi',
@@ -96,12 +96,12 @@ export const IT_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   sourcesIntro: 'Preferiamo dirti i limiti adesso piuttosto che farteli scoprire a metà diretta.',
   sources: [
     {
-      title: '15 piattaforme, più i link HLS',
-      body: 'ClawAI riconosce 15 piattaforme di dirette. Un canale Twitch in diretta viene analizzato sui server di ClawAI, senza dover condividere nulla e su qualsiasi dispositivo; se il canale è offline si usa l’audio del tuo dispositivo. TikTok LIVE, Instagram Live, Rumble, BIGO LIVE, LinkedIn Live, Telegram, Bilibili, CHZZK, SOOP e Nimo TV si aprono sulla piattaforma stessa («Guarda su …»), senza IA. Discord Go Live non è supportato perché non ha un link pubblico. I link HLS che hai il diritto di analizzare funzionano ancora; lo confermi all’avvio.',
+      title: '15 piattaforme, analizzate sui server di ClawAI',
+      body: 'ClawAI riconosce 15 piattaforme di dirette. Quando una diretta è in corso e pubblica, e la piattaforma lo consente, i server di ClawAI la leggono da soli: YouTube, Twitch, Kick, Facebook, TikTok LIVE, Rumble, BIGO LIVE, Bilibili, CHZZK, SOOP, Nimo TV e altre. Non devi condividere nulla, funziona su qualsiasi dispositivo, telefono compreso, e una sola analisi viene condivisa con tutti gli spettatori. Instagram Live di solito non può essere letto dal server. Discord Go Live non è supportato perché non ha un link pubblico. I link HLS che hai il diritto di analizzare funzionano ancora; lo confermi all’avvio.',
     },
     {
-      title: 'YouTube, Kick e Facebook: IA dal tuo dispositivo',
-      body: 'Si guardano nel loro player ufficiale e, dopo il tuo consenso, l’IA ascolta l’audio del tuo dispositivo. Sul computer condividi l’audio della scheda in Chrome o Edge («Analizza con il mio browser»); sul telefono il microfono sente la diretta dall’altoparlante («Analizza con il microfono»). Viene inviato solo l’audio, per la trascrizione, quindi si usa la modalità Audio. La chat dal vivo compare per i video YouTube, Twitch e Kick; le altre piattaforme hanno un link «Apri la chat».',
+      title: 'Quando il server non riesce a leggere una diretta',
+      body: 'In quel caso YouTube, Twitch, Kick e Facebook si guardano nel loro player ufficiale e, dopo il tuo consenso, l’IA ascolta l’audio del tuo dispositivo: sul computer condividi l’audio della scheda in Chrome o Edge («Analizza con il mio browser»); sul telefono il microfono sente la diretta dall’altoparlante («Analizza con il microfono»). Viene inviato solo l’audio, per la trascrizione, quindi si usa la modalità Audio. Le altre piattaforme si aprono sulla piattaforma stessa («Guarda su …»), senza IA. La chat dal vivo compare per i video YouTube, Twitch e Kick; le altre piattaforme hanno un link «Apri la chat».',
     },
     {
       title: 'I sottotitoli arrivano con qualche secondo di ritardo',
@@ -124,12 +124,12 @@ export const IT_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     {
       question: 'Live Intelligence funziona con le dirette YouTube?',
       answer:
-        'Sì. Una diretta YouTube si guarda nel suo player ufficiale e l’IA lavora sull’audio del tuo dispositivo dopo il tuo consenso: sul computer condividi l’audio della scheda in Chrome o Edge, sul telefono il microfono sente la diretta dall’altoparlante. Viene inviato solo l’audio, per la trascrizione, e i sottotitoli arrivano comunque qualche secondo dopo il parlato.',
+        'Sì, quando la diretta è in corso e pubblica e YouTube lo consente: i server di ClawAI la leggono, non devi condividere nulla e funziona su qualsiasi dispositivo. Se il server non riesce a leggerla, l’IA lavora sull’audio del tuo dispositivo dopo il tuo consenso: sul computer condividi l’audio della scheda in Chrome o Edge, sul telefono il microfono sente la diretta dall’altoparlante. In entrambi i casi i sottotitoli arrivano qualche secondo dopo il parlato.',
     },
     {
       question: 'Quali dirette può analizzare?',
       answer:
-        'Canali Twitch in diretta, analizzati sui server di ClawAI su qualsiasi dispositivo; YouTube, Kick e Facebook, dall’audio del tuo dispositivo; e dirette HLS che hai il diritto di analizzare, cosa che confermi all’avvio. Altre dieci piattaforme si aprono sulla piattaforma stessa, senza IA. Una diretta che il servizio non riesce a leggere viene segnalata come non supportata, senza fallire in silenzio.',
+        'Dirette pubbliche su YouTube, Twitch, Kick, Facebook, TikTok LIVE, Rumble, BIGO LIVE, Bilibili, CHZZK, SOOP, Nimo TV e altre piattaforme supportate, analizzate sui server di ClawAI su qualsiasi dispositivo quando la piattaforma lo consente; e dirette HLS che hai il diritto di analizzare, cosa che confermi all’avvio. Se il server non riesce a leggere una diretta, YouTube, Twitch, Kick e Facebook passano all’audio del tuo dispositivo, mentre le altre piattaforme si aprono sulla piattaforma stessa, senza IA. Instagram Live di solito non può essere letto dal server, e Discord non è supportato.',
     },
     {
       question: 'I sottotitoli sono in tempo reale?',
@@ -164,5 +164,5 @@ export const IT_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   ],
   closingTitle: 'Segui la prossima diretta senza guardare ogni minuto',
   closingBody:
-    'Incolla un link di Twitch, YouTube, Kick o Facebook, oppure un link HLS che hai il diritto di analizzare, scegli la lingua e inizia. I tuoi minuti gratuiti ti aspettano.',
+    'Incolla il link di una diretta su YouTube, Twitch, TikTok LIVE o un’altra piattaforma supportata, oppure un link HLS che hai il diritto di analizzare, scegli la lingua e inizia. I tuoi minuti gratuiti ti aspettano.',
 };

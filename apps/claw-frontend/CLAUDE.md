@@ -1200,7 +1200,7 @@ A public Thread page reads `?lang=` (an app language only; `readRequestedThreadL
 - Ledger label `billing.credit.surface.LIVE_INTELLIGENCE` (13 locales, `constants/credit.constants.ts`).
 - Platforms (batch 2): YouTube, Twitch, Kick and Facebook play in one allowlisted iframe (`constants/live-embed.constants.ts`,
   `utilities/live-embed.utility.ts` adds Twitch `parent` and YouTube chat `embed_domain`). The other 11 platforms are
-  `LINK_ONLY` ("Watch on <Platform>"); Discord is refused. CSP `frame-src` lists exactly those embed origins and nothing
+  `LINK_ONLY` ("Watch on <Platform>") unless server pull reads them (below); Discord is refused. CSP `frame-src` lists exactly those embed origins and nothing
   else; `www.youtube.com` is allowed in `frame-src` only (live chat).
 - Live chat: a "Live chat" tab when `chatEmbedUrl` passes the allowlist; an "Open chat on <Platform>" link always sits
   under it (React cannot see a refused cross-origin frame).
@@ -1210,9 +1210,13 @@ A public Thread page reads `?lang=` (an app language only; `readRequestedThreadL
   owner accepted the platforms' terms risk (2026-11-22). No mobile browser has `getDisplayMedia`: there the source is
   the **microphone** (`pickLiveCaptureSource()`, `LIVE_CAPTURE_MIC_CONSTRAINTS` with echo cancellation, noise
   suppression and auto gain OFF), same pipeline, "Analyze using microphone".
-- `SERVER_PULL` (a live Twitch channel, ADR-221 batch 3): official player and chat embeds, the feed reveals by wall
-  clock, no capture panel (a "ClawAI analyzes this stream on its servers" line instead), heartbeats run as playing while
-  the modal is open. Admin `/admin/live` has a "Server pull: Twitch" checkbox (`serverPullPlatforms`).
+- `SERVER_PULL` (ADR-221 batch 3, widened 2026-11-23): any platform but Discord whose stream is live and readable by
+  the server (yt-dlp; Instagram usually fails and falls back). The feed reveals by wall clock, no capture panel (a
+  "ClawAI analyzes this stream on its servers" line, `data-testid="live-server-pull"`), heartbeats run as playing while
+  the modal is open. YouTube/Twitch/Kick/Facebook show their official embeds; a platform with no embed comes back with
+  `embedUrl: null` and `useLiveModal().isPlayerLinkOut` shows the "Watch on <Platform>" link-out beside the full feed.
+  Admin `/admin/live` has ONE switch "Analyze live streams on ClawAI servers" (`LivePolicyFlag.SERVER_PULL`): on stores
+  `LIVE_SERVER_PULL_PLATFORMS` (every `LivePlatform` but Discord), off stores `[]`; an absent list reads as on.
 - Locale and marketing-content files with Hindi or Thai text can format differently on Windows and on CI's Linux
   Prettier (2026-11-22 `format:check` failure). Run `npx prettier --write` on them right before committing.
 - YouTube channel links play through the `live_stream` embed; `@handle` links show the `youtubeHandleError` string.

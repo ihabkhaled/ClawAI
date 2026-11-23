@@ -25,7 +25,9 @@ import { liveSessionHlsSrc } from '@/utilities/live-session.utility';
  * `startAt <= playbackAt` are revealed, so pause freezes the feed and seeking back hides later ones.
  * A browser-capture or server-pull session (cross-origin player, no media clock) reveals at
  * `playbackAt = Date.now()`. Server pull has no capture panel: the server reads the stream, so the
- * viewer counts as playing while the modal is open (its heartbeats still bill per viewer).
+ * viewer counts as playing while the modal is open (its heartbeats still bill per viewer). A
+ * server-pull platform with no embeddable player (TikTok LIVE, Rumble, …) shows a "Watch on" link-out
+ * in the player area and the full analysis feed beside it.
  */
 export function useLiveModal(input: LiveCreateSessionInput): UseLiveModalResult {
   const { t, locale } = useTranslation();
@@ -38,6 +40,8 @@ export function useLiveModal(input: LiveCreateSessionInput): UseLiveModalResult 
   const aiEnabled = session !== null && !isPlayerOnly;
   const hlsSrc = liveSessionHlsSrc(session);
   const embed = useLiveEmbed(session);
+  // A server-pull stream on a platform with no embeddable player still gets the feed, beside a link-out.
+  const isPlayerLinkOut = isLinkOnly || (isServerPull && embed.playerUrl === null);
   const initialStatus = session === null ? null : LIVE_SESSION_STATE_STATUS[session.state];
   const stream = useLiveStream(
     session?.sessionId ?? null,
@@ -100,6 +104,7 @@ export function useLiveModal(input: LiveCreateSessionInput): UseLiveModalResult 
     isLinkOnly,
     isCapture,
     isServerPull,
+    isPlayerLinkOut,
     embed,
     capture,
     hlsSrc,

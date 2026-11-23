@@ -39,6 +39,12 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends \
   && npm install -g npm@latest --no-audit --no-fund
 # Fail the build, not the first live run, if the binaries are missing.
 RUN ffmpeg -hide_banner -version >/dev/null && ffprobe -hide_banner -version >/dev/null
+# yt-dlp: server pull for every platform except Twitch's native path (ADR-221, 2026-11-23). A pinned
+# standalone build, checksum-verified; Node (already here) is its JavaScript runtime. Bump both ARGs together.
+ARG YTDLP_VERSION=2026.10.26
+ARG YTDLP_SHA256=767ba9dce7052aa196f8b12652f433d76de128ba168966fa84b6394d5e6c6795
+ADD https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/yt-dlp_linux /usr/local/bin/yt-dlp
+RUN echo "${YTDLP_SHA256}  /usr/local/bin/yt-dlp" | sha256sum -c -   && chmod 0755 /usr/local/bin/yt-dlp && yt-dlp --version >/dev/null
 RUN addgroup --system --gid 1001 nestjs && adduser --system --uid 1001 nestjs
 COPY --from=builder --chown=nestjs:nestjs /app/apps/claw-live-service/dist ./dist
 COPY --from=builder --chown=nestjs:nestjs /app/apps/claw-live-service/package.json ./package.json

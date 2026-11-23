@@ -35,7 +35,7 @@ for (const [name, [channelId, handle]] of Object.entries(CHANNELS)) {
   });
   const okChannel =
     channel.status < 300 &&
-    channel.data.capability === 'BROWSER_CAPTURE' &&
+    ['BROWSER_CAPTURE', 'SERVER_PULL'].includes(channel.data.capability) &&
     channel.data.embedUrl?.includes(`live_stream?channel=${channelId}`);
   const byHandle = await post('/live/sources/resolve', {
     url: `https://www.youtube.com/${handle}/live`,

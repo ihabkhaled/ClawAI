@@ -48,7 +48,23 @@ const DEFAULT_POLICY_CONFIG = {
     { connector: 'GEMINI', model: 'gemini-3.1-flash-lite', style: 'OPENAI_COMPAT' },
   ],
   // Server pull (ADR-221 addendum 2026-11-23): the server reads Twitch's public playlist itself.
-  serverPullPlatforms: ['TWITCH'],
+  // Every platform except Discord (owner decision 2026-11-23): Twitch natively, the rest via yt-dlp.
+  serverPullPlatforms: [
+    'YOUTUBE',
+    'TWITCH',
+    'KICK',
+    'FACEBOOK',
+    'TIKTOK',
+    'INSTAGRAM',
+    'RUMBLE',
+    'BIGO',
+    'LINKEDIN',
+    'TELEGRAM',
+    'BILIBILI',
+    'CHZZK',
+    'SOOP',
+    'NIMO',
+  ],
   featureEnabled: true,
 };
 

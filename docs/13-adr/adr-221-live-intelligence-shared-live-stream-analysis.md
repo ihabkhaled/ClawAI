@@ -113,3 +113,35 @@ YouTube grants caption or audio access, a streaming STT vendor is added, or the 
   `SERVER_PULL` session is refused (`422`).
 - **What would make this stale:** Twitch changing its token flow or blocking server requests (resolve then falls back
   to capture by itself); YouTube or Kick offering a sanctioned server playlist; the owner withdrawing the terms risk.
+
+## Addendum 2026-11-23 (batch 4): server pull on every platform
+
+- **Owner decision 2026-11-23:** "the mic workaround is 50/50, we need a concrete solution from the server, for all
+  providers". This **reverses the batch-3 refusal** for YouTube, Kick and the rest: the owner accepted the terms risk of
+  reading every platform's public stream on the server. It is an owner business decision, not a claim that the
+  platforms permit it.
+- **How:** Twitch keeps its native token path (`LIVE_TWITCH_CLIENT_ID`; empty now means "use yt-dlp" instead of "off").
+  Every other platform, and Twitch without the id, asks **yt-dlp** for the stream's HLS URL:
+  `yt-dlp --no-config --js-runtimes node --use-extractors default,-generic --format <worst HLS> --print
+"%(protocol)s %(url)s" -- <canonical watch URL>`. No shell, argv only, 30 s timeout, 16 KiB output cap
+  (`runBoundedProcess`). Only an `https` HLS result is accepted; anything else is "not readable".
+- **Safety kept:** the input is the watch URL **we** built from the parsed id, never the raw paste; the `generic`
+  extractor is off so no URL can make yt-dlp fetch an arbitrary host; every playlist and segment is still fetched by
+  our SSRF-guarded, DNS-pinned fetcher on a host-suffix pin = the resolved URL's registrable domain
+  (`manifest.googlevideo.com` → `googlevideo.com`).
+- **Link-only platforms upgrade too:** TikTok LIVE, Rumble, BIGO, Bilibili, CHZZK, SOOP, Nimo, LinkedIn and Telegram are
+  probed; a live one is `SERVER_PULL` with no embed (the page shows "Watch on …" plus the analysis feed), an offline or
+  unreadable one stays `LINK_ONLY`. YouTube, Kick, Facebook and offline Twitch fall back to `BROWSER_CAPTURE` with
+  `SERVER_PULL_UNAVAILABLE`. Discord stays refused. Instagram Live has no yt-dlp live support and stays link-only.
+- A resolved URL is cached 60 s per stream (resolve-time probe and the worker's first poll spawn yt-dlp once); a token
+  refresh passes `fresh` and bypasses the cache.
+- **Binary:** the standalone `yt-dlp_linux` release, pinned by version and SHA-256 in both Dockerfiles (`ARG
+YTDLP_VERSION`, `ARG YTDLP_SHA256`); Node in the image is its JavaScript runtime. Missing binary = pull unavailable,
+  capture fallback.
+- **Policy:** `serverPullPlatforms` accepts every platform except Discord; default (field absent) = all; the admin form
+  is one switch (all or none). The seeder writes the full list for a fresh database.
+- **Verified 2026-11-23:** from the production server's IP, yt-dlp returned live HLS for YouTube (Al Jazeera English)
+  and Kick in about 2 s each; locally, `live-server-pull-smoke.mjs` 20/20 with real captions from YouTube, Kick and
+  Twitch.
+- **What would make this stale:** a platform blocking datacenter IPs or changing its player (yt-dlp then needs a version
+  bump: change both ARGs); the owner withdrawing the terms risk (publish `serverPullPlatforms: []`).

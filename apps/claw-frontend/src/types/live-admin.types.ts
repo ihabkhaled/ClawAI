@@ -32,12 +32,12 @@ export type LivePolicyConfig = {
   budgetSoftStopPercent: number;
   summaryModelChain: LiveModelRef[];
   visionModelChain: LiveModelRef[];
-  /** Platforms ClawAI's server reads itself (Twitch only). Absent on a version saved before it existed. */
+  /** Platforms ClawAI's server reads itself (all but Discord). Absent on a version saved before it existed. */
   serverPullPlatforms?: LiveServerPullPlatform[];
 };
 
-/** The only platform server pull may read. */
-export type LiveServerPullPlatform = LivePlatform.TWITCH;
+/** A platform server pull may read: every platform but Discord (no public link). */
+export type LiveServerPullPlatform = Exclude<LivePlatform, LivePlatform.DISCORD>;
 
 /** One `LivePolicyVersion` row as the admin API returns it (GET list, PUT and rollback answer). */
 export type LivePolicyVersion = {
@@ -121,7 +121,7 @@ export type LivePlanFormRow = { plan: string; freeMinutes: string; paidUsdPerMin
 export type LivePolicyFormValues = {
   featureEnabled: boolean;
   killSwitch: boolean;
-  serverPullTwitch: boolean;
+  serverPull: boolean;
   plans: LivePlanFormRow[];
   defaultPlan: LivePlanFormRow;
   graceSeconds: string;

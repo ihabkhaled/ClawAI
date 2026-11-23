@@ -12,6 +12,7 @@ import {
   LiveStatusCode,
   LiveStatusTone,
 } from '@/enums/live.enum';
+import type { LiveServerPullPlatform } from '@/types/live-admin.types';
 import type {
   LiveCaptureCopy,
   LiveCaptureMachine,
@@ -358,8 +359,26 @@ export const LIVE_CAPTURE_COPY: Record<LiveCaptureSource, LiveCaptureCopy> = {
 /** A BROWSER_CAPTURE resolution's reasonCode when the server could not read the stream itself. */
 export const LIVE_SERVER_PULL_UNAVAILABLE_REASON = 'SERVER_PULL_UNAVAILABLE';
 
-/** Server pull reads Twitch only (YouTube and Kick refuse server reads without a bypass we do not build). */
-export const LIVE_SERVER_PULL_PLATFORMS: ReadonlyArray<LivePlatform.TWITCH> = [LivePlatform.TWITCH];
+/**
+ * Every platform server pull may read (mirrors claw-live-service): all but Discord, which has no
+ * public link. The admin switch stores this whole list when on and `[]` when off.
+ */
+export const LIVE_SERVER_PULL_PLATFORMS: ReadonlyArray<LiveServerPullPlatform> = [
+  LivePlatform.YOUTUBE,
+  LivePlatform.TWITCH,
+  LivePlatform.KICK,
+  LivePlatform.FACEBOOK,
+  LivePlatform.TIKTOK,
+  LivePlatform.INSTAGRAM,
+  LivePlatform.RUMBLE,
+  LivePlatform.BIGO,
+  LivePlatform.LINKEDIN,
+  LivePlatform.TELEGRAM,
+  LivePlatform.BILIBILI,
+  LivePlatform.CHZZK,
+  LivePlatform.SOOP,
+  LivePlatform.NIMO,
+];
 
 /** A status in this set stops the capture: nothing more would be analyzed or billed. */
 export const LIVE_CAPTURE_STOP_STATUSES: ReadonlySet<LiveStatusCode> = new Set([

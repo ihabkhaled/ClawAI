@@ -3,6 +3,10 @@ import {
   TRANSCRIPTION_HTTP_STATUS_TOO_MANY_REQUESTS,
   TRANSCRIPTION_MODALITY_REJECTION_MARKERS,
   TRANSCRIPTION_QUOTA_EXHAUSTED_CODES,
+  TRANSCRIPTION_REFUSAL_CURLY_APOSTROPHE,
+  TRANSCRIPTION_REFUSAL_MAX_CHARS,
+  TRANSCRIPTION_REFUSAL_PATTERNS,
+  TRANSCRIPTION_REFUSAL_WHITESPACE,
 } from '../constants/transcription.constants';
 import { TranscriptionFailureKind, TranscriptionResponseIssue } from '../../../common/enums';
 import { TranscriptionResponseError } from '../../../common/errors';
@@ -48,6 +52,22 @@ export function isAudioModalityRejection(error: unknown): boolean {
   return TRANSCRIPTION_MODALITY_REJECTION_MARKERS.some((marker) => detail.includes(marker));
 }
 
+/**
+ * Whether a 200 "transcript" is really a text-only model saying it cannot hear audio. Seen live on
+ * 2026-11-23: "I'm sorry, but I cannot process audio files. My capabilities are limited to text-based
+ * interactions." reached Live Intelligence as a caption. Short answers only (a refusal is a sentence
+ * or two); the patterns name audio as a file or input, or the model's own nature.
+ */
+export function isModelAudioRefusal(transcript: string): boolean {
+  if (transcript.length > TRANSCRIPTION_REFUSAL_MAX_CHARS) {
+    return false;
+  }
+  const normalized = transcript
+    .replace(TRANSCRIPTION_REFUSAL_WHITESPACE, ' ')
+    .replace(TRANSCRIPTION_REFUSAL_CURLY_APOSTROPHE, "'");
+  return TRANSCRIPTION_REFUSAL_PATTERNS.some((pattern) => pattern.test(normalized));
+}
+
 /** OpenAI's `insufficient_quota`, in `error.code` or `error.type`. */
 function isQuotaExhausted(error: unknown): boolean {
   const body = asErrorShape(error).response?.data?.error;
@@ -73,6 +93,8 @@ function classifyResponseIssue(issue: TranscriptionResponseIssue): Transcription
       return TranscriptionFailureKind.EMPTY_RESPONSE;
     case TranscriptionResponseIssue.TRUNCATED:
       return TranscriptionFailureKind.INCOMPLETE_RESPONSE;
+    case TranscriptionResponseIssue.REFUSAL:
+      return TranscriptionFailureKind.MODEL_REJECTED;
     case TranscriptionResponseIssue.BLOCKED:
       return TranscriptionFailureKind.TERMINAL;
   }

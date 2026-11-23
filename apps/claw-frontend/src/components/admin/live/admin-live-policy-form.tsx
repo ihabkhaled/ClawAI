@@ -1,7 +1,6 @@
 import { AdminLiveNumberField } from '@/components/admin/live/admin-live-number-field';
 import { AdminLivePlanRow } from '@/components/admin/live/admin-live-plan-row';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { LIVE_POLICY_NUMBER_FIELDS } from '@/constants/live.constants';
@@ -57,18 +56,14 @@ export function AdminLivePolicyForm({ controller }: AdminLiveSectionProps): Reac
           {t('live.admin.serverPullTitle')}
         </legend>
         <p className="text-muted-foreground text-xs">{t('live.admin.serverPullHint')}</p>
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id="admin-live-server-pull-twitch"
-            checked={values.serverPullTwitch}
-            onCheckedChange={(checked) =>
-              form.setFlag(LivePolicyFlag.SERVER_PULL_TWITCH, checked === true)
-            }
+        <label className="text-foreground flex items-center gap-2 text-sm">
+          <Switch
+            checked={values.serverPull}
+            onCheckedChange={(checked) => form.setFlag(LivePolicyFlag.SERVER_PULL, checked)}
+            data-testid="admin-live-server-pull"
           />
-          <label htmlFor="admin-live-server-pull-twitch" className="text-foreground text-sm">
-            {t('live.admin.serverPullTwitch')}
-          </label>
-        </div>
+          {t('live.admin.serverPullSwitch')}
+        </label>
       </fieldset>
       <fieldset className="border-border flex flex-col gap-3 rounded-lg border p-3">
         <legend className="text-foreground px-1 text-sm font-semibold">

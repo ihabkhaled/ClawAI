@@ -7,7 +7,8 @@ import type { LiveSourceNoticeProps } from '@/types/live.types';
 import { livePlatformName } from '@/utilities/live-embed.utility';
 
 /**
- * After the link is resolved: a server-pull platform says AI runs on ClawAI's servers (any device);
+ * After the link is resolved: a server-pull stream (any platform but Discord, with or without an
+ * embeddable player) says AI runs on ClawAI's servers (any device);
  * a browser-capture platform (YouTube, Twitch, Kick, Facebook) says AI runs from the viewer's own
  * device (through the microphone on a phone), and why when server pull was tried and failed; a link-only platform says it opens on the platform; a player-only
  * source says it gets no AI; an HLS source asks for the viewer's own rights attestation.

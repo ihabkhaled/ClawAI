@@ -19,9 +19,9 @@ const CASES = [
     'BROWSER_CAPTURE',
     false,
   ],
-  // Twitch is SERVER_PULL while live (ADR-221 batch 3), BROWSER_CAPTURE when offline.
-  ['Twitch (Kai Cenat)', 'https://www.twitch.tv/kaicenat', 'TWITCH', 'TWITCH_EITHER', true],
-  ['Twitch (xQc)', 'https://twitch.tv/xqc', 'TWITCH', 'TWITCH_EITHER', true],
+  // Any platform but Discord is SERVER_PULL while live (ADR-221 batch 4); the column is the fallback.
+  ['Twitch (Kai Cenat)', 'https://www.twitch.tv/kaicenat', 'TWITCH', 'BROWSER_CAPTURE', true],
+  ['Twitch (xQc)', 'https://twitch.tv/xqc', 'TWITCH', 'BROWSER_CAPTURE', true],
   ['Kick (Adin Ross)', 'https://kick.com/adinross', 'KICK', 'BROWSER_CAPTURE', true],
   [
     'Facebook Live',
@@ -74,9 +74,7 @@ for (const [name, url, platform, capability, hasChat] of CASES) {
   const ok =
     r.status === 200 &&
     r.data.platform === platform &&
-    (capability === 'TWITCH_EITHER'
-      ? ['SERVER_PULL', 'BROWSER_CAPTURE'].includes(r.data.capability)
-      : r.data.capability === capability) &&
+    [capability, 'SERVER_PULL'].includes(r.data.capability) &&
     Boolean(r.data.chatEmbedUrl) === hasChat &&
     typeof r.data.watchUrl === 'string' &&
     r.data.watchUrl.startsWith('https://');

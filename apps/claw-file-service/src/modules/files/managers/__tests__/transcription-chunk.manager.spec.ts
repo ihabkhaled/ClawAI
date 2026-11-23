@@ -211,6 +211,37 @@ describe('TranscriptionChunkManager (ADR-221 platform-paid chunk)', () => {
     expect(harness.fetchMock).not.toHaveBeenCalled();
   });
 
+  it('never returns a text-only model refusal as a caption: walks to the next model', async () => {
+    const harness = await buildHarness(
+      [GEMINI, OPENAI],
+      rates({
+        provider: 'OPENAI',
+        inputPerMillionMicroUsd: null,
+        outputPerMillionMicroUsd: null,
+        audioPerUnitMicroUsd: 100,
+      }),
+    );
+    // Seen live 2026-11-23 on a Kick stream.
+    mockedGemini.mockResolvedValue({
+      text: "I'm sorry, but I cannot process audio files. My capabilities are limited to text-based interactions.",
+    });
+    mockedOpenAi.mockResolvedValue({ text: 'the real words', durationSeconds: 6 });
+
+    const result = await harness.manager.transcribe(dto());
+
+    expect(result.provider).toBe('OPENAI');
+    expect(result.text).toBe('the real words');
+  });
+
+  it('502 rather than a fake caption when the only model refuses', async () => {
+    const harness = await buildHarness([GEMINI], rates());
+    mockedGemini.mockResolvedValue({ text: 'As an AI language model, I cannot transcribe audio.' });
+
+    await expect(harness.manager.transcribe(dto())).rejects.toMatchObject({
+      code: 'TRANSCRIBE_CHUNK_FAILED',
+    });
+  });
+
   it('reports LOCAL as free without asking for a rate card', async () => {
     const harness = await buildHarness([LOCAL]);
     mockedOpenAi.mockResolvedValue({ text: 'local words' });

@@ -55,8 +55,9 @@ export class HlsChunkSource implements RunChunkSource {
   private expectedNextAt: number | null = null;
   private files: string[] = [];
   private fileCounter = 0;
-  /** Server pull: the resolved master playlist (its token expires) and when it was resolved. */
+  /** Server pull: the resolved playlist (its token expires), its CDN hosts and when it resolved. */
   private pulledOrigin: URL | null = null;
+  private pulledSuffixes: readonly string[] = [];
   private pulledAt = 0;
 
   constructor(
@@ -104,8 +105,8 @@ export class HlsChunkSource implements RunChunkSource {
   }
 
   private async fetchMediaPlaylist(): Promise<ParsedPlaylist> {
-    const host = this.hostPin();
     const url = this.mediaUrl ?? (await this.originUrl());
+    const host = this.hostPin();
     const fetched = await this.fetcher.fetchObject(url, host, HLS_PLAYLIST_MAX_BYTES);
     const parsed = parsePlaylist(fetched.body.toString('utf8'));
     if (parsed.segments.length > 0 || parsed.variants.length === 0) {
@@ -123,11 +124,12 @@ export class HlsChunkSource implements RunChunkSource {
   private async originUrl(): Promise<URL> {
     if (this.pull === null) return new URL(this.context.sourceUrl);
     if (this.pulledOrigin !== null) return this.pulledOrigin;
-    const resolved = await this.pull.resolvePlaylist();
+    const resolved = await this.pull.resolve(this.pulledAt !== 0);
     if (resolved === null) throw new Error('LIVE_SERVER_PULL_UNAVAILABLE');
-    this.pulledOrigin = resolved;
+    this.pulledOrigin = resolved.playlist;
+    this.pulledSuffixes = resolved.hostSuffixes;
     this.pulledAt = Date.now();
-    return resolved;
+    return resolved.playlist;
   }
 
   /**
@@ -263,9 +265,9 @@ export class HlsChunkSource implements RunChunkSource {
     return Math.round((bytes / (AUDIO_SAMPLE_RATE * AUDIO_CHANNELS * 2)) * 1000);
   }
 
-  /** Server pull: the platform CDN's host suffixes; HLS: the stream's declared host. */
+  /** Server pull: the resolved stream's CDN host suffixes; HLS: the stream's declared host. */
   private hostPin(): HlsHostPin {
-    if (this.pull !== null) return this.pull.hostSuffixes;
+    if (this.pull !== null) return this.pulledSuffixes;
     if (!this.context.declaredHost) throw new Error('LIVE_SOURCE_HOST_MISSING');
     return this.context.declaredHost;
   }

@@ -12,6 +12,7 @@ import type {
 } from '../../../generated/prisma';
 import type { summaryReplySchema, transcribeReplySchema } from '../schemas/processing.schemas';
 import type { LiveStreamEvent } from '../../realtime/types/live-stream-event.types';
+import type { ResolvedPull } from '../../sources/types/server-pull.types';
 
 /** The fencing token a worker holds for one claimed run (section 3). */
 export interface RunLease {
@@ -116,9 +117,8 @@ export interface PlaylistVariant {
 
 /** A server-pulled platform stream: its CDN host suffixes and a fresh-playlist resolver. */
 export interface ServerPullSource {
-  hostSuffixes: readonly string[];
-  /** A fresh master playlist URL (new token), or null when the stream is offline or refused. */
-  resolvePlaylist: () => Promise<URL | null>;
+  /** The stream's playlist and CDN host suffixes (`fresh` = a new token), or null when offline. */
+  resolve: (fresh: boolean) => Promise<ResolvedPull | null>;
 }
 
 export interface ParsedPlaylist {

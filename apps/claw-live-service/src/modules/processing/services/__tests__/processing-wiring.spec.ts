@@ -120,8 +120,10 @@ describe('RunWorkerFactory', () => {
     };
     const playlist = new URL('https://usher.ttvnw.net/api/channel/hls/xqc.m3u8?sig=s&token=t');
     const serverPull = {
-      hostSuffixes: vi.fn().mockReturnValue(['ttvnw.net', 'live-video.net']),
-      resolvePlaylist: vi.fn().mockResolvedValue(playlist),
+      supports: vi.fn().mockReturnValue(true),
+      resolve: vi
+        .fn()
+        .mockResolvedValue({ playlist, hostSuffixes: ['ttvnw.net', 'live-video.net'] }),
     };
     const factory = new RunWorkerFactory(
       runs as never,
@@ -152,7 +154,11 @@ describe('RunWorkerFactory', () => {
     const worker = await factory.create({ id: 'run-p', generation: 1 });
     const source = (worker as unknown as { source: { poll: () => Promise<unknown> } }).source;
     await expect(source.poll()).resolves.toMatchObject({ chunks: [], ended: false });
-    expect(serverPull.resolvePlaylist).toHaveBeenCalledWith(LivePlatform.TWITCH, 'xqc');
+    expect(serverPull.resolve).toHaveBeenCalledWith(
+      LivePlatform.TWITCH,
+      expect.objectContaining({ id: 'xqc', watchUrl: 'https://www.twitch.tv/xqc' }),
+      false,
+    );
     const pins = ['ttvnw.net', 'live-video.net'];
     expect(fetcher.fetchObject).toHaveBeenNthCalledWith(1, playlist, pins, expect.any(Number));
     // AUDIO mode reads the lightest rendition: the audio-only one.

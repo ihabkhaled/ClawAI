@@ -254,7 +254,9 @@ Three behaviours worth knowing before changing it:
   whitespace, or only `thought: true` parts) → ONE same-model retry per job
   under the next request id (`…:GEMINI:2`), then the next model; a
   `MAX_TOKENS` cut-off (`INCOMPLETE_RESPONSE`) → next model, no same-model
-  retry; a content-policy block (`SAFETY`, `RECITATION`, `PROHIBITED_CONTENT`,
+  retry; a 200 whose text is a text-only model refusing audio ("I'm sorry, but I cannot process
+  audio files", `isModelAudioRefusal`, `TranscriptionResponseIssue.REFUSAL`, 2026-11-23: it reached Live
+  captions) → next model, on BOTH the metered and the platform-paid path; a content-policy block (`SAFETY`, `RECITATION`, `PROHIBITED_CONTENT`,
   `BLOCKLIST`, `SPII`, `promptFeedback.blockReason`) → stop with
   `TRANSCRIPTION_CONTENT_BLOCKED_MESSAGE`; anything else → stop. Hard ceiling
   `TRANSCRIPTION_MAX_PROVIDER_CALLS` = 4. `extractionError` is always one of

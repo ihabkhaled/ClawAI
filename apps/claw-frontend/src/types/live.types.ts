@@ -515,6 +515,11 @@ export type UseLiveModalResult = {
   isCapture: boolean;
   /** ClawAI's server analyzes the stream: no capture panel, the feed follows the wall clock. */
   isServerPull: boolean;
+  /**
+   * The player area is a "Watch on <Platform>" link-out: a LINK_ONLY session, or a SERVER_PULL one
+   * with no embeddable player (TikTok LIVE, Rumble, BIGO LIVE, …), whose analysis feed still shows.
+   */
+  isPlayerLinkOut: boolean;
   embed: LiveEmbedView;
   capture: UseLiveCaptureResult;
   hlsSrc: string | null;

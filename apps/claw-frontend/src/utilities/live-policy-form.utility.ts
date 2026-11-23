@@ -1,5 +1,5 @@
 import { LIVE_SECONDS_PER_MINUTE, LIVE_SERVER_PULL_PLATFORMS } from '@/constants/live.constants';
-import { LivePlanField, LivePlatform, LivePolicyNumberField } from '@/enums/live.enum';
+import { LivePlanField, LivePolicyNumberField } from '@/enums/live.enum';
 import type {
   LivePlanFormRow,
   LivePlanPolicy,
@@ -49,10 +49,8 @@ export function livePolicyToFormValues(config: LivePolicyConfig): LivePolicyForm
   return {
     featureEnabled: config.featureEnabled,
     killSwitch: config.killSwitch,
-    // A version saved before server pull existed has no list: the server's default (Twitch) applies.
-    serverPullTwitch: (config.serverPullPlatforms ?? LIVE_SERVER_PULL_PLATFORMS).includes(
-      LivePlatform.TWITCH,
-    ),
+    // A version saved before server pull existed has no list: the server's default (all platforms) applies.
+    serverPull: (config.serverPullPlatforms ?? LIVE_SERVER_PULL_PLATFORMS).length > 0,
     plans: Object.entries(config.plans).map(([plan, policy]) => planToRow(plan, policy)),
     defaultPlan: planToRow('', config.defaultPlan),
     graceSeconds: String(config.graceSeconds),
@@ -122,7 +120,7 @@ export function liveFormValuesToPolicy(
       ...base,
       featureEnabled: values.featureEnabled,
       killSwitch: values.killSwitch,
-      serverPullPlatforms: values.serverPullTwitch ? [LivePlatform.TWITCH] : [],
+      serverPullPlatforms: values.serverPull ? [...LIVE_SERVER_PULL_PLATFORMS] : [],
       plans,
       defaultPlan,
       graceSeconds: numbers.graceSeconds ?? base.graceSeconds,

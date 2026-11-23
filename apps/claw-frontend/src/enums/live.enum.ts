@@ -191,5 +191,5 @@ export enum LivePlanField {
 export enum LivePolicyFlag {
   FEATURE_ENABLED = 'featureEnabled',
   KILL_SWITCH = 'killSwitch',
-  SERVER_PULL_TWITCH = 'serverPullTwitch',
+  SERVER_PULL = 'serverPull',
 }

@@ -169,7 +169,9 @@ describe('HlsChunkSource', () => {
 
   describe('server pull', () => {
     const suffixes = ['ttvnw.net'];
-    function pulledSource(resolvePlaylist: () => Promise<URL | null>): HlsChunkSource {
+    function pulledSource(
+      resolvePlaylist: (fresh: boolean) => Promise<URL | null>,
+    ): HlsChunkSource {
       const context = {
         lease: { runId: 'r', generation: 1 },
         streamId: 's',
@@ -184,7 +186,12 @@ describe('HlsChunkSource', () => {
         fetcher as never,
         fixtures as never,
         mkdtempSync(join(tmpdir(), 'chunk-spec-')),
-        { hostSuffixes: suffixes, resolvePlaylist },
+        {
+          resolve: async (fresh) => {
+            const resolved = await resolvePlaylist(fresh);
+            return resolved === null ? null : { playlist: resolved, hostSuffixes: suffixes };
+          },
+        },
       );
     }
 
@@ -203,7 +210,7 @@ describe('HlsChunkSource', () => {
       const first = new URL('https://usher.ttvnw.net/hls/xqc.m3u8?token=1');
       const second = new URL('https://usher.ttvnw.net/hls/xqc.m3u8?token=2');
       const resolvePlaylist = vi
-        .fn<() => Promise<URL | null>>()
+        .fn<(fresh: boolean) => Promise<URL | null>>()
         .mockResolvedValueOnce(first)
         .mockResolvedValueOnce(second);
       const source = pulledSource(resolvePlaylist);
@@ -226,6 +233,7 @@ describe('HlsChunkSource', () => {
       await expect(source.poll()).rejects.toThrow('LIVE_UPSTREAM_FAILED');
       await source.poll();
       expect(resolvePlaylist).toHaveBeenCalledTimes(2);
+      expect(resolvePlaylist).toHaveBeenLastCalledWith(true);
       expect(fetcher.fetchObject).toHaveBeenCalledWith(second, suffixes, expect.any(Number));
       await source.dispose();
     });

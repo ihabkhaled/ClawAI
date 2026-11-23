@@ -2,6 +2,7 @@ import {
   classifyTranscriptionFailure,
   extractTranscriptionErrorMessage,
   isAudioModalityRejection,
+  isModelAudioRefusal,
 } from '../transcription-error.utility';
 import { TranscriptionFailureKind, TranscriptionResponseIssue } from '../../../../common/enums';
 import { TranscriptionResponseError } from '../../../../common/errors';
@@ -164,6 +165,7 @@ describe('classifyTranscriptionFailure — a 200 that is not a transcript', () =
     [TranscriptionResponseIssue.THOUGHT_ONLY, TranscriptionFailureKind.EMPTY_RESPONSE],
     [TranscriptionResponseIssue.TRUNCATED, TranscriptionFailureKind.INCOMPLETE_RESPONSE],
     [TranscriptionResponseIssue.BLOCKED, TranscriptionFailureKind.TERMINAL],
+    [TranscriptionResponseIssue.REFUSAL, TranscriptionFailureKind.MODEL_REJECTED],
   ])('%s → %s', (issue, kind) => {
     expect(classifyTranscriptionFailure(new TranscriptionResponseError(issue, 'x'))).toBe(kind);
   });
@@ -172,5 +174,32 @@ describe('classifyTranscriptionFailure — a 200 that is not a transcript', () =
     expect(
       classifyTranscriptionFailure(new Error('The provider returned an empty transcript.')),
     ).toBe(TranscriptionFailureKind.TERMINAL);
+  });
+});
+
+describe('isModelAudioRefusal', () => {
+  it.each([
+    "I'm sorry, but I cannot process audio files. My capabilities are limited to text-based interactions.",
+    'I am unable to transcribe audio content.',
+    'As an AI language model, I cannot listen to recordings.',
+    'I can\u2019t process audio.',
+    'Sorry, I cannot analyze the audio file you provided.',
+  ])('flags a refusal: %s', (text) => {
+    expect(isModelAudioRefusal(text)).toBe(true);
+  });
+
+  it.each([
+    "Sorry guys, I can't hear the audio on my end, give me a second.",
+    'We cannot process the refund until Monday.',
+    'The audio files are on the shared drive.',
+    '',
+  ])('keeps real speech: %s', (text) => {
+    expect(isModelAudioRefusal(text)).toBe(false);
+  });
+
+  it('never flags a long answer, however it reads', () => {
+    expect(isModelAudioRefusal(`I cannot process audio files. ${'words '.repeat(100)}`)).toBe(
+      false,
+    );
   });
 });

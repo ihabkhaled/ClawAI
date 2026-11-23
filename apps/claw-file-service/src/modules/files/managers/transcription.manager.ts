@@ -44,6 +44,7 @@ import {
   TRANSCRIPTION_PROVIDER_FAILED_MESSAGE,
   TRANSCRIPTION_PROVIDER_UNAVAILABLE_MESSAGE,
   TRANSCRIPTION_RATE_LIMIT_BACKOFF_MS,
+  TRANSCRIPTION_REFUSAL_ERROR,
   TRANSCRIPTION_TOO_LARGE_MESSAGE,
 } from '../constants/transcription.constants';
 import {
@@ -59,7 +60,10 @@ import {
   type DerivedAudioTranscriptionOutcome,
 } from '../types/video-processing.types';
 import { transcribeJobSchema } from '../dto/transcribe-job.dto';
-import { classifyTranscriptionFailure } from '../utilities/transcription-error.utility';
+import {
+  classifyTranscriptionFailure,
+  isModelAudioRefusal,
+} from '../utilities/transcription-error.utility';
 import { waitForTranscriptionBackoff } from '../utilities/transcription-backoff.utility';
 import { openAiTranscriptionModel } from '../utilities/transcription-model.utility';
 import { probeAudioSeconds } from '../utilities/audio-duration.utility';
@@ -654,6 +658,13 @@ export class TranscriptionManager implements OnModuleInit {
           TRANSCRIPTION_EMPTY_TRANSCRIPT_ERROR,
         );
       }
+      // A text-only model's "I cannot process audio" is never a transcript: next model.
+      if (isModelAudioRefusal(transcript)) {
+        throw new TranscriptionResponseError(
+          TranscriptionResponseIssue.REFUSAL,
+          TRANSCRIPTION_REFUSAL_ERROR,
+        );
+      }
     } catch (error: unknown) {
       if (this.isCancelled(context)) {
         // A user cancel aborted the call: RELEASED as CANCELLED, and returned
@@ -702,7 +713,15 @@ export class TranscriptionManager implements OnModuleInit {
       model,
       estimateTranscriptOutputTokens(seconds),
     );
-    return { status: TranscriptionAttemptStatus.COMPLETED, transcript: result.text.trim(), result };
+    const transcript = result.text.trim();
+    // A text-only model's "I cannot process audio" is never a caption: next model.
+    if (isModelAudioRefusal(transcript)) {
+      throw new TranscriptionResponseError(
+        TranscriptionResponseIssue.REFUSAL,
+        TRANSCRIPTION_REFUSAL_ERROR,
+      );
+    }
+    return { status: TranscriptionAttemptStatus.COMPLETED, transcript, result };
   }
 
   private async callProvider(

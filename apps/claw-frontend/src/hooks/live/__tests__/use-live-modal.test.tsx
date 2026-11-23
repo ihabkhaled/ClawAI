@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   capture: vi.fn(),
   playback: vi.fn(),
   wallClock: vi.fn(),
+  playerUrl: null as string | null,
 }));
 
 vi.mock('@/lib/i18n', () => ({
@@ -27,7 +28,12 @@ vi.mock('@/hooks/live/use-live-session', () => ({
   useLiveSession: () => ({ session: mocks.session, isCreating: false, error: null }),
 }));
 vi.mock('@/hooks/live/use-live-embed', () => ({
-  useLiveEmbed: () => ({ playerUrl: null, chatUrl: null, watchUrl: null, platformName: null }),
+  useLiveEmbed: () => ({
+    playerUrl: mocks.playerUrl,
+    chatUrl: null,
+    watchUrl: null,
+    platformName: null,
+  }),
 }));
 vi.mock('@/hooks/live/use-live-stream', () => ({
   useLiveStream: () => ({
@@ -98,6 +104,7 @@ const INPUT = {
 describe('useLiveModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.playerUrl = 'https://player.twitch.tv/?channel=shroud&parent=claw.local';
   });
 
   it('SERVER_PULL: wall-clock reveal, no capture, never paused, heartbeats as always playing', () => {
@@ -113,6 +120,29 @@ describe('useLiveModal', () => {
     const playbackArgs = mocks.playback.mock.lastCall ?? [];
     expect(playbackArgs[2]).toBe(true);
     expect(playbackArgs[5]).toEqual({ isCapture: true, isCapturing: true });
+    expect(result.current.isPlayerLinkOut).toBe(false);
+  });
+
+  it('SERVER_PULL with no embeddable player: link-out player, feed and AI still on', () => {
+    mocks.session = { ...session(LiveCapability.SERVER_PULL), embedUrl: null };
+    mocks.playerUrl = null;
+    const { result } = renderHook(() => useLiveModal(INPUT));
+
+    expect(result.current.isPlayerLinkOut).toBe(true);
+    expect(result.current.isLinkOnly).toBe(false);
+    expect(result.current.isPlayerOnly).toBe(false);
+    expect(result.current.isServerPull).toBe(true);
+    expect(mocks.capture).toHaveBeenLastCalledWith(expect.objectContaining({ enabled: false }));
+    expect(mocks.playback.mock.lastCall?.[2]).toBe(true);
+  });
+
+  it('LINK_ONLY: link-out player and no AI', () => {
+    mocks.session = session(LiveCapability.LINK_ONLY);
+    mocks.playerUrl = null;
+    const { result } = renderHook(() => useLiveModal(INPUT));
+
+    expect(result.current.isPlayerLinkOut).toBe(true);
+    expect(result.current.isPlayerOnly).toBe(true);
   });
 
   it('BROWSER_CAPTURE: capture on, reads as paused until the viewer shares audio', () => {

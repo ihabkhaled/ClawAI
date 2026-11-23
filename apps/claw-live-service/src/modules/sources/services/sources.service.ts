@@ -98,17 +98,17 @@ export class SourcesService {
   }
 
   /**
-   * Whether a browser-capture platform is server-pulled: NOT_ENABLED (policy off or no resolver,
-   * no network call), LIVE (the playlist answers) or UNREACHABLE (offline, refused, blocked).
+   * Whether a platform stream is server-pulled: NOT_ENABLED (refused platform, policy off or no
+   * resolver; no network call), LIVE (the playlist answers) or UNREACHABLE (offline, unreadable).
+   * Link-only platforms are tried too: a live one becomes SERVER_PULL, else it stays link-only.
    */
   private async serverPullFor({ definition, match }: PlatformResolution): Promise<ServerPullProbe> {
-    if (definition.capability !== LiveCapability.BROWSER_CAPTURE)
-      return ServerPullProbe.NOT_ENABLED;
+    if (definition.capability === null) return ServerPullProbe.NOT_ENABLED;
     if (!this.serverPull.supports(definition.platform)) return ServerPullProbe.NOT_ENABLED;
     const { config } = await this.policy.active();
     if (!config.serverPullPlatforms.includes(definition.platform))
       return ServerPullProbe.NOT_ENABLED;
-    const live = await this.serverPull.probe(definition.platform, match.id);
+    const live = await this.serverPull.probe(definition.platform, match);
     return live ? ServerPullProbe.LIVE : ServerPullProbe.UNREACHABLE;
   }
 

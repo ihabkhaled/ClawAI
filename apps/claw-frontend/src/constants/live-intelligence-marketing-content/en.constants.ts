@@ -4,11 +4,13 @@ import type { LiveIntelligenceMarketingDictionary } from '@/types/live-intellige
  * The English source of truth for the public Live Intelligence page.
  *
  * Every claim is drawn from docs/03-architecture/live-intelligence-architecture.md section 1 and
- * ADR-221: 15 platforms are recognized; a live Twitch channel is analyzed on the server and shared;
- * YouTube, Kick and Facebook are analyzed from the viewer's own device audio (shared tab or
- * microphone) after consent; ten more platforms are link-only and Discord is refused; HLS needs a
- * rights attestation; captions trail the speech by roughly 7 to 12 seconds; paid minutes always
- * need a confirmation. Describe what happens; never claim a platform endorses it.
+ * ADR-221: 15 platforms are recognized; a live, public stream on any of them except Discord is
+ * analyzed on ClawAI's servers and shared when the server can read it (Instagram Live usually
+ * cannot); otherwise YouTube, Twitch, Kick and Facebook fall back to the viewer's own device audio
+ * (shared tab or microphone) after consent and the rest open on the platform ("Watch on …");
+ * Discord is refused; HLS needs a rights attestation; captions trail the speech by roughly 7 to 12
+ * seconds; paid minutes always need a confirmation. Describe what happens; never claim a platform
+ * endorses it.
  */
 export const EN_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDictionary = {
   eyebrow: 'New in ClawAI',
@@ -22,7 +24,7 @@ export const EN_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   whatParagraphs: [
     'A live stream is hard to follow when it is long, fast or in a language you do not speak. Live Intelligence sits beside the video and does the note-taking: captions translated into your language, a running summary and a list of highlights, so you can look away and still know what you missed.',
     'It works in a modal inside ClawAI, so the stream and the analysis are on one screen. You choose the caption language and an analysis mode before you start, and you can pause, resume and seek wherever the stream allows it. When you pause, the feed freezes and billing stops.',
-    'Many people can watch the same stream at once without paying for the same work many times. When ClawAI analyzes a stream on its own servers, such as a live Twitch channel or an HLS link, it processes it once and shares that analysis with everyone watching it. The analysis you actually watched is saved to your own history, and you keep it until you delete it.',
+    'Many people can watch the same stream at once without paying for the same work many times. When ClawAI analyzes a stream on its own servers, such as a public live stream on YouTube, Twitch, TikTok LIVE or another supported platform, or an HLS link, it processes it once and shares that analysis with everyone watching it. The analysis you actually watched is saved to your own history, and you keep it until you delete it.',
   ],
   stepsTitle: 'How it works, in five steps',
   stepsIntro:
@@ -34,7 +36,7 @@ export const EN_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     },
     {
       title: 'Pick a language and a mode',
-      body: 'Choose the language for your captions and summaries, and one of three analysis modes: Audio, Audio + Vision or Smart Auto. For an HLS link you confirm you have the rights to analyze it; for YouTube, Kick or Facebook you agree to let ClawAI listen through your device.',
+      body: 'Choose the language for your captions and summaries, and one of three analysis modes: Audio, Audio + Vision or Smart Auto. For an HLS link you confirm you have the rights to analyze it. If ClawAI’s servers cannot read a YouTube, Twitch, Kick or Facebook stream, you can agree to let ClawAI listen through your device instead.',
     },
     {
       title: 'Watch with captions, cards and highlights',
@@ -81,7 +83,7 @@ export const EN_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     },
     {
       title: 'Shared processing',
-      body: 'Many viewers, one analysis. A live Twitch channel or an HLS stream is processed once on ClawAI’s servers and shared with everyone watching it, on any device, phones included. Analysis made from your own device’s audio stays private to you.',
+      body: 'Many viewers, one analysis. A public live stream that ClawAI’s servers can read, or an HLS stream, is processed once on ClawAI’s servers and shared with everyone watching it, on any device, phones included. Analysis made from your own device’s audio stays private to you.',
     },
   ],
   modesTitle: 'Three analysis modes',
@@ -105,12 +107,12 @@ export const EN_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   sourcesIntro: 'We would rather tell you the limits now than have you find them mid-stream.',
   sources: [
     {
-      title: '15 platforms, plus HLS links',
-      body: 'ClawAI recognizes 15 live platforms. A live Twitch channel is analyzed on ClawAI’s servers, with nothing to share and on any device; an offline channel falls back to your device’s audio. TikTok LIVE, Instagram Live, Rumble, BIGO LIVE, LinkedIn Live, Telegram, Bilibili, CHZZK, SOOP and Nimo TV open on the platform itself (“Watch on …”), with no AI. Discord Go Live is not supported because it has no public link. HLS links you have the rights to analyze still work; you confirm that when you start.',
+      title: '15 platforms, analyzed on ClawAI’s servers',
+      body: 'ClawAI recognizes 15 live platforms. When a stream is live and public, and the platform allows it, ClawAI’s servers read it themselves: YouTube, Twitch, Kick, Facebook, TikTok LIVE, Rumble, BIGO LIVE, Bilibili, CHZZK, SOOP, Nimo TV and others. There is nothing to share, it works on any device, phones included, and one analysis is shared with everyone watching. Instagram Live usually cannot be read by the server. Discord Go Live is not supported because it has no public link. HLS links you have the rights to analyze still work; you confirm that when you start.',
     },
     {
-      title: 'YouTube, Kick and Facebook: AI from your own device',
-      body: 'These play in their official player, and the AI listens to your device’s audio once you agree. On a computer you share the tab’s audio in Chrome or Edge (“Analyze with my browser”); on a phone the microphone hears the stream from the speaker (“Analyze using microphone”). Only audio is sent, for transcription, so this uses the Audio mode. Live chat appears for YouTube videos, Twitch and Kick; other platforms get an “Open chat” link.',
+      title: 'When the server cannot read a stream',
+      body: 'Then YouTube, Twitch, Kick and Facebook play in their official player, and the AI listens to your device’s audio once you agree: on a computer you share the tab’s audio in Chrome or Edge (“Analyze with my browser”); on a phone the microphone hears the stream from the speaker (“Analyze using microphone”). Only audio is sent, for transcription, so this uses the Audio mode. Other platforms open on the platform itself (“Watch on …”), without AI. Live chat appears for YouTube videos, Twitch and Kick; other platforms get an “Open chat” link.',
     },
     {
       title: 'Captions run a few seconds behind',
@@ -133,12 +135,12 @@ export const EN_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     {
       question: 'Does Live Intelligence work on YouTube live streams?',
       answer:
-        'Yes. A YouTube stream plays in its official player, and the AI works from your own device’s audio after you agree: on a computer you share the tab’s audio in Chrome or Edge, and on a phone the microphone hears the stream from the speaker. Only audio is sent, for transcription, and captions still arrive several seconds behind the speech.',
+        'Yes, when the stream is live and public and YouTube allows it: ClawAI’s servers read it, so there is nothing to share and it works on any device. If the server cannot read it, the AI works from your own device’s audio after you agree: on a computer you share the tab’s audio in Chrome or Edge, and on a phone the microphone hears the stream from the speaker. Either way, captions arrive several seconds behind the speech.',
     },
     {
       question: 'Which streams can it analyze?',
       answer:
-        'Live Twitch channels, analyzed on ClawAI’s servers on any device; YouTube, Kick and Facebook, from your own device’s audio; and HLS live streams you have the rights to analyze, which you confirm when you start. Ten other platforms open on the platform itself, without AI. A stream the service cannot read is reported as unsupported rather than failing silently.',
+        'Public live streams on YouTube, Twitch, Kick, Facebook, TikTok LIVE, Rumble, BIGO LIVE, Bilibili, CHZZK, SOOP, Nimo TV and other supported platforms, analyzed on ClawAI’s servers on any device when the platform allows it; and HLS live streams you have the rights to analyze, which you confirm when you start. If the server cannot read a stream, YouTube, Twitch, Kick and Facebook fall back to your own device’s audio, and other platforms open on the platform itself, without AI. Instagram Live usually cannot be read by the server, and Discord is not supported.',
     },
     {
       question: 'Are the captions real time?',
@@ -172,5 +174,5 @@ export const EN_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   ],
   closingTitle: 'Follow the next live stream without watching every minute',
   closingBody:
-    'Paste a Twitch, YouTube, Kick or Facebook link, or an HLS link you have the rights to analyze, choose your language and start. Your free minutes are waiting.',
+    'Paste a link to a live stream on YouTube, Twitch, TikTok LIVE or another supported platform, or an HLS link you have the rights to analyze, choose your language and start. Your free minutes are waiting.',
 };

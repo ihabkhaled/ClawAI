@@ -19,11 +19,11 @@ this file disagree, fix one in the same change) - decision:
   `PrismaService` and the global ioredis client (`LIVE_REDIS_CLIENT`). Migrations `20261122000000_live_init` and `20261122120000_live_platforms_capture` (platforms, capture) and the
   idempotent seeder `prisma/seeders/live-policy.seeder.cjs` (policy version 1 only when the table is empty).
 - **sources** - `POST /live/sources/resolve` (the platform registry: `constants/platform-registry.constants.ts` plus one
-  parser per platform, 15 platforms, parsing only except the Twitch server-pull probe), the HLS proxy (`GET /live/streams/:streamId/hls/p` and `/hls/:file`), the
+  parser per platform, 15 platforms, parsing only except the server-pull probe), the HLS proxy (`GET /live/streams/:streamId/hls/p` and `/hls/:file`), the
   SSRF guard (`source-url-guard.service.ts`), the fetcher and the fixture broadcaster (a looped recording served as a
   local HLS window; real source, nothing mocked).
 - **processing** - `BROWSER_CAPTURE` runs read the viewer's tab audio from the Redis list `live:capture:<runId>`
-  (`workers/capture-chunk-source.ts`), never the source; `SERVER_PULL` runs pull the resolved Twitch playlist (token
+  (`workers/capture-chunk-source.ts`), never the source; `SERVER_PULL` runs pull the resolved playlist (Twitch token or yt-dlp URL,
   re-resolved after a failed playlist fetch, at most once per 30 s); every other run pulls HLS. One run per processing key with a DB lease and generation fence (`run-coordinator`,
   `fenced-run-writer`), `run-reconciler` (recovers stale leases), `run-worker` (chunked STT through file-service),
   and the `transcript`, `summary`, `translation` and `vision` managers. Model calls go through connector-service.
@@ -53,12 +53,13 @@ this file disagree, fix one in the same change) - decision:
   cross-host redirects (architecture section 1).
 - **ffmpeg reads only local files.** The worker downloads segments itself, then runs ffmpeg on the local file with
   `-protocol_whitelist file`, so ffmpeg can never be steered to another host.
-- **Server-side reads: Twitch only (ADR-221 batch 3, owner decision 2026-11-23).** A live Twitch channel is
-  `SERVER_PULL`: `services/server-pull-resolver.service.ts` takes the anonymous web-player token (a `forbidden` token is
-  honoured) and the usher playlist; one `PUBLIC` run serves every viewer; the worker's pin is the host-suffix list
-  `ttvnw.net`/`live-video.net`; policy `serverPullPlatforms: []` turns it off with no network call. **Never pull YouTube
-  or Kick:** that needs defeating their protections (client impersonation past YouTube's attestation; Kick's 403 to
-  servers). YouTube, Kick, Facebook and offline Twitch are `BROWSER_CAPTURE`: the viewer's own tab audio, or its
+- **Server-side reads: every platform except Discord (ADR-221 batches 3-4, owner decisions 2026-11-23).** A live
+  stream is `SERVER_PULL`: `services/server-pull-resolver.service.ts` uses Twitch's web-player token (a `forbidden` token
+  is honoured) or, for everything else, the pinned `yt-dlp` binary (argv only, `--use-extractors default,-generic`, the
+  canonical watch URL we built, only an https HLS result, 30 s, cached 60 s). One `PUBLIC` run serves every viewer; the
+  worker's pin is the resolved CDN's registrable domain; policy `serverPullPlatforms: []` turns it off with no network
+  call. Never run yt-dlp through a shell or on the raw pasted URL. When the server cannot read a stream, YouTube, Kick,
+  Facebook and Twitch are `BROWSER_CAPTURE`: the viewer's own tab audio, or its
   microphone on phones, posted as WAV chunks (owner-accepted terms risk, decision 2026-11-22). The other registry platforms are `LINK_ONLY` (session `UNSUPPORTED`, no run, no billing, like the old
   `PLAYER_ONLY`); Discord is refused with `LIVE_DISCORD_PRIVATE`. YouTube `@handle` and vanity links are refused with
   `LIVE_YOUTUBE_HANDLE_UNSUPPORTED`.

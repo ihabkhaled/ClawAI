@@ -12,8 +12,9 @@ of them in the same change (rule 63).
 YouTube's Developer Policies forbid downloading, caching or separating the audio/video of YouTube
 content (III.E.1, III.I.7) and retrieving data by any means other than the API (III.I.14). The server
 therefore never downloads, fetches or captures YouTube's media, and never defeats any platform's protection.
-**One exception, owner decision 2026-11-23 (ADR-221 batch 3): Twitch `SERVER_PULL`** — the server reads
-Twitch's public playlist the way its own web player does (section "Server pull" below). Platform streams are analysed only from the **viewer's own
+**Superseded by owner decisions 2026-11-23 (ADR-221 batches 3 and 4): `SERVER_PULL` on every platform except
+Discord** — the server reads a live stream's public playlist (Twitch natively, the rest through yt-dlp; section
+"Server pull" below). When it cannot, the rules in this paragraph still apply. Platform streams are analysed only from the **viewer's own
 browser tab audio** (`BROWSER_CAPTURE`, below). Capturing YouTube and other platforms this way is an
 **owner-accepted terms risk (decision 2026-11-22)**: the owner accepted the terms exposure of viewer-side
 capture; it is not a claim that the platforms permit it.
@@ -52,14 +53,18 @@ only, never a network call**, except the Twitch server-pull probe when the polic
 - **Microphone capture (batch 3):** where tab audio is unavailable (every mobile browser), the browser captures the
   microphone instead (`getUserMedia`, echo cancellation / noise suppression / auto gain OFF) and posts the same chunks.
   Frontend only (`utilities/live-capture.utility.ts`, source picked by `pickLiveCaptureSource()`).
-- **Server pull (batch 3, Twitch only):** `services/server-pull-resolver.service.ts` asks `gql.twitch.tv` for the
-  anonymous playback token (honouring `forbidden`) and builds the usher master playlist. Resolve probes it when the
+- **Server pull (batch 3 Twitch, batch 4 every platform but Discord):** `services/server-pull-resolver.service.ts`
+  resolves a `ResolvedPull` (playlist + host suffixes). Twitch with `LIVE_TWITCH_CLIENT_ID`: the anonymous playback
+  token (honouring `forbidden`) and the usher master playlist. Everything else: `yt-dlp` (argv only, generic extractor
+  off, 30 s, only an https HLS result) on the canonical watch URL; the pin is the result's registrable domain. Results
+  are cached 60 s; link-only platforms are probed too (live → `SERVER_PULL` with no embed). Resolve probes it when the
   policy's `serverPullPlatforms` lists the platform: live → `SERVER_PULL` (`PUBLIC`, one run for every viewer, any
   device, `reasonCode SERVER_PULL_AVAILABLE`); offline/refused → private `BROWSER_CAPTURE` with
   `SERVER_PULL_UNAVAILABLE`; policy off → no network call. The worker (`HlsChunkSource` with a `ServerPullSource`)
   fetches on the host-suffix pin `ttvnw.net`/`live-video.net`, and drops the token after a failed playlist fetch (at
-  most once per 30 s) so the next poll re-resolves. YouTube (needs client impersonation to dodge attestation) and Kick
-  (403 to servers) are not pulled. The player and chat stay the official embeds; the feed reveals by wall clock.
+  most once per 30 s) so the next poll re-resolves (fresh, bypassing the cache). Twitch's pin is
+  `ttvnw.net`/`live-video.net`; a yt-dlp pull's pin is its own CDN domain. The player and chat stay the official embeds
+  where the platform has one; the feed reveals by wall clock.
 - `HLS` requires a per-user **rights attestation** (checkbox + timestamp stored on the session) before
   any processing; each viewer attests for themselves, so sharing a run never extends one user's
   attestation to another.

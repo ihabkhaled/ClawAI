@@ -91,14 +91,15 @@ export class RunWorkerFactory {
     return new HlsChunkSource(context, this.fetcher, this.fixtures, directory, pull);
   }
 
-  /** The stream's watch URL re-parsed for its platform id (the channel login for Twitch). */
+  /** The stream's watch URL re-parsed into its platform match (id and canonical watch URL). */
   private serverPullSource(
     context: WorkerContext,
     platform: LivePlatform | null,
   ): ServerPullSource {
-    const id = resolvePlatformUrl(new URL(context.sourceUrl))?.match.id ?? null;
-    const hostSuffixes = this.serverPull.hostSuffixes(platform);
-    if (id === null || hostSuffixes === null) throw new Error('LIVE_SERVER_PULL_UNSUPPORTED');
-    return { hostSuffixes, resolvePlaylist: () => this.serverPull.resolvePlaylist(platform, id) };
+    const match = resolvePlatformUrl(new URL(context.sourceUrl))?.match ?? null;
+    if (match === null || !this.serverPull.supports(platform)) {
+      throw new Error('LIVE_SERVER_PULL_UNSUPPORTED');
+    }
+    return { resolve: (fresh) => this.serverPull.resolve(platform, match, fresh) };
   }
 }

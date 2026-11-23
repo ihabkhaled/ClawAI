@@ -243,7 +243,7 @@ export type LiveLocaleTranslation = {
     killSwitch: string;
     serverPullTitle: string;
     serverPullHint: string;
-    serverPullTwitch: string;
+    serverPullSwitch: string;
     plansTitle: string;
     plan: string;
     defaultPlan: string;

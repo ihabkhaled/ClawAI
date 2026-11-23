@@ -1,16 +1,51 @@
 import { LivePlatform } from '../../../generated/prisma';
 
 /**
- * Server pull (ADR-221 addendum 2026-11-23): the server reads a platform's PUBLIC playlist the
- * same way that platform's own web player does, so one run serves every viewer on any device.
- * Only platforms that hand an anonymous player a playlist without any bypass are listed: YouTube
- * gives none without impersonating a client to dodge its attestation, and Kick refuses server
- * requests outright. Neither is worked around; they stay browser capture.
+ * Server pull (ADR-221 addendum 2026-11-23, widened the same day by owner decision): the server
+ * reads a live stream's public playlist so one run serves every viewer on any device. Twitch uses
+ * its own player's token path; every other platform asks yt-dlp for the stream's HLS URL. Discord
+ * has no public stream and stays refused. A platform yt-dlp cannot read falls back by itself.
  */
-export const SERVER_PULL_PLATFORMS: readonly LivePlatform[] = [LivePlatform.TWITCH];
+export const SERVER_PULL_PLATFORMS: readonly LivePlatform[] = Object.values(LivePlatform).filter(
+  (platform) => platform !== LivePlatform.DISCORD,
+);
 
-/** The policy default when a stored policy version predates the field. */
-export const SERVER_PULL_DEFAULT_PLATFORMS: readonly LivePlatform[] = [LivePlatform.TWITCH];
+/** The policy default when a stored policy version predates the field: every server-pull platform. */
+export const SERVER_PULL_DEFAULT_PLATFORMS: readonly LivePlatform[] = SERVER_PULL_PLATFORMS;
+
+/** yt-dlp on PATH (pinned in the Dockerfiles). Missing binary = pull unavailable, capture fallback. */
+export const YTDLP_BINARY = 'yt-dlp';
+/**
+ * Fixed arguments: no user config, Node as the JS runtime (already in the image), every extractor
+ * except `generic` (so a URL can never make it fetch an arbitrary host), live only, one line of output.
+ * Only an HLS format is accepted: the worker reads HLS through the SSRF-guarded fetcher.
+ */
+export const YTDLP_ARGS: readonly string[] = [
+  '--no-config',
+  '--js-runtimes',
+  'node',
+  '--use-extractors',
+  'default,-generic',
+  '--no-playlist',
+  // Live streams only: a recorded video (YouTube serves HLS for those too) prints nothing.
+  '--match-filters',
+  'is_live',
+  '--no-warnings',
+  '--quiet',
+  '--socket-timeout',
+  '10',
+  '--cache-dir',
+  '/tmp/yt-dlp-cache',
+  '--format',
+  'w[protocol^=m3u8]/ba[protocol^=m3u8]/b[protocol^=m3u8]',
+  '--print',
+  '%(protocol)s %(url)s',
+];
+export const YTDLP_TIMEOUT_MS = 30_000;
+export const YTDLP_MAX_OUTPUT_BYTES = 16 * 1024;
+/** A resolved stream URL is reused this long (resolve-time probe, then the worker's first poll). */
+export const SERVER_PULL_CACHE_TTL_MS = 60_000;
+export const SERVER_PULL_CACHE_MAX_ENTRIES = 256;
 
 export const TWITCH_GQL_URL = 'https://gql.twitch.tv/gql';
 export const TWITCH_GQL_HOST_SUFFIXES: readonly string[] = ['gql.twitch.tv'];
@@ -28,3 +63,5 @@ export const SERVER_PULL_REQUEST_TIMEOUT_MS = 5000;
 export const SERVER_PULL_REFRESH_MIN_INTERVAL_MS = 30_000;
 /** Upper bound of the usher `p` cache-buster, as the web player sends it. */
 export const TWITCH_USHER_RANDOM_MAX = 9_999_999;
+/** Country TLDs whose second level is public (`co.kr`, `com.br`): the host suffix keeps three labels. */
+export const PUBLIC_SECOND_LEVEL_LABEL = /^(?:co|com|net|org|ne|or|go|ac)$/u;
