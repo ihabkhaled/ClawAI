@@ -44,3 +44,7 @@ A second per-unit read endpoint, a change to the transcription provider walk, mo
 ## Amendment 2026-11-02 (a clip renamed as audio)
 
 The kind is decided by the file extension, so a short video renamed `.mp3` took the audio path and skipped the plan's video gate (`maxVideoSeconds`, 0 = disabled). Found by the automated security review of the commit. An audio-named upload is now probed once; a container that holds a real video stream (any codec except a still-image codec used for cover art: mjpeg, png, bmp, gif, tiff, webp, jpeg2000) is read through the video path and meets the same gate. A probe that cannot read the bytes leaves them on the audio path (fails open, as before), and an audio file with cover art stays audio. Tests: four cases in `transcription-read.manager.spec.ts` (25 pass).
+
+## Amendment 2026-11-23 (a per-replica limit)
+
+At most `TRANSCRIBE_READ_MAX_CONCURRENT` (2) reads run at once on one file-service replica; the next is refused 429 `TRANSCRIBE_READ_BUSY` before any ffmpeg child, temp dir or credit hold, so a retry cannot double-charge. A read takes a slot only after the cheap checks (type, empty, 12 MB) and gives it back on every outcome. Why: each read holds a decoded copy of up to the body limit plus an ffprobe/ffmpeg process, and a burst would starve the upload path's video jobs. Proved live with `scripts/qa/live-transcribe-smoke.mjs` (12 parallel unreadable files: 2 ran ffprobe, 10 busy, no 5xx).

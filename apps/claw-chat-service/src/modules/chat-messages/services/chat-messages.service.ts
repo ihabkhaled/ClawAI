@@ -488,6 +488,9 @@ export class ChatMessagesService implements OnModuleInit {
       // sends an empty list as a fast path, from a restricted plan whose list is
       // genuinely empty and therefore grants nothing.
       entitlements?.modelAccessMode,
+      // A cost-class plan (Free, Starter) has no model list: without its classes routing
+      // could offer it no substitute and no AUTO candidate (2026-11-23).
+      entitlements?.allowedCostClasses ?? [],
       // The free plan's price limit for AUTO routing (ADR-162). Absent means no limit.
       entitlements?.freeCreditMaxModelOutputMicroUsd ?? null,
       modality,
@@ -3102,6 +3105,7 @@ export class ChatMessagesService implements OnModuleInit {
     forcedModel: string | undefined,
     allowedModels: string[],
     modelAccessMode: string | undefined,
+    allowedCostClasses: string[],
     freeModelPriceCap: number | null,
     modality: AttachmentModalityFields & { previousTurnKind?: PreviousTurnKind },
   ): void {
@@ -3120,6 +3124,7 @@ export class ChatMessagesService implements OnModuleInit {
       // other plan an empty list grants nothing, so the mode has to travel too.
       allowedModels,
       modelAccessMode,
+      allowedCostClasses,
       // ADR-162: the dearest model (output price, micro-USD per million tokens) the plan's free
       // requests cover. null = no limit. The router leaves dearer models out of AUTO.
       freeModelPriceCap,

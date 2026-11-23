@@ -1180,6 +1180,7 @@ Every chat surface reaches research-service through one client, `utilities/resea
 - A used-up credit model either falls to an included model with a notice (`FALLBACK`, the default) or ends the turn with the original 402 (`STOP`). The user picks it in Settings; auth-service owns `User.creditFallbackMode`.
 - `AccessControlService.creditFallbackModeFor(userId)` reads it from `GET /internal/users/:id/entitlements` (absent means `FALLBACK`). `ChatExecutionManager` asks lazily, only after the first 402, so a turn with no credit refusal makes no extra call.
 - Under `STOP`, `skipChainCandidate` skips every remaining candidate (`creditFallbackStops`, `skipsAfterCreditStop` in `credit-fallback.utility.ts`; `creditStopped` in `candidate-chain.utility.ts`) and the chain ends in the credit refusal. A provider outage still falls to a substitute under `STOP`. Routing's `withIncludedSafetyNet` is unchanged. Spec: `__tests__/credit-fallback-mode.spec.ts`.
+- Every `message.created` publisher carries the plan's `modelAccessMode` AND `allowedCostClasses` (guard: `services/__tests__/message-created-publishers.spec.ts`). Until 2026-11-23 the main send left the classes out, so routing offered a Free or Starter user no substitute and the FALLBACK above never fired for a picked model (ADR-161 amendment).
 
 ## Model access carries cost marks (ADR-198 amendment, 2026-11-02)
 

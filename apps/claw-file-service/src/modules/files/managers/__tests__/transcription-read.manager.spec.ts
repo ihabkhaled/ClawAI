@@ -29,7 +29,10 @@ import { transcribeWithGemini } from '../../adapters/gemini-transcription.adapte
 import { transcribeWithOpenAi } from '../../adapters/openai-transcription.adapter';
 import { probeAudioSeconds } from '../../utilities/audio-duration.utility';
 import { MAX_TRANSCRIBABLE_AUDIO_BYTES } from '../../constants/transcription.constants';
-import { TRANSCRIBE_READ_MAX_TEXT_CHARS } from '../../constants/transcribe-read.constants';
+import {
+  TRANSCRIBE_READ_MAX_CONCURRENT,
+  TRANSCRIBE_READ_MAX_TEXT_CHARS,
+} from '../../constants/transcribe-read.constants';
 import { classifyReadMedia } from '../../utilities/transcribe-read-media.utility';
 import { transcribeTextSchema } from '../../dto/transcribe-text.dto';
 
@@ -253,6 +256,50 @@ describe('TranscriptionReadManager (POST /files/transcribe-text)', () => {
       const error = await refusal(h.reader.read(USER, { fileName: 'a.mp3', contentBase64: '=' }));
       expect(error.code).toBe(TranscribeReadErrorCode.EMPTY_MEDIA);
       expect(error.getStatus()).toBe(HttpStatus.BAD_REQUEST);
+    });
+  });
+
+  describe('per-replica limit', () => {
+    it('a read past the limit is a 429 that starts no ffmpeg and spends nothing', async () => {
+      mockedGemini.mockResolvedValue({ text: 'hello' });
+      const h = await buildHarness([GEMINI]);
+      let release = (): void => undefined;
+      const gate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      h.media.withBufferWorkspace.mockImplementation(
+        async (_bytes: Buffer, work: (w: unknown) => Promise<unknown>) => {
+          await gate;
+          return work({ dir: '/tmp/x', inputPath: '/tmp/x/input' });
+        },
+      );
+      const running = Array.from({ length: TRANSCRIBE_READ_MAX_CONCURRENT }, () =>
+        h.reader.read(USER, videoDto),
+      );
+
+      const error = await refusal(h.reader.read(USER, videoDto));
+      expect(error.code).toBe(TranscribeReadErrorCode.BUSY);
+      expect(error.getStatus()).toBe(HttpStatus.TOO_MANY_REQUESTS);
+      expect(h.media.withBufferWorkspace).toHaveBeenCalledTimes(TRANSCRIBE_READ_MAX_CONCURRENT);
+
+      release();
+      await Promise.all(running);
+      // The slots are free again once the running reads settle.
+      await expect(h.reader.read(USER, videoDto)).resolves.toMatchObject({ provider: 'GEMINI' });
+    });
+
+    it('a cheap refusal does not take a slot, and a failed read gives its slot back', async () => {
+      const h = await buildHarness([GEMINI]);
+      h.media.probe.mockResolvedValue({ ok: false, reason: 'CORRUPT_CONTAINER', detail: '' });
+      for (let i = 0; i < TRANSCRIBE_READ_MAX_CONCURRENT + 1; i += 1) {
+        expect((await refusal(h.reader.read(USER, videoDto))).code).toBe(
+          TranscribeReadErrorCode.MEDIA_UNREADABLE,
+        );
+        expect(
+          (await refusal(h.reader.read(USER, { fileName: 'a.pdf', contentBase64: AUDIO_B64 })))
+            .code,
+        ).toBe(TranscribeReadErrorCode.UNSUPPORTED_MEDIA_TYPE);
+      }
     });
   });
 

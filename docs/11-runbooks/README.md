@@ -120,3 +120,4 @@
 - [runbook-video-generation-failure.md](runbook-video-generation-failure.md) — a video job stuck, timed out or failed
 - [runbook-video-generation-failure.md](runbook-video-generation-failure.md)
 - [runbook-stale-shared-dist-after-pull.md](runbook-stale-shared-dist-after-pull.md)
+- [runbook-smart-app-control-blocks-native-binaries.md](runbook-smart-app-control-blocks-native-binaries.md) — local tests fail with "An Application Control policy has blocked this file"

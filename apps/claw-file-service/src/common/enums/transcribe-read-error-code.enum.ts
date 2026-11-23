@@ -34,4 +34,6 @@ export enum TranscribeReadErrorCode {
   UNAVAILABLE = 'TRANSCRIBE_READ_UNAVAILABLE',
   /** Every provider attempt failed or answered empty (502). Holds were released. */
   FAILED = 'TRANSCRIBE_READ_FAILED',
+  /** This replica already runs its maximum of media reads (429). Nothing ran, nothing billed. */
+  BUSY = 'TRANSCRIBE_READ_BUSY',
 }

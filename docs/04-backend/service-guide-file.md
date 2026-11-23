@@ -892,10 +892,12 @@ cap are unchanged. New dependencies mean the image needs a rebuild (`service:reb
 
 - Stateless, authenticated (`FILES_USE`), body `{ contentBase64, fileName, mimeType? }`, 200 `{ text, durationSeconds, provider, model?, truncated }`. Nothing is stored, no event is published.
 - Audio: mp3, m4a, wav, ogg, flac, aac (`.webm` only with an `audio/*` mimeType), 12 MB cap (413). Video: mp4, mov, mkv, webm; the transcript of the AUDIO TRACK only. Video duration cap `min(plan maxVideoSeconds, 1800 s)`; plan value 0 means disabled.
-- Errors `TRANSCRIBE_READ_*`: 400 `EMPTY_MEDIA`; 402 `INSUFFICIENT_CREDIT`; 422 `UNSUPPORTED_MEDIA_TYPE`, `MEDIA_TOO_LONG`, `VIDEO_DISABLED_FOR_PLAN`, `MEDIA_UNREADABLE`, `NO_AUDIO_TRACK`, `AUDIO_EXTRACTION_FAILED`, `NO_SPEECH`; 502 `FAILED`; 503 `CREDIT_CHECK_UNAVAILABLE`, `ENTITLEMENTS_UNAVAILABLE`, `TOOL_UNAVAILABLE`, `UNAVAILABLE`. Every 400/401/413/422 answers before any hold.
+- Errors `TRANSCRIBE_READ_*`: 400 `EMPTY_MEDIA`; 402 `INSUFFICIENT_CREDIT`; 422 `UNSUPPORTED_MEDIA_TYPE`, `MEDIA_TOO_LONG`, `VIDEO_DISABLED_FOR_PLAN`, `MEDIA_UNREADABLE`, `NO_AUDIO_TRACK`, `AUDIO_EXTRACTION_FAILED`, `NO_SPEECH`; 502 `FAILED`; 429 `BUSY`; 503 `CREDIT_CHECK_UNAVAILABLE`, `ENTITLEMENTS_UNAVAILABLE`, `TOOL_UNAVAILABLE`, `UNAVAILABLE`. Every 400/401/413/422 answers before any hold.
 - Money: the existing transcription meter, booked to `PaygSurface.TRANSCRIPTION_READ`, requestId `transcription-read:{userId}:{uuid}:{provider}`. The ranked provider walk is the one above (Gemini, OpenAI, free LOCAL last). A read does NOT count against the day/week/month token windows (rule 46: those are chat tokens enforced by chat-service) and is never free-allowance eligible (rule 37 item 22).
 - Files: `managers/transcription-read.manager.ts`, `services/transcription-read.service.ts`, `dto/transcribe-text.dto.ts`, `constants/transcribe-read.constants.ts` (design record), `utilities/transcribe-read-media.utility.ts`.
-- Honest gaps: unit tests only, not run against a live stack or real ffmpeg; no per-endpoint ffmpeg concurrency limit; audio duration is not capped beyond 12 MB (hold bounded at 7,200 s).
+- Per replica at most `TRANSCRIBE_READ_MAX_CONCURRENT` (2) reads run at once; the next one is a 429 `TRANSCRIBE_READ_BUSY` before any ffmpeg or hold, so a client may retry it without a double charge. Only a read that passed the cheap checks takes a slot, and a slot is given back on any outcome (2026-11-23).
+- Live check: `scripts/qa/live-transcribe-smoke.mjs` (no token, empty, unsupported, unreadable after a real ffprobe, a 12-request burst: 2 ran, 10 busy, no 5xx). Nothing in it reaches a provider.
+- Honest gaps: a real speech file through a real provider is proved only by the 2026-11-02 run (6 s, 29 micro-USD); audio duration is not capped beyond 12 MB (hold bounded at 7,200 s).
 
 ## Extraction cap (ADR-219, 2026-11-22)
 

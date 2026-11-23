@@ -3,6 +3,7 @@ import { RequiredModality } from '@claw/shared-types';
 import { ModalityFit } from '../../../common/enums/modality-fit.enum';
 import { ModalityKind, RouterProvider } from '../../../generated/prisma';
 import { CloudRouterEligibilityManager } from '../managers/cloud-router-eligibility.manager';
+import { PlanRoutingAccessManager } from '../managers/plan-routing-access.manager';
 import { type RoutingContext } from '../types/routing.types';
 
 const baseContext: RoutingContext = { message: 'hello', threadId: 'thread-1' };
@@ -193,6 +194,47 @@ describe('CloudRouterEligibilityManager free plan price limit (ADR-162)', () => 
     });
 
     expect(result.map((d) => d.id)).toEqual(['g1']);
+  });
+});
+
+describe('CloudRouterEligibilityManager cost-class plan (Free, Starter)', () => {
+  const CLASSES: Record<string, string> = {
+    'models/gemini-3.6-flash': 'STANDARD',
+    'models/gemini-2.5-flash-lite': 'CHEAP',
+    'claude-sonnet-5': 'PREMIUM',
+    'gpt-5.5': 'ULTRA',
+    'glm-5.2': 'FREE',
+  };
+  const resolveCostClasses = vi.fn(async (models: Array<{ provider: string; model: string }>) =>
+    models.map((m) => ({ ...m, costClass: CLASSES[m.model] ?? null })),
+  );
+  const buildWithPlan = (exposed: ReadonlySet<string> | null) =>
+    new CloudRouterEligibilityManager(
+      { findRoutableForCloudRouting: vi.fn().mockResolvedValue(ROUTABLE) } as never,
+      { exposedChatModels: vi.fn().mockResolvedValue(exposed) } as never,
+      undefined,
+      new PlanRoutingAccessManager({ resolveCostClasses } as never),
+    );
+  const freePlan: RoutingContext = {
+    ...baseContext,
+    allowedModels: ['__CLAW_PLAN_DENY_ALL__'],
+    allowedCostClasses: ['FREE', 'CHEAP', 'STANDARD'],
+    modelAccessAllowAll: false,
+  };
+
+  it('offers the models in the plan classes instead of nothing', async () => {
+    const result = await buildWithPlan(EXPOSED).resolveEligibleDeployments(freePlan);
+
+    expect(result.map((d) => d.id).sort()).toEqual(['g1', 'g2', 'l1']);
+  });
+
+  it('asks for classes only of models that could be offered (exposed, never the TTS model)', async () => {
+    resolveCostClasses.mockClear();
+    await buildWithPlan(EXPOSED).resolveEligibleDeployments(freePlan);
+
+    const asked = resolveCostClasses.mock.calls[0]?.[0].map((m) => m.model) ?? [];
+    expect(asked).not.toContain('gpt-4o-mini-tts');
+    expect(asked).toHaveLength(5);
   });
 });
 

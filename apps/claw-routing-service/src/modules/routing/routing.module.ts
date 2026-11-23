@@ -36,6 +36,7 @@ import { CloudRouterEligibilityManager } from './managers/cloud-router-eligibili
 import { ModelOutputPriceService } from './services/model-output-price.service';
 import { ExposedModelsService } from './services/exposed-models.service';
 import { PickedModelSubstituteManager } from './managers/picked-model-substitute.manager';
+import { PlanRoutingAccessManager } from './managers/plan-routing-access.manager';
 import { CloudRouterPromptManager } from './managers/cloud-router-prompt.manager';
 import { RouterShadowEvaluationManager } from './managers/router-shadow-evaluation.manager';
 
@@ -57,6 +58,7 @@ import { RouterShadowEvaluationManager } from './managers/router-shadow-evaluati
     RouterInferenceCoordinatorManager,
     CloudRouterManager,
     CloudRouterEligibilityManager,
+    PlanRoutingAccessManager,
     ModelOutputPriceService,
     PickedModelSubstituteManager,
     ExposedModelsService,

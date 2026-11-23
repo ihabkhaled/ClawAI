@@ -23,8 +23,10 @@ const PUBLISH_WINDOW = 1_600;
 const ALLOWED_WITHOUT_ACCESS_MODE = new Set(['runtime-v2-run.service.ts']);
 
 describe('every message.created publisher carries the plan access mode', () => {
+  // eslint-disable-next-line security/detect-non-literal-fs-filename -- fixed in-repo source tree
   const files = readdirSync(SERVICES_DIR).filter((name) => name.endsWith('.service.ts'));
   const publishers = files.flatMap((name) => {
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- fixed in-repo source file
     const source = readFileSync(join(SERVICES_DIR, name), 'utf8');
     return [...source.matchAll(PUBLISH)].map((match) => ({
       name,
@@ -40,6 +42,15 @@ describe('every message.created publisher carries the plan access mode', () => {
     '$name publishes modelAccessMode with message.created',
     ({ window }) => {
       expect(window).toMatch(/modelAccessMode/);
+    },
+  );
+
+  // 2026-11-23: the main send carried the mode but not the classes, so routing saw a Free
+  // (ALLOW_COST_CLASSES) user as allowed nothing and offered a picked model no substitute.
+  it.each(publishers.filter((entry) => !ALLOWED_WITHOUT_ACCESS_MODE.has(entry.name)))(
+    '$name publishes allowedCostClasses with message.created',
+    ({ window }) => {
+      expect(window).toMatch(/allowedCostClasses/);
     },
   );
 });

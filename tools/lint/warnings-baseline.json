@@ -486,9 +486,6 @@
     "apps/claw-chat-service/src/modules/chat-messages/services/__tests__/auto-research-resolution.spec.ts": {
       "@typescript-eslint/consistent-type-imports": 1
     },
-    "apps/claw-chat-service/src/modules/chat-messages/services/__tests__/message-created-publishers.spec.ts": {
-      "security/detect-non-literal-fs-filename": 2
-    },
     "apps/claw-chat-service/src/modules/chat-messages/services/__tests__/research-gate.service.spec.ts": {
       "@typescript-eslint/consistent-type-imports": 1
     },

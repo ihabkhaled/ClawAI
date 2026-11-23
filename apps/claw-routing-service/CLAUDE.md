@@ -401,7 +401,9 @@ Image-intent tables are in `@claw/shared-utilities` (rebuild its `dist` before r
 
 ## Plan model cost-class gate
 
-AUTO routing filters primary and fallback candidates through the plan's llowedCostClasses. This class set is an upper bound even when an explicit model row exists; unknown classes are excluded. Canonical model cost classes come from router-model pricing. See [plan and quota specification](../../docs/06-data/plan-and-quota-specification.md#5-model-access).
+AUTO routing filters primary and fallback candidates through the plan's `allowedCostClasses`. This class set is an upper bound even when an explicit model row exists; unknown classes are excluded. Canonical model cost classes come from router-model pricing. See [plan and quota specification](../../docs/06-data/plan-and-quota-specification.md#5-model-access).
+
+The candidate SET (cloud-router eligibility, picked-model substitutes, named-model requests) reads the plan through `managers/plan-routing-access.manager.ts` only. A cost-class plan carries the deny-all key in `allowedModels`, so reading the list alone offered Free and Starter users nothing (`eligible=0`, fixed 2026-11-23, ADR-161 amendment). Never read `context.allowedModels` directly in a new candidate path.
 
 `POST /internal/router-models/costs/classes` (service token, ADR-198) resolves up to 300 `{provider, model}` pairs to a cost class through `ModelCostService.getSnapshot`, so decorated ids, dated snapshots and the provider fallback behave as on send. It returns the class band only (null = unpriced), never a rate. With an optional `freeModelPriceCap` (micro-USD per million output tokens, ADR-162) each answer also carries `aboveFreeCap: true|false`, priced from the same snapshot auth-service charges; absent or null adds nothing. chat-service's model picker list is its only caller.
 

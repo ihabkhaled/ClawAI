@@ -8,7 +8,12 @@ import {
   modelMatchKey,
   selectCloudRouterCandidates,
 } from '../utilities/cloud-router-candidates.utility';
-import type { EligibleDeploymentRecord } from '../types/model-deployment.types';
+import { DeploymentActivationState } from '../../../generated/prisma';
+import type {
+  EligibleDeploymentRecord,
+  RoutableDeploymentRecord,
+} from '../types/model-deployment.types';
+import { PlanRoutingAccessManager } from './plan-routing-access.manager';
 import { UNAVAILABLE_PROVIDER } from '../constants/routing.constants';
 import type { RoutingContext, RoutingDecisionResult } from '../types/routing.types';
 import { rankDecisionByModalityFit } from '../utilities/modality-fit.utility';
@@ -35,7 +40,33 @@ export class CloudRouterEligibilityManager {
     private readonly exposedModels: ExposedModelsService,
     // Optional: without it the free plan's price limit is simply not applied here.
     @Optional() private readonly modelPrices?: ModelOutputPriceService,
+    // Without a cost service the default reads only an explicit plan list.
+    @Optional()
+    private readonly planAccess: PlanRoutingAccessManager = new PlanRoutingAccessManager(),
   ) {}
+
+  /**
+   * The plan's allowed keys. A cost-class plan's classes are resolved only for the models that
+   * could be offered at all (exposed, or ACTIVE when exposure is unreadable): each lookup is a
+   * database read, and the rest would be dropped by `selectCloudRouterCandidates` anyway.
+   */
+  private async allowedByPlan(
+    context: RoutingContext,
+    routable: ReadonlyArray<RoutableDeploymentRecord>,
+    exposed: ReadonlySet<string> | null,
+  ): Promise<ReadonlySet<string> | null> {
+    const offerable = routable
+      .filter((row) =>
+        exposed === null
+          ? row.activationState === DeploymentActivationState.ACTIVE
+          : exposed.has(modelMatchKey(row.runtimeProviderKey ?? row.provider, row.providerModelId)),
+      )
+      .map((row) => ({
+        provider: row.runtimeProviderKey ?? row.provider,
+        model: row.providerModelId,
+      }));
+    return this.planAccess.allowedKeys(context, offerable);
+  }
 
   /**
    * `max` defaults to the router prompt's list size; the picked-model
@@ -54,15 +85,7 @@ export class CloudRouterEligibilityManager {
     const routable = allRoutable.filter(
       (deployment) => !isAboveCap(deployment.provider, deployment.providerModelId),
     );
-    const allowed =
-      context.modelAccessAllowAll === true || context.allowedModels === undefined
-        ? null
-        : new Set(
-            context.allowedModels.map((entry) => {
-              const slash = entry.indexOf('/');
-              return modelMatchKey(entry.slice(0, slash), entry.slice(slash + 1));
-            }),
-          );
+    const allowed = await this.allowedByPlan(context, routable, exposed);
     const eligible = selectCloudRouterCandidates(routable, {
       exposed,
       allowed,

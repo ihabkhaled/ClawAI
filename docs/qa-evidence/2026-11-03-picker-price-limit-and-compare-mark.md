@@ -3,7 +3,7 @@
 Batch: picker-price-limit-and-compare-mark
 Date: 2026-11-03
 Commits: (fill in after committing)
-Verdict: PARTIAL
+Verdict: DONE
 
 Every lane is filled in. PASS needs the command and its real output (or a path, a count, a
 screenshot name). NOT_RUN and NOT_APPLICABLE need a reason. Verdict DONE is allowed only when no
@@ -15,7 +15,7 @@ lane is NOT_RUN or FAIL. A fabricated or assumed PASS is a prohibited sentence (
 | L02  | Typecheck, lint and build (touched workspaces)                          | PASS           | tsc --noEmit clean in routing, chat and frontend; eslint --max-warnings 0 clean on every touched file.                                                                                                                                                                   |
 | L03  | Manual API test (curl) with the log line proving the branch ran         | PASS           | Dev stack rebuilt for routing and chat. POST /chat-messages/model-access as a local Free user: gemini-2.5-flash-image allowed true, band STANDARD, covered false; claude-haiku-4-5 (at the limit) covered true; gemini-2.5-pro and opus-4-1 allowed false.               |
 | L04  | Manual browser test (Playwright against the real UI) with screenshots   | PASS           | Walked 2026-11-22 as a local Free-trial user on /chat/compare (screenshots compare-en-_.png, compare-ar-_.png in the session scratchpad). Search "GPT 4o": 5 marks (PREMIUM, CHEAP), 4 locked rows; "Gemini 2.5 Flash": 2 rows dimmed, 0 locked.                         |
-| L05  | Automation e2e (a committed or existing spec was run)                   | NOT_RUN        | No committed e2e covers the picker.                                                                                                                                                                                                                                      |
+| L05  | Automation e2e (a committed or existing spec was run)                   | PASS           | 2026-11-23: `tests/e2e/compare-model-picker.spec.ts` committed and run, 3 passed (375 px, 1280 px, Arabic).                                                                                                                                                              |
 | L06  | RBAC across roles and plan tiers (admin, paid, FREE)                    | PASS           | Free user checked live (above). Admin and paid plans have no price limit: unit test shows no routing call and every model covered.                                                                                                                                       |
 | L07  | Device matrix (3+ widths, both orientations, RTL)                       | PASS           | 375, 768, 1280 px in en and ar: every row 44 px, no page overflow. At 1280 the locked tag overflowed the ~263 px column by 9 px (FAIL, fixed 2026-11-22: the tag now shrinks with an ellipsis); re-measured 0 px. RTL: dir=rtl, mark on the left, checkbox on the right. |
 | L08  | UAT (acceptance criteria walked as the user would)                      | PASS           | As the user: opened Compare, searched, saw the band word and pips, a dear model dimmed but tickable, a not-on-plan model locked with "Not on your plan" (Arabic: ليس ضمن خطتك).                                                                                          |
@@ -33,4 +33,4 @@ The browser walk (2026-11-22) found one defect: on desktop the Compare list colu
 
 ## Open gaps
 
-- L05: no committed e2e covers the picker.
+- Closed 2026-11-23: L05 has a committed e2e.

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import {
   classifyImageIntent,
   classifyVideoIntent,
@@ -11,6 +11,7 @@ import { NAMED_MODEL_UNROUTABLE_PROVIDERS } from '../constants/named-model-reque
 import { ModelDeploymentRepository } from '../repositories/model-deployment.repository';
 import type { NamedModelCatalogEntry, NamedModelOutcome } from '../types/named-model-request.types';
 import type { RoutingContext } from '../types/routing.types';
+import { PlanRoutingAccessManager } from './plan-routing-access.manager';
 import {
   findNamedModelRequest,
   hasModelDirective,
@@ -35,14 +36,19 @@ import {
 export class NamedModelRequestManager {
   private readonly logger = new Logger(NamedModelRequestManager.name);
 
-  constructor(private readonly deployments: ModelDeploymentRepository) {}
+  constructor(
+    private readonly deployments: ModelDeploymentRepository,
+    @Optional()
+    private readonly planAccess: PlanRoutingAccessManager = new PlanRoutingAccessManager(),
+  ) {}
 
   async resolve(context: RoutingContext): Promise<NamedModelOutcome | null> {
     if (!hasModelDirective(context.message)) return null;
     try {
-      const catalog = await this.catalogFor(context);
-      const match = findNamedModelRequest(context.message, catalog);
+      const names = await this.catalogFor(context);
+      const match = findNamedModelRequest(context.message, names);
       if (match === null) return null;
+      const catalog = await this.withPlanDecision(context, names, match.provider);
       const usable = catalog.filter((entry) => entry.allowed && entry.healthy);
       const wanted = this.wantedCapability(context);
       const resolution = resolveNamedModel(match, usable, wanted);
@@ -81,26 +87,39 @@ export class NamedModelRequestManager {
       : NamedModelCapability.CHAT;
   }
 
-  /** Every routable model with whether this user's plan and the connector's health allow it. */
+  /** Every routable model with the connector's health; the plan decision is added after a match. */
   private async catalogFor(context: RoutingContext): Promise<NamedModelCatalogEntry[]> {
     const routable = await this.deployments.findRoutableForCloudRouting();
-    const allowed =
-      context.modelAccessAllowAll === true || context.allowedModels === undefined
-        ? null
-        : new Set(
-            context.allowedModels.map((entry) => {
-              const slash = entry.indexOf('/');
-              return modelMatchKey(entry.slice(0, slash), entry.slice(slash + 1));
-            }),
-          );
     return routable
       .filter((row) => !NAMED_MODEL_UNROUTABLE_PROVIDERS.includes(row.provider))
       .map((row) => ({
         provider: row.provider,
         providerModelId: row.providerModelId,
         isActive: row.activationState === DeploymentActivationState.ACTIVE,
-        allowed: allowed === null || allowed.has(modelMatchKey(row.provider, row.providerModelId)),
+        allowed: true,
         healthy: context.connectorHealth?.[row.provider] !== false,
       }));
+  }
+
+  /**
+   * Whether this user's plan allows each model. Only the named provider's models are asked
+   * about: a cost-class plan resolves a class per model, and the others cannot be picked.
+   */
+  private async withPlanDecision(
+    context: RoutingContext,
+    catalog: NamedModelCatalogEntry[],
+    provider: string,
+  ): Promise<NamedModelCatalogEntry[]> {
+    const allowed = await this.planAccess.allowedKeys(
+      context,
+      catalog
+        .filter((entry) => entry.provider === provider)
+        .map((entry) => ({ provider: entry.provider, model: entry.providerModelId })),
+    );
+    if (allowed === null) return catalog;
+    return catalog.map((entry) => ({
+      ...entry,
+      allowed: allowed.has(modelMatchKey(entry.provider, entry.providerModelId)),
+    }));
   }
 }

@@ -14,9 +14,11 @@ import { TranscriptionCapabilityClient } from '../clients/transcription-capabili
 import { MAX_TRANSCRIBABLE_AUDIO_BYTES } from '../constants/transcription.constants';
 import {
   TRANSCRIBE_READ_AUDIO_TOO_LARGE_MESSAGE,
+  TRANSCRIBE_READ_BUSY_MESSAGE,
   TRANSCRIBE_READ_EMPTY_MESSAGE,
   TRANSCRIBE_READ_ENTITLEMENTS_UNAVAILABLE_MESSAGE,
   TRANSCRIBE_READ_EXTRACTION_FAILED_MESSAGE,
+  TRANSCRIBE_READ_MAX_CONCURRENT,
   TRANSCRIBE_READ_MAX_VIDEO_SECONDS,
   TRANSCRIBE_READ_NO_AUDIO_TRACK_MESSAGE,
   TRANSCRIBE_READ_NO_SPEECH_MESSAGE,
@@ -57,6 +59,7 @@ import { VideoPlanLimitManager } from './video-plan-limit.manager';
 @Injectable()
 export class TranscriptionReadManager {
   private readonly logger = new Logger(TranscriptionReadManager.name);
+  private inFlight = 0;
 
   constructor(
     private readonly capabilityClient: TranscriptionCapabilityClient,
@@ -83,9 +86,23 @@ export class TranscriptionReadManager {
         HttpStatus.BAD_REQUEST,
       );
     }
-    return classification.kind === 'audio'
-      ? this.readAudio(userId, bytes, classification.mimeType)
-      : this.readVideo(userId, bytes);
+    // Per replica, after the cheap refusals: only a read that would spawn ffmpeg counts.
+    if (this.inFlight >= TRANSCRIBE_READ_MAX_CONCURRENT) {
+      this.logger.warn(`read: busy inFlight=${String(this.inFlight)}`);
+      throw this.refuse(
+        TranscribeReadErrorCode.BUSY,
+        TRANSCRIBE_READ_BUSY_MESSAGE,
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+    this.inFlight += 1;
+    try {
+      return classification.kind === 'audio'
+        ? await this.readAudio(userId, bytes, classification.mimeType)
+        : await this.readVideo(userId, bytes);
+    } finally {
+      this.inFlight -= 1;
+    }
   }
 
   private async readAudio(

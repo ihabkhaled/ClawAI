@@ -1,6 +1,7 @@
 import { describe, expect, it, type Mock, vi } from 'vitest';
 import { NamedModelCapability } from '../../../../common/enums/named-model-capability.enum';
 import { NamedModelRequestManager } from '../named-model-request.manager';
+import { PlanRoutingAccessManager } from '../plan-routing-access.manager';
 import type { ModelDeploymentRepository } from '../../repositories/model-deployment.repository';
 import type { RoutingContext } from '../../types/routing.types';
 
@@ -143,6 +144,34 @@ describe('NamedModelRequestManager', () => {
       manager.resolve({ ...restricted, modelAccessAllowAll: true }),
     ).resolves.toMatchObject({
       resolution: { provider: 'GEMINI' },
+    });
+  });
+
+  it('a cost-class plan (no model list) routes a name by class, asking only about that provider', async () => {
+    const find = vi.fn().mockResolvedValue(ROWS);
+    const resolveCostClasses = vi.fn(async (models: Array<{ provider: string; model: string }>) =>
+      models.map((m) => ({ ...m, costClass: m.model === 'grok-3-mini' ? 'CHEAP' : 'PREMIUM' })),
+    );
+    const manager = new NamedModelRequestManager(
+      { findRoutableForCloudRouting: find } as unknown as ModelDeploymentRepository,
+      new PlanRoutingAccessManager({ resolveCostClasses } as never),
+    );
+    const freePlan = {
+      allowedModels: ['__CLAW_PLAN_DENY_ALL__'],
+      allowedCostClasses: ['FREE', 'CHEAP', 'STANDARD'],
+      modelAccessAllowAll: false,
+    };
+    await expect(
+      manager.resolve(ctx('use grok to explain recursion', freePlan)),
+    ).resolves.toMatchObject({ resolution: { provider: 'GROK', model: 'grok-3-mini' } });
+    expect(
+      resolveCostClasses.mock.calls[0]?.[0].every(
+        (m: { provider: string }) => m.provider === 'GROK',
+      ),
+    ).toBe(true);
+    await expect(manager.resolve(ctx('use grok to draw a cat', freePlan))).resolves.toMatchObject({
+      resolution: null,
+      notice: { reason: 'NOT_IN_PLAN' },
     });
   });
 

@@ -57,6 +57,15 @@ export const TRANSCRIBE_READ_MAX_VIDEO_SECONDS = 1800;
 /** Longest transcript returned; a longer one is cut and `truncated` is true. */
 export const TRANSCRIBE_READ_MAX_TEXT_CHARS = 200_000;
 
+/**
+ * Media reads one replica runs at once. Each holds a decoded copy of up to the
+ * body limit plus an ffprobe/ffmpeg child, so a burst would starve the upload
+ * path's video jobs of CPU and memory. The extra caller gets 429 and retries.
+ */
+export const TRANSCRIBE_READ_MAX_CONCURRENT = 2;
+export const TRANSCRIBE_READ_BUSY_MESSAGE =
+  'Too many media reads are running right now. Try again in a moment.';
+
 export const TRANSCRIBE_READ_UNSUPPORTED_MESSAGE =
   'transcribe-text reads mp3, m4a, wav, ogg, flac, aac and webm audio, and mp4, mov, webm and mkv video.';
 export const TRANSCRIBE_READ_EMPTY_MESSAGE = 'contentBase64 decoded to no bytes.';

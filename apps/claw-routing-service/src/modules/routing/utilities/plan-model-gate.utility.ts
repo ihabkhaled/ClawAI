@@ -1,3 +1,4 @@
+import { modelMatchKey } from '@claw/shared-utilities';
 import { type RoutingDecisionResult } from '../types/routing.types';
 import { type PlanModelGateResult } from '../types/plan-model-gate.types';
 
@@ -70,4 +71,10 @@ export function applyPlanModelGate(
   }
 
   return { decision, outcome: 'unsatisfiable', excludedCandidates: totalCandidates };
+}
+
+/** A plan entry is `provider/model` as a catalog match key; the model id may itself contain slashes. */
+export function planEntryMatchKey(entry: string): string {
+  const slash = entry.indexOf('/');
+  return modelMatchKey(entry.slice(0, slash), entry.slice(slash + 1));
 }
