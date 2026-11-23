@@ -679,7 +679,7 @@ in-turn tool calls (only a count) and image generation as a named tool; the
 
 ### Web Push (ADR-166, 2026-10-11)
 
-`WebPushAdapter` (the only `web-push` import) sends to every row of `push_subscriptions` for a person whose `pushEnabled` is on, from `NotificationsService.receive` after the in-app row and email. Text is the localized email subject and preheader (`buildPushMessage`), so push has no strings of its own. Routes: `GET /notifications/push/config` (enabled and public key), `POST` and `DELETE /notifications/push/subscriptions` (own rows only, 204). Config: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, all three or push is off. A 404 or 410 from the push service deletes the subscription.
+`WebPushAdapter` (the only `web-push` import) sends to every row of `push_subscriptions` for a person whose `pushEnabled` is on, from `NotificationsService.receive` after the in-app row and email. Text is the localized email subject and preheader (`buildPushMessage`), so push has no strings of its own. Routes: `GET /notifications/push/config` (enabled and public key), `POST` and `DELETE /notifications/push/subscriptions` (own rows only, 204). Config: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, all three or push is off. A 404 or 410 from the push service deletes the subscription. Since web-push 4.0.0 (pure ESM, no default export) the adapter uses `import * as webpush from 'web-push'`; the old default import crash-looped auth-service and rolled back the v1.239.0 deploy (2026-11-23).
 
 ## Admin usage explorer
 

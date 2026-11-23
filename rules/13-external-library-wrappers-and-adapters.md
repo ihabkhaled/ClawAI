@@ -89,6 +89,11 @@ packages/shared-utilities/src/http-client/…                                   
   source CALLS exists on the namespace. Call position only, so type-only members
   such as `jwt.JwtPayload` are never flagged. A lint rule could not do this: the
   answer differs per package and is only knowable at runtime.
+  The same file also checks named constructor-parameter imports and, since
+  2026-11-23, that every **default** import of a package really has a default
+  export (web-push 4.0.0 went pure ESM with named exports only and crash-looped
+  auth-service; its spec mocked `{ default: … }` and passed). After a major
+  dependency bump, trust this test or an import of the built `dist`, never a mock.
 
 ## Related skills
 

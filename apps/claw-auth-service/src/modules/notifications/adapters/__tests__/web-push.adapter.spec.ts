@@ -1,4 +1,4 @@
-import webpush from 'web-push';
+import * as webpush from 'web-push';
 
 import { AppConfig } from '../../../../app/config/app.config';
 import { WebPushAdapter } from '../web-push.adapter';
@@ -12,7 +12,7 @@ vi.mock('web-push', () => {
       super(message);
     }
   }
-  return { default: { sendNotification: vi.fn(), WebPushError } };
+  return { sendNotification: vi.fn(), WebPushError };
 });
 
 const subscription = {

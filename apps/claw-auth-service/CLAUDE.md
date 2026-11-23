@@ -673,7 +673,7 @@ a migrated database, not only the dev one.
 
 ## Web Push (ADR-166)
 
-`modules/notifications` also sends browser push. `web-push` is imported only in `WebPushAdapter`. VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY and VAPID_SUBJECT are all-or-nothing; never log a subscription endpoint. Push text comes from the email dictionaries (`buildPushMessage`), never from new strings.
+`modules/notifications` also sends browser push. `web-push` is imported only in `WebPushAdapter`, as `import * as webpush` (v4 has no default export; a default import crashes boot). VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY and VAPID_SUBJECT are all-or-nothing; never log a subscription endpoint. Push text comes from the email dictionaries (`buildPushMessage`), never from new strings.
 
 ## Observability pages (ADR-169)
 

@@ -32,7 +32,15 @@ import { repoPath } from '../lib/repo.mjs';
 // catch are written with double quotes, and a single-quote-only pattern silently
 // scanned past every one of them.
 const NAMESPACE_IMPORT = /import \* as ([A-Za-z_$][\w$]*) from ['"]([^'"]+)['"]/gu;
-const SKIPPED_PREFIXES = ['node:', '.', '@claw/', '@app/', '@common/', '@modules/', '@infrastructure/'];
+const SKIPPED_PREFIXES = [
+  'node:',
+  '.',
+  '@claw/',
+  '@app/',
+  '@common/',
+  '@modules/',
+  '@infrastructure/',
+];
 
 function readJson(path) {
   return JSON.parse(readFileSync(path, 'utf8'));
@@ -256,4 +264,76 @@ test('constructor-parameter types imported from a CJS package survive ESM linkin
     `named imports that break under ESM:\n  ${violations.join('\n  ')}`,
   );
   assert.ok(checkedNames > 0, 'checked no named imports — the scanner is not guarding anything');
+});
+
+// The same trap, in its DEFAULT-import form, from the other direction.
+//
+// A CommonJS package always has a default under ESM (`module.exports`), so the
+// danger is a package that turned pure ESM with named exports only. On
+// 2026-11-23 web-push 4.0.0 did exactly that: `import webpush from 'web-push'`
+// threw `SyntaxError: The requested module 'web-push' does not provide an
+// export named 'default'` at link time, auth-service crash-looped, and the
+// v1.239.0 deploy rolled back. The spec mocked `{ default: ... }`, so it
+// passed against a shape the real package no longer has.
+const DEFAULT_IMPORT = /import ([A-Za-z_$][\w$]*)\s*(?:,\s*\{[^}]*\}\s*)?from ['"]([^'"]+)['"]/gu;
+
+function collectDefaultImportSpecifiers() {
+  const found = new Map();
+  for (const workspace of esmWorkspaces()) {
+    const source = join(workspace, 'src');
+    if (!existsSync(source)) {
+      continue;
+    }
+    for (const file of sourceFiles(source)) {
+      if (file.endsWith('.tsx')) {
+        continue; // the frontend is bundled by Next, not linked by Node
+      }
+      for (const [, localName, specifier] of readFileSync(file, 'utf8').matchAll(DEFAULT_IMPORT)) {
+        if (
+          localName === 'type' ||
+          SKIPPED_PREFIXES.some((prefix) => specifier.startsWith(prefix))
+        ) {
+          continue;
+        }
+        if (!found.has(specifier)) {
+          found.set(specifier, relative(repoPath(), file));
+        }
+      }
+    }
+  }
+  return found;
+}
+
+test('default imports of third-party packages have a default export under ESM', async () => {
+  const violations = [];
+  let checked = 0;
+  for (const [specifier, file] of collectDefaultImportSpecifiers()) {
+    if (!existsSync(repoPath('node_modules', packageRoot(specifier), 'package.json'))) {
+      continue;
+    }
+    let namespace;
+    try {
+      namespace = await import(specifier);
+    } catch (error) {
+      if (/does not provide an export named 'default'/u.test(error.message)) {
+        violations.push(`${file}: '${specifier}' has no default export under ESM`);
+      }
+      // Anything else (a native addon blocked by Windows Application Control, a
+      // package that needs a bundler) is not this trap; Linux CI loads the rest.
+      continue;
+    }
+    checked += 1;
+    if (!('default' in namespace)) {
+      violations.push(
+        `${file}: '${specifier}' has no default export under ESM (Node throws at link time). ` +
+          `Use a namespace or named import.`,
+      );
+    }
+  }
+  assert.deepEqual(
+    violations,
+    [],
+    `default imports that break under ESM:\n  ${violations.join('\n  ')}`,
+  );
+  assert.ok(checked > 0, 'checked no default imports — the scanner is not guarding anything');
 });

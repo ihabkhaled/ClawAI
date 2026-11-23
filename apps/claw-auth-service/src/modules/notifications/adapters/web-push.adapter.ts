@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import webpush from 'web-push';
+import * as webpush from 'web-push';
 
 import { AppConfig } from '../../../app/config/app.config';
 import {
