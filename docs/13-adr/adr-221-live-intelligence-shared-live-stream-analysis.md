@@ -184,6 +184,9 @@ YTDLP_VERSION`, `ARG YTDLP_SHA256`); Node in the image is its JavaScript runtime
   the rest; a stream of songs produced "Someone sings 'Let It Snow!' … a traditional American winter song". Browser
   lane on desktop, phone and tablet, dark and light: every tab, Enhance, Versions, Export (PDF/Markdown/Text), Open,
   Delete.
+- **CodeQL `js/request-forgery`** flagged the redirect Location reaching `pinnedGet`. Accepted in
+  `tools/security/codeql-accepted.json` like the shared HTTP chokepoint: every caller is guarded first, each redirect hop
+  is re-guarded on the same CDN suffixes (at most 3, https only) and the connection stays DNS-pinned.
 - **Not done / honest gaps:** a stream whose owner disables embedding still shows "This video is unavailable" in the
   player (we cannot see that inside a cross-origin frame; "Watch on" stays under it); research cost is recorded by
   research-service, not as a `LiveProviderCost` row (no `RESEARCH` pipeline stage yet); Kick chat is dark in light mode.

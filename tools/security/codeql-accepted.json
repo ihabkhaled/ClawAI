@@ -14,6 +14,11 @@
       "rule": "js/request-forgery",
       "path": "packages/shared-utilities/src/http-client/fetch-client.utility.ts",
       "reason": "Dismissed in GitHub code scanning as a false positive: every URL passes assertSafeRequestUrl before the request (TD-040)."
+    },
+    {
+      "rule": "js/request-forgery",
+      "path": "apps/claw-live-service/src/common/utilities/pinned-request.utility.ts",
+      "reason": "Reviewed 2026-11-24 (ADR-221 batch 5): live-service's one outbound chokepoint. Every caller passes the URL through SourceUrlGuardService first (declared host, or a server-pull CDN suffix with public-IP DNS checks) and the connection is pinned to those addresses. The flagged flow is a CDN 302 Location, followed at most 3 times, https only, each hop re-guarded on the same suffixes (hls-fetcher.service.spec.ts)."
     }
   ]
 }
