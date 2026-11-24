@@ -12,7 +12,7 @@ export const DE_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   eyebrow: 'Neu in ClawAI: Live & Video Intelligence',
   title: 'Jeder Livestream, jedes Video – verstanden in deiner Sprache',
   intro:
-    'Füge den Link zu einem Livestream oder einem aufgezeichneten Video von mehr als 30 Plattformen ein. ClawAI begleitet ihn mit Live-Untertiteln und einem laufenden Feed aus Zusammenfassungen und Höhepunkten – oder macht mit einem Klick aus dem ganzen Video einen übersichtlichen Bericht. Alles läuft auf den Servern von ClawAI und funktioniert deshalb auf jedem Gerät, auch auf deinem Smartphone.',
+    'Füge den Link zu einem Livestream oder einem aufgezeichneten Video von mehr als 15 Plattformen ein. ClawAI begleitet ihn mit Live-Untertiteln und einem laufenden Feed aus Zusammenfassungen und Höhepunkten – oder macht mit einem Klick aus dem ganzen Video einen übersichtlichen Bericht. Alles läuft auf den Servern von ClawAI und funktioniert deshalb auf jedem Gerät, auch auf deinem Smartphone.',
   openCta: 'Jetzt Link einfügen',
   signUpCta: 'Kostenloses Konto erstellen',
   howItWorksCta: 'So funktioniert es',
@@ -161,9 +161,9 @@ export const DE_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     'Wähle eine der 13 Sprachen der App: Englisch, Arabisch, Deutsch, Spanisch, Persisch, Französisch, Hindi, Italienisch, Japanisch, Portugiesisch, Russisch, Thai oder Chinesisch. Gesprochen werden darf in jeder Sprache.',
     'Spricht die Person bereits in deiner Sprache, liest du ihre genauen Worte. Wenn nicht, werden Untertitel, Zusammenfassungen und Höhepunkte übersetzt, und die Übersetzung erscheint anstelle des Originals.',
   ],
-  platformsTitle: 'Mehr als 30 Plattformen',
+  platformsTitle: 'Mehr als 15 Plattformen',
   platformsBody:
-    'YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X (Twitter), Bilibili, Niconico, CHZZK, SOOP und viele mehr. Livestreams und aufgezeichnete Videos funktionieren gleichermaßen.',
+    'YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X (Twitter), Bilibili, Niconico und viele mehr. Livestreams und aufgezeichnete Videos funktionieren gleichermaßen.',
   platformsCta: 'Alle Plattformen ansehen',
   limitsTitle: 'Gut zu wissen',
   limits: [
@@ -223,7 +223,7 @@ export const DE_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     {
       question: 'Welche Plattformen werden unterstützt?',
       answer:
-        'Mehr als 30, darunter YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X (Twitter), Bilibili und Niconico. Die Plattformseite listet sie alle auf. Es lassen sich nur öffentliche Videos und Streams lesen, und Discord wird nicht unterstützt, weil es keine öffentlichen Links hat.',
+        'Mehr als 15, darunter YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X (Twitter), Bilibili und Niconico. Die Plattformseite listet sie alle auf. Es lassen sich nur öffentliche Videos und Streams lesen, und Discord wird nicht unterstützt, weil es keine öffentlichen Links hat.',
     },
     {
       question: 'Postet oder chattet ClawAI in meinem Namen?',
@@ -334,7 +334,7 @@ export const DE_LIVE_INTELLIGENCE_MARKETING_SEO: LiveIntelligenceMarketingSeo = 
   overview: {
     title: 'Live & Video Intelligence: Live-Untertitel und Videozusammenfassung per Klick',
     description:
-      'Füge einen Link zu einem Livestream oder Video von YouTube, Twitch, TikTok und 30+ Plattformen ein. Erhalte Live-Untertitel in deiner Sprache, einen Intelligenten Feed mit Zusammenfassungen und Höhepunkten oder eine Videozusammenfassung mit Zeitstempeln per Klick. Auf jedem Gerät.',
+      'Füge einen Link zu einem Livestream oder Video von YouTube, Twitch, TikTok und 15+ Plattformen ein. Erhalte Live-Untertitel in deiner Sprache, einen Intelligenten Feed mit Zusammenfassungen und Höhepunkten oder eine Videozusammenfassung mit Zeitstempeln per Klick. Auf jedem Gerät.',
     keywords: [
       'Livestream Untertitel',
       'YouTube Video zusammenfassen',
@@ -346,7 +346,7 @@ export const DE_LIVE_INTELLIGENCE_MARKETING_SEO: LiveIntelligenceMarketingSeo = 
   platforms: {
     title: 'Unterstützte Plattformen für Live & Video Intelligence',
     description:
-      'Alle Plattformen, die ClawAI für Live-Untertitel und Videozusammenfassungen lesen kann: YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X, Bilibili, Niconico, CHZZK, SOOP und mehr, nach Art gruppiert.',
+      'Alle Plattformen, die ClawAI für Live-Untertitel und Videozusammenfassungen lesen kann: YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X, Bilibili, Niconico und mehr, nach Art gruppiert.',
     keywords: [
       'unterstützte Videoplattformen',
       'Livestream Plattformen',

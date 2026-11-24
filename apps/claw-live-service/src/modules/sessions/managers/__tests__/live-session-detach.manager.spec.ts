@@ -17,6 +17,8 @@ function setup(fresh = row()) {
   const sessions = {
     findById: vi.fn().mockResolvedValue(fresh),
     markDetached: vi.fn().mockResolvedValue(true),
+    findRun: vi.fn().mockResolvedValue({ processedMediaSeconds: 0 }),
+    accrueSummaryMedia: vi.fn().mockResolvedValue(true),
   };
   const presence = { remove: vi.fn() };
   const billing = { settleBlock: vi.fn() };
@@ -50,6 +52,20 @@ describe('LiveSessionDetachManager', () => {
         }),
       }),
     );
+  });
+
+  it('a closed summary first bills the video its run processed since the last heartbeat', async () => {
+    const { manager, sessions } = setup(row({ summary: true, accruedMediaSeconds: 120 }));
+    sessions.findRun.mockResolvedValue({ processedMediaSeconds: 300 });
+    await manager.detach(row({ summary: true }) as never, 'CLOSED');
+    expect(sessions.accrueSummaryMedia).toHaveBeenCalledWith('sess1', { from: 120, to: 300 });
+  });
+
+  it('never folds media for a play-along session', async () => {
+    const { manager, sessions } = setup();
+    await manager.detach(row() as never, 'CLOSED');
+    expect(sessions.findRun).not.toHaveBeenCalled();
+    expect(sessions.accrueSummaryMedia).not.toHaveBeenCalled();
   });
 
   it('is a no-op for an already-detached session and for a lost race', async () => {

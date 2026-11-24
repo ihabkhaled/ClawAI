@@ -72,6 +72,21 @@ export class LiveSessionRepository {
     return result.count === 1;
   }
 
+  /** Moves a summary's processed media into pendingSeconds, fenced on what was already accrued. */
+  async accrueSummaryMedia(
+    sessionId: string,
+    media: { from: number; to: number },
+  ): Promise<boolean> {
+    const result = await this.prisma.liveViewerSession.updateMany({
+      where: { id: sessionId, summary: true, accruedMediaSeconds: media.from },
+      data: {
+        accruedMediaSeconds: media.to,
+        pendingSeconds: { increment: media.to - media.from },
+      },
+    });
+    return result.count === 1;
+  }
+
   /** Liveness only (no state, no accrual) — used when the fenced write lost a race. */
   async touch(sessionId: string, at: Date, playbackAt: bigint): Promise<void> {
     await this.prisma.liveViewerSession.updateMany({

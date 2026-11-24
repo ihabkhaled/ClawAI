@@ -12,7 +12,7 @@ export const FA_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   eyebrow: 'تازه در ClawAI: Live & Video Intelligence',
   title: 'هر پخش زنده یا ویدیویی، به زبان خودتان',
   intro:
-    'لینک یک پخش زنده یا ویدیوی ضبط‌شده را از بیش از 30 پلتفرم بچسبانید. ClawAI با زیرنویس زنده و فیدی پیوسته از خلاصه‌ها و لحظه‌های برجسته همراهش پیش می‌رود، یا با یک کلیک کل ویدیو را به یک گزارش روشن تبدیل می‌کند. همه‌چیز روی سرورهای ClawAI اجرا می‌شود، پس روی هر دستگاهی کار می‌کند، حتی گوشی شما.',
+    'لینک یک پخش زنده یا ویدیوی ضبط‌شده را از بیش از 15 پلتفرم بچسبانید. ClawAI با زیرنویس زنده و فیدی پیوسته از خلاصه‌ها و لحظه‌های برجسته همراهش پیش می‌رود، یا با یک کلیک کل ویدیو را به یک گزارش روشن تبدیل می‌کند. همه‌چیز روی سرورهای ClawAI اجرا می‌شود، پس روی هر دستگاهی کار می‌کند، حتی گوشی شما.',
   openCta: 'همین حالا لینک بچسبانید',
   signUpCta: 'ساخت حساب رایگان',
   howItWorksCta: 'ببینید چطور کار می‌کند',
@@ -159,9 +159,9 @@ export const FA_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     'هر یک از 13 زبان برنامه را انتخاب کنید: انگلیسی، عربی، آلمانی، اسپانیایی، فارسی، فرانسوی، هندی، ایتالیایی، ژاپنی، پرتغالی، روسی، تایلندی یا چینی. گوینده می‌تواند به هر زبانی صحبت کند.',
     'وقتی گوینده از قبل به زبان شما صحبت می‌کند، دقیقاً همان کلمات خودش را می‌خوانید. وقتی این‌طور نیست، زیرنویس، خلاصه‌ها و لحظه‌های برجسته ترجمه می‌شوند و ترجمه به‌جای متن اصلی نمایش داده می‌شود.',
   ],
-  platformsTitle: 'بیش از 30 پلتفرم',
+  platformsTitle: 'بیش از 15 پلتفرم',
   platformsBody:
-    'YouTube، Twitch، Kick، Facebook، TikTok، Instagram، X (Twitter)، Bilibili، Niconico، CHZZK، SOOP و بسیاری دیگر. هم پخش زنده و هم ویدیوی ضبط‌شده کار می‌کند.',
+    'YouTube، Twitch، Kick، Facebook، TikTok، Instagram، X (Twitter)، Bilibili، Niconico و بسیاری دیگر. هم پخش زنده و هم ویدیوی ضبط‌شده کار می‌کند.',
   platformsCta: 'دیدن همهٔ پلتفرم‌ها',
   limitsTitle: 'خوب است بدانید',
   limits: [
@@ -221,7 +221,7 @@ export const FA_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     {
       question: 'چه پلتفرم‌هایی پشتیبانی می‌شوند؟',
       answer:
-        'بیش از 30 پلتفرم، از جمله YouTube، Twitch، Kick، Facebook، TikTok، Instagram، X (Twitter)، Bilibili و Niconico. صفحهٔ پلتفرم‌ها همه را فهرست کرده است. فقط ویدیوها و پخش‌های عمومی خوانده می‌شوند، و Discord پشتیبانی نمی‌شود چون لینک عمومی ندارد.',
+        'بیش از 15 پلتفرم، از جمله YouTube، Twitch، Kick، Facebook، TikTok، Instagram، X (Twitter)، Bilibili و Niconico. صفحهٔ پلتفرم‌ها همه را فهرست کرده است. فقط ویدیوها و پخش‌های عمومی خوانده می‌شوند، و Discord پشتیبانی نمی‌شود چون لینک عمومی ندارد.',
     },
     {
       question: 'آیا ClawAI از طرف من پست می‌گذارد یا گفتگو می‌کند؟',
@@ -332,7 +332,7 @@ export const FA_LIVE_INTELLIGENCE_MARKETING_SEO: LiveIntelligenceMarketingSeo = 
   overview: {
     title: 'Live & Video Intelligence: زیرنویس زنده و خلاصهٔ ویدیو با یک کلیک',
     description:
-      'لینک پخش زنده یا ویدیو را از YouTube، Twitch، TikTok و بیش از 30 پلتفرم بچسبانید. زیرنویس زنده به زبان خودتان، فید هوشمندی از خلاصه‌ها و لحظه‌های برجسته، یا خلاصهٔ یک‌کلیکی ویدیو با زمان‌بندی بگیرید. روی هر دستگاهی کار می‌کند.',
+      'لینک پخش زنده یا ویدیو را از YouTube، Twitch، TikTok و بیش از 15 پلتفرم بچسبانید. زیرنویس زنده به زبان خودتان، فید هوشمندی از خلاصه‌ها و لحظه‌های برجسته، یا خلاصهٔ یک‌کلیکی ویدیو با زمان‌بندی بگیرید. روی هر دستگاهی کار می‌کند.',
     keywords: [
       'زیرنویس پخش زنده',
       'خلاصه ویدیو با هوش مصنوعی',
@@ -344,7 +344,7 @@ export const FA_LIVE_INTELLIGENCE_MARKETING_SEO: LiveIntelligenceMarketingSeo = 
   platforms: {
     title: 'پلتفرم‌های پشتیبانی‌شده در Live & Video Intelligence',
     description:
-      'همهٔ پلتفرم‌هایی که ClawAI برای زیرنویس زنده و خلاصهٔ ویدیو می‌تواند بخواند: YouTube، Twitch، Kick، Facebook، TikTok، Instagram، X، Bilibili، Niconico، CHZZK، SOOP و بیشتر، دسته‌بندی‌شده بر اساس نوع.',
+      'همهٔ پلتفرم‌هایی که ClawAI برای زیرنویس زنده و خلاصهٔ ویدیو می‌تواند بخواند: YouTube، Twitch، Kick، Facebook، TikTok، Instagram، X، Bilibili، Niconico و بیشتر، دسته‌بندی‌شده بر اساس نوع.',
     keywords: [
       'پلتفرم‌های ویدیویی پشتیبانی‌شده',
       'پلتفرم‌های پخش زنده',

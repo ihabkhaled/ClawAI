@@ -91,7 +91,7 @@ export class RecordedChunkSource implements RunChunkSource {
    * play-along clock stops, so the video resumes where it paused.
    */
   private async advancing(): Promise<boolean> {
-    const billable = await this.options.canAdvance();
+    const billable = await this.options.canAdvance(this.positionSeconds);
     if (!billable) {
       this.pausedSince ??= Date.now();
       return false;
@@ -136,7 +136,9 @@ export class RecordedChunkSource implements RunChunkSource {
       { timeoutMs: FFMPEG_FRAME_TIMEOUT_MS, maxOutputBytes: FFMPEG_MAX_FRAME_BYTES },
     ).catch(() => null);
     const seconds = Number(result?.stdout.toString('utf8').trim());
-    return result?.exitCode === 0 && Number.isFinite(seconds) && seconds > 0 ? seconds : null;
+    // An image post downloads as a 0.04 s "video" (a Weibo test link, 2026-11-25): not a video.
+    const playable = Number.isFinite(seconds) && seconds >= RECORDED_MIN_TAIL_SECONDS;
+    return result?.exitCode === 0 && playable ? seconds : null;
   }
 
   /** `length` seconds of 16 kHz mono PCM from `at`, as a WAV chunk on play-along media time. */

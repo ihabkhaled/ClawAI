@@ -26,8 +26,13 @@ export const YTDLP_RECORDED_PROBE_ARGS: readonly string[] = [
   '/tmp/yt-dlp-cache',
   '--skip-download',
   '--print',
-  '%(is_live)s %(duration)s %(id)s',
+  '%(is_live)s %(duration)s %(id)s %(extractor_key)s',
 ];
+/**
+ * A live extractor that reports no length is a live room the server cannot pull (Huya serves FLV,
+ * 2026-11-25), never a recorded video.
+ */
+export const YTDLP_LIVE_EXTRACTOR_PATTERN = /live/iu;
 
 /**
  * The worker's download: smallest video that still gives a readable frame plus the audio (vision

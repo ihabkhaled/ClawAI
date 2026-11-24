@@ -1243,6 +1243,8 @@ A public Thread page reads `?lang=` (an app language only; `readRequestedThreadL
   ("Summarizing the video" / "Summary ready" / "Video ended"), the header badge from `liveModalBadgeKey`.
 - Embeds added to `LIVE_EMBED_ALLOWED_ORIGINS` (and so CSP `frame-src`): Instagram, TikTok, Dailymotion, Vimeo player.
 - Public pages: `/features/live-intelligence` (rewritten, same URL) and `/features/live-intelligence/platforms`;
-  the platform list is ONE constant, `LIVE_MARKETING_PLATFORMS`, corrected from the real sweep. Media:
+  the platform list is ONE constant, `LIVE_MARKETING_PLATFORMS`: only the 18 platforms that passed the real sweep
+  and Playwright rounds (2026-11-25), with `live`/`recorded` as tested; the copy says "more than 15 platforms". Add a
+  platform here only after `scripts/qa/live-platform-rounds.mjs` passes for it. Media:
   `public/marketing/videos/live-and-videos-{promo,demo}.mp4` (H.264; the owner's originals were HEVC, which Chrome
   plays only with hardware support) and `public/marketing/live-and-videos/*.png` (real 390x844 dark screenshots).

@@ -117,9 +117,19 @@ export class ProcessingRunRepository {
    * True while a viewer of the run may be billed (ACTIVE or GRACE): a recorded video's run only
    * advances then, so a session waiting for credits never gets free transcription.
    */
-  async hasBillableSession(runId: string): Promise<boolean> {
+  async hasBillableSession(
+    runId: string,
+    minAccruedMediaSeconds: number | null = null,
+  ): Promise<boolean> {
     const count = await this.prisma.liveViewerSession.count({
-      where: { runId, state: { in: [...RECORDED_ADVANCING_STATES] } },
+      where: {
+        runId,
+        state: { in: [...RECORDED_ADVANCING_STATES] },
+        // A summary run waits until its viewer's billing has caught up (security review 2026-11-25).
+        ...(minAccruedMediaSeconds === null
+          ? {}
+          : { accruedMediaSeconds: { gte: minAccruedMediaSeconds } }),
+      },
     });
     return count > 0;
   }

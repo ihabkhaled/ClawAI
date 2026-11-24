@@ -43,3 +43,19 @@ lane is NOT_RUN or FAIL. A fabricated or assumed PASS is a prohibited sentence (
 - Vimeo (login wall), Reddit and Douyin (cookies), Naver TV and TwitCasting VODs (yt-dlp errors) fail; not claimed.
 - Live-only platforms without a live channel to test today were not exercised live (same yt-dlp path).
 - A summary bills and progresses only while the page is open (heartbeats).
+
+## Every-platform rounds (2026-11-25)
+
+- Live channels found through each platform's public listing (Twitch GQL, Dailymotion API, Bilibili, CHZZK, SOOP,
+  Picarto, SHOWROOM, Huya, Douyu) plus known YouTube news channels and Kick streamers; recorded links per platform.
+- API sweep `live-platform-sweep.mjs`: 16/25 live as expected first pass; failures traced to CHZZK/Douyu/SOOP yt-dlp
+  extractor errors, SHOWROOM 403, Huya FLV (also misread as recorded: fixed).
+- Playwright `platform-rounds.mjs` through the real `/live` page (paste, Check link, Start or Summarize, count captions
+  and cards, screenshot per round): round 1 19/24 (2 failures were the test's expired login: fixed in the script;
+  Rumble still downloading a 2.7 h video at 60 s; Weibo link was an image post; OK.ru probe flaky); round 2 22/29
+  with all three one-click summaries passing (TikTok, Facebook, YouTube) and Twitch, Bilibili, Picarto, YouTube,
+  Rutube live passing; the 7 failures: 2 hit the 30-sessions-per-hour policy limit (product limit working), 2 channels
+  went offline between discovery and the round, Rumble (anti-bot) and OK.ru flaky, and a 1 s YouTube Short.
+- Public claims limited to the 18 platforms that passed ("more than 15 platforms").
+- Security review fix verified by unit tests (813/813): detach folds unbilled summary media, summary run waits beyond
+  180 s of unbilled media, live-room/no-length not recorded, sub-1 s downloads refused.

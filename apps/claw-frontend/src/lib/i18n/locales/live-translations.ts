@@ -12,7 +12,7 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
     page: {
       title: 'Live & Video Intelligence',
       description:
-        'Captions, summaries and highlights for live streams and videos from 30+ platforms.',
+        'Captions, summaries and highlights for live streams and videos from 15+ platforms.',
       urlLabel: 'Live stream or video link',
       urlPlaceholder: 'Paste a live stream or video link',
       languageLabel: 'Caption language',
@@ -335,7 +335,7 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
     nav: { live: 'البث والفيديو', adminLive: 'تحليل البث والفيديو' },
     page: {
       title: 'تحليل البث المباشر والفيديو',
-      description: 'ترجمة نصية وملخصات وأبرز اللحظات للبث المباشر والفيديوهات من أكثر من 30 منصة.',
+      description: 'ترجمة نصية وملخصات وأبرز اللحظات للبث المباشر والفيديوهات من أكثر من 15 منصة.',
       urlLabel: 'رابط بث مباشر أو فيديو',
       urlPlaceholder: 'الصق رابط بث مباشر أو فيديو',
       languageLabel: 'لغة الترجمة النصية',
@@ -653,7 +653,7 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
     page: {
       title: 'Live- & Video-Analyse',
       description:
-        'Untertitel, Zusammenfassungen und Highlights für Livestreams und Videos von über 30 Plattformen.',
+        'Untertitel, Zusammenfassungen und Highlights für Livestreams und Videos von über 15 Plattformen.',
       urlLabel: 'Link zu Livestream oder Video',
       urlPlaceholder: 'Link zu einem Livestream oder Video einfügen',
       languageLabel: 'Untertitelsprache',
@@ -990,7 +990,7 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
     page: {
       title: 'Análisis de directos y vídeos',
       description:
-        'Subtítulos, resúmenes y momentos destacados de directos y vídeos de más de 30 plataformas.',
+        'Subtítulos, resúmenes y momentos destacados de directos y vídeos de más de 15 plataformas.',
       urlLabel: 'Enlace de directo o vídeo',
       urlPlaceholder: 'Pega el enlace de un directo o un vídeo',
       languageLabel: 'Idioma de los subtítulos',
@@ -1321,7 +1321,7 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
     nav: { live: 'پخش زنده و ویدیو', adminLive: 'تحلیل پخش زنده و ویدیو' },
     page: {
       title: 'تحلیل پخش زنده و ویدیو',
-      description: 'زیرنویس، خلاصه و نکات برجسته برای پخش زنده و ویدیوها از بیش از ۳۰ پلتفرم.',
+      description: 'زیرنویس، خلاصه و نکات برجسته برای پخش زنده و ویدیوها از بیش از ۱۵ پلتفرم.',
       urlLabel: 'پیوند پخش زنده یا ویدیو',
       urlPlaceholder: 'پیوند پخش زنده یا ویدیو را جای‌گذاری کنید',
       languageLabel: 'زبان زیرنویس',
@@ -1651,7 +1651,7 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
     page: {
       title: 'Analyse des directs et vidéos',
       description:
-        'Sous-titres, résumés et temps forts des directs et vidéos de plus de 30 plateformes.',
+        'Sous-titres, résumés et temps forts des directs et vidéos de plus de 15 plateformes.',
       urlLabel: 'Lien d’un direct ou d’une vidéo',
       urlPlaceholder: 'Collez le lien d’un direct ou d’une vidéo',
       languageLabel: 'Langue des sous-titres',
@@ -1983,7 +1983,7 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
     nav: { live: 'लाइव और वीडियो', adminLive: 'लाइव और वीडियो इंटेलिजेंस' },
     page: {
       title: 'लाइव और वीडियो इंटेलिजेंस',
-      description: '30+ प्लेटफ़ॉर्म की लाइव स्ट्रीम और वीडियो के लिए कैप्शन, सारांश और हाइलाइट।',
+      description: '15+ प्लेटफ़ॉर्म की लाइव स्ट्रीम और वीडियो के लिए कैप्शन, सारांश और हाइलाइट।',
       urlLabel: 'लाइव स्ट्रीम या वीडियो लिंक',
       urlPlaceholder: 'लाइव स्ट्रीम या वीडियो का लिंक पेस्ट करें',
       languageLabel: 'कैप्शन की भाषा',
@@ -2299,7 +2299,7 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
     page: {
       title: 'Analisi di dirette e video',
       description:
-        'Sottotitoli, riassunti e momenti salienti per dirette e video da oltre 30 piattaforme.',
+        'Sottotitoli, riassunti e momenti salienti per dirette e video da oltre 15 piattaforme.',
       urlLabel: 'Link della diretta o del video',
       urlPlaceholder: 'Incolla il link di una diretta o di un video',
       languageLabel: 'Lingua dei sottotitoli',
@@ -2631,7 +2631,7 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
     nav: { live: 'ライブと動画', adminLive: 'ライブ・動画インテリジェンス' },
     page: {
       title: 'ライブ・動画インテリジェンス',
-      description: '30 以上のプラットフォームのライブ配信と動画に、字幕・要約・ハイライトを。',
+      description: '15 以上のプラットフォームのライブ配信と動画に、字幕・要約・ハイライトを。',
       urlLabel: 'ライブ配信または動画のリンク',
       urlPlaceholder: 'ライブ配信または動画のリンクを貼り付け',
       languageLabel: '字幕の言語',
@@ -2955,7 +2955,7 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
     page: {
       title: 'Análise de ao vivo e vídeos',
       description:
-        'Legendas, resumos e destaques de transmissões ao vivo e vídeos de mais de 30 plataformas.',
+        'Legendas, resumos e destaques de transmissões ao vivo e vídeos de mais de 15 plataformas.',
       urlLabel: 'Link da transmissão ou do vídeo',
       urlPlaceholder: 'Cole o link de uma transmissão ao vivo ou de um vídeo',
       languageLabel: 'Idioma das legendas',
@@ -3286,7 +3286,7 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
     page: {
       title: 'Анализ эфиров и видео',
       description:
-        'Субтитры, сводки и главные моменты для прямых эфиров и видео с более чем 30 платформ.',
+        'Субтитры, сводки и главные моменты для прямых эфиров и видео с более чем 15 платформ.',
       urlLabel: 'Ссылка на эфир или видео',
       urlPlaceholder: 'Вставьте ссылку на прямой эфир или видео',
       languageLabel: 'Язык субтитров',
@@ -3616,7 +3616,7 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
     nav: { live: 'ไลฟ์และวิดีโอ', adminLive: 'วิเคราะห์ไลฟ์และวิดีโอ' },
     page: {
       title: 'วิเคราะห์ไลฟ์และวิดีโอ',
-      description: 'คำบรรยาย สรุป และไฮไลต์สำหรับไลฟ์สตรีมและวิดีโอจากกว่า 30 แพลตฟอร์ม',
+      description: 'คำบรรยาย สรุป และไฮไลต์สำหรับไลฟ์สตรีมและวิดีโอจากกว่า 15 แพลตฟอร์ม',
       urlLabel: 'ลิงก์ไลฟ์สตรีมหรือวิดีโอ',
       urlPlaceholder: 'วางลิงก์ไลฟ์สตรีมหรือวิดีโอ',
       languageLabel: 'ภาษาของคำบรรยาย',
@@ -3925,7 +3925,7 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
     nav: { live: '直播与视频', adminLive: '直播与视频智能' },
     page: {
       title: '直播与视频智能',
-      description: '为 30+ 平台的直播和视频提供字幕、摘要和精彩片段。',
+      description: '为 15+ 平台的直播和视频提供字幕、摘要和精彩片段。',
       urlLabel: '直播或视频链接',
       urlPlaceholder: '粘贴直播或视频链接',
       languageLabel: '字幕语言',

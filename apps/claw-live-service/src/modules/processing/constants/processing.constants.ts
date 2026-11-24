@@ -55,6 +55,8 @@ export const FFMPEG_BINARY = 'ffmpeg';
 export const FFPROBE_BINARY = 'ffprobe';
 /** A one-click summary reads the video in 30 s pieces as fast as transcription allows (file-service takes up to 2 MB). */
 export const RECORDED_SUMMARY_CHUNK_SECONDS = 30;
+/** A summary run waits once it is this far ahead of the media its viewer was billed for. */
+export const SUMMARY_MAX_UNBILLED_SECONDS = 180;
 /** Pieces a summary run cuts per poll (one poll must stay well inside the lease). */
 export const RECORDED_SUMMARY_CHUNKS_PER_POLL = 2;
 /** A recorded video's last chunk shorter than this is dropped (no speech fits in it). */

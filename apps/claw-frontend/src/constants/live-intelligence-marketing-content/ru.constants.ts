@@ -12,7 +12,7 @@ export const RU_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   eyebrow: 'Новое в ClawAI: Live & Video Intelligence',
   title: 'Любая трансляция или видео — понятно и на вашем языке',
   intro:
-    'Вставьте ссылку на трансляцию или записанное видео с одной из более чем 30 платформ. ClawAI сопровождает его субтитрами в реальном времени и живой лентой сводок и ключевых моментов — или одним нажатием превращает всё видео в понятный отчёт. Всё работает на серверах ClawAI, поэтому подойдёт любое устройство, включая телефон.',
+    'Вставьте ссылку на трансляцию или записанное видео с одной из более чем 15 платформ. ClawAI сопровождает его субтитрами в реальном времени и живой лентой сводок и ключевых моментов — или одним нажатием превращает всё видео в понятный отчёт. Всё работает на серверах ClawAI, поэтому подойдёт любое устройство, включая телефон.',
   openCta: 'Вставить ссылку',
   signUpCta: 'Создать бесплатный аккаунт',
   howItWorksCta: 'Как это работает',
@@ -160,9 +160,9 @@ export const RU_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     'Выберите любой из 13 языков приложения: английский, арабский, немецкий, испанский, персидский, французский, хинди, итальянский, японский, португальский, русский, тайский или китайский. Говорящий может использовать любой язык.',
     'Если говорящий уже говорит на вашем языке, вы читаете его точные слова. Если нет, субтитры, сводки и ключевые моменты переводятся, и перевод показывается вместо оригинала.',
   ],
-  platformsTitle: 'Более 30 платформ',
+  platformsTitle: 'Более 15 платформ',
   platformsBody:
-    'YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X (Twitter), Bilibili, Niconico, CHZZK, SOOP и многие другие. Работают и трансляции, и записанные видео.',
+    'YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X (Twitter), Bilibili, Niconico и многие другие. Работают и трансляции, и записанные видео.',
   platformsCta: 'Все платформы',
   limitsTitle: 'Полезно знать',
   limits: [
@@ -222,7 +222,7 @@ export const RU_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     {
       question: 'Какие платформы поддерживаются?',
       answer:
-        'Более 30, в том числе YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X (Twitter), Bilibili и Niconico. Полный список — на странице платформ. Читать можно только публичные видео и трансляции; Discord не поддерживается, потому что у него нет публичных ссылок.',
+        'Более 15, в том числе YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X (Twitter), Bilibili и Niconico. Полный список — на странице платформ. Читать можно только публичные видео и трансляции; Discord не поддерживается, потому что у него нет публичных ссылок.',
     },
     {
       question: 'ClawAI публикует что-то или пишет в чат от моего имени?',
@@ -333,7 +333,7 @@ export const RU_LIVE_INTELLIGENCE_MARKETING_SEO: LiveIntelligenceMarketingSeo = 
   overview: {
     title: 'Live & Video Intelligence: субтитры к трансляциям и сводка видео в один клик',
     description:
-      'Вставьте ссылку на трансляцию или видео с YouTube, Twitch, TikTok и ещё 30+ платформ. Получайте субтитры в реальном времени на своём языке, «Умную ленту» сводок и ключевых моментов или сводку видео с таймкодами в один клик. Работает на любом устройстве.',
+      'Вставьте ссылку на трансляцию или видео с YouTube, Twitch, TikTok и ещё 15+ платформ. Получайте субтитры в реальном времени на своём языке, «Умную ленту» сводок и ключевых моментов или сводку видео с таймкодами в один клик. Работает на любом устройстве.',
     keywords: [
       'субтитры к трансляции',
       'краткое содержание видео ИИ',
@@ -345,7 +345,7 @@ export const RU_LIVE_INTELLIGENCE_MARKETING_SEO: LiveIntelligenceMarketingSeo = 
   platforms: {
     title: 'Платформы, поддерживаемые Live & Video Intelligence',
     description:
-      'Все платформы, которые ClawAI читает для субтитров в реальном времени и сводок видео: YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X, Bilibili, Niconico, CHZZK, SOOP и другие, сгруппированные по типам.',
+      'Все платформы, которые ClawAI читает для субтитров в реальном времени и сводок видео: YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X, Bilibili, Niconico и другие, сгруппированные по типам.',
     keywords: [
       'поддерживаемые видеоплатформы',
       'платформы для трансляций',

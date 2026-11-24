@@ -12,7 +12,11 @@ import { RecordedVideoService } from '../../sources/services/recorded-video.serv
 import { ServerPullResolverService } from '../../sources/services/server-pull-resolver.service';
 import { SUMMARY_ACCESS_SCOPE_PREFIX } from '../../sources/constants/sources.constants';
 import { resolvePlatformUrl } from '../../sources/utilities/platform-registry.utility';
-import { NO_RUN_CAPABILITIES, WORKER_TEMP_PREFIX } from '../constants/processing.constants';
+import {
+  NO_RUN_CAPABILITIES,
+  SUMMARY_MAX_UNBILLED_SECONDS,
+  WORKER_TEMP_PREFIX,
+} from '../constants/processing.constants';
 import { RunLifecycleManager } from '../managers/run-lifecycle.manager';
 import { SummaryManager } from '../managers/summary.manager';
 import { TranscriptManager } from '../managers/transcript.manager';
@@ -98,10 +102,15 @@ export class RunWorkerFactory {
     }
     if (capability === LiveCapability.RECORDED) {
       const directory = await mkdtemp(join(tmpdir(), WORKER_TEMP_PREFIX));
+      const summary = accessScope.startsWith(SUMMARY_ACCESS_SCOPE_PREFIX);
       return new RecordedChunkSource(context, this.recordedVideos, directory, {
         watchUrl: context.sourceUrl,
-        summary: accessScope.startsWith(SUMMARY_ACCESS_SCOPE_PREFIX),
-        canAdvance: () => this.runs.hasBillableSession(context.lease.runId),
+        summary,
+        canAdvance: (position) =>
+          this.runs.hasBillableSession(
+            context.lease.runId,
+            summary ? position - SUMMARY_MAX_UNBILLED_SECONDS : null,
+          ),
       });
     }
     const pull =

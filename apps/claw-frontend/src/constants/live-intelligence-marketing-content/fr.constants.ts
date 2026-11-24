@@ -12,7 +12,7 @@ export const FR_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   eyebrow: 'Nouveau dans ClawAI : Live & Video Intelligence',
   title: 'Chaque direct, chaque vidéo, compris dans votre langue',
   intro:
-    'Collez le lien d’un direct ou d’une vidéo enregistrée provenant de plus de 30 plateformes. ClawAI le suit avec des sous-titres en direct et un flux continu de résumés et de temps forts, ou transforme la vidéo entière en un rapport clair en un seul clic. Tout tourne sur les serveurs de ClawAI : cela fonctionne donc sur n’importe quel appareil, y compris votre téléphone.',
+    'Collez le lien d’un direct ou d’une vidéo enregistrée provenant de plus de 15 plateformes. ClawAI le suit avec des sous-titres en direct et un flux continu de résumés et de temps forts, ou transforme la vidéo entière en un rapport clair en un seul clic. Tout tourne sur les serveurs de ClawAI : cela fonctionne donc sur n’importe quel appareil, y compris votre téléphone.',
   openCta: 'Collez un lien maintenant',
   signUpCta: 'Créer un compte gratuit',
   howItWorksCta: 'Voir comment ça marche',
@@ -160,9 +160,9 @@ export const FR_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     'Choisissez l’une des 13 langues de l’application : anglais, arabe, allemand, espagnol, persan, français, hindi, italien, japonais, portugais, russe, thaï ou chinois. L’orateur peut parler n’importe quelle langue.',
     'Quand l’orateur parle déjà votre langue, vous lisez ses mots exacts. Sinon, les sous-titres, résumés et temps forts sont traduits, et la traduction s’affiche à la place de l’original.',
   ],
-  platformsTitle: 'Plus de 30 plateformes',
+  platformsTitle: 'Plus de 15 plateformes',
   platformsBody:
-    'YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X (Twitter), Bilibili, Niconico, CHZZK, SOOP et bien d’autres. Les directs comme les vidéos enregistrées fonctionnent.',
+    'YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X (Twitter), Bilibili, Niconico et bien d’autres. Les directs comme les vidéos enregistrées fonctionnent.',
   platformsCta: 'Voir toutes les plateformes',
   limitsTitle: 'Bon à savoir',
   limits: [
@@ -223,7 +223,7 @@ export const FR_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     {
       question: 'Quelles plateformes sont prises en charge ?',
       answer:
-        'Plus de 30, dont YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X (Twitter), Bilibili et Niconico. La page des plateformes les liste toutes. Seuls les vidéos et directs publics peuvent être lus, et Discord n’est pas pris en charge car il n’a pas de liens publics.',
+        'Plus de 15, dont YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X (Twitter), Bilibili et Niconico. La page des plateformes les liste toutes. Seuls les vidéos et directs publics peuvent être lus, et Discord n’est pas pris en charge car il n’a pas de liens publics.',
     },
     {
       question: 'ClawAI publie-t-il ou discute-t-il en mon nom ?',
@@ -334,7 +334,7 @@ export const FR_LIVE_INTELLIGENCE_MARKETING_SEO: LiveIntelligenceMarketingSeo = 
   overview: {
     title: 'Live & Video Intelligence : sous-titres en direct et résumé vidéo en un clic',
     description:
-      'Collez le lien d’un direct ou d’une vidéo YouTube, Twitch, TikTok et de 30+ plateformes. Obtenez des sous-titres en direct dans votre langue, un Flux intelligent de résumés et de temps forts, ou un résumé vidéo horodaté en un clic. Sur tous les appareils.',
+      'Collez le lien d’un direct ou d’une vidéo YouTube, Twitch, TikTok et de 15+ plateformes. Obtenez des sous-titres en direct dans votre langue, un Flux intelligent de résumés et de temps forts, ou un résumé vidéo horodaté en un clic. Sur tous les appareils.',
     keywords: [
       'sous-titres live stream',
       'résumer une vidéo YouTube',
@@ -346,7 +346,7 @@ export const FR_LIVE_INTELLIGENCE_MARKETING_SEO: LiveIntelligenceMarketingSeo = 
   platforms: {
     title: 'Plateformes prises en charge par Live & Video Intelligence',
     description:
-      'Toutes les plateformes que ClawAI sait lire pour les sous-titres en direct et les résumés vidéo : YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X, Bilibili, Niconico, CHZZK, SOOP et plus, par catégorie.',
+      'Toutes les plateformes que ClawAI sait lire pour les sous-titres en direct et les résumés vidéo : YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X, Bilibili, Niconico et plus, par catégorie.',
     keywords: [
       'plateformes vidéo prises en charge',
       'plateformes de streaming en direct',

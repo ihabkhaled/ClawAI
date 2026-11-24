@@ -1,6 +1,9 @@
 import { resolve, sep } from 'node:path';
 
-import { YTDLP_MISSING_FIELD } from '../constants/recorded-video.constants';
+import {
+  YTDLP_LIVE_EXTRACTOR_PATTERN,
+  YTDLP_MISSING_FIELD,
+} from '../constants/recorded-video.constants';
 import { YTDLP_VIDEO_ID_PATTERN } from '../constants/server-pull.constants';
 import type { RecordedProbe } from '../types/server-pull.types';
 
@@ -10,8 +13,9 @@ import type { RecordedProbe } from '../types/server-pull.types';
  */
 export function parseRecordedProbeLine(output: string): RecordedProbe | null {
   const line = output.trim().split('\n')[0] ?? '';
-  const [isLive, duration, id] = line.split(' ', 3);
+  const [isLive, duration, id, extractor = ''] = line.split(' ', 4);
   if (isLive === undefined || duration === undefined || isLive === 'True') return null;
+  if (duration === YTDLP_MISSING_FIELD && YTDLP_LIVE_EXTRACTOR_PATTERN.test(extractor)) return null;
   const seconds = duration === YTDLP_MISSING_FIELD ? null : Number(duration);
   if (seconds !== null && (!Number.isFinite(seconds) || seconds <= 0)) return null;
   return {

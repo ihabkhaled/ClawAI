@@ -257,7 +257,7 @@ The Threads Board (signed-in browse and search at `/board`, no author names on c
 ## 17. Live & Video Intelligence (was Live Intelligence) — Partial (deployed; recorded videos and one-click summary verified locally 2026-11-25)
 
 Renamed 2026-11-24 (owner): nav "Live & Videos", title "Live & Video Intelligence". Live streams AND recorded videos
-from 34 tested platforms, played along or summarized in one click ([ADR-221](../13-adr/adr-221-live-intelligence-shared-live-stream-analysis.md)
+from 18 verified platforms, played along or summarized in one click ([ADR-221](../13-adr/adr-221-live-intelligence-shared-live-stream-analysis.md)
 batch 6). The public page (same URL) carries the owner's two screen recordings and three real phone screenshots, and
 names no price; the platforms page lists only platforms that passed the real link sweep. The table below is the
 batch-1 record.

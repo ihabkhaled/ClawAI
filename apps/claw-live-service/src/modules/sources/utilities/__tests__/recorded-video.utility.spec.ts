@@ -11,6 +11,18 @@ describe('parseRecordedProbeLine', () => {
     expect(parseRecordedProbeLine(`${line}\n`)).toEqual(expected);
   });
 
+  it('refuses a live room that reports no length (Huya serves FLV, not a recorded video)', () => {
+    expect(parseRecordedProbeLine('NA NA 13579 HuyaLive')).toBeNull();
+    expect(parseRecordedProbeLine('NA NA DgGWAcIBZ9M Instagram')).toEqual({
+      durationSeconds: null,
+      videoId: 'DgGWAcIBZ9M',
+    });
+    expect(parseRecordedProbeLine('False 300 abc TwitchVod')).toEqual({
+      durationSeconds: 300,
+      videoId: 'abc',
+    });
+  });
+
   it.each(['True 0 abc', '', 'NA', 'False -3 abc', 'False nope abc'])('refuses %o', (line) => {
     expect(parseRecordedProbeLine(line)).toBeNull();
   });

@@ -12,7 +12,7 @@ export const TH_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   eyebrow: 'ใหม่ใน ClawAI: Live & Video Intelligence',
   title: 'ไลฟ์สตรีมหรือวิดีโอไหนก็เข้าใจได้ ในภาษาของคุณ',
   intro:
-    'วางลิงก์ไลฟ์สตรีมหรือวิดีโอที่บันทึกไว้จากกว่า 30 แพลตฟอร์ม ClawAI จะติดตามไปพร้อมคำบรรยายสด และฟีดสรุปกับไฮไลต์ที่อัปเดตต่อเนื่อง หรือเปลี่ยนวิดีโอทั้งเรื่องให้เป็นรายงานฉบับเดียวที่อ่านง่ายในคลิกเดียว ทุกอย่างทำงานบนเซิร์ฟเวอร์ของ ClawAI จึงใช้ได้บนทุกอุปกรณ์ รวมถึงโทรศัพท์ของคุณ',
+    'วางลิงก์ไลฟ์สตรีมหรือวิดีโอที่บันทึกไว้จากกว่า 15 แพลตฟอร์ม ClawAI จะติดตามไปพร้อมคำบรรยายสด และฟีดสรุปกับไฮไลต์ที่อัปเดตต่อเนื่อง หรือเปลี่ยนวิดีโอทั้งเรื่องให้เป็นรายงานฉบับเดียวที่อ่านง่ายในคลิกเดียว ทุกอย่างทำงานบนเซิร์ฟเวอร์ของ ClawAI จึงใช้ได้บนทุกอุปกรณ์ รวมถึงโทรศัพท์ของคุณ',
   openCta: 'วางลิงก์เลย',
   signUpCta: 'สร้างบัญชีฟรี',
   howItWorksCta: 'ดูวิธีการทำงาน',
@@ -156,9 +156,9 @@ export const TH_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     'เลือกได้จาก 13 ภาษาของแอป ได้แก่ อังกฤษ อาหรับ เยอรมัน สเปน เปอร์เซีย ฝรั่งเศส ฮินดี อิตาลี ญี่ปุ่น โปรตุเกส รัสเซีย ไทย หรือจีน ผู้พูดจะพูดภาษาอะไรก็ได้',
     'หากผู้พูดพูดภาษาของคุณอยู่แล้ว คุณจะอ่านถ้อยคำของเขาตรงตามที่พูด หากไม่ใช่ คำบรรยาย สรุป และไฮไลต์จะถูกแปล และคำแปลจะแสดงแทนต้นฉบับ',
   ],
-  platformsTitle: 'กว่า 30 แพลตฟอร์ม',
+  platformsTitle: 'กว่า 15 แพลตฟอร์ม',
   platformsBody:
-    'YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X (Twitter), Bilibili, Niconico, CHZZK, SOOP และอีกมากมาย ใช้ได้ทั้งไลฟ์สตรีมและวิดีโอที่บันทึกไว้',
+    'YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X (Twitter), Bilibili, Niconico และอีกมากมาย ใช้ได้ทั้งไลฟ์สตรีมและวิดีโอที่บันทึกไว้',
   platformsCta: 'ดูแพลตฟอร์มทั้งหมด',
   limitsTitle: 'สิ่งที่ควรรู้',
   limits: [
@@ -218,7 +218,7 @@ export const TH_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     {
       question: 'รองรับแพลตฟอร์มอะไรบ้าง',
       answer:
-        'กว่า 30 แพลตฟอร์ม รวมถึง YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X (Twitter), Bilibili และ Niconico ดูรายชื่อทั้งหมดได้ที่หน้าแพลตฟอร์ม อ่านได้เฉพาะวิดีโอและสตรีมสาธารณะ และไม่รองรับ Discord เพราะไม่มีลิงก์สาธารณะ',
+        'กว่า 15 แพลตฟอร์ม รวมถึง YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X (Twitter), Bilibili และ Niconico ดูรายชื่อทั้งหมดได้ที่หน้าแพลตฟอร์ม อ่านได้เฉพาะวิดีโอและสตรีมสาธารณะ และไม่รองรับ Discord เพราะไม่มีลิงก์สาธารณะ',
     },
     {
       question: 'ClawAI โพสต์หรือแชตแทนฉันไหม',
@@ -326,13 +326,13 @@ export const TH_LIVE_INTELLIGENCE_MARKETING_SEO: LiveIntelligenceMarketingSeo = 
   overview: {
     title: 'Live & Video Intelligence: คำบรรยายสดและสรุปวิดีโอในคลิกเดียว',
     description:
-      'วางลิงก์ไลฟ์สตรีมหรือวิดีโอจาก YouTube, Twitch, TikTok และกว่า 30 แพลตฟอร์ม รับคำบรรยายสดในภาษาของคุณ ฟีดอัจฉริยะที่รวมสรุปและไฮไลต์ หรือสรุปวิดีโอในคลิกเดียวพร้อมเวลากำกับ ใช้ได้บนทุกอุปกรณ์',
+      'วางลิงก์ไลฟ์สตรีมหรือวิดีโอจาก YouTube, Twitch, TikTok และกว่า 15 แพลตฟอร์ม รับคำบรรยายสดในภาษาของคุณ ฟีดอัจฉริยะที่รวมสรุปและไฮไลต์ หรือสรุปวิดีโอในคลิกเดียวพร้อมเวลากำกับ ใช้ได้บนทุกอุปกรณ์',
     keywords: ['คำบรรยายไลฟ์สด', 'สรุปวิดีโอด้วย AI', 'สรุปคลิป YouTube', 'แปลซับไลฟ์สด', 'ไฮไลต์ไลฟ์สตรีม'],
   },
   platforms: {
     title: 'แพลตฟอร์มที่รองรับใน Live & Video Intelligence',
     description:
-      'ทุกแพลตฟอร์มที่ ClawAI อ่านได้สำหรับคำบรรยายสดและสรุปวิดีโอ ได้แก่ YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X, Bilibili, Niconico, CHZZK, SOOP และอื่น ๆ จัดกลุ่มตามประเภท',
+      'ทุกแพลตฟอร์มที่ ClawAI อ่านได้สำหรับคำบรรยายสดและสรุปวิดีโอ ได้แก่ YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X, Bilibili, Niconico และอื่น ๆ จัดกลุ่มตามประเภท',
     keywords: ['แพลตฟอร์มวิดีโอที่รองรับ', 'แพลตฟอร์มไลฟ์สตรีม', 'แพลตฟอร์มสรุปวิดีโอ', 'คำบรรยาย Twitch'],
   },
 };

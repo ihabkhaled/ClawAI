@@ -247,6 +247,9 @@ export interface RecordedSourceOptions {
   watchUrl: string;
   /** A one-click "Summarize video" run: no pacing, 30 s pieces. */
   summary: boolean;
-  /** True while a viewer of the run is billable (ACTIVE or GRACE). */
-  canAdvance: () => Promise<boolean>;
+  /**
+   * True while a viewer of the run is billable (ACTIVE or GRACE) and, for a summary, billed up to
+   * within SUMMARY_MAX_UNBILLED_SECONDS of `positionSeconds`.
+   */
+  canAdvance: (positionSeconds: number) => Promise<boolean>;
 }

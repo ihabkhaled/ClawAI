@@ -23,11 +23,15 @@ describe('RecordedChunkSource', () => {
   const context = (mode: LiveMode) =>
     ({ mode, startedAt: new Date(RUN_STARTED_AT) }) as unknown as WorkerContext;
   const flush = () => new Promise((done) => setImmediate(done));
+  const positions: number[] = [];
   const source = (mode: LiveMode, download: () => Promise<string | null>, summary = false) =>
     new RecordedChunkSource(context(mode), { download: vi.fn(download) } as never, directory, {
       watchUrl: 'https://vt.tiktok.com/ZSsYongoV/',
       summary,
-      canAdvance: () => Promise.resolve(billable),
+      canAdvance: (position) => {
+        positions.push(position);
+        return Promise.resolve(billable);
+      },
     });
   const ready = async (recorded: RecordedChunkSource) => {
     await recorded.poll();
@@ -117,6 +121,25 @@ describe('RecordedChunkSource', () => {
     const rest = await recorded.poll();
     expect(rest.chunks.map((chunk) => chunk.endAt - chunk.startAt)).toEqual([14_000]);
     expect(rest).toMatchObject({ ended: true, mediaSeconds: 74 });
+  });
+
+  it('asks the billing gate with its current position, and stops a summary the gate holds back', async () => {
+    const recorded = source(LiveMode.AUDIO, () => Promise.resolve(join(directory, 'm.mkv')), true);
+    await ready(recorded);
+    await recorded.poll();
+    expect(positions.at(-1)).toBe(0);
+    billable = false;
+    expect((await recorded.poll()).chunks).toHaveLength(0);
+    expect(positions.at(-1)).toBe(60);
+  });
+
+  it('refuses an image post that downloads as a 0.04 s "video"', async () => {
+    run.mockImplementation((binary) =>
+      Promise.resolve(binary === 'ffprobe' ? reply('0.040000') : reply('')),
+    );
+    const recorded = source(LiveMode.AUDIO, () => Promise.resolve(join(directory, 'media.jpg')));
+    await ready(recorded);
+    await expect(recorded.poll()).rejects.toThrow('LIVE_RECORDED_UNREADABLE');
   });
 
   it('fails honestly when the download fails', async () => {

@@ -208,7 +208,7 @@ YTDLP_VERSION`, `ARG YTDLP_SHA256`); Node in the image is its JavaScript runtime
   card was never translated before; it is now. Browser check: Arabic stream, English page, 120 samples over 3 minutes,
   0 with Arabic text.
 
-## Addendum 2026-11-24/25 (batch 6): Live & Videos — recorded videos, 34 tested platforms, one-click summary
+## Addendum 2026-11-24/25 (batch 6): Live & Videos — recorded videos, 18 verified platforms, one-click summary
 
 - **Owner report:** Facebook `share/v` and `share/r` links, an Instagram reel and a `vt.tiktok.com` link all failed
   with `LIVE_SOURCE_UNSUPPORTED`. All six were recorded videos, not live streams; the registry only knew live links.
@@ -266,3 +266,19 @@ YTDLP_VERSION`, `ARG YTDLP_SHA256`); Node in the image is its JavaScript runtime
 - **Not done / honest gaps:** a summary needs the page open (heartbeats bill it; closing the tab stops the run and
   bills only what was processed); the speaker's "ClawAI" is sometimes transcribed "Kloe AI"; YouTube `@handle` links
   are still refused.
+- **Second pass 2026-11-25 (security review + every-platform rounds).** A commit security review flagged summary
+  billing as fail-open: closing the tab left the media processed since the last heartbeat unbilled, and the run could
+  race ahead of what was billed. Now detach folds that media into the final block (`foldSummaryMedia`,
+  `accrueSummaryMedia`, fenced), and a summary run only advances while its viewer was billed up to within
+  `SUMMARY_MAX_UNBILLED_SECONDS` (180 s) of its position (`hasBillableSession(runId, position - 180)`). A live room
+  that reports no length on a live extractor (Huya serves FLV, not HLS) is no longer taken for a recorded video, and a
+  download shorter than 1 s (an image post) fails as `LIVE_RECORDED_UNREADABLE` instead of ending silently.
+- **Every platform tested 2026-11-25** (live channels found through each platform's public listing; Playwright rounds
+  through the real `/live` page plus the API sweep). Passed: YouTube (live, video, Shorts), Facebook (video, reel, share
+  links), Instagram (reel), TikTok (video, short link), Twitch (live, past broadcast, clip), Kick (live), Dailymotion
+  (live, video), X (video), Rumble (video; anti-bot 403 at times), Bilibili (live), Niconico, VK, OK.ru (video; probe
+  flaky), Rutube (live, video), Odysee, Streamable, Mixcloud, Picarto (live) = 18. Failed: CHZZK and Douyu (yt-dlp
+  extractor errors), SOOP (extractor wants a new domain and still fails), SHOWROOM (403), Huya (FLV only), Bluesky
+  (400), Kakao TV (timeouts), DLive (API host gone), Weibo (the only test link was an image post), Vimeo, Reddit,
+  Douyin, Naver TV. Not testable today (no live channel found): Trovo, TwitCasting, 17LIVE, BIGO, LinkedIn, Telegram,
+  Nimo, Instagram/TikTok/Facebook live. The public pages claim only the 18, as "more than 15 platforms".

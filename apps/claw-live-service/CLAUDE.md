@@ -98,7 +98,9 @@ this file disagree, fix one in the same change) - decision:
   chunks; a summary run (`SUMMARY:<userId>` scope, `summarize: true`, RECORDED only) reads 30 s pieces at full speed
   on media time from the run start. Nothing advances unless a viewer of the run is ACTIVE or GRACE.
 - **Summary billing:** the run writes `processedMediaSeconds`; a summary session's heartbeat accrues exactly the new
-  processed seconds, fenced on `accruedMediaSeconds`, and NEVER wall time (a fall-through over-billed once).
+  processed seconds, fenced on `accruedMediaSeconds`, and NEVER wall time (a fall-through over-billed once). Detach
+  folds the media processed since the last heartbeat into the final block, and a summary run waits whenever it is more
+  than `SUMMARY_MAX_UNBILLED_SECONDS` (180) ahead of what its viewer was billed (security review 2026-11-25).
 - Facebook share links: one redirect, guarded, on `facebook.com` only, sent as `ClawAI-LinkCheck/1.0` (no client name
   → `/unsupportedbrowser`). Host-matched paths are kept unescaped (yt-dlp matches `@a:1` and `fid=1:2` literally).
 - `HLS_PLAYLIST_MAX_BYTES` is 4 MB: a YouTube news channel's 12 h master playlist exceeds 1 MB.

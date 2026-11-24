@@ -1,4 +1,4 @@
-# Change - Live & Videos: recorded videos, 34 tested platforms, one-click summary
+# Change - Live & Videos: recorded videos, 18 verified platforms, one-click summary
 
 ## Files
 

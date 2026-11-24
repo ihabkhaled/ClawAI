@@ -9,6 +9,7 @@ import { LIVE_EVENT_PUBLISHER } from '../../realtime/constants/realtime.tokens';
 import type { LiveEventPublisher } from '../../realtime/types/live-stream-event.types';
 import { LIVE_SETTLE_ON_CLOSE_STATES } from '../constants/live-session.constants';
 import { LiveSessionRepository } from '../repositories/live-session.repository';
+import { summaryMediaAccrual } from '../utilities/live-summary.utility';
 import { LivePresenceManager } from './live-presence.manager';
 
 /**
@@ -31,11 +32,24 @@ export class LiveSessionDetachManager {
 
   /** Settles what the session still owes on its current run (used by close and by a run switch). */
   async settleRemainder(sessionId: string): Promise<LiveViewerSession | null> {
+    await this.foldSummaryMedia(sessionId);
     const fresh = await this.sessions.findById(sessionId);
     if (!fresh?.runId || fresh.pendingSeconds <= 0) return fresh;
     if (!LIVE_SETTLE_ON_CLOSE_STATES.includes(fresh.state)) return fresh;
     await this.billing.settleBlock(fresh, fresh.pendingSeconds, { final: true });
     return this.sessions.findById(sessionId);
+  }
+
+  /**
+   * A summary session owes the video its run processed since the last heartbeat (security review
+   * 2026-11-25: closing the tab must not leave those seconds unbilled). Fenced like a heartbeat.
+   */
+  private async foldSummaryMedia(sessionId: string): Promise<void> {
+    const session = await this.sessions.findById(sessionId);
+    if (!session?.summary || session.runId === null) return;
+    const run = await this.sessions.findRun(session.runId);
+    const media = summaryMediaAccrual(session, run, session.state);
+    if (media !== null) await this.sessions.accrueSummaryMedia(session.id, media);
   }
 
   /** Closes the session; true when this call did the detach. */
