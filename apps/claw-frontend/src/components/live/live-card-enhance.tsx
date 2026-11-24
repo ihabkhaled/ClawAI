@@ -10,12 +10,12 @@ export function LiveCardEnhance({ eventId, t, locale }: LiveCardEventProps): Rea
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button size="sm" variant="ghost">
+        <Button size="sm" variant="ghost" className="text-muted-foreground h-8 px-2 text-xs">
           <Sparkles className="h-4 w-4" aria-hidden="true" />
           {t('live.card.enhance')}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80">
+      <PopoverContent align="end" className="w-80 p-3">
         <LiveCardEnhancePanel eventId={eventId} t={t} locale={locale} />
       </PopoverContent>
     </Popover>

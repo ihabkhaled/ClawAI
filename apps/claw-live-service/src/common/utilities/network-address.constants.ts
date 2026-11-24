@@ -33,3 +33,6 @@ export const BLOCKED_IPV6_SUBNETS: ReadonlyArray<readonly [string, number]> = [
  * this subnet also matches every plain IPv4 address, so it lives in its own list.
  */
 export const IPV4_MAPPED_IPV6_SUBNET: readonly [string, number] = ['::ffff:0:0', 96];
+
+/** HTTP statuses that name another location to fetch. */
+export const REDIRECT_STATUSES: ReadonlySet<number> = new Set([301, 302, 303, 307, 308]);

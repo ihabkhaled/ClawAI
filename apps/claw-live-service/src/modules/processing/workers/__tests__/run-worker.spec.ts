@@ -84,7 +84,7 @@ describe('RunWorker', () => {
     source.poll.mockResolvedValueOnce({ chunks: [], ended: true, latestSegmentFile: null });
     await worker().run();
     expect(deps.translations.flushCaptions).toHaveBeenCalledWith(context, true);
-    expect(deps.summaries.summarizeFinal).toHaveBeenCalledWith(context);
+    expect(deps.summaries.summarizeFinal).toHaveBeenCalledWith(context, expect.anything());
     expect(deps.lifecycle.finish).toHaveBeenCalledWith(
       context,
       LiveRunStatus.ENDED,

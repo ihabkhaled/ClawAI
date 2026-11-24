@@ -8,13 +8,19 @@ import {
   latestRevealedCaption,
   liveMarkerPercent,
   resolveLiveDisplayStatus,
+  revealLiveCaptions,
   revealLiveEvents,
 } from '@/utilities/live-reveal.utility';
 
 const T0 = 1_700_000_000_000;
 
-function caption(segmentId: string, offsetMs: number, text: string): LiveCaption {
-  return { segmentId, text, startAt: T0 + offsetMs, endAt: null, uncertain: false };
+function caption(
+  segmentId: string,
+  offsetMs: number,
+  text: string,
+  language: string | null = 'de',
+): LiveCaption {
+  return { segmentId, text, language, startAt: T0 + offsetMs, endAt: null, uncertain: false };
 }
 
 const CAPTIONS = [
@@ -41,24 +47,52 @@ describe('revealLiveEvents', () => {
 });
 
 describe('latestRevealedCaption', () => {
-  it('returns the newest reached caption in the source language without a translation', () => {
-    expect(latestRevealedCaption(CAPTIONS, {}, T0 + 7000)).toEqual({
+  it('shows the exact words when the speaker talks in the viewer language', () => {
+    expect(latestRevealedCaption(CAPTIONS, {}, 'de-DE', T0 + 7000)).toEqual({
       text: 'world',
       translated: false,
       uncertain: false,
     });
   });
 
-  it('prefers the session-language translation when it exists', () => {
-    expect(latestRevealedCaption(CAPTIONS, { b: 'Welt' }, T0 + 7000)).toEqual({
+  it('shows the translation when the speaker talks in another language', () => {
+    expect(latestRevealedCaption(CAPTIONS, { b: 'Welt' }, 'en', T0 + 7000)).toEqual({
       text: 'Welt',
       translated: true,
       uncertain: false,
     });
   });
 
+  it('never shows the original first while its translation is on the way', () => {
+    // b is pending and young: the overlay keeps the newest READABLE caption (a, after its wait).
+    expect(latestRevealedCaption(CAPTIONS, {}, 'en', T0 + 7000)).toBeNull();
+    expect(latestRevealedCaption(CAPTIONS, { a: 'hallo' }, 'en', T0 + 7000)?.text).toBe('hallo');
+  });
+
+  it('shows the original once the translation is overdue', () => {
+    expect(latestRevealedCaption(CAPTIONS.slice(0, 1), {}, 'en', T0 + 12_000)?.text).toBe('hello');
+  });
+
   it('is null before the first caption is reached', () => {
-    expect(latestRevealedCaption(CAPTIONS, {}, T0 - 1)).toBeNull();
+    expect(latestRevealedCaption(CAPTIONS, {}, 'de', T0 - 1)).toBeNull();
+  });
+});
+
+describe('revealLiveCaptions', () => {
+  it('keeps order and puts every caption in the viewer language', () => {
+    const lines = revealLiveCaptions(CAPTIONS, { a: 'hallo', b: 'Welt' }, 'en', T0 + 12_000);
+    expect(lines.map((line) => line.text)).toEqual(['hallo', 'Welt']);
+  });
+
+  it('treats an unknown spoken language as needing a translation', () => {
+    const unknown = [caption('x', 0, 'مرحبا', null)];
+    expect(revealLiveCaptions(unknown, {}, 'ar', T0 + 1000)).toEqual([]);
+    expect(revealLiveCaptions(unknown, { x: 'مرحبا' }, 'ar', T0 + 1000)[0]?.text).toBe('مرحبا');
+  });
+
+  it('matches base languages: ar-EG speech for an ar viewer is exact', () => {
+    const egyptian = [caption('e', 0, 'ازيك', 'ar-EG')];
+    expect(revealLiveCaptions(egyptian, {}, 'ar', T0)[0]?.text).toBe('ازيك');
   });
 });
 

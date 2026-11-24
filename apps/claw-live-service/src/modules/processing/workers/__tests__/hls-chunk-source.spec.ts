@@ -189,7 +189,9 @@ describe('HlsChunkSource', () => {
         {
           resolve: async (fresh) => {
             const resolved = await resolvePlaylist(fresh);
-            return resolved === null ? null : { playlist: resolved, hostSuffixes: suffixes };
+            return resolved === null
+              ? null
+              : { playlist: resolved, hostSuffixes: suffixes, videoId: null };
           },
         },
       );

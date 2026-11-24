@@ -3,10 +3,17 @@ import { request as httpsRequest } from 'node:https';
 import { isIP, type LookupFunction } from 'node:net';
 
 import type { PinnedGetOptions, PinnedGetResult } from './pinned-request.types';
+import { REDIRECT_STATUSES } from './network-address.constants';
 
-/** Why a pinned GET produced nothing: 'TOO_LARGE' or 'FAILED'. */
+/**
+ * Why a pinned GET produced nothing: 'TOO_LARGE', 'FAILED', or 'REDIRECT' with the `location` the
+ * server named (never followed here: the caller decides whether that host is allowed).
+ */
 export class PinnedRequestError extends Error {
-  constructor(readonly code: string) {
+  constructor(
+    readonly code: string,
+    readonly location: string | null = null,
+  ) {
     super(code);
   }
 }
@@ -46,7 +53,8 @@ function readCapped(response: IncomingMessage, maxBytes: number): Promise<Buffer
 /**
  * GET (or POST with `options.body`) over a connection pinned to `addresses` (already checked public), so a second DNS
  * answer can never redirect it (no rebinding). The Host header and TLS SNI stay the URL's
- * host, so certificates verify normally. Redirects are not followed: any non-2xx fails.
+ * host, so certificates verify normally. Redirects are not followed: a 3xx with a Location fails
+ * with code 'REDIRECT' (and the location), any other non-2xx with 'FAILED'.
  */
 export function pinnedGet(
   url: URL,
@@ -68,7 +76,11 @@ export function pinnedGet(
         const declared = Number(response.headers['content-length'] ?? '0');
         if (status < 200 || status >= 300) {
           response.resume();
-          reject(new PinnedRequestError('FAILED'));
+          const location = response.headers.location;
+          const redirect = REDIRECT_STATUSES.has(status) && typeof location === 'string';
+          reject(
+            new PinnedRequestError(redirect ? 'REDIRECT' : 'FAILED', redirect ? location : null),
+          );
           return;
         }
         if (declared > options.maxBytes) {

@@ -1,3 +1,4 @@
+import { LivePlatform } from '../../../generated/prisma';
 import { YOUTUBE_LIVE_CHAT_BASE_URL } from '../constants/platforms.constants';
 import {
   YOUTUBE_CHANNEL_ID_PATTERN,
@@ -70,4 +71,19 @@ export function parseYoutubeChannelUrl(url: URL): PlatformMatch | null {
     embedUrl: `${YOUTUBE_CHANNEL_LIVE_EMBED_URL}?channel=${channelId}&autoplay=1&playsinline=1`,
     chatEmbedUrl: null,
   };
+}
+
+/**
+ * The chat embed of a platform match. A YouTube channel link names no video, so it has none; once
+ * the server pull found the live video id (`pulledVideoId`), its `live_chat` page is used.
+ */
+export function liveChatEmbedUrl(
+  platform: LivePlatform,
+  matched: string | null,
+  pulledVideoId: string | null,
+): string | null {
+  if (matched !== null) return matched;
+  return platform === LivePlatform.YOUTUBE && pulledVideoId !== null
+    ? `${YOUTUBE_LIVE_CHAT_BASE_URL}${pulledVideoId}`
+    : null;
 }

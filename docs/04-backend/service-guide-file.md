@@ -513,6 +513,8 @@ env var.
 | 5xx, network, content-policy block                                               | `TERMINAL`                                        | Stop; a block records `TRANSCRIPTION_CONTENT_BLOCKED_MESSAGE`                                                                                                                                                             |
 | Ceiling                                                                          | `TRANSCRIPTION_MAX_PROVIDER_CALLS` = 4            | Retries included                                                                                                                                                                                                          |
 
+Live chunks (`POST /internal/files/transcribe-chunk`, 2026-11-24) use `TRANSCRIBE_CHUNK_INSTRUCTION`: verbatim in the spoken language, sung lyrics included, a leading `[[lang:xx]]` tag that `splitChunkLanguageTag` strips and returns as `language` (a tag alone is `noSpeech`). Live captions had `language: null` before, so same-language viewers got a needless translation.
+
 `extractionError` is always a fixed `TRANSCRIPTION_*_MESSAGE` sentence
 (busy / temporarily unavailable / no model accepted it / service error); the
 raw provider text is logged as `runCandidates: … kind=<KIND> — <raw>`. When

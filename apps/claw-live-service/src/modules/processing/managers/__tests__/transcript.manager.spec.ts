@@ -112,4 +112,20 @@ describe('TranscriptManager', () => {
     await manager.handleChunk(context, memory, { ...chunk, startAt: 200_000, endAt: 206_000 });
     expect(memory.recent.map((l) => l.id)).toEqual(['seg-1']);
   });
+
+  it('detects the spoken language when the speech model reports none, and remembers it', async () => {
+    tx.liveProcessingRun.update.mockResolvedValue({ nextSegmentSeq: 1 });
+    tx.liveTranscriptSegment.create.mockResolvedValue({ id: 'seg-0' });
+    const memory = createRunMemory(0);
+    stt.transcribe.mockResolvedValueOnce({ ...sttReply, text: 'السلام عليكم', language: null });
+    await manager.handleChunk(context, memory, chunk);
+    expect(tx.liveTranscriptSegment.create.mock.calls[0]?.[0].data.language).toBe('ar');
+    expect(events.emit.mock.calls[0]?.[0][0].data.language).toBe('ar');
+    expect(memory.spokenLanguage).toBe('ar');
+
+    // A Latin aside in an Arabic stream is not called Arabic.
+    stt.transcribe.mockResolvedValueOnce({ ...sttReply, text: 'OK', language: null });
+    await manager.handleChunk(context, memory, chunk);
+    expect(tx.liveTranscriptSegment.create.mock.calls[1]?.[0].data.language).toBeNull();
+  });
 });

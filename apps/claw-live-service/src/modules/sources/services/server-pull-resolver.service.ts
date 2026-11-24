@@ -1,5 +1,5 @@
 import { randomInt } from 'node:crypto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { pinnedGet } from '../../../common/utilities/pinned-request.utility';
@@ -42,6 +42,8 @@ import { SourceUrlGuardService } from './source-url-guard.service';
  */
 @Injectable()
 export class ServerPullResolverService {
+  private readonly logger = new Logger(ServerPullResolverService.name);
+
   private readonly cache = new Map<string, { at: number; pull: Promise<ResolvedPull | null> }>();
   private ytdlpRunning = 0;
 
@@ -70,14 +72,18 @@ export class ServerPullResolverService {
   }
 
   /** True when the playlist resolves AND answers (an offline channel gets none or a 404). */
-  async probe(platform: LivePlatform | null, match: PlatformMatch): Promise<boolean> {
+  /** The resolved pull when its playlist really answers (the stream is live and readable), else null. */
+  async probe(platform: LivePlatform | null, match: PlatformMatch): Promise<ResolvedPull | null> {
     const pull = await this.resolve(platform, match);
     return pull === null
-      ? false
+      ? null
       : this.fetcher
           .fetchObject(pull.playlist, pull.hostSuffixes, HLS_PLAYLIST_MAX_BYTES)
-          .then(() => true)
-          .catch(() => false);
+          .then(() => pull)
+          .catch(() => {
+            this.logger.warn(`probe ${String(platform)}:${match.id} playlist did not answer`);
+            return null;
+          });
   }
 
   private lookup(platform: LivePlatform, match: PlatformMatch): Promise<ResolvedPull | null> {
@@ -100,7 +106,10 @@ export class ServerPullResolverService {
    * output and concurrency (a full slot table answers null at once: the caller falls back).
    */
   private async resolveWithYtdlp(watchUrl: string): Promise<ResolvedPull | null> {
-    if (this.ytdlpRunning >= YTDLP_MAX_CONCURRENT) return null;
+    if (this.ytdlpRunning >= YTDLP_MAX_CONCURRENT) {
+      this.logger.warn('yt-dlp busy: concurrency cap reached, falling back');
+      return null;
+    }
     this.ytdlpRunning += 1;
     const result = await runBoundedProcess(YTDLP_BINARY, [...YTDLP_ARGS, '--', watchUrl], {
       timeoutMs: YTDLP_TIMEOUT_MS,
@@ -110,7 +119,19 @@ export class ServerPullResolverService {
     });
     const playlist =
       result.exitCode === 0 ? parseYtdlpStreamLine(result.stdout.toString('utf8')) : null;
-    return playlist === null ? null : { playlist, hostSuffixes: [streamHostSuffix(playlist)] };
+    if (playlist === null) {
+      // Exit code and the tail of yt-dlp's own error line only (no cookies or tokens are ever passed).
+      this.logger.warn(
+        `yt-dlp found no live HLS for ${watchUrl}: exit=${String(result.exitCode)} ${result.stderrTail.slice(-200).trim()}`,
+      );
+    }
+    return playlist === null
+      ? null
+      : {
+          playlist: playlist.url,
+          hostSuffixes: [streamHostSuffix(playlist.url)],
+          videoId: playlist.videoId,
+        };
   }
 
   /** The anonymous playback token the twitch.tv player asks for, then the usher master playlist. */
@@ -139,6 +160,6 @@ export class ServerPullResolverService {
     playlist.searchParams.set('allow_source', 'true');
     playlist.searchParams.set('allow_audio_only', 'true');
     playlist.searchParams.set('p', String(randomInt(TWITCH_USHER_RANDOM_MAX)));
-    return { playlist, hostSuffixes: TWITCH_CDN_HOST_SUFFIXES };
+    return { playlist, hostSuffixes: TWITCH_CDN_HOST_SUFFIXES, videoId: null };
   }
 }

@@ -39,7 +39,8 @@ export const YTDLP_ARGS: readonly string[] = [
   '--format',
   'w[protocol^=m3u8]/ba[protocol^=m3u8]/b[protocol^=m3u8]',
   '--print',
-  '%(protocol)s %(url)s',
+  // The video id rides last: a YouTube channel link gets its live chat from it (2026-11-24).
+  '%(protocol)s %(url)s %(id)s',
 ];
 export const YTDLP_TIMEOUT_MS = 30_000;
 export const YTDLP_MAX_OUTPUT_BYTES = 16 * 1024;
@@ -67,3 +68,6 @@ export const SERVER_PULL_REFRESH_MIN_INTERVAL_MS = 30_000;
 export const TWITCH_USHER_RANDOM_MAX = 9_999_999;
 /** Country TLDs whose second level is public (`co.kr`, `com.br`): the host suffix keeps three labels. */
 export const PUBLIC_SECOND_LEVEL_LABEL = /^(?:co|com|net|org|ne|or|go|ac)$/u;
+
+/** A platform video id as yt-dlp prints it: letters, digits, `_` and `-` only. */
+export const YTDLP_VIDEO_ID_PATTERN = /^[\w-]{1,64}$/u;

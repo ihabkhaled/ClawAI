@@ -2,6 +2,7 @@ import { LiveCaptionsOverlay } from '@/components/live/live-captions-overlay';
 import { LiveLinkOnlyPlayer } from '@/components/live/live-link-only-player';
 import { LiveWatchLink } from '@/components/live/live-watch-link';
 import { LIVE_EMBED_IFRAME_ALLOW } from '@/constants/live-embed.constants';
+import { LiveCaptionPlacement } from '@/enums/live.enum';
 import type { LivePlayerProps } from '@/types/live.types';
 
 /**
@@ -23,7 +24,7 @@ export function LivePlayer({
   if (hlsSrc === null) {
     return (
       <div className="flex flex-col gap-2">
-        <div className="relative aspect-video w-full overflow-hidden rounded-md bg-black">
+        <div className="ring-border relative aspect-video w-full overflow-hidden rounded-xl bg-black shadow-lg ring-1">
           {embed.playerUrl ? (
             <iframe
               src={embed.playerUrl}
@@ -38,13 +39,19 @@ export function LivePlayer({
               {t('live.modal.playerError')}
             </p>
           )}
+          {/* Server-pull and capture sessions: the newest caption sits over the platform player too. */}
+          <LiveCaptionsOverlay
+            caption={caption}
+            label={t('live.modal.captionsLabel')}
+            placement={LiveCaptionPlacement.TOP}
+          />
         </div>
         <LiveWatchLink embed={embed} t={t} />
       </div>
     );
   }
   return (
-    <div className="relative aspect-video w-full overflow-hidden rounded-md bg-black">
+    <div className="ring-border relative aspect-video w-full overflow-hidden rounded-xl bg-black shadow-lg ring-1">
       <video
         ref={player.videoRef}
         controls
@@ -54,7 +61,11 @@ export function LivePlayer({
       >
         <track kind="captions" />
       </video>
-      <LiveCaptionsOverlay caption={caption} label={t('live.modal.captionsLabel')} />
+      <LiveCaptionsOverlay
+        caption={caption}
+        label={t('live.modal.captionsLabel')}
+        placement={LiveCaptionPlacement.BOTTOM}
+      />
       {player.hasPlayerError ? (
         <p
           role="alert"

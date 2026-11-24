@@ -1,12 +1,16 @@
 import {
   LIVE_CHAT_ALLOWED_ORIGINS,
   LIVE_CHAT_EMBED_DOMAIN_PARAM,
+  LIVE_CHAT_TWITCH_DARK_FLAG,
+  LIVE_CHAT_TWITCH_DARK_FLAG_PATTERN,
+  LIVE_CHAT_TWITCH_ORPHAN_AMPERSAND,
+  LIVE_CHAT_YOUTUBE_DARK_PARAM,
   LIVE_EMBED_ALLOWED_ORIGINS,
   LIVE_EMBED_PARENT_PARAM,
 } from '@/constants/live-embed.constants';
 import { LIVE_PLATFORM_NAMES } from '@/constants/live.constants';
-import { LiveCapability } from '@/enums/live.enum';
-import type { LivePlatform } from '@/enums/live.enum';
+import { LiveCapability, LivePlatform } from '@/enums/live.enum';
+import { ResolvedTheme } from '@/enums/theme.enum';
 import type { LiveEmbedView, LivePlatformFields } from '@/types/live.types';
 
 import { youtubeWatchUrl } from './live-request.utility';
@@ -66,6 +70,39 @@ export function buildLiveChatEmbedUrl(
   return url;
 }
 
+/**
+ * The chat URL in the page's theme. YouTube takes `dark_theme=1`, Twitch the `darkpopout` flag (the
+ * server always sends it, so it is removed for light). Kick's popout chat is dark only.
+ */
+export function themeLiveChatUrl(
+  url: string,
+  platform: LivePlatform | null,
+  theme: ResolvedTheme,
+): string {
+  const dark = theme === ResolvedTheme.DARK;
+  if (platform === LivePlatform.YOUTUBE) {
+    return dark ? appendLiveQueryParam(url, LIVE_CHAT_YOUTUBE_DARK_PARAM, '1') : url;
+  }
+  if (platform !== LivePlatform.TWITCH) {
+    return url;
+  }
+  const plain = url
+    .replace(LIVE_CHAT_TWITCH_DARK_FLAG_PATTERN, '')
+    .replace(LIVE_CHAT_TWITCH_ORPHAN_AMPERSAND, '/chat?');
+  if (!dark) {
+    return plain;
+  }
+  return `${plain}${plain.includes('?') ? '&' : '?'}${LIVE_CHAT_TWITCH_DARK_FLAG}`;
+}
+
+/** The `color-scheme` of the chat document: Kick's popout is always dark, the others follow the page. */
+export function liveChatColorScheme(
+  platform: LivePlatform | null,
+  theme: ResolvedTheme,
+): ResolvedTheme {
+  return platform === LivePlatform.KICK ? ResolvedTheme.DARK : theme;
+}
+
 /** A platform page for "Watch on" and "Open chat on": https only, never javascript: or data:. */
 export function safeLiveWatchUrl(url: string | null | undefined): string | null {
   if (url === null || url === undefined || url === '') {
@@ -90,7 +127,9 @@ export function livePlatformName(platform: LivePlatform | null | undefined): str
 export function buildLiveEmbedView(
   session: LivePlatformFields & { embedUrl: string | null; capability: LiveCapability },
   hostname: string,
+  theme: ResolvedTheme = ResolvedTheme.DARK,
 ): LiveEmbedView {
+  const chatUrl = buildLiveChatEmbedUrl(session, hostname);
   const platformName = livePlatformName(session.platform);
   const watchUrl =
     safeLiveWatchUrl(session.watchUrl) ??
@@ -100,7 +139,8 @@ export function buildLiveEmbedView(
       session.capability === LiveCapability.LINK_ONLY
         ? null
         : buildLivePlayerEmbedUrl(session.embedUrl, session.embedNeedsParent, hostname),
-    chatUrl: buildLiveChatEmbedUrl(session, hostname),
+    chatUrl: chatUrl === null ? null : themeLiveChatUrl(chatUrl, session.platform, theme),
+    chatColorScheme: liveChatColorScheme(session.platform, theme),
     watchUrl: platformName === null ? null : watchUrl,
     platformName,
   };

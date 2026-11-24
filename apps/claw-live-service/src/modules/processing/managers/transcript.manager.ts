@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { LiveChunkOutcome } from '../../../common/enums/live-chunk-outcome.enum';
 import { LiveStreamEventType } from '../../../common/enums/live-stream-event-type.enum';
+import { resolveSpokenLanguage } from '../../../common/utilities/language.utility';
 import { LiveFeedEventKind, LivePipelineStage } from '../../../generated/prisma';
 import { TranscriptionAdapter } from '../adapters/transcription.adapter';
 import { SUMMARY_WINDOW_MS } from '../constants/processing.constants';
@@ -49,7 +50,9 @@ export class TranscriptManager {
       await this.commitSilence(context, chunk, reply);
       return { outcome: LiveChunkOutcome.SILENCE, line: null };
     }
-    const line = await this.commitSegment(context, chunk, reply, text);
+    const language = resolveSpokenLanguage(reply.language, text, memory.spokenLanguage);
+    if (language !== null) memory.spokenLanguage = language;
+    const line = await this.commitSegment(context, chunk, { ...reply, language }, text);
     this.remember(memory, line);
     await this.events.emit([
       {

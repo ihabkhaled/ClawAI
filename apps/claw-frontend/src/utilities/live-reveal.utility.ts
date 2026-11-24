@@ -1,5 +1,7 @@
 import {
   LIVE_BEHIND_THRESHOLD_MS,
+  LIVE_CAPTION_TRANSLATION_WAIT_MS,
+  LIVE_LANGUAGE_SUBTAG_SEPARATOR,
   LIVE_PERCENT,
   LIVE_SERVER_DOMINANT_STATUSES,
 } from '@/constants/live.constants';
@@ -17,32 +19,65 @@ export function revealLiveEvents<T extends { startAt: number }>(
   return items.filter((item) => item.startAt <= playbackAt);
 }
 
-/** The newest caption the viewer has reached, in the session language when a translation exists. */
+/** `pt-BR` → `pt`, `AR` → `ar`. */
+export function liveBaseLanguage(value: string): string {
+  return value.trim().toLowerCase().split(LIVE_LANGUAGE_SUBTAG_SEPARATOR)[0] ?? '';
+}
+
+/**
+ * The text a viewer reads for one caption, or null while it must stay hidden. Spoken in the viewer's
+ * language: the exact words. Otherwise the translation; while it is on its way nothing is shown, and
+ * only after `LIVE_CAPTION_TRANSLATION_WAIT_MS` without one does the original appear.
+ */
+export function captionDisplayText(
+  caption: LiveCaption,
+  translations: Readonly<Record<string, string>>,
+  language: string,
+  playbackAt: number,
+): string | null {
+  if (
+    caption.language !== null &&
+    liveBaseLanguage(caption.language) === liveBaseLanguage(language)
+  ) {
+    return caption.text;
+  }
+  const translated = translations[caption.segmentId];
+  if (translated !== undefined) {
+    return translated;
+  }
+  const age = playbackAt - (caption.endAt ?? caption.startAt);
+  return age >= LIVE_CAPTION_TRANSLATION_WAIT_MS ? caption.text : null;
+}
+
+/** The captions the viewer has reached, each already in the text they should read. */
+export function revealLiveCaptions(
+  captions: readonly LiveCaption[],
+  translations: Readonly<Record<string, string>>,
+  language: string,
+  playbackAt: number,
+): LiveCaption[] {
+  return revealLiveEvents(captions, playbackAt).flatMap((caption) => {
+    const text = captionDisplayText(caption, translations, language, playbackAt);
+    return text === null ? [] : [{ ...caption, text }];
+  });
+}
+
+/** The newest readable caption for the overlay; `translated` when it is not the spoken text. */
 export function latestRevealedCaption(
   captions: readonly LiveCaption[],
   translations: Readonly<Record<string, string>>,
+  language: string,
   playbackAt: number,
 ): LiveRevealedCaption | null {
-  let latest: LiveCaption | null = null;
-  for (const caption of captions) {
-    if (caption.startAt <= playbackAt && (latest === null || caption.startAt >= latest.startAt)) {
-      latest = caption;
-    }
-  }
-  if (latest === null) {
+  const latest = revealLiveCaptions(captions, translations, language, playbackAt).at(-1);
+  if (latest === undefined) {
     return null;
   }
-  const translated = translations[latest.segmentId];
-  return translated === undefined
-    ? { text: latest.text, translated: false, uncertain: latest.uncertain }
-    : { text: translated, translated: true, uncertain: latest.uncertain };
-}
-
-export function captionText(
-  caption: LiveCaption,
-  translations: Readonly<Record<string, string>>,
-): string {
-  return translations[caption.segmentId] ?? caption.text;
+  return {
+    text: latest.text,
+    translated: translations[latest.segmentId] === latest.text,
+    uncertain: latest.uncertain,
+  };
 }
 
 export function isWithinSeekable(mediaAt: number, range: LiveSeekableRange | null): boolean {

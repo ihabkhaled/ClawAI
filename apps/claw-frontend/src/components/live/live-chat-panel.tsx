@@ -18,6 +18,8 @@ export function LiveChatPanel({ embed, t }: LiveChatPanelProps): React.ReactElem
           src={embed.chatUrl}
           title={t('live.platform.chatTitle', { platform: embed.platformName ?? '' })}
           referrerPolicy="strict-origin-when-cross-origin"
+          style={{ colorScheme: embed.chatColorScheme }}
+          data-color-scheme={embed.chatColorScheme}
           className="border-border min-h-80 w-full flex-1 rounded-md border"
         />
       )}

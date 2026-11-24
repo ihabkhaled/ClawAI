@@ -147,3 +147,43 @@ YTDLP_VERSION`, `ARG YTDLP_SHA256`); Node in the image is its JavaScript runtime
   Twitch.
 - **What would make this stale:** a platform blocking datacenter IPs or changing its player (yt-dlp then needs a version
   bump: change both ARGs); the owner withdrawing the terms risk (publish `serverPullPlatforms: []`).
+
+## Addendum 2026-11-24 (batch 5): spoken language, context-aware feed, themed chat, UI
+
+- **Owner request 2026-11-24:** captions in the viewer's language (exact words when the speaker already speaks it, a
+  translation otherwise, never the original first), a smarter and faster feed that knows what it is watching (a song is
+  a song, with its singer and country), analysis that works in any language, and a live chat that is readable in dark
+  and light mode.
+- **Root cause found:** every caption was stored with `language: null` (Gemini reports no language), so the server
+  "translated" Arabic to Arabic and the page showed the original, then swapped in the copy.
+- **Spoken language.** file-service's Live chunk instruction (`TRANSCRIBE_CHUNK_INSTRUCTION`) asks for a
+  `[[lang:xx]]` tag before the words, transcribes sung lyrics, never translates; the tag is stripped
+  (`splitChunkLanguageTag`). live-service falls back to the writing system (`scriptLanguage`: Arabic, Persian, Urdu,
+  Hebrew, Cyrillic, Ukrainian, Greek, Devanagari, Bengali, Tamil, Telugu, Thai, Hangul, Kana, Han, Georgian, Armenian,
+  Ethiopic) and lets a Latin line inherit the run's last Latin language only (`resolveSpokenLanguage`).
+- **Captions in the UI.** `revealLiveCaptions`: same base language → the exact words; otherwise the translation; while
+  it is on the way the caption is hidden, and only after `LIVE_CAPTION_TRANSLATION_WAIT_MS` (12 s) does the original
+  show. The overlay sits at the TOP over a platform iframe (the platform's own captions own the bottom).
+- **Feed.** The summarizer prompt asks the model to name the content type, to say "singing" for sung words and name the
+  song, artist and country when sure, to use the visual notes and web context, to write in `OUTPUT_LANGUAGE` (the
+  spoken language) and to emit up to 4 highlights. Cards come every ~18 s of speech or a 6 s pause (were 30 s / 8 s);
+  vision samples every 10 s with on-screen text; people are never identified from their face.
+- **Research.** The model may return a `researchQuery`; live-service runs research-service `SEARCH_ONLY` as
+  `platform:live-intelligence` (`LiveResearchClient`), at most one per minute and 20 per run, never the same query
+  twice. Title, snippet and host reach the next prompt as `WEB_CONTEXT`; a URL never does. Failure = no context.
+  `RESEARCH_SERVICE_URL` defaults to `https://research-service:4016` (already in the root `.env`); no new env var.
+- **Live chat theme.** The page adds YouTube `dark_theme=1` and Twitch `darkpopout` only in dark mode and gives the
+  iframe a matching `color-scheme` (a mismatched scheme paints an opaque white canvas: white text on white). Kick's
+  popout is dark only. A YouTube channel link now gets its live chat: yt-dlp prints the live video id
+  (`%(protocol)s %(url)s %(id)s`) and resolve builds `live_chat?v=<id>`.
+- **UI.** Full-screen modal on phones, a LIVE badge, an "AI Analysis" panel with icon tabs that never wrap, cards with
+  a coloured edge per kind and importance dots, popovers with padding, an Export menu instead of three buttons, a usage
+  bar.
+- **Verified 2026-11-24 locally:** `live-language-matrix.mjs` rounds (French→English, Arabic→Arabic, Arabic→English,
+  English→Arabic) 18/18 with language detected on every caption, no same-language translation, and translations for
+  the rest; a stream of songs produced "Someone sings 'Let It Snow!' … a traditional American winter song". Browser
+  lane on desktop, phone and tablet, dark and light: every tab, Enhance, Versions, Export (PDF/Markdown/Text), Open,
+  Delete.
+- **Not done / honest gaps:** a stream whose owner disables embedding still shows "This video is unavailable" in the
+  player (we cannot see that inside a cross-origin frame; "Watch on" stays under it); research cost is recorded by
+  research-service, not as a `LiveProviderCost` row (no `RESEARCH` pipeline stage yet); Kick chat is dark in light mode.

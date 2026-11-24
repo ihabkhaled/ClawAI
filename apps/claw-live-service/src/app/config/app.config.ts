@@ -17,6 +17,7 @@ const appConfigSchema = z.object({
   FILE_SERVICE_URL: z.string().url(),
   FILE_GENERATION_SERVICE_URL: z.string().url(),
   ROUTING_SERVICE_URL: z.string().url().default('https://routing-service:4004'),
+  RESEARCH_SERVICE_URL: z.string().url().default('https://research-service:4016'),
   INTER_SERVICE_AUTH_TOKEN: z.string().min(32),
   JWT_SECRET: z.string().min(32),
   LIVE_ALLOW_HTTP_SOURCES: booleanFlag,

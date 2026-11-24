@@ -45,3 +45,31 @@ export const TRANSCRIBE_CHUNK_TOO_LONG_MESSAGE = 'The audio chunk is longer than
 export const TRANSCRIBE_CHUNK_FAILED_MESSAGE = 'The audio chunk could not be transcribed.';
 export const TRANSCRIBE_CHUNK_UNAVAILABLE_MESSAGE =
   'No speech-to-text provider is available right now.';
+
+/**
+ * The Live chunk instruction (2026-11-24). Gemini reports no language, and every Live caption was
+ * stored with `language: null`, so a viewer in the speaker's own language got a "translation" of
+ * the same words. The model names the spoken language in a tag on the first line; the tag is
+ * stripped before the text is returned. Sung lyrics are words too: a stream of a song must caption.
+ */
+export const TRANSCRIBE_CHUNK_INSTRUCTION = [
+  'Transcribe the attached audio verbatim, in the language and script it is spoken or sung in. Never translate.',
+  'Sung lyrics count as speech: transcribe them.',
+  'Start the answer with the tag [[lang:xx]] where xx is the ISO 639-1 code of the main spoken language (for example [[lang:ar]], [[lang:en]]), then the words.',
+  'Output only the tag and the spoken words as plain text: no commentary, no summary, no timestamps, no speaker labels.',
+  'If the audio contains no speech and no singing, output nothing at all.',
+].join(' ');
+
+/** The language tag the chunk instruction asks for, anywhere in the answer (a name such as
+ * `english` is kept as said; live-service reads codes and names alike). */
+export const TRANSCRIBE_CHUNK_LANGUAGE_TAG =
+  /\[\[\s*lang\s*:\s*([A-Za-z][A-Za-z0-9-]{1,19})\s*\]\]/giu;
+
+/**
+ * A chunk "transcript" with no words: only digits, clock stamps and separators ("00:00 00:01 00:02",
+ * seen on music, 2026-11-24). It is not speech and never becomes a caption.
+ */
+export const TRANSCRIBE_CHUNK_NUMBERS_ONLY = /^[\d\s:.,;\-–—]*$/u;
+
+/** One bracketed sound tag ("[Music]", "(applause)"); a chunk made only of these is not speech. */
+export const TRANSCRIBE_CHUNK_SOUND_TAG = /[[(][^\])]{1,30}[\])]/gu;

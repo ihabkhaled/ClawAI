@@ -10,7 +10,7 @@ export function LiveWatchLink({ embed, t }: LiveWatchLinkProps): React.ReactElem
       href={embed.watchUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="text-primary self-end text-sm underline-offset-4 hover:underline"
+      className="text-muted-foreground hover:text-primary self-end text-xs underline-offset-4 hover:underline"
     >
       {t('live.platform.watchOn', { platform: embed.platformName })}
     </a>

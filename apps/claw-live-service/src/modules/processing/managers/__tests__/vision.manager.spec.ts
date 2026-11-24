@@ -86,17 +86,17 @@ describe('VisionManager', () => {
     expect(events.emit).toHaveBeenCalled();
   });
 
-  it('samples at most every 15 s and skips an unchanged scene until 60 s passed', async () => {
+  it('samples at most every 10 s and skips an unchanged scene until 60 s passed', async () => {
     const memory = createRunMemory(0);
     memory.vision = {
       lastSampleWallAt: 100_000,
       lastKeptWallAt: 100_000,
       lastThumb: Buffer.alloc(256, 10),
     };
-    await manager.maybeSample(context(LiveMode.AUDIO_VISION), memory, '/tmp/s.bin', 110_000);
+    await manager.maybeSample(context(LiveMode.AUDIO_VISION), memory, '/tmp/s.bin', 105_000);
     expect(runBoundedProcess).not.toHaveBeenCalled();
     runBoundedProcess.mockResolvedValueOnce(thumb(12));
-    await manager.maybeSample(context(LiveMode.AUDIO_VISION), memory, '/tmp/s.bin', 116_000);
+    await manager.maybeSample(context(LiveMode.AUDIO_VISION), memory, '/tmp/s.bin', 111_000);
     expect(runBoundedProcess).toHaveBeenCalledTimes(1);
     expect(model.complete).not.toHaveBeenCalled();
   });

@@ -2,6 +2,7 @@ import type { RefObject } from 'react';
 
 import type {
   LiveCapability,
+  LiveCaptionPlacement,
   LiveCaptureAction,
   LiveCaptureError,
   LiveCaptureSource,
@@ -20,6 +21,7 @@ import type {
   LiveStatusTone,
   LiveStreamEventType,
 } from '@/enums/live.enum';
+import type { ResolvedTheme } from '@/enums/theme.enum';
 import type { ModelPickerGroup } from '@/types/component.types';
 import type { TranslateFunction } from '@/types/i18n.types';
 
@@ -187,6 +189,8 @@ export type LiveFeedCard = {
 export type LiveCaption = {
   segmentId: string;
   text: string;
+  /** Spoken language the server detected (`ar`, `en`), or null when it could not tell. */
+  language: string | null;
   startAt: number;
   endAt: number | null;
   uncertain: boolean;
@@ -285,6 +289,11 @@ export type LivePlaybackSnapshot = {
 export type LiveEmbedView = {
   playerUrl: string | null;
   chatUrl: string | null;
+  /**
+   * The CSS `color-scheme` the chat iframe must carry. A frame whose scheme differs from the page's
+   * gets an opaque canvas backdrop, which is how dark-mode YouTube chat became white on white.
+   */
+  chatColorScheme: ResolvedTheme;
   watchUrl: string | null;
   platformName: string | null;
 };
@@ -622,7 +631,12 @@ export type LiveCaptureConsentDialogProps = {
   t: TranslateFunction;
 };
 
-export type LiveCaptionsOverlayProps = { caption: LiveRevealedCaption | null; label: string };
+export type LiveCaptionsOverlayProps = {
+  caption: LiveRevealedCaption | null;
+  label: string;
+  /** TOP over a platform iframe (its own captions and controls own the bottom), BOTTOM over our video. */
+  placement: LiveCaptionPlacement;
+};
 
 export type LiveStatusBannerProps = {
   status: LiveStatusCode;
@@ -660,8 +674,8 @@ export type LiveFeedCardProps = {
 export type LiveCardEventProps = { eventId: string; t: TranslateFunction; locale: string };
 
 export type LiveCaptionsListProps = {
+  /** Already in the viewer's language (see `revealLiveCaptions`). */
   captions: LiveCaption[];
-  translations: Record<string, string>;
   t: TranslateFunction;
   locale: string;
 };

@@ -74,12 +74,14 @@ describe('SummaryManager', () => {
     }),
   };
   const events = { emit: vi.fn() };
+  const research = { search: vi.fn().mockResolvedValue([]) };
   const manager = new SummaryManager(
     prisma as never,
     writer as never,
     model as never,
     policy as never,
     events as never,
+    research as never,
   );
 
   beforeEach(() => {
@@ -98,16 +100,16 @@ describe('SummaryManager', () => {
     return memory;
   }
 
-  it('triggers on ≥ 30 s of new transcript or an ≥ 8 s pause, never on nothing', () => {
+  it('triggers on ≥ 18 s of new transcript or an ≥ 6 s pause, never on nothing', () => {
     const memory = createRunMemory(0);
     expect(manager.shouldSummarize(memory)).toBe(false);
-    memory.pendingTranscriptMs = 30_000;
+    memory.pendingTranscriptMs = 18_000;
     expect(manager.shouldSummarize(memory)).toBe(true);
     memory.pendingTranscriptMs = 6000;
     memory.lastSpeechEndAt = 10_000;
-    memory.lastMediaAt = 16_000;
+    memory.lastMediaAt = 15_000;
     expect(manager.shouldSummarize(memory)).toBe(false);
-    memory.lastMediaAt = 18_000;
+    memory.lastMediaAt = 16_000;
     expect(manager.shouldSummarize(memory)).toBe(true);
   });
 
@@ -334,6 +336,54 @@ describe('SummaryManager', () => {
       endAt: 90_000n,
     });
     expect(events.emit.mock.calls[0]?.[0][0].data.kind).toBe('FINAL');
+  });
+
+  it('asks for the spoken language and passes the web context to the next call', async () => {
+    model.complete.mockResolvedValueOnce(
+      reply({ ...validReply, researchQuery: 'sample lyric line lyrics' }),
+    );
+    tx.liveFeedEvent.create.mockResolvedValueOnce(row());
+    research.search.mockResolvedValueOnce([
+      {
+        query: 'sample lyric line lyrics',
+        title: 'Sample Song - Sample Singer',
+        snippet: 'Egyptian song by Sample Singer.',
+        host: 'example.org',
+      },
+    ]);
+    const memory = memoryWithTranscript();
+    memory.spokenLanguage = 'ar';
+    await manager.summarize(context, memory);
+    const first = model.complete.mock.calls[0]?.[1];
+    expect(first.user).toContain('OUTPUT_LANGUAGE: ar');
+    expect(first.user).toContain('WEB_CONTEXT:\n(none)');
+    expect(first.system).toContain('singing');
+    expect(research.search).toHaveBeenCalledWith(
+      'sample lyric line lyrics',
+      'live-research:run-1:1',
+    );
+    expect(memory.webNotes).toHaveLength(1);
+
+    model.complete.mockResolvedValueOnce(reply(validReply));
+    tx.liveFeedEvent.update.mockResolvedValueOnce(row({ version: 2 }));
+    memory.recent.push(line(2, 13_000, 'More.'));
+    memory.pendingTranscriptMs = 18_000;
+    await manager.summarize(context, memory);
+    const second = model.complete.mock.calls[1]?.[1];
+    expect(second.user).toContain('Egyptian song by Sample Singer. (example.org)');
+    expect(second.user).not.toContain('https://');
+  });
+
+  it('bounds research: no empty, repeated, too-early or over-budget query reaches the service', async () => {
+    const memory = createRunMemory(0);
+    await manager.maybeResearch(context, memory, '   ', 100_000);
+    await manager.maybeResearch(context, memory, 'first query', 100_000);
+    await manager.maybeResearch(context, memory, 'second query', 120_000);
+    await manager.maybeResearch(context, memory, 'FIRST query', 200_000);
+    expect(research.search).toHaveBeenCalledTimes(1);
+    memory.research.count = 20;
+    await manager.maybeResearch(context, memory, 'third query', 400_000);
+    expect(research.search).toHaveBeenCalledTimes(1);
   });
 
   it('writes no FINAL card when nothing was analysed', async () => {

@@ -10208,7 +10208,7 @@
           "file": "skills/run-gates-once-and-land.md"
         },
         {
-          "bytes": 6162,
+          "bytes": 7300,
           "file": "skills/run-live-intelligence-qa.md"
         },
         {
@@ -12889,7 +12889,7 @@
       },
       "claw-file-service": {
         "runner": "vitest",
-        "testFiles": 88
+        "testFiles": 89
       },
       "claw-frontend": {
         "runner": "vitest",
@@ -12905,7 +12905,7 @@
       },
       "claw-live-service": {
         "runner": "vitest",
-        "testFiles": 79
+        "testFiles": 81
       },
       "claw-llamacpp-service": {
         "runner": "vitest",
@@ -13835,7 +13835,7 @@
     "serviceCount": 22,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 3036,
+    "totalTestFiles": 3039,
     "workspaceCount": 29
   }
 }

@@ -1,5 +1,5 @@
 import { STREAM_DATA_CLOSE, STREAM_DATA_OPEN } from '../constants/processing.constants';
-import type { RunMemory, TranscriptLine } from '../types/processing.types';
+import type { RunMemory, TranscriptLine, WebNote } from '../types/processing.types';
 
 /** Removes the delimiter tokens from untrusted text so it cannot close its own data block. */
 export function sanitizeStreamText(text: string): string {
@@ -23,7 +23,31 @@ export function formatTranscript(lines: readonly TranscriptLine[]): string {
     .join('\n');
 }
 
-/** The summarizer's user message: working summary + open card + recent window + visual notes. */
+/** The host of a web result (`genius.com`), or null when it is not a URL. */
+export function webHost(value: string): string | null {
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return null;
+  }
+}
+
+/** `- title: snippet (host)` lines of the web context, or `(none)`. */
+export function formatWebNotes(notes: readonly WebNote[]): string {
+  return notes.length === 0
+    ? '(none)'
+    : notes
+        .map(
+          (note) =>
+            `- ${sanitizeStreamText(note.title)}: ${sanitizeStreamText(note.snippet)} (${note.host})`,
+        )
+        .join('\n');
+}
+
+/**
+ * The summarizer's user message: output language, working summary, open card, recent window,
+ * visual notes and the web context the model asked for.
+ */
 export function buildSummaryUserMessage(
   memory: RunMemory,
   window: readonly TranscriptLine[],
@@ -36,12 +60,15 @@ export function buildSummaryUserMessage(
   );
   return streamDataBlock(
     [
+      `OUTPUT_LANGUAGE: ${memory.spokenLanguage ?? 'auto'}`,
       `WORKING_SUMMARY: ${sanitizeStreamText(memory.workingSummary) || '(empty)'}`,
       `CURRENT_CARD: ${card}`,
       'TRANSCRIPT:',
       formatTranscript(window),
       'VISUAL_NOTES:',
       visuals.length > 0 ? visuals.join('\n') : '(none)',
+      'WEB_CONTEXT:',
+      formatWebNotes(memory.webNotes),
     ].join('\n'),
   );
 }

@@ -14,10 +14,11 @@ import {
 } from '../constants/sources.constants';
 import { ServerPullProbe } from '../../../common/enums/live-server-pull-probe.enum';
 import type { PlatformResolution } from '../types/platform.types';
+import type { ServerPullOutcome } from '../types/server-pull.types';
 import type { SourceResolution } from '../types/source-resolution.types';
 import { platformReasonCode, resolvePlatformUrl } from '../utilities/platform-registry.utility';
 import { normalizeSourceUrl } from '../utilities/source-url.utility';
-import { isYoutubeHandleUrl } from '../utilities/youtube-url.utility';
+import { isYoutubeHandleUrl, liveChatEmbedUrl } from '../utilities/youtube-url.utility';
 import { FixtureBroadcasterService } from './fixture-broadcaster.service';
 import { ServerPullResolverService } from './server-pull-resolver.service';
 import { SourceUrlGuardService } from './source-url-guard.service';
@@ -102,14 +103,19 @@ export class SourcesService {
    * resolver; no network call), LIVE (the playlist answers) or UNREACHABLE (offline, unreadable).
    * Link-only platforms are tried too: a live one becomes SERVER_PULL, else it stays link-only.
    */
-  private async serverPullFor({ definition, match }: PlatformResolution): Promise<ServerPullProbe> {
-    if (definition.capability === null) return ServerPullProbe.NOT_ENABLED;
-    if (!this.serverPull.supports(definition.platform)) return ServerPullProbe.NOT_ENABLED;
+  private async serverPullFor({
+    definition,
+    match,
+  }: PlatformResolution): Promise<ServerPullOutcome> {
+    const off = { probe: ServerPullProbe.NOT_ENABLED, videoId: null };
+    if (definition.capability === null) return off;
+    if (!this.serverPull.supports(definition.platform)) return off;
     const { config } = await this.policy.active();
-    if (!config.serverPullPlatforms.includes(definition.platform))
-      return ServerPullProbe.NOT_ENABLED;
-    const live = await this.serverPull.probe(definition.platform, match);
-    return live ? ServerPullProbe.LIVE : ServerPullProbe.UNREACHABLE;
+    if (!config.serverPullPlatforms.includes(definition.platform)) return off;
+    const pull = await this.serverPull.probe(definition.platform, match);
+    return pull === null
+      ? { probe: ServerPullProbe.UNREACHABLE, videoId: null }
+      : { probe: ServerPullProbe.LIVE, videoId: pull.videoId };
   }
 
   /**
@@ -120,7 +126,7 @@ export class SourcesService {
   private resolvePlatform(
     { definition, match }: PlatformResolution,
     userId: string,
-    probe: ServerPullProbe,
+    { probe, videoId }: ServerPullOutcome,
   ): SourceResolution {
     if (definition.refusalCode !== null || definition.capability === null) {
       throw new UnprocessableEntityException(
@@ -130,6 +136,11 @@ export class SourcesService {
     const pulled = probe === ServerPullProbe.LIVE;
     const capability = pulled ? LiveCapability.SERVER_PULL : definition.capability;
     const capture = capability === LiveCapability.BROWSER_CAPTURE;
+    const chatEmbedUrl = liveChatEmbedUrl(
+      definition.platform,
+      match.chatEmbedUrl,
+      pulled ? videoId : null,
+    );
     return {
       sourceKind: definition.sourceKind,
       capability,
@@ -140,10 +151,10 @@ export class SourcesService {
       embedUrl: match.embedUrl,
       reasonCode: platformReasonCode(capability, probe),
       platform: definition.platform,
-      chatEmbedUrl: match.chatEmbedUrl,
+      chatEmbedUrl,
       watchUrl: match.watchUrl,
       embedNeedsParent: definition.embedNeedsParent,
-      chatNeedsEmbedDomain: definition.chatNeedsEmbedDomain && match.chatEmbedUrl !== null,
+      chatNeedsEmbedDomain: definition.chatNeedsEmbedDomain && chatEmbedUrl !== null,
     };
   }
 

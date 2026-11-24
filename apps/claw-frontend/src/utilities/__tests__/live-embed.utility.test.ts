@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { LiveCapability, LivePlatform } from '@/enums/live.enum';
+import { ResolvedTheme } from '@/enums/theme.enum';
 import type { LivePlatformFields } from '@/types/live.types';
 import {
   allowlistedLiveUrl,
@@ -8,8 +9,10 @@ import {
   buildLiveChatEmbedUrl,
   buildLiveEmbedView,
   buildLivePlayerEmbedUrl,
+  liveChatColorScheme,
   livePlatformName,
   safeLiveWatchUrl,
+  themeLiveChatUrl,
 } from '@/utilities/live-embed.utility';
 
 const BASE: LivePlatformFields & { embedUrl: string | null; capability: LiveCapability } = {
@@ -126,7 +129,8 @@ describe('buildLiveEmbedView', () => {
   it('builds player, chat and watch links for an embeddable platform', () => {
     expect(buildLiveEmbedView(BASE, 'claw.local')).toEqual({
       playerUrl: 'https://player.twitch.tv/?channel=shroud&autoplay=true&parent=claw.local',
-      chatUrl: 'https://www.twitch.tv/embed/shroud/chat?darkpopout&parent=claw.local',
+      chatUrl: 'https://www.twitch.tv/embed/shroud/chat?parent=claw.local&darkpopout',
+      chatColorScheme: ResolvedTheme.DARK,
       watchUrl: 'https://www.twitch.tv/shroud',
       platformName: 'Twitch',
     });
@@ -148,6 +152,7 @@ describe('buildLiveEmbedView', () => {
     expect(view).toEqual({
       playerUrl: null,
       chatUrl: null,
+      chatColorScheme: ResolvedTheme.DARK,
       watchUrl: 'https://www.tiktok.com/@a/live',
       platformName: 'TikTok',
     });
@@ -173,5 +178,52 @@ describe('buildLiveEmbedView', () => {
     );
     expect(view.watchUrl).toBeNull();
     expect(view.platformName).toBeNull();
+  });
+});
+
+describe('live chat theme', () => {
+  const youtube = 'https://www.youtube.com/live_chat?v=abc&embed_domain=claw.local';
+  const twitch = 'https://www.twitch.tv/embed/shroud/chat?darkpopout&parent=claw.local';
+
+  it('asks YouTube for its dark chat only in dark mode', () => {
+    expect(themeLiveChatUrl(youtube, LivePlatform.YOUTUBE, ResolvedTheme.DARK)).toBe(
+      `${youtube}&dark_theme=1`,
+    );
+    expect(themeLiveChatUrl(youtube, LivePlatform.YOUTUBE, ResolvedTheme.LIGHT)).toBe(youtube);
+  });
+
+  it('keeps Twitch darkpopout in dark mode and removes it in light mode', () => {
+    expect(themeLiveChatUrl(twitch, LivePlatform.TWITCH, ResolvedTheme.LIGHT)).toBe(
+      'https://www.twitch.tv/embed/shroud/chat?parent=claw.local',
+    );
+    expect(
+      themeLiveChatUrl(
+        'https://www.twitch.tv/embed/shroud/chat?darkpopout',
+        LivePlatform.TWITCH,
+        ResolvedTheme.LIGHT,
+      ),
+    ).toBe('https://www.twitch.tv/embed/shroud/chat');
+    expect(
+      themeLiveChatUrl(
+        'https://www.twitch.tv/embed/s/chat',
+        LivePlatform.TWITCH,
+        ResolvedTheme.DARK,
+      ),
+    ).toBe('https://www.twitch.tv/embed/s/chat?darkpopout');
+  });
+
+  it('leaves Kick alone and gives its always-dark chat a dark color scheme', () => {
+    const kick = 'https://kick.com/popout/xqc/chat';
+    expect(themeLiveChatUrl(kick, LivePlatform.KICK, ResolvedTheme.LIGHT)).toBe(kick);
+    expect(liveChatColorScheme(LivePlatform.KICK, ResolvedTheme.LIGHT)).toBe(ResolvedTheme.DARK);
+    expect(liveChatColorScheme(LivePlatform.YOUTUBE, ResolvedTheme.LIGHT)).toBe(
+      ResolvedTheme.LIGHT,
+    );
+  });
+
+  it('builds a light view whose chat frame is light', () => {
+    const view = buildLiveEmbedView(BASE, 'claw.local', ResolvedTheme.LIGHT);
+    expect(view.chatUrl).toBe('https://www.twitch.tv/embed/shroud/chat?parent=claw.local');
+    expect(view.chatColorScheme).toBe(ResolvedTheme.LIGHT);
   });
 });

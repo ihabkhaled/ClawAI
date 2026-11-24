@@ -60,6 +60,8 @@ export const HLS_DNS_TIMEOUT_MS = 3000;
 export const HLS_PLAYLIST_MAX_BYTES = 1024 * 1024;
 export const HLS_SEGMENT_MAX_BYTES = 20 * 1024 * 1024;
 export const HLS_FETCH_TIMEOUT_MS = 10_000;
+/** Redirects a server-pulled CDN fetch may follow, each re-checked on the pinned host suffixes. */
+export const HLS_MAX_REDIRECTS = 3;
 /** Content types passed through from an origin (lower-case, parameters stripped). */
 export const HLS_PLAYLIST_CONTENT_TYPES: ReadonlySet<string> = new Set([
   'application/vnd.apple.mpegurl',

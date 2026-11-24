@@ -82,7 +82,7 @@ export class RunWorker {
     if (poll.ended) {
       await this.background?.catch(() => {});
       await this.deps.translations.flushCaptions(this.context, true);
-      await this.deps.summaries.summarizeFinal(this.context);
+      await this.deps.summaries.summarizeFinal(this.context, this.memory);
       await this.finish(LiveRunStatus.ENDED, LiveRunEndReason.SOURCE_ENDED);
       return true;
     }
@@ -98,6 +98,9 @@ export class RunWorker {
     } catch (error: unknown) {
       if (error instanceof LeaseLostError) throw error;
       this.pollFailures += 1;
+      // The reason only (a fetcher message names the host, never a signed query string).
+      const reason = error instanceof Error ? error.message.slice(0, 160) : 'unknown';
+      this.logger.warn(`run ${this.runId} poll failed (${String(this.pollFailures)}): ${reason}`);
       if (this.pollFailures >= WORKER_MAX_POLL_FAILURES) throw new Error('LIVE_SOURCE_UNREACHABLE');
       return { chunks: [], ended: false, latestSegmentFile: null };
     }

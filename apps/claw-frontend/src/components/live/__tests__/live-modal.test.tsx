@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { LiveModal } from '@/components/live/live-modal';
 import { LIVE_EMPTY_PLAYBACK } from '@/constants/live.constants';
 import { LiveCaptureState, LiveFeedTab, LiveMode, LiveStatusCode } from '@/enums/live.enum';
+import { ResolvedTheme } from '@/enums/theme.enum';
 import { LIVE_TRANSLATIONS } from '@/lib/i18n/locales/live-translations';
 import type { LiveEmbedView, UseLiveModalResult } from '@/types/live.types';
 
@@ -29,6 +30,7 @@ function t(key: string, params?: Record<string, string | number>): string {
 const TIKTOK: LiveEmbedView = {
   playerUrl: null,
   chatUrl: null,
+  chatColorScheme: ResolvedTheme.DARK,
   watchUrl: 'https://www.tiktok.com/@a/live',
   platformName: 'TikTok',
 };

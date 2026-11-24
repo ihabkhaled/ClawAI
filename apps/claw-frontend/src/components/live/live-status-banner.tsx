@@ -14,13 +14,13 @@ export function LiveStatusBanner({
     <div
       role="status"
       className={cn(
-        'flex flex-col gap-1 rounded-md border p-3 text-sm',
+        'flex flex-col gap-0.5 rounded-xl border px-3 py-2 text-xs sm:text-sm',
         LIVE_STATUS_TONE_CLASSES[presentation.tone],
       )}
       data-testid={`live-status-${status}`}
     >
       <p className="font-semibold">{t(presentation.titleKey)}</p>
-      <p>{t(presentation.descriptionKey)}</p>
+      <p className="text-muted-foreground hidden sm:block">{t(presentation.descriptionKey)}</p>
       {isLost ? <p>{t('live.modal.connectionLost')}</p> : null}
       {!isLost && isReconnecting ? <p>{t('live.modal.reconnecting')}</p> : null}
     </div>

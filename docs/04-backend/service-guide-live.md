@@ -76,6 +76,12 @@ Full request and response shapes: [architecture section 9](../03-architecture/li
   readable" at once and fall back) (ADR-221 batch 4).
   Upgrading yt-dlp: change `YTDLP_VERSION` and `YTDLP_SHA256` together in both Dockerfiles. Turning it off: publish a
   policy with `serverPullPlatforms: []`.
+- Every caption carries its spoken language (2026-11-24, ADR-221 batch 5): file-service's `[[lang:xx]]` tag, else the
+  writing system (`scriptLanguage`), else the run's last Latin language. A caption is translated only for viewers in
+  another language; summaries are written in the spoken language and translated per viewer.
+- The summarizer may ask for one web search (`researchQuery`); `LiveResearchClient` runs research-service `SEARCH_ONLY`
+  as `platform:live-intelligence`, at most 1 a minute and 20 a run. Only title, snippet and host reach the prompt.
+- A failed server pull logs why (`yt-dlp found no live HLS … exit=…`, `playlist did not answer`, `concurrency cap`).
 - Paid blocks are priced by the policy and sent to auth-service as `fixedCostMicroUsd` (auth `FIXED_PRICE_SURFACES`).
 - PDF export calls file-generation `POST /api/v1/internal/file-generations/render-pdf` (stateless, nothing stored).
 - The staff plan slug `admin` must have a row in the policy `plans` map, or staff fall to `defaultPlan` (0 free seconds).

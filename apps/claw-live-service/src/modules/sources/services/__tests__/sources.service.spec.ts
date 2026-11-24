@@ -183,9 +183,13 @@ describe('SourcesService', () => {
   });
 
   describe('server pull', () => {
-    const enable = (live: boolean): void => {
+    const enable = (live: boolean, videoId: string | null = null): void => {
       serverPull.supports.mockImplementation((platform: string) => platform !== 'DISCORD');
-      serverPull.probe.mockResolvedValue(live);
+      serverPull.probe.mockResolvedValue(
+        live
+          ? { playlist: new URL('https://cdn.example.com/p.m3u8'), hostSuffixes: [], videoId }
+          : null,
+      );
       policy.active.mockResolvedValue({
         config: { serverPullPlatforms: ['TWITCH', 'YOUTUBE', 'KICK', 'TIKTOK'] },
       });
@@ -241,6 +245,19 @@ describe('SourcesService', () => {
         });
       }
       expect(tiktok.embedUrl).toBeNull();
+    });
+
+    it('gives a live YouTube channel link the live chat of the video the server found', async () => {
+      enable(true, 'FelGGahCbS8');
+      const result = await service.resolve(
+        'https://www.youtube.com/channel/UCfiwzLy-8yKzIbsmZTzxDgw/live',
+        'u1',
+      );
+      expect(result).toMatchObject({
+        capability: LiveCapability.SERVER_PULL,
+        chatEmbedUrl: 'https://www.youtube.com/live_chat?v=FelGGahCbS8',
+        chatNeedsEmbedDomain: true,
+      });
     });
 
     it('keeps an offline link-only platform link-only, and never probes Discord', async () => {

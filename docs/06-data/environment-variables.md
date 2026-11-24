@@ -460,6 +460,8 @@ All services communicate via internal Docker service names.
 | `PLUGIN_SERVICE_URL`          | Yes      | `https://plugin-service:4021`              |
 | `LIVE_SERVICE_URL`            | Yes      | `https://live-service:4022`                |
 
+live-service also reads `RESEARCH_SERVICE_URL` (2026-11-24, ADR-221 batch 5: the Live feed's context search). In live-service it is optional and defaults to `https://research-service:4016`, so no `.env` change is needed.
+
 ---
 
 ## Per-Service Port Variables

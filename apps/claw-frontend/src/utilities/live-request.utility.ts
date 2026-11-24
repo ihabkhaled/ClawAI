@@ -115,3 +115,11 @@ export function liveResolveErrorKey(error: Error): string {
 export function liveSourceNeedsAttestation(capability: LiveCapability): boolean {
   return capability === LiveCapability.AUDIO || capability === LiveCapability.AUDIO_VISION;
 }
+
+/** Share of the month's free seconds still left, 0..100, for the usage bar. */
+export function liveFreePercentLeft(usage: LiveUsage): number {
+  if (usage.freeSecondsTotal <= 0) {
+    return 0;
+  }
+  return Math.min(100, Math.max(0, (liveFreeSecondsLeft(usage) / usage.freeSecondsTotal) * 100));
+}

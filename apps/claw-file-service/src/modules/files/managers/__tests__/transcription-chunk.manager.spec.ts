@@ -188,6 +188,28 @@ describe('TranscriptionChunkManager (ADR-221 platform-paid chunk)', () => {
     expect(harness.fetchMock).not.toHaveBeenCalled();
   });
 
+  it('asks Gemini for the spoken language and strips the tag from the caption', async () => {
+    const harness = await buildHarness([GEMINI, OPENAI]);
+    mockedGemini.mockResolvedValue({ text: '[[lang:AR]] مرحبا بكم' });
+
+    const result = await harness.manager.transcribe(dto());
+
+    expect(result.text).toBe('مرحبا بكم');
+    expect(result.language).toBe('ar');
+    expect(String(mockedGemini.mock.calls[0]?.[6])).toContain('[[lang:xx]]');
+    expect(String(mockedGemini.mock.calls[0]?.[6])).toContain('Never translate');
+  });
+
+  it('treats a tag with no words as no speech', async () => {
+    const harness = await buildHarness([GEMINI, OPENAI]);
+    mockedGemini.mockResolvedValue({ text: '[[lang:en]]' });
+
+    const result = await harness.manager.transcribe(dto());
+
+    expect(result.noSpeech).toBe(true);
+    expect(result.text).toBe('');
+  });
+
   it('walks to the next candidate after a model rejection and prices OpenAI per second', async () => {
     const harness = await buildHarness(
       [GEMINI, OPENAI],

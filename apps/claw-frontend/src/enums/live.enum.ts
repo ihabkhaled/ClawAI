@@ -193,3 +193,9 @@ export enum LivePolicyFlag {
   KILL_SWITCH = 'killSwitch',
   SERVER_PULL = 'serverPull',
 }
+
+/** Where the newest caption sits over the player. */
+export enum LiveCaptionPlacement {
+  TOP = 'TOP',
+  BOTTOM = 'BOTTOM',
+}

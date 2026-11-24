@@ -158,6 +158,7 @@ function applyCaption(state: LiveFeedState, event: LiveStreamEvent): LiveFeedSta
   const caption: LiveCaption = {
     segmentId,
     text,
+    language: readString(event.data, 'language'),
     startAt: event.startAt,
     endAt: event.endAt ?? null,
     uncertain: event.data.uncertain === true,

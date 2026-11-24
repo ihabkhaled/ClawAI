@@ -7,6 +7,7 @@ import { LivePlayer } from '@/components/live/live-player';
 import { LiveSidePanel } from '@/components/live/live-side-panel';
 import { LIVE_EMPTY_PLAYBACK } from '@/constants/live.constants';
 import { LiveFeedTab, LiveStatusCode } from '@/enums/live.enum';
+import { ResolvedTheme } from '@/enums/theme.enum';
 import { LIVE_TRANSLATIONS } from '@/lib/i18n/locales/live-translations';
 import type { LiveEmbedView, UseLiveModalResult, UseLivePlayerResult } from '@/types/live.types';
 
@@ -37,6 +38,7 @@ const PLAYER: UseLivePlayerResult = {
 const TWITCH: LiveEmbedView = {
   playerUrl: 'https://player.twitch.tv/?channel=shroud&autoplay=true&parent=claw.local',
   chatUrl: 'https://www.twitch.tv/embed/shroud/chat?darkpopout&parent=claw.local',
+  chatColorScheme: ResolvedTheme.DARK,
   watchUrl: 'https://www.twitch.tv/shroud',
   platformName: 'Twitch',
 };
@@ -44,6 +46,7 @@ const TWITCH: LiveEmbedView = {
 const TIKTOK: LiveEmbedView = {
   playerUrl: null,
   chatUrl: null,
+  chatColorScheme: ResolvedTheme.DARK,
   watchUrl: 'https://www.tiktok.com/@a/live',
   platformName: 'TikTok',
 };
@@ -135,6 +138,7 @@ describe('LiveSidePanel chat', () => {
     const facebook: LiveEmbedView = {
       playerUrl: 'https://www.facebook.com/plugins/video.php?href=x',
       chatUrl: null,
+      chatColorScheme: ResolvedTheme.DARK,
       watchUrl: 'https://www.facebook.com/page/videos/1',
       platformName: 'Facebook',
     };

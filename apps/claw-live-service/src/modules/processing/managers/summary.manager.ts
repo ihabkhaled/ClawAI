@@ -15,14 +15,19 @@ import type { LiveModelRef } from '../../policy/types/live-policy.types';
 import { LivePolicyService } from '../../policy/services/live-policy.service';
 import type { LiveStreamEvent } from '../../realtime/types/live-stream-event.types';
 import { LiveModelClient } from '../adapters/live-model.adapter';
+import { LiveResearchClient } from '../adapters/research.adapter';
 import {
   FINAL_EVENT_KEY,
   FINAL_MAX_CARDS,
   HIGHLIGHT_MEMORY_LIMIT,
+  RESEARCH_MAX_PER_RUN,
+  RESEARCH_MIN_INTERVAL_MS,
+  RESEARCH_QUERY_MAX_CHARS,
   SNAPSHOT_INTERVAL_MS,
   SUMMARY_MAX_OUTPUT_TOKENS,
   SUMMARY_MIN_NEW_TRANSCRIPT_MS,
   SUMMARY_PAUSE_TRIGGER_MS,
+  WEB_NOTE_LIMIT,
   WORKING_SUMMARY_MAX_CHARS,
 } from '../constants/processing.constants';
 import { FINAL_SYSTEM_PROMPT, SUMMARY_SYSTEM_PROMPT } from '../constants/prompts.constants';
@@ -48,6 +53,7 @@ import { extractJsonObject } from '../utilities/json-reply.utility';
 import { recordProviderCost } from '../utilities/provider-cost.utility';
 import {
   buildSummaryUserMessage,
+  formatWebNotes,
   sanitizeStreamText,
   streamDataBlock,
 } from '../utilities/stream-prompt.utility';
@@ -66,6 +72,7 @@ export class SummaryManager {
     private readonly model: LiveModelClient,
     private readonly policy: LivePolicyService,
     private readonly events: RunEventEmitter,
+    private readonly research: LiveResearchClient,
   ) {}
 
   shouldSummarize(memory: RunMemory): boolean {
@@ -97,11 +104,41 @@ export class SummaryManager {
       await this.writer.commit(context.lease, (tx) => this.recordCost(tx, context, reply, false));
       return [];
     }
-    return this.apply(context, memory, parsed, reply, { first, last });
+    const changed = await this.apply(context, memory, parsed, reply, { first, last });
+    await this.maybeResearch(context, memory, parsed.researchQuery);
+    return changed;
   }
 
-  /** On ENDED: one FINAL card covering only the analysed cards of the run. */
-  async summarizeFinal(context: WorkerContext): Promise<void> {
+  /**
+   * Runs the web search the summarizer asked for, when the run still has budget: one every
+   * `RESEARCH_MIN_INTERVAL_MS`, at most `RESEARCH_MAX_PER_RUN`, never the same query twice. The
+   * results feed the NEXT summary call (and the final one). A failure only means no context.
+   */
+  async maybeResearch(
+    context: WorkerContext,
+    memory: RunMemory,
+    rawQuery: string,
+    now = Date.now(),
+  ): Promise<void> {
+    const query = rawQuery.trim().slice(0, RESEARCH_QUERY_MAX_CHARS);
+    const key = query.toLowerCase();
+    const state = memory.research;
+    if (query === '' || state.queries.includes(key)) return;
+    if (state.count >= RESEARCH_MAX_PER_RUN || now - state.lastWallAt < RESEARCH_MIN_INTERVAL_MS) {
+      return;
+    }
+    state.count += 1;
+    state.lastWallAt = now;
+    state.queries.push(key);
+    const notes = await this.research.search(
+      query,
+      `live-research:${context.lease.runId}:${String(state.count)}`,
+    );
+    if (notes.length > 0) memory.webNotes = [...memory.webNotes, ...notes].slice(-WEB_NOTE_LIMIT);
+  }
+
+  /** On ENDED: one FINAL card covering only the analysed cards of the run (plus its web context). */
+  async summarizeFinal(context: WorkerContext, memory?: RunMemory): Promise<void> {
     const runId = context.lease.runId;
     const cards = await this.prisma.liveFeedEvent.findMany({
       where: { runId, kind: LiveFeedEventKind.SUMMARY },
@@ -111,9 +148,15 @@ export class SummaryManager {
     const first = cards[0];
     const last = cards.at(-1);
     if (!first || !last) return;
-    const source = cards
-      .map((card) => `- ${sanitizeStreamText(card.title)}: ${sanitizeStreamText(card.body)}`)
-      .join('\n');
+    const source = [
+      `OUTPUT_LANGUAGE: ${memory?.spokenLanguage ?? 'auto'}`,
+      'CARDS:',
+      ...cards.map(
+        (card) => `- ${sanitizeStreamText(card.title)}: ${sanitizeStreamText(card.body)}`,
+      ),
+      'WEB_CONTEXT:',
+      formatWebNotes(memory?.webNotes ?? []),
+    ].join('\n');
     const { config } = await this.policy.active();
     const reply = await this.callModel(
       context,

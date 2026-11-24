@@ -80,4 +80,9 @@ this file disagree, fix one in the same change) - decision:
   new compensating rows, and history deletion never deletes them.
 - **Policy is data.** Limits, prices, free seconds and the kill switch live in `LivePolicyVersion`, not in env or code.
 - **Stream speech is untrusted.** Delimited as data in prompts; model output is schema-validated plain text.
+- **Spoken language and context (2026-11-24, ADR-221 batch 5).** A caption's language comes from file-service's
+  `[[lang:xx]]` tag, else `scriptLanguage`, else the run's last Latin language (`resolveSpokenLanguage`); never translate
+  a caption into its own language. Summaries are written in `OUTPUT_LANGUAGE` (the spoken language) and may ask for one
+  web search (`LiveResearchClient`, research-service `SEARCH_ONLY`, `platform:live-intelligence`, 1/min, 20/run). A
+  URL never reaches a prompt. YouTube channel links get `live_chat?v=<id>` from yt-dlp's printed video id.
 - Prisma client is generated to `src/generated/prisma` (git-ignored); `npm run build` and `npm test` generate it.

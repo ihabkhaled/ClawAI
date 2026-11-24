@@ -16,12 +16,12 @@ export function LiveCardVersionsPopover({
   return (
     <Popover open={versions.open} onOpenChange={versions.setOpen}>
       <PopoverTrigger asChild>
-        <Button size="sm" variant="ghost">
+        <Button size="sm" variant="ghost" className="text-muted-foreground h-8 px-2 text-xs">
           <History className="h-4 w-4" aria-hidden="true" />
           {t('live.card.versions')}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="flex max-h-80 w-80 flex-col gap-2 overflow-y-auto">
+      <PopoverContent align="end" className="flex max-h-80 w-80 flex-col gap-2 overflow-y-auto p-3">
         <p className="text-foreground text-sm font-semibold">{t('live.card.versionsTitle')}</p>
         {versions.isLoading ? (
           <p className="text-muted-foreground text-sm">{t('live.card.versionsLoading')}</p>

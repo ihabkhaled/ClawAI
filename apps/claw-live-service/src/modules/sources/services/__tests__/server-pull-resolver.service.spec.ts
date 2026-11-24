@@ -91,6 +91,7 @@ describe('ServerPullResolverService', () => {
     expect(args.slice(-2)).toEqual(['--', youtube.watchUrl]);
     expect(pull?.playlist.hostname).toBe('manifest.googlevideo.com');
     expect(pull?.hostSuffixes).toEqual(['googlevideo.com']);
+    expect(args).toEqual(expect.arrayContaining(['%(protocol)s %(url)s %(id)s']));
   });
 
   it('Twitch falls back to yt-dlp when LIVE_TWITCH_CLIENT_ID is empty', async () => {
@@ -128,16 +129,18 @@ describe('ServerPullResolverService', () => {
   it('probes live only when the playlist answers on the resolved suffixes', async () => {
     runBoundedProcess.mockResolvedValue(ytdlpLine('m3u8 https://a.live-video.net/p.m3u8'));
     fetcher.fetchObject.mockResolvedValueOnce({ body: Buffer.from('#EXTM3U') });
-    await expect(service.probe(LivePlatform.KICK, youtube)).resolves.toBe(true);
+    await expect(service.probe(LivePlatform.KICK, youtube)).resolves.toMatchObject({
+      hostSuffixes: ['live-video.net'],
+    });
     expect(fetcher.fetchObject).toHaveBeenCalledWith(
       expect.any(URL),
       ['live-video.net'],
       expect.any(Number),
     );
     fetcher.fetchObject.mockRejectedValueOnce(new Error('LIVE_UPSTREAM_FAILED'));
-    await expect(service.probe(LivePlatform.KICK, youtube)).resolves.toBe(false);
+    await expect(service.probe(LivePlatform.KICK, youtube)).resolves.toBeNull();
     runBoundedProcess.mockResolvedValueOnce(ytdlpLine('', 1));
-    await expect(service.probe(LivePlatform.RUMBLE, youtube)).resolves.toBe(false);
+    await expect(service.probe(LivePlatform.RUMBLE, youtube)).resolves.toBeNull();
   });
 
   it('runs at most 4 yt-dlp lookups at once and answers null (fallback) past that', async () => {

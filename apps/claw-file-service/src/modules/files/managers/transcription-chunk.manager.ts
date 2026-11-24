@@ -11,6 +11,7 @@ import { TranscriptionRateClient } from '../clients/transcription-rate.client';
 import {
   TRANSCRIBE_CHUNK_EMPTY_MESSAGE,
   TRANSCRIBE_CHUNK_FAILED_MESSAGE,
+  TRANSCRIBE_CHUNK_INSTRUCTION,
   TRANSCRIBE_CHUNK_LABEL_PREFIX,
   TRANSCRIBE_CHUNK_MAX_BYTES,
   TRANSCRIBE_CHUNK_MAX_SECONDS,
@@ -28,6 +29,10 @@ import {
 } from '../types/transcription.types';
 import { probeAudioSeconds } from '../utilities/audio-duration.utility';
 import { estimateChunkCostMicroUsd } from '../utilities/transcribe-chunk-cost.utility';
+import {
+  isNonSpeechChunk,
+  splitChunkLanguageTag,
+} from '../utilities/transcribe-chunk-language.utility';
 import { TranscriptionManager } from './transcription.manager';
 
 /**
@@ -89,6 +94,7 @@ export class TranscriptionChunkManager {
         mimeType: dto.mimeType,
         sizeBytes: bytes.length,
         platformPaid: true,
+        instruction: TRANSCRIBE_CHUNK_INSTRUCTION,
         ...(seconds === undefined ? {} : { audioSeconds: seconds }),
       },
       candidates,
@@ -137,13 +143,16 @@ export class TranscriptionChunkManager {
       },
       rates,
     );
-    const noSpeech = outcome.transcript.length === 0;
+    const tagged = splitChunkLanguageTag(outcome.transcript);
+    // Fake clock stamps or "[Music]" alone are not speech: nothing for a caption.
+    const noSpeech = isNonSpeechChunk(tagged.text);
+    const language = outcome.result.language ?? tagged.language;
     this.logger.log(
-      `toResult: requestId=${dto.requestId} provider=${provider} model=${outcome.model} chars=${String(outcome.transcript.length)} noSpeech=${String(noSpeech)} costKnown=${String(costKnown)}`,
+      `toResult: requestId=${dto.requestId} provider=${provider} model=${outcome.model} chars=${String(tagged.text.length)} language=${language ?? 'none'} noSpeech=${String(noSpeech)} costKnown=${String(costKnown)}`,
     );
     return {
-      text: outcome.transcript,
-      language: outcome.result.language ?? null,
+      text: noSpeech ? '' : tagged.text,
+      language,
       provider,
       model: outcome.model.length > 0 ? outcome.model : null,
       durationSeconds: seconds ?? Math.ceil(outcome.result.durationSeconds ?? 0),

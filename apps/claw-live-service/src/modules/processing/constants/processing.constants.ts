@@ -87,38 +87,54 @@ export const TRANSCRIBE_RETRY_DELAYS_MS: readonly number[] = [500, 1500];
 
 // ── Summaries (section 4) ───────────────────────────────────────────────────
 
-export const SUMMARY_MIN_NEW_TRANSCRIPT_MS = 30_000;
-export const SUMMARY_PAUSE_TRIGGER_MS = 8000;
+// 2026-11-24: the feed was too slow and too thin. A card every ~18 s of speech (was 30 s), a
+// larger reply for richer cards in scripts that cost more tokens (Arabic, Hindi), a longer memory.
+export const SUMMARY_MIN_NEW_TRANSCRIPT_MS = 18_000;
+export const SUMMARY_PAUSE_TRIGGER_MS = 6000;
 export const SUMMARY_WINDOW_MS = 90_000;
-export const SUMMARY_MAX_OUTPUT_TOKENS = 900;
-export const WORKING_SUMMARY_MAX_CHARS = 2400;
+export const SUMMARY_MAX_OUTPUT_TOKENS = 1600;
+export const WORKING_SUMMARY_MAX_CHARS = 4000;
 export const SNAPSHOT_INTERVAL_MS = 10 * 60_000;
 export const HIGHLIGHT_DEDUPE_SIMILARITY = 0.8;
 export const HIGHLIGHT_DEDUPE_WINDOW_MS = 120_000;
 export const HIGHLIGHT_MEMORY_LIMIT = 40;
-export const VISUAL_NOTE_LIMIT = 6;
+export const VISUAL_NOTE_LIMIT = 8;
 export const STREAM_DATA_OPEN = '<<<STREAM_DATA';
 export const STREAM_DATA_CLOSE = 'STREAM_DATA>>>';
 export const FINAL_EVENT_KEY = 'final';
 export const FINAL_MAX_CARDS = 60;
+
+// ── Context research (2026-11-24) ────────────────────────────────────────────
+// The summarizer may ask for ONE short web search (a lyric line, a name, an event) when it cannot
+// place what it hears. research-service SEARCH_ONLY, platform-paid, bounded per run.
+
+export const RESEARCH_RUNS_PATH = '/api/v1/internal/research/runs';
+export const RESEARCH_PLATFORM_USER = 'platform:live-intelligence';
+export const RESEARCH_TIMEOUT_MS = 20_000;
+export const RESEARCH_MAX_RESULTS = 4;
+export const RESEARCH_MIN_INTERVAL_MS = 60_000;
+export const RESEARCH_MAX_PER_RUN = 20;
+export const RESEARCH_QUERY_MAX_CHARS = 120;
+export const RESEARCH_SNIPPET_MAX_CHARS = 280;
+export const WEB_NOTE_LIMIT = 8;
 
 // ── Translation ─────────────────────────────────────────────────────────────
 
 export const TRANSLATION_LANGUAGE_CACHE_MS = 5000;
 export const TRANSLATION_CAPTION_BATCH = 2;
 export const TRANSLATION_CAPTION_MAX_WAIT_MS = 3000;
-export const TRANSLATION_MAX_OUTPUT_TOKENS = 700;
+export const TRANSLATION_MAX_OUTPUT_TOKENS = 1200;
 
 // ── Vision (section 4) ──────────────────────────────────────────────────────
 
-export const VISION_SAMPLE_INTERVAL_MS = 15_000;
+export const VISION_SAMPLE_INTERVAL_MS = 10_000;
 export const VISION_FORCE_KEEP_MS = 60_000;
 export const VISION_SMART_SILENCE_MS = 30_000;
 /** Mean absolute difference (0..255) of 16x16 grayscale thumbnails that counts as a scene change. */
 export const VISION_SCENE_DIFF_THRESHOLD = 24;
 export const VISION_THUMB_SIZE = 16;
 export const VISION_FRAME_WIDTH = 640;
-export const VISION_MAX_OUTPUT_TOKENS = 300;
+export const VISION_MAX_OUTPUT_TOKENS = 400;
 
 // ── Platform-paid model calls (pattern of threads-service TranslationModelClient) ──
 

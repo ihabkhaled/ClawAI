@@ -15,6 +15,7 @@ import { parseLiveFeedTab } from '@/utilities/live-request.utility';
 import {
   isBehindLiveEdge,
   latestRevealedCaption,
+  revealLiveCaptions,
   resolveLiveDisplayStatus,
   revealLiveEvents,
 } from '@/utilities/live-reveal.utility';
@@ -81,10 +82,27 @@ export function useLiveModal(input: LiveCreateSessionInput): UseLiveModalResult 
     () => ({
       cards: revealLiveEvents(feed.cards, playbackAt),
       highlights: revealLiveEvents(feed.highlights, playbackAt),
-      captions: revealLiveEvents(feed.captions, playbackAt),
-      caption: latestRevealedCaption(feed.captions, feed.captionTranslations, playbackAt),
+      captions: revealLiveCaptions(
+        feed.captions,
+        feed.captionTranslations,
+        input.language,
+        playbackAt,
+      ),
+      caption: latestRevealedCaption(
+        feed.captions,
+        feed.captionTranslations,
+        input.language,
+        playbackAt,
+      ),
     }),
-    [feed.captionTranslations, feed.captions, feed.cards, feed.highlights, playbackAt],
+    [
+      feed.captionTranslations,
+      feed.captions,
+      feed.cards,
+      feed.highlights,
+      input.language,
+      playbackAt,
+    ],
   );
   // A capture session that is not sharing audio reads as paused: nothing is analyzed or billed.
   // A server-pull session is never paused by the viewer; only a PAUSED status from the server shows it.

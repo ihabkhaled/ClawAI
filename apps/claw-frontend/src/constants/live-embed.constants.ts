@@ -31,3 +31,15 @@ export const LIVE_EMBED_PARENT_PARAM = 'parent';
 export const LIVE_CHAT_EMBED_DOMAIN_PARAM = 'embed_domain';
 
 export const LIVE_EMBED_IFRAME_ALLOW = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+
+/** YouTube live chat renders its dark skin only when asked (`dark_theme=1`); light is its default. */
+export const LIVE_CHAT_YOUTUBE_DARK_PARAM = 'dark_theme';
+
+/** Twitch chat's dark skin is the flag-only `darkpopout` param; without it Twitch chat is light. */
+export const LIVE_CHAT_TWITCH_DARK_FLAG = 'darkpopout';
+
+/** Matches the `darkpopout` flag the server may already have put on a Twitch chat URL. */
+export const LIVE_CHAT_TWITCH_DARK_FLAG_PATTERN = /[?&]darkpopout(?=&|$)/u;
+
+/** After `?darkpopout` is removed, the next param starts with `&`; this turns it back into `?`. */
+export const LIVE_CHAT_TWITCH_ORPHAN_AMPERSAND = /\/chat&/u;

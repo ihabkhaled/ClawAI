@@ -87,6 +87,26 @@ export interface RunMemory {
   visualNotes: VisualNote[];
   processedMs: number;
   vision: VisionState;
+  /** Last spoken language the run detected; a Latin line with no reported language inherits it. */
+  spokenLanguage: string | null;
+  /** Web search results the summarizer asked for, newest last (bounded). */
+  webNotes: WebNote[];
+  research: ResearchState;
+}
+
+/** One web search result the summarizer reads as context (title + snippet + host, never a URL). */
+export interface WebNote {
+  query: string;
+  title: string;
+  snippet: string;
+  host: string;
+}
+
+export interface ResearchState {
+  lastWallAt: number;
+  count: number;
+  /** Lower-cased queries already searched in this run, so a repeat is skipped. */
+  queries: string[];
 }
 
 export interface VisionState {

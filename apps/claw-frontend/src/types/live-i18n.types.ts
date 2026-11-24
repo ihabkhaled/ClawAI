@@ -63,6 +63,8 @@ export type LiveLocaleTranslation = {
     description: string;
     starting: string;
     sessionError: string;
+    analysisTitle: string;
+    liveBadge: string;
     tabFeed: string;
     tabCaptions: string;
     tabHighlights: string;

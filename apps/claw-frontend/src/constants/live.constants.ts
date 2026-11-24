@@ -12,6 +12,7 @@ import {
   LiveStatusCode,
   LiveStatusTone,
 } from '@/enums/live.enum';
+import { ResolvedTheme } from '@/enums/theme.enum';
 import type { LiveServerPullPlatform } from '@/types/live-admin.types';
 import type {
   LiveCaptureCopy,
@@ -64,6 +65,16 @@ export const LIVE_AUTO_SCROLL_THRESHOLD_PX = 48;
 
 /** Captions kept in memory for one modal; older ones live in history. */
 export const LIVE_MAX_CAPTIONS = 400;
+
+/**
+ * How long a caption in another language waits for its translation before the original is shown
+ * instead. Until then it is not shown at all, so the viewer never reads the original and then sees
+ * it swapped (2026-11-24). The server batches translations within 3 s; a model call adds a few more.
+ */
+export const LIVE_CAPTION_TRANSLATION_WAIT_MS = 12_000;
+
+/** Splits a language tag into its subtags: `pt-BR`, `zh_Hant`. */
+export const LIVE_LANGUAGE_SUBTAG_SEPARATOR = /[-_]/u;
 
 export const LIVE_HLS_MIME_TYPE = 'application/vnd.apple.mpegurl';
 
@@ -164,11 +175,30 @@ export const LIVE_STATUS_PRESENTATION: Record<LiveStatusCode, LiveStatusPresenta
 };
 
 /** Token classes per tone; text stays `foreground`, so contrast is the theme's own (>= 4.5:1). */
+/**
+ * The accent stripe on the start edge of a feed card (2026-11-24 redesign): summaries in the brand
+ * colour, highlights in the warning tone, visual notes and gaps in the info tone. Theme tokens only.
+ */
+export const LIVE_CARD_ACCENT_CLASSES: Record<LiveFeedEventKind, string> = {
+  [LiveFeedEventKind.SUMMARY]: 'border-s-primary',
+  [LiveFeedEventKind.HIGHLIGHT]: 'border-s-warning',
+  [LiveFeedEventKind.FINAL]: 'border-s-success',
+  [LiveFeedEventKind.VISUAL]: 'border-s-info',
+  [LiveFeedEventKind.GAP]: 'border-s-border',
+};
+
+/** A tab of the AI Analysis panel: a row on a mouse, an icon over a short label on touch. */
+export const LIVE_PANEL_TAB_CLASS =
+  'touch:min-h-12 touch:flex-col touch:gap-0.5 touch:px-1 touch:text-[11px] data-[state=active]:text-primary gap-1.5 rounded-lg px-2 text-xs sm:text-sm';
+
+/** Importance is shown as up to three dots, never as the words "Importance 3". */
+export const LIVE_IMPORTANCE_DOTS: ReadonlyArray<number> = [1, 2, 3];
+
 export const LIVE_STATUS_TONE_CLASSES: Record<LiveStatusTone, string> = {
-  [LiveStatusTone.INFO]: 'border-border bg-muted text-foreground',
-  [LiveStatusTone.WARNING]: 'border-warning bg-warning/10 text-foreground',
-  [LiveStatusTone.DANGER]: 'border-destructive bg-destructive/10 text-foreground',
-  [LiveStatusTone.NEUTRAL]: 'border-border bg-card text-foreground',
+  [LiveStatusTone.INFO]: 'border-border bg-muted/60 text-foreground',
+  [LiveStatusTone.WARNING]: 'border-warning/60 bg-warning/10 text-foreground',
+  [LiveStatusTone.DANGER]: 'border-destructive/60 bg-destructive/10 text-foreground',
+  [LiveStatusTone.NEUTRAL]: 'border-border bg-card/60 text-foreground',
 };
 
 /** The status a session state starts the banner at (create returns a state, not a status code). */
@@ -406,6 +436,7 @@ export const LIVE_CAPTURE_IDLE: LiveCaptureMachine = { state: LiveCaptureState.I
 export const LIVE_EMPTY_EMBED_VIEW: LiveEmbedView = {
   playerUrl: null,
   chatUrl: null,
+  chatColorScheme: ResolvedTheme.DARK,
   watchUrl: null,
   platformName: null,
 };

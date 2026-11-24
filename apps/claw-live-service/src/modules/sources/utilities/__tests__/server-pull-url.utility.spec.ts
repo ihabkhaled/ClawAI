@@ -11,7 +11,7 @@ describe('server pull URL helpers', () => {
   });
 
   it('accepts only an https HLS line from yt-dlp', () => {
-    expect(parseYtdlpStreamLine('m3u8_native https://a.b.com/x.m3u8\n')?.href).toBe(
+    expect(parseYtdlpStreamLine('m3u8_native https://a.b.com/x.m3u8\n')?.url.href).toBe(
       'https://a.b.com/x.m3u8',
     );
     expect(parseYtdlpStreamLine('m3u8 https://a.b.com/x')).not.toBeNull();
@@ -19,5 +19,21 @@ describe('server pull URL helpers', () => {
     expect(parseYtdlpStreamLine('m3u8 http://a.b.com/x.m3u8')).toBeNull();
     expect(parseYtdlpStreamLine('m3u8 not-a-url')).toBeNull();
     expect(parseYtdlpStreamLine('')).toBeNull();
+  });
+
+  it('reads the video id printed after the URL, and only a plain id', () => {
+    expect(parseYtdlpStreamLine('m3u8_native https://a.b.com/x.m3u8 FelGGahCbS8')?.videoId).toBe(
+      'FelGGahCbS8',
+    );
+    expect(parseYtdlpStreamLine('m3u8_native https://a.b.com/x.m3u8')?.videoId).toBeNull();
+    expect(parseYtdlpStreamLine('m3u8 https://a.b.com/x.m3u8 <script>')?.videoId).toBeNull();
+  });
+
+  it('reads the video id printed after the URL, and only a plain id', () => {
+    expect(parseYtdlpStreamLine('m3u8_native https://a.b.com/x.m3u8 FelGGahCbS8')?.videoId).toBe(
+      'FelGGahCbS8',
+    );
+    expect(parseYtdlpStreamLine('m3u8_native https://a.b.com/x.m3u8')?.videoId).toBeNull();
+    expect(parseYtdlpStreamLine('m3u8 https://a.b.com/x.m3u8 <script>')?.videoId).toBeNull();
   });
 });

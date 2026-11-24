@@ -49,6 +49,8 @@ export const LIVE_PLATFORM_REGISTRY: readonly PlatformDefinition[] = [
     platform: LivePlatform.YOUTUBE,
     sourceKind: LiveSourceKind.YOUTUBE,
     capability: LiveCapability.BROWSER_CAPTURE,
+    // No chat until server pull finds the live video id; then YouTube needs `embed_domain`.
+    chatNeedsEmbedDomain: true,
     parse: parseYoutubeChannelUrl,
   },
   {

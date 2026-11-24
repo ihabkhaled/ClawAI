@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { SourcesModule } from '../sources/sources.module';
 import { LiveModelClient } from './adapters/live-model.adapter';
+import { LiveResearchClient } from './adapters/research.adapter';
 import { TranscriptionAdapter } from './adapters/transcription.adapter';
 import { RunLifecycleManager } from './managers/run-lifecycle.manager';
 import { SummaryManager } from './managers/summary.manager';
@@ -36,6 +37,7 @@ import { RunWorkerFactory } from './services/run-worker-factory.service';
     VisionManager,
     LiveModelClient,
     TranscriptionAdapter,
+    LiveResearchClient,
   ],
   exports: [RunCoordinatorService],
 })

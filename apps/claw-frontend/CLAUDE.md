@@ -1217,6 +1217,12 @@ A public Thread page reads `?lang=` (an app language only; `readRequestedThreadL
   `embedUrl: null` and `useLiveModal().isPlayerLinkOut` shows the "Watch on <Platform>" link-out beside the full feed.
   Admin `/admin/live` has ONE switch "Analyze live streams on ClawAI servers" (`LivePolicyFlag.SERVER_PULL`): on stores
   `LIVE_SERVER_PULL_PLATFORMS` (every `LivePlatform` but Discord), off stores `[]`; an absent list reads as on.
+- Captions and theme (2026-11-24): `revealLiveCaptions` shows the exact words when the caption's language matches the
+  viewer's, the translation otherwise, and hides a foreign caption until its translation arrives (12 s, then the
+  original). `useLiveEmbed` themes the chat (`themeLiveChatUrl`: YouTube `dark_theme=1`, Twitch `darkpopout`) and the
+  iframe carries `chatColorScheme`; never let the frame's `color-scheme` differ from the page (white on white).
+  The modal is full screen on phones; the AI Analysis tab strip uses `LIVE_PANEL_TAB_CLASS` (icons over labels on
+  touch, never wraps); `PopoverContent` has no padding of its own (add `p-3`).
 - Locale and marketing-content files with Hindi or Thai text can format differently on Windows and on CI's Linux
   Prettier (2026-11-22 `format:check` failure). Run `npx prettier --write` on them right before committing.
 - YouTube channel links play through the `live_stream` embed; `@handle` links show the `youtubeHandleError` string.

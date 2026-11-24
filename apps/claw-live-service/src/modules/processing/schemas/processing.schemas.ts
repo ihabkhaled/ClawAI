@@ -15,7 +15,7 @@ export const transcribeReplySchema = z.object({
 });
 
 const plainTitle = z.string().trim().min(1).max(120);
-const plainText = z.string().trim().min(1).max(1200);
+const plainText = z.string().trim().min(1).max(2000);
 
 /** Strict summarizer reply (section 4). Anything else is rejected, never repaired. */
 export const summaryReplySchema = z.object({
@@ -37,6 +37,24 @@ export const summaryReplySchema = z.object({
       }),
     )
     .max(5),
+  /** A web search the model asks for to place what it hears; absent or empty when none. */
+  researchQuery: z.string().trim().max(300).optional().default(''),
+});
+
+/** research-service `POST /internal/research/runs` (SEARCH_ONLY): only the fields read here. */
+export const researchRunReplySchema = z.object({
+  status: z.string(),
+  bundle: z.object({
+    items: z
+      .array(
+        z.object({
+          title: z.string().nullable().optional(),
+          url: z.string(),
+          snippet: z.string().optional().default(''),
+        }),
+      )
+      .default([]),
+  }),
 });
 
 /** Final (ENDED) summary reply. */
@@ -58,7 +76,7 @@ export const cardTranslationReplySchema = z.object({ title: plainTitle, text: pl
 /** Vision reply: a frame description, or visible=false when nothing worth noting is shown. */
 export const visionReplySchema = z.object({
   visible: z.boolean(),
-  description: z.string().trim().max(400),
+  description: z.string().trim().max(700),
 });
 
 export const connectorConfigSchema = z.object({

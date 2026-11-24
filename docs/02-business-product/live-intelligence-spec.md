@@ -54,6 +54,12 @@ assumptions: the owner should confirm or change them in the admin page.
   YouTube/Kick/Facebook fall back to tab or microphone capture and the others to "Watch on …". Discord stays refused;
   Instagram Live usually cannot be read.
 - An offline Twitch channel falls back to capture and says the server could not read it.
+- Captions follow the viewer's language (2026-11-24): a speaker in the viewer's language is shown word for word; any
+  other language is shown only as its translation (the original appears only if the translation is 12 s late).
+- Cards say what the stream is (news, a song, a match, a game) and who is in it when the stream, the screen or a web
+  search makes it clear; a song is "someone sings X by Y", never "the speaker says". Summaries are written in the
+  speaker's language and translated for each viewer.
+- The platform's live chat follows the app theme (dark or light); YouTube channel links get their live chat too.
 
 ## Acceptance (user journey)
 
