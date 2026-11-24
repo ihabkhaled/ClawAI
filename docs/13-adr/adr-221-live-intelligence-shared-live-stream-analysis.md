@@ -282,3 +282,7 @@ YTDLP_VERSION`, `ARG YTDLP_SHA256`); Node in the image is its JavaScript runtime
   (400), Kakao TV (timeouts), DLive (API host gone), Weibo (the only test link was an image post), Vimeo, Reddit,
   Douyin, Naver TV. Not testable today (no live channel found): Trovo, TwitCasting, 17LIVE, BIGO, LinkedIn, Telegram,
   Nimo, Instagram/TikTok/Facebook live. The public pages claim only the 18, as "more than 15 platforms".
+- **Push security review 2026-11-25:** a mode change on a summary session moved it to a new run while keeping its
+  billed media count, so the new run's first minutes went unbilled. A summary's mode is now fixed (like a capture's)
+  and every run switch resets `accruedMediaSeconds` as a backstop. Stability: 78 link checks over 3 rounds gave the
+  same answer per platform (only channels that went offline and Rumble's anti-bot 1 of 3 differed).

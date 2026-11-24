@@ -59,3 +59,6 @@ lane is NOT_RUN or FAIL. A fabricated or assumed PASS is a prohibited sentence (
 - Public claims limited to the 18 platforms that passed ("more than 15 platforms").
 - Security review fix verified by unit tests (813/813): detach folds unbilled summary media, summary run waits beyond
   180 s of unbilled media, live-room/no-length not recorded, sub-1 s downloads refused.
+- Push security review: summary mode change could restart the billed count on a new run; mode now fixed for
+  summaries and run switches reset the count (unit test, live-service 814/814). Link-check stability: 78/78 over 3
+  rounds.

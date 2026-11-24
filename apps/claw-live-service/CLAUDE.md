@@ -100,7 +100,8 @@ this file disagree, fix one in the same change) - decision:
 - **Summary billing:** the run writes `processedMediaSeconds`; a summary session's heartbeat accrues exactly the new
   processed seconds, fenced on `accruedMediaSeconds`, and NEVER wall time (a fall-through over-billed once). Detach
   folds the media processed since the last heartbeat into the final block, and a summary run waits whenever it is more
-  than `SUMMARY_MAX_UNBILLED_SECONDS` (180) ahead of what its viewer was billed (security review 2026-11-25).
+  than `SUMMARY_MAX_UNBILLED_SECONDS` (180) ahead of what its viewer was billed (security review 2026-11-25). A
+  summary's mode is fixed (a run switch would restart its billed count); `switchRun` also resets `accruedMediaSeconds`.
 - Facebook share links: one redirect, guarded, on `facebook.com` only, sent as `ClawAI-LinkCheck/1.0` (no client name
   → `/unsupportedbrowser`). Host-matched paths are kept unescaped (yt-dlp matches `@a:1` and `fid=1:2` literally).
 - `HLS_PLAYLIST_MAX_BYTES` is 4 MB: a YouTube news channel's 12 h master playlist exceeds 1 MB.

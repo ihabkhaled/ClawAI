@@ -131,7 +131,10 @@ export class LiveSessionsService {
       await this.sessions.updateLanguage(session.id, body.language);
     }
     const modeChange = body.mode !== undefined && body.mode !== session.mode;
-    if (modeChange && session.runId !== null && !(await this.isCapture(session))) {
+    // A summary's mode is fixed like a capture's: a new run would restart its billed media count
+    // (push security review 2026-11-25).
+    const fixedMode = session.summary || (await this.isCapture(session));
+    if (modeChange && session.runId !== null && !fixedMode) {
       await this.switchRun(session, body.mode ?? session.mode);
     }
     return this.stateView(await this.owned(sessionId, userId));

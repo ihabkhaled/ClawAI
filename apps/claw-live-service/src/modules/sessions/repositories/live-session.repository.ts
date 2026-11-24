@@ -116,7 +116,8 @@ export class LiveSessionRepository {
   async switchRun(sessionId: string, mode: LiveMode, runId: string): Promise<void> {
     await this.prisma.liveViewerSession.update({
       where: { id: sessionId },
-      data: { mode, runId, pendingSeconds: 0 },
+      // The billed media count belongs to the old run (summaries never switch; this is a backstop).
+      data: { mode, runId, pendingSeconds: 0, accruedMediaSeconds: 0 },
     });
   }
 

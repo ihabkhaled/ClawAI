@@ -319,6 +319,24 @@ describe('LiveSessionsService', () => {
     expect(detacher.leaveRun).toHaveBeenCalledWith('run-old');
   });
 
+  it('keeps a one-click summary on its run when the viewer asks for another mode', async () => {
+    const { service, sessions, coordinator, detacher } = setup();
+    sessions.findOwned.mockResolvedValue({
+      id: 'sess1',
+      userId: 'u1',
+      streamId: 'stream1',
+      runId: 'run1',
+      mode: LiveMode.AUDIO,
+      state: LiveSessionState.ACTIVE,
+      summary: true,
+      language: 'en',
+    });
+    await service.update('sess1', 'u1', { mode: LiveMode.AUDIO_VISION });
+    expect(detacher.settleRemainder).not.toHaveBeenCalled();
+    expect(coordinator.attach).not.toHaveBeenCalled();
+    expect(sessions.switchRun).not.toHaveBeenCalled();
+  });
+
   it('refuses to update a closed session', async () => {
     const { service, sessions } = setup();
     sessions.findOwned.mockResolvedValue({ id: 'sess1', state: LiveSessionState.DETACHED });
