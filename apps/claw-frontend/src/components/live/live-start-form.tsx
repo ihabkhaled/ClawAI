@@ -1,4 +1,4 @@
-import { Radio } from 'lucide-react';
+import { FileText, Radio } from 'lucide-react';
 
 import { LiveSourceNotice } from '@/components/live/live-source-notice';
 import { Button } from '@/components/ui/button';
@@ -14,8 +14,16 @@ import { LIVE_MODE_OPTIONS } from '@/constants/live.constants';
 import { SUPPORTED_LOCALES } from '@/lib/i18n/i18n.constants';
 import type { LiveStartFormProps } from '@/types/live.types';
 
-/** Link, caption language and mode; "Check link" resolves the source before Start is offered. */
-export function LiveStartForm({ form, t, onStart }: LiveStartFormProps): React.ReactElement {
+/**
+ * Link, caption language and mode; "Check link" resolves the source before Start is offered. A
+ * recorded video offers two ways: play along, or "Summarize video" (the whole video at once).
+ */
+export function LiveStartForm({
+  form,
+  t,
+  onStart,
+  onSummarize,
+}: LiveStartFormProps): React.ReactElement {
   return (
     <section
       aria-label={t('live.page.title')}
@@ -97,10 +105,21 @@ export function LiveStartForm({ form, t, onStart }: LiveStartFormProps): React.R
         />
       ) : null}
       <p className="text-muted-foreground text-xs">{t('live.page.latencyNote')}</p>
-      <Button onClick={onStart} disabled={!form.canStart} className="self-start">
-        <Radio className="h-4 w-4" aria-hidden="true" />
-        {t('live.page.start')}
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        <Button onClick={onStart} disabled={!form.canStart}>
+          <Radio className="h-4 w-4" aria-hidden="true" />
+          {form.canSummarize ? t('live.summary.playAlong') : t('live.page.start')}
+        </Button>
+        {form.canSummarize ? (
+          <Button variant="secondary" onClick={onSummarize} data-testid="live-summarize">
+            <FileText className="h-4 w-4" aria-hidden="true" />
+            {t('live.summary.button')}
+          </Button>
+        ) : null}
+      </div>
+      {form.canSummarize ? (
+        <p className="text-muted-foreground text-xs">{t('live.summary.choiceHint')}</p>
+      ) : null}
     </section>
   );
 }

@@ -8622,6 +8622,11 @@
         "route": "/features/live-intelligence"
       },
       {
+        "file": "apps/claw-frontend/src/app/(marketing)/features/live-intelligence/platforms/page.tsx",
+        "kind": "page",
+        "route": "/features/live-intelligence/platforms"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(marketing)/features/page.tsx",
         "kind": "page",
         "route": "/features"
@@ -12893,7 +12898,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 1077
+        "testFiles": 1079
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -12905,7 +12910,7 @@
       },
       "claw-live-service": {
         "runner": "vitest",
-        "testFiles": 81
+        "testFiles": 86
       },
       "claw-llamacpp-service": {
         "runner": "vitest",
@@ -13826,7 +13831,7 @@
     "endpointCount": 1004,
     "envVarCount": 396,
     "eventCount": 191,
-    "frontendRouteCount": 189,
+    "frontendRouteCount": 190,
     "localeCount": 13,
     "nginxRouteCount": 75,
     "permissionCount": 96,
@@ -13835,7 +13840,7 @@
     "serviceCount": 22,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 3039,
+    "totalTestFiles": 3046,
     "workspaceCount": 29
   }
 }

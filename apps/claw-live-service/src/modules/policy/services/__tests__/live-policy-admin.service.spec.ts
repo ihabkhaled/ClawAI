@@ -24,6 +24,7 @@ const validConfig = {
   summaryModelChain: [],
   visionModelChain: [],
   serverPullPlatforms: ['TWITCH'],
+  recordedVideoMaxSeconds: 10800,
 };
 
 const row = (version: number, active: boolean, config: unknown = validConfig) => ({

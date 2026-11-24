@@ -7,6 +7,10 @@ export enum LiveSourceErrorCode {
   SOURCE_PLAYER_ONLY = 'LIVE_SOURCE_PLAYER_ONLY',
   /** Discord Go Live streams inside a voice channel and has no public link to watch or analyse. */
   DISCORD_PRIVATE = 'LIVE_DISCORD_PRIVATE',
+  /** A recorded video longer than the policy's `recordedVideoMaxSeconds`. */
+  RECORDED_TOO_LONG = 'LIVE_RECORDED_TOO_LONG',
+  /** "Summarize video" needs a recorded video the server can read (not a live stream). */
+  SUMMARY_NEEDS_RECORDED = 'LIVE_SUMMARY_NEEDS_RECORDED',
   STREAM_NOT_FOUND = 'LIVE_STREAM_NOT_FOUND',
   UPSTREAM_FAILED = 'LIVE_UPSTREAM_FAILED',
   UPSTREAM_TOO_LARGE = 'LIVE_UPSTREAM_TOO_LARGE',

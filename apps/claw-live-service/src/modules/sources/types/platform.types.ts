@@ -9,6 +9,11 @@ export interface PlatformMatch {
   watchUrl: string;
   embedUrl: string | null;
   chatEmbedUrl: string | null;
+  /**
+   * Set on an app share link (`facebook.com/share/v/<code>`): the host suffix its one redirect may
+   * stay on. The redirect is followed once, through the SSRF guard, to the real video link.
+   */
+  shareRedirectSuffix?: string;
 }
 
 /** A URL parser for one platform: null when the URL is not that platform's live link. */
@@ -30,4 +35,11 @@ export interface PlatformDefinition {
 export interface PlatformResolution {
   definition: PlatformDefinition;
   match: PlatformMatch;
+}
+
+/** One host-matched platform (VIDEO_PLATFORM_HOSTS): its hosts and the query params that identify a video. */
+export interface VideoPlatformHosts {
+  platform: LivePlatform;
+  hosts: readonly string[];
+  keepQuery?: readonly string[];
 }

@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { LiveModal } from '@/components/live/live-modal';
-import { LIVE_EMPTY_PLAYBACK } from '@/constants/live.constants';
+import { LIVE_EMPTY_PLAYBACK, LIVE_STATUS_PRESENTATION } from '@/constants/live.constants';
 import { LiveCaptureState, LiveFeedTab, LiveMode, LiveStatusCode } from '@/enums/live.enum';
 import { ResolvedTheme } from '@/enums/theme.enum';
 import { LIVE_TRANSLATIONS } from '@/lib/i18n/locales/live-translations';
@@ -52,6 +52,9 @@ function serverPullModal(embed: LiveEmbedView): UseLiveModalResult {
     hlsSrc: null,
     player: { snapshot: LIVE_EMPTY_PLAYBACK },
     status: LiveStatusCode.ANALYZING,
+    statusPresentation: LIVE_STATUS_PRESENTATION[LiveStatusCode.ANALYZING],
+    isSummary: false,
+    clockOrigin: null,
     showCreditsPanel: false,
     usage: null,
     isReconnecting: false,

@@ -43,6 +43,7 @@ import type {
   LiveSourceResolutionView,
 } from '../types/live-session.types';
 import { playbackPath, readBeaconToken } from '../utilities/live-beacon.utility';
+import { summaryResolution } from '../utilities/live-summary.utility';
 
 /** Viewer sessions: start/attach, heartbeat, approval, language/mode change, close. */
 @Injectable()
@@ -70,13 +71,15 @@ export class LiveSessionsService {
       embedUrl: resolution.embedUrl,
       reasonCode: resolution.reasonCode,
       ...this.platformView(resolution),
+      durationSeconds: resolution.durationSeconds,
     };
   }
 
   async create(userId: string, body: CreateSessionBody): Promise<LiveSessionCreatedView> {
     const policy = await this.policies.active();
     this.admission.assertFeatureEnabled(policy);
-    const resolution = await this.sources.resolve(body.url, userId);
+    const resolved = await this.sources.resolve(body.url, userId);
+    const resolution = body.summarize ? summaryResolution(resolved, userId) : resolved;
     // PLAYER_ONLY and LINK_ONLY: recorded as UNSUPPORTED, no run, no admission, no billing.
     if (NO_RUN_CAPABILITIES.includes(resolution.capability)) {
       const stream = await this.sources.upsertStream(resolution);
@@ -185,6 +188,7 @@ export class LiveSessionsService {
       rightsAttestedAt: body.attestRights ? now : null,
       policyVersion: policy.version,
       lastHeartbeatAt: now,
+      summary: body.summarize,
     });
     if (capture) await this.coordinator.assignCaptureSession(runId, session.id);
     await this.presence.touch(runId, session.id, now.getTime());
@@ -225,7 +229,16 @@ export class LiveSessionsService {
       state: session.state,
       usage: await this.presenter.usage(session),
       closeToken: this.closeTokens.issue(session.id, session.userId),
+      summary: session.summary,
+      mediaStartAt: await this.mediaStartAt(session),
     };
+  }
+
+  /** A summary's media time 0 is its run's start (RecordedChunkSource stamps chunks from it). */
+  private async mediaStartAt(session: LiveViewerSession): Promise<number | null> {
+    if (!session.summary || session.runId === null) return null;
+    const run = await this.sessions.findRun(session.runId);
+    return run?.startedAt.getTime() ?? null;
   }
 
   private platformView(resolution: SourceResolution): LivePlatformView {

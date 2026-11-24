@@ -41,7 +41,10 @@ export function computeAccrual(input: LiveAccrualInput): LiveAccrualResult {
 }
 
 /** ACTIVE counts; DELAYED counts only while its last commit is ≤ 20 s old; nothing else does. */
-export function isRunAccruing(run: LiveRunAccrualView | null, now: number): boolean {
+export function isRunAccruing(
+  run: Pick<LiveRunAccrualView, 'status' | 'lastCommitAt'> | null,
+  now: number,
+): boolean {
   if (!run) return false;
   if (run.status === LiveRunStatus.ACTIVE) return true;
   return run.status !== LiveRunStatus.DELAYED || run.lastCommitAt === null
@@ -69,7 +72,7 @@ export function nextStateForBeat(
 /** The status code a viewer is shown for a session state and its run. */
 export function statusCodeFor(
   state: LiveSessionState,
-  run: LiveRunAccrualView | null,
+  run: Pick<LiveRunAccrualView, 'status' | 'lastCommitAt'> | null,
 ): LiveStatusCode {
   if (state === LiveSessionState.ACTIVE) {
     if (run?.status === LiveRunStatus.ENDED) return LiveStatusCode.ENDED;

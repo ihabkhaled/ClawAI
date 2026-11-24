@@ -8,6 +8,9 @@ const IDENTICAL_ALLOWED = new Set([
   'history.exportPdf',
   'history.exportMarkdown',
   'admin.latencyValue',
+  // "Video" and "Live & Videos" are the German and Italian words too (2026-11-24).
+  'modal.videoBadge',
+  'nav.live',
 ]);
 
 function flatten(node: unknown, prefix = ''): Record<string, string> {

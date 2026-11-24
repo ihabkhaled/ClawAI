@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const seeder = require('../live-policy.seeder.cjs') as {
   run: (prisma: unknown) => Promise<{ inserted: boolean; reason: string }>;
+  PLATFORMS_ADDED_2026_11_24: string[];
   DEFAULT_POLICY_CONFIG: Record<string, unknown> & {
     plans: Record<string, { freeSecondsPerMonth: number; paidMicroUsdPerMinute: number }>;
   };
@@ -26,13 +27,57 @@ describe('live policy seeder', () => {
     });
   });
 
-  it('never touches an existing policy', async () => {
-    const prisma = {
-      livePolicyVersion: { count: vi.fn().mockResolvedValue(2), create: vi.fn() },
+  const existingPolicy = (config: Record<string, unknown>) => {
+    const tx = {
+      livePolicyVersion: {
+        aggregate: vi.fn().mockResolvedValue({ _max: { version: 11 } }),
+        updateMany: vi.fn(),
+        create: vi.fn(),
+      },
     };
+    const prisma = {
+      livePolicyVersion: {
+        count: vi.fn().mockResolvedValue(11),
+        create: vi.fn(),
+        findUnique: vi.fn().mockResolvedValue({ version: 11, config }),
+      },
+      $transaction: vi.fn((work: (client: typeof tx) => Promise<unknown>) => work(tx)),
+    };
+    return { prisma, tx };
+  };
+
+  it('never touches a current policy (an administrator choice stays)', async () => {
+    const { prisma, tx } = existingPolicy({
+      serverPullPlatforms: ['TWITCH'],
+      recordedVideoMaxSeconds: 0,
+    });
 
     await expect(seeder.run(prisma)).resolves.toMatchObject({ inserted: false });
     expect(prisma.livePolicyVersion.create).not.toHaveBeenCalled();
+    expect(tx.livePolicyVersion.create).not.toHaveBeenCalled();
+  });
+
+  it('upgrades an older active policy once: the 24 new platforms and the 3-hour recorded cap', async () => {
+    const { prisma, tx } = existingPolicy({
+      killSwitch: false,
+      serverPullPlatforms: ['TWITCH', 'FACEBOOK'],
+    });
+
+    await expect(seeder.run(prisma)).resolves.toMatchObject({ inserted: true });
+    expect(tx.livePolicyVersion.updateMany).toHaveBeenCalledWith({
+      where: { activeKey: 'active' },
+      data: { activeKey: null },
+    });
+    const { data } = tx.livePolicyVersion.create.mock.calls[0]?.[0] as {
+      data: { version: number; config: Record<string, unknown> };
+    };
+    expect(data.version).toBe(12);
+    expect(data.config).toMatchObject({ killSwitch: false, recordedVideoMaxSeconds: 10800 });
+    expect(data.config['serverPullPlatforms']).toEqual([
+      'TWITCH',
+      'FACEBOOK',
+      ...seeder.PLATFORMS_ADDED_2026_11_24,
+    ]);
   });
 
   it('carries the owner numbers: free seconds per plan and 20000 micro-USD a minute', () => {

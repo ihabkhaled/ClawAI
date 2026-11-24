@@ -37,6 +37,7 @@ describe('RunWorkerFactory', () => {
       {} as never,
       {} as never,
       {} as never,
+      {} as never,
     );
     runs.findRunWithStream.mockResolvedValueOnce({
       id: 'run-1',
@@ -79,6 +80,7 @@ describe('RunWorkerFactory', () => {
       {} as never,
       {} as never,
       fetcher as never,
+      {} as never,
       {} as never,
       {} as never,
       redis as never,
@@ -136,6 +138,7 @@ describe('RunWorkerFactory', () => {
       fetcher as never,
       {} as never,
       serverPull as never,
+      {} as never,
       {} as never,
     );
     runs.findRunWithStream.mockResolvedValueOnce({

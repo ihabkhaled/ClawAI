@@ -5,6 +5,7 @@ import {
   LIVE_SECONDS_PER_MINUTE,
   LIVE_YOUTUBE_CHANNEL_EMBED_SEGMENT,
   LIVE_YOUTUBE_CHANNEL_URL,
+  LIVE_RECORDED_TOO_LONG_ERROR_CODE,
   LIVE_YOUTUBE_HANDLE_ERROR_CODE,
   LIVE_YOUTUBE_WATCH_URL,
 } from '@/constants/live.constants';
@@ -14,7 +15,7 @@ import {
 } from '@/constants/marketing-videos.constants';
 import { LiveCapability, LiveFeedTab, LiveMode } from '@/enums/live.enum';
 import type { LiveExportFormat } from '@/enums/live.enum';
-import type { LiveUsage } from '@/types/live.types';
+import type { LiveSummaryEstimate, LiveUsage } from '@/types/live.types';
 
 /** Query params for a cursor page: no cursor on the first page, never an empty `cursor=`. */
 export function buildLiveCursorParams(cursor: string | null): Record<string, string> | undefined {
@@ -36,8 +37,18 @@ export function liveFreeSecondsLeft(usage: LiveUsage): number {
   return Math.max(0, usage.freeSecondsTotal - usage.freeSecondsUsed);
 }
 
-/** Media epoch ms as a local wall-clock time. */
-export function formatLiveClock(mediaAt: number, locale: string): string {
+/**
+ * Media epoch ms as a local wall-clock time, or, for a one-click summary (`origin` = its media
+ * start), as the offset into the video (`4:05`, `1:02:09`).
+ */
+export function formatLiveClock(
+  mediaAt: number,
+  locale: string,
+  origin: number | null = null,
+): string {
+  if (origin !== null) {
+    return formatLiveOffset(mediaAt - origin);
+  }
   try {
     return new Intl.DateTimeFormat(locale, { timeStyle: 'medium' }).format(mediaAt);
   } catch {
@@ -100,10 +111,13 @@ function hasLiveErrorCode(error: Error, code: string): boolean {
   return error.message.includes(code) || ('code' in error && error.code === code);
 }
 
-/** The message key for a failed link check: a YouTube @handle and a Discord link get their own explanation. */
+/** The message key for a failed link check: a YouTube @handle, a too-long recorded video and a Discord link get their own explanation. */
 export function liveResolveErrorKey(error: Error): string {
   if (hasLiveErrorCode(error, LIVE_YOUTUBE_HANDLE_ERROR_CODE)) {
     return 'live.page.youtubeHandleError';
+  }
+  if (hasLiveErrorCode(error, LIVE_RECORDED_TOO_LONG_ERROR_CODE)) {
+    return 'live.page.recordedTooLongError';
   }
   if (hasLiveErrorCode(error, LIVE_DISCORD_PRIVATE_ERROR_CODE)) {
     return 'live.platform.discordPrivate';
@@ -122,4 +136,28 @@ export function liveFreePercentLeft(usage: LiveUsage): number {
     return 0;
   }
   return Math.min(100, Math.max(0, (liveFreeSecondsLeft(usage) / usage.freeSecondsTotal) * 100));
+}
+
+/** An offset into a video as `m:ss` or `h:mm:ss` (never negative). */
+export function formatLiveOffset(offsetMs: number): string {
+  const total = Math.max(0, Math.floor(offsetMs / 1000));
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = String(total % 60).padStart(2, '0');
+  return hours > 0
+    ? `${String(hours)}:${String(minutes).padStart(2, '0')}:${seconds}`
+    : `${String(minutes)}:${seconds}`;
+}
+
+/** What a one-click summary of a `durationSeconds` video uses against this month's allowance. */
+export function liveSummaryEstimate(
+  durationSeconds: number | null | undefined,
+  usage: LiveUsage | null,
+): LiveSummaryEstimate {
+  const freeMinutesLeft = usage === null ? 0 : Math.floor(liveFreeSecondsLeft(usage) / 60);
+  if (durationSeconds === null || durationSeconds === undefined || durationSeconds <= 0) {
+    return { minutes: null, freeMinutesLeft, paidMinutes: 0 };
+  }
+  const minutes = Math.ceil(durationSeconds / 60);
+  return { minutes, freeMinutesLeft, paidMinutes: Math.max(0, minutes - freeMinutesLeft) };
 }

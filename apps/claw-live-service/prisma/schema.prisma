@@ -29,6 +29,9 @@ enum LiveCapability {
   BROWSER_CAPTURE
   /// The server reads the platform's public playlist itself (Twitch): one shared run for every viewer, any device.
   SERVER_PULL
+  /// A recorded video (reel, post, past stream): the server downloads it once (bounded by policy
+  /// `recordedVideoMaxSeconds`) and plays it along at normal speed. Private to the viewer, billed per watched second.
+  RECORDED
 }
 
 /// Platforms the source registry recognises by URL shape (architecture section 1).
@@ -48,6 +51,30 @@ enum LivePlatform {
   CHZZK
   SOOP
   NIMO
+  DAILYMOTION
+  X
+  VIMEO
+  TROVO
+  DLIVE
+  HUYA
+  DOUYU
+  DOUYIN
+  TWITCASTING
+  NICONICO
+  PICARTO
+  ODYSEE
+  RUTUBE
+  VK
+  OK
+  REDDIT
+  STREAMABLE
+  NAVER_TV
+  KAKAO_TV
+  WEIBO
+  SHOWROOM
+  LIVE17
+  MIXCLOUD
+  BLUESKY
 }
 
 enum LiveMode {
@@ -165,6 +192,8 @@ model LiveProcessingRun {
   /// BROWSER_CAPTURE runs only: the one viewer session allowed to push tab audio into this run.
   captureSessionId String?       @map("capture_session_id")
   startedAt        DateTime      @default(now()) @map("started_at")
+  /// Seconds of a recorded video this run has transcribed (RECORDED runs; drives summary billing).
+  processedMediaSeconds Int      @default(0) @map("processed_media_seconds")
   endedAt          DateTime?     @map("ended_at")
   createdAt        DateTime      @default(now()) @map("created_at")
   updatedAt        DateTime      @updatedAt @map("updated_at")
@@ -290,6 +319,11 @@ model LiveViewerSession {
   spentMicroUsd       BigInt           @default(0) @map("spent_micro_usd")
   /// Active AI seconds accrued and not yet settled into a 60 s block.
   pendingSeconds      Int              @default(0) @map("pending_seconds")
+  /// A one-click "Summarize video" session (ADR-221 batch 6): billed by the media seconds its run has
+  /// processed, never by wall time. Its stream is scoped `SUMMARY:<userId>`.
+  summary             Boolean          @default(false)
+  /// Media seconds of the run already moved into pendingSeconds (summary sessions only).
+  accruedMediaSeconds Int              @default(0) @map("accrued_media_seconds")
   billedSeconds       Int              @default(0) @map("billed_seconds")
   nextBlockIndex      Int              @default(0) @map("next_block_index")
   lastHeartbeatAt     DateTime?        @map("last_heartbeat_at")

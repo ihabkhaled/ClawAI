@@ -71,6 +71,36 @@ describe('LiveHeartbeatManager', () => {
     expect(view.statusCode).toBe(LiveStatusCode.ANALYZING);
   });
 
+  it('a summary session accrues the media seconds its run processed, never wall time', async () => {
+    const { manager, sessions, presence } = setup();
+    sessions.findRun.mockResolvedValue({
+      status: LiveRunStatus.ENDED,
+      lastCommitAt: new Date(),
+      processedMediaSeconds: 754,
+    });
+    await manager.beat(row({ summary: true, accruedMediaSeconds: 600 }) as never, playing);
+    expect(presence.accrue).not.toHaveBeenCalled();
+    expect(sessions.recordHeartbeat).toHaveBeenCalledWith(
+      'sess1',
+      expect.objectContaining({ pendingIncrement: 154, media: { from: 600, to: 754 } }),
+    );
+  });
+
+  it('a summary session with no new progress accrues nothing, never wall time', async () => {
+    const { manager, sessions, presence } = setup();
+    sessions.findRun.mockResolvedValue({
+      status: LiveRunStatus.ACTIVE,
+      lastCommitAt: new Date(),
+      processedMediaSeconds: 60,
+    });
+    await manager.beat(row({ summary: true, accruedMediaSeconds: 60 }) as never, playing);
+    expect(presence.accrue).not.toHaveBeenCalled();
+    expect(sessions.recordHeartbeat).toHaveBeenCalledWith(
+      'sess1',
+      expect.objectContaining({ pendingIncrement: 0 }),
+    );
+  });
+
   it('accrues nothing while paused and moves the session to PAUSED', async () => {
     const { manager, sessions, presence, coverage } = setup();
     await manager.beat(row() as never, paused);

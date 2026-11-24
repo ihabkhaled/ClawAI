@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { LIVE_CREDIT_STATUSES, LIVE_SESSION_STATE_STATUS } from '@/constants/live.constants';
+import {
+  LIVE_CREDIT_STATUSES,
+  LIVE_REVEAL_ALL_AT,
+  LIVE_SESSION_STATE_STATUS,
+} from '@/constants/live.constants';
 import { LiveCapability, LiveFeedTab } from '@/enums/live.enum';
 import { useLiveCapture } from '@/hooks/live/use-live-capture';
 import { useLiveEmbed } from '@/hooks/live/use-live-embed';
@@ -19,7 +23,7 @@ import {
   resolveLiveDisplayStatus,
   revealLiveEvents,
 } from '@/utilities/live-reveal.utility';
-import { liveSessionHlsSrc } from '@/utilities/live-session.utility';
+import { liveSessionHlsSrc, liveStatusPresentation } from '@/utilities/live-session.utility';
 
 /**
  * Controller for the live modal. Everything shown is filtered by playback time: only events with
@@ -35,7 +39,10 @@ export function useLiveModal(input: LiveCreateSessionInput): UseLiveModalResult 
   const { session, isCreating, error } = useLiveSession(input);
   const isLinkOnly = session?.capability === LiveCapability.LINK_ONLY;
   const isCapture = session?.capability === LiveCapability.BROWSER_CAPTURE;
-  const isServerPull = session?.capability === LiveCapability.SERVER_PULL;
+  // A recorded video is read by the server too: same feed, no capture panel, wall-clock reveal.
+  const isServerPull =
+    session?.capability === LiveCapability.SERVER_PULL ||
+    session?.capability === LiveCapability.RECORDED;
   const isWallClock = isCapture || isServerPull;
   const isPlayerOnly = session?.capability === LiveCapability.PLAYER_ONLY || isLinkOnly;
   const aiEnabled = session !== null && !isPlayerOnly;
@@ -75,7 +82,10 @@ export function useLiveModal(input: LiveCreateSessionInput): UseLiveModalResult 
     }
   }, [session, setStatus]);
   const { isPaused: isPlayerPaused, liveEdgeAt } = player.snapshot;
-  const playbackAt = isWallClock ? wallClock : player.snapshot.playbackAt;
+  // A one-click summary is a report, not a playback: everything it has is shown at once.
+  const isSummary = session?.summary === true;
+  const followedAt = isWallClock ? wallClock : player.snapshot.playbackAt;
+  const playbackAt = isSummary ? LIVE_REVEAL_ALL_AT : followedAt;
   const isPaused = !isWallClock && isPlayerPaused;
   const { feed } = stream;
   const revealed = useMemo(
@@ -116,6 +126,9 @@ export function useLiveModal(input: LiveCreateSessionInput): UseLiveModalResult 
     t,
     locale,
     session,
+    isSummary,
+    clockOrigin: isSummary ? (session?.mediaStartAt ?? null) : null,
+    statusPresentation: liveStatusPresentation(status, session),
     sessionError: error,
     isCreating,
     isPlayerOnly,

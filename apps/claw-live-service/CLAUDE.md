@@ -19,7 +19,8 @@ this file disagree, fix one in the same change) - decision:
   `PrismaService` and the global ioredis client (`LIVE_REDIS_CLIENT`). Migrations `20261122000000_live_init` and `20261122120000_live_platforms_capture` (platforms, capture) and the
   idempotent seeder `prisma/seeders/live-policy.seeder.cjs` (policy version 1 only when the table is empty).
 - **sources** - `POST /live/sources/resolve` (the platform registry: `constants/platform-registry.constants.ts` plus one
-  parser per platform, 15 platforms, parsing only except the server-pull probe), the HLS proxy (`GET /live/streams/:streamId/hls/p` and `/hls/:file`), the
+  parser per platform, 15 platforms plus 24 host-matched ones in `constants/video-platforms.constants.ts`, parsing
+  only except the server-pull and recorded-video probes and the one Facebook share-link redirect `ShareLinkService` follows), the HLS proxy (`GET /live/streams/:streamId/hls/p` and `/hls/:file`), the
   SSRF guard (`source-url-guard.service.ts`), the fetcher and the fixture broadcaster (a looped recording served as a
   local HLS window; real source, nothing mocked).
 - **processing** - `BROWSER_CAPTURE` runs read the viewer's tab audio from the Redis list `live:capture:<runId>`
@@ -88,3 +89,18 @@ this file disagree, fix one in the same change) - decision:
   web search (`LiveResearchClient`, research-service `SEARCH_ONLY`, `platform:live-intelligence`, 1/min, 20/run). A
   URL never reaches a prompt. YouTube channel links get `live_chat?v=<id>` from yt-dlp's printed video id.
 - Prisma client is generated to `src/generated/prisma` (git-ignored); `npm run build` and `npm test` generate it.
+
+## Recorded videos and the one-click summary (2026-11-24, ADR-221 batch 6)
+
+- `RECORDED` capability: resolve tries live (`SERVER_PULL`) first, then `RecordedVideoService.probe`; longer than
+  policy `recordedVideoMaxSeconds` (3 h) → `LIVE_RECORDED_TOO_LONG`. Scope `PRIVATE:<userId>`, no chat.
+- `RecordedChunkSource` downloads once (yt-dlp, run temp dir, printed path must stay inside it) and plays along in 6 s
+  chunks; a summary run (`SUMMARY:<userId>` scope, `summarize: true`, RECORDED only) reads 30 s pieces at full speed
+  on media time from the run start. Nothing advances unless a viewer of the run is ACTIVE or GRACE.
+- **Summary billing:** the run writes `processedMediaSeconds`; a summary session's heartbeat accrues exactly the new
+  processed seconds, fenced on `accruedMediaSeconds`, and NEVER wall time (a fall-through over-billed once).
+- Facebook share links: one redirect, guarded, on `facebook.com` only, sent as `ClawAI-LinkCheck/1.0` (no client name
+  → `/unsupportedbrowser`). Host-matched paths are kept unescaped (yt-dlp matches `@a:1` and `fid=1:2` literally).
+- `HLS_PLAYLIST_MAX_BYTES` is 4 MB: a YouTube news channel's 12 h master playlist exceeds 1 MB.
+- QA: `scripts/qa/live-platform-sweep.mjs <cases.json>`, `scripts/qa/live-summary-run.mjs` (LIVE_QA_URL), and
+  `live-language-matrix.mjs` (accepts RECORDED). Run at most 2-3 cases at once (yt-dlp cap 4 per replica).

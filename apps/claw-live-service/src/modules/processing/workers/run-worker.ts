@@ -78,6 +78,9 @@ export class RunWorker {
     }
     const poll = await this.pollSource();
     for (const chunk of poll.chunks) await this.processChunk(chunk);
+    if (poll.mediaSeconds !== undefined && poll.chunks.length > 0) {
+      await this.deps.writer.recordMediaProgress(this.context.lease, poll.mediaSeconds);
+    }
     await this.updateDelay();
     if (poll.ended) {
       await this.background?.catch(() => {});

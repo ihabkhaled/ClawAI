@@ -31,6 +31,8 @@ import {
 } from '@/constants/learn.constants';
 import {
   LIVE_INTELLIGENCE_MARKETING_PATH,
+  LIVE_INTELLIGENCE_PLATFORMS_PATH,
+  LIVE_INTELLIGENCE_PLATFORMS_SLUG,
   LIVE_INTELLIGENCE_SLUG,
 } from '@/constants/live-intelligence-marketing.constants';
 import {
@@ -347,7 +349,8 @@ const PUBLISHED_CONTENT_CONFIGS: ReadonlyArray<PublishedContentConfig> = [
     relatedSlugs: ['threads/discover', 'features', 'how-it-works', 'pricing'],
     reviewDate: '2026-10-07',
   },
-  // Live Intelligence (ADR-221): the public introduction. `/live` is the signed-in portal screen.
+  // Live & Video Intelligence (ADR-221, renamed 2026-11-24): the public introduction and its
+  // platforms list. `/live` is the signed-in portal screen.
   {
     slug: LIVE_INTELLIGENCE_SLUG,
     path: LIVE_INTELLIGENCE_MARKETING_PATH,
@@ -355,8 +358,26 @@ const PUBLISHED_CONTENT_CONFIGS: ReadonlyArray<PublishedContentConfig> = [
     adEligibility: AdEligibility.ELIGIBLE,
     feedEligibility: FeedEligibility.PUBLISHABLE,
     structuredDataType: StructuredDataType.FAQ_PAGE,
-    relatedSlugs: ['features', 'how-it-works', 'pricing', 'features/threads'],
-    reviewDate: '2026-11-22',
+    relatedSlugs: [
+      LIVE_INTELLIGENCE_PLATFORMS_SLUG,
+      'features',
+      'how-it-works',
+      'pricing',
+      'features/threads',
+    ],
+    reviewDate: '2026-11-24',
+  },
+  {
+    slug: LIVE_INTELLIGENCE_PLATFORMS_SLUG,
+    path: LIVE_INTELLIGENCE_PLATFORMS_PATH,
+    category: ContentCategory.FEATURES,
+    // Ad-ineligible on purpose (rules/38): a page that is mostly a list of names is the shape a
+    // reviewer reads as low-value inventory, however useful it is to a visitor.
+    adEligibility: AdEligibility.INELIGIBLE,
+    feedEligibility: FeedEligibility.PUBLISHABLE,
+    structuredDataType: StructuredDataType.FAQ_PAGE,
+    relatedSlugs: [LIVE_INTELLIGENCE_SLUG, 'features', 'pricing'],
+    reviewDate: '2026-11-24',
   },
   // Comparison hub and its rival pages. Ad-ineligible on purpose: a page whose
   // job is to be a fair, checkable comparison of named competitors does not

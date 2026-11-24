@@ -45,6 +45,7 @@ export const NON_PLATFORM_FIELDS = {
   watchUrl: '',
   embedNeedsParent: false,
   chatNeedsEmbedDomain: false,
+  durationSeconds: null,
 } as const;
 export const PUBLIC_ACCESS_SCOPE = 'PUBLIC';
 export const PRIVATE_ACCESS_SCOPE_PREFIX = 'PRIVATE:';
@@ -57,7 +58,11 @@ export const HLS_DNS_TIMEOUT_MS = 3000;
 
 // ── HLS proxy ───────────────────────────────────────────────────────────────
 
-export const HLS_PLAYLIST_MAX_BYTES = 1024 * 1024;
+/**
+ * A YouTube news stream's master playlist with a 12-hour rewind window measured 1.04 MB on
+ * 2026-11-24 and grows past 1 MB, which made server pull fail for it; 4 MB leaves room.
+ */
+export const HLS_PLAYLIST_MAX_BYTES = 4 * 1024 * 1024;
 export const HLS_SEGMENT_MAX_BYTES = 20 * 1024 * 1024;
 export const HLS_FETCH_TIMEOUT_MS = 10_000;
 /** Redirects a server-pulled CDN fetch may follow, each re-checked on the pinned host suffixes. */
@@ -95,3 +100,6 @@ export const FIXTURE_IDLE_STOP_MS = 5 * 60_000;
 export const FIXTURE_IDLE_SWEEP_MS = 30_000;
 export const FIXTURE_READY_TIMEOUT_MS = 20_000;
 export const FIXTURE_READY_POLL_MS = 250;
+
+/** A one-click "Summarize video" stream: private to the viewer and apart from their play-along run. */
+export const SUMMARY_ACCESS_SCOPE_PREFIX = 'SUMMARY:';

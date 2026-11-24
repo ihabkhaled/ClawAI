@@ -15,7 +15,7 @@ import { RU_LIVE_INTELLIGENCE_MARKETING_CONTENT } from './live-intelligence-mark
 import { TH_LIVE_INTELLIGENCE_MARKETING_CONTENT } from './live-intelligence-marketing-content/th.constants';
 import { ZH_LIVE_INTELLIGENCE_MARKETING_CONTENT } from './live-intelligence-marketing-content/zh.constants';
 
-/** Live Intelligence page copy, translated per locale. */
+/** Live & Video Intelligence page copy (both pages), translated per locale. */
 export const LIVE_INTELLIGENCE_MARKETING_CONTENT_BY_LOCALE: Record<
   Locale,
   LiveIntelligenceMarketingDictionary

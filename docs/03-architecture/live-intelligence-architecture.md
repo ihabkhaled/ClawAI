@@ -267,6 +267,17 @@ Caption p95 ≤ 3 s is **not reachable** with chunked batch STT (decision 2026-1
 Translation p95 ≤ 5 s after the caption; summary p95 ≤ 10 s after a topic closes; worker recovery
 < 15 s; zero duplicate visible events (eventKey unique) and zero duplicate charges (idempotencyKey).
 
+## 11. Recorded videos and the one-click summary (ADR-221 batch 6, 2026-11-24)
+
+- Capabilities: `SERVER_PULL` (live, shared, `PUBLIC`), `RECORDED` (recorded, `PRIVATE:<userId>`), a summary
+  (`RECORDED` on scope `SUMMARY:<userId>`), `BROWSER_CAPTURE`, `LINK_ONLY`. Resolve order: registry parse → Facebook
+  share redirect (one hop, guarded) → live probe → recorded probe (bounded by policy `recordedVideoMaxSeconds`).
+- `RecordedChunkSource`: yt-dlp download into the run temp dir, ffmpeg on the local file only; play-along cuts 6 s
+  chunks on its clock, a summary 30 s pieces at full speed on media time from the run start. It advances only while a
+  viewer of the run is ACTIVE or GRACE.
+- Billing for a summary: the run's `processedMediaSeconds` (fenced write) is accrued into the session by heartbeats,
+  fenced on `accruedMediaSeconds`; wall time is never accrued for a summary.
+
 ## What would make this stale
 
 A streaming STT vendor added; YouTube granting caption access; a platform adding or withdrawing an official player

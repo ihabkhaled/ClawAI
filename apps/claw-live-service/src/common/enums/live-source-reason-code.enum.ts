@@ -10,4 +10,6 @@ export enum LiveSourceReasonCode {
   SERVER_PULL_AVAILABLE = 'SERVER_PULL_AVAILABLE',
   /** Server pull is on for the platform but the stream could not be read (offline, refused): browser capture instead. */
   SERVER_PULL_UNAVAILABLE = 'SERVER_PULL_UNAVAILABLE',
+  /** A recorded video: ClawAI's server plays it along from the start (private to the viewer). */
+  RECORDED_VIDEO = 'RECORDED_VIDEO',
 }

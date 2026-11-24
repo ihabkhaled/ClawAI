@@ -205,6 +205,10 @@ describe('buildContentSecurityPolicy analytics hosts', () => {
       'https://player.kick.com',
       'https://kick.com',
       'https://www.facebook.com',
+      'https://www.instagram.com',
+      'https://www.tiktok.com',
+      'https://www.dailymotion.com',
+      'https://player.vimeo.com',
     ]) {
       expect(sources).toContain(origin);
     }

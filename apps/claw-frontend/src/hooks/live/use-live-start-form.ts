@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 
-import { LiveMode } from '@/enums/live.enum';
+import { LiveCapability, LiveMode } from '@/enums/live.enum';
 import { useTranslation } from '@/lib/i18n';
 import { liveRepository } from '@/repositories/live/live.repository';
 import type { LiveCreateSessionInput, UseLiveStartFormResult } from '@/types/live.types';
@@ -28,6 +28,7 @@ export function useLiveStartForm(): UseLiveStartFormResult {
   // link-only sources do not (a browser capture has its own consent dialog in the modal).
   const needsAttestation = resolution !== null && liveSourceNeedsAttestation(resolution.capability);
   const canStart = resolution !== null && (!needsAttestation || attestRights);
+  const canSummarize = resolution?.capability === LiveCapability.RECORDED;
 
   const setModeValue = useCallback((value: string): void => {
     const next = parseLiveMode(value);
@@ -72,5 +73,6 @@ export function useLiveStartForm(): UseLiveStartFormResult {
     setAttestRights,
     resolve,
     buildSessionInput,
+    canSummarize,
   };
 }

@@ -38,6 +38,7 @@ export const liveRepository = {
       language: input.language,
       mode: input.mode,
       attestRights: input.attestRights,
+      ...(input.summarize === true ? { summarize: true } : {}),
     });
     return response.data;
   },

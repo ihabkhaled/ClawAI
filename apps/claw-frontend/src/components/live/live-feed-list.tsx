@@ -9,6 +9,7 @@ export function LiveFeedList({
   locale,
   allowEnhance,
   emptyLabel,
+  clockOrigin = null,
 }: LiveFeedListProps): React.ReactElement {
   const scroll = useLiveFeedScroll(cards.length);
   return (
@@ -33,6 +34,7 @@ export function LiveFeedList({
           t={t}
           locale={locale}
           allowEnhance={allowEnhance}
+          clockOrigin={clockOrigin}
         />
       ))}
     </div>

@@ -8,13 +8,13 @@ import type { LiveLocaleTranslation } from '@/types/live-i18n.types';
  */
 export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
   [Locale.EN]: {
-    nav: { live: 'Live', adminLive: 'Live Intelligence' },
+    nav: { live: 'Live & Videos', adminLive: 'Live & Video Intelligence' },
     page: {
-      title: 'Live Intelligence',
+      title: 'Live & Video Intelligence',
       description:
-        'Watch a live stream with captions in your language, short summaries and highlights.',
-      urlLabel: 'Live stream link',
-      urlPlaceholder: 'Paste a live stream link',
+        'Captions, summaries and highlights for live streams and videos from 30+ platforms.',
+      urlLabel: 'Live stream or video link',
+      urlPlaceholder: 'Paste a live stream or video link',
       languageLabel: 'Caption language',
       modeLabel: 'Analysis',
       modeAudio: 'Audio',
@@ -24,6 +24,8 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       checking: 'Checking…',
       start: 'Start',
       resolveError: 'We could not read this link. Check it and try again.',
+      recordedTooLongError:
+        'This video is longer than 3 hours. Paste a shorter video or a live stream.',
       youtubeHandleError:
         'YouTube channel names (@name) can’t be opened here. Open the live stream on YouTube and paste its video link, or the channel’s /channel/UC… link.',
       attestLabel: 'I have the rights to have this stream analyzed.',
@@ -77,6 +79,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       sessionError: 'The session could not start.',
       analysisTitle: 'AI Analysis',
       liveBadge: 'LIVE',
+      videoBadge: 'VIDEO',
+      videoEndedTitle: 'Video ended',
+      videoEndedDescription: 'The video played to its end; the final summary is below.',
       tabFeed: 'Smart Feed',
       tabCaptions: 'Captions',
       tabHighlights: 'Highlights',
@@ -99,6 +104,28 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       watchOnYoutube: 'Watch on YouTube',
       videoLabel: 'Live video',
     },
+    summary: {
+      badge: 'SUMMARY',
+      button: 'Summarize video',
+      playAlong: 'Watch with live analysis',
+      choiceHint: 'Watch it with analysis that follows the video, or get the whole report at once.',
+      dialogTitle: 'Summarize this video',
+      dialogDescription:
+        'ClawAI reads the whole video now and gives you a summary, key moments with times, highlights and the full transcript. It is saved in your history.',
+      uses: 'Uses {minutes} Live minutes (the video’s length).',
+      lengthUnknown:
+        'The site does not say how long this video is; it uses one Live minute per minute of video.',
+      freeLeft: 'Free minutes left this month: {minutes}.',
+      paid: '{minutes} minutes go past your free minutes and are paid at your plan’s per-minute price.',
+      cancel: 'Cancel',
+      confirm: 'Summarize',
+      confirmPaid: 'Approve and summarize',
+      feedEmpty: 'Summarizing the video… the report appears here.',
+      workingTitle: 'Summarizing the video',
+      workingDescription: 'ClawAI is reading the whole video; the report fills in below.',
+      readyTitle: 'Summary ready',
+      readyDescription: 'The whole video is summarized. Find it again in your history.',
+    },
     platform: {
       recognised: 'Platform: {platform}',
       captureTitle: 'AI analysis with your browser',
@@ -106,6 +133,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         '{platform} plays here. For captions, summaries and highlights, press “Analyze with my browser” under the player and share this tab’s audio.',
       serverPullTitle: 'AI runs on ClawAI servers',
       serverPullNotice: 'Works on any device, including phones.',
+      recordedTitle: 'Recorded video: AI plays along',
+      recordedNotice:
+        'ClawAI’s server plays the video from the start; captions, summaries and highlights follow it. Works on any device.',
       serverPullUnavailable:
         'ClawAI could not read this stream directly, so AI uses your device’s audio.',
       captureNoticeMic:
@@ -302,12 +332,12 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
     },
   },
   [Locale.AR]: {
-    nav: { live: 'مباشر', adminLive: 'التحليل المباشر' },
+    nav: { live: 'البث والفيديو', adminLive: 'تحليل البث والفيديو' },
     page: {
-      title: 'التحليل المباشر',
-      description: 'شاهد بثًا مباشرًا مع ترجمة نصية بلغتك وملخصات قصيرة وأبرز اللحظات.',
-      urlLabel: 'رابط البث المباشر',
-      urlPlaceholder: 'الصق رابط البث المباشر',
+      title: 'تحليل البث المباشر والفيديو',
+      description: 'ترجمة نصية وملخصات وأبرز اللحظات للبث المباشر والفيديوهات من أكثر من 30 منصة.',
+      urlLabel: 'رابط بث مباشر أو فيديو',
+      urlPlaceholder: 'الصق رابط بث مباشر أو فيديو',
       languageLabel: 'لغة الترجمة النصية',
       modeLabel: 'التحليل',
       modeAudio: 'الصوت',
@@ -317,6 +347,7 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       checking: 'جارٍ الفحص…',
       start: 'ابدأ',
       resolveError: 'تعذّرت قراءة هذا الرابط. تحقق منه وحاول مرة أخرى.',
+      recordedTooLongError: 'هذا الفيديو أطول من 3 ساعات. الصق فيديو أقصر أو بثًا مباشرًا.',
       youtubeHandleError:
         'لا يمكن فتح أسماء قنوات يوتيوب (@name) هنا. افتح البث المباشر على يوتيوب والصق رابط الفيديو، أو رابط القناة /channel/UC….',
       attestLabel: 'لدي الحقوق اللازمة لتحليل هذا البث.',
@@ -369,6 +400,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       sessionError: 'تعذّر بدء الجلسة.',
       analysisTitle: 'تحليل الذكاء الاصطناعي',
       liveBadge: 'مباشر',
+      videoBadge: 'فيديو',
+      videoEndedTitle: 'انتهى الفيديو',
+      videoEndedDescription: 'انتهى عرض الفيديو؛ الملخص النهائي بالأسفل.',
       tabFeed: 'الخلاصة الذكية',
       tabCaptions: 'الترجمة النصية',
       tabHighlights: 'أبرز اللحظات',
@@ -391,6 +425,27 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       watchOnYoutube: 'شاهد على يوتيوب',
       videoLabel: 'فيديو مباشر',
     },
+    summary: {
+      badge: 'ملخص',
+      button: 'لخّص الفيديو',
+      playAlong: 'شاهد مع تحليل مباشر',
+      choiceHint: 'شاهده مع تحليل يتابع الفيديو، أو احصل على التقرير كاملًا دفعة واحدة.',
+      dialogTitle: 'لخّص هذا الفيديو',
+      dialogDescription:
+        'يقرأ ClawAI الفيديو كاملًا الآن ويقدّم لك ملخصًا وأهم اللحظات بأوقاتها وأبرز النقاط والنص الكامل، ويُحفظ في سجلك.',
+      uses: 'يستهلك {minutes} دقيقة من دقائق البث (طول الفيديو).',
+      lengthUnknown: 'لا يذكر الموقع طول هذا الفيديو؛ تُحسب دقيقة بث واحدة لكل دقيقة من الفيديو.',
+      freeLeft: 'الدقائق المجانية المتبقية هذا الشهر: {minutes}.',
+      paid: '{minutes} دقيقة تتجاوز دقائقك المجانية وتُدفع بسعر الدقيقة في خطتك.',
+      cancel: 'إلغاء',
+      confirm: 'لخّص',
+      confirmPaid: 'وافق ولخّص',
+      feedEmpty: 'جارٍ تلخيص الفيديو… سيظهر التقرير هنا.',
+      workingTitle: 'جارٍ تلخيص الفيديو',
+      workingDescription: 'يقرأ ClawAI الفيديو كاملًا؛ يمتلئ التقرير بالأسفل.',
+      readyTitle: 'الملخص جاهز',
+      readyDescription: 'تم تلخيص الفيديو كاملًا. تجده مرة أخرى في سجلك.',
+    },
     platform: {
       recognised: 'المنصة: {platform}',
       captureTitle: 'تحليل بالذكاء الاصطناعي عبر متصفحك',
@@ -398,6 +453,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         'يُعرض {platform} هنا. للحصول على الترجمة النصية والملخصات وأبرز اللحظات، اضغط «التحليل عبر متصفحي» أسفل المشغل وشارك صوت علامة التبويب هذه.',
       serverPullTitle: 'يعمل الذكاء الاصطناعي على خوادم ClawAI',
       serverPullNotice: 'يعمل على أي جهاز، بما في ذلك الهواتف.',
+      recordedTitle: 'فيديو مسجّل: الذكاء الاصطناعي يتابعه معك',
+      recordedNotice:
+        'يشغّل خادم ClawAI الفيديو من البداية، وتتبعه الترجمات والملخصات وأبرز اللحظات. يعمل على أي جهاز.',
       serverPullUnavailable:
         'تعذّر على ClawAI قراءة هذا البث مباشرة، لذا يستخدم الذكاء الاصطناعي صوت جهازك.',
       captureNoticeMic:
@@ -591,13 +649,13 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
     },
   },
   [Locale.DE]: {
-    nav: { live: 'Livestream', adminLive: 'Live-Analyse' },
+    nav: { live: 'Live & Videos', adminLive: 'Live- & Video-Analyse' },
     page: {
-      title: 'Live-Analyse',
+      title: 'Live- & Video-Analyse',
       description:
-        'Sieh dir einen Livestream mit Untertiteln in deiner Sprache, kurzen Zusammenfassungen und Highlights an.',
-      urlLabel: 'Link zum Livestream',
-      urlPlaceholder: 'Livestream-Link einfügen',
+        'Untertitel, Zusammenfassungen und Highlights für Livestreams und Videos von über 30 Plattformen.',
+      urlLabel: 'Link zu Livestream oder Video',
+      urlPlaceholder: 'Link zu einem Livestream oder Video einfügen',
       languageLabel: 'Untertitelsprache',
       modeLabel: 'Analyse',
       modeAudio: 'Ton',
@@ -607,6 +665,8 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       checking: 'Wird geprüft…',
       start: 'Starten',
       resolveError: 'Wir konnten diesen Link nicht lesen. Prüfe ihn und versuche es erneut.',
+      recordedTooLongError:
+        'Dieses Video ist länger als 3 Stunden. Füge ein kürzeres Video oder einen Livestream ein.',
       youtubeHandleError:
         'YouTube-Kanalnamen (@name) lassen sich hier nicht öffnen. Öffne den Livestream auf YouTube und füge den Videolink oder den /channel/UC…-Link des Kanals ein.',
       attestLabel: 'Ich habe die Rechte, diesen Stream analysieren zu lassen.',
@@ -660,6 +720,10 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       sessionError: 'Die Sitzung konnte nicht gestartet werden.',
       analysisTitle: 'KI-Analyse',
       liveBadge: 'DIREKT',
+      videoBadge: 'VIDEO',
+      videoEndedTitle: 'Video zu Ende',
+      videoEndedDescription:
+        'Das Video ist bis zum Ende gelaufen; die Schlusszusammenfassung steht unten.',
       tabFeed: 'Intelligenter Feed',
       tabCaptions: 'Untertitel',
       tabHighlights: 'Höhepunkte',
@@ -683,6 +747,29 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       watchOnYoutube: 'Auf YouTube ansehen',
       videoLabel: 'Live-Video',
     },
+    summary: {
+      badge: 'ZUSAMMENFASSUNG',
+      button: 'Video zusammenfassen',
+      playAlong: 'Mit Live-Analyse ansehen',
+      choiceHint:
+        'Sieh es mit einer Analyse, die dem Video folgt, oder hol dir den ganzen Bericht auf einmal.',
+      dialogTitle: 'Dieses Video zusammenfassen',
+      dialogDescription:
+        'ClawAI liest jetzt das ganze Video und liefert eine Zusammenfassung, wichtige Momente mit Zeitangaben, Highlights und das vollständige Transkript. Alles wird in deinem Verlauf gespeichert.',
+      uses: 'Verbraucht {minutes} Live-Minuten (die Länge des Videos).',
+      lengthUnknown:
+        'Die Seite nennt die Länge dieses Videos nicht; pro Videominute wird eine Live-Minute verbraucht.',
+      freeLeft: 'Freie Minuten in diesem Monat: {minutes}.',
+      paid: '{minutes} Minuten gehen über deine freien Minuten hinaus und werden zum Minutenpreis deines Tarifs berechnet.',
+      cancel: 'Abbrechen',
+      confirm: 'Zusammenfassen',
+      confirmPaid: 'Freigeben und zusammenfassen',
+      feedEmpty: 'Das Video wird zusammengefasst… der Bericht erscheint hier.',
+      workingTitle: 'Video wird zusammengefasst',
+      workingDescription: 'ClawAI liest das ganze Video; der Bericht füllt sich unten.',
+      readyTitle: 'Zusammenfassung fertig',
+      readyDescription: 'Das ganze Video ist zusammengefasst. Du findest es in deinem Verlauf.',
+    },
     platform: {
       recognised: 'Plattform: {platform}',
       captureTitle: 'KI-Analyse über deinen Browser',
@@ -690,6 +777,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         '{platform} läuft hier. Für Untertitel, Zusammenfassungen und Highlights tippe unter dem Player auf „Mit meinem Browser analysieren“ und teile den Ton dieses Tabs.',
       serverPullTitle: 'Die KI läuft auf ClawAI-Servern',
       serverPullNotice: 'Funktioniert auf jedem Gerät, auch auf Smartphones.',
+      recordedTitle: 'Aufgezeichnetes Video: Die KI läuft mit',
+      recordedNotice:
+        'Der ClawAI-Server spielt das Video von Anfang an ab; Untertitel, Zusammenfassungen und Highlights folgen ihm. Funktioniert auf jedem Gerät.',
       serverPullUnavailable:
         'ClawAI konnte diesen Stream nicht direkt lesen, daher nutzt die KI den Ton deines Geräts.',
       captureNoticeMic:
@@ -896,13 +986,13 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
     },
   },
   [Locale.ES]: {
-    nav: { live: 'En vivo', adminLive: 'Análisis en vivo' },
+    nav: { live: 'Directos y vídeos', adminLive: 'Análisis de directos y vídeos' },
     page: {
-      title: 'Análisis en vivo',
+      title: 'Análisis de directos y vídeos',
       description:
-        'Mira una transmisión en vivo con subtítulos en tu idioma, resúmenes breves y momentos destacados.',
-      urlLabel: 'Enlace de la transmisión en vivo',
-      urlPlaceholder: 'Pega el enlace de una transmisión en vivo',
+        'Subtítulos, resúmenes y momentos destacados de directos y vídeos de más de 30 plataformas.',
+      urlLabel: 'Enlace de directo o vídeo',
+      urlPlaceholder: 'Pega el enlace de un directo o un vídeo',
       languageLabel: 'Idioma de los subtítulos',
       modeLabel: 'Análisis',
       modeAudio: 'Solo audio',
@@ -912,6 +1002,8 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       checking: 'Comprobando…',
       start: 'Iniciar',
       resolveError: 'No pudimos leer este enlace. Revísalo e inténtalo de nuevo.',
+      recordedTooLongError:
+        'Este vídeo dura más de 3 horas. Pega un vídeo más corto o una transmisión en directo.',
       youtubeHandleError:
         'Los nombres de canal de YouTube (@name) no se pueden abrir aquí. Abre la transmisión en YouTube y pega el enlace del video o el enlace /channel/UC… del canal.',
       attestLabel: 'Tengo los derechos para que se analice esta transmisión.',
@@ -966,6 +1058,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       sessionError: 'No se pudo iniciar la sesión.',
       analysisTitle: 'Análisis con IA',
       liveBadge: 'EN VIVO',
+      videoBadge: 'VÍDEO',
+      videoEndedTitle: 'Vídeo terminado',
+      videoEndedDescription: 'El vídeo llegó al final; el resumen final está abajo.',
       tabFeed: 'Feed inteligente',
       tabCaptions: 'Subtítulos',
       tabHighlights: 'Destacados',
@@ -989,6 +1084,29 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       watchOnYoutube: 'Ver en YouTube',
       videoLabel: 'Vídeo en vivo',
     },
+    summary: {
+      badge: 'RESUMEN',
+      button: 'Resumir vídeo',
+      playAlong: 'Ver con análisis en directo',
+      choiceHint:
+        'Míralo con un análisis que sigue el vídeo, o recibe el informe completo de una vez.',
+      dialogTitle: 'Resumir este vídeo',
+      dialogDescription:
+        'ClawAI lee ahora el vídeo completo y te da un resumen, los momentos clave con su tiempo, los destacados y la transcripción completa. Se guarda en tu historial.',
+      uses: 'Usa {minutes} minutos de directo (la duración del vídeo).',
+      lengthUnknown:
+        'El sitio no indica cuánto dura este vídeo; se usa un minuto de directo por cada minuto de vídeo.',
+      freeLeft: 'Minutos gratis que te quedan este mes: {minutes}.',
+      paid: '{minutes} minutos superan tus minutos gratis y se pagan al precio por minuto de tu plan.',
+      cancel: 'Cancelar',
+      confirm: 'Resumir',
+      confirmPaid: 'Aprobar y resumir',
+      feedEmpty: 'Resumiendo el vídeo… el informe aparecerá aquí.',
+      workingTitle: 'Resumiendo el vídeo',
+      workingDescription: 'ClawAI está leyendo todo el vídeo; el informe se completa abajo.',
+      readyTitle: 'Resumen listo',
+      readyDescription: 'Todo el vídeo está resumido. Lo encontrarás en tu historial.',
+    },
     platform: {
       recognised: 'Plataforma: {platform}',
       captureTitle: 'Análisis con IA desde tu navegador',
@@ -996,6 +1114,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         '{platform} se reproduce aquí. Para subtítulos, resúmenes y momentos destacados, pulsa «Analizar con mi navegador» debajo del reproductor y comparte el audio de esta pestaña.',
       serverPullTitle: 'La IA funciona en los servidores de ClawAI',
       serverPullNotice: 'Funciona en cualquier dispositivo, también en móviles.',
+      recordedTitle: 'Vídeo grabado: la IA lo sigue contigo',
+      recordedNotice:
+        'El servidor de ClawAI reproduce el vídeo desde el principio; los subtítulos, resúmenes y momentos destacados lo siguen. Funciona en cualquier dispositivo.',
       serverPullUnavailable:
         'ClawAI no pudo leer esta transmisión directamente, así que la IA usa el audio de tu dispositivo.',
       captureNoticeMic:
@@ -1197,13 +1318,12 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
     },
   },
   [Locale.FA]: {
-    nav: { live: 'زنده', adminLive: 'تحلیل زنده' },
+    nav: { live: 'پخش زنده و ویدیو', adminLive: 'تحلیل پخش زنده و ویدیو' },
     page: {
-      title: 'تحلیل زنده',
-      description:
-        'یک پخش زنده را با زیرنویس به زبان خودتان، خلاصه‌های کوتاه و لحظه‌های برجسته ببینید.',
-      urlLabel: 'پیوند پخش زنده',
-      urlPlaceholder: 'پیوند پخش زنده را جای‌گذاری کنید',
+      title: 'تحلیل پخش زنده و ویدیو',
+      description: 'زیرنویس، خلاصه و نکات برجسته برای پخش زنده و ویدیوها از بیش از ۳۰ پلتفرم.',
+      urlLabel: 'پیوند پخش زنده یا ویدیو',
+      urlPlaceholder: 'پیوند پخش زنده یا ویدیو را جای‌گذاری کنید',
       languageLabel: 'زبان زیرنویس',
       modeLabel: 'تحلیل',
       modeAudio: 'صدا',
@@ -1213,6 +1333,8 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       checking: 'در حال بررسی…',
       start: 'شروع',
       resolveError: 'نتوانستیم این پیوند را بخوانیم. آن را بررسی کنید و دوباره تلاش کنید.',
+      recordedTooLongError:
+        'این ویدیو بیش از ۳ ساعت است. ویدیوی کوتاه‌تر یا یک پخش زنده را جای‌گذاری کنید.',
       youtubeHandleError:
         'نام کانال‌های یوتیوب (@name) اینجا باز نمی‌شود. پخش زنده را در یوتیوب باز کنید و پیوند ویدیو یا پیوند /channel/UC… کانال را بچسبانید.',
       attestLabel: 'من حق تحلیل این پخش را دارم.',
@@ -1266,6 +1388,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       sessionError: 'نشست شروع نشد.',
       analysisTitle: 'تحلیل هوش مصنوعی',
       liveBadge: 'زنده',
+      videoBadge: 'ویدیو',
+      videoEndedTitle: 'ویدیو تمام شد',
+      videoEndedDescription: 'ویدیو تا پایان پخش شد؛ خلاصهٔ نهایی در پایین است.',
       tabFeed: 'فید هوشمند',
       tabCaptions: 'زیرنویس',
       tabHighlights: 'لحظه‌های برجسته',
@@ -1288,6 +1413,28 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       watchOnYoutube: 'تماشا در یوتیوب',
       videoLabel: 'ویدیوی زنده',
     },
+    summary: {
+      badge: 'خلاصه',
+      button: 'خلاصهٔ ویدیو',
+      playAlong: 'تماشا با تحلیل زنده',
+      choiceHint: 'با تحلیلی که همراه ویدیو پیش می‌رود تماشا کنید، یا کل گزارش را یک‌جا بگیرید.',
+      dialogTitle: 'خلاصه‌کردن این ویدیو',
+      dialogDescription:
+        'ClawAI اکنون کل ویدیو را می‌خواند و خلاصه، لحظه‌های کلیدی با زمان، نکات برجسته و متن کامل را به شما می‌دهد. همه در تاریخچهٔ شما ذخیره می‌شود.',
+      uses: '{minutes} دقیقهٔ پخش زنده مصرف می‌شود (طول ویدیو).',
+      lengthUnknown:
+        'سایت طول این ویدیو را اعلام نمی‌کند؛ به ازای هر دقیقهٔ ویدیو یک دقیقهٔ پخش زنده مصرف می‌شود.',
+      freeLeft: 'دقیقه‌های رایگان باقی‌ماندهٔ این ماه: {minutes}.',
+      paid: '{minutes} دقیقه از دقیقه‌های رایگان شما بیشتر است و با قیمت هر دقیقهٔ طرح شما پرداخت می‌شود.',
+      cancel: 'لغو',
+      confirm: 'خلاصه کن',
+      confirmPaid: 'تأیید و خلاصه کن',
+      feedEmpty: 'در حال خلاصه‌کردن ویدیو… گزارش اینجا نمایش داده می‌شود.',
+      workingTitle: 'در حال خلاصه‌کردن ویدیو',
+      workingDescription: 'ClawAI کل ویدیو را می‌خواند؛ گزارش در پایین کامل می‌شود.',
+      readyTitle: 'خلاصه آماده است',
+      readyDescription: 'کل ویدیو خلاصه شد. دوباره در تاریخچهٔ خود پیدایش می‌کنید.',
+    },
     platform: {
       recognised: 'سکو: {platform}',
       captureTitle: 'تحلیل هوش مصنوعی با مرورگر شما',
@@ -1295,6 +1442,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         '{platform} اینجا پخش می‌شود. برای زیرنویس، خلاصه و نکات برجسته، زیر پخش‌کننده «تحلیل با مرورگر من» را بزنید و صدای این زبانه را به اشتراک بگذارید.',
       serverPullTitle: 'هوش مصنوعی روی سرورهای ClawAI اجرا می‌شود',
       serverPullNotice: 'روی هر دستگاهی، از جمله گوشی، کار می‌کند.',
+      recordedTitle: 'ویدیوی ضبط‌شده: هوش مصنوعی همراه آن پیش می‌رود',
+      recordedNotice:
+        'سرور ClawAI ویدیو را از ابتدا پخش می‌کند و زیرنویس‌ها، خلاصه‌ها و نکات برجسته همراه آن می‌آیند. روی هر دستگاهی کار می‌کند.',
       serverPullUnavailable:
         'ClawAI نتوانست این پخش را مستقیم بخواند، پس هوش مصنوعی از صدای دستگاه شما استفاده می‌کند.',
       captureNoticeMic:
@@ -1497,13 +1647,13 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
     },
   },
   [Locale.FR]: {
-    nav: { live: 'En direct', adminLive: 'Analyse en direct' },
+    nav: { live: 'Direct et vidéos', adminLive: 'Analyse des directs et vidéos' },
     page: {
-      title: 'Analyse en direct',
+      title: 'Analyse des directs et vidéos',
       description:
-        'Regardez un direct avec des sous-titres dans votre langue, de courts résumés et des temps forts.',
-      urlLabel: 'Lien du direct',
-      urlPlaceholder: 'Collez un lien de direct',
+        'Sous-titres, résumés et temps forts des directs et vidéos de plus de 30 plateformes.',
+      urlLabel: 'Lien d’un direct ou d’une vidéo',
+      urlPlaceholder: 'Collez le lien d’un direct ou d’une vidéo',
       languageLabel: 'Langue des sous-titres',
       modeLabel: 'Analyse',
       modeAudio: 'Son',
@@ -1513,6 +1663,8 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       checking: 'Vérification…',
       start: 'Démarrer',
       resolveError: 'Nous n’avons pas pu lire ce lien. Vérifiez-le et réessayez.',
+      recordedTooLongError:
+        'Cette vidéo dure plus de 3 heures. Collez une vidéo plus courte ou un direct.',
       youtubeHandleError:
         'Les noms de chaîne YouTube (@name) ne peuvent pas être ouverts ici. Ouvrez le direct sur YouTube et collez le lien de la vidéo, ou le lien /channel/UC… de la chaîne.',
       attestLabel: 'J’ai les droits pour faire analyser ce direct.',
@@ -1566,6 +1718,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       sessionError: 'La session n’a pas pu démarrer.',
       analysisTitle: 'Analyse IA',
       liveBadge: 'EN DIRECT',
+      videoBadge: 'VIDÉO',
+      videoEndedTitle: 'Vidéo terminée',
+      videoEndedDescription: 'La vidéo est allée jusqu’au bout ; le résumé final est ci-dessous.',
       tabFeed: 'Flux intelligent',
       tabCaptions: 'Sous-titres',
       tabHighlights: 'Temps forts',
@@ -1589,6 +1744,29 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       watchOnYoutube: 'Regarder sur YouTube',
       videoLabel: 'Vidéo en direct',
     },
+    summary: {
+      badge: 'RÉSUMÉ',
+      button: 'Résumer la vidéo',
+      playAlong: 'Regarder avec l’analyse en direct',
+      choiceHint:
+        'Regardez-la avec une analyse qui suit la vidéo, ou obtenez tout le rapport d’un coup.',
+      dialogTitle: 'Résumer cette vidéo',
+      dialogDescription:
+        'ClawAI lit maintenant toute la vidéo et vous donne un résumé, les moments clés horodatés, les temps forts et la transcription complète. Le tout est enregistré dans votre historique.',
+      uses: 'Utilise {minutes} minutes de direct (la durée de la vidéo).',
+      lengthUnknown:
+        'Le site n’indique pas la durée de cette vidéo ; une minute de direct est utilisée par minute de vidéo.',
+      freeLeft: 'Minutes gratuites restantes ce mois-ci : {minutes}.',
+      paid: '{minutes} minutes dépassent vos minutes gratuites et sont payées au prix par minute de votre offre.',
+      cancel: 'Annuler',
+      confirm: 'Résumer',
+      confirmPaid: 'Approuver et résumer',
+      feedEmpty: 'Résumé de la vidéo en cours… le rapport apparaîtra ici.',
+      workingTitle: 'Résumé de la vidéo en cours',
+      workingDescription: 'ClawAI lit toute la vidéo ; le rapport se complète ci-dessous.',
+      readyTitle: 'Résumé prêt',
+      readyDescription: 'Toute la vidéo est résumée. Retrouvez-la dans votre historique.',
+    },
     platform: {
       recognised: 'Plateforme : {platform}',
       captureTitle: 'Analyse IA avec votre navigateur',
@@ -1596,6 +1774,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         '{platform} est lu ici. Pour les sous-titres, résumés et temps forts, appuyez sur « Analyser avec mon navigateur » sous le lecteur et partagez le son de cet onglet.',
       serverPullTitle: 'L’IA tourne sur les serveurs de ClawAI',
       serverPullNotice: 'Fonctionne sur tous les appareils, y compris les téléphones.',
+      recordedTitle: 'Vidéo enregistrée : l’IA la suit avec vous',
+      recordedNotice:
+        'Le serveur de ClawAI lit la vidéo depuis le début ; sous-titres, résumés et temps forts la suivent. Fonctionne sur tout appareil.',
       serverPullUnavailable:
         'ClawAI n’a pas pu lire ce flux directement, l’IA utilise donc le son de votre appareil.',
       captureNoticeMic:
@@ -1799,12 +1980,12 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
     },
   },
   [Locale.HI]: {
-    nav: { live: 'लाइव', adminLive: 'लाइव विश्लेषण' },
+    nav: { live: 'लाइव और वीडियो', adminLive: 'लाइव और वीडियो इंटेलिजेंस' },
     page: {
-      title: 'लाइव विश्लेषण',
-      description: 'अपनी भाषा के कैप्शन, छोटे सारांश और मुख्य अंशों के साथ लाइव स्ट्रीम देखें।',
-      urlLabel: 'लाइव स्ट्रीम लिंक',
-      urlPlaceholder: 'लाइव स्ट्रीम का लिंक चिपकाएँ',
+      title: 'लाइव और वीडियो इंटेलिजेंस',
+      description: '30+ प्लेटफ़ॉर्म की लाइव स्ट्रीम और वीडियो के लिए कैप्शन, सारांश और हाइलाइट।',
+      urlLabel: 'लाइव स्ट्रीम या वीडियो लिंक',
+      urlPlaceholder: 'लाइव स्ट्रीम या वीडियो का लिंक पेस्ट करें',
       languageLabel: 'कैप्शन की भाषा',
       modeLabel: 'विश्लेषण',
       modeAudio: 'ऑडियो',
@@ -1814,6 +1995,7 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       checking: 'जाँच हो रही है…',
       start: 'शुरू करें',
       resolveError: 'हम यह लिंक नहीं पढ़ सके। इसे जाँचें और फिर कोशिश करें।',
+      recordedTooLongError: 'यह वीडियो 3 घंटे से लंबा है। कोई छोटा वीडियो या लाइव स्ट्रीम पेस्ट करें।',
       youtubeHandleError:
         'YouTube चैनल नाम (@name) यहाँ नहीं खुलते। YouTube पर लाइव स्ट्रीम खोलें और उसका वीडियो लिंक, या चैनल का /channel/UC… लिंक चिपकाएँ।',
       attestLabel: 'मेरे पास इस स्ट्रीम का विश्लेषण कराने का अधिकार है।',
@@ -1866,6 +2048,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       sessionError: 'सत्र शुरू नहीं हो सका।',
       analysisTitle: 'एआई विश्लेषण',
       liveBadge: 'लाइव',
+      videoBadge: 'वीडियो',
+      videoEndedTitle: 'वीडियो खत्म हुआ',
+      videoEndedDescription: 'वीडियो अंत तक चला; अंतिम सारांश नीचे है।',
       tabFeed: 'स्मार्ट फ़ीड',
       tabCaptions: 'कैप्शन',
       tabHighlights: 'मुख्य अंश',
@@ -1888,6 +2073,27 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       watchOnYoutube: 'YouTube पर देखें',
       videoLabel: 'लाइव वीडियो',
     },
+    summary: {
+      badge: 'सारांश',
+      button: 'वीडियो का सारांश',
+      playAlong: 'लाइव विश्लेषण के साथ देखें',
+      choiceHint: 'वीडियो के साथ चलने वाले विश्लेषण के साथ देखें, या पूरी रिपोर्ट एक साथ पाएँ।',
+      dialogTitle: 'इस वीडियो का सारांश बनाएँ',
+      dialogDescription:
+        'ClawAI अभी पूरा वीडियो पढ़ता है और आपको सारांश, समय के साथ मुख्य पल, हाइलाइट और पूरा ट्रांसक्रिप्ट देता है। यह आपकी हिस्ट्री में सेव होता है।',
+      uses: '{minutes} लाइव मिनट लगेंगे (वीडियो की लंबाई)।',
+      lengthUnknown: 'साइट इस वीडियो की लंबाई नहीं बताती; वीडियो के हर मिनट पर एक लाइव मिनट लगता है।',
+      freeLeft: 'इस महीने बचे मुफ़्त मिनट: {minutes}।',
+      paid: '{minutes} मिनट आपके मुफ़्त मिनटों से ज़्यादा हैं और आपके प्लान की प्रति-मिनट कीमत पर चुकाए जाते हैं।',
+      cancel: 'रद्द करें',
+      confirm: 'सारांश बनाएँ',
+      confirmPaid: 'मंज़ूरी दें और सारांश बनाएँ',
+      feedEmpty: 'वीडियो का सारांश बन रहा है… रिपोर्ट यहाँ दिखेगी।',
+      workingTitle: 'वीडियो का सारांश बन रहा है',
+      workingDescription: 'ClawAI पूरा वीडियो पढ़ रहा है; रिपोर्ट नीचे भरती जाएगी।',
+      readyTitle: 'सारांश तैयार है',
+      readyDescription: 'पूरे वीडियो का सारांश बन गया। इसे अपनी हिस्ट्री में फिर पाएँ।',
+    },
     platform: {
       recognised: 'प्लैटफ़ॉर्म: {platform}',
       captureTitle: 'आपके ब्राउज़र से AI विश्लेषण',
@@ -1895,6 +2101,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         '{platform} यहाँ चलता है। कैप्शन, सारांश और हाइलाइट के लिए प्लेयर के नीचे “मेरे ब्राउज़र से विश्लेषण करें” दबाएँ और इस टैब की आवाज़ शेयर करें।',
       serverPullTitle: 'AI, ClawAI के सर्वर पर चलता है',
       serverPullNotice: 'फ़ोन समेत किसी भी डिवाइस पर काम करता है।',
+      recordedTitle: 'रिकॉर्ड किया गया वीडियो: AI साथ-साथ चलता है',
+      recordedNotice:
+        'ClawAI का सर्वर वीडियो को शुरू से चलाता है; कैप्शन, सारांश और हाइलाइट उसके साथ आते हैं। किसी भी डिवाइस पर काम करता है।',
       serverPullUnavailable:
         'ClawAI इस स्ट्रीम को सीधे नहीं पढ़ सका, इसलिए AI आपके डिवाइस की आवाज़ इस्तेमाल करता है।',
       captureNoticeMic: '{platform} स्ट्रीम चलते समय AI आपके माइक्रोफ़ोन से सुनता है। उसकी आवाज़ चालू रखें।',
@@ -2086,13 +2295,13 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
     },
   },
   [Locale.IT]: {
-    nav: { live: 'In diretta', adminLive: 'Analisi in diretta' },
+    nav: { live: 'Dirette e video', adminLive: 'Analisi di dirette e video' },
     page: {
-      title: 'Analisi in diretta',
+      title: 'Analisi di dirette e video',
       description:
-        'Guarda una diretta con sottotitoli nella tua lingua, brevi riassunti e momenti salienti.',
-      urlLabel: 'Link della diretta',
-      urlPlaceholder: 'Incolla il link di una diretta',
+        'Sottotitoli, riassunti e momenti salienti per dirette e video da oltre 30 piattaforme.',
+      urlLabel: 'Link della diretta o del video',
+      urlPlaceholder: 'Incolla il link di una diretta o di un video',
       languageLabel: 'Lingua dei sottotitoli',
       modeLabel: 'Analisi',
       modeAudio: 'Solo audio',
@@ -2102,6 +2311,8 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       checking: 'Controllo in corso…',
       start: 'Avvia',
       resolveError: 'Non siamo riusciti a leggere questo link. Controllalo e riprova.',
+      recordedTooLongError:
+        'Questo video dura più di 3 ore. Incolla un video più breve o una diretta.',
       youtubeHandleError:
         'I nomi dei canali YouTube (@name) non si possono aprire qui. Apri la diretta su YouTube e incolla il link del video, oppure il link /channel/UC… del canale.',
       attestLabel: 'Ho i diritti per far analizzare questa diretta.',
@@ -2155,6 +2366,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       sessionError: 'Impossibile avviare la sessione.',
       analysisTitle: 'Analisi IA',
       liveBadge: 'DIRETTA',
+      videoBadge: 'VIDEO',
+      videoEndedTitle: 'Video terminato',
+      videoEndedDescription: 'Il video è arrivato alla fine; il riassunto finale è qui sotto.',
       tabFeed: 'Feed intelligente',
       tabCaptions: 'Sottotitoli',
       tabHighlights: 'Momenti salienti',
@@ -2178,6 +2392,29 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       watchOnYoutube: 'Guarda su YouTube',
       videoLabel: 'Video in diretta',
     },
+    summary: {
+      badge: 'RIASSUNTO',
+      button: 'Riassumi il video',
+      playAlong: 'Guarda con l’analisi dal vivo',
+      choiceHint:
+        'Guardalo con un’analisi che segue il video, oppure ottieni subito l’intero rapporto.',
+      dialogTitle: 'Riassumi questo video',
+      dialogDescription:
+        'ClawAI legge ora l’intero video e ti dà un riassunto, i momenti chiave con il loro minutaggio, i momenti salienti e la trascrizione completa. Tutto viene salvato nella tua cronologia.',
+      uses: 'Usa {minutes} minuti live (la durata del video).',
+      lengthUnknown:
+        'Il sito non indica la durata di questo video; si usa un minuto live per ogni minuto di video.',
+      freeLeft: 'Minuti gratuiti rimasti questo mese: {minutes}.',
+      paid: '{minutes} minuti superano i tuoi minuti gratuiti e sono pagati al prezzo al minuto del tuo piano.',
+      cancel: 'Annulla',
+      confirm: 'Riassumi',
+      confirmPaid: 'Approva e riassumi',
+      feedEmpty: 'Riassunto del video in corso… il rapporto apparirà qui.',
+      workingTitle: 'Riassunto del video in corso',
+      workingDescription: 'ClawAI sta leggendo tutto il video; il rapporto si riempie qui sotto.',
+      readyTitle: 'Riassunto pronto',
+      readyDescription: 'L’intero video è riassunto. Lo ritrovi nella tua cronologia.',
+    },
     platform: {
       recognised: 'Piattaforma: {platform}',
       captureTitle: 'Analisi IA con il tuo browser',
@@ -2185,6 +2422,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         '{platform} viene riprodotto qui. Per sottotitoli, riassunti e momenti salienti, premi «Analizza con il mio browser» sotto il player e condividi l’audio di questa scheda.',
       serverPullTitle: 'L’IA funziona sui server di ClawAI',
       serverPullNotice: 'Funziona su qualsiasi dispositivo, anche sui telefoni.',
+      recordedTitle: 'Video registrato: l’IA lo segue con te',
+      recordedNotice:
+        'Il server di ClawAI riproduce il video dall’inizio; sottotitoli, riassunti e momenti salienti lo seguono. Funziona su qualsiasi dispositivo.',
       serverPullUnavailable:
         'ClawAI non è riuscito a leggere direttamente questo stream, quindi l’IA usa l’audio del tuo dispositivo.',
       captureNoticeMic:
@@ -2388,12 +2628,12 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
     },
   },
   [Locale.JA]: {
-    nav: { live: 'ライブ', adminLive: 'ライブ分析' },
+    nav: { live: 'ライブと動画', adminLive: 'ライブ・動画インテリジェンス' },
     page: {
-      title: 'ライブ分析',
-      description: 'ライブ配信を、あなたの言語の字幕、短い要約、ハイライトつきで視聴できます。',
-      urlLabel: 'ライブ配信のリンク',
-      urlPlaceholder: 'ライブ配信のリンクを貼り付け',
+      title: 'ライブ・動画インテリジェンス',
+      description: '30 以上のプラットフォームのライブ配信と動画に、字幕・要約・ハイライトを。',
+      urlLabel: 'ライブ配信または動画のリンク',
+      urlPlaceholder: 'ライブ配信または動画のリンクを貼り付け',
       languageLabel: '字幕の言語',
       modeLabel: '分析',
       modeAudio: '音声',
@@ -2403,6 +2643,8 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       checking: '確認中…',
       start: '開始',
       resolveError: 'このリンクを読み取れませんでした。確認してもう一度お試しください。',
+      recordedTooLongError:
+        'この動画は 3 時間を超えています。短い動画かライブ配信のリンクを貼り付けてください。',
       youtubeHandleError:
         'YouTubeのチャンネル名（@name）はここでは開けません。YouTubeでライブ配信を開き、動画のリンクかチャンネルの /channel/UC… リンクを貼り付けてください。',
       attestLabel: 'この配信を分析する権利を持っています。',
@@ -2455,6 +2697,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       sessionError: 'セッションを開始できませんでした。',
       analysisTitle: 'AI 分析',
       liveBadge: 'ライブ',
+      videoBadge: '動画',
+      videoEndedTitle: '動画が終了しました',
+      videoEndedDescription: '動画は最後まで再生されました。最終要約は下にあります。',
       tabFeed: 'スマートフィード',
       tabCaptions: '字幕',
       tabHighlights: 'ハイライト',
@@ -2477,6 +2722,28 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       watchOnYoutube: 'YouTubeで見る',
       videoLabel: 'ライブ映像',
     },
+    summary: {
+      badge: '要約',
+      button: '動画を要約',
+      playAlong: 'ライブ分析で見る',
+      choiceHint: '動画に合わせて進む分析と一緒に見るか、レポート全体を一度に受け取れます。',
+      dialogTitle: 'この動画を要約',
+      dialogDescription:
+        'ClawAI が今すぐ動画全体を読み取り、要約、時刻付きの重要な場面、ハイライト、全文の文字起こしをお届けします。履歴に保存されます。',
+      uses: 'ライブ時間を {minutes} 分使います（動画の長さ）。',
+      lengthUnknown:
+        'このサイトは動画の長さを公開していません。動画 1 分につきライブ時間 1 分を使います。',
+      freeLeft: '今月の残りの無料時間：{minutes} 分。',
+      paid: '{minutes} 分は無料時間を超えるため、プランの 1 分あたりの料金で支払われます。',
+      cancel: 'キャンセル',
+      confirm: '要約する',
+      confirmPaid: '承認して要約',
+      feedEmpty: '動画を要約しています… レポートはここに表示されます。',
+      workingTitle: '動画を要約しています',
+      workingDescription: 'ClawAI が動画全体を読み取っています。レポートは下に表示されます。',
+      readyTitle: '要約が完了しました',
+      readyDescription: '動画全体を要約しました。履歴からいつでも開けます。',
+    },
     platform: {
       recognised: 'プラットフォーム: {platform}',
       captureTitle: 'ブラウザーで AI 分析',
@@ -2484,6 +2751,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         '{platform} はここで再生できます。字幕・要約・ハイライトを使うには、プレーヤーの下の「ブラウザーで分析」を押して、このタブの音声を共有してください。',
       serverPullTitle: 'AI は ClawAI のサーバーで動作します',
       serverPullNotice: 'スマートフォンを含むあらゆる端末で使えます。',
+      recordedTitle: '録画動画：AI が一緒に再生します',
+      recordedNotice:
+        'ClawAI のサーバーが動画を最初から再生し、字幕・要約・ハイライトがそれに合わせて表示されます。どの端末でも使えます。',
       serverPullUnavailable:
         'ClawAI はこの配信を直接読み取れなかったため、AI は端末の音声を使います。',
       captureNoticeMic:
@@ -2681,13 +2951,13 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
     },
   },
   [Locale.PT]: {
-    nav: { live: 'Ao vivo', adminLive: 'Análise ao vivo' },
+    nav: { live: 'Ao vivo e vídeos', adminLive: 'Análise de ao vivo e vídeos' },
     page: {
-      title: 'Análise ao vivo',
+      title: 'Análise de ao vivo e vídeos',
       description:
-        'Assista a uma transmissão ao vivo com legendas no seu idioma, resumos curtos e destaques.',
-      urlLabel: 'Link da transmissão ao vivo',
-      urlPlaceholder: 'Cole o link de uma transmissão ao vivo',
+        'Legendas, resumos e destaques de transmissões ao vivo e vídeos de mais de 30 plataformas.',
+      urlLabel: 'Link da transmissão ou do vídeo',
+      urlPlaceholder: 'Cole o link de uma transmissão ao vivo ou de um vídeo',
       languageLabel: 'Idioma das legendas',
       modeLabel: 'Análise',
       modeAudio: 'Áudio',
@@ -2697,6 +2967,8 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       checking: 'Verificando…',
       start: 'Iniciar',
       resolveError: 'Não conseguimos ler este link. Confira e tente de novo.',
+      recordedTooLongError:
+        'Este vídeo tem mais de 3 horas. Cole um vídeo mais curto ou uma transmissão ao vivo.',
       youtubeHandleError:
         'Nomes de canal do YouTube (@name) não podem ser abertos aqui. Abra a transmissão no YouTube e cole o link do vídeo ou o link /channel/UC… do canal.',
       attestLabel: 'Tenho os direitos para que esta transmissão seja analisada.',
@@ -2750,6 +3022,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       sessionError: 'Não foi possível iniciar a sessão.',
       analysisTitle: 'Análise com IA',
       liveBadge: 'AO VIVO',
+      videoBadge: 'VÍDEO',
+      videoEndedTitle: 'Vídeo encerrado',
+      videoEndedDescription: 'O vídeo chegou ao fim; o resumo final está abaixo.',
       tabFeed: 'Feed inteligente',
       tabCaptions: 'Legendas',
       tabHighlights: 'Destaques',
@@ -2773,6 +3048,29 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       watchOnYoutube: 'Assistir no YouTube',
       videoLabel: 'Vídeo ao vivo',
     },
+    summary: {
+      badge: 'RESUMO',
+      button: 'Resumir vídeo',
+      playAlong: 'Assistir com análise ao vivo',
+      choiceHint:
+        'Assista com uma análise que acompanha o vídeo, ou receba o relatório completo de uma vez.',
+      dialogTitle: 'Resumir este vídeo',
+      dialogDescription:
+        'A ClawAI lê agora o vídeo inteiro e entrega um resumo, os momentos-chave com o tempo, os destaques e a transcrição completa. Tudo fica salvo no seu histórico.',
+      uses: 'Usa {minutes} minutos ao vivo (a duração do vídeo).',
+      lengthUnknown:
+        'O site não informa a duração deste vídeo; cada minuto de vídeo usa um minuto ao vivo.',
+      freeLeft: 'Minutos grátis restantes neste mês: {minutes}.',
+      paid: '{minutes} minutos passam dos seus minutos grátis e são pagos pelo preço por minuto do seu plano.',
+      cancel: 'Cancelar',
+      confirm: 'Resumir',
+      confirmPaid: 'Aprovar e resumir',
+      feedEmpty: 'Resumindo o vídeo… o relatório aparece aqui.',
+      workingTitle: 'Resumindo o vídeo',
+      workingDescription: 'A ClawAI está lendo o vídeo inteiro; o relatório se completa abaixo.',
+      readyTitle: 'Resumo pronto',
+      readyDescription: 'O vídeo inteiro foi resumido. Encontre-o de novo no seu histórico.',
+    },
     platform: {
       recognised: 'Plataforma: {platform}',
       captureTitle: 'Análise com IA pelo seu navegador',
@@ -2780,6 +3078,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         '{platform} é reproduzido aqui. Para legendas, resumos e destaques, toque em “Analisar com meu navegador” abaixo do player e compartilhe o áudio desta aba.',
       serverPullTitle: 'A IA roda nos servidores da ClawAI',
       serverPullNotice: 'Funciona em qualquer dispositivo, inclusive celulares.',
+      recordedTitle: 'Vídeo gravado: a IA acompanha com você',
+      recordedNotice:
+        'O servidor da ClawAI reproduz o vídeo desde o início; legendas, resumos e destaques o acompanham. Funciona em qualquer dispositivo.',
       serverPullUnavailable:
         'A ClawAI não conseguiu ler esta transmissão diretamente, então a IA usa o áudio do seu dispositivo.',
       captureNoticeMic:
@@ -2981,13 +3282,13 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
     },
   },
   [Locale.RU]: {
-    nav: { live: 'Эфир', adminLive: 'Анализ эфиров' },
+    nav: { live: 'Эфиры и видео', adminLive: 'Анализ эфиров и видео' },
     page: {
-      title: 'Анализ эфиров',
+      title: 'Анализ эфиров и видео',
       description:
-        'Смотрите прямую трансляцию с субтитрами на вашем языке, краткими сводками и ключевыми моментами.',
-      urlLabel: 'Ссылка на трансляцию',
-      urlPlaceholder: 'Вставьте ссылку на трансляцию',
+        'Субтитры, сводки и главные моменты для прямых эфиров и видео с более чем 30 платформ.',
+      urlLabel: 'Ссылка на эфир или видео',
+      urlPlaceholder: 'Вставьте ссылку на прямой эфир или видео',
       languageLabel: 'Язык субтитров',
       modeLabel: 'Анализ',
       modeAudio: 'Звук',
@@ -2997,6 +3298,8 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       checking: 'Проверяем…',
       start: 'Начать',
       resolveError: 'Не удалось прочитать эту ссылку. Проверьте её и попробуйте снова.',
+      recordedTooLongError:
+        'Это видео длиннее 3 часов. Вставьте видео покороче или прямую трансляцию.',
       youtubeHandleError:
         'Имена каналов YouTube (@name) здесь не открываются. Откройте трансляцию на YouTube и вставьте ссылку на видео или ссылку канала /channel/UC….',
       attestLabel: 'У меня есть права на анализ этой трансляции.',
@@ -3050,6 +3353,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       sessionError: 'Не удалось запустить сеанс.',
       analysisTitle: 'Анализ ИИ',
       liveBadge: 'ЭФИР',
+      videoBadge: 'ВИДЕО',
+      videoEndedTitle: 'Видео закончилось',
+      videoEndedDescription: 'Видео досмотрено до конца; итоговая сводка ниже.',
       tabFeed: 'Умная лента',
       tabCaptions: 'Субтитры',
       tabHighlights: 'Ключевые моменты',
@@ -3073,6 +3379,29 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       watchOnYoutube: 'Смотреть на YouTube',
       videoLabel: 'Видео в прямом эфире',
     },
+    summary: {
+      badge: 'СВОДКА',
+      button: 'Кратко о видео',
+      playAlong: 'Смотреть с живым анализом',
+      choiceHint:
+        'Смотрите с анализом, который идёт вместе с видео, или получите весь отчёт сразу.',
+      dialogTitle: 'Сделать сводку этого видео',
+      dialogDescription:
+        'ClawAI сейчас прочитает всё видео и даст сводку, ключевые моменты с таймкодами, главные моменты и полную расшифровку. Всё сохранится в истории.',
+      uses: 'Расходует {minutes} минут эфира (длина видео).',
+      lengthUnknown:
+        'Сайт не сообщает длину этого видео; на каждую минуту видео расходуется минута эфира.',
+      freeLeft: 'Бесплатных минут осталось в этом месяце: {minutes}.',
+      paid: '{minutes} минут сверх бесплатных оплачиваются по поминутной цене вашего тарифа.',
+      cancel: 'Отмена',
+      confirm: 'Сделать сводку',
+      confirmPaid: 'Подтвердить и сделать сводку',
+      feedEmpty: 'Делаем сводку видео… отчёт появится здесь.',
+      workingTitle: 'Делаем сводку видео',
+      workingDescription: 'ClawAI читает всё видео; отчёт заполняется ниже.',
+      readyTitle: 'Сводка готова',
+      readyDescription: 'Сводка по всему видео готова. Её можно найти в истории.',
+    },
     platform: {
       recognised: 'Платформа: {platform}',
       captureTitle: 'ИИ-анализ через ваш браузер',
@@ -3080,6 +3409,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         '{platform} воспроизводится здесь. Чтобы получить субтитры, сводки и главные моменты, нажмите «Анализировать в моём браузере» под плеером и поделитесь звуком этой вкладки.',
       serverPullTitle: 'ИИ работает на серверах ClawAI',
       serverPullNotice: 'Работает на любом устройстве, включая телефоны.',
+      recordedTitle: 'Записанное видео: ИИ смотрит вместе с вами',
+      recordedNotice:
+        'Сервер ClawAI воспроизводит видео с начала; субтитры, сводки и главные моменты идут вслед за ним. Работает на любом устройстве.',
       serverPullUnavailable:
         'ClawAI не удалось прочитать эту трансляцию напрямую, поэтому ИИ использует звук вашего устройства.',
       captureNoticeMic:
@@ -3281,12 +3613,12 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
     },
   },
   [Locale.TH]: {
-    nav: { live: 'สด', adminLive: 'การวิเคราะห์สด' },
+    nav: { live: 'ไลฟ์และวิดีโอ', adminLive: 'วิเคราะห์ไลฟ์และวิดีโอ' },
     page: {
-      title: 'การวิเคราะห์สด',
-      description: 'ดูสตรีมสดพร้อมคำบรรยายในภาษาของคุณ สรุปสั้น ๆ และไฮไลต์',
-      urlLabel: 'ลิงก์สตรีมสด',
-      urlPlaceholder: 'วางลิงก์สตรีมสด',
+      title: 'วิเคราะห์ไลฟ์และวิดีโอ',
+      description: 'คำบรรยาย สรุป และไฮไลต์สำหรับไลฟ์สตรีมและวิดีโอจากกว่า 30 แพลตฟอร์ม',
+      urlLabel: 'ลิงก์ไลฟ์สตรีมหรือวิดีโอ',
+      urlPlaceholder: 'วางลิงก์ไลฟ์สตรีมหรือวิดีโอ',
       languageLabel: 'ภาษาของคำบรรยาย',
       modeLabel: 'การวิเคราะห์',
       modeAudio: 'เสียง',
@@ -3296,6 +3628,7 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       checking: 'กำลังตรวจสอบ…',
       start: 'เริ่ม',
       resolveError: 'เราอ่านลิงก์นี้ไม่ได้ โปรดตรวจสอบแล้วลองอีกครั้ง',
+      recordedTooLongError: 'วิดีโอนี้ยาวเกิน 3 ชั่วโมง วางวิดีโอที่สั้นกว่าหรือไลฟ์สตรีมแทน',
       youtubeHandleError:
         'เปิดชื่อช่อง YouTube (@name) ที่นี่ไม่ได้ โปรดเปิดสตรีมสดบน YouTube แล้ววางลิงก์วิดีโอ หรือลิงก์ /channel/UC… ของช่อง',
       attestLabel: 'ฉันมีสิทธิ์ให้วิเคราะห์สตรีมนี้',
@@ -3347,6 +3680,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       sessionError: 'เริ่มเซสชันไม่ได้',
       analysisTitle: 'การวิเคราะห์ด้วย AI',
       liveBadge: 'สด',
+      videoBadge: 'วิดีโอ',
+      videoEndedTitle: 'วิดีโอจบแล้ว',
+      videoEndedDescription: 'วิดีโอเล่นจนจบ สรุปสุดท้ายอยู่ด้านล่าง',
       tabFeed: 'ฟีดอัจฉริยะ',
       tabCaptions: 'คำบรรยาย',
       tabHighlights: 'ไฮไลต์',
@@ -3369,6 +3705,27 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       watchOnYoutube: 'ดูบน YouTube',
       videoLabel: 'วิดีโอสด',
     },
+    summary: {
+      badge: 'สรุป',
+      button: 'สรุปวิดีโอ',
+      playAlong: 'ดูพร้อมการวิเคราะห์แบบสด',
+      choiceHint: 'ดูพร้อมการวิเคราะห์ที่ตามวิดีโอไป หรือรับรายงานทั้งหมดในครั้งเดียว',
+      dialogTitle: 'สรุปวิดีโอนี้',
+      dialogDescription:
+        'ClawAI จะอ่านวิดีโอทั้งหมดตอนนี้ แล้วให้สรุป ช่วงสำคัญพร้อมเวลา ไฮไลต์ และคำถอดความฉบับเต็ม ทั้งหมดบันทึกไว้ในประวัติของคุณ',
+      uses: 'ใช้ {minutes} นาทีไลฟ์ (ความยาวของวิดีโอ)',
+      lengthUnknown: 'เว็บไซต์ไม่ได้บอกความยาวของวิดีโอนี้ จะใช้หนึ่งนาทีไลฟ์ต่อวิดีโอหนึ่งนาที',
+      freeLeft: 'นาทีฟรีที่เหลือเดือนนี้: {minutes}',
+      paid: '{minutes} นาทีเกินนาทีฟรีของคุณ และคิดตามราคาต่อนาทีของแพ็กเกจคุณ',
+      cancel: 'ยกเลิก',
+      confirm: 'สรุป',
+      confirmPaid: 'อนุมัติและสรุป',
+      feedEmpty: 'กำลังสรุปวิดีโอ… รายงานจะแสดงที่นี่',
+      workingTitle: 'กำลังสรุปวิดีโอ',
+      workingDescription: 'ClawAI กำลังอ่านวิดีโอทั้งหมด รายงานจะเติมด้านล่าง',
+      readyTitle: 'สรุปพร้อมแล้ว',
+      readyDescription: 'สรุปวิดีโอทั้งหมดแล้ว ดูอีกครั้งได้ในประวัติของคุณ',
+    },
     platform: {
       recognised: 'แพลตฟอร์ม: {platform}',
       captureTitle: 'วิเคราะห์ด้วย AI ผ่านเบราว์เซอร์ของคุณ',
@@ -3376,6 +3733,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         '{platform} เล่นได้ที่นี่ หากต้องการคำบรรยาย สรุป และไฮไลต์ ให้กด “วิเคราะห์ด้วยเบราว์เซอร์ของฉัน” ใต้เครื่องเล่นแล้วแชร์เสียงของแท็บนี้',
       serverPullTitle: 'AI ทำงานบนเซิร์ฟเวอร์ของ ClawAI',
       serverPullNotice: 'ใช้ได้ทุกอุปกรณ์ รวมถึงโทรศัพท์',
+      recordedTitle: 'วิดีโอที่บันทึกไว้: AI ดูไปพร้อมกับคุณ',
+      recordedNotice:
+        'เซิร์ฟเวอร์ของ ClawAI เล่นวิดีโอตั้งแต่ต้น คำบรรยาย สรุป และไฮไลต์จะตามไปด้วย ใช้ได้กับทุกอุปกรณ์',
       serverPullUnavailable: 'ClawAI อ่านสตรีมนี้โดยตรงไม่ได้ AI จึงใช้เสียงจากอุปกรณ์ของคุณ',
       captureNoticeMic: 'AI ฟังผ่านไมโครโฟนของคุณขณะสตรีม {platform} กำลังเล่น เปิดเสียงไว้ด้วย',
       linkOnlyTitle: 'ไม่มีเครื่องเล่นของ {platform} ที่นี่',
@@ -3562,12 +3922,12 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
     },
   },
   [Locale.ZH]: {
-    nav: { live: '直播', adminLive: '直播分析' },
+    nav: { live: '直播与视频', adminLive: '直播与视频智能' },
     page: {
-      title: '直播分析',
-      description: '观看直播，并获得你所用语言的字幕、简短摘要和精彩片段。',
-      urlLabel: '直播链接',
-      urlPlaceholder: '粘贴直播链接',
+      title: '直播与视频智能',
+      description: '为 30+ 平台的直播和视频提供字幕、摘要和精彩片段。',
+      urlLabel: '直播或视频链接',
+      urlPlaceholder: '粘贴直播或视频链接',
       languageLabel: '字幕语言',
       modeLabel: '分析',
       modeAudio: '音频',
@@ -3577,6 +3937,7 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       checking: '正在检查…',
       start: '开始',
       resolveError: '无法读取此链接。请检查后重试。',
+      recordedTooLongError: '此视频超过 3 小时。请粘贴更短的视频或直播。',
       youtubeHandleError:
         '无法在此打开 YouTube 频道名（@name）。请在 YouTube 上打开直播，然后粘贴视频链接或频道的 /channel/UC… 链接。',
       attestLabel: '我有权对这个直播进行分析。',
@@ -3628,6 +3989,9 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       sessionError: '无法开始会话。',
       analysisTitle: 'AI 分析',
       liveBadge: '直播',
+      videoBadge: '视频',
+      videoEndedTitle: '视频已结束',
+      videoEndedDescription: '视频已播放完毕，最终摘要在下方。',
       tabFeed: '智能动态',
       tabCaptions: '字幕',
       tabHighlights: '精彩片段',
@@ -3650,6 +4014,27 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
       watchOnYoutube: '在 YouTube 上观看',
       videoLabel: '直播视频',
     },
+    summary: {
+      badge: '摘要',
+      button: '总结视频',
+      playAlong: '边看边实时分析',
+      choiceHint: '一边观看一边跟随视频的分析，或一次性获得完整报告。',
+      dialogTitle: '总结此视频',
+      dialogDescription:
+        'ClawAI 现在读取整个视频，为你生成摘要、带时间的关键时刻、精彩片段和完整文字稿，并保存在你的历史记录中。',
+      uses: '使用 {minutes} 分钟直播时长（视频长度）。',
+      lengthUnknown: '该网站未提供此视频的时长；每分钟视频使用一分钟直播时长。',
+      freeLeft: '本月剩余免费分钟：{minutes}。',
+      paid: '{minutes} 分钟超出免费额度，将按你套餐的每分钟价格付费。',
+      cancel: '取消',
+      confirm: '总结',
+      confirmPaid: '批准并总结',
+      feedEmpty: '正在总结视频…报告将显示在这里。',
+      workingTitle: '正在总结视频',
+      workingDescription: 'ClawAI 正在读取整个视频，报告会在下方逐步显示。',
+      readyTitle: '摘要已完成',
+      readyDescription: '整个视频已总结完毕，可在历史记录中再次查看。',
+    },
     platform: {
       recognised: '平台：{platform}',
       captureTitle: '用你的浏览器进行 AI 分析',
@@ -3657,6 +4042,8 @@ export const LIVE_TRANSLATIONS: Record<Locale, LiveLocaleTranslation> = {
         '{platform} 可在此播放。如需字幕、摘要和精彩片段，请点击播放器下方的“用我的浏览器分析”，并共享此标签页的音频。',
       serverPullTitle: 'AI 在 ClawAI 服务器上运行',
       serverPullNotice: '适用于任何设备，包括手机。',
+      recordedTitle: '录制视频：AI 跟着一起播放',
+      recordedNotice: 'ClawAI 服务器从头播放视频，字幕、摘要和精彩片段随之出现。任何设备均可使用。',
       serverPullUnavailable: 'ClawAI 无法直接读取此直播，因此 AI 使用你设备的音频。',
       captureNoticeMic: '{platform} 直播播放时，AI 会通过你的麦克风收听。请保持声音开启。',
       linkOnlyTitle: '此处没有 {platform} 播放器',

@@ -54,6 +54,19 @@ describe('LiveSourceNotice', () => {
     expect(notice).toHaveTextContent('Platform: Twitch');
   });
 
+  it('RECORDED: says the server plays the video along from the start, on any device', () => {
+    renderNotice({
+      ...TWITCH,
+      capability: LiveCapability.RECORDED,
+      reasonCode: 'RECORDED_VIDEO',
+      platform: LivePlatform.DAILYMOTION,
+    });
+    const notice = screen.getByTestId('live-recorded-notice');
+    expect(notice).toHaveTextContent('Recorded video: AI plays along');
+    expect(notice).toHaveTextContent('plays the video from the start');
+    expect(notice).toHaveTextContent('Platform: Dailymotion');
+  });
+
   it('BROWSER_CAPTURE after a failed server pull: explains the device audio fallback', () => {
     renderNotice({
       ...TWITCH,

@@ -47,6 +47,8 @@ export type LiveSourceResolution = LivePlatformFields & {
   capability: LiveCapability;
   embedUrl: string | null;
   reasonCode: string | null;
+  /** A recorded video's length in seconds (the summary estimate); null or absent when unknown. */
+  durationSeconds?: number | null;
 };
 
 export type LiveCreateSessionInput = {
@@ -54,6 +56,19 @@ export type LiveCreateSessionInput = {
   language: string;
   mode: LiveMode;
   attestRights: boolean;
+  /** One-click "Summarize video": the whole recorded video at once. */
+  summarize?: boolean;
+  /** Approve paid minutes right after the session opens (the viewer confirmed the estimate). */
+  approvePaid?: boolean;
+};
+
+/** What a one-click summary will use, in whole minutes (the video's length counts as Live minutes). */
+export type LiveSummaryEstimate = {
+  /** Null when the site does not report the length. */
+  minutes: number | null;
+  freeMinutesLeft: number;
+  /** Minutes past the free allowance (0 when it fits or the length is unknown). */
+  paidMinutes: number;
 };
 
 /** Session-scoped billing counters (`usage` on create and heartbeat). Money is integer micro-USD. */
@@ -78,6 +93,9 @@ export type LiveSession = LivePlatformFields & {
   state: LiveSessionState;
   usage: LiveSessionUsage;
   closeToken: string;
+  /** A one-click summary session: everything is shown at once, times as offsets from mediaStartAt. */
+  summary?: boolean;
+  mediaStartAt?: number | null;
 };
 
 /** `seekableFromAt` is omitted (never null) when the player has no seekable window. */
@@ -372,6 +390,8 @@ export type UseLiveStartFormResult = {
   setAttestRights: (value: boolean) => void;
   resolve: () => void;
   buildSessionInput: () => LiveCreateSessionInput | null;
+  /** True for a recorded video: the "Summarize video" button is offered beside Start. */
+  canSummarize: boolean;
 };
 
 export type UseLiveHistoryResult = {
@@ -415,6 +435,22 @@ export type UseLivePageResult = {
   closeModal: () => void;
   openDetail: (id: string) => void;
   closeDetail: () => void;
+  summary: UseLiveSummaryStartResult;
+};
+
+/** The "Summarize video" estimate dialog: open while `estimate` is not null. */
+export type UseLiveSummaryStartResult = {
+  estimate: LiveSummaryEstimate | null;
+  openSummary: () => void;
+  closeSummary: () => void;
+  confirmSummary: () => void;
+};
+
+export type LiveSummaryDialogProps = {
+  estimate: LiveSummaryEstimate | null;
+  t: TranslateFunction;
+  onConfirm: () => void;
+  onCancel: () => void;
 };
 
 export type UseLiveSessionResult = {
@@ -524,6 +560,11 @@ export type UseLiveModalResult = {
   t: TranslateFunction;
   locale: string;
   session: LiveSession | null;
+  /** A one-click summary: the whole report is shown at once. */
+  isSummary: boolean;
+  /** The summary's media start (times as offsets into the video); null otherwise. */
+  clockOrigin: number | null;
+  statusPresentation: LiveStatusPresentation;
   sessionError: string | null;
   isCreating: boolean;
   isPlayerOnly: boolean;
@@ -563,6 +604,7 @@ export type LiveStartFormProps = {
   form: UseLiveStartFormResult;
   t: TranslateFunction;
   onStart: () => void;
+  onSummarize: () => void;
 };
 
 export type LiveSourceNoticeProps = {
@@ -647,6 +689,8 @@ export type LiveCaptionsOverlayProps = {
 
 export type LiveStatusBannerProps = {
   status: LiveStatusCode;
+  /** The wording for this session (a summary and a recorded video read differently from a stream). */
+  presentation: LiveStatusPresentation;
   isReconnecting: boolean;
   isLost: boolean;
   t: TranslateFunction;
@@ -669,6 +713,8 @@ export type LiveFeedListProps = {
   locale: string;
   allowEnhance: boolean;
   emptyLabel: string;
+  /** A one-click summary's media start: times show as offsets into the video. */
+  clockOrigin?: number | null;
 };
 
 export type LiveFeedCardProps = {
@@ -676,6 +722,8 @@ export type LiveFeedCardProps = {
   t: TranslateFunction;
   locale: string;
   allowEnhance: boolean;
+  /** A one-click summary's media start: times show as offsets into the video. */
+  clockOrigin?: number | null;
 };
 
 export type LiveCardEventProps = { eventId: string; t: TranslateFunction; locale: string };
@@ -685,6 +733,8 @@ export type LiveCaptionsListProps = {
   captions: LiveCaption[];
   t: TranslateFunction;
   locale: string;
+  /** A one-click summary's media start: times show as offsets into the video. */
+  clockOrigin?: number | null;
 };
 
 export type LiveTimelineProps = {

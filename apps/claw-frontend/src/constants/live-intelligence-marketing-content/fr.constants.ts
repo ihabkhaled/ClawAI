@@ -1,168 +1,357 @@
-import type { LiveIntelligenceMarketingDictionary } from '@/types/live-intelligence-marketing-content.types';
+import { LiveMarketingPlatformGroup } from '@/enums/live-marketing-platform-group.enum';
+import type {
+  LiveIntelligenceMarketingDictionary,
+  LiveIntelligenceMarketingSeo,
+} from '@/types/live-intelligence-marketing-content.types';
 
-/** French copy for the public Live Intelligence page. Same claims as the English source. */
+/**
+ * The French copy of the public Live & Video Intelligence pages. Every claim mirrors the English
+ * file (`en.constants.ts`); nothing here may say more than it does.
+ */
 export const FR_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDictionary = {
-  eyebrow: 'Nouveau dans ClawAI',
-  title: 'Live Intelligence : sous-titres, résumés et temps forts d’un direct',
+  eyebrow: 'Nouveau dans ClawAI : Live & Video Intelligence',
+  title: 'Chaque direct, chaque vidéo, compris dans votre langue',
   intro:
-    'Collez le lien d’un direct et regardez-le dans ClawAI. Pendant la lecture, ClawAI transforme la parole en sous-titres dans la langue de votre choix, tient à jour de courtes cartes de résumé quand le sujet change et repère les moments importants sur une frise. Fermez la fenêtre : ce que vous avez regardé reste dans votre historique, prêt à être enrichi et exporté.',
-  openCta: 'Ouvrir Live Intelligence',
-  pricingCta: 'Voir les offres et les tarifs',
-  howItWorksCta: 'Voir le fonctionnement',
-  whatTitle: 'Ce qu’est Live Intelligence',
-  whatParagraphs: [
-    'Un direct est difficile à suivre quand il est long, rapide ou dans une langue que vous ne parlez pas. Live Intelligence se place à côté de la vidéo et prend les notes : sous-titres traduits dans votre langue, résumé continu et liste des temps forts, pour que vous puissiez détourner les yeux sans perdre le fil.',
-    'Tout se passe dans une fenêtre de ClawAI : le direct et l’analyse sont sur le même écran. Vous choisissez la langue des sous-titres et un mode d’analyse avant de commencer, puis vous pouvez mettre en pause, reprendre et vous déplacer là où le flux le permet. En pause, le flux est figé et la facturation s’arrête.',
-    'Plusieurs personnes peuvent regarder le même direct sans payer plusieurs fois le même travail. Quand ClawAI analyse un flux sur ses propres serveurs, comme un direct public sur YouTube, Twitch, TikTok LIVE ou une autre plateforme prise en charge, ou un lien HLS, il le traite une seule fois et partage l’analyse avec tous ses spectateurs. L’analyse que vous avez réellement regardée est enregistrée dans votre historique, et vous la gardez jusqu’à ce que vous la supprimiez.',
+    'Collez le lien d’un direct ou d’une vidéo enregistrée provenant de plus de 30 plateformes. ClawAI le suit avec des sous-titres en direct et un flux continu de résumés et de temps forts, ou transforme la vidéo entière en un rapport clair en un seul clic. Tout tourne sur les serveurs de ClawAI : cela fonctionne donc sur n’importe quel appareil, y compris votre téléphone.',
+  openCta: 'Collez un lien maintenant',
+  signUpCta: 'Créer un compte gratuit',
+  howItWorksCta: 'Voir comment ça marche',
+  videosTitle: 'Voyez-le à l’œuvre',
+  videosIntro:
+    'Deux courts extraits du vrai produit. Appuyez sur lecture : ils sont muets par défaut et tournent en boucle, vous pouvez donc les regarder n’importe où.',
+  videos: [
+    {
+      title: 'Le panneau Analyse IA à côté d’un stream de jeu vidéo',
+      body: 'Un stream de jeu vidéo est en cours pendant que le panneau Analyse IA tient un fil continu de ce qui se passe à l’écran et de ce qui se dit.',
+    },
+    {
+      title: 'Un journal télévisé en direct en arabe, sous-titré en anglais sur un téléphone',
+      body: 'L’enregistrement sur téléphone d’un journal en direct sur YouTube : la présentatrice parle arabe, les sous-titres s’affichent en anglais et le Flux intelligent résume l’actualité jusqu’ici.',
+    },
   ],
-  stepsTitle: 'Comment ça marche, en cinq étapes',
-  stepsIntro:
-    'Du lien collé au résumé exporté. Chaque étape est une action de votre part ou un travail que ClawAI fait pour vous.',
+  stepsTitle: 'Comment ça marche, en quatre étapes',
+  stepsIntro: 'D’un lien collé à des notes que vous pouvez garder. Rien à installer.',
   steps: [
     {
-      title: 'Collez le lien',
-      body: 'Ouvrez Live Intelligence et collez l’adresse d’un direct. ClawAI vérifie que la source est prise en charge avant toute analyse ou facturation, et vous le dit clairement si ce n’est pas le cas.',
+      title: 'Collez un lien',
+      body: 'Collez l’adresse d’un direct ou d’une vidéo enregistrée : un reel, une publication, un short ou un ancien live. ClawAI vérifie qu’il peut lire la source avant de démarrer quoi que ce soit.',
     },
     {
-      title: 'Choisissez une langue et un mode',
-      body: 'Choisissez la langue des sous-titres et des résumés, puis l’un des trois modes : Audio, Audio + Vision ou Smart Auto. Pour un lien HLS, vous confirmez avoir le droit de l’analyser. Si les serveurs de ClawAI ne peuvent pas lire un direct YouTube, Twitch, Kick ou Facebook, vous pouvez accepter que ClawAI écoute plutôt via votre appareil.',
+      title: 'Choisissez votre langue et un mode',
+      body: 'Choisissez la langue dans laquelle vous voulez lire, parmi les 13 langues de l’application, ainsi qu’un mode d’analyse : Son, Son + image ou Auto intelligent.',
     },
     {
-      title: 'Regardez avec sous-titres, cartes et temps forts',
-      body: 'Les sous-titres apparaissent quelques secondes après la parole, environ 7 à 12 secondes de retard. Les cartes de résumé changent avec les sujets et les temps forts détectés sont placés sur une frise cliquable.',
+      title: 'Suivez en direct, ou cliquez sur « Résumer la vidéo »',
+      body: 'Suivez le contenu avec des sous-titres et un Flux intelligent de résumés, de temps forts et de notes visuelles. Pour une vidéo enregistrée, vous pouvez aussi cliquer sur « Résumer la vidéo » et obtenir le rapport complet d’un coup.',
     },
     {
-      title: 'Pause, reprise et déplacement',
-      body: 'Mettez en pause pour figer le flux et arrêter le compteur. Reprenez là où vous vous étiez arrêté ou revenez au direct, avec l’écart affiché clairement. Le déplacement dans le flux fonctionne là où la source le permet.',
-    },
-    {
-      title: 'Fermez, revenez, enrichissez, exportez',
-      body: 'En fermant la fenêtre, ce que vous avez regardé reste dans votre historique. Vous pouvez ensuite enrichir une carte avec le modèle de votre choix et exporter l’historique en PDF, Markdown ou TXT.',
+      title: 'Exportez et partagez',
+      body: 'Tout est enregistré dans votre historique. Exportez-le en PDF, Markdown ou TXT et partagez-le avec qui en a besoin.',
     },
   ],
-  featuresTitle: 'Ce que vous obtenez',
-  features: [
+  screenshotsTitle: 'À quoi ça ressemble sur un téléphone',
+  screenshotsIntro: 'De vrais écrans de l’application, capturés sur un téléphone en thème sombre.',
+  screenshots: [
     {
-      title: 'Sous-titres en direct dans votre langue',
-      body: 'La parole est transcrite puis traduite dans la langue choisie. Les sous-titres arrivent quelques secondes après l’orateur : ce n’est pas instantané, et l’interface le dit.',
+      title: 'Coller le lien d’un direct ou d’une vidéo',
+      body: 'Un seul champ accepte un lien de n’importe quelle plateforme prise en charge. Choisissez la langue et le mode, puis lancez.',
     },
     {
-      title: 'Des cartes de résumé qui suivent',
-      body: 'De courtes cartes résument le direct et sont actualisées quand le sujet change : la dernière carte vous dit où en est le direct.',
+      title: 'Le flux en direct avec sous-titres, résumés et temps forts',
+      body: 'Les sous-titres suivent l’orateur à quelques secondes près, tandis que le Flux intelligent tient à jour résumés, temps forts et notes visuelles.',
     },
     {
-      title: 'Temps forts automatiques sur une frise',
-      body: 'Les moments à revoir sont détectés et marqués sur une frise. Cliquez pour y aller, quand le flux autorise le déplacement.',
+      title: 'Un résumé vidéo en un clic',
+      body: 'Le rapport final : un résumé global, les moments clés horodatés, les temps forts et la transcription complète.',
+    },
+  ],
+  outcomesTitle: 'Ce que ça change pour vous',
+  outcomes: [
+    {
+      title: 'Rattrapez un live de deux heures en quelques minutes',
+      body: 'Lisez le résumé et les moments clés au lieu de parcourir tout l’enregistrement. Chaque moment est horodaté : vous sautez directement au passage qui compte.',
     },
     {
-      title: 'Pause, reprise et déplacement',
-      body: 'Contrôlez la lecture comme un enregistrement quand la source le permet. En pause, le flux est figé et rien n’est facturé.',
+      title: 'Suivez une émission en langue étrangère dans votre langue',
+      body: 'Une conférence de presse en japonais, un commentaire de match en espagnol, le journal en arabe : lisez les sous-titres et les résumés dans la langue de votre choix.',
     },
     {
-      title: 'Un historique que vous maîtrisez',
-      body: 'L’analyse regardée est conservée dans un historique paginé jusqu’à ce que vous la supprimiez. La supprimer l’efface.',
+      title: 'Ne manquez plus jamais le moment clé',
+      body: 'Les temps forts sont repérés au fil du direct : vous pouvez détourner les yeux et savoir quand même ce qui vient de se passer.',
     },
     {
-      title: 'Enrichir une carte avec le modèle de votre choix',
-      body: 'Choisissez un modèle disponible pour reformuler ou approfondir une carte. L’enrichissement est facturé au coût réel du modèle choisi.',
+      title: 'Des notes pour les réunions, les cours, l’actualité et le jeu vidéo',
+      body: 'Transformez un webinaire public, un cours enregistré, un direct d’actualité ou un tournoi en notes que vous pouvez rechercher, conserver et exporter.',
     },
     {
-      title: 'Export en PDF, Markdown ou TXT',
-      body: 'Sortez votre historique de ClawAI dans le format qui convient à la suite.',
+      title: 'Fonctionne sur tous les appareils',
+      body: 'ClawAI lit le direct sur ses propres serveurs. Vous n’avez rien à partager depuis votre écran, donc cela fonctionne de la même façon sur téléphone, tablette ou ordinateur.',
     },
     {
-      title: 'Traitement partagé',
-      body: 'Beaucoup de spectateurs, une seule analyse. Un direct public que les serveurs de ClawAI peuvent lire, ou un flux HLS, est traité une fois sur les serveurs de ClawAI et partagé avec tous ceux qui le regardent, sur n’importe quel appareil, téléphone compris. Une analyse faite à partir du son de votre propre appareil reste privée.',
+      title: 'Votre historique, vos exports',
+      body: 'Ce que vous avez regardé et chaque résumé que vous avez créé restent dans votre historique, prêts à être exportés en PDF, Markdown ou TXT.',
+    },
+  ],
+  waysTitle: 'Deux façons de l’utiliser',
+  waysIntro:
+    'Suivez un direct au moment où il se déroule, ou confiez une vidéo enregistrée à ClawAI et recevez le rapport en une fois.',
+  ways: [
+    {
+      title: 'Analyse en direct : suivez en même temps',
+      body: 'Les sous-titres arrivent environ 7 à 12 secondes après la parole, et un Flux intelligent continu ajoute résumés, temps forts et notes visuelles. Les plateformes dotées d’un chat en direct ont droit à un onglet de chat. Pour une vidéo enregistrée, ClawAI la lit depuis le début à vitesse normale et l’analyse suit.',
+    },
+    {
+      title: 'Résumer la vidéo : un seul clic',
+      body: 'Pour une vidéo enregistrée, ClawAI traite toute la vidéo d’un coup et renvoie un rapport complet : un résumé global, les moments clés horodatés, les temps forts et la transcription complète. Il est enregistré dans votre historique et s’exporte en PDF, Markdown ou TXT.',
+    },
+  ],
+  waysTableCaption: 'Analyse en direct et résumé en un clic, côte à côte',
+  waysTableAspect: 'Ce que vous obtenez',
+  waysTableLive: 'Analyse en direct',
+  waysTableSummary: 'Résumer la vidéo',
+  waysRows: [
+    {
+      label: 'Fonctionne avec',
+      live: 'Les directs et les vidéos enregistrées',
+      summary: 'Les vidéos enregistrées jusqu’à 3 heures',
+    },
+    {
+      label: 'Rythme',
+      live: 'Suit la vidéo en temps réel, sous-titres avec environ 7 à 12 secondes de décalage',
+      summary: 'Toute la vidéo est traitée d’un coup',
+    },
+    {
+      label: 'Résultat',
+      live: 'Sous-titres et Flux intelligent de résumés, temps forts et notes visuelles',
+      summary: 'Résumé global, moments clés horodatés, temps forts et transcription complète',
+    },
+    {
+      label: 'Chat en direct',
+      live: 'Un onglet de chat sur les plateformes qui en ont un',
+      summary: 'Inutile',
+    },
+    {
+      label: 'Conservation',
+      live: 'Enregistré dans votre historique, export en PDF, Markdown ou TXT',
+      summary: 'Enregistré dans votre historique, export en PDF, Markdown ou TXT',
     },
   ],
   modesTitle: 'Trois modes d’analyse',
   modesIntro:
-    'Le mode décide ce que ClawAI observe. Vous le choisissez avant de commencer, et le coût suit ce choix.',
+    'Le mode détermine ce à quoi ClawAI prête attention. Vous le choisissez avant de commencer.',
   modes: [
     {
-      title: 'Audio',
-      body: 'Sous-titres, résumés et temps forts à partir de ce qui est dit. Le mode le plus simple, adapté aux conférences, points de presse, cours et entretiens.',
+      title: 'Son',
+      body: 'Sous-titres, résumés et temps forts à partir de ce qui est dit. Idéal pour les conférences, interviews, podcasts, cours et journaux d’information.',
     },
     {
-      title: 'Audio + Vision',
-      body: 'Ajoute ce qui est montré à l’écran : diapositives, graphiques, démonstration. ClawAI échantillonne des images du flux et garde celles qui ont changé. La vision est facturée au coût réel du modèle utilisé.',
+      title: 'Son + image',
+      body: 'Ajoute ce qui s’affiche à l’écran, comme des diapositives, des graphiques, des tableaux de score ou du gameplay, pour que les notes décrivent ce que vous voyez autant que ce que vous entendez.',
     },
     {
-      title: 'Smart Auto',
-      body: 'Part de l’audio et n’ajoute la vision que lorsque le flux devient silencieux ou que l’image change, pour payer la vision quand elle a des chances de compter.',
+      title: 'Auto intelligent',
+      body: 'Part du son et regarde l’image quand elle a des chances de compter, par exemple quand l’orateur se tait ou que la scène change.',
     },
   ],
-  sourcesTitle: 'Ce qu’il peut et ne peut pas analyser',
-  sourcesIntro: 'Nous préférons vous dire les limites maintenant plutôt que pendant le direct.',
-  sources: [
+  researchNote:
+    'Recherche : un résumé peut lancer une recherche web pour ajouter du contexte, par exemple qui est un intervenant ou à quoi un événement fait référence.',
+  languagesTitle: 'Lisez-le dans votre langue',
+  languagesParagraphs: [
+    'Choisissez l’une des 13 langues de l’application : anglais, arabe, allemand, espagnol, persan, français, hindi, italien, japonais, portugais, russe, thaï ou chinois. L’orateur peut parler n’importe quelle langue.',
+    'Quand l’orateur parle déjà votre langue, vous lisez ses mots exacts. Sinon, les sous-titres, résumés et temps forts sont traduits, et la traduction s’affiche à la place de l’original.',
+  ],
+  platformsTitle: 'Plus de 30 plateformes',
+  platformsBody:
+    'YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X (Twitter), Bilibili, Niconico, CHZZK, SOOP et bien d’autres. Les directs comme les vidéos enregistrées fonctionnent.',
+  platformsCta: 'Voir toutes les plateformes',
+  limitsTitle: 'Bon à savoir',
+  limits: [
     {
-      title: '15 plateformes, analysées sur les serveurs de ClawAI',
-      body: 'ClawAI reconnaît 15 plateformes de direct. Quand un direct est en cours et public, et que la plateforme le permet, les serveurs de ClawAI le lisent eux-mêmes : YouTube, Twitch, Kick, Facebook, TikTok LIVE, Rumble, BIGO LIVE, Bilibili, CHZZK, SOOP, Nimo TV et d’autres. Rien à partager, cela fonctionne sur n’importe quel appareil, téléphone compris, et une seule analyse est partagée avec tous les spectateurs. Instagram Live ne peut généralement pas être lu par le serveur. Discord Go Live n’est pas pris en charge, faute de lien public. Les liens HLS que vous avez le droit d’analyser fonctionnent toujours ; vous le confirmez au démarrage.',
+      title: 'Uniquement les vidéos et directs publics',
+      body: 'ClawAI ne peut lire que les vidéos et directs publics. Certaines plateformes, ou certaines vidéos, peuvent refuser l’accès depuis un serveur ; dans ce cas, ClawAI vous le dit clairement au lieu de faire semblant.',
     },
     {
-      title: 'Quand le serveur ne peut pas lire un direct',
-      body: 'YouTube, Twitch, Kick et Facebook se lisent alors dans leur lecteur officiel, et l’IA écoute le son de votre appareil une fois votre accord donné : sur ordinateur, vous partagez le son de l’onglet dans Chrome ou Edge (« Analyser avec mon navigateur ») ; sur téléphone, le micro capte le direct depuis le haut-parleur (« Analyser avec le micro »). Seul l’audio est envoyé, pour la transcription, d’où le mode Audio. Les autres plateformes s’ouvrent sur la plateforme elle-même (« Regarder sur … »), sans IA. Le chat en direct s’affiche pour les vidéos YouTube, Twitch et Kick ; les autres plateformes ont un lien « Ouvrir le chat ».',
+      title: 'Vidéos enregistrées jusqu’à 3 heures',
+      body: 'Une vidéo enregistrée peut durer jusqu’à 3 heures, pour l’analyse en direct comme pour le résumé en un clic.',
     },
     {
       title: 'Les sous-titres ont quelques secondes de retard',
-      body: 'La parole est transcrite par petits morceaux : les sous-titres arrivent environ 7 à 12 secondes après. Ce n’est pas du sous-titrage en temps réel.',
+      body: 'La parole est transcrite par courts segments, donc les sous-titres arrivent environ 7 à 12 secondes après avoir été prononcés. Ce n’est pas du sous-titrage instantané.',
     },
     {
-      title: 'Des états honnêtes, jamais de faux succès',
-      body: 'La fenêtre indique quand elle se connecte, prend du retard, récupère, n’a plus de minutes gratuites, attend votre accord, est à capacité maximale ou quand le direct est terminé.',
+      title: 'Des minutes gratuites chaque mois, des minutes payantes seulement avec votre accord',
+      body: 'Chaque formule inclut des minutes gratuites chaque mois. Au-delà, les minutes ne sont payantes qu’une fois que vous avez donné votre accord. Un résumé en un clic compte la durée de la vidéo en minutes.',
     },
   ],
-  plansTitle: 'Minutes gratuites et tarifs',
-  plansIntro:
-    'Chaque offre inclut des minutes d’analyse gratuites par mois. Ce sont les valeurs par défaut, ajustables.',
-  planMinutesUnit: 'minutes gratuites par mois',
-  planProAndAbove: 'Pro et supérieures',
-  plansBody:
-    'Après vos minutes gratuites, l’analyse coûte {price} la minute, et seulement après votre confirmation. Vous pouvez fixer un plafond de dépense. Quand votre crédit est épuisé, vous disposez d’un unique délai de grâce de 60 secondes. La vision est facturée au coût réel du modèle utilisé, et la pause arrête le compteur.',
   faqTitle: 'Questions fréquentes',
   faq: [
     {
-      question: 'Live Intelligence fonctionne-t-il avec les directs YouTube ?',
+      question: 'Est-ce que ça marche sur mon téléphone ?',
       answer:
-        'Oui, quand le direct est en cours et public et que YouTube le permet : les serveurs de ClawAI le lisent, il n’y a rien à partager et cela fonctionne sur n’importe quel appareil. Si le serveur ne peut pas le lire, l’IA travaille à partir du son de votre propre appareil après votre accord : sur ordinateur, vous partagez le son de l’onglet dans Chrome ou Edge ; sur téléphone, le micro capte le direct depuis le haut-parleur. Dans les deux cas, les sous-titres arrivent quelques secondes après la parole.',
+        'Oui. ClawAI lit le direct ou la vidéo sur ses propres serveurs, vous n’avez donc rien à partager depuis votre écran. Cela fonctionne aussi bien sur téléphone que sur tablette ou ordinateur.',
     },
     {
-      question: 'Quels flux peut-il analyser ?',
+      question: 'Dans quelles langues puis-je lire les sous-titres ?',
       answer:
-        'Les directs publics sur YouTube, Twitch, Kick, Facebook, TikTok LIVE, Rumble, BIGO LIVE, Bilibili, CHZZK, SOOP, Nimo TV et d’autres plateformes prises en charge, analysés sur les serveurs de ClawAI sur n’importe quel appareil quand la plateforme le permet ; et les directs HLS que vous avez le droit d’analyser, ce que vous confirmez au démarrage. Si le serveur ne peut pas lire un direct, YouTube, Twitch, Kick et Facebook passent au son de votre propre appareil, et les autres plateformes s’ouvrent sur la plateforme elle-même, sans IA. Instagram Live ne peut généralement pas être lu par le serveur, et Discord n’est pas pris en charge.',
+        'Dans l’une des 13 langues de l’application : anglais, arabe, allemand, espagnol, persan, français, hindi, italien, japonais, portugais, russe, thaï et chinois. L’orateur peut parler n’importe quelle langue. S’il parle déjà votre langue, vous voyez ses mots exacts ; sinon, la traduction s’affiche à la place de l’original.',
+    },
+    {
+      question:
+        'Est-ce que ça marche avec des vidéos enregistrées, ou seulement avec des directs ?',
+      answer:
+        'Les deux. Collez un direct, ou une vidéo enregistrée comme un reel, une publication, un short ou un ancien live. Avec une vidéo enregistrée, vous pouvez la suivre depuis le début à vitesse normale, ou cliquer sur « Résumer la vidéo » pour obtenir le rapport complet d’un coup.',
+    },
+    {
+      question: 'Quelle durée maximale pour une vidéo ?',
+      answer: 'Une vidéo enregistrée peut durer jusqu’à 3 heures.',
+    },
+    {
+      question: 'Que contient un résumé en un clic ?',
+      answer:
+        'Un résumé global, les moments clés horodatés, les temps forts et la transcription complète. Il est enregistré dans votre historique et peut être exporté en PDF, Markdown ou TXT.',
+    },
+    {
+      question: 'Comment est-ce facturé ?',
+      answer:
+        'Chaque formule inclut des minutes gratuites chaque mois. Au-delà, vous payez à la minute, et uniquement après avoir donné votre accord. Un résumé en un clic compte la durée de la vidéo en minutes.',
     },
     {
       question: 'Les sous-titres sont-ils en temps réel ?',
       answer:
-        'Non. Ils arrivent environ 7 à 12 secondes après la parole, car l’audio est transcrit par petits morceaux. Les résumés et temps forts suivent les sous-titres.',
+        'Presque. Les sous-titres arrivent environ 7 à 12 secondes après la parole, car l’audio est transcrit par courts segments. Les résumés et les temps forts suivent les sous-titres.',
     },
     {
-      question: 'Combien ça coûte ?',
+      question: 'Quelles plateformes sont prises en charge ?',
       answer:
-        'Chaque offre inclut des minutes gratuites par mois : 30 pour Free, 120 pour Starter, 300 pour Plus et 600 pour Pro et au-delà. Ensuite, 0,02 $ la minute, seulement après votre confirmation, avec un plafond optionnel. La vision est facturée au coût réel du modèle.',
+        'Plus de 30, dont YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X (Twitter), Bilibili et Niconico. La page des plateformes les liste toutes. Seuls les vidéos et directs publics peuvent être lus, et Discord n’est pas pris en charge car il n’a pas de liens publics.',
     },
     {
-      question: 'Que se passe-t-il si mon crédit s’épuise en plein direct ?',
+      question: 'ClawAI publie-t-il ou discute-t-il en mon nom ?',
       answer:
-        'Vous disposez d’un seul délai de grâce de 60 secondes, puis l’analyse s’arrête jusqu’à ce que vous ajoutiez du crédit.',
+        'Non. ClawAI se contente de lire le direct. Il ne publie, ne commente et ne discute jamais pour vous sur aucune plateforme. Ce que dit le direct, et ce que dit son chat, est traité comme des données non fiables à résumer, jamais comme des instructions pour ClawAI.',
     },
     {
-      question: 'La pause coûte-t-elle quelque chose ?',
+      question: 'Qui peut voir ce que j’ai regardé ?',
       answer:
-        'Non. En pause, le flux est figé et la facturation s’arrête. Reprenez là où vous étiez ou revenez au direct.',
-    },
-    {
-      question: 'Que devient mon historique ?',
-      answer:
-        'L’analyse que vous avez réellement regardée est conservée jusqu’à sa suppression. Vous pouvez la parcourir, enrichir une carte avec un modèle de votre choix et l’exporter en PDF, Markdown ou TXT.',
-    },
-    {
-      question: 'Puis-je poser des questions au direct ?',
-      answer:
-        'Pas dans cette première version. Live Intelligence fournit sous-titres, cartes de résumé et temps forts ; les questions sur un direct ne sont pas encore incluses.',
+        'Votre historique vous appartient. Les analyses que vous avez suivies et les résumés que vous avez créés restent dans votre compte jusqu’à ce que vous les supprimiez, et c’est vous qui décidez de ce que vous exportez ou partagez.',
     },
   ],
-  closingTitle: 'Suivez le prochain direct sans regarder chaque minute',
+  closingTitle: 'Collez votre premier lien',
   closingBody:
-    'Collez le lien d’un direct sur YouTube, Twitch, TikTok LIVE ou une autre plateforme prise en charge, ou un lien HLS que vous avez le droit d’analyser, choisissez votre langue et lancez. Vos minutes gratuites vous attendent.',
+    'Un match en direct, une conférence de presse, un cours ou un live de deux heures que vous avez manqué : collez le lien, choisissez votre langue et laissez ClawAI prendre les notes. Des minutes gratuites sont incluses chaque mois dans chaque formule.',
+  platformsPage: {
+    eyebrow: 'Nouveau dans ClawAI : Live & Video Intelligence',
+    title: 'Toutes les plateformes que Live & Video Intelligence sait lire',
+    intro:
+      'Collez un lien de l’une de ces plateformes, en direct ou enregistré. ClawAI le lit sur ses propres serveurs : cela fonctionne donc sur n’importe quel appareil, téléphones compris.',
+    openCta: 'Collez un lien maintenant',
+    backCta: 'Retour à Live & Video Intelligence',
+    groupsTitle: 'Les plateformes par catégorie',
+    groupsIntro:
+      'Les noms des plateformes sont des marques de leurs propriétaires. ClawAI n’est ni affilié à elles ni approuvé par elles.',
+    groups: {
+      [LiveMarketingPlatformGroup.GLOBAL_VIDEO]: {
+        title: 'Vidéo grand public',
+        body: 'Les grands sites vidéo que l’on partage tous les jours, des longues conférences et des cours aux courts extraits et aux émissions audio.',
+      },
+      [LiveMarketingPlatformGroup.GAMING_STREAMING]: {
+        title: 'Jeu vidéo et streaming',
+        body: 'Jeu vidéo en direct, esport et streams de créateurs, avec un onglet de chat en direct juste à côté de l’analyse.',
+      },
+      [LiveMarketingPlatformGroup.SOCIAL]: {
+        title: 'Réseaux sociaux',
+        body: 'Reels, publications, shorts et directs issus des réseaux sociaux et des canaux de messagerie.',
+      },
+      [LiveMarketingPlatformGroup.ASIA]: {
+        title: 'Asie',
+        body: 'Plateformes vidéo et de direct de Chine, du Japon, de Corée et de toute l’Asie, lisibles dans l’une des 13 langues de l’application.',
+      },
+    },
+    liveTag: 'Direct',
+    videoTag: 'Vidéos',
+    supportTitle: 'Ce qui fonctionne sur chaque plateforme',
+    supportIntro: 'Les trois mêmes fonctions marchent partout où ClawAI peut lire la source.',
+    support: [
+      {
+        title: 'Directs',
+        body: 'Des sous-titres environ 7 à 12 secondes après la parole, un Flux intelligent de résumés, de temps forts et de notes visuelles, et un onglet de chat en direct quand la plateforme en propose un.',
+      },
+      {
+        title: 'Vidéos enregistrées',
+        body: 'Reels, publications, shorts et anciens lives jusqu’à 3 heures. ClawAI lit la vidéo depuis le début à vitesse normale et l’analyse suit.',
+      },
+      {
+        title: 'Résumé en un clic',
+        body: 'Pour une vidéo enregistrée, cliquez sur « Résumer la vidéo » et obtenez un résumé global, les moments clés horodatés, les temps forts et la transcription complète.',
+      },
+    ],
+    limitsTitle: 'Les limites, en toute honnêteté',
+    limits: [
+      {
+        title: 'Public uniquement',
+        body: 'Seuls les vidéos et directs publics peuvent être lus. Les contenus privés ou réservés aux membres ne sont pas lisibles.',
+      },
+      {
+        title: 'Une plateforme peut refuser',
+        body: 'Certaines plateformes, ou certaines vidéos, peuvent refuser l’accès depuis un serveur. Dans ce cas, ClawAI vous le dit clairement au lieu d’afficher un faux résultat.',
+      },
+      {
+        title: 'Discord n’est pas pris en charge',
+        body: 'Les streams Discord n’ont pas de liens publics : un serveur n’a donc rien à ouvrir.',
+      },
+    ],
+    faqTitle: 'Questions sur les plateformes',
+    faq: [
+      {
+        question: 'Ma plateforme est-elle prise en charge ?',
+        answer:
+          'Si elle figure sur cette page, collez le lien : ClawAI le vérifie avant de démarrer quoi que ce soit. Si la plateforme ou la vidéo refuse l’accès depuis un serveur, vous le voyez immédiatement.',
+      },
+      {
+        question: 'Les directs et les vidéos enregistrées fonctionnent-ils tous les deux ?',
+        answer:
+          'Oui, sur toutes les plateformes listées. Une vidéo enregistrée peut aussi être résumée en un clic, jusqu’à 3 heures.',
+      },
+      {
+        question: 'Pourquoi une vidéo peut-elle échouer alors que sa plateforme est listée ?',
+        answer:
+          'Une plateforme peut empêcher un serveur de lire une vidéo précise, même publique. Dans ce cas, ClawAI vous le dit immédiatement. Les vidéos et directs privés ne peuvent jamais être lus.',
+      },
+      {
+        question: 'Pourquoi Discord est-il absent ?',
+        answer:
+          'Les streams Discord n’ont pas de lien public qu’un serveur pourrait ouvrir : ClawAI ne peut donc pas les lire.',
+      },
+    ],
+    closingTitle: 'Vous avez trouvé votre plateforme ?',
+    closingBody:
+      'Collez le lien, choisissez votre langue et lancez-vous. Des minutes gratuites sont incluses chaque mois dans chaque formule.',
+  },
+};
+
+/** French SEO copy for both pages; claims mirror the English file. */
+export const FR_LIVE_INTELLIGENCE_MARKETING_SEO: LiveIntelligenceMarketingSeo = {
+  overview: {
+    title: 'Live & Video Intelligence : sous-titres en direct et résumé vidéo en un clic',
+    description:
+      'Collez le lien d’un direct ou d’une vidéo YouTube, Twitch, TikTok et de 30+ plateformes. Obtenez des sous-titres en direct dans votre langue, un Flux intelligent de résumés et de temps forts, ou un résumé vidéo horodaté en un clic. Sur tous les appareils.',
+    keywords: [
+      'sous-titres live stream',
+      'résumer une vidéo YouTube',
+      'résumé vidéo IA',
+      'traduction sous-titres en direct',
+      'temps forts live',
+    ],
+  },
+  platforms: {
+    title: 'Plateformes prises en charge par Live & Video Intelligence',
+    description:
+      'Toutes les plateformes que ClawAI sait lire pour les sous-titres en direct et les résumés vidéo : YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X, Bilibili, Niconico, CHZZK, SOOP et plus, par catégorie.',
+    keywords: [
+      'plateformes vidéo prises en charge',
+      'plateformes de streaming en direct',
+      'sous-titres Twitch',
+      'résumé vidéo plateformes',
+    ],
+  },
 };

@@ -137,6 +137,32 @@ describe('useLiveModal', () => {
     expect(mocks.playback.mock.lastCall?.[2]).toBe(true);
   });
 
+  it('RECORDED: read by the server like a live stream, a link-out when the platform has no player', () => {
+    mocks.session = { ...session(LiveCapability.RECORDED), embedUrl: null };
+    mocks.playerUrl = null;
+    const { result } = renderHook(() => useLiveModal(INPUT));
+
+    expect(result.current.isServerPull).toBe(true);
+    expect(result.current.isCapture).toBe(false);
+    expect(result.current.isPlayerOnly).toBe(false);
+    expect(result.current.isPlayerLinkOut).toBe(true);
+    expect(mocks.capture).toHaveBeenLastCalledWith(expect.objectContaining({ enabled: false }));
+    expect(mocks.playback.mock.lastCall?.[2]).toBe(true);
+  });
+
+  it('a one-click summary reveals the whole report at once, with times as offsets', () => {
+    mocks.session = {
+      ...session(LiveCapability.RECORDED),
+      summary: true,
+      mediaStartAt: 1_000_000,
+    };
+    const { result } = renderHook(() => useLiveModal(INPUT));
+
+    expect(result.current.isSummary).toBe(true);
+    expect(result.current.clockOrigin).toBe(1_000_000);
+    expect(result.current.isServerPull).toBe(true);
+  });
+
   it('LINK_ONLY: link-out player and no AI', () => {
     mocks.session = session(LiveCapability.LINK_ONLY);
     mocks.playerUrl = null;

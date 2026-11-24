@@ -2,6 +2,10 @@ import { z } from 'zod';
 
 import { LivePlatform } from '../../../generated/prisma';
 import {
+  RECORDED_VIDEO_DEFAULT_MAX_SECONDS,
+  RECORDED_VIDEO_MAX_SECONDS_CEILING,
+} from '../../sources/constants/recorded-video.constants';
+import {
   SERVER_PULL_DEFAULT_PLATFORMS,
   SERVER_PULL_PLATFORMS,
 } from '../../sources/constants/server-pull.constants';
@@ -50,4 +54,14 @@ export const livePolicySchema = z.object({
       },
     )
     .default([...SERVER_PULL_DEFAULT_PLATFORMS]),
+  /**
+   * Longest recorded video the server downloads and plays along (ADR-221 batch 6, owner decision
+   * 2026-11-24: 3 hours). 0 turns recorded videos off; absent in older versions = the 3-hour default.
+   */
+  recordedVideoMaxSeconds: z
+    .number()
+    .int()
+    .min(0)
+    .max(RECORDED_VIDEO_MAX_SECONDS_CEILING)
+    .default(RECORDED_VIDEO_DEFAULT_MAX_SECONDS),
 });

@@ -72,3 +72,15 @@ approve credits, use up credits, get the 60 s grace, delete the history and see 
 
 Connecting, Analyzing, Paused, Delayed, Recovering, Free minutes used up, Credits required, Grace,
 Unsupported source, Capacity reached, Stream ended, Completed. No fake success state is ever shown.
+
+## Marketing pages (2026-11-24)
+
+The feature is marketed as **Live & Video Intelligence** (nav label "Live & Videos"); the URLs keep
+their old name. `/features/live-intelligence` is the overview (hero, two portrait clips, four steps,
+three phone screenshots, outcomes, live analysis vs one-click summary, modes, languages, platforms
+teaser, limits, FAQ); `/features/live-intelligence/platforms` lists every platform by group. Both are
+in 13 locales and registered in the content registry (sitemap, llms.txt, hreflang, Lighthouse). The
+platform list is ONE constant, `LIVE_MARKETING_PLATFORMS` in
+`apps/claw-frontend/src/constants/live-intelligence-marketing-platforms.constants.ts`; correct a
+platform there. The copy states no price and no number of free minutes: those are admin policy.
+Screenshots live in `apps/claw-frontend/public/marketing/live-and-videos/` (390x844, dark theme).

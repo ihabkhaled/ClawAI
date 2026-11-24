@@ -35,6 +35,8 @@ export interface LiveSourceResolutionView extends LivePlatformView {
   capability: LiveCapability;
   embedUrl: string | null;
   reasonCode: string | null;
+  /** A recorded video's length (the one-click summary estimate); null when unknown or live. */
+  durationSeconds: number | null;
 }
 
 export interface LiveSessionCreatedView extends LivePlatformView {
@@ -49,6 +51,10 @@ export interface LiveSessionCreatedView extends LivePlatformView {
   usage: LiveSessionUsageView;
   /** Short-lived signed token for the navigator.sendBeacon close (POST /sessions/:id/close). */
   closeToken: string;
+  /** A one-click summary session: the feed shows the whole report, times as offsets from mediaStartAt. */
+  summary: boolean;
+  /** Epoch ms of the summary's media time 0 (its run's start); null for every other session. */
+  mediaStartAt: number | null;
 }
 
 export interface LiveHeartbeatView {
@@ -72,6 +78,9 @@ export interface LiveCloseView {
 export interface LiveRunAccrualView {
   status: LiveRunStatus;
   lastCommitAt: Date | null;
+  startedAt: Date;
+  /** Seconds of a recorded video the run has transcribed (summary billing). */
+  processedMediaSeconds: number;
 }
 
 export interface LiveAccrualInput {
@@ -113,4 +122,6 @@ export interface LiveHeartbeatWrite {
   lastHeartbeatAt: Date;
   lastPlaybackAt: bigint;
   pendingIncrement: number;
+  /** Summary sessions: move accruedMediaSeconds from `from` to `to` (fenced on `from`). */
+  media?: { from: number; to: number };
 }

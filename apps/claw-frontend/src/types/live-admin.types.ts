@@ -34,6 +34,8 @@ export type LivePolicyConfig = {
   visionModelChain: LiveModelRef[];
   /** Platforms ClawAI's server reads itself (all but Discord). Absent on a version saved before it existed. */
   serverPullPlatforms?: LiveServerPullPlatform[];
+  /** Longest recorded video the server plays along, in seconds (0 = off). Kept as loaded; absent = 3 hours. */
+  recordedVideoMaxSeconds?: number;
 };
 
 /** A platform server pull may read: every platform but Discord (no public link). */

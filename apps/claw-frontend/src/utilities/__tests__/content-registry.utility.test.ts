@@ -118,6 +118,7 @@ describe('content registry integrity', () => {
       '/faq',
       '/features',
       '/features/live-intelligence',
+      '/features/live-intelligence/platforms',
       '/features/threads',
       '/how-it-works',
       '/integrations',
@@ -223,10 +224,10 @@ describe('localized publication boundary', () => {
     // /use-cases task (the /use-cases hub itself is already one of the 29
     // launch pages, unchanged by this cluster) + the /compare/models hub +
     // one page per family pair. 34 = the 31 standalone pages plus the two
-    // commerce policies (/delivery-shipping, /refund-cancellation) and
-    // /features/live-intelligence.
+    // commerce policies (/delivery-shipping, /refund-cancellation),
+    // /features/live-intelligence and /features/live-intelligence/platforms.
     const expectedCount =
-      34 +
+      35 +
       LEARN_TOPIC_ORDER.length +
       1 +
       INTEGRATION_TOPIC_ORDER.length +

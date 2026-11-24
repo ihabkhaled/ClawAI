@@ -45,14 +45,20 @@ export class LiveSessionRepository {
   findRun(runId: string): Promise<LiveRunAccrualView | null> {
     return this.prisma.liveProcessingRun.findUnique({
       where: { id: runId },
-      select: { status: true, lastCommitAt: true },
+      select: { status: true, lastCommitAt: true, startedAt: true, processedMediaSeconds: true },
     });
   }
 
   /** Applies a heartbeat, fenced on the state it was computed from. False when the state moved. */
   async recordHeartbeat(sessionId: string, write: LiveHeartbeatWrite): Promise<boolean> {
     const result = await this.prisma.liveViewerSession.updateMany({
-      where: { id: sessionId, state: write.expectedState },
+      // A summary's media accrual is also fenced on what was already accrued, so two heartbeats
+      // racing on the same progress can never bill it twice.
+      where: {
+        id: sessionId,
+        state: write.expectedState,
+        ...(write.media ? { accruedMediaSeconds: write.media.from } : {}),
+      },
       data: {
         state: write.state,
         lastHeartbeatAt: write.lastHeartbeatAt,
@@ -60,6 +66,7 @@ export class LiveSessionRepository {
         ...(write.pendingIncrement > 0
           ? { pendingSeconds: { increment: write.pendingIncrement } }
           : {}),
+        ...(write.media ? { accruedMediaSeconds: write.media.to } : {}),
       },
     });
     return result.count === 1;

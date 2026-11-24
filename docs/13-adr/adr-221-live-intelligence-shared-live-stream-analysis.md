@@ -207,3 +207,62 @@ YTDLP_VERSION`, `ARG YTDLP_SHA256`); Node in the image is its JavaScript runtime
   other languages' translations (a few seconds per summary) — accepted: no original ever flashes for anyone. The FINAL
   card was never translated before; it is now. Browser check: Arabic stream, English page, 120 samples over 3 minutes,
   0 with Arabic text.
+
+## Addendum 2026-11-24/25 (batch 6): Live & Videos — recorded videos, 34 tested platforms, one-click summary
+
+- **Owner report:** Facebook `share/v` and `share/r` links, an Instagram reel and a `vt.tiktok.com` link all failed
+  with `LIVE_SOURCE_UNSUPPORTED`. All six were recorded videos, not live streams; the registry only knew live links.
+- **Owner decisions (2026-11-24):** recorded videos are analysed (play along at normal speed, private run per
+  viewer, billed per watched second like live); at most 3 hours (policy `recordedVideoMaxSeconds`, 0 = off, ceiling
+  12 h); every recommended platform is added and any that fails a real test is dropped from the public claims; the
+  feature is renamed **Live & Videos** (nav) / **Live & Video Intelligence** (title); a one-click **Summarize video**
+  button sits beside play-along, billed as the video's length in Live minutes (free first, then the same per-minute
+  price, approved before it runs) and returns the full report (summary, key moments with times, highlights, full
+  transcript; saved in history, exportable); the public page is rewritten at the same URL plus a platforms page.
+- **New capability `RECORDED`** (migration `20261124120000_live_recorded_and_platforms`, enum values only). Resolve
+  asks yt-dlp first for a live HLS stream (`SERVER_PULL`, unchanged), then for a recorded video
+  (`RecordedVideoService.probe`, `--skip-download`, prints `is_live duration id`). Longer than the policy cap →
+  `LIVE_RECORDED_TOO_LONG`. A recorded stream is scoped `PRIVATE:<userId>` (its play-along position is the viewer's
+  own) and has no live chat.
+- **Worker:** `RecordedChunkSource` downloads the video once with yt-dlp into the run's temp dir (same flags as the
+  probe, `!is_live & duration<=?43200`, 1.5 GB cap, 15 min, the printed path must lie inside the dir), then cuts 6 s
+  chunks as the play-along clock reaches them (16 kHz mono, ffmpeg on the local file only) plus one frame per poll
+  for vision. Nothing advances while no viewer of the run is ACTIVE or GRACE (`hasBillableSession`): a viewer waiting
+  for credits gets no free transcription and the clock resumes where it paused.
+- **One-click summary** (migration `20261124130000_live_video_summary`, additive): `POST /live/sessions` with
+  `summarize: true` (RECORDED only, else `LIVE_SUMMARY_NEEDS_RECORDED`) uses the scope `SUMMARY:<userId>`, so it is
+  its own run apart from play-along. The run reads 30 s pieces as fast as transcription allows (2 per poll) on media
+  time from the run's start (`mediaStartAt` in the create answer; the page shows `m:ss` offsets and reveals the whole
+  report at once). The worker records `LiveProcessingRun.processedMediaSeconds`; a summary session's heartbeat accrues
+  exactly the new processed seconds (`summaryMediaAccrual`, fenced on `accruedMediaSeconds`) and never wall time. The
+  page shows the estimate first (`liveSummaryEstimate`: minutes, free minutes left, paid minutes) and, when minutes
+  are paid, approves them together with the confirmation.
+- **Platforms.** 24 host-matched platforms (`VIDEO_PLATFORM_HOSTS`: the path is the id, query params only when they
+  identify the video, plain id characters only, never escaped because yt-dlp matches Odysee's `@a:1/b:2` and Weibo's
+  `fid=1:2` literally). Facebook share links are followed ONE redirect through the SSRF guard on `facebook.com`
+  (`ShareLinkService`, client name `ClawAI-LinkCheck/1.0`: with no name Facebook answers `/unsupportedbrowser`).
+  Facebook `reel/<id>` and `<page>/videos/<slug>/<id>`, Instagram `reel|reels|p|tv/<code>` (official embed), TikTok
+  `@user/video/<id>` (embed) and `vt.`/`vm.`/`t/` share links, Twitch `videos/<id>` (player) and clips, and Kick
+  `<user>/videos/<uuid>` (was silently read as the live channel) are recognised. Frontend frame allowlist adds
+  `www.instagram.com`, `www.tiktok.com`, `www.dailymotion.com`, `player.vimeo.com`.
+- **Bug found while testing:** server pull of a YouTube news channel failed because its master playlist (12 h rewind)
+  measured 1.04 MB against a 1 MB cap. `HLS_PLAYLIST_MAX_BYTES` is now 4 MB. This also fixes production.
+- **Billing bug found and fixed before shipping:** a summary heartbeat with no new progress fell through to wall-clock
+  accrual (60 s video billed 60 + 16 pending); summary sessions now never accrue wall time.
+- **Policy upgrade:** the seeder (runs on every prod start) adds, once, a new active policy version with the 24
+  platforms appended to `serverPullPlatforms` and `recordedVideoMaxSeconds: 10800`, only while the active config has
+  no `recordedVideoMaxSeconds` (an administrator's later choices are never overwritten). Dev: version 12.
+- **Verified 2026-11-24/25 locally** (`scripts/qa/live-platform-sweep.mjs`, `live-summary-run.mjs`,
+  `live-language-matrix.mjs`): RECORDED for the owner's two Facebook links, the Instagram reel, the TikTok link,
+  YouTube, Dailymotion, Streamable, Rutube, OK.ru, VK, Odysee, Mixcloud, Niconico, Weibo, Rumble; SERVER_PULL for a
+  live YouTube news channel; `LIVE_RECORDED_TOO_LONG` for a 10 h video; Discord refused. Summary: 60 s TikTok in 27 s,
+  5 min Facebook video in 47 s (7/7, offsets 0,30,60…, 323 s billed for 325 s). Play-along: recorded Facebook reel
+  and live channel 14/14 with every caption, card and highlight translated for an English viewer.
+- **Failed real tests, not claimed publicly (still recognised, fall back to link-out):** Vimeo (every video needs a
+  login now), Reddit and Douyin (need cookies; we pass none), Naver TV and TwitCasting past broadcasts (extractor
+  errors in yt-dlp 2026.10.26). Rumble answered 403 to repeated hits (anti-bot) and is flaky. Live-only link shapes
+  (BIGO, LinkedIn, Telegram, CHZZK, SOOP, Nimo, Bilibili live, SHOWROOM, 17LIVE, Huya, Douyu, Picarto, Trovo, DLive)
+  were not tested live today (no known live channel); they use the same yt-dlp path that passed for the others.
+- **Not done / honest gaps:** a summary needs the page open (heartbeats bill it; closing the tab stops the run and
+  bills only what was processed); the speaker's "ClawAI" is sometimes transcribed "Kloe AI"; YouTube `@handle` links
+  are still refused.

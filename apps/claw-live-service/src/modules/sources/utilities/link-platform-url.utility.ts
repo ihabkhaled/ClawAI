@@ -11,6 +11,8 @@ import {
   CHZZK_WATCH_BASE_URL,
   DISCORD_HOSTS,
   INSTAGRAM_HOSTS,
+  INSTAGRAM_MEDIA_CODE_PATTERN,
+  INSTAGRAM_MEDIA_KINDS,
   INSTAGRAM_RESERVED_PATHS,
   INSTAGRAM_USER_PATTERN,
   INSTAGRAM_WATCH_BASE_URL,
@@ -35,8 +37,12 @@ import {
   TELEGRAM_HOSTS,
   TELEGRAM_LIVE_PARAMS,
   TELEGRAM_WATCH_BASE_URL,
+  TIKTOK_EMBED_BASE_URL,
   TIKTOK_HOSTS,
+  TIKTOK_SHORT_CODE_PATTERN,
+  TIKTOK_SHORT_HOSTS,
   TIKTOK_USER_PATTERN,
+  TIKTOK_VIDEO_ID_PATTERN,
   TIKTOK_WATCH_BASE_URL,
   TIKTOK_WATCH_SUFFIX,
 } from '../constants/platforms.constants';
@@ -49,20 +55,53 @@ function linkOnly(id: string, watchUrl: string): PlatformMatch {
   return { id, watchUrl, embedUrl: null, chatEmbedUrl: null };
 }
 
-/** `tiktok.com/@<user>/live` or `tiktok.com/@<user>`. */
+/**
+ * `tiktok.com/@<user>/live` or `tiktok.com/@<user>` (live), `tiktok.com/@<user>/video/<id>` (a
+ * recorded video, with the official embed) and the share links `vt.tiktok.com/<code>`,
+ * `vm.tiktok.com/<code>` and `tiktok.com/t/<code>`.
+ */
 export function parseTiktokUrl(url: URL): PlatformMatch | null {
+  const segments = pathSegments(url);
+  if (hostIn(url, TIKTOK_SHORT_HOSTS) || (hostIn(url, TIKTOK_HOSTS) && segments[0] === 't')) {
+    const code = matching(segments.at(-1), TIKTOK_SHORT_CODE_PATTERN);
+    const short = segments.length === (segments[0] === 't' ? 2 : 1) ? code : null;
+    return short ? linkOnly(`short:${short}`, `${url.origin}${url.pathname}`) : null;
+  }
   if (!hostIn(url, TIKTOK_HOSTS)) return null;
-  const [first, second] = pathSegments(url);
-  if (!first?.startsWith('@') || (second !== undefined && second !== 'live')) return null;
+  const [first, second, third] = segments;
+  if (!first?.startsWith('@')) return null;
   const user = matching(first.slice(1), TIKTOK_USER_PATTERN)?.toLowerCase();
-  return user ? linkOnly(user, `${TIKTOK_WATCH_BASE_URL}${user}${TIKTOK_WATCH_SUFFIX}`) : null;
+  if (!user) return null;
+  if (second === 'video') {
+    const id = matching(third, TIKTOK_VIDEO_ID_PATTERN);
+    return id
+      ? {
+          ...linkOnly(`video:${id}`, `${TIKTOK_WATCH_BASE_URL}${user}/video/${id}`),
+          embedUrl: `${TIKTOK_EMBED_BASE_URL}${id}`,
+        }
+      : null;
+  }
+  return second !== undefined && second !== 'live'
+    ? null
+    : linkOnly(user, `${TIKTOK_WATCH_BASE_URL}${user}${TIKTOK_WATCH_SUFFIX}`);
 }
 
-/** `instagram.com/<user>/live` or `instagram.com/<user>`. */
+/**
+ * `instagram.com/<user>/live` or `instagram.com/<user>` (live), and a recorded reel or post
+ * `instagram.com/{reel,reels,p,tv}/<code>` (with the official embed).
+ */
 export function parseInstagramUrl(url: URL): PlatformMatch | null {
   if (!hostIn(url, INSTAGRAM_HOSTS)) return null;
-  const [first, second] = pathSegments(url);
-  if (first === undefined || INSTAGRAM_RESERVED_PATHS.has(first.toLowerCase())) return null;
+  const [first, second, third] = pathSegments(url);
+  if (first === undefined) return null;
+  const kind = INSTAGRAM_MEDIA_KINDS.get(first.toLowerCase());
+  if (kind !== undefined) {
+    const code = matching(second, INSTAGRAM_MEDIA_CODE_PATTERN);
+    if (!code || third !== undefined) return null;
+    const watchUrl = `${INSTAGRAM_WATCH_BASE_URL}${kind}/${code}/`;
+    return { ...linkOnly(`media:${code}`, watchUrl), embedUrl: `${watchUrl}embed` };
+  }
+  if (INSTAGRAM_RESERVED_PATHS.has(first.toLowerCase())) return null;
   if (second !== undefined && second !== 'live') return null;
   const user = matching(first, INSTAGRAM_USER_PATTERN)?.toLowerCase();
   return user

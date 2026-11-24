@@ -8,7 +8,9 @@ import { LiveCapability, type LivePlatform } from '../../../generated/prisma';
 import { LIVE_REDIS_CLIENT } from '../../../infrastructure/redis/constants/redis.constants';
 import { FixtureBroadcasterService } from '../../sources/services/fixture-broadcaster.service';
 import { HlsFetcherService } from '../../sources/services/hls-fetcher.service';
+import { RecordedVideoService } from '../../sources/services/recorded-video.service';
 import { ServerPullResolverService } from '../../sources/services/server-pull-resolver.service';
+import { SUMMARY_ACCESS_SCOPE_PREFIX } from '../../sources/constants/sources.constants';
 import { resolvePlatformUrl } from '../../sources/utilities/platform-registry.utility';
 import { NO_RUN_CAPABILITIES, WORKER_TEMP_PREFIX } from '../constants/processing.constants';
 import { RunLifecycleManager } from '../managers/run-lifecycle.manager';
@@ -25,6 +27,7 @@ import type {
 } from '../types/processing.types';
 import { CaptureChunkSource } from '../workers/capture-chunk-source';
 import { HlsChunkSource } from '../workers/hls-chunk-source';
+import { RecordedChunkSource } from '../workers/recorded-chunk-source';
 import { RunWorker } from '../workers/run-worker';
 import { FencedRunWriter } from './fenced-run-writer.service';
 
@@ -42,6 +45,7 @@ export class RunWorkerFactory {
     private readonly fetcher: HlsFetcherService,
     private readonly fixtures: FixtureBroadcasterService,
     private readonly serverPull: ServerPullResolverService,
+    private readonly recordedVideos: RecordedVideoService,
     @Inject(LIVE_REDIS_CLIENT) private readonly redis: Redis,
   ) {}
 
@@ -58,7 +62,12 @@ export class RunWorkerFactory {
       declaredHost: run.stream.declaredHost,
       startedAt: run.startedAt,
     };
-    const source = await this.source(context, run.stream.capability, run.stream.platform);
+    const source = await this.source(
+      context,
+      run.stream.capability,
+      run.stream.platform,
+      run.stream.accessScope,
+    );
     return new RunWorker(
       {
         writer: this.writer,
@@ -74,16 +83,26 @@ export class RunWorkerFactory {
   }
 
   /**
-   * BROWSER_CAPTURE reads the viewer's tab-audio queue; SERVER_PULL pulls the platform's public
+   * BROWSER_CAPTURE reads the viewer's tab-audio queue; RECORDED downloads the video (its stored
+   * sourceUrl is the canonical watch URL we built) and plays it along; SERVER_PULL pulls the platform's public
    * playlist (resolved by the worker, token refreshed on failure); everything else pulls HLS.
    */
   private async source(
     context: WorkerContext,
     capability: LiveCapability,
     platform: LivePlatform | null,
+    accessScope: string,
   ): Promise<RunChunkSource> {
     if (capability === LiveCapability.BROWSER_CAPTURE) {
       return new CaptureChunkSource(this.redis, context.lease.runId);
+    }
+    if (capability === LiveCapability.RECORDED) {
+      const directory = await mkdtemp(join(tmpdir(), WORKER_TEMP_PREFIX));
+      return new RecordedChunkSource(context, this.recordedVideos, directory, {
+        watchUrl: context.sourceUrl,
+        summary: accessScope.startsWith(SUMMARY_ACCESS_SCOPE_PREFIX),
+        canAdvance: () => this.runs.hasBillableSession(context.lease.runId),
+      });
     }
     const pull =
       capability === LiveCapability.SERVER_PULL ? this.serverPullSource(context, platform) : null;

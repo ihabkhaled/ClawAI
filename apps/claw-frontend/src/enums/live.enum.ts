@@ -75,6 +75,30 @@ export enum LivePlatform {
   CHZZK = 'CHZZK',
   SOOP = 'SOOP',
   NIMO = 'NIMO',
+  DAILYMOTION = 'DAILYMOTION',
+  X = 'X',
+  VIMEO = 'VIMEO',
+  TROVO = 'TROVO',
+  DLIVE = 'DLIVE',
+  HUYA = 'HUYA',
+  DOUYU = 'DOUYU',
+  DOUYIN = 'DOUYIN',
+  TWITCASTING = 'TWITCASTING',
+  NICONICO = 'NICONICO',
+  PICARTO = 'PICARTO',
+  ODYSEE = 'ODYSEE',
+  RUTUBE = 'RUTUBE',
+  VK = 'VK',
+  OK = 'OK',
+  REDDIT = 'REDDIT',
+  STREAMABLE = 'STREAMABLE',
+  NAVER_TV = 'NAVER_TV',
+  KAKAO_TV = 'KAKAO_TV',
+  WEIBO = 'WEIBO',
+  SHOWROOM = 'SHOWROOM',
+  LIVE17 = 'LIVE17',
+  MIXCLOUD = 'MIXCLOUD',
+  BLUESKY = 'BLUESKY',
 }
 
 export enum LiveCapability {
@@ -87,6 +111,8 @@ export enum LiveCapability {
   BROWSER_CAPTURE = 'BROWSER_CAPTURE',
   /** Plays in an embed; ClawAI's server reads the stream itself and shares the analysis with every viewer. */
   SERVER_PULL = 'SERVER_PULL',
+  /** A recorded video (reel, post, past stream): the server plays it along from the start, private to the viewer. */
+  RECORDED = 'RECORDED',
 }
 
 export enum LiveMode {

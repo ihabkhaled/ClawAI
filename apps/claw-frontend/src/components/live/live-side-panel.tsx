@@ -63,11 +63,17 @@ export function LiveSidePanel({ modal }: LiveSidePanelProps): React.ReactElement
             t={t}
             locale={locale}
             allowEnhance={allowEnhance}
-            emptyLabel={t('live.modal.feedEmpty')}
+            emptyLabel={t(modal.isSummary ? 'live.summary.feedEmpty' : 'live.modal.feedEmpty')}
+            clockOrigin={modal.clockOrigin}
           />
         </TabsContent>
         <TabsContent value={LiveFeedTab.CAPTIONS} className="mt-3 flex min-h-0 flex-1 flex-col">
-          <LiveCaptionsList captions={modal.captions} t={t} locale={locale} />
+          <LiveCaptionsList
+            captions={modal.captions}
+            t={t}
+            locale={locale}
+            clockOrigin={modal.clockOrigin}
+          />
         </TabsContent>
         <TabsContent value={LiveFeedTab.HIGHLIGHTS} className="mt-3 flex min-h-0 flex-1 flex-col">
           <LiveFeedList
@@ -76,6 +82,7 @@ export function LiveSidePanel({ modal }: LiveSidePanelProps): React.ReactElement
             locale={locale}
             allowEnhance={allowEnhance}
             emptyLabel={t('live.modal.highlightsEmpty')}
+            clockOrigin={modal.clockOrigin}
           />
         </TabsContent>
         {hasChat ? (

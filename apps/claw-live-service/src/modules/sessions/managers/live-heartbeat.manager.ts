@@ -13,6 +13,7 @@ import type { HeartbeatBody } from '../dto/live-session.dto';
 import { LiveSessionRepository } from '../repositories/live-session.repository';
 import type { LiveHeartbeatView, LiveRunAccrualView } from '../types/live-session.types';
 import { isRunAccruing, nextStateForBeat, statusCodeFor } from '../utilities/live-accrual.utility';
+import { summaryMediaAccrual } from '../utilities/live-summary.utility';
 import { LiveCoverageManager } from './live-coverage.manager';
 import { LivePresenceManager } from './live-presence.manager';
 import { LiveSessionPresenterManager } from './live-session-presenter.manager';
@@ -20,7 +21,8 @@ import { LiveSessionPresenterManager } from './live-session-presenter.manager';
 /**
  * One heartbeat (architecture doc sections 3, 5, 6): presence, play/pause
  * state, server-side accrual (never trusted from the client), coverage and
- * 60-second block settlement.
+ * 60-second block settlement. A one-click summary accrues the media seconds its
+ * run has transcribed instead of wall time (ADR-221 batch 6).
  */
 @Injectable()
 export class LiveHeartbeatManager {
@@ -45,20 +47,15 @@ export class LiveHeartbeatManager {
       body.state === LiveHeartbeatState.PLAYING &&
       LIVE_ACCRUING_STATES.includes(state) &&
       isRunAccruing(run, now);
-    const seconds = accruing
-      ? await this.presence.accrue(
-          session.userId,
-          session.runId,
-          session.lastHeartbeatAt?.getTime() ?? null,
-          now,
-        )
-      : 0;
+    const media = summaryMediaAccrual(session, run, state);
+    const seconds = await this.accrualSeconds(session, session.runId, media, accruing, now);
     const applied = await this.sessions.recordHeartbeat(session.id, {
       expectedState: session.state,
       state,
       lastHeartbeatAt: new Date(now),
       lastPlaybackAt: BigInt(body.playbackAt),
       pendingIncrement: seconds,
+      ...(media ? { media } : {}),
     });
     if (!applied) {
       // The state moved under us (billing, another device, close): liveness only.
@@ -68,6 +65,28 @@ export class LiveHeartbeatManager {
     }
     const settled = await this.settleFullBlocks(session.id);
     return this.view(settled ?? session, run);
+  }
+
+  /**
+   * Seconds this beat adds to the session. A summary is billed by the video its run processed and
+   * NEVER by wall time (2026-11-24 bug: a beat with no new progress fell through to wall-clock
+   * accrual and over-billed); everyone else by server-measured wall time while playing.
+   */
+  private async accrualSeconds(
+    session: LiveViewerSession,
+    runId: string,
+    media: { from: number; to: number } | null,
+    accruing: boolean,
+    now: number,
+  ): Promise<number> {
+    if (session.summary) return media === null ? 0 : media.to - media.from;
+    if (!accruing) return 0;
+    return this.presence.accrue(
+      session.userId,
+      runId,
+      session.lastHeartbeatAt?.getTime() ?? null,
+      now,
+    );
   }
 
   /** Settles every full 60 s block pending (bounded), then expires a due grace window. */

@@ -6,4 +6,6 @@ export enum ServerPullProbe {
   LIVE = 'LIVE',
   /** Enabled but the stream could not be read (offline, refused, blocked): browser capture. */
   UNREACHABLE = 'UNREACHABLE',
+  /** Not live, but a recorded video the server can download and play along (RECORDED). */
+  RECORDED = 'RECORDED',
 }

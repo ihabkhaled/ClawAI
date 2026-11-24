@@ -1230,3 +1230,19 @@ A public Thread page reads `?lang=` (an app language only; `readRequestedThreadL
 - YouTube channel links play through the `live_stream` embed; `@handle` links show the `youtubeHandleError` string.
 - The dev frontend (Turbopack in Docker on Windows) does not see new routes or edits to existing files until
   `docker restart claw-frontend`.
+
+## Live & Videos (2026-11-24, ADR-221 batch 6)
+
+- Renamed: nav `live.nav.live` = "Live & Videos", page title "Live & Video Intelligence" (13 locales). Never write
+  "live only" copy again: the surface takes live streams AND recorded videos.
+- A `RECORDED` resolution offers two buttons: "Watch with live analysis" (play along; `useLiveModal` treats it like
+  server pull) and "Summarize video" (`useLiveSummaryStart` → `LiveSummaryDialog` estimate from
+  `liveSummaryEstimate`; confirming with paid minutes also calls approve-credits). A summary session
+  (`session.summary`) reveals everything at once (`LIVE_REVEAL_ALL_AT`) and shows times as offsets from
+  `mediaStartAt` (`formatLiveClock(at, locale, origin)`); status wording comes from `liveStatusPresentation`
+  ("Summarizing the video" / "Summary ready" / "Video ended"), the header badge from `liveModalBadgeKey`.
+- Embeds added to `LIVE_EMBED_ALLOWED_ORIGINS` (and so CSP `frame-src`): Instagram, TikTok, Dailymotion, Vimeo player.
+- Public pages: `/features/live-intelligence` (rewritten, same URL) and `/features/live-intelligence/platforms`;
+  the platform list is ONE constant, `LIVE_MARKETING_PLATFORMS`, corrected from the real sweep. Media:
+  `public/marketing/videos/live-and-videos-{promo,demo}.mp4` (H.264; the owner's originals were HEVC, which Chrome
+  plays only with hardware support) and `public/marketing/live-and-videos/*.png` (real 390x844 dark screenshots).

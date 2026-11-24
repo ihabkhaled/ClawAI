@@ -21,6 +21,7 @@ export function LiveFeedCardItem({
   t,
   locale,
   allowEnhance,
+  clockOrigin = null,
 }: LiveFeedCardProps): React.ReactElement {
   const label =
     card.highlightType === null
@@ -38,7 +39,7 @@ export function LiveFeedCardItem({
       <div className="flex flex-wrap items-center gap-2 text-xs">
         <Badge variant={card.highlightType === null ? 'secondary' : 'info'}>{label}</Badge>
         <time className="text-muted-foreground tabular-nums">
-          {formatLiveClock(card.startAt, locale)}
+          {formatLiveClock(card.startAt, locale, clockOrigin)}
         </time>
         {card.importance > 0 ? (
           <span

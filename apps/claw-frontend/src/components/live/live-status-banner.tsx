@@ -1,15 +1,15 @@
-import { LIVE_STATUS_PRESENTATION, LIVE_STATUS_TONE_CLASSES } from '@/constants/live.constants';
+import { LIVE_STATUS_TONE_CLASSES } from '@/constants/live.constants';
 import type { LiveStatusBannerProps } from '@/types/live.types';
 import { cn } from '@/utilities';
 
 /** The one status line for the session. Every code has its own text; nothing claims a success it did not see. */
 export function LiveStatusBanner({
   status,
+  presentation,
   isReconnecting,
   isLost,
   t,
 }: LiveStatusBannerProps): React.ReactElement {
-  const presentation = LIVE_STATUS_PRESENTATION[status];
   return (
     <div
       role="status"

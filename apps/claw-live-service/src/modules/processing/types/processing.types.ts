@@ -153,6 +153,8 @@ export interface ChunkPoll {
   ended: boolean;
   /** Most recent media segment on disk (for a vision frame), or null. */
   latestSegmentFile: string | null;
+  /** Recorded videos: seconds of the video transcribed so far (written to the run for billing). */
+  mediaSeconds?: number;
 }
 
 /** Where a RunWorker gets its audio: the HLS/fixture puller or the browser-capture queue. */
@@ -237,4 +239,14 @@ export interface HighlightOutcome {
   remembered: RememberedHighlight[];
   /** New highlights, sent for translation once the commit lands. */
   targets: Omit<CardTranslationTarget, 'language'>[];
+}
+
+/** How a RECORDED run reads its video. */
+export interface RecordedSourceOptions {
+  /** The canonical watch URL stored on the stream (never the raw paste). */
+  watchUrl: string;
+  /** A one-click "Summarize video" run: no pacing, 30 s pieces. */
+  summary: boolean;
+  /** True while a viewer of the run is billable (ACTIVE or GRACE). */
+  canAdvance: () => Promise<boolean>;
 }

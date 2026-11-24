@@ -2,6 +2,7 @@
 //
 // Idempotent: it inserts version 1 ONLY when live_policy_versions has no rows at all, so an
 // administrator's later versions (and a deliberately deactivated state) are never overwritten.
+// One exception, also idempotent: the 2026-11-24 upgrade (see `upgrade`).
 // `activeKey = 'active'` is the emulated partial unique index that marks the one live version.
 //
 // Run: `npm run seed` (dev entrypoint, `prisma db seed` when SEED_ON_START=true in prod).
@@ -13,6 +14,36 @@ const ACTIVE_KEY = 'active';
 const SEED_NOTE = 'seed v1 (owner decision 2026-11-22)';
 
 const PAID_MICRO_USD_PER_MINUTE = 20000;
+
+// ADR-221 batch 6 (owner decision 2026-11-24): recorded videos and 24 more platforms.
+const RECORDED_VIDEO_MAX_SECONDS = 10800;
+const UPGRADE_NOTE = 'seed upgrade: recorded videos + 24 platforms (owner decision 2026-11-24)';
+const PLATFORMS_ADDED_2026_11_24 = [
+  'DAILYMOTION',
+  'X',
+  'VIMEO',
+  'TROVO',
+  'DLIVE',
+  'HUYA',
+  'DOUYU',
+  'DOUYIN',
+  'TWITCASTING',
+  'NICONICO',
+  'PICARTO',
+  'ODYSEE',
+  'RUTUBE',
+  'VK',
+  'OK',
+  'REDDIT',
+  'STREAMABLE',
+  'NAVER_TV',
+  'KAKAO_TV',
+  'WEIBO',
+  'SHOWROOM',
+  'LIVE17',
+  'MIXCLOUD',
+  'BLUESKY',
+];
 
 function plan(freeSecondsPerMonth) {
   return { freeSecondsPerMonth, paidMicroUsdPerMinute: PAID_MICRO_USD_PER_MINUTE };
@@ -64,16 +95,17 @@ const DEFAULT_POLICY_CONFIG = {
     'CHZZK',
     'SOOP',
     'NIMO',
+    ...PLATFORMS_ADDED_2026_11_24,
   ],
+  // Recorded videos (owner decision 2026-11-24): played along, at most 3 hours; 0 turns them off.
+  recordedVideoMaxSeconds: RECORDED_VIDEO_MAX_SECONDS,
   featureEnabled: true,
 };
 
-/** @param {{ livePolicyVersion: { count: Function, create: Function } }} prisma */
+/** @param {any} prisma */
 async function run(prisma) {
   const existing = await prisma.livePolicyVersion.count();
-  if (existing > 0) {
-    return { inserted: false, reason: 'policy rows already exist' };
-  }
+  if (existing > 0) return upgrade(prisma);
   await prisma.livePolicyVersion.create({
     data: {
       version: 1,
@@ -83,6 +115,44 @@ async function run(prisma) {
     },
   });
   return { inserted: true, reason: 'seeded version 1' };
+}
+
+/**
+ * One-time upgrade of an existing policy (2026-11-24): a new active version that adds the platforms
+ * introduced that day to `serverPullPlatforms` and sets `recordedVideoMaxSeconds`. Every other value
+ * is copied as is. It runs only while the active config has no `recordedVideoMaxSeconds`, so an
+ * administrator's later choices (a removed platform, recorded videos off) are never overwritten.
+ * @param {any} prisma
+ */
+async function upgrade(prisma) {
+  const active = await prisma.livePolicyVersion.findUnique({ where: { activeKey: ACTIVE_KEY } });
+  if (!active || active.config === null || typeof active.config !== 'object') {
+    return { inserted: false, reason: 'policy rows already exist' };
+  }
+  if ('recordedVideoMaxSeconds' in active.config) {
+    return { inserted: false, reason: 'policy rows already exist and are current' };
+  }
+  const platforms = Array.isArray(active.config.serverPullPlatforms)
+    ? active.config.serverPullPlatforms
+    : DEFAULT_POLICY_CONFIG.serverPullPlatforms;
+  const config = {
+    ...active.config,
+    serverPullPlatforms: [...new Set([...platforms, ...PLATFORMS_ADDED_2026_11_24])],
+    recordedVideoMaxSeconds: RECORDED_VIDEO_MAX_SECONDS,
+  };
+  const version = await prisma.$transaction(async (tx) => {
+    const latest = await tx.livePolicyVersion.aggregate({ _max: { version: true } });
+    await tx.livePolicyVersion.updateMany({
+      where: { activeKey: ACTIVE_KEY },
+      data: { activeKey: null },
+    });
+    const next = (latest._max.version ?? 0) + 1;
+    await tx.livePolicyVersion.create({
+      data: { version: next, activeKey: ACTIVE_KEY, config, note: UPGRADE_NOTE },
+    });
+    return next;
+  });
+  return { inserted: true, reason: `upgraded the active policy to version ${String(version)}` };
 }
 
 function loadGeneratedClient() {
@@ -120,4 +190,11 @@ if (require.main === module) {
   });
 }
 
-module.exports = { run, DEFAULT_POLICY_CONFIG, ACTIVE_KEY, SEED_NOTE };
+module.exports = {
+  run,
+  DEFAULT_POLICY_CONFIG,
+  ACTIVE_KEY,
+  SEED_NOTE,
+  UPGRADE_NOTE,
+  PLATFORMS_ADDED_2026_11_24,
+};

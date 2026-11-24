@@ -7,18 +7,23 @@ describe('SourcesService', () => {
   const prisma = { liveStream: { upsert: vi.fn().mockResolvedValue({ id: 'stream-1' }) } };
   const serverPull = { supports: vi.fn().mockReturnValue(false), probe: vi.fn() };
   const policy = { active: vi.fn().mockResolvedValue({ config: { serverPullPlatforms: [] } }) };
+  const recordedVideos = { probe: vi.fn().mockResolvedValue(null) };
+  const shareLinks = { follow: vi.fn(async (resolution: unknown) => resolution) };
   const service = new SourcesService(
     prisma as never,
     guard as never,
     fixtures as never,
     serverPull as never,
     policy as never,
+    recordedVideos as never,
+    shareLinks as never,
   );
 
   beforeEach(() => {
     vi.clearAllMocks();
     serverPull.supports.mockReturnValue(false);
     policy.active.mockResolvedValue({ config: { serverPullPlatforms: [] } });
+    recordedVideos.probe.mockResolvedValue(null);
   });
 
   it('resolves YouTube as BROWSER_CAPTURE with the same nocookie embed, its chat, and no network call', async () => {
@@ -279,6 +284,84 @@ describe('SourcesService', () => {
         'u1',
       );
       expect(facebook.capability).toBe(LiveCapability.BROWSER_CAPTURE);
+    });
+  });
+  describe('recorded videos (ADR-221 batch 6)', () => {
+    const recorded = (durationSeconds: number | null, maxSeconds = 10_800) => {
+      serverPull.supports.mockReturnValue(true);
+      serverPull.probe.mockResolvedValue(null);
+      recordedVideos.probe.mockResolvedValue({ durationSeconds, videoId: 'v1' });
+      policy.active.mockResolvedValue({
+        config: {
+          serverPullPlatforms: ['FACEBOOK', 'TIKTOK', 'DAILYMOTION'],
+          recordedVideoMaxSeconds: maxSeconds,
+        },
+      });
+    };
+
+    it('resolves a Facebook share link to a recorded video as RECORDED, private, with no chat', async () => {
+      recorded(95);
+      const result = await service.resolve('https://www.facebook.com/share/v/1DpSNW9BD1/', 'u1');
+      expect(result).toMatchObject({
+        capability: LiveCapability.RECORDED,
+        accessScope: 'PRIVATE:u1',
+        reasonCode: 'RECORDED_VIDEO',
+        platform: LivePlatform.FACEBOOK,
+        watchUrl: 'https://www.facebook.com/share/v/1DpSNW9BD1/',
+        chatEmbedUrl: null,
+      });
+      expect(recordedVideos.probe).toHaveBeenCalledWith(
+        'https://www.facebook.com/share/v/1DpSNW9BD1/',
+      );
+    });
+
+    it('accepts a video whose length the site hides (Instagram) and a new host platform', async () => {
+      recorded(null);
+      await expect(
+        service.resolve('https://vt.tiktok.com/ZSsYongoV/', 'u1'),
+      ).resolves.toMatchObject({
+        capability: LiveCapability.RECORDED,
+        platform: LivePlatform.TIKTOK,
+      });
+      await expect(
+        service.resolve('https://www.dailymotion.com/video/x9abcd', 'u1'),
+      ).resolves.toMatchObject({
+        capability: LiveCapability.RECORDED,
+        platform: LivePlatform.DAILYMOTION,
+        embedUrl: 'https://www.dailymotion.com/embed/video/x9abcd',
+      });
+    });
+
+    it('refuses a video longer than the policy allows with LIVE_RECORDED_TOO_LONG', async () => {
+      recorded(10_801);
+      await expect(
+        service.resolve('https://www.facebook.com/reel/4620908104798158', 'u1'),
+      ).rejects.toThrow('LIVE_RECORDED_TOO_LONG');
+    });
+
+    it('never probes for a recorded video when the policy turns them off (0)', async () => {
+      recorded(60, 0);
+      const result = await service.resolve('https://www.facebook.com/reel/4620908104798158', 'u1');
+      expect(result.capability).toBe(LiveCapability.BROWSER_CAPTURE);
+      expect(recordedVideos.probe).not.toHaveBeenCalled();
+    });
+
+    it('keeps a live stream on shared SERVER_PULL without asking about recorded videos', async () => {
+      recorded(60);
+      serverPull.probe.mockResolvedValue({
+        playlist: new URL('https://cdn.example.com/p.m3u8'),
+        hostSuffixes: [],
+        videoId: null,
+      });
+      const result = await service.resolve(
+        'https://www.facebook.com/watch/live/?v=1234567890',
+        'u1',
+      );
+      expect(result).toMatchObject({
+        capability: LiveCapability.SERVER_PULL,
+        accessScope: 'PUBLIC',
+      });
+      expect(recordedVideos.probe).not.toHaveBeenCalled();
     });
   });
 });

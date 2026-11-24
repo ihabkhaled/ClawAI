@@ -16,6 +16,7 @@ export type LiveLocaleTranslation = {
     start: string;
     resolveError: string;
     youtubeHandleError: string;
+    recordedTooLongError: string;
     attestLabel: string;
     attestHint: string;
     watchOnly: string;
@@ -65,6 +66,9 @@ export type LiveLocaleTranslation = {
     sessionError: string;
     analysisTitle: string;
     liveBadge: string;
+    videoBadge: string;
+    videoEndedTitle: string;
+    videoEndedDescription: string;
     tabFeed: string;
     tabCaptions: string;
     tabHighlights: string;
@@ -87,6 +91,26 @@ export type LiveLocaleTranslation = {
     watchOnYoutube: string;
     videoLabel: string;
   };
+  summary: {
+    badge: string;
+    button: string;
+    playAlong: string;
+    choiceHint: string;
+    dialogTitle: string;
+    dialogDescription: string;
+    uses: string;
+    lengthUnknown: string;
+    freeLeft: string;
+    paid: string;
+    cancel: string;
+    confirm: string;
+    confirmPaid: string;
+    feedEmpty: string;
+    workingTitle: string;
+    workingDescription: string;
+    readyTitle: string;
+    readyDescription: string;
+  };
   platform: {
     recognised: string;
     captureTitle: string;
@@ -94,6 +118,8 @@ export type LiveLocaleTranslation = {
     captureNoticeMic: string;
     serverPullTitle: string;
     serverPullNotice: string;
+    recordedTitle: string;
+    recordedNotice: string;
     serverPullUnavailable: string;
     linkOnlyTitle: string;
     linkOnlyNotice: string;

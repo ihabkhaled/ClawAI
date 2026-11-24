@@ -32,6 +32,7 @@ function resolution(kind: LiveSourceKind, capability: LiveCapability) {
     watchUrl: kind === LiveSourceKind.YOUTUBE ? 'https://www.youtube.com/watch?v=abc' : '',
     embedNeedsParent: false,
     chatNeedsEmbedDomain: kind === LiveSourceKind.YOUTUBE,
+    durationSeconds: capability === LiveCapability.RECORDED ? 754 : null,
   };
 }
 
@@ -103,6 +104,7 @@ const body = {
   language: 'en',
   mode: LiveMode.AUDIO,
   attestRights: true,
+  summarize: false,
 };
 
 describe('LiveSessionsService', () => {
@@ -120,7 +122,29 @@ describe('LiveSessionsService', () => {
       watchUrl: '',
       embedNeedsParent: false,
       chatNeedsEmbedDomain: false,
+      durationSeconds: null,
     });
+  });
+
+  it('starts a one-click summary of a recorded video on its own SUMMARY run, with its media start', async () => {
+    const { service, sources, sessions } = setup(LiveSourceKind.PLATFORM, LiveCapability.RECORDED);
+    Object.assign(sessions, {
+      findRun: vi.fn().mockResolvedValue({ startedAt: new Date(1_700_000_000_000) }),
+    });
+    const view = await service.create('u1', { ...body, summarize: true });
+    expect(sources.upsertStream).toHaveBeenCalledWith(
+      expect.objectContaining({ accessScope: 'SUMMARY:u1', capability: LiveCapability.RECORDED }),
+    );
+    expect(sessions.create).toHaveBeenCalledWith(expect.objectContaining({ summary: true }));
+    expect(view).toMatchObject({ summary: true, mediaStartAt: 1_700_000_000_000 });
+  });
+
+  it('refuses a one-click summary of anything but a recorded video', async () => {
+    const { service, sessions } = setup(LiveSourceKind.PLATFORM, LiveCapability.SERVER_PULL);
+    await expect(service.create('u1', { ...body, summarize: true })).rejects.toThrow(
+      'LIVE_SUMMARY_NEEDS_RECORDED',
+    );
+    expect(sessions.create).not.toHaveBeenCalled();
   });
 
   it('records a LINK_ONLY platform as UNSUPPORTED with no run, no admission and no billing', async () => {

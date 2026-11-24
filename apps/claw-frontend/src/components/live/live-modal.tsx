@@ -18,6 +18,7 @@ import {
 import { useLiveModal } from '@/hooks/live/use-live-modal';
 import type { LiveModalProps } from '@/types/live.types';
 import { cn } from '@/utilities';
+import { liveModalBadgeKey } from '@/utilities/live-session.utility';
 
 /**
  * The live modal: video left (~60 %) and the feed panel right on desktop; video on top and feed below
@@ -39,7 +40,7 @@ export function LiveModal({ input, onClose }: LiveModalProps): React.ReactElemen
                   className="bg-destructive h-1.5 w-1.5 animate-pulse rounded-full"
                   aria-hidden="true"
                 />
-                {t('live.modal.liveBadge')}
+                {t(liveModalBadgeKey(session))}
               </span>
             ) : null}
           </DialogTitle>
@@ -77,6 +78,7 @@ export function LiveModal({ input, onClose }: LiveModalProps): React.ReactElemen
               ) : null}
               <LiveStatusBanner
                 status={modal.status}
+                presentation={modal.statusPresentation}
                 isReconnecting={modal.isReconnecting}
                 isLost={modal.isLost}
                 t={t}

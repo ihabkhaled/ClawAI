@@ -22,6 +22,7 @@ export function platformReasonCode(
   probe: ServerPullProbe,
 ): LiveSourceReasonCode {
   if (capability === LiveCapability.SERVER_PULL) return LiveSourceReasonCode.SERVER_PULL_AVAILABLE;
+  if (capability === LiveCapability.RECORDED) return LiveSourceReasonCode.RECORDED_VIDEO;
   if (capability !== LiveCapability.BROWSER_CAPTURE) return LiveSourceReasonCode.LINK_ONLY_PLATFORM;
   return probe === ServerPullProbe.UNREACHABLE
     ? LiveSourceReasonCode.SERVER_PULL_UNAVAILABLE

@@ -34,6 +34,8 @@ export const createSessionBodySchema = z.object({
   language: languageSchema,
   mode: z.nativeEnum(LiveMode),
   attestRights: z.boolean().default(false),
+  /** One-click "Summarize video": the whole recorded video at once (ADR-221 batch 6). */
+  summarize: z.boolean().default(false),
 });
 export type CreateSessionBody = z.infer<typeof createSessionBodySchema>;
 

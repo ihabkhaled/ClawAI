@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { useLiveHistory } from '@/hooks/live/use-live-history';
 import { useLiveHistoryActions } from '@/hooks/live/use-live-history-actions';
 import { useLiveStartForm } from '@/hooks/live/use-live-start-form';
+import { useLiveSummaryStart } from '@/hooks/live/use-live-summary-start';
 import { useLiveUsage } from '@/hooks/live/use-live-usage';
 import { useTranslation } from '@/lib/i18n';
 import { queryKeys } from '@/repositories/shared/query-keys';
@@ -20,6 +21,7 @@ export function useLivePage(): UseLivePageResult {
   const [sessionInput, setSessionInput] = useState<LiveCreateSessionInput | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const { buildSessionInput } = form;
+  const summary = useLiveSummaryStart(form, usage, setSessionInput);
 
   const start = useCallback((): void => {
     const input = buildSessionInput();
@@ -45,6 +47,7 @@ export function useLivePage(): UseLivePageResult {
     detailId,
     start,
     closeModal,
+    summary,
     openDetail: setDetailId,
     closeDetail: () => setDetailId(null),
   };

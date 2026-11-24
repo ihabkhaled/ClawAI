@@ -3,8 +3,9 @@ import { describe, expect, it } from 'vitest';
 
 import { LiveStatusBanner } from '@/components/live/live-status-banner';
 import { LIVE_STATUS_PRESENTATION } from '@/constants/live.constants';
-import { LiveStatusCode } from '@/enums/live.enum';
+import { LiveCapability, LiveStatusCode } from '@/enums/live.enum';
 import { LIVE_TRANSLATIONS } from '@/lib/i18n/locales/live-translations';
+import { liveStatusPresentation } from '@/utilities/live-session.utility';
 
 /** Resolves `live.*` keys against the real English dictionary, so a wrong key shows as a raw key. */
 function t(key: string): string {
@@ -21,7 +22,15 @@ function t(key: string): string {
 
 describe('LiveStatusBanner', () => {
   it.each(Object.values(LiveStatusCode))('renders its own translated text for %s', (status) => {
-    render(<LiveStatusBanner status={status} isReconnecting={false} isLost={false} t={t} />);
+    render(
+      <LiveStatusBanner
+        status={status}
+        presentation={LIVE_STATUS_PRESENTATION[status]}
+        isReconnecting={false}
+        isLost={false}
+        t={t}
+      />,
+    );
     const banner = screen.getByTestId(`live-status-${status}`);
     const presentation = LIVE_STATUS_PRESENTATION[status];
     expect(banner).toHaveTextContent(t(presentation.titleKey));
@@ -38,10 +47,47 @@ describe('LiveStatusBanner', () => {
 
   it('adds the connection state when the feed is reconnecting or lost', () => {
     const { rerender } = render(
-      <LiveStatusBanner status={LiveStatusCode.ANALYZING} isReconnecting isLost={false} t={t} />,
+      <LiveStatusBanner
+        status={LiveStatusCode.ANALYZING}
+        presentation={LIVE_STATUS_PRESENTATION[LiveStatusCode.ANALYZING]}
+        isReconnecting
+        isLost={false}
+        t={t}
+      />,
     );
     expect(screen.getByRole('status')).toHaveTextContent(t('live.modal.reconnecting'));
-    rerender(<LiveStatusBanner status={LiveStatusCode.ANALYZING} isReconnecting isLost t={t} />);
+    rerender(
+      <LiveStatusBanner
+        status={LiveStatusCode.ANALYZING}
+        presentation={LIVE_STATUS_PRESENTATION[LiveStatusCode.ANALYZING]}
+        isReconnecting
+        isLost
+        t={t}
+      />,
+    );
     expect(screen.getByRole('status')).toHaveTextContent(t('live.modal.connectionLost'));
+  });
+
+  it('a summary and a recorded video have their own wording, never "stream ended"', () => {
+    const summaryDone = liveStatusPresentation(LiveStatusCode.ENDED, {
+      capability: LiveCapability.RECORDED,
+      summary: true,
+    });
+    const videoDone = liveStatusPresentation(LiveStatusCode.ENDED, {
+      capability: LiveCapability.RECORDED,
+    });
+    expect(t(summaryDone.titleKey)).toBe('Summary ready');
+    expect(t(videoDone.titleKey)).toBe('Video ended');
+    expect(liveStatusPresentation(LiveStatusCode.ENDED, null)).toBe(
+      LIVE_STATUS_PRESENTATION[LiveStatusCode.ENDED],
+    );
+    expect(
+      t(
+        liveStatusPresentation(LiveStatusCode.ANALYZING, {
+          capability: LiveCapability.RECORDED,
+          summary: true,
+        }).titleKey,
+      ),
+    ).toBe('Summarizing the video');
   });
 });

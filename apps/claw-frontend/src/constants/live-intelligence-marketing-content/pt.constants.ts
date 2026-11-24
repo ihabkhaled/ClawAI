@@ -1,169 +1,356 @@
-import type { LiveIntelligenceMarketingDictionary } from '@/types/live-intelligence-marketing-content.types';
+import { LiveMarketingPlatformGroup } from '@/enums/live-marketing-platform-group.enum';
+import type {
+  LiveIntelligenceMarketingDictionary,
+  LiveIntelligenceMarketingSeo,
+} from '@/types/live-intelligence-marketing-content.types';
 
-/** Portuguese copy for the public Live Intelligence page. Same claims as the English source. */
+/**
+ * The Portuguese copy for the public Live & Video Intelligence pages. Every claim mirrors the
+ * English source in `en.constants.ts`; no price or free-minute count is written here.
+ */
 export const PT_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDictionary = {
-  eyebrow: 'Novidade no ClawAI',
-  title: 'Live Intelligence: legendas, resumos e destaques de uma transmissão ao vivo',
+  eyebrow: 'Novidade no ClawAI: Live & Video Intelligence',
+  title: 'Qualquer transmissão ao vivo ou vídeo, entendido no seu idioma',
   intro:
-    'Cole o link de uma transmissão ao vivo e assista dentro do ClawAI. Enquanto ela roda, o ClawAI transforma a fala em legendas no idioma que você escolher, mantém cartões de resumo curtos atualizados quando o assunto muda e marca os momentos importantes em uma linha do tempo. Feche a janela e o que você assistiu fica no seu histórico, pronto para aprimorar e exportar.',
-  openCta: 'Abrir o Live Intelligence',
-  pricingCta: 'Ver planos e preços',
-  howItWorksCta: 'Ver como funciona',
-  whatTitle: 'O que é o Live Intelligence',
-  whatParagraphs: [
-    'Uma transmissão ao vivo é difícil de acompanhar quando é longa, rápida ou está num idioma que você não fala. O Live Intelligence fica ao lado do vídeo e faz as anotações: legendas traduzidas para o seu idioma, um resumo contínuo e uma lista de destaques, para você poder desviar o olhar sem perder o fio.',
-    'Tudo acontece numa janela dentro do ClawAI: a transmissão e a análise ficam na mesma tela. Antes de começar você escolhe o idioma das legendas e um modo de análise, e pode pausar, retomar e avançar ou voltar onde a transmissão permitir. Ao pausar, a transmissão congela e a cobrança para.',
-    'Muitas pessoas podem assistir à mesma transmissão sem pagar várias vezes pelo mesmo trabalho. Quando o ClawAI analisa uma transmissão nos próprios servidores, como uma transmissão ao vivo pública no YouTube, na Twitch, no TikTok LIVE ou em outra plataforma compatível, ou um link HLS, ele a processa uma única vez e compartilha a análise com todos os espectadores. A análise que você realmente assistiu é salva no seu histórico e fica lá até você apagá-la.',
+    'Cole o link de uma transmissão ao vivo ou de um vídeo gravado de mais de 30 plataformas. A ClawAI acompanha tudo com legendas ao vivo e um feed contínuo de resumos e destaques, ou transforma o vídeo inteiro em um relatório claro com um único clique. Tudo roda nos servidores da ClawAI, então funciona em qualquer dispositivo, inclusive no seu celular.',
+  openCta: 'Cole um link agora',
+  signUpCta: 'Criar conta grátis',
+  howItWorksCta: 'Veja como funciona',
+  videosTitle: 'Veja funcionando',
+  videosIntro:
+    'Dois clipes curtos do produto real. Toque para reproduzir: eles começam sem som e em loop, para você assistir em qualquer lugar.',
+  videos: [
+    {
+      title: 'O painel Análise com IA ao lado de uma transmissão de jogo',
+      body: 'Enquanto uma transmissão de jogo roda, o painel Análise com IA mantém um feed contínuo do que acontece na tela e do que é dito.',
+    },
+    {
+      title: 'Um telejornal ao vivo em árabe, com legendas em inglês no celular',
+      body: 'Gravação feita no celular de um telejornal ao vivo no YouTube: o apresentador fala árabe, a legenda aparece em inglês e o Feed inteligente resume a notícia até aquele momento.',
+    },
   ],
-  stepsTitle: 'Como funciona, em cinco passos',
-  stepsIntro:
-    'Do link colado ao resumo exportado. Cada passo é algo que você faz ou algo que o ClawAI faz por você.',
+  stepsTitle: 'Como funciona, em quatro passos',
+  stepsIntro: 'Do link colado às anotações que você pode guardar. Não é preciso instalar nada.',
   steps: [
     {
-      title: 'Cole o link',
-      body: 'Abra o Live Intelligence e cole o endereço de uma transmissão ao vivo. O ClawAI verifica se a fonte é compatível antes de analisar ou cobrar qualquer coisa e avisa com clareza se não for.',
+      title: 'Cole um link',
+      body: 'Cole o endereço de uma transmissão ao vivo ou de um vídeo gravado: um reel, um post, um short ou uma live passada. A ClawAI verifica se consegue ler a fonte antes de começar.',
     },
     {
-      title: 'Escolha idioma e modo',
-      body: 'Escolha o idioma das legendas e dos resumos e um de três modos: Áudio, Áudio + Visão ou Smart Auto. Para um link HLS, você confirma que tem direito de analisá-lo. Se os servidores do ClawAI não conseguirem ler uma transmissão do YouTube, da Twitch, do Kick ou do Facebook, você pode aceitar que o ClawAI escute pelo seu dispositivo.',
+      title: 'Escolha o idioma e o modo',
+      body: 'Escolha o idioma em que quer ler, entre os 13 idiomas do app, e um modo de análise: Áudio, Áudio + visão ou Automático inteligente.',
     },
     {
-      title: 'Assista com legendas, cartões e destaques',
-      body: 'As legendas aparecem alguns segundos depois da fala, com cerca de 7 a 12 segundos de atraso. Os cartões de resumo mudam com os assuntos e os destaques detectados ficam numa linha do tempo clicável.',
+      title: 'Acompanhe ao vivo ou clique em Resumir vídeo',
+      body: 'Acompanhe com legendas e um Feed inteligente de resumos, destaques e notas visuais. Em um vídeo gravado, você também pode clicar em Resumir vídeo e receber o relatório completo de uma vez.',
     },
     {
-      title: 'Pause, retome e avance',
-      body: 'Pause para congelar a transmissão e parar o contador. Retome de onde parou ou vá para o ao vivo, com a lacuna mostrada claramente. Avançar e voltar funciona onde a própria transmissão permite.',
-    },
-    {
-      title: 'Feche, volte, aprimore, exporte',
-      body: 'Ao fechar a janela, o que você assistiu fica no histórico. Depois, você pode aprimorar qualquer cartão com um modelo à sua escolha e exportar o histórico em PDF, Markdown ou TXT.',
+      title: 'Exporte e compartilhe',
+      body: 'Tudo fica salvo no seu histórico. Exporte em PDF, Markdown ou TXT e compartilhe com quem precisar.',
     },
   ],
-  featuresTitle: 'O que você recebe',
-  features: [
+  screenshotsTitle: 'Como fica no celular',
+  screenshotsIntro: 'Telas reais do app, capturadas em um celular com o tema escuro.',
+  screenshots: [
     {
-      title: 'Legendas ao vivo no seu idioma',
-      body: 'A fala é transcrita e traduzida para o idioma escolhido. As legendas chegam alguns segundos depois de quem fala: não é instantâneo, e a interface diz isso.',
+      title: 'Colando o link de uma transmissão ao vivo ou de um vídeo',
+      body: 'Um único campo aceita links de qualquer plataforma compatível. Escolha o idioma e o modo e comece.',
     },
     {
-      title: 'Cartões de resumo que acompanham',
-      body: 'Cartões curtos resumem a transmissão e são atualizados quando o assunto muda, então o mais recente mostra onde a transmissão está agora.',
+      title: 'O feed ao vivo com legendas, resumos e destaques',
+      body: 'As legendas chegam alguns segundos depois da fala, enquanto o Feed inteligente mantém resumos, destaques e notas visuais sempre atualizados.',
     },
     {
-      title: 'Destaques automáticos numa linha do tempo',
-      body: 'Os momentos que valem a pena rever são detectados e marcados na linha do tempo. Clique para ir até lá, onde a transmissão permitir.',
+      title: 'Um resumo de vídeo com um clique',
+      body: 'O relatório pronto: um resumo geral, os momentos principais com marcação de tempo, destaques e a transcrição completa.',
+    },
+  ],
+  outcomesTitle: 'O que ele faz por você',
+  outcomes: [
+    {
+      title: 'Coloque em dia uma live de duas horas em minutos',
+      body: 'Leia o resumo e os momentos principais em vez de passar a gravação inteira. Cada momento tem marcação de tempo, para você pular direto para o que importa.',
     },
     {
-      title: 'Pause, retome e avance',
-      body: 'Controle a reprodução como uma gravação quando a fonte permitir. Em pausa, a transmissão fica congelada e nada é cobrado.',
+      title: 'Acompanhe uma transmissão em outro idioma no seu',
+      body: 'Uma coletiva de imprensa em japonês, a narração de uma partida em espanhol, o noticiário em árabe: leia as legendas e os resumos no idioma que você escolher.',
     },
     {
-      title: 'Um histórico sob seu controle',
-      body: 'A análise que você assistiu fica num histórico paginado até você apagá-la. Apagar remove.',
+      title: 'Nunca perca o momento decisivo',
+      body: 'Os destaques são selecionados enquanto a transmissão acontece, então você pode desviar o olhar e ainda saber o que acabou de rolar.',
     },
     {
-      title: 'Aprimore um cartão com o modelo que escolher',
-      body: 'Escolha um modelo disponível para reescrever ou aprofundar um cartão. O aprimoramento é cobrado pelo custo real do modelo escolhido.',
+      title: 'Anotações para reuniões, aulas, notícias e games',
+      body: 'Transforme um webinar público, uma aula gravada, uma cobertura de notícias ao vivo ou um torneio em anotações que você pode pesquisar, guardar e exportar.',
     },
     {
-      title: 'Exporte em PDF, Markdown ou TXT',
-      body: 'Leve seu histórico para fora do ClawAI no formato que combina com o próximo passo.',
+      title: 'Funciona em qualquer dispositivo',
+      body: 'A ClawAI lê a transmissão nos próprios servidores. Não é preciso compartilhar a tela, então funciona do mesmo jeito no celular, no tablet ou no computador.',
     },
     {
-      title: 'Processamento compartilhado',
-      body: 'Muitos espectadores, uma análise. Uma transmissão ao vivo pública que os servidores do ClawAI conseguem ler, ou uma transmissão HLS, é processada uma vez nos servidores do ClawAI e compartilhada com todos que estão assistindo, em qualquer dispositivo, inclusive no celular. A análise feita com o áudio do seu próprio dispositivo fica só com você.',
+      title: 'Seu histórico, suas exportações',
+      body: 'O que você assistiu e cada resumo que você gerou ficam no seu histórico, prontos para exportar em PDF, Markdown ou TXT.',
+    },
+  ],
+  waysTitle: 'Duas formas de usar',
+  waysIntro:
+    'Acompanhe uma transmissão enquanto ela acontece ou entregue um vídeo gravado à ClawAI e receba o relatório de uma só vez.',
+  ways: [
+    {
+      title: 'Análise ao vivo: assista junto',
+      body: 'As legendas chegam cerca de 7 a 12 segundos depois da fala, e um Feed inteligente contínuo acrescenta resumos, destaques e notas visuais. Plataformas com chat ao vivo ganham uma aba de chat. Em um vídeo gravado, a ClawAI reproduz desde o início em velocidade normal e a análise acompanha.',
+    },
+    {
+      title: 'Resumir vídeo: um clique',
+      body: 'Em um vídeo gravado, a ClawAI processa o vídeo inteiro de uma vez e devolve um relatório completo: um resumo geral, os momentos principais com marcação de tempo, destaques e a transcrição completa. Ele fica salvo no seu histórico e pode ser exportado em PDF, Markdown ou TXT.',
+    },
+  ],
+  waysTableCaption: 'Análise ao vivo e resumo com um clique, lado a lado',
+  waysTableAspect: 'O que você recebe',
+  waysTableLive: 'Análise ao vivo',
+  waysTableSummary: 'Resumir vídeo',
+  waysRows: [
+    {
+      label: 'Funciona com',
+      live: 'Transmissões ao vivo e vídeos gravados',
+      summary: 'Vídeos gravados de até 3 horas',
+    },
+    {
+      label: 'Tempo',
+      live: 'Acompanha o vídeo em tempo real, legendas cerca de 7 a 12 segundos atrás',
+      summary: 'O vídeo inteiro é processado de uma vez',
+    },
+    {
+      label: 'Resultado',
+      live: 'Legendas e um Feed inteligente de resumos, destaques e notas visuais',
+      summary:
+        'Resumo geral, momentos principais com marcação de tempo, destaques e transcrição completa',
+    },
+    {
+      label: 'Chat ao vivo',
+      live: 'Uma aba de chat nas plataformas que têm chat',
+      summary: 'Não é necessário',
+    },
+    {
+      label: 'Guardar',
+      live: 'Salvo no seu histórico, exportação em PDF, Markdown ou TXT',
+      summary: 'Salvo no seu histórico, exportação em PDF, Markdown ou TXT',
     },
   ],
   modesTitle: 'Três modos de análise',
-  modesIntro:
-    'O modo decide o que o ClawAI observa. Você o escolhe antes de começar e o custo acompanha a escolha.',
+  modesIntro: 'O modo define no que a ClawAI presta atenção. Você escolhe antes de começar.',
   modes: [
     {
       title: 'Áudio',
-      body: 'Legendas, resumos e destaques a partir do que é dito. O modo mais simples, certo para palestras, briefings, aulas e entrevistas.',
+      body: 'Legendas, resumos e destaques a partir do que é dito. Ideal para palestras, entrevistas, podcasts, aulas e noticiários.',
     },
     {
-      title: 'Áudio + Visão',
-      body: 'Acrescenta o que aparece na tela, como slides, gráficos ou uma demonstração. O ClawAI amostra quadros da transmissão e guarda os que mudaram. A visão é cobrada pelo custo real do modelo usado.',
+      title: 'Áudio + visão',
+      body: 'Acrescenta o que aparece na tela, como slides, gráficos, placares ou gameplay, para que as anotações descrevam o que você vê além do que você ouve.',
     },
     {
-      title: 'Smart Auto',
-      body: 'Começa pelo áudio e só acrescenta visão quando a transmissão fica em silêncio ou a imagem muda, para você pagar pela visão quando ela provavelmente importa.',
+      title: 'Automático inteligente',
+      body: 'Parte do áudio e olha a imagem quando ela provavelmente importa, por exemplo quando quem fala fica em silêncio ou a cena muda.',
     },
   ],
-  sourcesTitle: 'O que ele pode e não pode analisar',
-  sourcesIntro:
-    'Preferimos contar os limites agora a deixar você descobri-los no meio da transmissão.',
-  sources: [
+  researchNote:
+    'Pesquisa: um resumo pode fazer uma busca na web para acrescentar contexto, como quem é um palestrante ou a que evento algo se refere.',
+  languagesTitle: 'Leia no seu idioma',
+  languagesParagraphs: [
+    'Escolha qualquer um dos 13 idiomas do app: inglês, árabe, alemão, espanhol, persa, francês, hindi, italiano, japonês, português, russo, tailandês ou chinês. Quem fala pode usar qualquer idioma.',
+    'Quando quem fala já usa o seu idioma, você lê as palavras exatas. Quando não, as legendas, os resumos e os destaques são traduzidos, e a tradução aparece no lugar do original.',
+  ],
+  platformsTitle: 'Mais de 30 plataformas',
+  platformsBody:
+    'YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X (Twitter), Bilibili, Niconico, CHZZK, SOOP e muitas outras. Funciona tanto com transmissões ao vivo quanto com vídeos gravados.',
+  platformsCta: 'Ver todas as plataformas',
+  limitsTitle: 'Bom saber',
+  limits: [
     {
-      title: '15 plataformas, analisadas nos servidores do ClawAI',
-      body: 'O ClawAI reconhece 15 plataformas de transmissão ao vivo. Quando uma transmissão está ao vivo e é pública, e a plataforma permite, os servidores do ClawAI a leem por conta própria: YouTube, Twitch, Kick, Facebook, TikTok LIVE, Rumble, BIGO LIVE, Bilibili, CHZZK, SOOP, Nimo TV e outras. Não há nada para compartilhar, funciona em qualquer dispositivo, inclusive no celular, e uma única análise é compartilhada com todos os espectadores. O Instagram Live geralmente não pode ser lido pelo servidor. O Discord Go Live não é compatível porque não tem link público. Links HLS que você tem direito de analisar continuam funcionando; você confirma isso ao iniciar.',
+      title: 'Apenas vídeos e transmissões públicos',
+      body: 'A ClawAI só consegue ler vídeos e transmissões públicos. Algumas plataformas, ou vídeos específicos, podem recusar o acesso a partir de um servidor; quando isso acontece, a ClawAI avisa com clareza em vez de fingir que deu certo.',
     },
     {
-      title: 'Quando o servidor não consegue ler uma transmissão',
-      body: 'Nesse caso, YouTube, Twitch, Kick e Facebook tocam no player oficial e, com a sua permissão, a IA escuta o áudio do seu dispositivo: no computador, você compartilha o áudio da aba no Chrome ou no Edge (“Analisar com meu navegador”); no celular, o microfone ouve a transmissão pelo alto-falante (“Analisar com o microfone”). Só o áudio é enviado, para transcrição, por isso o modo usado é o Áudio. As outras plataformas abrem na própria plataforma (“Assistir em …”), sem IA. O chat ao vivo aparece para vídeos do YouTube, Twitch e Kick; as outras plataformas ganham um link “Abrir o chat”.',
+      title: 'Vídeos gravados de até 3 horas',
+      body: 'Um vídeo gravado pode ter até 3 horas, tanto na análise ao vivo quanto no resumo com um clique.',
     },
     {
-      title: 'As legendas chegam com alguns segundos de atraso',
-      body: 'A fala é transcrita em trechos curtos, então as legendas chegam cerca de 7 a 12 segundos depois. Não é legendagem em tempo real.',
+      title: 'As legendas chegam alguns segundos depois',
+      body: 'A fala é transcrita em trechos curtos, então as legendas chegam cerca de 7 a 12 segundos depois de serem ditas. Não são legendas instantâneas.',
     },
     {
-      title: 'Estados honestos, nunca um sucesso falso',
-      body: 'A janela mostra quando está conectando, atrasada, se recuperando, sem minutos grátis, aguardando sua aprovação, na capacidade máxima ou quando a transmissão terminou.',
+      title: 'Minutos grátis todo mês, minutos pagos só com sua aprovação',
+      body: 'Todos os planos incluem minutos grátis todo mês. Depois disso, os minutos só são cobrados quando você aprova. Um resumo com um clique conta a duração do vídeo em minutos.',
     },
   ],
-  plansTitle: 'Minutos grátis e preços',
-  plansIntro:
-    'Todos os planos incluem minutos de análise grátis a cada mês. São os valores padrão e podem ser ajustados.',
-  planMinutesUnit: 'minutos grátis por mês',
-  planProAndAbove: 'Pro e acima',
-  plansBody:
-    'Depois dos minutos grátis, a análise custa {price} por minuto, e só depois que você confirmar. Você pode definir um limite de gasto. Quando o crédito acaba, há um único período de tolerância de 60 segundos. A visão é cobrada pelo custo real do modelo usado e pausar para o contador.',
   faqTitle: 'Perguntas frequentes',
   faq: [
     {
-      question: 'O Live Intelligence funciona com transmissões ao vivo do YouTube?',
+      question: 'Funciona no celular?',
       answer:
-        'Sim, quando a transmissão está ao vivo, é pública e o YouTube permite: os servidores do ClawAI a leem, não há nada para compartilhar e funciona em qualquer dispositivo. Se o servidor não conseguir lê-la, a IA trabalha com o áudio do seu próprio dispositivo depois da sua permissão: no computador, você compartilha o áudio da aba no Chrome ou no Edge; no celular, o microfone ouve a transmissão pelo alto-falante. Nos dois casos, as legendas chegam alguns segundos depois da fala.',
+        'Sim. A ClawAI lê a transmissão ou o vídeo nos próprios servidores, então não é preciso compartilhar a tela. Funciona igualmente em celulares, tablets e computadores.',
     },
     {
-      question: 'Quais transmissões ele pode analisar?',
+      question: 'Em quais idiomas posso ler as legendas?',
       answer:
-        'Transmissões ao vivo públicas no YouTube, Twitch, Kick, Facebook, TikTok LIVE, Rumble, BIGO LIVE, Bilibili, CHZZK, SOOP, Nimo TV e outras plataformas compatíveis, analisadas nos servidores do ClawAI em qualquer dispositivo quando a plataforma permite; e transmissões HLS ao vivo que você tem direito de analisar, o que você confirma ao iniciar. Se o servidor não conseguir ler uma transmissão, YouTube, Twitch, Kick e Facebook passam a usar o áudio do seu próprio dispositivo, e as outras plataformas abrem na própria plataforma, sem IA. O Instagram Live geralmente não pode ser lido pelo servidor, e o Discord não é compatível.',
+        'Em qualquer um dos 13 idiomas do app: inglês, árabe, alemão, espanhol, persa, francês, hindi, italiano, japonês, português, russo, tailandês e chinês. Quem fala pode usar qualquer idioma. Se já falar o seu idioma, você vê as palavras exatas; caso contrário, a tradução aparece no lugar do original.',
+    },
+    {
+      question: 'Funciona com vídeos gravados ou só com transmissões ao vivo?',
+      answer:
+        'Com os dois. Cole uma transmissão ao vivo ou um vídeo gravado, como um reel, um post, um short ou uma live passada. Com um vídeo gravado, você pode acompanhar desde o início em velocidade normal ou clicar em Resumir vídeo para receber o relatório completo de uma vez.',
+    },
+    {
+      question: 'Qual pode ser a duração de um vídeo?',
+      answer: 'Um vídeo gravado pode ter até 3 horas.',
+    },
+    {
+      question: 'O que vem em um resumo com um clique?',
+      answer:
+        'Um resumo geral, os momentos principais com marcação de tempo, destaques e a transcrição completa. Ele fica salvo no seu histórico e pode ser exportado em PDF, Markdown ou TXT.',
+    },
+    {
+      question: 'Como é cobrado?',
+      answer:
+        'Todos os planos incluem minutos grátis todo mês. Depois disso, você paga por minuto, e só depois de aprovar. Um resumo com um clique conta a duração do vídeo em minutos.',
     },
     {
       question: 'As legendas são em tempo real?',
       answer:
-        'Não. Chegam cerca de 7 a 12 segundos depois da fala, porque o áudio é transcrito em trechos curtos. Resumos e destaques seguem as legendas.',
+        'Quase. As legendas chegam cerca de 7 a 12 segundos depois da fala, porque o áudio é transcrito em trechos curtos. Os resumos e os destaques vêm logo depois das legendas.',
     },
     {
-      question: 'Quanto custa?',
+      question: 'Quais plataformas são compatíveis?',
       answer:
-        'Cada plano inclui minutos grátis por mês: 30 no Free, 120 no Starter, 300 no Plus e 600 no Pro e acima. Depois, US$ 0,02 por minuto, só após sua confirmação e com limite de gasto opcional. A visão é cobrada pelo custo real do modelo.',
+        'Mais de 30, incluindo YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X (Twitter), Bilibili e Niconico. A página de plataformas lista todas. Só é possível ler vídeos e transmissões públicos, e o Discord não é compatível porque não tem links públicos.',
     },
     {
-      question: 'O que acontece se meu crédito acabar no meio da transmissão?',
+      question: 'A ClawAI publica ou conversa no chat em meu nome?',
       answer:
-        'Você tem um único período de tolerância de 60 segundos e depois a análise para até você adicionar crédito.',
+        'Não. A ClawAI apenas lê a transmissão. Ela nunca publica, comenta ou conversa em nenhuma plataforma por você. O que a transmissão diz, e o que o chat dela diz, é tratado como dado não confiável para resumir, nunca como instrução para a ClawAI.',
     },
     {
-      question: 'Pausar custa alguma coisa?',
+      question: 'Quem pode ver o que eu assisti?',
       answer:
-        'Não. Ao pausar, a transmissão congela e a cobrança para. Retome de onde parou ou volte ao ao vivo.',
-    },
-    {
-      question: 'O que acontece com o meu histórico?',
-      answer:
-        'A análise que você realmente assistiu fica guardada até você apagá-la. Você pode navegar nela, aprimorar um cartão com um modelo à sua escolha e exportá-la em PDF, Markdown ou TXT.',
-    },
-    {
-      question: 'Posso fazer perguntas à transmissão?',
-      answer:
-        'Não nesta primeira versão. O Live Intelligence oferece legendas, cartões de resumo e destaques; perguntas sobre uma transmissão ainda não estão incluídas.',
+        'Seu histórico é seu. As análises que você assistiu e os resumos que você gerou ficam na sua conta até você apagá-los, e você decide o que exportar ou compartilhar.',
     },
   ],
-  closingTitle: 'Acompanhe a próxima transmissão sem assistir a cada minuto',
+  closingTitle: 'Cole seu primeiro link',
   closingBody:
-    'Cole o link de uma transmissão ao vivo no YouTube, na Twitch, no TikTok LIVE ou em outra plataforma compatível, ou um link HLS que você tem direito de analisar, escolha seu idioma e comece. Seus minutos grátis estão esperando.',
+    'Uma partida ao vivo, uma coletiva de imprensa, uma aula ou aquela live de duas horas que você perdeu: cole o link, escolha o idioma e deixe a ClawAI fazer as anotações. Todos os planos incluem minutos grátis todo mês.',
+  platformsPage: {
+    eyebrow: 'Novidade no ClawAI: Live & Video Intelligence',
+    title: 'Todas as plataformas que o Live & Video Intelligence consegue ler',
+    intro:
+      'Cole um link de qualquer uma destas plataformas, ao vivo ou gravado. A ClawAI lê nos próprios servidores, então funciona em qualquer dispositivo, inclusive celulares.',
+    openCta: 'Cole um link agora',
+    backCta: 'Voltar para Live & Video Intelligence',
+    groupsTitle: 'Plataformas por tipo',
+    groupsIntro:
+      'Os nomes das plataformas são marcas registradas de seus respectivos donos. A ClawAI não é afiliada a elas nem endossada por elas.',
+    groups: {
+      [LiveMarketingPlatformGroup.GLOBAL_VIDEO]: {
+        title: 'Vídeo global',
+        body: 'Os grandes sites de vídeo que as pessoas compartilham todos os dias, de palestras e aulas longas a clipes curtos e programas de áudio.',
+      },
+      [LiveMarketingPlatformGroup.GAMING_STREAMING]: {
+        title: 'Games e streaming',
+        body: 'Lives de games, esports e transmissões de criadores, com uma aba de chat ao vivo ao lado da análise.',
+      },
+      [LiveMarketingPlatformGroup.SOCIAL]: {
+        title: 'Redes sociais',
+        body: 'Reels, posts, shorts e transmissões ao vivo de redes sociais e canais de mensagens.',
+      },
+      [LiveMarketingPlatformGroup.ASIA]: {
+        title: 'Ásia',
+        body: 'Plataformas de vídeo e de lives da China, do Japão, da Coreia e de toda a Ásia, lidas em qualquer um dos 13 idiomas do app.',
+      },
+    },
+    liveTag: 'Ao vivo',
+    videoTag: 'Vídeos',
+    supportTitle: 'O que funciona em todas as plataformas',
+    supportIntro: 'Os mesmos três recursos funcionam onde quer que a ClawAI consiga ler a fonte.',
+    support: [
+      {
+        title: 'Transmissões ao vivo',
+        body: 'Legendas cerca de 7 a 12 segundos depois da fala, um Feed inteligente de resumos, destaques e notas visuais e uma aba de chat ao vivo quando a plataforma tem uma.',
+      },
+      {
+        title: 'Vídeos gravados',
+        body: 'Reels, posts, shorts e lives passadas de até 3 horas. A ClawAI reproduz o vídeo desde o início em velocidade normal e a análise acompanha.',
+      },
+      {
+        title: 'Resumo com um clique',
+        body: 'Em um vídeo gravado, clique em Resumir vídeo e receba um resumo geral, os momentos principais com marcação de tempo, destaques e a transcrição completa.',
+      },
+    ],
+    limitsTitle: 'Os limites, com honestidade',
+    limits: [
+      {
+        title: 'Apenas conteúdo público',
+        body: 'Só é possível ler vídeos e transmissões públicos. Conteúdo privado ou exclusivo para membros não pode ser lido.',
+      },
+      {
+        title: 'Uma plataforma pode recusar',
+        body: 'Algumas plataformas, ou vídeos específicos, podem recusar o acesso a partir de um servidor. Quando isso acontece, a ClawAI avisa com clareza em vez de mostrar um resultado falso.',
+      },
+      {
+        title: 'O Discord não é compatível',
+        body: 'As transmissões do Discord não têm links públicos, então não há nada que um servidor possa abrir.',
+      },
+    ],
+    faqTitle: 'Perguntas sobre plataformas',
+    faq: [
+      {
+        question: 'Minha plataforma é compatível?',
+        answer:
+          'Se ela está nesta página, cole o link e a ClawAI verifica antes de começar. Se a plataforma ou o vídeo recusar o acesso do servidor, você fica sabendo na hora.',
+      },
+      {
+        question: 'Funcionam tanto transmissões ao vivo quanto vídeos gravados?',
+        answer:
+          'Sim, em todas as plataformas listadas. Um vídeo gravado de até 3 horas também pode ser resumido com um clique.',
+      },
+      {
+        question: 'Por que um vídeo pode falhar se a plataforma está na lista?',
+        answer:
+          'Uma plataforma pode impedir que um servidor leia um vídeo específico, mesmo público. Quando isso acontece, a ClawAI avisa na hora. Vídeos e transmissões privados nunca podem ser lidos.',
+      },
+      {
+        question: 'Por que o Discord não está aqui?',
+        answer:
+          'As transmissões do Discord não têm um link público que um servidor possa abrir, então a ClawAI não consegue lê-las.',
+      },
+    ],
+    closingTitle: 'Encontrou sua plataforma?',
+    closingBody:
+      'Cole o link, escolha o idioma e comece. Todos os planos incluem minutos grátis todo mês.',
+  },
+};
+
+/** Portuguese SEO copy for both pages; claims mirror the English file. */
+export const PT_LIVE_INTELLIGENCE_MARKETING_SEO: LiveIntelligenceMarketingSeo = {
+  overview: {
+    title: 'Live & Video Intelligence: legendas ao vivo e resumo de vídeo com um clique',
+    description:
+      'Cole o link de uma live ou de um vídeo do YouTube, Twitch, TikTok e mais de 30 plataformas. Receba legendas ao vivo no seu idioma, um Feed inteligente de resumos e destaques ou um resumo de vídeo com marcação de tempo em um clique. Funciona em qualquer dispositivo.',
+    keywords: [
+      'legendas para live',
+      'resumo de vídeo com IA',
+      'resumir vídeo do YouTube',
+      'legenda traduzida ao vivo',
+      'destaques de live',
+    ],
+  },
+  platforms: {
+    title: 'Plataformas compatíveis com o Live & Video Intelligence',
+    description:
+      'Todas as plataformas que a ClawAI consegue ler para legendas ao vivo e resumos de vídeo: YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X, Bilibili, Niconico, CHZZK, SOOP e outras, agrupadas por tipo.',
+    keywords: [
+      'plataformas de vídeo compatíveis',
+      'plataformas de transmissão ao vivo',
+      'legendas para Twitch',
+      'resumo de vídeo do YouTube',
+    ],
+  },
 };

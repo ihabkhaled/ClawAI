@@ -1,6 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 
 import { LiveSourceKind } from '../../../../generated/prisma';
+import { HLS_PLAYLIST_MAX_BYTES } from '../../constants/sources.constants';
 import { decodeHlsProxyTarget, hlsProxyPath } from '../../utilities/hls-proxy-url.utility';
 import { HlsProxyService } from '../hls-proxy.service';
 
@@ -52,7 +53,7 @@ describe('HlsProxyService', () => {
     expect(fetcher.fetchObject).toHaveBeenCalledWith(
       new URL(hlsStream.sourceUrl),
       'cdn.example.com',
-      1024 * 1024,
+      HLS_PLAYLIST_MAX_BYTES,
     );
     expect(reply.contentType).toBe('application/vnd.apple.mpegurl');
     const text = await bodyText(reply.body);

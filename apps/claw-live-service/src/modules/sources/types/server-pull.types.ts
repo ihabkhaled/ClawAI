@@ -17,4 +17,12 @@ export interface ResolvedPull {
 export interface ServerPullOutcome {
   probe: ServerPullProbe;
   videoId: string | null;
+  /** RECORDED only: the video's length when the site reports it. */
+  durationSeconds?: number | null;
+}
+
+/** What the recorded-video probe learned: the length (null when the site hides it) and the video id. */
+export interface RecordedProbe {
+  durationSeconds: number | null;
+  videoId: string | null;
 }

@@ -10,6 +10,7 @@ import { PrismaService } from '../../../infrastructure/database/prisma/prisma.se
 import {
   ATTACHED_SESSION_STATES,
   LIVE_RUN_STATUSES,
+  RECORDED_ADVANCING_STATES,
   RUN_LEASE_SECONDS,
 } from '../constants/processing.constants';
 import type { ClaimedRunRow } from '../types/processing.types';
@@ -110,6 +111,17 @@ export class ProcessingRunRepository {
       where: { leaseOwner: owner },
       data: { leaseExpiresAt: new Date(0) },
     });
+  }
+
+  /**
+   * True while a viewer of the run may be billed (ACTIVE or GRACE): a recorded video's run only
+   * advances then, so a session waiting for credits never gets free transcription.
+   */
+  async hasBillableSession(runId: string): Promise<boolean> {
+    const count = await this.prisma.liveViewerSession.count({
+      where: { runId, state: { in: [...RECORDED_ADVANCING_STATES] } },
+    });
+    return count > 0;
   }
 
   findRunWithStream(runId: string): Promise<(LiveProcessingRun & { stream: LiveStream }) | null> {

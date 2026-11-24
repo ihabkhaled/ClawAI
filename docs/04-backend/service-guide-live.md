@@ -140,3 +140,17 @@ An existing `.env` is never rewritten. Add `PG_LIVE_PASSWORD`, `LIVE_DATABASE_UR
 `PG_LIVE_*` values (or run `bash scripts/ensure-prod-env.sh --env /srv/clawai/.env`), start the database once
 (`docker compose ... up -d pg-live`), re-run `install-tls` so the certificate lists `live-service`, then deploy. See
 [add-a-service-to-production](../11-runbooks/add-a-service-to-production.md).
+
+## Recorded videos and "Summarize video" (2026-11-24, ADR-221 batch 6)
+
+| What                | How                                                                                                                                                                |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Recorded video link | Resolve → `RECORDED` (private), `durationSeconds` in the answer; > policy `recordedVideoMaxSeconds` → 422 `LIVE_RECORDED_TOO_LONG`                                 |
+| Play along          | `POST /live/sessions` as before; the worker downloads once and cuts 6 s chunks on the play-along clock                                                             |
+| One-click summary   | `POST /live/sessions` with `summarize: true` (RECORDED only, else 422 `LIVE_SUMMARY_NEEDS_RECORDED`); answer has `summary: true`, `mediaStartAt`                   |
+| Summary billing     | Heartbeats accrue the run's newly processed media seconds (`processedMediaSeconds` − `accruedMediaSeconds`), never wall time; free first, then paid after approval |
+| Share links         | `facebook.com/share/{v,r,p}/<code>`: one guarded redirect on `facebook.com`                                                                                        |
+
+Migrations: `20261124120000_live_recorded_and_platforms` (enum values), `20261124130000_live_video_summary` (three
+columns with defaults). The seeder upgrades the active policy once (24 platforms, 3 h cap). Runbook: nothing manual —
+deploy runs `migrate deploy` then the seeder.

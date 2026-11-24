@@ -292,6 +292,8 @@ export const LIVE_POLICY_NUMBER_FIELDS: ReadonlyArray<LivePolicyNumberFieldOptio
 
 /** live-service refuses YouTube @handle links with this code (paste the video or /channel/UC… link). */
 export const LIVE_YOUTUBE_HANDLE_ERROR_CODE = 'LIVE_YOUTUBE_HANDLE_UNSUPPORTED';
+/** A recorded video longer than the live policy allows (3 hours by default). */
+export const LIVE_RECORDED_TOO_LONG_ERROR_CODE = 'LIVE_RECORDED_TOO_LONG';
 
 /** Where "Watch on YouTube" points; the embed URL carries the video or channel id. */
 export const LIVE_YOUTUBE_WATCH_URL = 'https://www.youtube.com/watch?v=';
@@ -318,6 +320,30 @@ export const LIVE_PLATFORM_NAMES: Record<LivePlatform, string> = {
   [LivePlatform.CHZZK]: 'CHZZK',
   [LivePlatform.SOOP]: 'SOOP',
   [LivePlatform.NIMO]: 'Nimo TV',
+  [LivePlatform.DAILYMOTION]: 'Dailymotion',
+  [LivePlatform.X]: 'X',
+  [LivePlatform.VIMEO]: 'Vimeo',
+  [LivePlatform.TROVO]: 'Trovo',
+  [LivePlatform.DLIVE]: 'DLive',
+  [LivePlatform.HUYA]: 'Huya',
+  [LivePlatform.DOUYU]: 'Douyu',
+  [LivePlatform.DOUYIN]: 'Douyin',
+  [LivePlatform.TWITCASTING]: 'TwitCasting',
+  [LivePlatform.NICONICO]: 'Niconico',
+  [LivePlatform.PICARTO]: 'Picarto',
+  [LivePlatform.ODYSEE]: 'Odysee',
+  [LivePlatform.RUTUBE]: 'Rutube',
+  [LivePlatform.VK]: 'VK Video',
+  [LivePlatform.OK]: 'OK.ru',
+  [LivePlatform.REDDIT]: 'Reddit',
+  [LivePlatform.STREAMABLE]: 'Streamable',
+  [LivePlatform.NAVER_TV]: 'Naver TV',
+  [LivePlatform.KAKAO_TV]: 'Kakao TV',
+  [LivePlatform.WEIBO]: 'Weibo',
+  [LivePlatform.SHOWROOM]: 'SHOWROOM',
+  [LivePlatform.LIVE17]: '17LIVE',
+  [LivePlatform.MIXCLOUD]: 'Mixcloud',
+  [LivePlatform.BLUESKY]: 'Bluesky',
 };
 
 // ─── Browser tab-audio capture (batch 2) ─────────────────────────────────────
@@ -387,6 +413,36 @@ export const LIVE_CAPTURE_COPY: Record<LiveCaptureSource, LiveCaptureCopy> = {
   },
 };
 
+/** A one-click summary reads as "Summarizing…" then "Summary ready", never as a stream. */
+export const LIVE_SUMMARY_STATUS_PRESENTATION: Partial<
+  Record<LiveStatusCode, LiveStatusPresentation>
+> = {
+  [LiveStatusCode.ANALYZING]: {
+    titleKey: 'live.summary.workingTitle',
+    descriptionKey: 'live.summary.workingDescription',
+    tone: LiveStatusTone.INFO,
+  },
+  [LiveStatusCode.ENDED]: {
+    titleKey: 'live.summary.readyTitle',
+    descriptionKey: 'live.summary.readyDescription',
+    tone: LiveStatusTone.NEUTRAL,
+  },
+};
+
+/** A recorded video that played to its end says so, not "stream ended". */
+export const LIVE_RECORDED_STATUS_PRESENTATION: Partial<
+  Record<LiveStatusCode, LiveStatusPresentation>
+> = {
+  [LiveStatusCode.ENDED]: {
+    titleKey: 'live.modal.videoEndedTitle',
+    descriptionKey: 'live.modal.videoEndedDescription',
+    tone: LiveStatusTone.NEUTRAL,
+  },
+};
+
+/** A one-click summary reveals every event at once (its media time runs ahead of the wall clock). */
+export const LIVE_REVEAL_ALL_AT = Number.MAX_SAFE_INTEGER;
+
 /** A BROWSER_CAPTURE resolution's reasonCode when the server could not read the stream itself. */
 export const LIVE_SERVER_PULL_UNAVAILABLE_REASON = 'SERVER_PULL_UNAVAILABLE';
 
@@ -409,6 +465,30 @@ export const LIVE_SERVER_PULL_PLATFORMS: ReadonlyArray<LiveServerPullPlatform> =
   LivePlatform.CHZZK,
   LivePlatform.SOOP,
   LivePlatform.NIMO,
+  LivePlatform.DAILYMOTION,
+  LivePlatform.X,
+  LivePlatform.VIMEO,
+  LivePlatform.TROVO,
+  LivePlatform.DLIVE,
+  LivePlatform.HUYA,
+  LivePlatform.DOUYU,
+  LivePlatform.DOUYIN,
+  LivePlatform.TWITCASTING,
+  LivePlatform.NICONICO,
+  LivePlatform.PICARTO,
+  LivePlatform.ODYSEE,
+  LivePlatform.RUTUBE,
+  LivePlatform.VK,
+  LivePlatform.OK,
+  LivePlatform.REDDIT,
+  LivePlatform.STREAMABLE,
+  LivePlatform.NAVER_TV,
+  LivePlatform.KAKAO_TV,
+  LivePlatform.WEIBO,
+  LivePlatform.SHOWROOM,
+  LivePlatform.LIVE17,
+  LivePlatform.MIXCLOUD,
+  LivePlatform.BLUESKY,
 ];
 
 /** A status in this set stops the capture: nothing more would be analyzed or billed. */

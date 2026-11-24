@@ -34,6 +34,16 @@ export class FencedRunWriter {
     });
   }
 
+  /** Records how many seconds of a recorded video the run has transcribed (summary billing reads it). */
+  async recordMediaProgress(lease: RunLease, seconds: number): Promise<void> {
+    await this.commit(lease, (tx) =>
+      tx.liveProcessingRun.update({
+        where: { id: lease.runId },
+        data: { processedMediaSeconds: Math.floor(seconds) },
+      }),
+    );
+  }
+
   /** Renews the lease and returns the run's current status (one fenced round trip). */
   async renew(lease: RunLease): Promise<LiveRunStatus> {
     return this.commit(lease, async (tx) => {

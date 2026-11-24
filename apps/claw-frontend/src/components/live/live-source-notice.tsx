@@ -8,7 +8,8 @@ import { livePlatformName } from '@/utilities/live-embed.utility';
 
 /**
  * After the link is resolved: a server-pull stream (any platform but Discord, with or without an
- * embeddable player) says AI runs on ClawAI's servers (any device);
+ * embeddable player) says AI runs on ClawAI's servers (any device); a recorded video says the
+ * server plays it along from the start;
  * a browser-capture platform (YouTube, Twitch, Kick, Facebook) says AI runs from the viewer's own
  * device (through the microphone on a phone), and why when server pull was tried and failed; a link-only platform says it opens on the platform; a player-only
  * source says it gets no AI; an HLS source asks for the viewer's own rights attestation.
@@ -28,6 +29,15 @@ export function LiveSourceNotice({
         testId="live-server-pull-notice"
         title={t('live.platform.serverPullTitle')}
         lines={[...recognised, t('live.platform.serverPullNotice')]}
+      />
+    );
+  }
+  if (resolution.capability === LiveCapability.RECORDED) {
+    return (
+      <LiveNoticeBox
+        testId="live-recorded-notice"
+        title={t('live.platform.recordedTitle')}
+        lines={[...recognised, t('live.platform.recordedNotice')]}
       />
     );
   }

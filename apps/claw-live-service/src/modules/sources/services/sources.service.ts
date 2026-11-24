@@ -13,13 +13,15 @@ import {
   PUBLIC_ACCESS_SCOPE,
 } from '../constants/sources.constants';
 import { ServerPullProbe } from '../../../common/enums/live-server-pull-probe.enum';
-import type { PlatformResolution } from '../types/platform.types';
+import type { PlatformMatch, PlatformResolution } from '../types/platform.types';
 import type { ServerPullOutcome } from '../types/server-pull.types';
 import type { SourceResolution } from '../types/source-resolution.types';
 import { platformReasonCode, resolvePlatformUrl } from '../utilities/platform-registry.utility';
 import { normalizeSourceUrl } from '../utilities/source-url.utility';
 import { isYoutubeHandleUrl, liveChatEmbedUrl } from '../utilities/youtube-url.utility';
 import { FixtureBroadcasterService } from './fixture-broadcaster.service';
+import { RecordedVideoService } from './recorded-video.service';
+import { ShareLinkService } from './share-link.service';
 import { ServerPullResolverService } from './server-pull-resolver.service';
 import { SourceUrlGuardService } from './source-url-guard.service';
 
@@ -32,6 +34,8 @@ export class SourcesService {
     private readonly fixtures: FixtureBroadcasterService,
     private readonly serverPull: ServerPullResolverService,
     private readonly policy: LivePolicyService,
+    private readonly recordedVideos: RecordedVideoService,
+    private readonly shareLinks: ShareLinkService,
   ) {}
 
   async resolve(rawUrl: string, userId: string): Promise<SourceResolution> {
@@ -43,8 +47,11 @@ export class SourcesService {
     } catch {
       throw new UnprocessableEntityException(LiveSourceErrorCode.SOURCE_UNSUPPORTED);
     }
-    const platform = resolvePlatformUrl(url);
-    if (platform) return this.resolvePlatform(platform, userId, await this.serverPullFor(platform));
+    const parsed = resolvePlatformUrl(url);
+    if (parsed) {
+      const platform = await this.shareLinks.follow(parsed);
+      return this.resolvePlatform(platform, userId, await this.serverPullFor(platform));
+    }
     if (isYoutubeHandleUrl(url)) {
       throw new UnprocessableEntityException(LiveSourceErrorCode.YOUTUBE_HANDLE_UNSUPPORTED);
     }
@@ -100,8 +107,9 @@ export class SourcesService {
 
   /**
    * Whether a platform stream is server-pulled: NOT_ENABLED (refused platform, policy off or no
-   * resolver; no network call), LIVE (the playlist answers) or UNREACHABLE (offline, unreadable).
-   * Link-only platforms are tried too: a live one becomes SERVER_PULL, else it stays link-only.
+   * resolver; no network call), LIVE (the playlist answers), RECORDED (not live, but a recorded
+   * video within the policy's length) or UNREACHABLE (offline, unreadable).
+   * Link-only platforms are tried too: a readable one becomes SERVER_PULL or RECORDED.
    */
   private async serverPullFor({
     definition,
@@ -113,20 +121,37 @@ export class SourcesService {
     const { config } = await this.policy.active();
     if (!config.serverPullPlatforms.includes(definition.platform)) return off;
     const pull = await this.serverPull.probe(definition.platform, match);
-    return pull === null
-      ? { probe: ServerPullProbe.UNREACHABLE, videoId: null }
-      : { probe: ServerPullProbe.LIVE, videoId: pull.videoId };
+    return pull !== null
+      ? { probe: ServerPullProbe.LIVE, videoId: pull.videoId }
+      : this.recordedFor(match, config.recordedVideoMaxSeconds);
+  }
+
+  /** A recorded video within `maxSeconds` is RECORDED; longer is refused; unreadable stays UNREACHABLE. */
+  private async recordedFor(match: PlatformMatch, maxSeconds: number): Promise<ServerPullOutcome> {
+    const unreachable = { probe: ServerPullProbe.UNREACHABLE, videoId: null };
+    if (maxSeconds === 0) return unreachable;
+    const recorded = await this.recordedVideos.probe(match.watchUrl);
+    if (recorded === null) return unreachable;
+    if (recorded.durationSeconds !== null && recorded.durationSeconds > maxSeconds) {
+      throw new UnprocessableEntityException(LiveSourceErrorCode.RECORDED_TOO_LONG);
+    }
+    return {
+      probe: ServerPullProbe.RECORDED,
+      videoId: recorded.videoId,
+      durationSeconds: recorded.durationSeconds,
+    };
   }
 
   /**
    * A registry platform. SERVER_PULL streams are PUBLIC (one run shared by every viewer);
-   * BROWSER_CAPTURE sources are scoped to the viewer (their own tab audio is never shared);
+   * BROWSER_CAPTURE and RECORDED sources are scoped to the viewer (their own tab audio, their own
+   * play-along position);
    * LINK_ONLY never gets a run.
    */
   private resolvePlatform(
     { definition, match }: PlatformResolution,
     userId: string,
-    { probe, videoId }: ServerPullOutcome,
+    { probe, videoId, durationSeconds = null }: ServerPullOutcome,
   ): SourceResolution {
     if (definition.refusalCode !== null || definition.capability === null) {
       throw new UnprocessableEntityException(
@@ -134,18 +159,20 @@ export class SourcesService {
       );
     }
     const pulled = probe === ServerPullProbe.LIVE;
-    const capability = pulled ? LiveCapability.SERVER_PULL : definition.capability;
-    const capture = capability === LiveCapability.BROWSER_CAPTURE;
-    const chatEmbedUrl = liveChatEmbedUrl(
-      definition.platform,
-      match.chatEmbedUrl,
-      pulled ? videoId : null,
-    );
+    const capability = this.capabilityFor(probe, definition.capability);
+    // Tab audio and a recorded video's play-along position are the viewer's own: never shared.
+    const isPrivate =
+      capability === LiveCapability.BROWSER_CAPTURE || capability === LiveCapability.RECORDED;
+    // A recorded video has no live chat.
+    const chatEmbedUrl =
+      capability === LiveCapability.RECORDED
+        ? null
+        : liveChatEmbedUrl(definition.platform, match.chatEmbedUrl, pulled ? videoId : null);
     return {
       sourceKind: definition.sourceKind,
       capability,
       sourceIdentity: sha256Hex(`${definition.platform}:${match.id}`),
-      accessScope: capture ? `${PRIVATE_ACCESS_SCOPE_PREFIX}${userId}` : PUBLIC_ACCESS_SCOPE,
+      accessScope: isPrivate ? `${PRIVATE_ACCESS_SCOPE_PREFIX}${userId}` : PUBLIC_ACCESS_SCOPE,
       normalizedUrl: match.watchUrl,
       declaredHost: new URL(match.watchUrl).host,
       embedUrl: match.embedUrl,
@@ -155,7 +182,14 @@ export class SourcesService {
       watchUrl: match.watchUrl,
       embedNeedsParent: definition.embedNeedsParent,
       chatNeedsEmbedDomain: definition.chatNeedsEmbedDomain && chatEmbedUrl !== null,
+      durationSeconds,
     };
+  }
+
+  private capabilityFor(probe: ServerPullProbe, fallback: LiveCapability): LiveCapability {
+    if (probe === ServerPullProbe.LIVE) return LiveCapability.SERVER_PULL;
+    if (probe === ServerPullProbe.RECORDED) return LiveCapability.RECORDED;
+    return fallback;
   }
 
   private async resolveHls(url: URL, userId: string): Promise<SourceResolution> {

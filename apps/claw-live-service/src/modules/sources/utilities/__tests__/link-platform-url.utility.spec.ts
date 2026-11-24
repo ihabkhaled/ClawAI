@@ -143,7 +143,9 @@ describe('LINK_ONLY platform parsers', () => {
     [parseTiktokUrl, 'https://www.tiktok.com/@someone/video/123'],
     [parseTiktokUrl, 'https://www.tiktok.com/someone'],
     [parseTiktokUrl, 'https://www.tiktok.com/@a'],
-    [parseInstagramUrl, 'https://www.instagram.com/p/Cabc123/'],
+    [parseInstagramUrl, 'https://www.instagram.com/reel/DgGWAcIBZ9M/extra'],
+    [parseTiktokUrl, 'https://vt.tiktok.com/'],
+    [parseTiktokUrl, 'https://vt.tiktok.com/ZSsYongoV/extra'],
     [parseInstagramUrl, 'https://www.instagram.com/reel/abc/'],
     [parseInstagramUrl, 'https://www.instagram.com/nasa/tagged'],
     [parseInstagramUrl, 'https://www.instagram.com/'],
@@ -200,5 +202,35 @@ describe('parseDiscordUrl', () => {
     'https://www.discordapp.com/invite/abc',
   ])('matches %s so it can be refused', (value) => {
     expect(parseDiscordUrl(url(value))).not.toBeNull();
+  });
+
+  it('accepts recorded TikTok videos and share links, with the official embed for a video id', () => {
+    expect(parseTiktokUrl(url('https://vt.tiktok.com/ZSsYongoV/'))).toEqual({
+      id: 'short:ZSsYongoV',
+      watchUrl: 'https://vt.tiktok.com/ZSsYongoV/',
+      embedUrl: null,
+      chatEmbedUrl: null,
+    });
+    expect(parseTiktokUrl(url('https://www.tiktok.com/t/ZTabc123/'))?.id).toBe('short:ZTabc123');
+    expect(
+      parseTiktokUrl(url('https://www.tiktok.com/@Some.User/video/7708131026584734996?lang=en')),
+    ).toEqual({
+      id: 'video:7708131026584734996',
+      watchUrl: 'https://www.tiktok.com/@some.user/video/7708131026584734996',
+      embedUrl: 'https://www.tiktok.com/embed/v2/7708131026584734996',
+      chatEmbedUrl: null,
+    });
+  });
+
+  it.each(['reel', 'reels', 'p', 'tv'])('accepts a recorded Instagram /%s/ link', (kind) => {
+    const canonical = kind === 'reels' ? 'reel' : kind;
+    expect(parseInstagramUrl(url(`https://www.instagram.com/${kind}/DgGWAcIBZ9M/?igsh=x`))).toEqual(
+      {
+        id: 'media:DgGWAcIBZ9M',
+        watchUrl: `https://www.instagram.com/${canonical}/DgGWAcIBZ9M/`,
+        embedUrl: `https://www.instagram.com/${canonical}/DgGWAcIBZ9M/embed`,
+        chatEmbedUrl: null,
+      },
+    );
   });
 });

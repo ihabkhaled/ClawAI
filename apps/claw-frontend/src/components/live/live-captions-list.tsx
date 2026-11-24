@@ -7,6 +7,7 @@ export function LiveCaptionsList({
   captions,
   t,
   locale,
+  clockOrigin = null,
 }: LiveCaptionsListProps): React.ReactElement {
   const scroll = useLiveFeedScroll(captions.length);
   return (
@@ -31,7 +32,7 @@ export function LiveCaptionsList({
           dir="auto"
         >
           <span className="text-muted-foreground me-2 text-xs tabular-nums">
-            {formatLiveClock(caption.startAt, locale)}
+            {formatLiveClock(caption.startAt, locale, clockOrigin)}
           </span>
           {caption.text}
           {caption.uncertain ? (

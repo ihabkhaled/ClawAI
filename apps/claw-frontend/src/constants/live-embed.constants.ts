@@ -10,6 +10,11 @@ export const LIVE_EMBED_ALLOWED_ORIGINS: ReadonlyArray<string> = [
   'https://player.twitch.tv',
   'https://player.kick.com',
   'https://www.facebook.com',
+  // Recorded videos (ADR-221 batch 6): the platforms' official players.
+  'https://www.instagram.com',
+  'https://www.tiktok.com',
+  'https://www.dailymotion.com',
+  'https://player.vimeo.com',
 ];
 
 /** Origins a live chat iframe may load (`chatEmbedUrl`). YouTube live chat is only served from www.youtube.com. */

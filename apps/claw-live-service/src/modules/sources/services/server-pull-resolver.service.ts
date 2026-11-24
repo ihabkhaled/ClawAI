@@ -87,7 +87,11 @@ export class ServerPullResolverService {
   }
 
   private lookup(platform: LivePlatform, match: PlatformMatch): Promise<ResolvedPull | null> {
-    return platform === LivePlatform.TWITCH && AppConfig.get().LIVE_TWITCH_CLIENT_ID !== ''
+    // A past broadcast or a clip (`video:…`, `clip:…`) is not a channel: never ask Twitch's token for it.
+    const channel = !match.id.includes(':');
+    return platform === LivePlatform.TWITCH &&
+      channel &&
+      AppConfig.get().LIVE_TWITCH_CLIENT_ID !== ''
       ? this.resolveTwitch(match.id)
       : this.resolveWithYtdlp(match.watchUrl);
   }

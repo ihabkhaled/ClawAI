@@ -24,4 +24,6 @@ export interface SourceResolution {
   embedNeedsParent: boolean;
   /** True when the frontend must append `&embed_domain=<hostname>` to the chat (YouTube). */
   chatNeedsEmbedDomain: boolean;
+  /** A RECORDED video's length when the site reports it (the summary estimate); null otherwise. */
+  durationSeconds: number | null;
 }

@@ -19,7 +19,9 @@ import {
   parseTelegramUrl,
   parseTiktokUrl,
 } from '../utilities/link-platform-url.utility';
+import { parseVideoPlatformUrl } from '../utilities/video-platform-url.utility';
 import { parseYoutubeChannelUrl, parseYoutubeVideoUrl } from '../utilities/youtube-url.utility';
+import { VIDEO_PLATFORM_HOSTS } from './video-platforms.constants';
 
 /** Defaults of a platform row; each row overrides what differs. */
 const PLATFORM_DEFAULTS = {
@@ -33,7 +35,8 @@ const PLATFORM_DEFAULTS = {
 /**
  * The platform registry (architecture section 1): tried in order, first match wins.
  * BROWSER_CAPTURE = the platform has an official player embed, so the viewer can share
- * that tab's audio; LINK_ONLY = no embeddable player, the UI links out. Parsing only.
+ * that tab's audio; LINK_ONLY = no embeddable player, the UI links out. Either is only the fallback:
+ * a stream the server can read becomes SERVER_PULL (live) or RECORDED (a recorded video). Parsing only.
  */
 export const LIVE_PLATFORM_REGISTRY: readonly PlatformDefinition[] = [
   {
@@ -89,4 +92,9 @@ export const LIVE_PLATFORM_REGISTRY: readonly PlatformDefinition[] = [
     refusalCode: LiveSourceErrorCode.DISCORD_PRIVATE,
     parse: parseDiscordUrl,
   },
+  ...VIDEO_PLATFORM_HOSTS.map((row): PlatformDefinition => ({
+    ...PLATFORM_DEFAULTS,
+    platform: row.platform,
+    parse: (url) => parseVideoPlatformUrl(url, row),
+  })),
 ];

@@ -47,6 +47,11 @@ describe('liveResolveErrorKey', () => {
     expect(liveResolveErrorKey(coded)).toBe('live.platform.discordPrivate');
   });
 
+  it('explains a recorded video over the length cap', () => {
+    const coded = Object.assign(new Error('Unprocessable'), { code: 'LIVE_RECORDED_TOO_LONG' });
+    expect(liveResolveErrorKey(coded)).toBe('live.page.recordedTooLongError');
+  });
+
   it('falls back to the generic message', () => {
     expect(liveResolveErrorKey(new Error('LIVE_SOURCE_UNSUPPORTED'))).toBe(
       'live.page.resolveError',

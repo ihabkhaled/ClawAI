@@ -120,7 +120,7 @@ async function runCase(token, { url, language }) {
     return;
   }
   const session = created.data;
-  check(`${label}: session ${session.capability}`, session.capability === 'SERVER_PULL');
+  check(`${label}: session ${session.capability}`, ['SERVER_PULL', 'RECORDED'].includes(session.capability));
   const events = { list: [], status: 0 };
   const stop = openSse(`/live/sessions/${session.sessionId}/stream`, token, events);
   const started = Date.now();

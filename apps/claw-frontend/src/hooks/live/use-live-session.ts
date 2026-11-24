@@ -15,7 +15,14 @@ export function useLiveSession(input: LiveCreateSessionInput): UseLiveSessionRes
   const { t } = useTranslation();
   const startedFor = useRef<LiveCreateSessionInput | null>(null);
   const { mutate, data, isPending, error } = useMutation({
-    mutationFn: (value: LiveCreateSessionInput) => liveRepository.createSession(value),
+    mutationFn: async (value: LiveCreateSessionInput) => {
+      const session = await liveRepository.createSession(value);
+      // The viewer already confirmed the paid minutes in the summary estimate.
+      if (value.approvePaid === true) {
+        await liveRepository.approveCredits(session.sessionId, {});
+      }
+      return session;
+    },
     onError: (failure: Error) => showToast.apiError(failure, t('live.modal.sessionError')),
   });
 

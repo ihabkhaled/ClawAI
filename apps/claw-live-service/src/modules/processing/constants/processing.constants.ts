@@ -31,6 +31,11 @@ export const ATTACHED_SESSION_STATES: readonly LiveSessionState[] = [
   LiveSessionState.CREDITS_REQUIRED,
   LiveSessionState.GRACE,
 ];
+/** A recorded video's run advances only while a viewer is billable (never while one waits for credits). */
+export const RECORDED_ADVANCING_STATES: readonly LiveSessionState[] = [
+  LiveSessionState.ACTIVE,
+  LiveSessionState.GRACE,
+];
 export const PRISMA_UNIQUE_VIOLATION = 'P2002';
 /** Capabilities that never get a run (no analysis, no billing): the session is UNSUPPORTED. */
 export const NO_RUN_CAPABILITIES: readonly LiveCapability[] = [
@@ -47,6 +52,13 @@ export const WORKER_DELAYED_AFTER_MS = 20_000;
 export const WORKER_MAX_POLL_FAILURES = 30;
 export const WORKER_TEMP_PREFIX = 'claw-live-run-';
 export const FFMPEG_BINARY = 'ffmpeg';
+export const FFPROBE_BINARY = 'ffprobe';
+/** A one-click summary reads the video in 30 s pieces as fast as transcription allows (file-service takes up to 2 MB). */
+export const RECORDED_SUMMARY_CHUNK_SECONDS = 30;
+/** Pieces a summary run cuts per poll (one poll must stay well inside the lease). */
+export const RECORDED_SUMMARY_CHUNKS_PER_POLL = 2;
+/** A recorded video's last chunk shorter than this is dropped (no speech fits in it). */
+export const RECORDED_MIN_TAIL_SECONDS = 1;
 export const FFMPEG_DECODE_TIMEOUT_MS = 20_000;
 export const FFMPEG_FRAME_TIMEOUT_MS = 10_000;
 export const FFMPEG_MAX_PCM_BYTES = 32 * 1024 * 1024;

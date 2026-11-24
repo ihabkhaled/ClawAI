@@ -152,6 +152,11 @@
       "route": "/features/live-intelligence"
     },
     {
+      "file": "apps/claw-frontend/src/app/(marketing)/features/live-intelligence/platforms/page.tsx",
+      "kind": "page",
+      "route": "/features/live-intelligence/platforms"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(marketing)/features/page.tsx",
       "kind": "page",
       "route": "/features"

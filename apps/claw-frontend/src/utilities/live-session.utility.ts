@@ -1,7 +1,23 @@
 import { API_BASE_URL } from '@/constants/api.constants';
-import { LIVE_API, LIVE_JSON_MIME_TYPE } from '@/constants/live.constants';
-import { LiveHeartbeatState, LiveSourceKind } from '@/enums/live.enum';
-import type { LiveHeartbeatInput, LivePlaybackSnapshot, LiveSession } from '@/types/live.types';
+import {
+  LIVE_API,
+  LIVE_JSON_MIME_TYPE,
+  LIVE_RECORDED_STATUS_PRESENTATION,
+  LIVE_STATUS_PRESENTATION,
+  LIVE_SUMMARY_STATUS_PRESENTATION,
+} from '@/constants/live.constants';
+import {
+  LiveCapability,
+  LiveHeartbeatState,
+  LiveSourceKind,
+  type LiveStatusCode,
+} from '@/enums/live.enum';
+import type {
+  LiveHeartbeatInput,
+  LivePlaybackSnapshot,
+  LiveSession,
+  LiveStatusPresentation,
+} from '@/types/live.types';
 
 import { isBehindLiveEdge } from './live-reveal.utility';
 
@@ -65,4 +81,28 @@ export function liveHlsUrl(streamId: string): string {
 
 export function liveStreamUrl(sessionId: string): string {
   return `${API_BASE_URL}${LIVE_API.STREAM(sessionId)}`;
+}
+
+/** The modal's header badge: LIVE for a stream, Video for a recorded video, Summary for a one-click summary. */
+export function liveModalBadgeKey(session: Pick<LiveSession, 'capability' | 'summary'>): string {
+  if (session.summary === true) {
+    return 'live.summary.badge';
+  }
+  return session.capability === LiveCapability.RECORDED
+    ? 'live.modal.videoBadge'
+    : 'live.modal.liveBadge';
+}
+
+/** The status wording for a session: a summary and a recorded video have their own, else the stream's. */
+export function liveStatusPresentation(
+  status: LiveStatusCode,
+  session: Pick<LiveSession, 'capability' | 'summary'> | null,
+): LiveStatusPresentation {
+  if (session?.summary === true) {
+    return LIVE_SUMMARY_STATUS_PRESENTATION[status] ?? LIVE_STATUS_PRESENTATION[status];
+  }
+  if (session?.capability === LiveCapability.RECORDED) {
+    return LIVE_RECORDED_STATUS_PRESENTATION[status] ?? LIVE_STATUS_PRESENTATION[status];
+  }
+  return LIVE_STATUS_PRESENTATION[status];
 }
