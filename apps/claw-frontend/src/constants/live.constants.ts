@@ -259,6 +259,7 @@ export const LIVE_FEED_KIND_KEYS: Record<LiveFeedEventKind, string> = {
 export const LIVE_EMPTY_FEED_STATE: LiveFeedState = {
   captions: [],
   captionTranslations: {},
+  cardTranslations: {},
   cards: [],
   highlights: [],
   status: LiveStatusCode.CONNECTING,

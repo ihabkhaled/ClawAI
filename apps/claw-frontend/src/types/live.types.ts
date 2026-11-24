@@ -235,12 +235,19 @@ export type LiveFeedState = {
   captions: LiveCaption[];
   /** segmentId → caption text in the session language. */
   captionTranslations: Record<string, string>;
+  /**
+   * `eventId:version` → the copy in the session language. Kept even when it arrives before its card:
+   * the server sends translations first so a viewer never sees the original flash in (2026-11-24).
+   */
+  cardTranslations: Record<string, LiveCardTranslation>;
   cards: LiveFeedCard[];
   highlights: LiveFeedCard[];
   status: LiveStatusCode;
   /** Latest session usage (heartbeat response, or an SSE `usage` frame). */
   usage: LiveSessionUsage | null;
 };
+
+export type LiveCardTranslation = { title: string | null; body: string | null };
 
 export type LiveRevealedCaption = { text: string; translated: boolean; uncertain: boolean };
 

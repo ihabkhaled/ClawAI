@@ -78,7 +78,9 @@ Full request and response shapes: [architecture section 9](../03-architecture/li
   policy with `serverPullPlatforms: []`.
 - Every caption carries its spoken language (2026-11-24, ADR-221 batch 5): file-service's `[[lang:xx]]` tag, else the
   writing system (`scriptLanguage`), else the run's last Latin language. A caption is translated only for viewers in
-  another language; summaries are written in the spoken language and translated per viewer.
+  another language; summaries are written in the spoken language and translated per viewer. Summary cards AND
+  highlights are translated; a card's language is read from its own text (`cardLanguage`), so a model that ignored
+  `OUTPUT_LANGUAGE` is still translated, and translations are published before the card (fix 2026-11-24).
 - The summarizer may ask for one web search (`researchQuery`); `LiveResearchClient` runs research-service `SEARCH_ONLY`
   as `platform:live-intelligence`, at most 1 a minute and 20 a run. Only title, snippet and host reach the prompt.
 - A failed server pull logs why (`yt-dlp found no live HLS … exit=…`, `playlist did not answer`, `concurrency cap`).

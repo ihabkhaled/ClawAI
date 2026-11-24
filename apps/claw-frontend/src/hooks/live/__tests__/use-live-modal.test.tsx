@@ -40,6 +40,7 @@ vi.mock('@/hooks/live/use-live-stream', () => ({
     feed: {
       captions: [],
       captionTranslations: {},
+      cardTranslations: {},
       cards: [],
       highlights: [],
       status: LiveStatusCode.ANALYZING,

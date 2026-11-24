@@ -145,11 +145,9 @@ export class RunWorker {
 
   private async runBackground(segmentFile: string | null): Promise<void> {
     await this.deps.translations.flushCaptions(this.context);
-    if (this.deps.summaries.shouldSummarize(this.memory)) {
-      const changed = await this.deps.summaries.summarize(this.context, this.memory);
-      for (const card of changed)
-        await this.deps.translations.translateCard(this.context, card.target, card.type);
-    }
+    // summarize translates each changed card before publishing it.
+    if (this.deps.summaries.shouldSummarize(this.memory))
+      await this.deps.summaries.summarize(this.context, this.memory);
     await this.deps.vision.maybeSample(this.context, this.memory, segmentFile);
     await this.deps.summaries.maybeSnapshot(this.context, this.memory);
   }

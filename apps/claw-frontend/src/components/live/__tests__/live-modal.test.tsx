@@ -59,6 +59,7 @@ function serverPullModal(embed: LiveEmbedView): UseLiveModalResult {
     caption: null,
     captions: [],
     captionTranslations: {},
+    cardTranslations: {},
     cards: [],
     highlights: [],
     isBehindLive: false,

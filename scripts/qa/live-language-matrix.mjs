@@ -45,6 +45,20 @@ function check(name, ok, detail = '') {
 }
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const base = (value) => (value ?? '').toLowerCase().split(/[-_]/u)[0];
+const NON_LATIN_VIEWERS = new Set([
+  'ar',
+  'fa',
+  'hi',
+  'ja',
+  'ru',
+  'th',
+  'zh',
+  'ko',
+  'he',
+  'el',
+  'uk',
+  'ur',
+]);
 
 async function call(method, path, token, body) {
   const res = await fetch(`${BASE}${path}`, {
@@ -77,7 +91,7 @@ function openSse(path, token, events) {
         const dataLine = frame.split('\n').find((line) => line.startsWith('data:'));
         if (!dataLine) continue;
         try {
-          events.list.push(JSON.parse(dataLine.slice(5).trim()));
+          events.list.push({ ...JSON.parse(dataLine.slice(5).trim()), receivedAt: Date.now() });
         } catch {
           // keep-alive frame
         }
@@ -155,6 +169,40 @@ async function runCase(token, { url, language }) {
     foreign.length === 0 || translated.length >= Math.ceil(foreign.length * 0.6),
     `${translated.length}/${foreign.length}`,
   );
+  // Cards and highlights are written in the spoken language: a viewer of another language must get
+  // a translated copy of every one (2026-11-24 bug: highlights stayed Arabic for an English viewer).
+  const sourceCards = events.list.filter(
+    (event) =>
+      ['card', 'card_version', 'highlight'].includes(event.type) && event.language === undefined,
+  );
+  const translatedIds = new Set(
+    events.list
+      .filter((event) => event.language !== undefined && base(event.language) === base(language))
+      .map((event) => event.data?.eventId),
+  );
+  const viewerShare = known.filter((value) => base(value) === base(language)).length;
+  const spokenOther = known.length > 0 && viewerShare / known.length < 0.5;
+  if (spokenOther) {
+    // A card already written in a Latin-script viewer's script (an English clip in an Arabic
+    // stream) is shown as written, so only cards in another script must have a copy.
+    const latinViewer = !NON_LATIN_VIEWERS.has(base(language));
+    const otherScript = (event) =>
+      !latinViewer || /[^\p{Script=Latin}\P{L}]/u.test(`${event.data?.title} ${event.data?.body}`);
+    const untranslated = sourceCards.filter(
+      (event) => otherScript(event) && !translatedIds.has(event.data?.eventId),
+    );
+    check(
+      `${label}: every card and highlight is translated`,
+      sourceCards.length > 0 && untranslated.length === 0,
+      `${untranslated.length} of ${sourceCards.length} untranslated (${highlights.length} highlights)`,
+    );
+    for (const event of untranslated) {
+      const ageSeconds = Math.round((Date.now() - (event.receivedAt ?? Date.now())) / 1000);
+      console.log(
+        `      untranslated ${event.type} v${event.data?.version} (${ageSeconds}s before the end): ${String(event.data?.title).slice(0, 80)}`,
+      );
+    }
+  }
   check(
     `${label}: summary cards`,
     cards.length > 0,

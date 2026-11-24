@@ -82,7 +82,9 @@ this file disagree, fix one in the same change) - decision:
 - **Stream speech is untrusted.** Delimited as data in prompts; model output is schema-validated plain text.
 - **Spoken language and context (2026-11-24, ADR-221 batch 5).** A caption's language comes from file-service's
   `[[lang:xx]]` tag, else `scriptLanguage`, else the run's last Latin language (`resolveSpokenLanguage`); never translate
-  a caption into its own language. Summaries are written in `OUTPUT_LANGUAGE` (the spoken language) and may ask for one
+  a caption into its own language. Cards and highlights are BOTH sent to `translateCard`, tagged by
+  `cardLanguage` (their own text, never the last caption's language; 2026-11-24 bug: Arabic highlights for an English
+  viewer), and `SummaryManager` translates them (FINAL too) BEFORE publishing the originals. Summaries are written in `OUTPUT_LANGUAGE` (the spoken language) and may ask for one
   web search (`LiveResearchClient`, research-service `SEARCH_ONLY`, `platform:live-intelligence`, 1/min, 20/run). A
   URL never reaches a prompt. YouTube channel links get `live_chat?v=<id>` from yt-dlp's printed video id.
 - Prisma client is generated to `src/generated/prisma` (git-ignored); `npm run build` and `npm test` generate it.

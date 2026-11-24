@@ -158,6 +158,58 @@ describe('applyLiveStreamEvent', () => {
     expect(state.cards).toHaveLength(0);
   });
 
+  it('shows a highlight in the viewer language once its translated copy arrives', () => {
+    const highlight = event({
+      type: LiveStreamEventType.HIGHLIGHT,
+      data: { ...cardData('h1', 1, 'هدف', 'سجل الفريق'), kind: LiveFeedEventKind.HIGHLIGHT },
+    });
+    const copy = (language: string, title: string) =>
+      event({
+        type: LiveStreamEventType.HIGHLIGHT,
+        language,
+        data: { eventId: 'h1', version: 1, title, body: `${title} body` },
+      });
+    const state = apply([highlight, copy('fr', 'But'), copy('en', 'Goal')], 'en');
+    expect(state.highlights).toHaveLength(1);
+    expect(state.highlights[0]).toMatchObject({
+      title: 'هدف',
+      translatedTitle: 'Goal',
+      translatedBody: 'Goal body',
+    });
+  });
+
+  it('keeps a translation that arrives BEFORE its card (the server sends copies first)', () => {
+    const copy = event({
+      type: LiveStreamEventType.HIGHLIGHT,
+      language: 'en',
+      data: { eventId: 'h2', version: 1, title: 'Goal', body: 'The team scored.' },
+    });
+    const highlight = event({
+      type: LiveStreamEventType.HIGHLIGHT,
+      data: { ...cardData('h2', 1, 'هدف', 'سجل الفريق'), kind: LiveFeedEventKind.HIGHLIGHT },
+    });
+    const card = event({
+      type: LiveStreamEventType.CARD,
+      language: 'en',
+      data: { eventId: 'c2', version: 2, title: 'News', body: 'Update' },
+    });
+    const state = apply(
+      [
+        copy,
+        highlight,
+        card,
+        event({ type: LiveStreamEventType.CARD, data: cardData('c2', 1, 'أخبار', 'تحديث') }),
+      ],
+      'en',
+    );
+    expect(state.highlights[0]).toMatchObject({
+      translatedTitle: 'Goal',
+      translatedBody: 'The team scored.',
+    });
+    // A copy of another version never dresses up this one.
+    expect(state.cards[0]?.translatedTitle).toBeUndefined();
+  });
+
   it('keeps a vision card (no importance / highlightType in its data)', () => {
     const state = apply([
       event({

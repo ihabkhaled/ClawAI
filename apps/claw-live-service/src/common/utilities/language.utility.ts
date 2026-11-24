@@ -60,3 +60,12 @@ export function resolveSpokenLanguage(
   if (known !== null) return known;
   return previous !== null && !SCRIPT_LANGUAGES.has(previous) ? previous : null;
 }
+
+/**
+ * The language a summary card was really written in: its own script first (a model can ignore
+ * OUTPUT_LANGUAGE), a Latin text keeps the requested Latin language, otherwise unknown (null),
+ * and an unknown card is translated for every viewer.
+ */
+export function cardLanguage(title: string, body: string, requested: string | null): string | null {
+  return resolveSpokenLanguage(null, `${title} ${body}`, requested);
+}

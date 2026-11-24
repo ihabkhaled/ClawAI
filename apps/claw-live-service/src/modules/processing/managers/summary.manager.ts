@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { LiveStreamEventType } from '../../../common/enums/live-stream-event-type.enum';
 import { sha256Hex } from '../../../common/utilities/hash.utility';
+import { cardLanguage } from '../../../common/utilities/language.utility';
 import { introducesLinksOrMarkup } from '../../../common/utilities/plain-text.utility';
 import { wordTokens } from '../../../common/utilities/text-similarity.utility';
 import {
@@ -31,9 +32,11 @@ import {
   WORKING_SUMMARY_MAX_CHARS,
 } from '../constants/processing.constants';
 import { FINAL_SYSTEM_PROMPT, SUMMARY_SYSTEM_PROMPT } from '../constants/prompts.constants';
+import { LeaseLostError } from '../errors/processing.errors';
 import { finalReplySchema, summaryReplySchema } from '../schemas/processing.schemas';
 import { FencedRunWriter } from '../services/fenced-run-writer.service';
 import { RunEventEmitter } from '../services/run-event-emitter.service';
+import { TranslationManager } from './translation.manager';
 import type {
   CardOutcome,
   ChangedCard,
@@ -66,6 +69,8 @@ import {
  */
 @Injectable()
 export class SummaryManager {
+  private readonly logger = new Logger(SummaryManager.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly writer: FencedRunWriter,
@@ -73,6 +78,7 @@ export class SummaryManager {
     private readonly policy: LivePolicyService,
     private readonly events: RunEventEmitter,
     private readonly research: LiveResearchClient,
+    private readonly translations: TranslationManager,
   ) {}
 
   shouldSummarize(memory: RunMemory): boolean {
@@ -91,6 +97,8 @@ export class SummaryManager {
     memory.pendingFirst = null;
     memory.lastSummaryWallAt = Date.now();
     const { config } = await this.policy.active();
+    // The language the model is told to write in; translation skips only viewers of this language.
+    const writtenIn = memory.spokenLanguage;
     const userMessage = buildSummaryUserMessage(memory, window);
     const reply = await this.callModel(
       context,
@@ -104,7 +112,7 @@ export class SummaryManager {
       await this.writer.commit(context.lease, (tx) => this.recordCost(tx, context, reply, false));
       return [];
     }
-    const changed = await this.apply(context, memory, parsed, reply, { first, last });
+    const changed = await this.apply(context, memory, parsed, reply, { first, last }, writtenIn);
     await this.maybeResearch(context, memory, parsed.researchQuery);
     return changed;
   }
@@ -187,7 +195,17 @@ export class SummaryManager {
         update: {},
       });
     });
-    if (row) await this.events.emit([this.cardEvent(LiveStreamEventType.CARD, row)]);
+    if (!row) return;
+    const target = {
+      id: row.id,
+      title: row.title,
+      body: row.body,
+      version: row.version,
+      startAt: Number(row.startAt),
+      language: cardLanguage(row.title, row.body, memory?.spokenLanguage ?? null),
+    };
+    await this.translateBeforePublish(context, [{ type: LiveStreamEventType.CARD, target }]);
+    await this.events.emit([this.cardEvent(LiveStreamEventType.CARD, row)]);
   }
 
   /** Every 10 min: a compacted LiveMemorySnapshot (long-term memory). */
@@ -215,6 +233,7 @@ export class SummaryManager {
     reply: SummaryReply,
     model: ModelReply,
     span: SummarySpan,
+    writtenIn: string | null,
   ): Promise<ChangedCard[]> {
     const outcome = await this.writer.commit(context.lease, async (tx) => {
       await this.recordCost(tx, context, model, true);
@@ -233,18 +252,38 @@ export class SummaryManager {
     memory.highlights = [...memory.highlights, ...outcome.highlights.remembered].slice(
       -HIGHLIGHT_MEMORY_LIMIT,
     );
-    await this.events.emit([...outcome.card.events, ...outcome.highlights.events]);
-    return outcome.card.changed.map((type) => ({
+    const { id, title, body, version, startAt } = outcome.card.open;
+    const cards = outcome.card.changed.map((type) => ({
       type,
-      target: {
-        id: outcome.card.open.id,
-        title: outcome.card.open.title,
-        body: outcome.card.open.body,
-        version: outcome.card.open.version,
-        startAt: outcome.card.open.startAt,
-        language: span.last.language,
-      },
+      target: { id, title, body, version, startAt, language: cardLanguage(title, body, writtenIn) },
     }));
+    // Highlights are cards too: a viewer of another language must get them translated.
+    const highlights = outcome.highlights.targets.map((target) => ({
+      type: LiveStreamEventType.HIGHLIGHT,
+      target: { ...target, language: cardLanguage(target.title, target.body, writtenIn) },
+    }));
+    const changed = [...cards, ...highlights];
+    await this.translateBeforePublish(context, changed);
+    await this.events.emit([...outcome.card.events, ...outcome.highlights.events]);
+    return changed;
+  }
+
+  /**
+   * Translations go out BEFORE the card itself, so a viewer of another language never sees the
+   * original first (owner rule 2026-11-24). A failed translation never holds the card back.
+   */
+  private async translateBeforePublish(
+    context: WorkerContext,
+    changed: readonly ChangedCard[],
+  ): Promise<void> {
+    for (const card of changed) {
+      try {
+        await this.translations.translateCard(context, card.target, card.type);
+      } catch (error: unknown) {
+        if (error instanceof LeaseLostError) throw error;
+        this.logger.warn(`run ${context.lease.runId}: card ${card.target.id} translation failed`);
+      }
+    }
   }
 
   private async applyCard(
@@ -340,6 +379,7 @@ export class SummaryManager {
   ): Promise<HighlightOutcome> {
     const events: LiveStreamEvent[] = [];
     const remembered: RememberedHighlight[] = [];
+    const targets: HighlightOutcome['targets'] = [];
     for (const highlight of reply.highlights) {
       const text = `${highlight.title} ${highlight.summary}`;
       if (isDuplicateHighlight(highlight.type, text, last.startAt, [...kept, ...remembered]))
@@ -368,8 +408,15 @@ export class SummaryManager {
       });
       remembered.push({ type: highlight.type, text, at: last.startAt });
       events.push(this.cardEvent(LiveStreamEventType.HIGHLIGHT, row));
+      targets.push({
+        id: row.id,
+        title: row.title,
+        body: row.body,
+        version: row.version,
+        startAt: Number(row.startAt),
+      });
     }
-    return { events, remembered };
+    return { events, remembered, targets };
   }
 
   private validateSummary(content: string, source: string): SummaryReply | null {

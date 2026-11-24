@@ -63,6 +63,7 @@ function modal(embed: LiveEmbedView, tab = LiveFeedTab.FEED): UseLiveModalResult
     highlights: [],
     captions: [],
     captionTranslations: {},
+    cardTranslations: {},
     status: LiveStatusCode.ANALYZING,
   } as unknown as UseLiveModalResult;
 }

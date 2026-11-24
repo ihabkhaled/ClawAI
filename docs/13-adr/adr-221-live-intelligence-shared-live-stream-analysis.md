@@ -190,3 +190,20 @@ YTDLP_VERSION`, `ARG YTDLP_SHA256`); Node in the image is its JavaScript runtime
 - **Not done / honest gaps:** a stream whose owner disables embedding still shows "This video is unavailable" in the
   player (we cannot see that inside a cross-origin frame; "Watch on" stays under it); research cost is recorded by
   research-service, not as a `LiveProviderCost` row (no `RESEARCH` pipeline stage yet); Kick chat is dark in light mode.
+- **Fix 2026-11-24 (batch 5b): highlights stayed in the spoken language.** The owner chose English, watched an
+  Arabic stream and read Arabic highlights. Two causes: `SummaryManager.apply` handed only the summary card to
+  `TranslationManager.translateCard` (highlights were never translated), and a card was tagged with the last
+  caption's language instead of the language it was written in. Now every new highlight is translated too, and a card's
+  language is `cardLanguage(title, body, requested)`: its own script, a Latin text keeps a requested Latin language,
+  otherwise unknown (translated for everyone). Rule restated by the owner: the viewer's language equals the spoken
+  language → the exact words, only the other-language parts translated; a different language → everything translated
+  (captions, summary cards and highlights). `live-language-matrix.mjs` now fails when a card or highlight in another
+  script has no copy in the viewer's language; 21/21 on Arabic→English, mixed Arabic/English→English, Hindi→English
+  and Spanish→Arabic.
+- **Translation first, then the card.** `SummaryManager` now translates every changed card, highlight and the FINAL
+  card (`translateBeforePublish`) between the commit and the publish, so the viewer's copy reaches the page before the
+  original; a failed translation never holds a card back. The page keeps a copy that arrives first in
+  `cardTranslations` (`eventId:version`) and dresses the card with it when it lands. Same-language viewers wait for the
+  other languages' translations (a few seconds per summary) — accepted: no original ever flashes for anyone. The FINAL
+  card was never translated before; it is now. Browser check: Arabic stream, English page, 120 samples over 3 minutes,
+  0 with Arabic text.

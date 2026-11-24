@@ -1,4 +1,9 @@
-import { baseLanguage, resolveSpokenLanguage, scriptLanguage } from '../language.utility';
+import {
+  baseLanguage,
+  cardLanguage,
+  resolveSpokenLanguage,
+  scriptLanguage,
+} from '../language.utility';
 
 describe('scriptLanguage', () => {
   it.each([
@@ -45,5 +50,14 @@ describe('resolveSpokenLanguage', () => {
   it('keeps baseLanguage behaviour', () => {
     expect(baseLanguage('EN')).toBe('en');
     expect(baseLanguage(null)).toBeNull();
+  });
+});
+
+describe('cardLanguage', () => {
+  it('reads the script of the card, not the requested language', () => {
+    expect(cardLanguage('عاجل', 'خبر جديد', 'en')).toBe('ar');
+    expect(cardLanguage('Breaking', 'New report', 'es')).toBe('es');
+    expect(cardLanguage('Breaking', 'New report', 'ar')).toBeNull();
+    expect(cardLanguage('Breaking', 'New report', null)).toBeNull();
   });
 });

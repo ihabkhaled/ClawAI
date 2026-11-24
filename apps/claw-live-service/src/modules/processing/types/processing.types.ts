@@ -235,4 +235,6 @@ export interface CardOutcome {
 export interface HighlightOutcome {
   events: LiveStreamEvent[];
   remembered: RememberedHighlight[];
+  /** New highlights, sent for translation once the commit lands. */
+  targets: Omit<CardTranslationTarget, 'language'>[];
 }

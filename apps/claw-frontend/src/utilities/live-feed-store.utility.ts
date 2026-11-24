@@ -121,10 +121,11 @@ export function upsertLiveCard(cards: LiveFeedCard[], next: LiveFeedCard): LiveF
   if (current === undefined || current.version > next.version) {
     return cards;
   }
+  const sameVersion = current.version === next.version;
   const merged: LiveFeedCard = {
     ...next,
-    translatedTitle: current.version === next.version ? current.translatedTitle : undefined,
-    translatedBody: current.version === next.version ? current.translatedBody : undefined,
+    translatedTitle: next.translatedTitle ?? (sameVersion ? current.translatedTitle : undefined),
+    translatedBody: next.translatedBody ?? (sameVersion ? current.translatedBody : undefined),
   };
   return cards.map((card, position) => (position === index ? merged : card));
 }
@@ -182,6 +183,41 @@ function applyCaptionTranslation(
   return { ...state, captionTranslations: { ...state.captionTranslations, [segmentId]: text } };
 }
 
+/** The key a card translation is stored under: one copy per card version. */
+export function liveCardTranslationKey(eventId: string, version: number): string {
+  return `${eventId}:${String(version)}`;
+}
+
+/** A card with the stored copy of its version, when that copy arrived first. */
+function withStoredTranslation(state: LiveFeedState, card: LiveFeedCard): LiveFeedCard {
+  const copy = state.cardTranslations[liveCardTranslationKey(card.eventId, card.version)];
+  return copy === undefined
+    ? card
+    : {
+        ...card,
+        translatedTitle: copy.title ?? undefined,
+        translatedBody: copy.body ?? undefined,
+      };
+}
+
+function storeCardTranslation(state: LiveFeedState, event: LiveStreamEvent): LiveFeedState {
+  const eventId = readString(event.data, 'eventId');
+  const version = readNumber(event.data, 'version');
+  if (eventId === null || version === null) {
+    return state;
+  }
+  return {
+    ...state,
+    cardTranslations: {
+      ...state.cardTranslations,
+      [liveCardTranslationKey(eventId, version)]: {
+        title: readString(event.data, 'title'),
+        body: readString(event.data, 'body'),
+      },
+    },
+  };
+}
+
 function applyCardEvent(
   state: LiveFeedState,
   event: LiveStreamEvent,
@@ -190,19 +226,22 @@ function applyCardEvent(
   const isHighlight = event.type === LiveStreamEventType.HIGHLIGHT;
   if (event.language !== undefined) {
     // A translated copy of a card: only the session language is kept. It carries no kind, so it is
-    // matched by eventId in both lists.
-    return event.language === language
-      ? {
-          ...state,
-          cards: applyCardTranslation(state.cards, event),
-          highlights: applyCardTranslation(state.highlights, event),
-        }
-      : state;
+    // matched by eventId in both lists, and stored for a card that has not arrived yet.
+    if (event.language !== language) {
+      return state;
+    }
+    const stored = storeCardTranslation(state, event);
+    return {
+      ...stored,
+      cards: applyCardTranslation(stored.cards, event),
+      highlights: applyCardTranslation(stored.highlights, event),
+    };
   }
-  const card = toCard(event);
-  if (card === null) {
+  const parsed = toCard(event);
+  if (parsed === null) {
     return state;
   }
+  const card = withStoredTranslation(state, parsed);
   if (card.kind === LiveFeedEventKind.HIGHLIGHT || isHighlight) {
     return { ...state, highlights: upsertLiveCard(state.highlights, card) };
   }

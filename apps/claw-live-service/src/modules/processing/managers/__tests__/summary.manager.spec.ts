@@ -75,6 +75,12 @@ describe('SummaryManager', () => {
   };
   const events = { emit: vi.fn() };
   const research = { search: vi.fn().mockResolvedValue([]) };
+  const order: string[] = [];
+  const translations = {
+    translateCard: vi.fn(async (_context: unknown, target: { id: string }) => {
+      order.push(`translate:${target.id}`);
+    }),
+  };
   const manager = new SummaryManager(
     prisma as never,
     writer as never,
@@ -82,10 +88,15 @@ describe('SummaryManager', () => {
     policy as never,
     events as never,
     research as never,
+    translations as never,
   );
 
   beforeEach(() => {
     vi.clearAllMocks();
+    order.length = 0;
+    events.emit.mockImplementation(async (list: { type: string }[]) => {
+      order.push(`emit:${list.map((e) => e.type).join(',')}`);
+    });
     tx.liveFeedEvent.findUnique.mockResolvedValue(null);
   });
 
@@ -243,6 +254,88 @@ describe('SummaryManager', () => {
     ]);
   });
 
+  it('hands new highlights to translation, tagged with the language they were written in', async () => {
+    const highlight = {
+      type: 'MILESTONE',
+      title: 'هدف',
+      summary: 'سجل الفريق هدفا.',
+      importance: 3,
+      quote: '',
+      confidence: 0.9,
+    };
+    model.complete.mockResolvedValueOnce(reply({ ...validReply, highlights: [highlight] }));
+    tx.liveFeedEvent.create
+      .mockResolvedValueOnce(row())
+      .mockResolvedValueOnce(
+        row({ id: 'hl-1', kind: 'HIGHLIGHT', title: 'هدف', body: 'سجل الفريق هدفا.' }),
+      );
+    const memory = memoryWithTranscript();
+    // The last caption is English, but the summary was asked for in Arabic.
+    memory.spokenLanguage = 'ar';
+    const changed = await manager.summarize(context, memory);
+    expect(changed).toEqual([
+      expect.objectContaining({
+        type: LiveStreamEventType.CARD,
+        // English text although Arabic was asked for: unknown, so translated for everyone.
+        target: expect.objectContaining({ id: 'ev-1', language: null }),
+      }),
+      {
+        type: LiveStreamEventType.HIGHLIGHT,
+        target: {
+          id: 'hl-1',
+          title: 'هدف',
+          body: 'سجل الفريق هدفا.',
+          version: 1,
+          startAt: 1000,
+          language: 'ar',
+        },
+      },
+    ]);
+  });
+
+  it('translates every changed card and highlight BEFORE publishing the originals', async () => {
+    const highlight = {
+      type: 'MILESTONE',
+      title: 'هدف',
+      summary: 'سجل الفريق هدفا.',
+      importance: 3,
+      quote: '',
+      confidence: 0.9,
+    };
+    model.complete.mockResolvedValueOnce(reply({ ...validReply, highlights: [highlight] }));
+    tx.liveFeedEvent.create
+      .mockResolvedValueOnce(row())
+      .mockResolvedValueOnce(row({ id: 'hl-1', kind: 'HIGHLIGHT' }));
+    await manager.summarize(context, memoryWithTranscript());
+    expect(order).toEqual(['translate:ev-1', 'translate:hl-1', 'emit:card,highlight']);
+  });
+
+  it('still publishes the card when its translation throws', async () => {
+    model.complete.mockResolvedValueOnce(reply(validReply));
+    tx.liveFeedEvent.create.mockResolvedValueOnce(row());
+    translations.translateCard.mockRejectedValueOnce(new Error('db down'));
+    await manager.summarize(context, memoryWithTranscript());
+    expect(events.emit).toHaveBeenCalledTimes(1);
+  });
+
+  it('tags a card by its own text when the model ignored OUTPUT_LANGUAGE', async () => {
+    model.complete.mockResolvedValueOnce(reply(validReply));
+    tx.liveFeedEvent.create.mockResolvedValueOnce(row({ title: 'إطلاق', body: 'الإصدار الجديد.' }));
+    const memory = memoryWithTranscript();
+    memory.spokenLanguage = 'en';
+    const [card] = await manager.summarize(context, memory);
+    expect(card?.target.language).toBe('ar');
+  });
+
+  it('leaves a Latin card untagged when Arabic was requested, so every viewer gets a translation', async () => {
+    model.complete.mockResolvedValueOnce(reply(validReply));
+    tx.liveFeedEvent.create.mockResolvedValueOnce(row());
+    const memory = memoryWithTranscript();
+    memory.spokenLanguage = 'ar';
+    const [card] = await manager.summarize(context, memory);
+    expect(card?.target.language).toBeNull();
+  });
+
   it('skips a highlight whose eventKey already exists', async () => {
     const highlight = {
       type: 'MILESTONE',
@@ -336,6 +429,8 @@ describe('SummaryManager', () => {
       endAt: 90_000n,
     });
     expect(events.emit.mock.calls[0]?.[0][0].data.kind).toBe('FINAL');
+    // The final card is translated too, before it is published.
+    expect(order).toEqual(['translate:final', 'emit:card']);
   });
 
   it('asks for the spoken language and passes the web context to the next call', async () => {

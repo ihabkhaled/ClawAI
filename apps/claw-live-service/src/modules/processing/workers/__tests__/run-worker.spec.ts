@@ -69,13 +69,15 @@ describe('RunWorker', () => {
       .mockResolvedValueOnce({ outcome: LiveChunkOutcome.TEXT, line })
       .mockResolvedValueOnce({ outcome: LiveChunkOutcome.SILENCE, line: null });
     deps.summaries.shouldSummarize.mockReturnValueOnce(true);
-    deps.summaries.summarize.mockResolvedValueOnce([{ target: { id: 'c' }, type: 'card' }]);
+    deps.summaries.summarize.mockResolvedValueOnce([]);
     const runner = worker();
     await expect(runner.iterate()).resolves.toBe(false);
     await new Promise((resolve) => setImmediate(resolve));
     expect(deps.transcripts.handleChunk).toHaveBeenCalledTimes(2);
     expect(deps.translations.enqueueCaption).toHaveBeenCalledWith('run-1', line);
-    expect(deps.translations.translateCard).toHaveBeenCalledWith(context, { id: 'c' }, 'card');
+    // Cards are translated inside summarize, before they are published.
+    expect(deps.summaries.summarize).toHaveBeenCalledWith(context, expect.anything());
+    expect(deps.translations.translateCard).not.toHaveBeenCalled();
     expect(deps.vision.maybeSample).toHaveBeenCalledWith(context, expect.anything(), '/tmp/x');
     expect(deps.summaries.maybeSnapshot).toHaveBeenCalled();
   });
