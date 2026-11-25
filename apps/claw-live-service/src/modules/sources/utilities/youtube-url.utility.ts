@@ -58,6 +58,7 @@ export function parseYoutubeVideoUrl(url: URL): PlatformMatch | null {
     watchUrl: `${YOUTUBE_WATCH_BASE_URL}${videoId}`,
     embedUrl: `${YOUTUBE_EMBED_BASE_URL}${videoId}${YOUTUBE_EMBED_QUERY}`,
     chatEmbedUrl: `${YOUTUBE_LIVE_CHAT_BASE_URL}${videoId}`,
+    portrait: url.pathname.split('/').includes('shorts'),
   };
 }
 

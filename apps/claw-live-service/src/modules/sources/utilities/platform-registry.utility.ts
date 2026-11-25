@@ -1,3 +1,6 @@
+import { UnprocessableEntityException } from '@nestjs/common';
+
+import { LiveSourceErrorCode } from '../../../common/enums/live-source-error-code.enum';
 import { ServerPullProbe } from '../../../common/enums/live-server-pull-probe.enum';
 import { LiveSourceReasonCode } from '../../../common/enums/live-source-reason-code.enum';
 import { LiveCapability } from '../../../generated/prisma';
@@ -27,4 +30,14 @@ export function platformReasonCode(
   return probe === ServerPullProbe.UNREACHABLE
     ? LiveSourceReasonCode.SERVER_PULL_UNAVAILABLE
     : LiveSourceReasonCode.BROWSER_CAPTURE_AVAILABLE;
+}
+
+/** A refused platform (Discord) or one with no capability is refused here; else its capability. */
+export function assertAnalysable(definition: PlatformDefinition): LiveCapability {
+  if (definition.refusalCode !== null || definition.capability === null) {
+    throw new UnprocessableEntityException(
+      definition.refusalCode ?? LiveSourceErrorCode.SOURCE_UNSUPPORTED,
+    );
+  }
+  return definition.capability;
 }

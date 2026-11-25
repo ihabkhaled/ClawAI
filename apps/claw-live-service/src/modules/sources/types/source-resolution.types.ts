@@ -26,4 +26,6 @@ export interface SourceResolution {
   chatNeedsEmbedDomain: boolean;
   /** A RECORDED video's length when the site reports it (the summary estimate); null otherwise. */
   durationSeconds: number | null;
+  /** The player is framed 9:16 (a vertical video); false for everything else. */
+  portrait: boolean;
 }

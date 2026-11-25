@@ -82,6 +82,34 @@ describe('RunWorker', () => {
     expect(deps.summaries.maybeSnapshot).toHaveBeenCalled();
   });
 
+  it('a short video that ends on its first poll still gets a summary card before the final', async () => {
+    deps.writer.renew.mockResolvedValue(LiveRunStatus.ACTIVE);
+    deps.transcripts.handleChunk.mockImplementation(
+      (_context: unknown, memory: { pendingFirst: unknown }) => {
+        memory.pendingFirst = { id: 'line-1' };
+        return Promise.resolve({ outcome: 'COMMITTED' });
+      },
+    );
+    source.poll.mockResolvedValueOnce({
+      chunks: [chunk],
+      ended: true,
+      latestSegmentFile: '/tmp/f.jpg',
+    });
+    await worker().run();
+    expect(deps.summaries.summarize).toHaveBeenCalledTimes(1);
+    expect(deps.vision.maybeSample).toHaveBeenCalledWith(context, expect.anything(), '/tmp/f.jpg');
+    const summarizeOrder = deps.summaries.summarize.mock.invocationCallOrder[0] ?? 0;
+    const finalOrder = deps.summaries.summarizeFinal.mock.invocationCallOrder[0] ?? 0;
+    expect(summarizeOrder).toBeLessThan(finalOrder);
+  });
+
+  it('never re-summarizes at the end when everything was already summarized', async () => {
+    deps.writer.renew.mockResolvedValue(LiveRunStatus.ACTIVE);
+    source.poll.mockResolvedValueOnce({ chunks: [], ended: true, latestSegmentFile: null });
+    await worker().run();
+    expect(deps.summaries.summarize).not.toHaveBeenCalled();
+  });
+
   it('source end → final summary, ENDED with SOURCE_ENDED', async () => {
     source.poll.mockResolvedValueOnce({ chunks: [], ended: true, latestSegmentFile: null });
     await worker().run();

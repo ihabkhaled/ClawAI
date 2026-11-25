@@ -1248,3 +1248,6 @@ A public Thread page reads `?lang=` (an app language only; `readRequestedThreadL
   platform here only after `scripts/qa/live-platform-rounds.mjs` passes for it. Media:
   `public/marketing/videos/live-and-videos-{promo,demo}.mp4` (H.264; the owner's originals were HEVC, which Chrome
   plays only with hardware support) and `public/marketing/live-and-videos/*.png` (real 390x844 dark screenshots).
+- Portrait (2026-11-25): `session.portrait` frames the player 9:16 via `LIVE_PLAYER_FRAME_CLASSES` (36dvh on a
+  phone so the status line stays visible, 70dvh on desktop); the caption overlay is `line-clamp-3` and hidden on a
+  summary; a recorded video shows no "Open chat on" link (`modal.isRecorded`).

@@ -26,7 +26,7 @@ export const YTDLP_RECORDED_PROBE_ARGS: readonly string[] = [
   '/tmp/yt-dlp-cache',
   '--skip-download',
   '--print',
-  '%(is_live)s %(duration)s %(id)s %(extractor_key)s',
+  '%(is_live)s %(duration)s %(id)s %(extractor_key)s %(width)s %(height)s',
 ];
 /**
  * A live extractor that reports no length is a live room the server cannot pull (Huya serves FLV,

@@ -77,6 +77,7 @@ describe('LivePlayer', () => {
         hlsSrc={null}
         player={PLAYER}
         caption={null}
+        isPortrait={false}
         t={t}
       />,
     );
@@ -87,6 +88,33 @@ describe('LivePlayer', () => {
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
+  it('frames a vertical video 9:16 and a regular one 16:9', () => {
+    const { rerender } = render(
+      <LivePlayer
+        embed={TWITCH}
+        isLinkOnly={false}
+        hlsSrc={null}
+        player={PLAYER}
+        caption={null}
+        isPortrait
+        t={t}
+      />,
+    );
+    expect(screen.getByTestId('live-player-frame').className).toContain('aspect-[9/16]');
+    rerender(
+      <LivePlayer
+        embed={TWITCH}
+        isLinkOnly={false}
+        hlsSrc={null}
+        player={PLAYER}
+        caption={null}
+        isPortrait={false}
+        t={t}
+      />,
+    );
+    expect(screen.getByTestId('live-player-frame').className).toContain('aspect-video');
+  });
+
   it('shows an error, never an iframe, when the embed was refused by the allowlist', () => {
     const { container } = render(
       <LivePlayer
@@ -95,6 +123,7 @@ describe('LivePlayer', () => {
         hlsSrc={null}
         player={PLAYER}
         caption={null}
+        isPortrait={false}
         t={t}
       />,
     );
@@ -104,7 +133,15 @@ describe('LivePlayer', () => {
 
   it('LINK_ONLY: names the platform and offers Watch on <Platform> in a new tab', () => {
     const { container } = render(
-      <LivePlayer embed={TIKTOK} isLinkOnly hlsSrc={null} player={PLAYER} caption={null} t={t} />,
+      <LivePlayer
+        embed={TIKTOK}
+        isLinkOnly
+        hlsSrc={null}
+        player={PLAYER}
+        caption={null}
+        isPortrait
+        t={t}
+      />,
     );
     expect(container.querySelector('iframe')).toBeNull();
     expect(screen.getByTestId('live-link-only-player')).toHaveTextContent('TikTok');

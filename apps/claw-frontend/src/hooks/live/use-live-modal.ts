@@ -135,6 +135,8 @@ export function useLiveModal(input: LiveCreateSessionInput): UseLiveModalResult 
     isLinkOnly,
     isCapture,
     isServerPull,
+    isRecorded: session?.capability === LiveCapability.RECORDED,
+    isPortrait: session?.portrait === true,
     isPlayerLinkOut,
     embed,
     capture,
@@ -145,7 +147,8 @@ export function useLiveModal(input: LiveCreateSessionInput): UseLiveModalResult 
     usage,
     isReconnecting: stream.isReconnecting || heartbeatError,
     isLost: stream.isLost,
-    caption: revealed.caption,
+    // A summary is a report: its 30 s transcript blocks belong in the Captions tab, not over the video.
+    caption: isSummary ? null : revealed.caption,
     captions: revealed.captions,
     captionTranslations: feed.captionTranslations,
     cards: revealed.cards,

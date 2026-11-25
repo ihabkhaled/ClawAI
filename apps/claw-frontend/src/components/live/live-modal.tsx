@@ -63,6 +63,7 @@ export function LiveModal({ input, onClose }: LiveModalProps): React.ReactElemen
                 hlsSrc={modal.hlsSrc}
                 player={modal.player}
                 caption={modal.caption}
+                isPortrait={modal.isPortrait}
                 t={t}
               />
               {modal.isCapture ? <LiveCapturePanel capture={modal.capture} t={t} /> : null}

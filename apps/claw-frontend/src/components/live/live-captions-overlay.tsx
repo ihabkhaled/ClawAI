@@ -20,7 +20,7 @@ export function LiveCaptionsOverlay({
     >
       {caption ? (
         <p
-          className="bg-background/85 text-foreground max-w-full rounded-lg px-3 py-1.5 text-center text-sm leading-snug shadow-lg backdrop-blur-sm md:text-base"
+          className="bg-background/85 text-foreground line-clamp-3 max-w-full rounded-lg px-3 py-1.5 text-center text-sm leading-snug shadow-lg backdrop-blur-sm md:text-base"
           dir="auto"
         >
           {caption.text}

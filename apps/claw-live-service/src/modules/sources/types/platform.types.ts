@@ -14,6 +14,8 @@ export interface PlatformMatch {
    * stay on. The redirect is followed once, through the SSRF guard, to the real video link.
    */
   shareRedirectSuffix?: string;
+  /** A vertical format by its link shape (reel, short, TikTok video): the page frames it 9:16. */
+  portrait?: boolean;
 }
 
 /** A URL parser for one platform: null when the URL is not that platform's live link. */

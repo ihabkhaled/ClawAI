@@ -85,6 +85,7 @@ export class RunWorker {
     if (poll.ended) {
       await this.background?.catch(() => {});
       await this.deps.translations.flushCaptions(this.context, true);
+      await this.summarizeTheRest(poll.latestSegmentFile);
       await this.deps.summaries.summarizeFinal(this.context, this.memory);
       await this.finish(LiveRunStatus.ENDED, LiveRunEndReason.SOURCE_ENDED);
       return true;
@@ -153,6 +154,18 @@ export class RunWorker {
       await this.deps.summaries.summarize(this.context, this.memory);
     await this.deps.vision.maybeSample(this.context, this.memory, segmentFile);
     await this.deps.summaries.maybeSnapshot(this.context, this.memory);
+  }
+
+  /**
+   * At the end, what was never summarized gets its summary card (and the last frame its visual
+   * note) before the final summary, which is built from those cards. A short video (one 30 s
+   * summary piece, a 20 s reel) used to end with no card and so no report at all (2026-11-25).
+   */
+  private async summarizeTheRest(segmentFile: string | null): Promise<void> {
+    if (this.memory.pendingFirst !== null) {
+      await this.deps.summaries.summarize(this.context, this.memory);
+    }
+    await this.deps.vision.maybeSample(this.context, this.memory, segmentFile);
   }
 
   private async finish(status: LiveRunStatus, reason: LiveRunEndReason): Promise<void> {

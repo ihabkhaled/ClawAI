@@ -13,7 +13,7 @@ import type { RecordedProbe } from '../types/server-pull.types';
  */
 export function parseRecordedProbeLine(output: string): RecordedProbe | null {
   const line = output.trim().split('\n')[0] ?? '';
-  const [isLive, duration, id, extractor = ''] = line.split(' ', 4);
+  const [isLive, duration, id, extractor = '', width, height] = line.split(' ', 6);
   if (isLive === undefined || duration === undefined || isLive === 'True') return null;
   if (duration === YTDLP_MISSING_FIELD && YTDLP_LIVE_EXTRACTOR_PATTERN.test(extractor)) return null;
   const seconds = duration === YTDLP_MISSING_FIELD ? null : Number(duration);
@@ -21,7 +21,15 @@ export function parseRecordedProbeLine(output: string): RecordedProbe | null {
   return {
     durationSeconds: seconds === null ? null : Math.ceil(seconds),
     videoId: id !== undefined && YTDLP_VIDEO_ID_PATTERN.test(id) ? id : null,
+    portrait: frameIsPortrait(width, height),
   };
+}
+
+/** Taller than wide when yt-dlp reports both sides; null when either is missing. */
+function frameIsPortrait(width: string | undefined, height: string | undefined): boolean | null {
+  const w = Number(width);
+  const h = Number(height);
+  return Number.isFinite(w) && Number.isFinite(h) && w > 0 && h > 0 ? h > w : null;
 }
 
 /** The downloaded file yt-dlp printed, only when it really lies inside the run's directory. */

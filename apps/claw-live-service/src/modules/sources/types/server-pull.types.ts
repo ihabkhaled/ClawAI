@@ -19,10 +19,14 @@ export interface ServerPullOutcome {
   videoId: string | null;
   /** RECORDED only: the video's length when the site reports it. */
   durationSeconds?: number | null;
+  /** RECORDED only: the frame is taller than wide (null when the site does not say). */
+  portrait?: boolean | null;
 }
 
 /** What the recorded-video probe learned: the length (null when the site hides it) and the video id. */
 export interface RecordedProbe {
   durationSeconds: number | null;
   videoId: string | null;
+  /** True/false when the site reports the frame size; null when it does not. */
+  portrait: boolean | null;
 }

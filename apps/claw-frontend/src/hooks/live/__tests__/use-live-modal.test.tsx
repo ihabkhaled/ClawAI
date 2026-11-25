@@ -160,6 +160,9 @@ describe('useLiveModal', () => {
 
     expect(result.current.isSummary).toBe(true);
     expect(result.current.clockOrigin).toBe(1_000_000);
+    // The report's long transcript blocks never cover the video.
+    expect(result.current.caption).toBeNull();
+    expect(result.current.isRecorded).toBe(true);
     expect(result.current.isServerPull).toBe(true);
   });
 

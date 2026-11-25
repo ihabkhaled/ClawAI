@@ -16,7 +16,11 @@ import { ServerPullProbe } from '../../../common/enums/live-server-pull-probe.en
 import type { PlatformMatch, PlatformResolution } from '../types/platform.types';
 import type { ServerPullOutcome } from '../types/server-pull.types';
 import type { SourceResolution } from '../types/source-resolution.types';
-import { platformReasonCode, resolvePlatformUrl } from '../utilities/platform-registry.utility';
+import {
+  assertAnalysable,
+  platformReasonCode,
+  resolvePlatformUrl,
+} from '../utilities/platform-registry.utility';
 import { normalizeSourceUrl } from '../utilities/source-url.utility';
 import { isYoutubeHandleUrl, liveChatEmbedUrl } from '../utilities/youtube-url.utility';
 import { FixtureBroadcasterService } from './fixture-broadcaster.service';
@@ -139,6 +143,7 @@ export class SourcesService {
       probe: ServerPullProbe.RECORDED,
       videoId: recorded.videoId,
       durationSeconds: recorded.durationSeconds,
+      portrait: recorded.portrait,
     };
   }
 
@@ -151,23 +156,14 @@ export class SourcesService {
   private resolvePlatform(
     { definition, match }: PlatformResolution,
     userId: string,
-    { probe, videoId, durationSeconds = null }: ServerPullOutcome,
+    outcome: ServerPullOutcome,
   ): SourceResolution {
-    if (definition.refusalCode !== null || definition.capability === null) {
-      throw new UnprocessableEntityException(
-        definition.refusalCode ?? LiveSourceErrorCode.SOURCE_UNSUPPORTED,
-      );
-    }
-    const pulled = probe === ServerPullProbe.LIVE;
-    const capability = this.capabilityFor(probe, definition.capability);
+    const { probe, videoId } = outcome;
+    const capability = this.capabilityFor(probe, assertAnalysable(definition));
     // Tab audio and a recorded video's play-along position are the viewer's own: never shared.
     const isPrivate =
       capability === LiveCapability.BROWSER_CAPTURE || capability === LiveCapability.RECORDED;
-    // A recorded video has no live chat.
-    const chatEmbedUrl =
-      capability === LiveCapability.RECORDED
-        ? null
-        : liveChatEmbedUrl(definition.platform, match.chatEmbedUrl, pulled ? videoId : null);
+    const chatEmbedUrl = this.chatFor({ definition, match }, capability, probe, videoId);
     return {
       sourceKind: definition.sourceKind,
       capability,
@@ -182,8 +178,22 @@ export class SourcesService {
       watchUrl: match.watchUrl,
       embedNeedsParent: definition.embedNeedsParent,
       chatNeedsEmbedDomain: definition.chatNeedsEmbedDomain && chatEmbedUrl !== null,
-      durationSeconds,
+      durationSeconds: outcome.durationSeconds ?? null,
+      // The site's frame size wins; else the link shape (reel, short, TikTok video).
+      portrait: outcome.portrait ?? match.portrait ?? false,
     };
+  }
+
+  /** The live chat embed; a recorded video has none, a pulled channel gets its live video's chat. */
+  private chatFor(
+    { definition, match }: PlatformResolution,
+    capability: LiveCapability,
+    probe: ServerPullProbe,
+    videoId: string | null,
+  ): string | null {
+    if (capability === LiveCapability.RECORDED) return null;
+    const pulledVideoId = probe === ServerPullProbe.LIVE ? videoId : null;
+    return liveChatEmbedUrl(definition.platform, match.chatEmbedUrl, pulledVideoId);
   }
 
   private capabilityFor(probe: ServerPullProbe, fallback: LiveCapability): LiveCapability {

@@ -46,6 +46,7 @@ export const NON_PLATFORM_FIELDS = {
   embedNeedsParent: false,
   chatNeedsEmbedDomain: false,
   durationSeconds: null,
+  portrait: false,
 } as const;
 export const PUBLIC_ACCESS_SCOPE = 'PUBLIC';
 export const PRIVATE_ACCESS_SCOPE_PREFIX = 'PRIVATE:';

@@ -153,11 +153,18 @@ export function parseFacebookUrl(url: URL): PlatformMatch | null {
       `share:${second}:${code}`,
       `${FACEBOOK_WATCH_BASE_URL}share/${second}/${code}/`,
     );
-    return { ...share, shareRedirectSuffix: FACEBOOK_SHARE_REDIRECT_SUFFIX };
+    // `share/r` is a reel: vertical.
+    return {
+      ...share,
+      shareRedirectSuffix: FACEBOOK_SHARE_REDIRECT_SUFFIX,
+      portrait: second === 'r',
+    };
   }
   if (first === 'reel') {
     const id = matching(second, FACEBOOK_VIDEO_ID_PATTERN);
-    return id ? facebookMatch(id, `${FACEBOOK_WATCH_BASE_URL}reel/${id}`) : null;
+    return id
+      ? { ...facebookMatch(id, `${FACEBOOK_WATCH_BASE_URL}reel/${id}`), portrait: true }
+      : null;
   }
   const page = matching(first, FACEBOOK_PAGE_PATTERN);
   // `<page>/videos/<id>` or `<page>/videos/<title-slug>/<id>`.

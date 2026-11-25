@@ -251,6 +251,7 @@ export class LiveSessionsService {
       watchUrl: resolution.watchUrl,
       embedNeedsParent: resolution.embedNeedsParent,
       chatNeedsEmbedDomain: resolution.chatNeedsEmbedDomain,
+      portrait: resolution.portrait,
     };
   }
 

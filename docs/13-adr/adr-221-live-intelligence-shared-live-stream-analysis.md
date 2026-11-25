@@ -286,3 +286,12 @@ YTDLP_VERSION`, `ARG YTDLP_SHA256`); Node in the image is its JavaScript runtime
   billed media count, so the new run's first minutes went unbilled. A summary's mode is now fixed (like a capture's)
   and every run switch resets `accruedMediaSeconds` as a backstop. Stability: 78 link checks over 3 rounds gave the
   same answer per platform (only channels that went offline and Rumble's anti-bot 1 of 3 differed).
+- **Owner report 2026-11-25 (production, phone): portrait videos and the summary view.** A reel was cropped into a
+  16:9 frame, the summary's 30 s transcript blocks covered the whole player, "Open chat on Facebook" showed for a
+  video, and a 30 s reel's summary ended "Summary ready" with an empty report. Now: resolve returns `portrait`
+  (yt-dlp's reported width/height win, else the link shape: Facebook reel and `share/r`, Instagram reels, TikTok,
+  YouTube Shorts) and the page frames it 9:16 (36% of a phone's height, 70% on desktop); captions over the video are
+  clamped to 3 lines and hidden on a summary; recorded videos show no chat link; and when a run ends the worker
+  summarizes the transcript that was never summarized (and samples the last frame) before the final summary, which is
+  built from those cards. Verified in the browser at 390x844: reel frame 171x304, summary of the 30 s reel shows 3
+  cards.

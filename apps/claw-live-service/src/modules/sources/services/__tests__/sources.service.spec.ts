@@ -332,6 +332,26 @@ describe('SourcesService', () => {
       });
     });
 
+    it('frames a vertical video 9:16: the reported frame size wins, else the link shape', async () => {
+      recorded(60);
+      recordedVideos.probe.mockResolvedValue({ durationSeconds: 60, videoId: 'v', portrait: true });
+      await expect(
+        service.resolve('https://www.dailymotion.com/video/x9abcd', 'u1'),
+      ).resolves.toMatchObject({ portrait: true });
+      recordedVideos.probe.mockResolvedValue({ durationSeconds: 60, videoId: 'v', portrait: null });
+      await expect(
+        service.resolve('https://www.facebook.com/reel/4620908104798158', 'u1'),
+      ).resolves.toMatchObject({ portrait: true });
+      recordedVideos.probe.mockResolvedValue({
+        durationSeconds: 60,
+        videoId: 'v',
+        portrait: false,
+      });
+      await expect(
+        service.resolve('https://www.facebook.com/reel/4620908104798158', 'u1'),
+      ).resolves.toMatchObject({ portrait: false });
+    });
+
     it('refuses a video longer than the policy allows with LIVE_RECORDED_TOO_LONG', async () => {
       recorded(10_801);
       await expect(

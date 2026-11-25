@@ -2,8 +2,10 @@ import { LiveCaptionsOverlay } from '@/components/live/live-captions-overlay';
 import { LiveLinkOnlyPlayer } from '@/components/live/live-link-only-player';
 import { LiveWatchLink } from '@/components/live/live-watch-link';
 import { LIVE_EMBED_IFRAME_ALLOW } from '@/constants/live-embed.constants';
+import { LIVE_PLAYER_FRAME_CLASSES } from '@/constants/live.constants';
 import { LiveCaptionPlacement } from '@/enums/live.enum';
 import type { LivePlayerProps } from '@/types/live.types';
+import { cn } from '@/utilities';
 
 /**
  * A platform stream plays in one generic iframe whose origin passed the allowlist (YouTube nocookie,
@@ -16,6 +18,7 @@ export function LivePlayer({
   hlsSrc,
   player,
   caption,
+  isPortrait,
   t,
 }: LivePlayerProps): React.ReactElement {
   if (isLinkOnly) {
@@ -24,7 +27,13 @@ export function LivePlayer({
   if (hlsSrc === null) {
     return (
       <div className="flex flex-col gap-2">
-        <div className="ring-border relative aspect-video w-full overflow-hidden rounded-xl bg-black shadow-lg ring-1">
+        <div
+          className={cn(
+            'ring-border relative overflow-hidden rounded-xl bg-black shadow-lg ring-1',
+            isPortrait ? LIVE_PLAYER_FRAME_CLASSES.portrait : LIVE_PLAYER_FRAME_CLASSES.landscape,
+          )}
+          data-testid="live-player-frame"
+        >
           {embed.playerUrl ? (
             <iframe
               src={embed.playerUrl}

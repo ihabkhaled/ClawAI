@@ -40,6 +40,8 @@ export type LivePlatformFields = {
   watchUrl: string;
   embedNeedsParent: boolean;
   chatNeedsEmbedDomain: boolean;
+  /** A vertical video (reel, short, TikTok, or a frame taller than wide): the player is framed 9:16. */
+  portrait?: boolean;
 };
 
 export type LiveSourceResolution = LivePlatformFields & {
@@ -572,6 +574,10 @@ export type UseLiveModalResult = {
   isCapture: boolean;
   /** ClawAI's server analyzes the stream: no capture panel, the feed follows the wall clock. */
   isServerPull: boolean;
+  /** A recorded video (played along or summarized): no live chat. */
+  isRecorded: boolean;
+  /** The video is vertical: the player is framed 9:16. */
+  isPortrait: boolean;
   /**
    * The player area is a "Watch on <Platform>" link-out: a LINK_ONLY session, or a SERVER_PULL one
    * with no embeddable player (TikTok LIVE, Rumble, BIGO LIVE, …), whose analysis feed still shows.
@@ -651,6 +657,8 @@ export type LivePlayerProps = {
   hlsSrc: string | null;
   player: UseLivePlayerResult;
   caption: LiveRevealedCaption | null;
+  /** Frame the platform player 9:16 instead of 16:9. */
+  isPortrait: boolean;
   t: TranslateFunction;
 };
 

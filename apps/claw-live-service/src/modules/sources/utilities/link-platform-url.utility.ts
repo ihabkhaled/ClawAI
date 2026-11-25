@@ -65,7 +65,9 @@ export function parseTiktokUrl(url: URL): PlatformMatch | null {
   if (hostIn(url, TIKTOK_SHORT_HOSTS) || (hostIn(url, TIKTOK_HOSTS) && segments[0] === 't')) {
     const code = matching(segments.at(-1), TIKTOK_SHORT_CODE_PATTERN);
     const short = segments.length === (segments[0] === 't' ? 2 : 1) ? code : null;
-    return short ? linkOnly(`short:${short}`, `${url.origin}${url.pathname}`) : null;
+    return short
+      ? { ...linkOnly(`short:${short}`, `${url.origin}${url.pathname}`), portrait: true }
+      : null;
   }
   if (!hostIn(url, TIKTOK_HOSTS)) return null;
   const [first, second, third] = segments;
@@ -78,6 +80,7 @@ export function parseTiktokUrl(url: URL): PlatformMatch | null {
       ? {
           ...linkOnly(`video:${id}`, `${TIKTOK_WATCH_BASE_URL}${user}/video/${id}`),
           embedUrl: `${TIKTOK_EMBED_BASE_URL}${id}`,
+          portrait: true,
         }
       : null;
   }
@@ -99,7 +102,11 @@ export function parseInstagramUrl(url: URL): PlatformMatch | null {
     const code = matching(second, INSTAGRAM_MEDIA_CODE_PATTERN);
     if (!code || third !== undefined) return null;
     const watchUrl = `${INSTAGRAM_WATCH_BASE_URL}${kind}/${code}/`;
-    return { ...linkOnly(`media:${code}`, watchUrl), embedUrl: `${watchUrl}embed` };
+    return {
+      ...linkOnly(`media:${code}`, watchUrl),
+      embedUrl: `${watchUrl}embed`,
+      portrait: kind === 'reel',
+    };
   }
   if (INSTAGRAM_RESERVED_PATHS.has(first.toLowerCase())) return null;
   if (second !== undefined && second !== 'live') return null;

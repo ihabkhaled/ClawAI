@@ -107,3 +107,6 @@ this file disagree, fix one in the same change) - decision:
 - `HLS_PLAYLIST_MAX_BYTES` is 4 MB: a YouTube news channel's 12 h master playlist exceeds 1 MB.
 - QA: `scripts/qa/live-platform-sweep.mjs <cases.json>`, `scripts/qa/live-summary-run.mjs` (LIVE_QA_URL), and
   `live-language-matrix.mjs` (accepts RECORDED). Run at most 2-3 cases at once (yt-dlp cap 4 per replica).
+- **End of a run:** `RunWorker.summarizeTheRest` summarizes what was never summarized (and samples the last frame)
+  before `summarizeFinal`, which only reads SUMMARY cards: a short video used to end with no report. Resolve returns
+  `portrait` (reported frame size, else the link shape).

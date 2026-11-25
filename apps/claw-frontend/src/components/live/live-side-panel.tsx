@@ -29,7 +29,7 @@ export function LiveSidePanel({ modal }: LiveSidePanelProps): React.ReactElement
           <span className="bg-primary h-4 w-1 rounded-full" aria-hidden="true" />
           {t('live.modal.analysisTitle')}
         </h2>
-        {hasChat ? null : <LiveChatLink embed={embed} t={t} />}
+        {hasChat || modal.isRecorded ? null : <LiveChatLink embed={embed} t={t} />}
       </div>
       <Tabs value={modal.tab} onValueChange={modal.setTab} className="flex min-h-0 flex-1 flex-col">
         <TabsList

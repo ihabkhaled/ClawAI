@@ -4,9 +4,15 @@ import { parseRecordedProbeLine, recordedFilePath } from '../recorded-video.util
 
 describe('parseRecordedProbeLine', () => {
   it.each([
-    ['False 59.6 7708131026584734996', { durationSeconds: 60, videoId: '7708131026584734996' }],
-    ['NA NA DgGWAcIBZ9M', { durationSeconds: null, videoId: 'DgGWAcIBZ9M' }],
-    ['NA 120 bad/id', { durationSeconds: 120, videoId: null }],
+    [
+      'False 59.6 7708131026584734996 TikTok 576 1024',
+      { durationSeconds: 60, videoId: '7708131026584734996', portrait: true },
+    ],
+    [
+      'NA NA DgGWAcIBZ9M Instagram NA NA',
+      { durationSeconds: null, videoId: 'DgGWAcIBZ9M', portrait: null },
+    ],
+    ['NA 120 bad/id Youtube 1920 1080', { durationSeconds: 120, videoId: null, portrait: false }],
   ])('reads %s', (line, expected) => {
     expect(parseRecordedProbeLine(`${line}\n`)).toEqual(expected);
   });
@@ -16,10 +22,12 @@ describe('parseRecordedProbeLine', () => {
     expect(parseRecordedProbeLine('NA NA DgGWAcIBZ9M Instagram')).toEqual({
       durationSeconds: null,
       videoId: 'DgGWAcIBZ9M',
+      portrait: null,
     });
     expect(parseRecordedProbeLine('False 300 abc TwitchVod')).toEqual({
       durationSeconds: 300,
       videoId: 'abc',
+      portrait: null,
     });
   });
 

@@ -28,6 +28,8 @@ export interface LivePlatformView {
   embedNeedsParent: boolean;
   /** YouTube: the frontend appends `&embed_domain=<hostname>` to the chat URL. */
   chatNeedsEmbedDomain: boolean;
+  /** A vertical video (reel, short, TikTok, or a frame taller than wide): the player is framed 9:16. */
+  portrait: boolean;
 }
 
 export interface LiveSourceResolutionView extends LivePlatformView {

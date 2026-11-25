@@ -440,6 +440,15 @@ export const LIVE_RECORDED_STATUS_PRESENTATION: Partial<
   },
 };
 
+/**
+ * The platform player's frame: 16:9, or 9:16 for a vertical video (reel, short, TikTok), centred and
+ * held to 36% of a phone's height so the status line and the analysis stay visible below it.
+ */
+export const LIVE_PLAYER_FRAME_CLASSES = {
+  landscape: 'aspect-video w-full',
+  portrait: 'aspect-[9/16] h-[36dvh] max-w-full self-center md:h-[70dvh]',
+} as const;
+
 /** A one-click summary reveals every event at once (its media time runs ahead of the wall clock). */
 export const LIVE_REVEAL_ALL_AT = Number.MAX_SAFE_INTEGER;
 

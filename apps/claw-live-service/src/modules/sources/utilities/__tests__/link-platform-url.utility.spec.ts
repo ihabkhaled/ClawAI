@@ -210,6 +210,7 @@ describe('parseDiscordUrl', () => {
       watchUrl: 'https://vt.tiktok.com/ZSsYongoV/',
       embedUrl: null,
       chatEmbedUrl: null,
+      portrait: true,
     });
     expect(parseTiktokUrl(url('https://www.tiktok.com/t/ZTabc123/'))?.id).toBe('short:ZTabc123');
     expect(
@@ -219,6 +220,7 @@ describe('parseDiscordUrl', () => {
       watchUrl: 'https://www.tiktok.com/@some.user/video/7708131026584734996',
       embedUrl: 'https://www.tiktok.com/embed/v2/7708131026584734996',
       chatEmbedUrl: null,
+      portrait: true,
     });
   });
 
@@ -230,6 +232,7 @@ describe('parseDiscordUrl', () => {
         watchUrl: `https://www.instagram.com/${canonical}/DgGWAcIBZ9M/`,
         embedUrl: `https://www.instagram.com/${canonical}/DgGWAcIBZ9M/embed`,
         chatEmbedUrl: null,
+        portrait: canonical === 'reel',
       },
     );
   });
