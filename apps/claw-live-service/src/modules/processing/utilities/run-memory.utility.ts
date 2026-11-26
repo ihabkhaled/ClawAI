@@ -18,6 +18,6 @@ export function createRunMemory(now: number): RunMemory {
     vision: { lastSampleWallAt: 0, lastKeptWallAt: 0, lastThumb: null },
     spokenLanguage: null,
     webNotes: [],
-    research: { lastWallAt: 0, count: 0, queries: [] },
+    research: { lastWallAt: 0, count: 0, queries: [], lyricSearches: 0 },
   };
 }

@@ -18,6 +18,7 @@ import {
   WORKER_TEMP_PREFIX,
 } from '../constants/processing.constants';
 import { RunLifecycleManager } from '../managers/run-lifecycle.manager';
+import { ReportManager } from '../managers/report.manager';
 import { SummaryManager } from '../managers/summary.manager';
 import { TranscriptManager } from '../managers/transcript.manager';
 import { TranslationManager } from '../managers/translation.manager';
@@ -44,6 +45,7 @@ export class RunWorkerFactory {
     private readonly lifecycle: RunLifecycleManager,
     private readonly transcripts: TranscriptManager,
     private readonly summaries: SummaryManager,
+    private readonly reports: ReportManager,
     private readonly translations: TranslationManager,
     private readonly vision: VisionManager,
     private readonly fetcher: HlsFetcherService,
@@ -78,6 +80,7 @@ export class RunWorkerFactory {
         lifecycle: this.lifecycle,
         transcripts: this.transcripts,
         summaries: this.summaries,
+        reports: this.reports,
         translations: this.translations,
         vision: this.vision,
       },

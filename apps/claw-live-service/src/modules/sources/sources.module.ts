@@ -6,6 +6,7 @@ import { HlsFetcherService } from './services/hls-fetcher.service';
 import { HlsProxyService } from './services/hls-proxy.service';
 import { RecordedVideoService } from './services/recorded-video.service';
 import { ShareLinkService } from './services/share-link.service';
+import { YtdlpRunnerService } from './services/ytdlp-runner.service';
 import { ServerPullResolverService } from './services/server-pull-resolver.service';
 import { SourceUrlGuardService } from './services/source-url-guard.service';
 import { SourcesService } from './services/sources.service';
@@ -22,6 +23,7 @@ import { SourcesService } from './services/sources.service';
     ServerPullResolverService,
     RecordedVideoService,
     ShareLinkService,
+    YtdlpRunnerService,
   ],
   exports: [
     SourcesService,

@@ -9,6 +9,13 @@ import {
   SERVER_PULL_DEFAULT_PLATFORMS,
   SERVER_PULL_PLATFORMS,
 } from '../../sources/constants/server-pull.constants';
+import {
+  LIVE_COUNCIL_DEFAULT_AGENT,
+  LIVE_COUNCIL_MAX,
+  LIVE_COUNCIL_MIN,
+  LIVE_MODEL_CHAIN_MAX,
+  LIVE_MODEL_CHAIN_MIN,
+} from '../constants/live-policy.constants';
 
 /** Per-plan price and free quota. Money is integer micro-USD (rule 28). */
 export const livePlanPolicySchema = z.object({
@@ -22,6 +29,11 @@ export const liveModelRefSchema = z.object({
   model: z.string().min(1),
   style: z.enum(['OPENAI_COMPAT', 'OLLAMA']),
 });
+
+const liveModelChainSchema = z
+  .array(liveModelRefSchema)
+  .min(LIVE_MODEL_CHAIN_MIN)
+  .max(LIVE_MODEL_CHAIN_MAX);
 
 /**
  * The versioned admin policy (LivePolicyVersion.config). Seeded as v1 by
@@ -39,8 +51,17 @@ export const livePolicySchema = z.object({
   sessionsPerUserPerHour: z.number().int().min(1),
   dailyBudgetMicroUsd: z.number().int().min(0),
   budgetSoftStopPercent: z.number().int().min(1).max(100),
-  summaryModelChain: z.array(liveModelRefSchema),
-  visionModelChain: z.array(liveModelRefSchema),
+  summaryModelChain: liveModelChainSchema,
+  visionModelChain: liveModelChainSchema,
+  /**
+   * 1..3 extra agents that each draft the summary, highlights and report; the main model
+   * (summaryModelChain) merges the drafts. Absent in versions saved before 2026-11-26: one agent.
+   */
+  councilModelChain: z
+    .array(liveModelRefSchema)
+    .min(LIVE_COUNCIL_MIN)
+    .max(LIVE_COUNCIL_MAX)
+    .default([{ ...LIVE_COUNCIL_DEFAULT_AGENT }]),
   /**
    * Platforms the server reads itself (shared run, any device). Absent in versions saved before
    * 2026-11-23, so it defaults on; an empty list turns server pull off (browser capture only).

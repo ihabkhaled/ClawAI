@@ -36,6 +36,7 @@ describe('isNonSpeechChunk', () => {
     '[Music]',
     '(applause) [music]',
     '1 2 3',
+    '♪ ♪',
   ])('treats %j as no speech', (text) => {
     expect(isNonSpeechChunk(text)).toBe(true);
   });
@@ -46,6 +47,7 @@ describe('isNonSpeechChunk', () => {
     'अरे यार',
     '[Music] and then he said hi',
     'Room 101',
+    '♪ انا بموت',
   ])('keeps %j', (text) => {
     expect(isNonSpeechChunk(text)).toBe(false);
   });

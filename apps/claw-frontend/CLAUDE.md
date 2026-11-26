@@ -1243,11 +1243,20 @@ A public Thread page reads `?lang=` (an app language only; `readRequestedThreadL
   ("Summarizing the video" / "Summary ready" / "Video ended"), the header badge from `liveModalBadgeKey`.
 - Embeds added to `LIVE_EMBED_ALLOWED_ORIGINS` (and so CSP `frame-src`): Instagram, TikTok, Dailymotion, Vimeo player.
 - Public pages: `/features/live-intelligence` (rewritten, same URL) and `/features/live-intelligence/platforms`;
-  the platform list is ONE constant, `LIVE_MARKETING_PLATFORMS`: only the 18 platforms that passed the real sweep
-  and Playwright rounds (2026-11-25), with `live`/`recorded` as tested; the copy says "more than 15 platforms". Add a
-  platform here only after `scripts/qa/live-platform-rounds.mjs` passes for it. Media:
+  the platform list is ONE constant, `LIVE_MARKETING_PLATFORMS`, read by both public pages AND the in-app
+  `LiveSupportedPlatforms` list on `/live` (owner 2026-11-26: "write down all the platforms we support"). Only
+  platforms whose real link passed `POST /live/sources/resolve` (live ones also captioned) are listed, with
+  `live`/`recorded` as tested; the copy says "more than 50 platforms". Add one only after
+  `scripts/qa/live-platform-sweep.mjs` and `live-language-matrix.mjs` pass for it. Media:
   `public/marketing/videos/live-and-videos-{promo,demo}.mp4` (H.264; the owner's originals were HEVC, which Chrome
   plays only with hardware support) and `public/marketing/live-and-videos/*.png` (real 390x844 dark screenshots).
 - Portrait (2026-11-25): `session.portrait` frames the player 9:16 via `LIVE_PLAYER_FRAME_CLASSES` (36dvh on a
   phone so the status line stays visible, 70dvh on desktop); the caption overlay is `line-clamp-3` and hidden on a
   summary; a recorded video shows no "Open chat on" link (`modal.isRecorded`).
+- Round 2 (2026-11-26): a card in another script with no translation yet renders "Translating…"
+  (`liveCardLanguageState` PENDING, `data-testid="live-card-translating"`), after 45 s the original with a
+  "shown in its original language" line (ORIGINAL); foreign captions wait 30 s. A `LINK_ONLY` source with reason
+  `SERVER_PULL_UNAVAILABLE` says the server cannot read it right now (never a mic or tab-audio offer). A `REPORT`
+  card (the one-click summary's detailed report) renders through `LiveReportBody` (`parseLiveReportBody`: a heading
+  per blank-line section, `0:44` times on the start side). `/admin/live` picks the main, vision and 1-3 agent models
+  with the chat `ModelPicker` (`admin-live-model-chain.tsx`); only Ollama and Gemini connectors are callable by Live.

@@ -1,5 +1,6 @@
 import { LiveCardEnhance } from '@/components/live/live-card-enhance';
 import { LiveCardVersionsPopover } from '@/components/live/live-card-versions-popover';
+import { LiveReportBody } from '@/components/live/live-report-body';
 import { Badge } from '@/components/ui/badge';
 import {
   LIVE_CARD_ACCENT_CLASSES,
@@ -7,6 +8,7 @@ import {
   LIVE_HIGHLIGHT_TYPE_KEYS,
   LIVE_IMPORTANCE_DOTS,
 } from '@/constants/live.constants';
+import { LiveCardLanguageState, LiveFeedEventKind } from '@/enums/live.enum';
 import type { LiveFeedCardProps } from '@/types/live.types';
 import { cn } from '@/utilities';
 import { formatLiveClock } from '@/utilities/live-request.utility';
@@ -60,14 +62,38 @@ export function LiveFeedCardItem({
           </span>
         ) : null}
       </div>
-      {card.title ? (
-        <h3 className="text-foreground text-sm leading-snug font-semibold" dir="auto">
-          {card.translatedTitle ?? card.title}
-        </h3>
-      ) : null}
-      <p className="text-foreground/90 text-sm leading-relaxed whitespace-pre-line" dir="auto">
-        {card.translatedBody ?? card.body}
-      </p>
+      {card.languageState === LiveCardLanguageState.PENDING ? (
+        <p
+          className="text-muted-foreground flex items-center gap-2 text-sm"
+          data-testid="live-card-translating"
+        >
+          <span className="bg-primary h-1.5 w-1.5 animate-pulse rounded-full" aria-hidden="true" />
+          {t('live.card.translating')}
+        </p>
+      ) : (
+        <>
+          {card.title ? (
+            <h3 className="text-foreground text-sm leading-snug font-semibold" dir="auto">
+              {card.translatedTitle ?? card.title}
+            </h3>
+          ) : null}
+          {card.kind === LiveFeedEventKind.REPORT ? (
+            <LiveReportBody body={card.translatedBody ?? card.body} />
+          ) : (
+            <p
+              className="text-foreground/90 text-sm leading-relaxed whitespace-pre-line"
+              dir="auto"
+            >
+              {card.translatedBody ?? card.body}
+            </p>
+          )}
+          {card.languageState === LiveCardLanguageState.ORIGINAL ? (
+            <p className="text-muted-foreground text-xs" data-testid="live-card-original">
+              {t('live.card.originalLanguage')}
+            </p>
+          ) : null}
+        </>
+      )}
       {card.version > 1 || allowEnhance ? (
         <div className="-mb-1 flex flex-wrap items-center justify-end gap-1">
           {card.version > 1 ? (

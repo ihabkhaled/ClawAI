@@ -116,7 +116,7 @@ describe('TranslationManager', () => {
 
   it('batches queued captions and flushes on size or age', async () => {
     model.complete.mockResolvedValue({
-      content: '{"items":[{"id":0,"text":"x"},{"id":1,"text":"y"}]}',
+      content: '{"items":[{"id":0,"text":"مرحبا"},{"id":1,"text":"أهلا"}]}',
       connector: 'O',
       model: 'm',
       latencyMs: 1,
@@ -133,6 +133,61 @@ describe('TranslationManager', () => {
     manager.dropRun('run-1');
     await manager.flushCaptions(context, true);
     expect(model.complete).toHaveBeenCalledTimes(2);
+  });
+
+  it('asks again when a translation comes back in the wrong language, and stops after 3 tries', async () => {
+    prisma.liveTranslation.findUnique.mockResolvedValue(null);
+    const echo = {
+      content: '{"title":"Release","text":"Ships Tuesday"}',
+      connector: 'O',
+      model: 'm',
+      latencyMs: 1,
+    };
+    const arabic = {
+      content: '{"title":"إصدار","text":"يصدر الثلاثاء"}',
+      connector: 'O',
+      model: 'm',
+      latencyMs: 1,
+    };
+    model.complete.mockResolvedValueOnce(echo).mockResolvedValueOnce(arabic);
+    await manager.translateCard(
+      context,
+      {
+        id: 'ev-9',
+        title: 'Release',
+        body: 'Ships Tuesday',
+        version: 1,
+        startAt: 0,
+        language: 'en',
+      },
+      LiveStreamEventType.CARD,
+    );
+    expect(model.complete).toHaveBeenCalledTimes(2);
+    expect(events.emit).toHaveBeenLastCalledWith([
+      expect.objectContaining({
+        language: 'ar',
+        data: expect.objectContaining({ title: 'إصدار' }),
+      }),
+    ]);
+
+    model.complete.mockReset();
+    events.emit.mockClear();
+    model.complete.mockResolvedValue(echo);
+    await manager.translateCard(
+      context,
+      {
+        id: 'ev-10',
+        title: 'Release',
+        body: 'Ships Tuesday',
+        version: 1,
+        startAt: 0,
+        language: 'en',
+      },
+      LiveStreamEventType.CARD,
+    );
+    expect(model.complete).toHaveBeenCalledTimes(3);
+    // Never an English "translation" for an Arabic viewer.
+    expect(events.emit).not.toHaveBeenCalled();
   });
 
   it('translates a card per language with the card version as cache key', async () => {

@@ -75,6 +75,43 @@ enum LivePlatform {
   LIVE17
   MIXCLOUD
   BLUESKY
+  /// Added 2026-11-26 (owner: "more than 30 live and 30 video platforms"), each read once by yt-dlp.
+  VK_PLAY_LIVE
+  PEERTUBE
+  STEAM
+  GOODGAME
+  YOUNOW
+  RAIPLAY
+  RAIPLAY_SOUND
+  BFMTV
+  CBS_NEWS
+  LRT
+  FRANCE_TV
+  ROYA
+  MATCH_TV
+  RTVC_PLAY
+  TUNEIN
+  WEBCAMERA_PL
+  TED
+  SOUNDCLOUD
+  BANDCAMP
+  ARCHIVE_ORG
+  NINEGAG
+  PINTEREST
+  BITCHUTE
+  GOOGLE_DRIVE
+  DROPBOX
+  LOOM
+  SPREAKER
+  APPLE_PODCASTS
+  MEDAL
+  UN_WEB_TV
+  ZHIHU
+  CNN
+  VIDLII
+  FLICKR
+  ACFUN
+  IMGUR
 }
 
 enum LiveMode {
@@ -111,6 +148,8 @@ enum LiveFeedEventKind {
   VISUAL
   GAP
   FINAL
+  /// The detailed report of a one-click video summary (timestamped moments, chapters, quotes).
+  REPORT
 }
 
 enum LiveHighlightType {

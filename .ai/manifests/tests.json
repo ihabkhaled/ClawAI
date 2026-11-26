@@ -58,7 +58,7 @@
     },
     "claw-frontend": {
       "runner": "vitest",
-      "testFiles": 1079
+      "testFiles": 1085
     },
     "claw-health-service": {
       "runner": "vitest",
@@ -70,7 +70,7 @@
     },
     "claw-live-service": {
       "runner": "vitest",
-      "testFiles": 87
+      "testFiles": 91
     },
     "claw-llamacpp-service": {
       "runner": "vitest",
@@ -118,5 +118,5 @@
     }
   },
   "generated": true,
-  "total": 3047
+  "total": 3057
 }

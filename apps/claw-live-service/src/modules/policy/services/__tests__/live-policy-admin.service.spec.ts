@@ -21,8 +21,13 @@ const validConfig = {
   sessionsPerUserPerHour: 20,
   dailyBudgetMicroUsd: 50_000_000,
   budgetSoftStopPercent: 80,
-  summaryModelChain: [],
-  visionModelChain: [],
+  summaryModelChain: [{ connector: 'OLLAMA', model: 'gemma4:31b', style: 'OLLAMA' }],
+  visionModelChain: [
+    { connector: 'GEMINI', model: 'gemini-3.1-flash-lite', style: 'OPENAI_COMPAT' },
+  ],
+  councilModelChain: [
+    { connector: 'GEMINI', model: 'gemini-3.1-flash-lite', style: 'OPENAI_COMPAT' },
+  ],
   serverPullPlatforms: ['TWITCH'],
   recordedVideoMaxSeconds: 10800,
 };

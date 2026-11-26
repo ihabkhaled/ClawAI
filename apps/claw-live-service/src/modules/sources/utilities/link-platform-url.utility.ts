@@ -5,6 +5,9 @@ import {
   BIGO_WATCH_BASE_URL,
   BILIBILI_LIVE_HOST,
   BILIBILI_ROOM_PATTERN,
+  BILIBILI_VIDEO_BASE_URL,
+  BILIBILI_VIDEO_HOSTS,
+  BILIBILI_VIDEO_ID_PATTERN,
   BILIBILI_WATCH_BASE_URL,
   CHZZK_CHANNEL_PATTERN,
   CHZZK_HOST,
@@ -37,8 +40,11 @@ import {
   TELEGRAM_HOSTS,
   TELEGRAM_LIVE_PARAMS,
   TELEGRAM_WATCH_BASE_URL,
+  TIKTOK_ANY_USER_VIDEO_BASE_URL,
   TIKTOK_EMBED_BASE_URL,
   TIKTOK_HOSTS,
+  TIKTOK_HTML_SUFFIX,
+  TIKTOK_ID_PATH_PREFIXES,
   TIKTOK_SHORT_CODE_PATTERN,
   TIKTOK_SHORT_HOSTS,
   TIKTOK_USER_PATTERN,
@@ -60,6 +66,24 @@ function linkOnly(id: string, watchUrl: string): PlatformMatch {
  * recorded video, with the official embed) and the share links `vt.tiktok.com/<code>`,
  * `vm.tiktok.com/<code>` and `tiktok.com/t/<code>`.
  */
+/**
+ * `/embed/<id>`, `/embed/v2/<id>`, `/player/v1/<id>` and `m.tiktok.com/v/<id>.html`: shapes yt-dlp has
+ * no extractor for (2026-11-26), read as `www.tiktok.com/@/video/<id>`.
+ */
+function tiktokIdOnlyVideo(segments: readonly string[]): PlatformMatch | null {
+  const [first, ...rest] = segments;
+  if (first === undefined || !TIKTOK_ID_PATH_PREFIXES.has(first) || rest.length === 0) return null;
+  const last = rest.at(-1) ?? '';
+  const raw = last.endsWith(TIKTOK_HTML_SUFFIX) ? last.slice(0, -TIKTOK_HTML_SUFFIX.length) : last;
+  const id = matching(raw, TIKTOK_VIDEO_ID_PATTERN);
+  if (!id || rest.length > 2) return null;
+  return {
+    ...linkOnly(`video:${id}`, `${TIKTOK_ANY_USER_VIDEO_BASE_URL}${id}`),
+    embedUrl: `${TIKTOK_EMBED_BASE_URL}${id}`,
+    portrait: true,
+  };
+}
+
 export function parseTiktokUrl(url: URL): PlatformMatch | null {
   const segments = pathSegments(url);
   if (hostIn(url, TIKTOK_SHORT_HOSTS) || (hostIn(url, TIKTOK_HOSTS) && segments[0] === 't')) {
@@ -71,6 +95,8 @@ export function parseTiktokUrl(url: URL): PlatformMatch | null {
   }
   if (!hostIn(url, TIKTOK_HOSTS)) return null;
   const [first, second, third] = segments;
+  const bare = tiktokIdOnlyVideo(segments);
+  if (bare) return bare;
   if (!first?.startsWith('@')) return null;
   const user = matching(first.slice(1), TIKTOK_USER_PATTERN)?.toLowerCase();
   if (!user) return null;
@@ -166,6 +192,12 @@ export function parseTelegramUrl(url: URL): PlatformMatch | null {
 
 /** `live.bilibili.com/<room>`. */
 export function parseBilibiliUrl(url: URL): PlatformMatch | null {
+  if (hostIn(url, BILIBILI_VIDEO_HOSTS)) {
+    const [first, second, third] = pathSegments(url);
+    const id =
+      first === 'video' && third === undefined ? matching(second, BILIBILI_VIDEO_ID_PATTERN) : null;
+    return id ? linkOnly(`video:${id}`, `${BILIBILI_VIDEO_BASE_URL}${id}`) : null;
+  }
   if (url.hostname.toLowerCase() !== BILIBILI_LIVE_HOST) return null;
   const segments = pathSegments(url);
   const room = segments.length === 1 ? matching(segments[0], BILIBILI_ROOM_PATTERN) : null;

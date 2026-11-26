@@ -1,3 +1,4 @@
+import type { ReportSectionLabels } from '../types/processing.types';
 import { LiveCapability, LiveRunStatus, LiveSessionState } from '../../../generated/prisma';
 
 // ── Identity ────────────────────────────────────────────────────────────────
@@ -130,6 +131,29 @@ export const RESEARCH_MIN_INTERVAL_MS = 60_000;
 export const RESEARCH_MAX_PER_RUN = 20;
 export const RESEARCH_QUERY_MAX_CHARS = 120;
 export const RESEARCH_SNIPPET_MAX_CHARS = 280;
+
+/** Speech-to-text starts every sung line with this sign (file-service chunk instruction). */
+export const SUNG_LINE_MARK = '♪';
+/** Lyric searches the service may start itself in one run, when the model asked for none. */
+export const LYRIC_RESEARCH_MAX_PER_RUN = 3;
+/** Words of a sung line kept for its lyric search: enough to be distinctive, short enough to match. */
+export const LYRIC_QUERY_MAX_WORDS = 8;
+/** The word "lyrics" per spoken language; English for any other. */
+export const LYRIC_SEARCH_WORDS: Readonly<Record<string, string>> = {
+  ar: 'كلمات',
+  de: 'Songtext',
+  es: 'letra',
+  fa: 'متن آهنگ',
+  fr: 'paroles',
+  hi: 'लिरिक्स',
+  it: 'testo',
+  ja: '歌詞',
+  pt: 'letra',
+  ru: 'текст песни',
+  th: 'เนื้อเพลง',
+  tr: 'sözleri',
+  zh: '歌词',
+};
 export const WEB_NOTE_LIMIT = 8;
 
 // ── Translation ─────────────────────────────────────────────────────────────
@@ -138,6 +162,8 @@ export const TRANSLATION_LANGUAGE_CACHE_MS = 5000;
 export const TRANSLATION_CAPTION_BATCH = 2;
 export const TRANSLATION_CAPTION_MAX_WAIT_MS = 3000;
 export const TRANSLATION_MAX_OUTPUT_TOKENS = 1200;
+/** A translation that is unusable or not really in the target language is asked again, at most this often. */
+export const TRANSLATION_MAX_ATTEMPTS = 3;
 
 // ── Vision (section 4) ──────────────────────────────────────────────────────
 
@@ -161,3 +187,77 @@ export const GEMINI_DEFAULT_BASE_URL = 'https://generativelanguage.googleapis.co
 export const OLLAMA_DEFAULT_BASE_URL = 'https://ollama.com';
 export const OLLAMA_CONNECTOR = 'OLLAMA';
 export const OPENAI_COMPAT_STYLE = 'OPENAI_COMPAT';
+
+/** The video report of a one-click summary (owner 2026-11-26: "like YouTube's summary, per second"). */
+export const REPORT_EVENT_KEY = 'report';
+export const MS_PER_SECOND = 1000;
+export const SECONDS_PER_MINUTE = 60;
+export const SECONDS_PER_HOUR = 3600;
+/** One number of an `h:mm:ss` clock. */
+export const REPORT_CLOCK_PART = /^\d{1,3}$/u;
+/** Transcript of one report part: a moment about every 10 s gives about 30 moments a part. */
+export const REPORT_WINDOW_MS = 300_000;
+/** Seconds between two moments the report asks for. */
+export const REPORT_MOMENT_EVERY_SECONDS = 10;
+export const REPORT_MAX_SEGMENTS = 6000;
+export const REPORT_MAX_VISUAL_NOTES = 400;
+export const REPORT_MAX_MOMENTS = 1200;
+export const REPORT_MAX_QUOTES = 12;
+export const REPORT_MAX_OUTPUT_TOKENS = 4096;
+/** Section headings of the report body, per viewer language; English for any other. */
+export const REPORT_DEFAULT_SECTION_LABELS: ReportSectionLabels = {
+  summary: 'Summary',
+  chapters: 'Chapters',
+  moments: 'Moment by moment',
+  quotes: 'Key quotes',
+};
+export const REPORT_SECTION_LABELS: Readonly<Record<string, ReportSectionLabels>> = {
+  en: {
+    summary: 'Summary',
+    chapters: 'Chapters',
+    moments: 'Moment by moment',
+    quotes: 'Key quotes',
+  },
+  ar: { summary: 'الملخص', chapters: 'الفصول', moments: 'لحظة بلحظة', quotes: 'أهم الاقتباسات' },
+  de: {
+    summary: 'Zusammenfassung',
+    chapters: 'Kapitel',
+    moments: 'Moment für Moment',
+    quotes: 'Wichtige Zitate',
+  },
+  es: {
+    summary: 'Resumen',
+    chapters: 'Capítulos',
+    moments: 'Momento a momento',
+    quotes: 'Citas clave',
+  },
+  fa: { summary: 'خلاصه', chapters: 'فصل‌ها', moments: 'لحظه به لحظه', quotes: 'نقل‌قول‌های مهم' },
+  fr: {
+    summary: 'Résumé',
+    chapters: 'Chapitres',
+    moments: 'Moment par moment',
+    quotes: 'Citations clés',
+  },
+  hi: { summary: 'सारांश', chapters: 'अध्याय', moments: 'पल-पल', quotes: 'मुख्य उद्धरण' },
+  it: {
+    summary: 'Riepilogo',
+    chapters: 'Capitoli',
+    moments: 'Momento per momento',
+    quotes: 'Citazioni chiave',
+  },
+  ja: { summary: '要約', chapters: 'チャプター', moments: '瞬間ごと', quotes: '主な引用' },
+  pt: {
+    summary: 'Resumo',
+    chapters: 'Capítulos',
+    moments: 'Momento a momento',
+    quotes: 'Citações principais',
+  },
+  ru: {
+    summary: 'Кратко',
+    chapters: 'Главы',
+    moments: 'Момент за моментом',
+    quotes: 'Ключевые цитаты',
+  },
+  th: { summary: 'สรุป', chapters: 'บท', moments: 'ทีละช่วง', quotes: 'คำพูดสำคัญ' },
+  zh: { summary: '摘要', chapters: '章节', moments: '逐刻回顾', quotes: '关键引语' },
+};

@@ -12,7 +12,7 @@ export const JA_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   eyebrow: 'ClawAI の新機能：Live & Video Intelligence',
   title: 'どんなライブ配信も動画も、あなたの言語で理解できる',
   intro:
-    '15 以上のプラットフォームから、ライブ配信や録画動画のリンクを貼り付けるだけ。ClawAI がライブ字幕と、要約・ハイライトが流れるフィードで内容を追いかけます。動画全体をワンクリックで分かりやすいレポートにまとめることもできます。処理は ClawAI のサーバーで行うため、スマートフォンを含むどの端末でも使えます。',
+    '50 以上のプラットフォームから、ライブ配信や録画動画のリンクを貼り付けるだけ。ClawAI がライブ字幕と、要約・ハイライトが流れるフィードで内容を追いかけます。動画全体をワンクリックで分かりやすいレポートにまとめることもできます。処理は ClawAI のサーバーで行うため、スマートフォンを含むどの端末でも使えます。',
   openCta: '今すぐリンクを貼り付ける',
   signUpCta: '無料アカウントを作成',
   howItWorksCta: '使い方を見る',
@@ -159,7 +159,7 @@ export const JA_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     'アプリが対応する 13 言語から選べます：英語、アラビア語、ドイツ語、スペイン語、ペルシア語、フランス語、ヒンディー語、イタリア語、日本語、ポルトガル語、ロシア語、タイ語、中国語。話し手はどの言語で話していてもかまいません。',
     '話し手がすでにあなたの言語で話している場合は、その言葉がそのまま表示されます。そうでない場合は、字幕・要約・ハイライトが翻訳され、原文の代わりに訳文が表示されます。',
   ],
-  platformsTitle: '15 以上のプラットフォームに対応',
+  platformsTitle: '50 以上のプラットフォームに対応',
   platformsBody:
     'YouTube、Twitch、Kick、Facebook、TikTok、Instagram、X (Twitter)、Bilibili、Niconico など多数。ライブ配信にも録画動画にも対応しています。',
   platformsCta: '対応プラットフォームをすべて見る',
@@ -221,7 +221,7 @@ export const JA_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     {
       question: 'どのプラットフォームに対応していますか？',
       answer:
-        'YouTube、Twitch、Kick、Facebook、TikTok、Instagram、X (Twitter)、Bilibili、Niconico など 15 以上です。すべての一覧はプラットフォームのページでご覧いただけます。読み取れるのは公開された動画と配信のみです。Discord には公開リンクがないため、対応していません。',
+        'YouTube、Twitch、Kick、Facebook、TikTok、Instagram、X (Twitter)、Bilibili、Niconico など 50 以上です。すべての一覧はプラットフォームのページでご覧いただけます。読み取れるのは公開された動画と配信のみです。Discord には公開リンクがないため、対応していません。',
     },
     {
       question: 'ClawAI が私の代わりに投稿やチャットをすることはありますか？',
@@ -332,7 +332,7 @@ export const JA_LIVE_INTELLIGENCE_MARKETING_SEO: LiveIntelligenceMarketingSeo = 
   overview: {
     title: 'Live & Video Intelligence：ライブ字幕とワンクリック動画要約',
     description:
-      'YouTube、Twitch、TikTok など 15 以上のプラットフォームのライブ配信や動画のリンクを貼り付けるだけ。あなたの言語のライブ字幕、要約とハイライトのスマートフィード、タイムスタンプつきのワンクリック動画要約が手に入ります。スマートフォンを含むどの端末でも使えます。',
+      'YouTube、Twitch、TikTok など 50 以上のプラットフォームのライブ配信や動画のリンクを貼り付けるだけ。あなたの言語のライブ字幕、要約とハイライトのスマートフィード、タイムスタンプつきのワンクリック動画要約が手に入ります。スマートフォンを含むどの端末でも使えます。',
     keywords: [
       'ライブ配信 字幕 翻訳',
       'AI 動画 要約',

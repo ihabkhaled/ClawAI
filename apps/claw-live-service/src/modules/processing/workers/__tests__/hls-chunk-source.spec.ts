@@ -191,7 +191,7 @@ describe('HlsChunkSource', () => {
             const resolved = await resolvePlaylist(fresh);
             return resolved === null
               ? null
-              : { playlist: resolved, hostSuffixes: suffixes, videoId: null };
+              : { playlist: resolved, hostSuffixes: suffixes, videoId: null, headers: {} };
           },
         },
       );
@@ -222,7 +222,7 @@ describe('HlsChunkSource', () => {
           : Promise.resolve({ body: Buffer.from(playlist(10, 3)) }),
       );
       await source.poll();
-      expect(fetcher.fetchObject).toHaveBeenCalledWith(first, suffixes, expect.any(Number));
+      expect(fetcher.fetchObject).toHaveBeenCalledWith(first, suffixes, expect.any(Number), {});
 
       // A failure inside the throttle window keeps the token (a blip is not an expiry).
       fetcher.fetchObject.mockRejectedValueOnce(new Error('LIVE_UPSTREAM_FAILED'));
@@ -236,7 +236,7 @@ describe('HlsChunkSource', () => {
       await source.poll();
       expect(resolvePlaylist).toHaveBeenCalledTimes(2);
       expect(resolvePlaylist).toHaveBeenLastCalledWith(true);
-      expect(fetcher.fetchObject).toHaveBeenCalledWith(second, suffixes, expect.any(Number));
+      expect(fetcher.fetchObject).toHaveBeenCalledWith(second, suffixes, expect.any(Number), {});
       await source.dispose();
     });
   });

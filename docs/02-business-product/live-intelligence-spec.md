@@ -40,6 +40,14 @@ need explicit confirmation, with an optional spending cap.
 unlimited get pro's 600, the highest value the owner named, so nothing is over-granted. These are
 assumptions: the owner should confirm or change them in the admin page.
 
+## Owner decisions (2026-11-26): server only, one language, songs, agents, the detailed report
+
+- **Superseded 2026-11-26 (owner: "server only, retry", ADR-221 round 2): no link falls back to the viewer's tab audio or microphone any more.** An unreadable link is read once more after 2 s, then it is `LINK_ONLY` with reason `SERVER_PULL_UNAVAILABLE`. The capture text below describes the old path, kept only for sessions created before then.
+- **One language:** everything a viewer reads is in the viewer's language; a card still being translated says "Translating…", never shows the other language silently.
+- **Songs:** sung words are lyrics; the analysis names the song and artist when it can find them and never reports a lyric as the singer's real state.
+- **Agents:** the admin picks the main model, fallbacks and 1 to 3 extra agents; each agent drafts, the main model merges.
+- **Detailed report:** "Summarize video" ends with a report in the viewer's language: a summary, chapters, a moment about every 10 seconds ("0:44 — …") and key quotes.
+
 ## Owner decisions (2026-11-23): phones and server pull
 
 - **Phones:** no mobile browser can share tab audio, so on a phone the button reads "Analyze using microphone". The phone's

@@ -1,4 +1,5 @@
 import type { RunLifecycleManager } from '../managers/run-lifecycle.manager';
+import type { ReportManager } from '../managers/report.manager';
 import type { SummaryManager } from '../managers/summary.manager';
 import type { TranscriptManager } from '../managers/transcript.manager';
 import type { TranslationManager } from '../managers/translation.manager';
@@ -11,6 +12,7 @@ export interface RunWorkerDeps {
   lifecycle: RunLifecycleManager;
   transcripts: TranscriptManager;
   summaries: SummaryManager;
+  reports: ReportManager;
   translations: TranslationManager;
   vision: VisionManager;
 }

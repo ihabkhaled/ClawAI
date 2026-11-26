@@ -2,7 +2,12 @@ import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 
 import { LiveSourceErrorCode } from '../../../common/enums/live-source-error-code.enum';
 import { sha256Hex } from '../../../common/utilities/hash.utility';
-import { LiveCapability, LiveSourceKind, type LiveStream } from '../../../generated/prisma';
+import {
+  LiveCapability,
+  type LivePlatform,
+  LiveSourceKind,
+  type LiveStream,
+} from '../../../generated/prisma';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { LivePolicyService } from '../../policy/services/live-policy.service';
 import {
@@ -12,6 +17,7 @@ import {
   PRIVATE_ACCESS_SCOPE_PREFIX,
   PUBLIC_ACCESS_SCOPE,
 } from '../constants/sources.constants';
+import { RESOLVE_RETRY_DELAY_MS } from '../constants/server-pull.constants';
 import { ServerPullProbe } from '../../../common/enums/live-server-pull-probe.enum';
 import type { PlatformMatch, PlatformResolution } from '../types/platform.types';
 import type { ServerPullOutcome } from '../types/server-pull.types';
@@ -124,10 +130,25 @@ export class SourcesService {
     if (!this.serverPull.supports(definition.platform)) return off;
     const { config } = await this.policy.active();
     if (!config.serverPullPlatforms.includes(definition.platform)) return off;
-    const pull = await this.serverPull.probe(definition.platform, match);
+    const max = config.recordedVideoMaxSeconds;
+    const first = await this.readOnce(definition.platform, match, max, false);
+    if (first.probe !== ServerPullProbe.UNREACHABLE) return first;
+    // One more fresh try after a short pause: a platform's block is often momentary (2026-11-26).
+    await new Promise((done) => setTimeout(done, RESOLVE_RETRY_DELAY_MS));
+    return this.readOnce(definition.platform, match, max, true);
+  }
+
+  /** Live first, then recorded; `fresh` skips the 60 s server-pull cache. */
+  private async readOnce(
+    platform: LivePlatform,
+    match: PlatformMatch,
+    maxSeconds: number,
+    fresh: boolean,
+  ): Promise<ServerPullOutcome> {
+    const pull = await this.serverPull.probe(platform, match, fresh);
     return pull !== null
       ? { probe: ServerPullProbe.LIVE, videoId: pull.videoId }
-      : this.recordedFor(match, config.recordedVideoMaxSeconds);
+      : this.recordedFor(match, maxSeconds);
   }
 
   /** A recorded video within `maxSeconds` is RECORDED; longer is refused; unreadable stays UNREACHABLE. */
@@ -196,10 +217,15 @@ export class SourcesService {
     return liveChatEmbedUrl(definition.platform, match.chatEmbedUrl, pulledVideoId);
   }
 
+  /**
+   * Server only (owner decision 2026-11-26): a stream the server cannot read is never handed to the
+   * viewer's tab audio or microphone (a blocked YouTube read dropped phones to the microphone); it is
+   * LINK_ONLY with an honest reason instead.
+   */
   private capabilityFor(probe: ServerPullProbe, fallback: LiveCapability): LiveCapability {
     if (probe === ServerPullProbe.LIVE) return LiveCapability.SERVER_PULL;
     if (probe === ServerPullProbe.RECORDED) return LiveCapability.RECORDED;
-    return fallback;
+    return fallback === LiveCapability.BROWSER_CAPTURE ? LiveCapability.LINK_ONLY : fallback;
   }
 
   private async resolveHls(url: URL, userId: string): Promise<SourceResolution> {

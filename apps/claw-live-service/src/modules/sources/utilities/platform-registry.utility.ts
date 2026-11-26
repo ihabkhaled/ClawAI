@@ -26,10 +26,11 @@ export function platformReasonCode(
 ): LiveSourceReasonCode {
   if (capability === LiveCapability.SERVER_PULL) return LiveSourceReasonCode.SERVER_PULL_AVAILABLE;
   if (capability === LiveCapability.RECORDED) return LiveSourceReasonCode.RECORDED_VIDEO;
-  if (capability !== LiveCapability.BROWSER_CAPTURE) return LiveSourceReasonCode.LINK_ONLY_PLATFORM;
-  return probe === ServerPullProbe.UNREACHABLE
-    ? LiveSourceReasonCode.SERVER_PULL_UNAVAILABLE
-    : LiveSourceReasonCode.BROWSER_CAPTURE_AVAILABLE;
+  // The server tried and could not read it (blocked, offline, refused): say so, never fall back.
+  if (probe === ServerPullProbe.UNREACHABLE) return LiveSourceReasonCode.SERVER_PULL_UNAVAILABLE;
+  return capability === LiveCapability.BROWSER_CAPTURE
+    ? LiveSourceReasonCode.BROWSER_CAPTURE_AVAILABLE
+    : LiveSourceReasonCode.LINK_ONLY_PLATFORM;
 }
 
 /** A refused platform (Discord) or one with no capability is refused here; else its capability. */

@@ -5,7 +5,9 @@ import { LiveModelClient } from './adapters/live-model.adapter';
 import { LiveResearchClient } from './adapters/research.adapter';
 import { TranscriptionAdapter } from './adapters/transcription.adapter';
 import { RunLifecycleManager } from './managers/run-lifecycle.manager';
+import { ReportManager } from './managers/report.manager';
 import { SummaryManager } from './managers/summary.manager';
+import { LiveCouncilService } from './services/live-council.service';
 import { TranscriptManager } from './managers/transcript.manager';
 import { TranslationManager } from './managers/translation.manager';
 import { VisionManager } from './managers/vision.manager';
@@ -33,6 +35,8 @@ import { RunWorkerFactory } from './services/run-worker-factory.service';
     RunLifecycleManager,
     TranscriptManager,
     SummaryManager,
+    ReportManager,
+    LiveCouncilService,
     TranslationManager,
     VisionManager,
     LiveModelClient,

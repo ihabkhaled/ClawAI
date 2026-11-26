@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { LIVE_ADMIN_DEFAULT_DAYS } from '@/constants/live.constants';
 import { QUERY_POLL_BACKGROUND_MS } from '@/constants/query-policy.constants';
+import { useAdminLiveModelOptions } from '@/hooks/admin/live/use-admin-live-model-options';
 import { useAdminLivePolicy } from '@/hooks/admin/live/use-admin-live-policy';
 import { useTranslation } from '@/lib/i18n';
 import { liveAdminRepository } from '@/repositories/live/live-admin.repository';
@@ -32,6 +33,7 @@ export function useAdminLive(): UseAdminLiveResult {
     onSettled: () => setStopRunId(null),
   });
   const policy = useAdminLivePolicy();
+  const models = useAdminLiveModelOptions(policy.form.values?.modelChains ?? null, t);
   const { mutate: stopMutate } = stop;
   const { refetch } = overview;
 
@@ -45,6 +47,7 @@ export function useAdminLive(): UseAdminLiveResult {
     isOverviewError: overview.isError,
     retryOverview: () => void refetch(),
     ...policy,
+    ...models,
     stopRunId,
     pendingRunId: stop.isPending ? (stop.variables ?? null) : null,
     askStopRun: setStopRunId,

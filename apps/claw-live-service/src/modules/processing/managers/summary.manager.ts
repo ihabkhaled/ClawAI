@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
 
 import { LiveStreamEventType } from '../../../common/enums/live-stream-event-type.enum';
@@ -6,26 +5,20 @@ import { sha256Hex } from '../../../common/utilities/hash.utility';
 import { cardLanguage } from '../../../common/utilities/language.utility';
 import { introducesLinksOrMarkup } from '../../../common/utilities/plain-text.utility';
 import { wordTokens } from '../../../common/utilities/text-similarity.utility';
-import {
-  type LiveFeedEvent,
-  LiveFeedEventKind,
-  LivePipelineStage,
-} from '../../../generated/prisma';
+import { type LiveFeedEvent, LiveFeedEventKind } from '../../../generated/prisma';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
-import type { LiveModelRef } from '../../policy/types/live-policy.types';
 import { LivePolicyService } from '../../policy/services/live-policy.service';
 import type { LiveStreamEvent } from '../../realtime/types/live-stream-event.types';
-import { LiveModelClient } from '../adapters/live-model.adapter';
 import { LiveResearchClient } from '../adapters/research.adapter';
 import {
   FINAL_EVENT_KEY,
   FINAL_MAX_CARDS,
   HIGHLIGHT_MEMORY_LIMIT,
+  LYRIC_RESEARCH_MAX_PER_RUN,
   RESEARCH_MAX_PER_RUN,
   RESEARCH_MIN_INTERVAL_MS,
   RESEARCH_QUERY_MAX_CHARS,
   SNAPSHOT_INTERVAL_MS,
-  SUMMARY_MAX_OUTPUT_TOKENS,
   SUMMARY_MIN_NEW_TRANSCRIPT_MS,
   SUMMARY_PAUSE_TRIGGER_MS,
   WEB_NOTE_LIMIT,
@@ -35,6 +28,7 @@ import { FINAL_SYSTEM_PROMPT, SUMMARY_SYSTEM_PROMPT } from '../constants/prompts
 import { LeaseLostError } from '../errors/processing.errors';
 import { finalReplySchema, summaryReplySchema } from '../schemas/processing.schemas';
 import { FencedRunWriter } from '../services/fenced-run-writer.service';
+import { LiveCouncilService } from '../services/live-council.service';
 import { RunEventEmitter } from '../services/run-event-emitter.service';
 import { TranslationManager } from './translation.manager';
 import type {
@@ -52,8 +46,9 @@ import type {
   WorkerContext,
 } from '../types/processing.types';
 import { isDuplicateHighlight } from '../utilities/highlight-dedupe.utility';
+import { feedEventMessage } from '../utilities/feed-event.utility';
 import { extractJsonObject } from '../utilities/json-reply.utility';
-import { recordProviderCost } from '../utilities/provider-cost.utility';
+import { lyricResearchQuery } from '../utilities/song-lyrics.utility';
 import {
   buildSummaryUserMessage,
   formatWebNotes,
@@ -74,7 +69,7 @@ export class SummaryManager {
   constructor(
     private readonly prisma: PrismaService,
     private readonly writer: FencedRunWriter,
-    private readonly model: LiveModelClient,
+    private readonly council: LiveCouncilService,
     private readonly policy: LivePolicyService,
     private readonly events: RunEventEmitter,
     private readonly research: LiveResearchClient,
@@ -100,21 +95,44 @@ export class SummaryManager {
     // The language the model is told to write in; translation skips only viewers of this language.
     const writtenIn = memory.spokenLanguage;
     const userMessage = buildSummaryUserMessage(memory, window);
-    const reply = await this.callModel(
+    const reply = await this.council.draftThenMerge(
       context,
-      config.summaryModelChain,
-      SUMMARY_SYSTEM_PROMPT,
-      userMessage,
+      { main: config.summaryModelChain, council: config.councilModelChain },
+      { system: SUMMARY_SYSTEM_PROMPT, user: userMessage },
+      (content) => this.validateSummary(content, userMessage),
     );
     if (!reply) return [];
     const parsed = this.validateSummary(reply.content, userMessage);
     if (!parsed) {
-      await this.writer.commit(context.lease, (tx) => this.recordCost(tx, context, reply, false));
+      await this.writer.commit(context.lease, (tx) =>
+        this.council.recordCost(tx, context, reply, false),
+      );
       return [];
     }
     const changed = await this.apply(context, memory, parsed, reply, { first, last }, writtenIn);
-    await this.maybeResearch(context, memory, parsed.researchQuery);
+    await this.researchAfterSummary(context, memory, parsed.researchQuery, window);
     return changed;
+  }
+
+  /**
+   * The model's own search first. When it asked for none but lines were sung, the service searches
+   * the lyric itself (at most LYRIC_RESEARCH_MAX_PER_RUN times): a song the model did not place is
+   * the case it most often gets wrong, reading a lyric as the singer's real state.
+   */
+  private async researchAfterSummary(
+    context: WorkerContext,
+    memory: RunMemory,
+    modelQuery: string,
+    window: readonly TranscriptLine[],
+  ): Promise<void> {
+    if (modelQuery.trim() !== '') {
+      await this.maybeResearch(context, memory, modelQuery);
+      return;
+    }
+    if (memory.research.lyricSearches >= LYRIC_RESEARCH_MAX_PER_RUN) return;
+    const lyricQuery = lyricResearchQuery(window, memory.spokenLanguage);
+    if (lyricQuery === '') return;
+    if (await this.maybeResearch(context, memory, lyricQuery)) memory.research.lyricSearches += 1;
   }
 
   /**
@@ -127,13 +145,13 @@ export class SummaryManager {
     memory: RunMemory,
     rawQuery: string,
     now = Date.now(),
-  ): Promise<void> {
+  ): Promise<boolean> {
     const query = rawQuery.trim().slice(0, RESEARCH_QUERY_MAX_CHARS);
     const key = query.toLowerCase();
     const state = memory.research;
-    if (query === '' || state.queries.includes(key)) return;
+    if (query === '' || state.queries.includes(key)) return false;
     if (state.count >= RESEARCH_MAX_PER_RUN || now - state.lastWallAt < RESEARCH_MIN_INTERVAL_MS) {
-      return;
+      return false;
     }
     state.count += 1;
     state.lastWallAt = now;
@@ -143,6 +161,7 @@ export class SummaryManager {
       `live-research:${context.lease.runId}:${String(state.count)}`,
     );
     if (notes.length > 0) memory.webNotes = [...memory.webNotes, ...notes].slice(-WEB_NOTE_LIMIT);
+    return true;
   }
 
   /** On ENDED: one FINAL card covering only the analysed cards of the run (plus its web context). */
@@ -166,11 +185,14 @@ export class SummaryManager {
       formatWebNotes(memory?.webNotes ?? []),
     ].join('\n');
     const { config } = await this.policy.active();
-    const reply = await this.callModel(
+    const reply = await this.council.draftThenMerge(
       context,
-      config.summaryModelChain,
-      FINAL_SYSTEM_PROMPT,
-      streamDataBlock(source),
+      { main: config.summaryModelChain, council: config.councilModelChain },
+      { system: FINAL_SYSTEM_PROMPT, user: streamDataBlock(source) },
+      (content) => {
+        const draft = finalReplySchema.safeParse(extractJsonObject(content));
+        return draft.success ? draft.data : null;
+      },
     );
     if (!reply) return;
     const parsed = finalReplySchema.safeParse(extractJsonObject(reply.content));
@@ -178,7 +200,7 @@ export class SummaryManager {
       parsed.success &&
       !introducesLinksOrMarkup(`${parsed.data.title}\n${parsed.data.summary}`, source);
     const row = await this.writer.commit(context.lease, async (tx) => {
-      await this.recordCost(tx, context, reply, valid);
+      await this.council.recordCost(tx, context, reply, valid);
       if (!parsed.success || !valid) return null;
       return tx.liveFeedEvent.upsert({
         where: { runId_eventKey: { runId, eventKey: FINAL_EVENT_KEY } },
@@ -205,7 +227,7 @@ export class SummaryManager {
       language: cardLanguage(row.title, row.body, memory?.spokenLanguage ?? null),
     };
     await this.translateBeforePublish(context, [{ type: LiveStreamEventType.CARD, target }]);
-    await this.events.emit([this.cardEvent(LiveStreamEventType.CARD, row)]);
+    await this.events.emit([feedEventMessage(LiveStreamEventType.CARD, row)]);
   }
 
   /** Every 10 min: a compacted LiveMemorySnapshot (long-term memory). */
@@ -236,7 +258,7 @@ export class SummaryManager {
     writtenIn: string | null,
   ): Promise<ChangedCard[]> {
     const outcome = await this.writer.commit(context.lease, async (tx) => {
-      await this.recordCost(tx, context, model, true);
+      await this.council.recordCost(tx, context, model, true);
       const card = await this.applyCard(tx, context.lease.runId, memory.openCard, reply, span);
       const highlights = await this.applyHighlights(
         tx,
@@ -298,7 +320,7 @@ export class SummaryManager {
       return {
         open: this.toOpenCard(row),
         closed: null,
-        events: [this.cardEvent(LiveStreamEventType.CARD_VERSION, row)],
+        events: [feedEventMessage(LiveStreamEventType.CARD_VERSION, row)],
         changed: [LiveStreamEventType.CARD_VERSION],
       };
     }
@@ -308,10 +330,10 @@ export class SummaryManager {
         where: { id: open.id },
         data: { isOpen: false, endAt: BigInt(span.first.startAt) },
       });
-      events.push(this.cardEvent(LiveStreamEventType.CARD_VERSION, closed));
+      events.push(feedEventMessage(LiveStreamEventType.CARD_VERSION, closed));
     }
     const created = await this.createCard(tx, runId, reply.current, span.first);
-    events.push(this.cardEvent(LiveStreamEventType.CARD, created));
+    events.push(feedEventMessage(LiveStreamEventType.CARD, created));
     return {
       open: this.toOpenCard(created),
       closed: open,
@@ -407,7 +429,7 @@ export class SummaryManager {
         },
       });
       remembered.push({ type: highlight.type, text, at: last.startAt });
-      events.push(this.cardEvent(LiveStreamEventType.HIGHLIGHT, row));
+      events.push(feedEventMessage(LiveStreamEventType.HIGHLIGHT, row));
       targets.push({
         id: row.id,
         title: row.title,
@@ -430,44 +452,6 @@ export class SummaryManager {
     return introducesLinksOrMarkup(strings.join('\n'), source) ? null : parsed.data;
   }
 
-  private async callModel(
-    context: WorkerContext,
-    chain: readonly LiveModelRef[],
-    system: string,
-    user: string,
-  ): Promise<ModelReply | null> {
-    try {
-      return await this.model.complete(chain, {
-        system,
-        user,
-        maxTokens: SUMMARY_MAX_OUTPUT_TOKENS,
-      });
-    } catch {
-      const failed = { content: '', connector: 'none', model: 'none', latencyMs: 0 };
-      await this.writer.commit(context.lease, (tx) => this.recordCost(tx, context, failed, false));
-      return null;
-    }
-  }
-
-  private recordCost(
-    tx: FencedTx,
-    context: WorkerContext,
-    reply: ModelReply,
-    succeeded: boolean,
-  ): Promise<void> {
-    return recordProviderCost(tx, {
-      idempotencyKey: `summary:${context.lease.runId}:${randomUUID()}`,
-      runId: context.lease.runId,
-      stage: LivePipelineStage.SUMMARY,
-      provider: reply.connector,
-      model: reply.model,
-      units: reply.content.length,
-      costMicroUsd: 0,
-      latencyMs: reply.latencyMs,
-      succeeded,
-    });
-  }
-
   private appendWorkingSummary(memory: RunMemory, closed: OpenCard): void {
     const next = `${memory.workingSummary}\n${closed.title}: ${closed.body}`.trim();
     memory.workingSummary =
@@ -483,27 +467,6 @@ export class SummaryManager {
       version: row.version,
       startAt: Number(row.startAt),
       importance: row.importance,
-    };
-  }
-
-  private cardEvent(type: LiveStreamEventType, row: LiveFeedEvent): LiveStreamEvent {
-    return {
-      type,
-      runId: row.runId,
-      startAt: Number(row.startAt),
-      ...(row.endAt === null ? {} : { endAt: Number(row.endAt) }),
-      data: {
-        eventId: row.id,
-        eventKey: row.eventKey,
-        kind: row.kind,
-        highlightType: row.highlightType,
-        title: row.title,
-        body: row.body,
-        importance: row.importance,
-        confidence: row.confidence,
-        version: row.version,
-        isOpen: row.isOpen,
-      },
     };
   }
 }

@@ -8,6 +8,7 @@ import { LiveHistoryList } from '@/components/live/live-history-list';
 import { LiveModal } from '@/components/live/live-modal';
 import { LiveStartForm } from '@/components/live/live-start-form';
 import { LiveSummaryDialog } from '@/components/live/live-summary-dialog';
+import { LiveSupportedPlatforms } from '@/components/live/live-supported-platforms';
 import { LiveUsageCard } from '@/components/live/live-usage-card';
 import { useLivePage } from '@/hooks/live/use-live-page';
 
@@ -29,6 +30,7 @@ export default function LivePage(): ReactElement {
         </div>
         <LiveUsageCard usage={controller.usage} t={t} locale={controller.locale} />
       </div>
+      <LiveSupportedPlatforms t={t} />
       <LiveHistoryList
         history={controller.history}
         actions={controller.historyActions}

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { LIVE_CAPTION_TRANSLATION_WAIT_MS } from '@/constants/live.constants';
 import { LiveStatusCode } from '@/enums/live.enum';
 import type { LiveCaption } from '@/types/live.types';
 import {
@@ -70,7 +71,10 @@ describe('latestRevealedCaption', () => {
   });
 
   it('shows the original once the translation is overdue', () => {
-    expect(latestRevealedCaption(CAPTIONS.slice(0, 1), {}, 'en', T0 + 12_000)?.text).toBe('hello');
+    expect(
+      latestRevealedCaption(CAPTIONS.slice(0, 1), {}, 'en', T0 + LIVE_CAPTION_TRANSLATION_WAIT_MS)
+        ?.text,
+    ).toBe('hello');
   });
 
   it('is null before the first caption is reached', () => {

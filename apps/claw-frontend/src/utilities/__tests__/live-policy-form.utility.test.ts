@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
+import { LIVE_COUNCIL_DEFAULT_CHAIN } from '@/constants/live-model-chain.constants';
 import { LIVE_SERVER_PULL_PLATFORMS } from '@/constants/live.constants';
+import { LiveModelChainKind } from '@/enums/live-model-chain.enum';
 import { LivePlatform } from '@/enums/live.enum';
 import type { LivePolicyConfig } from '@/types/live-admin.types';
 import {
@@ -26,7 +28,7 @@ const CONFIG: LivePolicyConfig = {
   dailyBudgetMicroUsd: 20_000_000,
   budgetSoftStopPercent: 80,
   summaryModelChain: [{ connector: 'GEMINI', model: 'gemini-flash', style: 'OPENAI_COMPAT' }],
-  visionModelChain: [],
+  visionModelChain: [{ connector: 'GEMINI', model: 'gemini-vision', style: 'OPENAI_COMPAT' }],
 };
 
 describe('minutes <-> seconds', () => {
@@ -101,5 +103,49 @@ describe('server pull switch', () => {
     expect(values.serverPull).toBe(true);
     values.serverPull = false;
     expect(liveFormValuesToPolicy(values, CONFIG).config?.serverPullPlatforms).toEqual([]);
+  });
+});
+
+describe('model chains', () => {
+  const ollama = { connector: 'OLLAMA', model: 'gemma4:31b', style: 'OLLAMA' };
+
+  it('round-trips the main, vision and council chains', () => {
+    const council = [ollama, { ...ollama, model: 'deepseek-v4.1-flash' }];
+    const values = livePolicyToFormValues({ ...CONFIG, councilModelChain: council });
+    expect(values.modelChains[LiveModelChainKind.SUMMARY]).toEqual(CONFIG.summaryModelChain);
+    expect(values.modelChains[LiveModelChainKind.VISION]).toEqual(CONFIG.visionModelChain);
+    expect(values.modelChains[LiveModelChainKind.COUNCIL]).toEqual(council);
+    values.modelChains[LiveModelChainKind.SUMMARY] = [ollama, ...CONFIG.summaryModelChain];
+    const config = liveFormValuesToPolicy(values, CONFIG).config;
+    expect(config?.summaryModelChain).toEqual([ollama, ...CONFIG.summaryModelChain]);
+    expect(config?.visionModelChain).toEqual(CONFIG.visionModelChain);
+    expect(config?.councilModelChain).toEqual(council);
+  });
+
+  it('gives a version saved before the council the one default agent', () => {
+    const values = livePolicyToFormValues(CONFIG);
+    expect(values.modelChains[LiveModelChainKind.COUNCIL]).toEqual(LIVE_COUNCIL_DEFAULT_CHAIN);
+    expect(liveFormValuesToPolicy(values, CONFIG).config?.councilModelChain).toEqual(
+      LIVE_COUNCIL_DEFAULT_CHAIN,
+    );
+  });
+
+  it('names a chain outside its limits: main 1..5, vision 1..5, council 1..3', () => {
+    const cases: Array<[LiveModelChainKind, number]> = [
+      [LiveModelChainKind.SUMMARY, 0],
+      [LiveModelChainKind.SUMMARY, 6],
+      [LiveModelChainKind.VISION, 0],
+      [LiveModelChainKind.COUNCIL, 0],
+      [LiveModelChainKind.COUNCIL, 4],
+    ];
+    for (const [kind, length] of cases) {
+      const values = livePolicyToFormValues(CONFIG);
+      values.modelChains[kind] = Array.from({ length }, () => ollama);
+      expect(liveFormValuesToPolicy(values, CONFIG)).toEqual({ config: null, invalidField: kind });
+    }
+    const atMax = livePolicyToFormValues(CONFIG);
+    atMax.modelChains[LiveModelChainKind.SUMMARY] = Array.from({ length: 5 }, () => ollama);
+    atMax.modelChains[LiveModelChainKind.COUNCIL] = Array.from({ length: 3 }, () => ollama);
+    expect(liveFormValuesToPolicy(atMax, CONFIG).invalidField).toBeNull();
   });
 });

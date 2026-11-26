@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import type { LivePlanField, LivePolicyFlag, LivePolicyNumberField } from '@/enums/live.enum';
+import { useAdminLiveModelChainActions } from '@/hooks/admin/live/use-admin-live-model-chain-actions';
 import type {
   LivePolicyFormValues,
   LivePolicyVersion,
@@ -17,6 +18,8 @@ export function useAdminLivePolicyForm(
 ): UseAdminLivePolicyFormResult {
   const [values, setValues] = useState<LivePolicyFormValues | null>(null);
   const [invalidField, setInvalidField] = useState<string | null>(null);
+  const clearInvalid = useCallback((): void => setInvalidField(null), []);
+  const chainActions = useAdminLiveModelChainActions(setValues, clearInvalid);
 
   useEffect(() => {
     setValues(policy === null ? null : livePolicyToFormValues(policy.config));
@@ -57,6 +60,7 @@ export function useAdminLivePolicyForm(
     setNumber: (field: LivePolicyNumberField, value: string) => update({ [field]: value }),
     setPlan,
     setNote: (note: string) => update({ note }),
+    chainActions,
     build,
   };
 }

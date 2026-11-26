@@ -63,14 +63,15 @@ Full request and response shapes: [architecture section 9](../03-architecture/li
 - Writes are fenced: a worker commits only while its generation matches the run. A deleted or stale run writes nothing.
 - ffmpeg reads local files only (`-protocol_whitelist file`); the worker fetches playlists and segments itself through the
   SSRF guard and the DNS-pinned connection.
-- YouTube is `BROWSER_CAPTURE` (tab audio on desktop, microphone on phones). `/watch`, `youtu.be` and `/channel/UC...`
+- **Superseded 2026-11-26 (owner: "server only, retry", ADR-221 round 2): no link falls back to the viewer's tab audio or microphone any more.** An unreadable link is read once more after 2 s, then it is `LINK_ONLY` with reason `SERVER_PULL_UNAVAILABLE`. The capture text below describes the old path, kept only for sessions created before then.
+- (Before 2026-11-26) YouTube was `BROWSER_CAPTURE` (tab audio on desktop, microphone on phones). `/watch`, `youtu.be` and `/channel/UC...`
   links play (channel links through the `live_stream` embed); `@handle` links are refused with
   `LIVE_YOUTUBE_HANDLE_UNSUPPORTED`.
 - Every platform except Discord is `SERVER_PULL` while the stream is live and the policy's `serverPullPlatforms`
   lists it (default: all): the server reads the public playlist itself (`ServerPullResolverService`; Twitch natively when
   `LIVE_TWITCH_CLIENT_ID` is set, everything else through the pinned `yt-dlp` binary), one `PUBLIC` run for every viewer.
   A live link-only platform (TikTok, Rumble, …) becomes `SERVER_PULL` with no embed; offline it stays `LINK_ONLY`. Offline or a
-  forbidden token → private `BROWSER_CAPTURE` with `SERVER_PULL_UNAVAILABLE`. Resolve does a token call plus one
+  forbidden token → one more read after 2 s, then `LINK_ONLY` with `SERVER_PULL_UNAVAILABLE`. Resolve does a token call plus one
   playlist fetch (5 s timeouts each). The worker's pin is a host-suffix list (`ttvnw.net`, `live-video.net`). Device
   audio for a `SERVER_PULL` session is `422`. yt-dlp resolves in ~2 s, 30 s timeout, cached 60 s, at most 4 at once per replica (more answer "not
   readable" at once and fall back) (ADR-221 batch 4).

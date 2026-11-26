@@ -4,6 +4,7 @@ import {
   SCRIPT_LANGUAGE_MIN_SHARE,
   SCRIPT_LANGUAGE_RULES,
   SCRIPT_LANGUAGES,
+  SCRIPT_LANGUAGES_STRICT,
   SCRIPT_MARKER_LANGUAGES,
   SCRIPT_MARKER_MIN_LETTERS,
 } from './language.constants';
@@ -68,4 +69,21 @@ export function resolveSpokenLanguage(
  */
 export function cardLanguage(title: string, body: string, requested: string | null): string | null {
   return resolveSpokenLanguage(null, `${title} ${body}`, requested);
+}
+
+/**
+ * True when a translation is really written for `target`: a script language (Arabic, Russian,
+ * Japanese, …) must come back in a non-Latin script, a Latin language (English, French, …) must not
+ * come back mostly in another script. A model that echoes the source text fails this (the owner saw
+ * an Arabic highlight among English ones, 2026-11-26).
+ */
+export function isInLanguage(text: string, target: string): boolean {
+  const script = scriptLanguage(text);
+  if (countMatches(text, LETTER_PATTERN) === 0) return true;
+  const base = baseLanguage(target);
+  // A script language needs its script (exactly, for the strict ones); a Latin one needs none.
+  const scriptTarget = base !== null && SCRIPT_LANGUAGES.has(base);
+  return scriptTarget
+    ? script !== null && (script === base || !SCRIPT_LANGUAGES_STRICT.has(base))
+    : script === null;
 }

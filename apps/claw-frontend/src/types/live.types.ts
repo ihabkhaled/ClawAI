@@ -7,6 +7,7 @@ import type {
   LiveCaptureError,
   LiveCaptureSource,
   LiveCaptureState,
+  LiveCardLanguageState,
   LiveExportFormat,
   LiveFeedEventKind,
   LiveFeedTab,
@@ -204,6 +205,10 @@ export type LiveFeedCard = {
   highlightType: LiveHighlightType | null;
   translatedTitle?: string;
   translatedBody?: string;
+  /** Wall-clock ms the page first received this card (the translation wait counts from here). */
+  receivedAt?: number;
+  /** Set by the modal: whether the card can be shown in the viewer's language yet. */
+  languageState?: LiveCardLanguageState;
 };
 
 export type LiveCaption = {
@@ -761,3 +766,13 @@ export type LiveTimelineMarkerProps = {
   label: string;
   onSeek: (mediaAt: number) => void;
 };
+
+/** One line of the video report: `0:44` plus its text, or a plain paragraph (clock null). */
+export type LiveReportLine = { clock: string | null; text: string };
+
+/** One section of the video report body (Summary, Chapters, Moment by moment, Key quotes). */
+export type LiveReportSection = { title: string; lines: LiveReportLine[] };
+
+export type LiveReportBodyProps = { body: string };
+
+export type LiveSupportedPlatformsProps = { t: TranslateFunction };

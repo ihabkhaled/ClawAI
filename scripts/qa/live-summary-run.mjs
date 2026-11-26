@@ -16,7 +16,8 @@ const PASSWORD = process.env.LIVE_QA_PASSWORD ?? process.env.ADMIN_PASSWORD;
 const URL_TO_SUMMARIZE = process.env.LIVE_QA_URL;
 const LANGUAGE = process.env.LIVE_QA_LANGUAGE ?? 'en';
 const MODE = process.env.LIVE_QA_MODE ?? 'AUDIO';
-const TIMEOUT_SECONDS = Number(process.env.LIVE_QA_TIMEOUT_SECONDS ?? 420);
+const TIMEOUT_SECONDS = Number(process.env.LIVE_QA_TIMEOUT_SECONDS ?? 600);
+const REPORT_GRACE_SECONDS = Number(process.env.LIVE_QA_REPORT_GRACE_SECONDS ?? 240);
 
 if (!EMAIL || !PASSWORD || !URL_TO_SUMMARIZE) {
   console.error('Set LIVE_QA_URL and LIVE_QA_EMAIL/LIVE_QA_PASSWORD (or ADMIN_*).');
@@ -100,6 +101,8 @@ async function main() {
   const events = [];
   const stop = openSse(`/live/sessions/${sessionId}/stream`, token, events);
   let finalCard = null;
+  let reportCard = null;
+  let endedAt = null;
   let lastUsage = null;
   while (Date.now() - started < TIMEOUT_SECONDS * 1000) {
     const beat = await call('POST', `/live/sessions/${sessionId}/heartbeat`, token, {
@@ -109,8 +112,11 @@ async function main() {
     });
     lastUsage = beat.data?.usage ?? lastUsage;
     finalCard = events.find((event) => ['card', 'card_version'].includes(event.type) && event.data?.kind === 'FINAL');
+    reportCard = events.find((event) => event.type === 'card' && event.data?.kind === 'REPORT' && event.language === undefined);
     const ended = events.some((event) => event.type === 'status' && ['ENDED', 'COMPLETED'].includes(event.data?.code));
-    if (finalCard || ended) break;
+    // The detailed report comes after the FINAL card; give it up to REPORT_GRACE_SECONDS more.
+    if (finalCard || ended) endedAt ??= Date.now();
+    if (reportCard || (endedAt !== null && Date.now() - endedAt > REPORT_GRACE_SECONDS * 1000)) break;
     await wait(4000);
   }
   // One more heartbeat after the end so the last processed seconds are accrued.
@@ -134,6 +140,12 @@ async function main() {
   check('caption times are offsets into the video', offsets.every((value) => value >= 0 && value < 4 * 3600), offsets.slice(0, 5).join(','));
   console.log(`      usage: ${JSON.stringify(lastUsage && { billedSeconds: lastUsage.billedSeconds, pendingSeconds: lastUsage.pendingSeconds })}`);
   if (finalCard) console.log(`      FINAL: ${finalCard.data?.title} — ${String(finalCard.data?.body).slice(0, 400)}`);
+  const reportBody = String(reportCard?.data?.body ?? '');
+  const momentCount = reportBody.split('\n').filter((line) => /^\d{1,2}:\d{2}(:\d{2})? — /u.test(line)).length;
+  const spokenSeconds = offsets.length > 0 ? Math.max(...offsets) - Math.min(...offsets) : 0;
+  check('the detailed report arrived (REPORT card)', reportCard !== null && reportCard !== undefined);
+  check('the report has a moment about every 10-20 s', momentCount >= Math.max(1, Math.floor(spokenSeconds / 20)), `${momentCount} moments over ${spokenSeconds}s`);
+  if (reportCard) console.log(`      REPORT: ${reportCard.data?.title}\n${reportBody.slice(0, 2500)}`);
   for (const event of highlights.slice(0, 3)) {
     const at = Math.round(((event.startAt ?? event.data?.startAt) - mediaStartAt) / 1000);
     console.log(`      highlight @${at}s: ${event.data?.title}`);

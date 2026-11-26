@@ -89,3 +89,26 @@ export const openAiReplySchema = z.object({
 });
 
 export const ollamaReplySchema = z.object({ message: z.object({ content: z.string() }) });
+
+const reportClock = z.string().trim().max(12);
+
+/** One part of the video report (REPORT_MOMENTS_SYSTEM_PROMPT). */
+export const reportMomentsReplySchema = z.object({
+  moments: z.array(z.object({ at: reportClock, text: z.string().trim().min(1).max(600) })).max(80),
+  quotes: z
+    .array(z.object({ at: reportClock, text: z.string().trim().min(1).max(300) }))
+    .max(4)
+    .optional()
+    .default([]),
+});
+
+/** The overview of the video report (REPORT_OVERVIEW_SYSTEM_PROMPT). */
+export const reportOverviewReplySchema = z.object({
+  title: plainTitle,
+  summary: z.string().trim().min(1).max(4000),
+  chapters: z
+    .array(z.object({ at: reportClock, title: plainTitle }))
+    .max(40)
+    .optional()
+    .default([]),
+});

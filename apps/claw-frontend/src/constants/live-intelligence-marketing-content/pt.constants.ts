@@ -12,7 +12,7 @@ export const PT_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   eyebrow: 'Novidade no ClawAI: Live & Video Intelligence',
   title: 'Qualquer transmissão ao vivo ou vídeo, entendido no seu idioma',
   intro:
-    'Cole o link de uma transmissão ao vivo ou de um vídeo gravado de mais de 15 plataformas. A ClawAI acompanha tudo com legendas ao vivo e um feed contínuo de resumos e destaques, ou transforma o vídeo inteiro em um relatório claro com um único clique. Tudo roda nos servidores da ClawAI, então funciona em qualquer dispositivo, inclusive no seu celular.',
+    'Cole o link de uma transmissão ao vivo ou de um vídeo gravado de mais de 50 plataformas. A ClawAI acompanha tudo com legendas ao vivo e um feed contínuo de resumos e destaques, ou transforma o vídeo inteiro em um relatório claro com um único clique. Tudo roda nos servidores da ClawAI, então funciona em qualquer dispositivo, inclusive no seu celular.',
   openCta: 'Cole um link agora',
   signUpCta: 'Criar conta grátis',
   howItWorksCta: 'Veja como funciona',
@@ -160,7 +160,7 @@ export const PT_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     'Escolha qualquer um dos 13 idiomas do app: inglês, árabe, alemão, espanhol, persa, francês, hindi, italiano, japonês, português, russo, tailandês ou chinês. Quem fala pode usar qualquer idioma.',
     'Quando quem fala já usa o seu idioma, você lê as palavras exatas. Quando não, as legendas, os resumos e os destaques são traduzidos, e a tradução aparece no lugar do original.',
   ],
-  platformsTitle: 'Mais de 15 plataformas',
+  platformsTitle: 'Mais de 50 plataformas',
   platformsBody:
     'YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X (Twitter), Bilibili, Niconico e muitas outras. Funciona tanto com transmissões ao vivo quanto com vídeos gravados.',
   platformsCta: 'Ver todas as plataformas',
@@ -222,7 +222,7 @@ export const PT_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     {
       question: 'Quais plataformas são compatíveis?',
       answer:
-        'Mais de 15, incluindo YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X (Twitter), Bilibili e Niconico. A página de plataformas lista todas. Só é possível ler vídeos e transmissões públicos, e o Discord não é compatível porque não tem links públicos.',
+        'Mais de 50, incluindo YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X (Twitter), Bilibili e Niconico. A página de plataformas lista todas. Só é possível ler vídeos e transmissões públicos, e o Discord não é compatível porque não tem links públicos.',
     },
     {
       question: 'A ClawAI publica ou conversa no chat em meu nome?',
@@ -333,7 +333,7 @@ export const PT_LIVE_INTELLIGENCE_MARKETING_SEO: LiveIntelligenceMarketingSeo = 
   overview: {
     title: 'Live & Video Intelligence: legendas ao vivo e resumo de vídeo com um clique',
     description:
-      'Cole o link de uma live ou de um vídeo do YouTube, Twitch, TikTok e mais de 15 plataformas. Receba legendas ao vivo no seu idioma, um Feed inteligente de resumos e destaques ou um resumo de vídeo com marcação de tempo em um clique. Funciona em qualquer dispositivo.',
+      'Cole o link de uma live ou de um vídeo do YouTube, Twitch, TikTok e mais de 50 plataformas. Receba legendas ao vivo no seu idioma, um Feed inteligente de resumos e destaques ou um resumo de vídeo com marcação de tempo em um clique. Funciona em qualquer dispositivo.',
     keywords: [
       'legendas para live',
       'resumo de vídeo com IA',

@@ -1,12 +1,13 @@
+import { AdminLiveModelChain } from '@/components/admin/live/admin-live-model-chain';
 import { AdminLiveNumberField } from '@/components/admin/live/admin-live-number-field';
 import { AdminLivePlanRow } from '@/components/admin/live/admin-live-plan-row';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { LIVE_MODEL_CHAIN_EDITORS } from '@/constants/live-model-chain.constants';
 import { LIVE_POLICY_NUMBER_FIELDS } from '@/constants/live.constants';
 import { LivePolicyFlag } from '@/enums/live.enum';
 import type { AdminLiveSectionProps } from '@/types/live-admin.types';
-import { liveModelChainsPreview } from '@/utilities/live-policy-form.utility';
 
 /** The policy editor: minutes and dollars here, seconds and micro-USD on the wire. */
 export function AdminLivePolicyForm({ controller }: AdminLiveSectionProps): React.ReactElement {
@@ -99,15 +100,23 @@ export function AdminLivePolicyForm({ controller }: AdminLiveSectionProps): Reac
           />
         ))}
       </div>
-      <div className="flex flex-col gap-1">
-        <p className="text-foreground text-sm font-medium">{t('live.admin.modelChains')}</p>
-        <p className="text-muted-foreground text-xs">{t('live.admin.modelChainsHint')}</p>
-        <pre
-          className="bg-muted text-foreground max-h-64 overflow-auto rounded-md p-3 text-xs"
-          dir="ltr"
-        >
-          {liveModelChainsPreview(policy.config)}
-        </pre>
+      <div className="flex flex-col gap-3" data-testid="admin-live-model-chains">
+        <div className="flex flex-col gap-1">
+          <p className="text-foreground text-sm font-medium">{t('live.admin.modelChains')}</p>
+          <p className="text-muted-foreground text-xs">{t('live.admin.modelChainsHint')}</p>
+        </div>
+        {LIVE_MODEL_CHAIN_EDITORS.map((editor) => (
+          <AdminLiveModelChain
+            key={editor.kind}
+            editor={editor}
+            chain={values.modelChains[editor.kind]}
+            groups={controller.modelGroups}
+            isLoading={controller.isModelsLoading}
+            invalid={form.invalidField === editor.kind}
+            t={t}
+            actions={form.chainActions}
+          />
+        ))}
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="admin-live-note" className="text-foreground text-sm font-medium">

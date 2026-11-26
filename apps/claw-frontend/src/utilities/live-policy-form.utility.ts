@@ -1,4 +1,5 @@
 import { LIVE_SECONDS_PER_MINUTE, LIVE_SERVER_PULL_PLATFORMS } from '@/constants/live.constants';
+import { LiveModelChainKind } from '@/enums/live-model-chain.enum';
 import { LivePlanField, LivePolicyNumberField } from '@/enums/live.enum';
 import type {
   LivePlanFormRow,
@@ -7,6 +8,10 @@ import type {
   LivePolicyFormResult,
   LivePolicyFormValues,
 } from '@/types/live-admin.types';
+import {
+  liveInvalidModelChain,
+  liveModelChainsFromConfig,
+} from '@/utilities/live-model-chain.utility';
 import { microUsdToUsdInput, usdInputToMicroUsd } from '@/utilities/micro-usd-input.utility';
 
 const WHOLE_NUMBER_PATTERN = /^\d+$/u;
@@ -59,6 +64,7 @@ export function livePolicyToFormValues(config: LivePolicyConfig): LivePolicyForm
     sessionsPerUserPerHour: String(config.sessionsPerUserPerHour),
     dailyBudgetUsd: microUsdToUsdInput(config.dailyBudgetMicroUsd),
     budgetSoftStopPercent: String(config.budgetSoftStopPercent),
+    modelChains: liveModelChainsFromConfig(config),
     note: '',
   };
 }
@@ -77,7 +83,7 @@ function rowToPlan(row: LivePlanFormRow): LivePlanPolicy | string {
 
 /**
  * Form values back to the stored policy: minutes → seconds, dollars → integer micro-USD.
- * Model chains and vision billing are not edited here, so they are carried over from `base`.
+ * Vision billing and recorded-video length are not edited here, so they are carried over from `base`.
  */
 export function liveFormValuesToPolicy(
   values: LivePolicyFormValues,
@@ -114,6 +120,11 @@ export function liveFormValuesToPolicy(
   if (dailyBudgetMicroUsd === null || dailyBudgetMicroUsd === undefined) {
     return { config: null, invalidField: LivePolicyNumberField.DAILY_BUDGET_USD };
   }
+  const invalidChain = liveInvalidModelChain(values.modelChains);
+  if (invalidChain !== null) {
+    return { config: null, invalidField: invalidChain };
+  }
+  const chains = values.modelChains;
   return {
     invalidField: null,
     config: {
@@ -129,15 +140,9 @@ export function liveFormValuesToPolicy(
       sessionsPerUserPerHour: numbers.sessionsPerUserPerHour ?? base.sessionsPerUserPerHour,
       dailyBudgetMicroUsd,
       budgetSoftStopPercent: numbers.budgetSoftStopPercent ?? base.budgetSoftStopPercent,
+      summaryModelChain: [...chains[LiveModelChainKind.SUMMARY]],
+      visionModelChain: [...chains[LiveModelChainKind.VISION]],
+      councilModelChain: [...chains[LiveModelChainKind.COUNCIL]],
     },
   };
-}
-
-/** Read-only preview of the model chains the form does not edit. */
-export function liveModelChainsPreview(config: LivePolicyConfig): string {
-  return JSON.stringify(
-    { summaryModelChain: config.summaryModelChain, visionModelChain: config.visionModelChain },
-    null,
-    2,
-  );
 }

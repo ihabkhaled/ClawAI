@@ -44,4 +44,6 @@ export interface VideoPlatformHosts {
   platform: LivePlatform;
   hosts: readonly string[];
   keepQuery?: readonly string[];
+  /** Any subdomain of these also matches (`<artist>.bandcamp.com`, `<camera>.webcamera.pl`). */
+  hostSuffixes?: readonly string[];
 }

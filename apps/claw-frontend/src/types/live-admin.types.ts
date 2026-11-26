@@ -1,3 +1,4 @@
+import type { LiveModelChainDirection, LiveModelChainKind } from '@/enums/live-model-chain.enum';
 import type {
   LivePlatform,
   LivePlanField,
@@ -7,6 +8,7 @@ import type {
   LiveRunStatus,
   LiveSourceKind,
 } from '@/enums/live.enum';
+import type { ModelPickerGroup } from '@/types/component.types';
 import type { TranslateFunction } from '@/types/i18n.types';
 
 /** Mirrors claw-live-service `livePlanPolicySchema`. Money is integer micro-USD. */
@@ -32,6 +34,8 @@ export type LivePolicyConfig = {
   budgetSoftStopPercent: number;
   summaryModelChain: LiveModelRef[];
   visionModelChain: LiveModelRef[];
+  /** 1..3 extra agents that each draft; the main model merges. Absent before 2026-11-26 (one default agent). */
+  councilModelChain?: LiveModelRef[];
   /** Platforms ClawAI's server reads itself (all but Discord). Absent on a version saved before it existed. */
   serverPullPlatforms?: LiveServerPullPlatform[];
   /** Longest recorded video the server plays along, in seconds (0 = off). Kept as loaded; absent = 3 hours. */
@@ -132,6 +136,7 @@ export type LivePolicyFormValues = {
   sessionsPerUserPerHour: string;
   dailyBudgetUsd: string;
   budgetSoftStopPercent: string;
+  modelChains: LiveModelChains;
   note: string;
 };
 
@@ -145,6 +150,7 @@ export type UseAdminLivePolicyFormResult = {
   setNumber: (field: LivePolicyNumberField, value: string) => void;
   setPlan: (plan: string, field: LivePlanField, value: string) => void;
   setNote: (value: string) => void;
+  chainActions: UseAdminLiveModelChainActionsResult;
   build: () => LivePolicyFormResult | null;
 };
 
@@ -163,20 +169,21 @@ export type UseAdminLivePolicyResult = {
   confirmRollback: () => void;
 };
 
-export type UseAdminLiveResult = UseAdminLivePolicyResult & {
-  t: TranslateFunction;
-  locale: string;
-  days: number;
-  setDays: (days: number) => void;
-  overview: LiveAdminOverview | null;
-  isOverviewLoading: boolean;
-  isOverviewError: boolean;
-  retryOverview: () => void;
-  stopRunId: string | null;
-  pendingRunId: string | null;
-  askStopRun: (id: string | null) => void;
-  confirmStopRun: () => void;
-};
+export type UseAdminLiveResult = UseAdminLivePolicyResult &
+  UseAdminLiveModelOptionsResult & {
+    t: TranslateFunction;
+    locale: string;
+    days: number;
+    setDays: (days: number) => void;
+    overview: LiveAdminOverview | null;
+    isOverviewLoading: boolean;
+    isOverviewError: boolean;
+    retryOverview: () => void;
+    stopRunId: string | null;
+    pendingRunId: string | null;
+    askStopRun: (id: string | null) => void;
+    confirmStopRun: () => void;
+  };
 
 export type AdminLiveSectionProps = { controller: UseAdminLiveResult };
 
@@ -194,4 +201,55 @@ export type AdminLivePlanRowProps = {
   invalidField: string | null;
   t: TranslateFunction;
   onChange: (plan: string, field: LivePlanField, value: string) => void;
+};
+
+/** One chain editor on the policy form, with the live-service schema's length limits. */
+export type LiveModelChainEditorOption = {
+  kind: LiveModelChainKind;
+  min: number;
+  max: number;
+  titleKey: string;
+  hintKey: string;
+  addKey: string;
+};
+
+/** The three chains as the form edits them. */
+export type LiveModelChains = Record<LiveModelChainKind, LiveModelRef[]>;
+
+export type UseAdminLiveModelChainActionsResult = {
+  setChainModel: (kind: LiveModelChainKind, index: number, value: string | null) => void;
+  moveChainRow: (
+    kind: LiveModelChainKind,
+    index: number,
+    direction: LiveModelChainDirection,
+  ) => void;
+  removeChainRow: (kind: LiveModelChainKind, index: number) => void;
+  addChainRow: (kind: LiveModelChainKind) => void;
+};
+
+export type UseAdminLiveModelOptionsResult = {
+  /** The chat picker's catalogue; providers Live cannot call are shown disabled with the reason. */
+  modelGroups: ModelPickerGroup[];
+  isModelsLoading: boolean;
+};
+
+export type AdminLiveModelChainProps = {
+  editor: LiveModelChainEditorOption;
+  chain: LiveModelRef[];
+  groups: ModelPickerGroup[];
+  isLoading: boolean;
+  invalid: boolean;
+  t: TranslateFunction;
+  actions: UseAdminLiveModelChainActionsResult;
+};
+
+export type AdminLiveModelChainRowProps = {
+  editor: LiveModelChainEditorOption;
+  index: number;
+  count: number;
+  value: string;
+  groups: ModelPickerGroup[];
+  isLoading: boolean;
+  t: TranslateFunction;
+  actions: UseAdminLiveModelChainActionsResult;
 };

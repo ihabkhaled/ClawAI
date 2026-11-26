@@ -484,7 +484,7 @@ and service-auth rules as the generated-image route; the file is the user's, sou
 - live-service charges viewers itself on `PaygSurface.LIVE_INTELLIGENCE` and records this cost once in `LiveProviderCost`. file-service never charges a user for a chunk.
 - Files: `managers/transcription-chunk.manager.ts`, `services/transcription-chunk.service.ts`, `clients/transcription-rate.client.ts`, `dto/transcribe-chunk.dto.ts`, `dto/model-rate-response.dto.ts`, `constants/transcribe-chunk.constants.ts` (design record), `types/transcribe-chunk.types.ts`, error codes `TranscribeChunkErrorCode`, metric source `LIVE_CHUNK`.
 - Honest gaps: there is no per-endpoint rate limit or ffmpeg concurrency cap; live-service owns admission and the daily provider budget. `languageHint` is logged, not sent.
-- **Spoken language (2026-11-24).** The chunk walk passes `TRANSCRIBE_CHUNK_INSTRUCTION`: verbatim in the spoken language and script, sung lyrics count, a leading `[[lang:xx]]` tag. `splitChunkLanguageTag` removes every tag and returns the first as `language` (OpenAI's own `language` wins when present); a tag with no words is `noSpeech`. Before this every Live caption had `language: null`.
+- **Spoken language (2026-11-24).** The chunk walk passes `TRANSCRIBE_CHUNK_INSTRUCTION`: verbatim in the spoken language and script, sung lyrics count and every sung line starts with ♪ (2026-11-26; a chunk of only note signs is `noSpeech`), a leading `[[lang:xx]]` tag. `splitChunkLanguageTag` removes every tag and returns the first as `language` (OpenAI's own `language` wins when present); a tag with no words is `noSpeech`. Before this every Live caption had `language: null`.
 
 ## Billed media read: `POST /files/transcribe-text` (ADR-216, 2026-11-02)
 

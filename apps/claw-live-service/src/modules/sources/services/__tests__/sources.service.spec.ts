@@ -26,14 +26,14 @@ describe('SourcesService', () => {
     recordedVideos.probe.mockResolvedValue(null);
   });
 
-  it('resolves YouTube as BROWSER_CAPTURE with the same nocookie embed, its chat, and no network call', async () => {
+  it('resolves YouTube with server pull off as LINK_ONLY (never the viewer device), keeping its embed and chat', async () => {
     const result = await service.resolve('https://youtu.be/dQw4w9WgXcQ', 'u1');
     expect(result).toMatchObject({
       sourceKind: LiveSourceKind.YOUTUBE,
-      capability: LiveCapability.BROWSER_CAPTURE,
-      reasonCode: 'BROWSER_CAPTURE_AVAILABLE',
+      capability: LiveCapability.LINK_ONLY,
+      reasonCode: 'LINK_ONLY_PLATFORM',
       embedUrl: 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1&playsinline=1',
-      accessScope: 'PRIVATE:u1',
+      accessScope: 'PUBLIC',
       platform: LivePlatform.YOUTUBE,
       chatEmbedUrl: 'https://www.youtube.com/live_chat?v=dQw4w9WgXcQ',
       watchUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
@@ -54,8 +54,8 @@ describe('SourcesService', () => {
     );
     expect(result).toMatchObject({
       sourceKind: LiveSourceKind.YOUTUBE,
-      capability: LiveCapability.BROWSER_CAPTURE,
-      reasonCode: 'BROWSER_CAPTURE_AVAILABLE',
+      capability: LiveCapability.LINK_ONLY,
+      reasonCode: 'LINK_ONLY_PLATFORM',
       embedUrl:
         'https://www.youtube-nocookie.com/embed/live_stream?channel=UCNye-wNBqNL5ZzHSJj3l8Bg&autoplay=1&playsinline=1',
       normalizedUrl: 'https://www.youtube.com/channel/UCNye-wNBqNL5ZzHSJj3l8Bg/live',
@@ -78,9 +78,9 @@ describe('SourcesService', () => {
     const result = await service.resolve('https://www.twitch.tv/Shroud', 'u3');
     expect(result).toMatchObject({
       sourceKind: LiveSourceKind.PLATFORM,
-      capability: LiveCapability.BROWSER_CAPTURE,
+      capability: LiveCapability.LINK_ONLY,
       platform: LivePlatform.TWITCH,
-      accessScope: 'PRIVATE:u3',
+      accessScope: 'PUBLIC',
       embedUrl: 'https://player.twitch.tv/?channel=shroud&autoplay=true',
       chatEmbedUrl: 'https://www.twitch.tv/embed/shroud/chat?darkpopout',
       watchUrl: 'https://www.twitch.tv/shroud',
@@ -214,25 +214,33 @@ describe('SourcesService', () => {
       expect(serverPull.probe).toHaveBeenCalledWith(
         LivePlatform.TWITCH,
         expect.objectContaining({ id: 'xqc', watchUrl: 'https://www.twitch.tv/xqc' }),
+        false,
       );
     });
 
-    it('falls back to private BROWSER_CAPTURE with SERVER_PULL_UNAVAILABLE when the stream cannot be read', async () => {
+    it('says SERVER_PULL_UNAVAILABLE (LINK_ONLY, never the viewer device) when the server cannot read it, after one fresh retry', async () => {
       enable(false);
       const result = await service.resolve('https://www.twitch.tv/offline_channel', 'u1');
       expect(result).toMatchObject({
-        capability: LiveCapability.BROWSER_CAPTURE,
-        accessScope: 'PRIVATE:u1',
+        capability: LiveCapability.LINK_ONLY,
+        accessScope: 'PUBLIC',
         reasonCode: 'SERVER_PULL_UNAVAILABLE',
       });
+      // First try, then one fresh retry that skips the 60 s cache.
+      expect(serverPull.probe).toHaveBeenCalledTimes(2);
+      expect(serverPull.probe).toHaveBeenLastCalledWith(
+        LivePlatform.TWITCH,
+        expect.anything(),
+        true,
+      );
     });
 
     it('makes no network call when the policy turns server pull off (the default-off rollback lever)', async () => {
       serverPull.supports.mockImplementation((platform: string) => platform === 'TWITCH');
       const result = await service.resolve('https://www.twitch.tv/xqc', 'u1');
       expect(result).toMatchObject({
-        capability: LiveCapability.BROWSER_CAPTURE,
-        reasonCode: 'BROWSER_CAPTURE_AVAILABLE',
+        capability: LiveCapability.LINK_ONLY,
+        reasonCode: 'LINK_ONLY_PLATFORM',
       });
       expect(serverPull.probe).not.toHaveBeenCalled();
     });
@@ -268,9 +276,10 @@ describe('SourcesService', () => {
     it('keeps an offline link-only platform link-only, and never probes Discord', async () => {
       enable(false);
       const tiktok = await service.resolve('https://www.tiktok.com/@someone/live', 'u1');
+      // The server tried and could not read it: it says so.
       expect(tiktok).toMatchObject({
         capability: LiveCapability.LINK_ONLY,
-        reasonCode: 'LINK_ONLY_PLATFORM',
+        reasonCode: 'SERVER_PULL_UNAVAILABLE',
       });
       serverPull.probe.mockClear();
       await expect(service.resolve('https://discord.com/channels/1/2', 'u1')).rejects.toBeDefined();
@@ -283,7 +292,7 @@ describe('SourcesService', () => {
         'https://www.facebook.com/NASA/videos/123456789012',
         'u1',
       );
-      expect(facebook.capability).toBe(LiveCapability.BROWSER_CAPTURE);
+      expect(facebook.capability).toBe(LiveCapability.LINK_ONLY);
     });
   });
   describe('recorded videos (ADR-221 batch 6)', () => {
@@ -362,7 +371,7 @@ describe('SourcesService', () => {
     it('never probes for a recorded video when the policy turns them off (0)', async () => {
       recorded(60, 0);
       const result = await service.resolve('https://www.facebook.com/reel/4620908104798158', 'u1');
-      expect(result.capability).toBe(LiveCapability.BROWSER_CAPTURE);
+      expect(result.capability).toBe(LiveCapability.LINK_ONLY);
       expect(recordedVideos.probe).not.toHaveBeenCalled();
     });
 

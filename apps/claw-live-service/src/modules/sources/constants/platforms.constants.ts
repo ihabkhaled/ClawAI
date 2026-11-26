@@ -90,6 +90,12 @@ export const TIKTOK_SHORT_HOSTS: ReadonlySet<string> = new Set(['vt.tiktok.com',
 export const TIKTOK_SHORT_CODE_PATTERN = /^[A-Za-z0-9]{5,16}$/u;
 export const TIKTOK_VIDEO_ID_PATTERN = /^\d{10,25}$/u;
 export const TIKTOK_EMBED_BASE_URL = 'https://www.tiktok.com/embed/v2/';
+/** A video read without its author: yt-dlp reads `www.tiktok.com/@/video/<id>` (2026-11-26). */
+export const TIKTOK_ANY_USER_VIDEO_BASE_URL = 'https://www.tiktok.com/@/video/';
+/** Path prefixes that carry a video id: `/embed/<id>`, `/embed/v2/<id>`, `/player/v1/<id>`, `/v/<id>.html`. */
+export const TIKTOK_ID_PATH_PREFIXES: ReadonlySet<string> = new Set(['embed', 'player', 'v']);
+/** The `.html` ending of an `m.tiktok.com/v/<id>.html` link (where a vm short link lands). */
+export const TIKTOK_HTML_SUFFIX = '.html';
 
 // Instagram
 export const INSTAGRAM_HOSTS: ReadonlySet<string> = new Set([
@@ -140,6 +146,8 @@ export const LINKEDIN_LIVE_PREFIXES: readonly (readonly string[])[] = [
   ['events'],
   ['video', 'live'],
   ['feed', 'update'],
+  // A post with a video (recorded, 2026-11-26): `linkedin.com/posts/<slug>`.
+  ['posts'],
 ];
 export const LINKEDIN_ID_PATTERN = /^[A-Za-z0-9:_%-]{1,200}$/u;
 export const LINKEDIN_WATCH_BASE_URL = 'https://www.linkedin.com/';
@@ -154,6 +162,14 @@ export const TELEGRAM_WATCH_BASE_URL = 'https://t.me/';
 export const BILIBILI_LIVE_HOST = 'live.bilibili.com';
 export const BILIBILI_ROOM_PATTERN = /^\d{1,12}$/u;
 export const BILIBILI_WATCH_BASE_URL = 'https://live.bilibili.com/';
+/** Recorded Bilibili videos (2026-11-26): `www.bilibili.com/video/<BV…|av…>`. */
+export const BILIBILI_VIDEO_HOSTS: ReadonlySet<string> = new Set([
+  'bilibili.com',
+  'www.bilibili.com',
+  'm.bilibili.com',
+]);
+export const BILIBILI_VIDEO_ID_PATTERN = /^(?:BV[0-9A-Za-z]{10}|av\d{1,12})$/u;
+export const BILIBILI_VIDEO_BASE_URL = 'https://www.bilibili.com/video/';
 
 // CHZZK
 export const CHZZK_HOST = 'chzzk.naver.com';
@@ -162,6 +178,9 @@ export const CHZZK_WATCH_BASE_URL = 'https://chzzk.naver.com/live/';
 
 // SOOP Korea (formerly AfreecaTV)
 export const SOOP_HOSTS: ReadonlySet<string> = new Set([
+  'sooplive.com',
+  'www.sooplive.com',
+  'play.sooplive.com',
   'sooplive.co.kr',
   'www.sooplive.co.kr',
   'ch.sooplive.co.kr',
@@ -174,7 +193,8 @@ export const SOOP_HOSTS: ReadonlySet<string> = new Set([
 /** The optional broadcast number after the id on play.sooplive.co.kr. */
 export const SOOP_BROADCAST_NO_PATTERN = /^\d{1,15}$/u;
 export const SOOP_ID_PATTERN = /^[A-Za-z0-9_]{3,20}$/u;
-export const SOOP_WATCH_BASE_URL = 'https://play.sooplive.co.kr/';
+/** The only form yt-dlp reads today (2026-11-26): the `.co.kr` and afreecatv links are rewritten to it. */
+export const SOOP_WATCH_BASE_URL = 'https://play.sooplive.com/';
 
 // Nimo TV
 export const NIMO_HOSTS: ReadonlySet<string> = new Set(['nimo.tv', 'www.nimo.tv', 'm.nimo.tv']);

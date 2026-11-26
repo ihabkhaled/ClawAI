@@ -114,29 +114,66 @@ describe('LINK_ONLY platform parsers', () => {
       parseSoopUrl,
       'https://www.sooplive.co.kr/streamer1',
       'streamer1',
-      'https://play.sooplive.co.kr/streamer1',
+      'https://play.sooplive.com/streamer1',
     ],
     [
       parseSoopUrl,
       'https://play.sooplive.co.kr/streamer1/281234567',
       'streamer1',
-      'https://play.sooplive.co.kr/streamer1',
+      'https://play.sooplive.com/streamer1',
     ],
     [
       parseSoopUrl,
       'https://play.afreecatv.com/Streamer1/281234567',
       'streamer1',
-      'https://play.sooplive.co.kr/streamer1',
+      'https://play.sooplive.com/streamer1',
     ],
     [
       parseSoopUrl,
       'https://bj.afreecatv.com/streamer1',
       'streamer1',
-      'https://play.sooplive.co.kr/streamer1',
+      'https://play.sooplive.com/streamer1',
     ],
     [parseNimoUrl, 'https://www.nimo.tv/Some-User', 'some-user', 'https://www.nimo.tv/some-user'],
   ])('%o accepts %s', (parse, value, id, watchUrl) => {
     expect(parse(url(value))).toEqual({ id, watchUrl, embedUrl: null, chatEmbedUrl: null });
+  });
+
+  it.each([
+    'https://www.tiktok.com/embed/7712514899993971462',
+    'https://www.tiktok.com/embed/v2/7712514899993971462',
+    'https://www.tiktok.com/player/v1/7712514899993971462',
+    'https://m.tiktok.com/v/7712514899993971462.html',
+  ])('reads the TikTok id-only shape %s as www.tiktok.com/@/video/<id> (2026-11-26)', (value) => {
+    expect(parseTiktokUrl(url(value))).toMatchObject({
+      id: 'video:7712514899993971462',
+      watchUrl: 'https://www.tiktok.com/@/video/7712514899993971462',
+      portrait: true,
+    });
+  });
+
+  it('reads recorded Bilibili videos and LinkedIn video posts (2026-11-26)', () => {
+    expect(parseBilibiliUrl(url('https://www.bilibili.com/video/BV13x41117TL'))?.watchUrl).toBe(
+      'https://www.bilibili.com/video/BV13x41117TL',
+    );
+    expect(parseBilibiliUrl(url('https://m.bilibili.com/video/av170001'))?.id).toBe(
+      'video:av170001',
+    );
+    expect(parseBilibiliUrl(url('https://www.bilibili.com/video/notanid'))).toBeNull();
+    expect(parseBilibiliUrl(url('https://www.bilibili.com/anime'))).toBeNull();
+    expect(
+      parseLinkedinUrl(
+        url('https://www.linkedin.com/posts/someone_topic-ugcPost-6850898786781339649-mM20'),
+      )?.watchUrl,
+    ).toBe('https://www.linkedin.com/posts/someone_topic-ugcPost-6850898786781339649-mM20/');
+  });
+
+  it('reads tiktok.com and m.tiktok.com video links as the www form yt-dlp reads', () => {
+    for (const host of ['tiktok.com', 'm.tiktok.com']) {
+      expect(
+        parseTiktokUrl(url(`https://${host}/@some.user/video/7712514899993971462`))?.watchUrl,
+      ).toBe('https://www.tiktok.com/@some.user/video/7712514899993971462');
+    }
   });
 
   it.each([

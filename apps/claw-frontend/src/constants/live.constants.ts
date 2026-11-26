@@ -71,7 +71,31 @@ export const LIVE_MAX_CAPTIONS = 400;
  * instead. Until then it is not shown at all, so the viewer never reads the original and then sees
  * it swapped (2026-11-24). The server batches translations within 3 s; a model call adds a few more.
  */
-export const LIVE_CAPTION_TRANSLATION_WAIT_MS = 12_000;
+export const LIVE_CAPTION_TRANSLATION_WAIT_MS = 30_000;
+/** A card in another language waits this long for its translation before the original is shown (marked). */
+export const LIVE_CARD_TRANSLATION_WAIT_MS = 45_000;
+/**
+ * The script each non-Latin viewer language is written in: a card's text must be mostly in it to
+ * count as "in the viewer's language". Every other language is Latin-script.
+ */
+export const LIVE_LANGUAGE_SCRIPT_PATTERNS: Readonly<Record<string, RegExp>> = {
+  ar: /\p{Script=Arabic}/gu,
+  fa: /\p{Script=Arabic}/gu,
+  ur: /\p{Script=Arabic}/gu,
+  ru: /\p{Script=Cyrillic}/gu,
+  uk: /\p{Script=Cyrillic}/gu,
+  hi: /\p{Script=Devanagari}/gu,
+  th: /\p{Script=Thai}/gu,
+  zh: /\p{Script=Han}/gu,
+  ja: /[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}]/gu,
+  ko: /\p{Script=Hangul}/gu,
+  he: /\p{Script=Hebrew}/gu,
+  el: /\p{Script=Greek}/gu,
+};
+export const LIVE_LATIN_LETTER_PATTERN = /\p{Script=Latin}/gu;
+export const LIVE_ANY_LETTER_PATTERN = /\p{L}/gu;
+/** Share of a text's letters that must be in the viewer's script. */
+export const LIVE_LANGUAGE_MIN_SCRIPT_SHARE = 0.5;
 
 /** Splits a language tag into its subtags: `pt-BR`, `zh_Hant`. */
 export const LIVE_LANGUAGE_SUBTAG_SEPARATOR = /[-_]/u;
@@ -183,6 +207,7 @@ export const LIVE_CARD_ACCENT_CLASSES: Record<LiveFeedEventKind, string> = {
   [LiveFeedEventKind.SUMMARY]: 'border-s-primary',
   [LiveFeedEventKind.HIGHLIGHT]: 'border-s-warning',
   [LiveFeedEventKind.FINAL]: 'border-s-success',
+  [LiveFeedEventKind.REPORT]: 'border-s-success',
   [LiveFeedEventKind.VISUAL]: 'border-s-info',
   [LiveFeedEventKind.GAP]: 'border-s-border',
 };
@@ -254,6 +279,7 @@ export const LIVE_FEED_KIND_KEYS: Record<LiveFeedEventKind, string> = {
   [LiveFeedEventKind.VISUAL]: 'live.card.kindVisual',
   [LiveFeedEventKind.GAP]: 'live.card.kindGap',
   [LiveFeedEventKind.FINAL]: 'live.card.kindFinal',
+  [LiveFeedEventKind.REPORT]: 'live.card.kindReport',
 };
 
 export const LIVE_EMPTY_FEED_STATE: LiveFeedState = {
@@ -344,6 +370,42 @@ export const LIVE_PLATFORM_NAMES: Record<LivePlatform, string> = {
   [LivePlatform.LIVE17]: '17LIVE',
   [LivePlatform.MIXCLOUD]: 'Mixcloud',
   [LivePlatform.BLUESKY]: 'Bluesky',
+  [LivePlatform.VK_PLAY_LIVE]: 'VK Video Live',
+  [LivePlatform.PEERTUBE]: 'PeerTube',
+  [LivePlatform.STEAM]: 'Steam',
+  [LivePlatform.GOODGAME]: 'GoodGame',
+  [LivePlatform.YOUNOW]: 'YouNow',
+  [LivePlatform.RAIPLAY]: 'RaiPlay',
+  [LivePlatform.RAIPLAY_SOUND]: 'RaiPlay Sound',
+  [LivePlatform.BFMTV]: 'BFMTV',
+  [LivePlatform.CBS_NEWS]: 'CBS News',
+  [LivePlatform.LRT]: 'LRT',
+  [LivePlatform.FRANCE_TV]: 'France TV',
+  [LivePlatform.ROYA]: 'Roya TV',
+  [LivePlatform.MATCH_TV]: 'Match TV',
+  [LivePlatform.RTVC_PLAY]: 'RTVC Play',
+  [LivePlatform.TUNEIN]: 'TuneIn',
+  [LivePlatform.WEBCAMERA_PL]: 'WebCamera.pl',
+  [LivePlatform.TED]: 'TED',
+  [LivePlatform.SOUNDCLOUD]: 'SoundCloud',
+  [LivePlatform.BANDCAMP]: 'Bandcamp',
+  [LivePlatform.ARCHIVE_ORG]: 'Internet Archive',
+  [LivePlatform.NINEGAG]: '9GAG',
+  [LivePlatform.PINTEREST]: 'Pinterest',
+  [LivePlatform.BITCHUTE]: 'BitChute',
+  [LivePlatform.GOOGLE_DRIVE]: 'Google Drive',
+  [LivePlatform.DROPBOX]: 'Dropbox',
+  [LivePlatform.LOOM]: 'Loom',
+  [LivePlatform.SPREAKER]: 'Spreaker',
+  [LivePlatform.APPLE_PODCASTS]: 'Apple Podcasts',
+  [LivePlatform.MEDAL]: 'Medal',
+  [LivePlatform.UN_WEB_TV]: 'UN Web TV',
+  [LivePlatform.ZHIHU]: 'Zhihu',
+  [LivePlatform.CNN]: 'CNN',
+  [LivePlatform.VIDLII]: 'VidLii',
+  [LivePlatform.FLICKR]: 'Flickr',
+  [LivePlatform.ACFUN]: 'AcFun',
+  [LivePlatform.IMGUR]: 'Imgur',
 };
 
 // ─── Browser tab-audio capture (batch 2) ─────────────────────────────────────
@@ -498,6 +560,42 @@ export const LIVE_SERVER_PULL_PLATFORMS: ReadonlyArray<LiveServerPullPlatform> =
   LivePlatform.LIVE17,
   LivePlatform.MIXCLOUD,
   LivePlatform.BLUESKY,
+  LivePlatform.VK_PLAY_LIVE,
+  LivePlatform.PEERTUBE,
+  LivePlatform.STEAM,
+  LivePlatform.GOODGAME,
+  LivePlatform.YOUNOW,
+  LivePlatform.RAIPLAY,
+  LivePlatform.RAIPLAY_SOUND,
+  LivePlatform.BFMTV,
+  LivePlatform.CBS_NEWS,
+  LivePlatform.LRT,
+  LivePlatform.FRANCE_TV,
+  LivePlatform.ROYA,
+  LivePlatform.MATCH_TV,
+  LivePlatform.RTVC_PLAY,
+  LivePlatform.TUNEIN,
+  LivePlatform.WEBCAMERA_PL,
+  LivePlatform.TED,
+  LivePlatform.SOUNDCLOUD,
+  LivePlatform.BANDCAMP,
+  LivePlatform.ARCHIVE_ORG,
+  LivePlatform.NINEGAG,
+  LivePlatform.PINTEREST,
+  LivePlatform.BITCHUTE,
+  LivePlatform.GOOGLE_DRIVE,
+  LivePlatform.DROPBOX,
+  LivePlatform.LOOM,
+  LivePlatform.SPREAKER,
+  LivePlatform.APPLE_PODCASTS,
+  LivePlatform.MEDAL,
+  LivePlatform.UN_WEB_TV,
+  LivePlatform.ZHIHU,
+  LivePlatform.CNN,
+  LivePlatform.VIDLII,
+  LivePlatform.FLICKR,
+  LivePlatform.ACFUN,
+  LivePlatform.IMGUR,
 ];
 
 /** A status in this set stops the capture: nothing more would be analyzed or billed. */
@@ -530,3 +628,12 @@ export const LIVE_EMPTY_EMBED_VIEW: LiveEmbedView = {
   watchUrl: null,
   platformName: null,
 };
+
+/** A report line that starts with a video time (`0:44 `, `1:02:03 `), then an optional dash. */
+export const LIVE_REPORT_CLOCK_LINE = /^([\d:]{4,8}) (.*)$/u;
+/** The time itself: `m:ss`, `mm:ss` or `h:mm:ss`. */
+export const LIVE_REPORT_CLOCK = /^\d{1,2}:\d{2}$|^\d{1,2}:\d{2}:\d{2}$/u;
+/** The dash between a moment's time and its text. */
+export const LIVE_REPORT_MOMENT_DASH = '— ';
+/** A blank line between two sections of the report body. */
+export const LIVE_REPORT_SECTION_BREAK = /\n{2,}/u;

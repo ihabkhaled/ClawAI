@@ -10,7 +10,13 @@ import type {
   LiveSourceKind,
   Prisma,
 } from '../../../generated/prisma';
-import type { summaryReplySchema, transcribeReplySchema } from '../schemas/processing.schemas';
+import type { LiveModelRef } from '../../policy/types/live-policy.types';
+import type {
+  reportMomentsReplySchema,
+  reportOverviewReplySchema,
+  summaryReplySchema,
+  transcribeReplySchema,
+} from '../schemas/processing.schemas';
 import type { LiveStreamEvent } from '../../realtime/types/live-stream-event.types';
 import type { ResolvedPull } from '../../sources/types/server-pull.types';
 
@@ -107,6 +113,8 @@ export interface ResearchState {
   count: number;
   /** Lower-cased queries already searched in this run, so a repeat is skipped. */
   queries: string[];
+  /** Lyric searches the service started itself because sung lines were not placed yet. */
+  lyricSearches: number;
 }
 
 export interface VisionState {
@@ -253,3 +261,68 @@ export interface RecordedSourceOptions {
    */
   canAdvance: (positionSeconds: number) => Promise<boolean>;
 }
+
+/** The main model chain and the 1..3 extra agents of the active policy (draft then merge). */
+export interface LiveCouncilChains {
+  main: readonly LiveModelRef[];
+  council: readonly LiveModelRef[];
+}
+
+/** One timestamped line of the video report: seconds from the start of the video. */
+export interface ReportMoment {
+  atSeconds: number;
+  text: string;
+}
+
+/** One part of the transcript the report covers in one model call, in video seconds. */
+export interface ReportWindow {
+  fromSeconds: number;
+  toSeconds: number;
+  lines: TranscriptLine[];
+}
+
+/** What the report body is built from. */
+export interface ReportContent {
+  summary: string;
+  chapters: ReportMoment[];
+  moments: ReportMoment[];
+  quotes: ReportMoment[];
+}
+
+/** Section headings of the report body in one language. */
+export interface ReportSectionLabels {
+  summary: string;
+  chapters: string;
+  moments: string;
+  quotes: string;
+}
+
+/** One on-screen note of the run, in video seconds. */
+export interface ReportVisualNote {
+  atSeconds: number;
+  text: string;
+}
+
+/** What one report part is written from, besides its transcript window. */
+export interface ReportPartInput {
+  origin: number;
+  language: string;
+  visuals: readonly ReportVisualNote[];
+  memory: RunMemory;
+}
+
+/** The moments and quotes one part produced. */
+export interface ReportPart {
+  moments: ReportMoment[];
+  quotes: ReportMoment[];
+}
+
+/** The overview reply of the report, chapters in video seconds. */
+export interface ReportOverview {
+  title: string;
+  summary: string;
+  chapters: ReportMoment[];
+}
+
+export type ReportMomentsReply = z.infer<typeof reportMomentsReplySchema>;
+export type ReportOverviewReply = z.infer<typeof reportOverviewReplySchema>;

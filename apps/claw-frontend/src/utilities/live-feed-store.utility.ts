@@ -115,7 +115,9 @@ export function liveHistoryEventToCard(event: LiveHistoryEvent): LiveFeedCard {
 export function upsertLiveCard(cards: LiveFeedCard[], next: LiveFeedCard): LiveFeedCard[] {
   const index = cards.findIndex((card) => card.eventId === next.eventId);
   if (index === -1) {
-    return [...cards, next].toSorted((a, b) => a.startAt - b.startAt);
+    // The translation wait counts from when this page first saw the card.
+    const stamped = { ...next, receivedAt: next.receivedAt ?? Date.now() };
+    return [...cards, stamped].toSorted((a, b) => a.startAt - b.startAt);
   }
   const current = cards[index];
   if (current === undefined || current.version > next.version) {
@@ -124,6 +126,7 @@ export function upsertLiveCard(cards: LiveFeedCard[], next: LiveFeedCard): LiveF
   const sameVersion = current.version === next.version;
   const merged: LiveFeedCard = {
     ...next,
+    receivedAt: current.receivedAt ?? next.receivedAt,
     translatedTitle: next.translatedTitle ?? (sameVersion ? current.translatedTitle : undefined),
     translatedBody: next.translatedBody ?? (sameVersion ? current.translatedBody : undefined),
   };

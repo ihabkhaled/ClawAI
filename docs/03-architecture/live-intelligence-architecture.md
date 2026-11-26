@@ -12,6 +12,7 @@ of them in the same change (rule 63).
 YouTube's Developer Policies forbid downloading, caching or separating the audio/video of YouTube
 content (III.E.1, III.I.7) and retrieving data by any means other than the API (III.I.14). The server
 therefore never downloads, fetches or captures YouTube's media, and never defeats any platform's protection.
+**Superseded 2026-11-26 (owner: "server only, retry", ADR-221 round 2): no link falls back to the viewer's tab audio or microphone any more.** An unreadable link is read once more after 2 s, then it is `LINK_ONLY` with reason `SERVER_PULL_UNAVAILABLE`. The capture text below describes the old path, kept only for sessions created before then.
 **Superseded by owner decisions 2026-11-23 (ADR-221 batches 3 and 4): `SERVER_PULL` on every platform except
 Discord** — the server reads a live stream's public playlist (Twitch natively, the rest through yt-dlp; section
 "Server pull" below). When it cannot, the rules in this paragraph still apply. Platform streams are analysed only from the **viewer's own
@@ -59,8 +60,8 @@ only, never a network call**, except the Twitch server-pull probe when the polic
   off, 30 s, only an https HLS result) on the canonical watch URL; the pin is the result's registrable domain. Results
   are cached 60 s; link-only platforms are probed too (live → `SERVER_PULL` with no embed). Resolve probes it when the
   policy's `serverPullPlatforms` lists the platform: live → `SERVER_PULL` (`PUBLIC`, one run for every viewer, any
-  device, `reasonCode SERVER_PULL_AVAILABLE`); offline/refused → private `BROWSER_CAPTURE` with
-  `SERVER_PULL_UNAVAILABLE`; policy off → no network call. The worker (`HlsChunkSource` with a `ServerPullSource`)
+  device, `reasonCode SERVER_PULL_AVAILABLE`); offline/refused → read again after 2 s, then `LINK_ONLY` with
+  `SERVER_PULL_UNAVAILABLE` (was private `BROWSER_CAPTURE` until 2026-11-26); policy off → no network call. The worker (`HlsChunkSource` with a `ServerPullSource`)
   fetches on the host-suffix pin `ttvnw.net`/`live-video.net`, and drops the token after a failed playlist fetch (at
   most once per 30 s) so the next poll re-resolves (fresh, bypassing the cache). Twitch's pin is
   `ttvnw.net`/`live-video.net`; a yt-dlp pull's pin is its own CDN domain. The player and chat stay the official embeds
@@ -283,3 +284,16 @@ Translation p95 ≤ 5 s after the caption; summary p95 ≤ 10 s after a topic cl
 A streaming STT vendor added; YouTube granting caption access; a platform adding or withdrawing an official player
 or chat embed; the browser-capture risk decision being revisited; a second owning service; any change to
 the billing unit or grace semantics.
+
+## Round 2 (2026-11-26): agents, songs, the video report
+
+- **Analysis calls** (summary, highlights, FINAL, report parts) go through `LiveCouncilService.draftThenMerge`: the
+  policy's `councilModelChain` (1..3 models) drafts in parallel, the `summaryModelChain` merges the valid drafts;
+  no valid draft → the main chain alone. Captions are one speech-to-text pass, never council work.
+- **Songs:** sung caption lines start with ♪ (file-service); a summary with sung lines and no requested search
+  triggers a lyric search (`lyricResearchQuery`, ≤ 3 per run, inside the research budget of 20 per run, 1 per minute).
+- **Translations** must be in the target script (`isInLanguage`), else asked again (≤ 3 attempts).
+- **Video report:** on a `SUMMARY:<userId>` run, after the FINAL card, `ReportManager` reads the whole transcript
+  (≤ 6000 segments) and the VISUAL notes, writes 5-minute parts as moments about every 10 s ("0:44 — …", ≤ 1200),
+  then an overview (title, summary, chapters), and stores one `REPORT` event (`eventKey: report`) in the language of
+  the viewer's session. Plain text body: sections split by a blank line, first line the heading.

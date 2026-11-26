@@ -2,7 +2,7 @@
 //
 // Idempotent: it inserts version 1 ONLY when live_policy_versions has no rows at all, so an
 // administrator's later versions (and a deliberately deactivated state) are never overwritten.
-// One exception, also idempotent: the 2026-11-24 upgrade (see `upgrade`).
+// Two exceptions, also idempotent: the 2026-11-24 and 2026-11-26 upgrades (see `upgrade`).
 // `activeKey = 'active'` is the emulated partial unique index that marks the one live version.
 //
 // Run: `npm run seed` (dev entrypoint, `prisma db seed` when SEED_ON_START=true in prod).
@@ -45,6 +45,52 @@ const PLATFORMS_ADDED_2026_11_24 = [
   'BLUESKY',
 ];
 
+// Platforms the server reads from 2026-11-26 (owner: more than 30 live and 30 video platforms).
+const PLATFORMS_ADDED_2026_11_26 = [
+  'VK_PLAY_LIVE',
+  'PEERTUBE',
+  'STEAM',
+  'GOODGAME',
+  'YOUNOW',
+  'RAIPLAY',
+  'RAIPLAY_SOUND',
+  'BFMTV',
+  'CBS_NEWS',
+  'LRT',
+  'FRANCE_TV',
+  'ROYA',
+  'MATCH_TV',
+  'RTVC_PLAY',
+  'TUNEIN',
+  'WEBCAMERA_PL',
+  'TED',
+  'SOUNDCLOUD',
+  'BANDCAMP',
+  'ARCHIVE_ORG',
+  'NINEGAG',
+  'PINTEREST',
+  'BITCHUTE',
+  'GOOGLE_DRIVE',
+  'DROPBOX',
+  'LOOM',
+  'SPREAKER',
+  'APPLE_PODCASTS',
+  'MEDAL',
+  'UN_WEB_TV',
+  'ZHIHU',
+  'CNN',
+  'VIDLII',
+  'FLICKR',
+  'ACFUN',
+  'IMGUR',
+];
+
+// Council agents (owner decision 2026-11-26): 1..3 extra agents each draft, the main model merges.
+const COUNCIL_UPGRADE_NOTE = 'seed upgrade: council agents (owner decision 2026-11-26)';
+const DEFAULT_COUNCIL_MODEL_CHAIN = [
+  { connector: 'GEMINI', model: 'gemini-3.1-flash-lite', style: 'OPENAI_COMPAT' },
+];
+
 function plan(freeSecondsPerMonth) {
   return { freeSecondsPerMonth, paidMicroUsdPerMinute: PAID_MICRO_USD_PER_MINUTE };
 }
@@ -78,6 +124,8 @@ const DEFAULT_POLICY_CONFIG = {
   visionModelChain: [
     { connector: 'GEMINI', model: 'gemini-3.1-flash-lite', style: 'OPENAI_COMPAT' },
   ],
+  // Extra agents that each draft the summary; summaryModelChain merges (owner decision 2026-11-26).
+  councilModelChain: DEFAULT_COUNCIL_MODEL_CHAIN,
   // Server pull (ADR-221 addendum 2026-11-23): the server reads Twitch's public playlist itself.
   // Every platform except Discord (owner decision 2026-11-23): Twitch natively, the rest via yt-dlp.
   serverPullPlatforms: [
@@ -96,6 +144,7 @@ const DEFAULT_POLICY_CONFIG = {
     'SOOP',
     'NIMO',
     ...PLATFORMS_ADDED_2026_11_24,
+    ...PLATFORMS_ADDED_2026_11_26,
   ],
   // Recorded videos (owner decision 2026-11-24): played along, at most 3 hours; 0 turns them off.
   recordedVideoMaxSeconds: RECORDED_VIDEO_MAX_SECONDS,
@@ -118,10 +167,12 @@ async function run(prisma) {
 }
 
 /**
- * One-time upgrade of an existing policy (2026-11-24): a new active version that adds the platforms
- * introduced that day to `serverPullPlatforms` and sets `recordedVideoMaxSeconds`. Every other value
- * is copied as is. It runs only while the active config has no `recordedVideoMaxSeconds`, so an
- * administrator's later choices (a removed platform, recorded videos off) are never overwritten.
+ * One-time upgrades of an existing policy, applied in date order. Each inserts a new active version
+ * that copies every value and adds only what its day introduced, and each runs only while the active
+ * config lacks its field, so an administrator's later choices are never overwritten.
+ * - 2026-11-24: the day's platforms join `serverPullPlatforms`; `recordedVideoMaxSeconds` is set.
+ * - 2026-11-26: `councilModelChain` gets the one default agent; a non-empty `serverPullPlatforms`
+ *   also gets the day's 36 platforms.
  * @param {any} prisma
  */
 async function upgrade(prisma) {
@@ -129,18 +180,50 @@ async function upgrade(prisma) {
   if (!active || active.config === null || typeof active.config !== 'object') {
     return { inserted: false, reason: 'policy rows already exist' };
   }
-  if ('recordedVideoMaxSeconds' in active.config) {
+  let config = active.config;
+  const versions = [];
+  if (!('recordedVideoMaxSeconds' in config)) {
+    const platforms = Array.isArray(config.serverPullPlatforms)
+      ? config.serverPullPlatforms
+      : DEFAULT_POLICY_CONFIG.serverPullPlatforms;
+    config = {
+      ...config,
+      serverPullPlatforms: [...new Set([...platforms, ...PLATFORMS_ADDED_2026_11_24])],
+      recordedVideoMaxSeconds: RECORDED_VIDEO_MAX_SECONDS,
+    };
+    versions.push(await insertActiveVersion(prisma, config, UPGRADE_NOTE));
+  }
+  if (!('councilModelChain' in config)) {
+    // Server pull left on (a non-empty list) also reads the day's new platforms; off stays off.
+    const platforms = Array.isArray(config.serverPullPlatforms) ? config.serverPullPlatforms : [];
+    const widened =
+      platforms.length > 0
+        ? [...new Set([...platforms, ...PLATFORMS_ADDED_2026_11_26])]
+        : platforms;
+    config = {
+      ...config,
+      councilModelChain: DEFAULT_COUNCIL_MODEL_CHAIN,
+      serverPullPlatforms: widened,
+    };
+    versions.push(await insertActiveVersion(prisma, config, COUNCIL_UPGRADE_NOTE));
+  }
+  if (versions.length === 0) {
     return { inserted: false, reason: 'policy rows already exist and are current' };
   }
-  const platforms = Array.isArray(active.config.serverPullPlatforms)
-    ? active.config.serverPullPlatforms
-    : DEFAULT_POLICY_CONFIG.serverPullPlatforms;
-  const config = {
-    ...active.config,
-    serverPullPlatforms: [...new Set([...platforms, ...PLATFORMS_ADDED_2026_11_24])],
-    recordedVideoMaxSeconds: RECORDED_VIDEO_MAX_SECONDS,
+  return {
+    inserted: true,
+    reason: `upgraded the active policy to version ${versions.map(String).join(', ')}`,
   };
-  const version = await prisma.$transaction(async (tx) => {
+}
+
+/**
+ * Deactivates the current version and inserts `config` as the next active one.
+ * @param {any} prisma
+ * @param {Record<string, unknown>} config
+ * @param {string} note
+ */
+async function insertActiveVersion(prisma, config, note) {
+  return prisma.$transaction(async (tx) => {
     const latest = await tx.livePolicyVersion.aggregate({ _max: { version: true } });
     await tx.livePolicyVersion.updateMany({
       where: { activeKey: ACTIVE_KEY },
@@ -148,11 +231,10 @@ async function upgrade(prisma) {
     });
     const next = (latest._max.version ?? 0) + 1;
     await tx.livePolicyVersion.create({
-      data: { version: next, activeKey: ACTIVE_KEY, config, note: UPGRADE_NOTE },
+      data: { version: next, activeKey: ACTIVE_KEY, config, note },
     });
     return next;
   });
-  return { inserted: true, reason: `upgraded the active policy to version ${String(version)}` };
 }
 
 function loadGeneratedClient() {
@@ -191,10 +273,13 @@ if (require.main === module) {
 }
 
 module.exports = {
+  PLATFORMS_ADDED_2026_11_26,
   run,
   DEFAULT_POLICY_CONFIG,
   ACTIVE_KEY,
   SEED_NOTE,
   UPGRADE_NOTE,
+  COUNCIL_UPGRADE_NOTE,
+  DEFAULT_COUNCIL_MODEL_CHAIN,
   PLATFORMS_ADDED_2026_11_24,
 };

@@ -124,9 +124,9 @@ describe('LiveIntelligencePlatformsPage', () => {
 });
 
 describe('Live & Video Intelligence platform list', () => {
-  it('names more than 15 platforms (only the ones that passed the real sweep), each once, and never Discord', () => {
+  it('names more than 50 platforms (only the ones that passed the real sweep), each once, and never Discord', () => {
     const names = LIVE_MARKETING_PLATFORMS.map((platform) => platform.name);
-    expect(names.length).toBeGreaterThan(15);
+    expect(names.length).toBeGreaterThan(50);
     expect(new Set(names).size).toBe(names.length);
     expect(names.some((name) => /discord/iu.test(name))).toBe(false);
   });

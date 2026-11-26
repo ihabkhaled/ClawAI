@@ -12,7 +12,7 @@ export const ZH_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   eyebrow: 'ClawAI 新功能：Live & Video Intelligence',
   title: '任何直播或视频，都能用你的语言看懂',
   intro:
-    '粘贴来自 15 个以上平台的直播或录播视频链接。ClawAI 会用实时字幕和不断更新的摘要与精彩片段动态全程跟进，也可以一键把整段视频整理成一份清晰的报告。一切都在 ClawAI 的服务器上运行，因此任何设备都能用，手机也不例外。',
+    '粘贴来自 50 个以上平台的直播或录播视频链接。ClawAI 会用实时字幕和不断更新的摘要与精彩片段动态全程跟进，也可以一键把整段视频整理成一份清晰的报告。一切都在 ClawAI 的服务器上运行，因此任何设备都能用，手机也不例外。',
   openCta: '立即粘贴链接',
   signUpCta: '免费创建账户',
   howItWorksCta: '了解使用方法',
@@ -157,7 +157,7 @@ export const ZH_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     '可从应用支持的 13 种语言中任选其一：英语、阿拉伯语、德语、西班牙语、波斯语、法语、印地语、意大利语、日语、葡萄牙语、俄语、泰语或中文。说话者可以使用任何语言。',
     '如果说话者本来就在说你的语言，你看到的就是他们的原话；如果不是，字幕、摘要和精彩片段会被翻译，并以译文取代原文显示。',
   ],
-  platformsTitle: '支持 15 个以上平台',
+  platformsTitle: '支持 50 个以上平台',
   platformsBody:
     'YouTube、Twitch、Kick、Facebook、TikTok、Instagram、X (Twitter)、Bilibili、Niconico 等众多平台。直播和录播视频均可使用。',
   platformsCta: '查看所有平台',
@@ -219,7 +219,7 @@ export const ZH_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     {
       question: '支持哪些平台？',
       answer:
-        '超过 15 个，包括 YouTube、Twitch、Kick、Facebook、TikTok、Instagram、X (Twitter)、Bilibili 和 Niconico。平台页面列出了全部平台。只能读取公开的视频和直播；Discord 没有公开链接，因此不受支持。',
+        '超过 50 个，包括 YouTube、Twitch、Kick、Facebook、TikTok、Instagram、X (Twitter)、Bilibili 和 Niconico。平台页面列出了全部平台。只能读取公开的视频和直播；Discord 没有公开链接，因此不受支持。',
     },
     {
       question: 'ClawAI 会代表我发帖或聊天吗？',
@@ -326,7 +326,7 @@ export const ZH_LIVE_INTELLIGENCE_MARKETING_SEO: LiveIntelligenceMarketingSeo = 
   overview: {
     title: 'Live & Video Intelligence：直播实时字幕与一键视频总结',
     description:
-      '粘贴来自 YouTube、Twitch、TikTok 等 15 个以上平台的直播或视频链接，即可获得你所用语言的实时字幕、包含摘要和精彩片段的智能动态，或带时间戳的一键视频总结。手机、平板、电脑等任何设备均可使用，无需安装。',
+      '粘贴来自 YouTube、Twitch、TikTok 等 50 个以上平台的直播或视频链接，即可获得你所用语言的实时字幕、包含摘要和精彩片段的智能动态，或带时间戳的一键视频总结。手机、平板、电脑等任何设备均可使用，无需安装。',
     keywords: ['直播实时字幕', 'AI 视频总结', 'YouTube 视频总结', '直播字幕翻译', '直播精彩片段'],
   },
   platforms: {

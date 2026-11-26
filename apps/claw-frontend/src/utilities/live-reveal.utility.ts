@@ -1,12 +1,22 @@
 import {
+  LIVE_ANY_LETTER_PATTERN,
   LIVE_BEHIND_THRESHOLD_MS,
   LIVE_CAPTION_TRANSLATION_WAIT_MS,
+  LIVE_CARD_TRANSLATION_WAIT_MS,
+  LIVE_LANGUAGE_MIN_SCRIPT_SHARE,
+  LIVE_LANGUAGE_SCRIPT_PATTERNS,
   LIVE_LANGUAGE_SUBTAG_SEPARATOR,
+  LIVE_LATIN_LETTER_PATTERN,
   LIVE_PERCENT,
   LIVE_SERVER_DOMINANT_STATUSES,
 } from '@/constants/live.constants';
-import { LiveStatusCode } from '@/enums/live.enum';
-import type { LiveCaption, LiveRevealedCaption, LiveSeekableRange } from '@/types/live.types';
+import { LiveCardLanguageState, LiveStatusCode } from '@/enums/live.enum';
+import type {
+  LiveCaption,
+  LiveFeedCard,
+  LiveRevealedCaption,
+  LiveSeekableRange,
+} from '@/types/live.types';
 
 /**
  * Only what the viewer has already reached: `startAt <= playbackAt`. Pausing freezes `playbackAt`,
@@ -113,4 +123,54 @@ export function resolveLiveDisplayStatus(
     return serverStatus;
   }
   return isPaused ? LiveStatusCode.PAUSED : serverStatus;
+}
+
+function letterCount(text: string, pattern: RegExp): number {
+  return text.match(pattern)?.length ?? 0;
+}
+
+/** True when `text` is written in the script of `language` (Arabic for ar, Latin for en, …). */
+export function liveTextMatchesLanguage(text: string, language: string): boolean {
+  const letters = letterCount(text, LIVE_ANY_LETTER_PATTERN);
+  if (letters === 0) {
+    return true;
+  }
+  const script =
+    LIVE_LANGUAGE_SCRIPT_PATTERNS[liveBaseLanguage(language) ?? ''] ?? LIVE_LATIN_LETTER_PATTERN;
+  return letterCount(text, script) / letters >= LIVE_LANGUAGE_MIN_SCRIPT_SHARE;
+}
+
+/**
+ * Whether a card can be shown in the viewer's language: translated or already in it is READY; in
+ * another script with no copy yet is PENDING ("Translating…"); still no copy after
+ * LIVE_CARD_TRANSLATION_WAIT_MS is ORIGINAL (shown, marked). The owner saw an Arabic highlight among
+ * English ones (2026-11-26): a foreign card is never shown silently as if it were translated.
+ */
+export function liveCardLanguageState(
+  card: LiveFeedCard,
+  language: string,
+  now: number,
+): LiveCardLanguageState {
+  if (card.translatedBody !== undefined || card.translatedTitle !== undefined) {
+    return LiveCardLanguageState.READY;
+  }
+  if (liveTextMatchesLanguage(`${card.title} ${card.body}`, language)) {
+    return LiveCardLanguageState.READY;
+  }
+  const waited = now - (card.receivedAt ?? now);
+  return waited >= LIVE_CARD_TRANSLATION_WAIT_MS
+    ? LiveCardLanguageState.ORIGINAL
+    : LiveCardLanguageState.PENDING;
+}
+
+/** The cards with their language state for this viewer. */
+export function withLiveCardLanguageState(
+  cards: readonly LiveFeedCard[],
+  language: string,
+  now: number,
+): LiveFeedCard[] {
+  return cards.map((card) => ({
+    ...card,
+    languageState: liveCardLanguageState(card, language, now),
+  }));
 }

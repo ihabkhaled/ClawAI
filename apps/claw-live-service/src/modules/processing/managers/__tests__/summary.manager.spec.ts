@@ -2,6 +2,7 @@ import { LiveStreamEventType } from '../../../../common/enums/live-stream-event-
 import { LiveFeedEventKind, LiveMode, LiveSourceKind } from '../../../../generated/prisma';
 import { createRunMemory } from '../../utilities/run-memory.utility';
 import { SummaryManager } from '../summary.manager';
+import { LiveCouncilService } from '../../services/live-council.service';
 
 const context = {
   lease: { runId: 'run-1', generation: 2 },
@@ -70,7 +71,10 @@ describe('SummaryManager', () => {
   const policy = {
     active: vi.fn().mockResolvedValue({
       version: 1,
-      config: { summaryModelChain: [{ connector: 'OLLAMA', model: 'gemma', style: 'OLLAMA' }] },
+      config: {
+        summaryModelChain: [{ connector: 'OLLAMA', model: 'gemma', style: 'OLLAMA' }],
+        councilModelChain: [],
+      },
     }),
   };
   const events = { emit: vi.fn() };
@@ -84,7 +88,7 @@ describe('SummaryManager', () => {
   const manager = new SummaryManager(
     prisma as never,
     writer as never,
-    model as never,
+    new LiveCouncilService(writer as never, model as never),
     policy as never,
     events as never,
     research as never,
@@ -467,6 +471,84 @@ describe('SummaryManager', () => {
     const second = model.complete.mock.calls[1]?.[1];
     expect(second.user).toContain('Egyptian song by Sample Singer. (example.org)');
     expect(second.user).not.toContain('https://');
+  });
+
+  it('searches a sung line itself when the model asked for nothing (a lyric is not the singer)', async () => {
+    model.complete.mockResolvedValueOnce(reply(validReply));
+    tx.liveFeedEvent.create.mockResolvedValueOnce(row());
+    const memory = createRunMemory(0);
+    memory.recent = [line(0, 1000, '♪ انا بموت في حبك')];
+    memory.pendingFirst = memory.recent[0] ?? null;
+    memory.pendingTranscriptMs = 12_000;
+    memory.spokenLanguage = 'ar';
+    await manager.summarize(context, memory);
+    const system = model.complete.mock.calls[0]?.[1].system as string;
+    expect(system).toContain('♪ are sung');
+    expect(system).toContain('never the singer');
+    expect(research.search).toHaveBeenCalledWith('انا بموت في حبك كلمات', 'live-research:run-1:1');
+    expect(memory.research.lyricSearches).toBe(1);
+  });
+
+  it('starts no lyric search for speech, or past the lyric budget', async () => {
+    model.complete.mockResolvedValue(reply(validReply));
+    tx.liveFeedEvent.create.mockResolvedValue(row());
+    await manager.summarize(context, memoryWithTranscript());
+    const sung = createRunMemory(0);
+    sung.recent = [line(0, 1000, '♪ la la love')];
+    sung.pendingFirst = sung.recent[0] ?? null;
+    sung.pendingTranscriptMs = 12_000;
+    sung.research.lyricSearches = 3;
+    await manager.summarize(context, sung);
+    expect(research.search).not.toHaveBeenCalled();
+  });
+
+  describe('draft then merge (extra agents)', () => {
+    const agentA = { connector: 'GEMINI', model: 'agent-a', style: 'OPENAI_COMPAT' };
+    const agentB = { connector: 'GEMINI', model: 'agent-b', style: 'OPENAI_COMPAT' };
+    function withCouncil(council: unknown[]) {
+      policy.active.mockResolvedValueOnce({
+        version: 2,
+        config: {
+          summaryModelChain: [{ connector: 'OLLAMA', model: 'gemma', style: 'OLLAMA' }],
+          councilModelChain: council,
+        },
+      });
+    }
+
+    it('asks every agent, then the main model merges the valid drafts', async () => {
+      withCouncil([agentA, agentB]);
+      const draftA = { ...validReply, current: { ...validReply.current, title: 'Draft A' } };
+      model.complete
+        .mockResolvedValueOnce(reply(draftA))
+        .mockResolvedValueOnce({ ...reply(validReply), content: 'not json' })
+        .mockResolvedValueOnce(reply(validReply));
+      tx.liveFeedEvent.create.mockResolvedValueOnce(row());
+      await manager.summarize(context, memoryWithTranscript());
+      expect(model.complete).toHaveBeenCalledTimes(3);
+      expect(model.complete.mock.calls[0]?.[0]).toEqual([agentA]);
+      expect(model.complete.mock.calls[1]?.[0]).toEqual([agentB]);
+      const merge = model.complete.mock.calls[2];
+      expect(merge?.[0]).toEqual([{ connector: 'OLLAMA', model: 'gemma', style: 'OLLAMA' }]);
+      expect(merge?.[1].system).toContain('Other analysts already answered');
+      expect(merge?.[1].user).toContain('DRAFT 1: {');
+      expect(merge?.[1].user).toContain('Draft A');
+      expect(merge?.[1].user).not.toContain('DRAFT 2');
+      const costRows = tx.liveProviderCost.upsert.mock.calls.map(
+        (call: { create: { succeeded: boolean } }[]) => call[0]?.create.succeeded,
+      );
+      expect(costRows.slice(0, 2)).toEqual([true, false]);
+    });
+
+    it('lets the main model answer alone when no agent drafted', async () => {
+      withCouncil([agentA]);
+      model.complete
+        .mockRejectedValueOnce(new Error('down'))
+        .mockResolvedValueOnce(reply(validReply));
+      tx.liveFeedEvent.create.mockResolvedValueOnce(row());
+      await manager.summarize(context, memoryWithTranscript());
+      expect(model.complete).toHaveBeenCalledTimes(2);
+      expect(model.complete.mock.calls[1]?.[1].system).not.toContain('Other analysts');
+    });
   });
 
   it('bounds research: no empty, repeated, too-early or over-budget query reaches the service', async () => {

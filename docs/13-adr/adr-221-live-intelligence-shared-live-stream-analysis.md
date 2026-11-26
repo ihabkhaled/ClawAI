@@ -295,3 +295,57 @@ YTDLP_VERSION`, `ARG YTDLP_SHA256`); Node in the image is its JavaScript runtime
   summarizes the transcript that was never summarized (and samples the last frame) before the final summary, which is
   built from those cards. Verified in the browser at 390x844: reel frame 171x304, summary of the 30 s reel shows 3
   cards.
+
+## Addendum 2026-11-26 (round 2): server-only reads, consistent languages, songs, agents, the video report
+
+Owner report (production, phone and desktop): a YouTube video on a phone fell back to the microphone; an English
+viewer sometimes got one Arabic highlight, summary or caption; an Arabic song line ("انا بموت", Tamer Hosny) was
+reported as someone wanting to die; TikTok links failed; the admin could not choose the analysis model; the video
+summary was not detailed. Owner decisions (2026-11-26):
+
+- **Server only, retry.** A link is never read through the viewer's microphone or tab audio again. The resolver tries
+  the server read, waits `RESOLVE_RETRY_DELAY_MS` (2 s) and tries once more with a fresh probe; still unreadable is
+  `LINK_ONLY` with reason `SERVER_PULL_UNAVAILABLE` and the page says the server cannot read it right now.
+  `capabilityFor` never returns `BROWSER_CAPTURE` (the capture code stays for old sessions). Root cause of the phone
+  bug: YouTube answers data-centre addresses with "Sign in to confirm you're not a bot"; `YtdlpRunnerService` now
+  retries YouTube with `player_client=android_vr` (then `android_vr,web_safari`) only when that block appears, and a
+  5th concurrent yt-dlp call waits up to 30 s for a slot instead of failing.
+- **One language per viewer.** The server checks every translation is written in the target script
+  (`isInLanguage`) and asks again up to `TRANSLATION_MAX_ATTEMPTS` (3). The page shows "Translating…" for a card in
+  another script with no copy yet and, after 45 s, the original marked "shown in its original language"; foreign
+  captions wait 30 s (was 12 s).
+- **Songs.** Speech-to-text starts every sung line with ♪. Sung lines are lyrics, never the singer's own state (rule in
+  every analysis prompt). When the summarizer asks no web search but lines were sung, the service searches the
+  longest sung line plus the word "lyrics" in the spoken language itself (at most 3 per run), so the next summary can
+  name the song and artist.
+- **Agents: draft then merge.** Policy `councilModelChain` (1 to 3 models, default one Gemini flash-lite agent):
+  every agent drafts the summary, highlights, final card and report parts in parallel, then the main chain
+  (`summaryModelChain`) merges the valid drafts (`LiveCouncilService`, `COUNCIL_MERGE_INSTRUCTION`); no valid draft →
+  the main chain answers alone. Captions stay one fast speech-to-text pass. Every draft is a cost row. The admin form
+  picks each model (main + up to 5 fallbacks, vision + fallbacks, 1 to 3 agents) from the chat model list.
+- **The detailed video report.** A one-click summary run ends with a `REPORT` feed event (migration
+  `20261126120000_live_video_report`): written in the viewer's language, built per 5-minute part of the transcript
+  (with on-screen notes and web context) as a moment about every 10 s ("0:44 — …"), then one overview call for the
+  summary and chapters; up to 12 key quotes in their original language. The page draws it as sections with times;
+  exports include it. A failed part is skipped, never invented; a failed report never stops the run from ending.
+- **Platforms (owner: "more than 30 live and 30 video platforms, test them one by one", and list them all in the app
+  and on the marketing page).** 36 platforms added (enum + migration `20261126130000_live_platforms_round2`, host rows
+  with subdomain suffixes for Bandcamp and WebCamera.pl). Link shapes yt-dlp cannot read are rewritten: TikTok
+  `/embed[/v2]/<id>`, `/player/v1/<id>`, `m.tiktok.com/v/<id>.html` → `www.tiktok.com/@/video/<id>`; VK `live-` →
+  `video-`; GoodGame `/channel/<u>` → `/<u>`; SOOP → `play.sooplive.com/<id>` (the only readable host today);
+  Bilibili `/video/<BV…>` and LinkedIn `/posts/<slug>` now parse. Some CDNs answer 403 without the page's headers
+  (Roya, RaiPlay, Odysee, VK): yt-dlp now prints `%(http_headers)j` and the probe and the worker send only an
+  allow-list (user-agent, accept, accept-language, referer, origin, sec-fetch-mode; never cookies). An encrypted live
+  playlist (`#EXT-X-KEY` other than `METHOD=NONE`, RaiNews24) is refused at the probe: it would never caption.
+  Verified on 2026-11-26 through our own `POST /live/sources/resolve` plus a real session per live link: 22
+  platforms live (SERVER_PULL and captions arrived) and 39 recorded (RECORDED), 53 distinct; only those are listed in `LIVE_MARKETING_PLATFORMS`, which now feeds the public
+  pages AND the in-app "Supported platforms" list; the copy says "more than 50 platforms". The policy upgrade adds the
+  36 platforms to a non-empty `serverPullPlatforms` (production stores an explicit list of 38). Not claimed: Vimeo
+  (login), Reddit, Douyin, Naver TV, SHOWROOM, Huya and Niconico live (not HLS), Douyu, Bluesky, Kakao TV, DLive,
+  Trovo, 17LIVE, BIGO, Telegram, Nimo, Dropbox (file names with spaces), PandaLive (adult content), RaiPlay live
+  (encrypted). Resolve but gave no captions in a real session, so not claimed live: Steam and TwitCasting (signed
+  fMP4 segments answer 401/403), PeerTube (garr.tv), WebCamera.pl (no audio track), YouNow (channel went 18+/offline),
+  France TV and Match TV (became unreadable between sweep and session). TikTok live and CBS News needed a reviewed
+  second CDN in the host pin (`SERVER_PULL_EXTRA_CDN_SUFFIXES`: realcrius.com, cbsivideo.com). Known gap: an OK.ru
+  live broadcast reports neither "live" nor a length, so it is probed as a recorded video. The owner asked for 30
+  live platforms; 22 are verified today.

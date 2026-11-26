@@ -87,6 +87,7 @@ export class RunWorker {
       await this.deps.translations.flushCaptions(this.context, true);
       await this.summarizeTheRest(poll.latestSegmentFile);
       await this.deps.summaries.summarizeFinal(this.context, this.memory);
+      await this.writeReport();
       await this.finish(LiveRunStatus.ENDED, LiveRunEndReason.SOURCE_ENDED);
       return true;
     }
@@ -166,6 +167,16 @@ export class RunWorker {
       await this.deps.summaries.summarize(this.context, this.memory);
     }
     await this.deps.vision.maybeSample(this.context, this.memory, segmentFile);
+  }
+
+  /** The detailed video report (summary runs only); a failure never keeps the run from ending. */
+  private async writeReport(): Promise<void> {
+    try {
+      await this.deps.reports.writeReport(this.context, this.memory);
+    } catch (error: unknown) {
+      if (error instanceof LeaseLostError) throw error;
+      this.logger.warn(`run ${this.runId}: video report failed`);
+    }
   }
 
   private async finish(status: LiveRunStatus, reason: LiveRunEndReason): Promise<void> {

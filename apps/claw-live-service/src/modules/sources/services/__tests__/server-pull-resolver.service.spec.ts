@@ -9,6 +9,7 @@ vi.mock('../../../../common/utilities/process.utility', () => ({ runBoundedProce
 
 import { LivePlatform } from '../../../../generated/prisma';
 import { ServerPullResolverService } from '../server-pull-resolver.service';
+import { YtdlpRunnerService } from '../ytdlp-runner.service';
 
 const allowed = JSON.stringify({
   data: {
@@ -43,7 +44,11 @@ describe('ServerPullResolverService', () => {
     vi.clearAllMocks();
     config.LIVE_TWITCH_CLIENT_ID = 'public-web-player-id';
     guard.assertSafeOnSuffixes.mockResolvedValue(['151.101.1.1']);
-    service = new ServerPullResolverService(guard as never, fetcher as never);
+    service = new ServerPullResolverService(
+      guard as never,
+      fetcher as never,
+      new YtdlpRunnerService(),
+    );
   });
 
   it('supports every platform except Discord and a missing platform', () => {
@@ -91,7 +96,7 @@ describe('ServerPullResolverService', () => {
     expect(args.slice(-2)).toEqual(['--', youtube.watchUrl]);
     expect(pull?.playlist.hostname).toBe('manifest.googlevideo.com');
     expect(pull?.hostSuffixes).toEqual(['googlevideo.com']);
-    expect(args).toEqual(expect.arrayContaining(['%(protocol)s %(url)s %(id)s']));
+    expect(args).toEqual(expect.arrayContaining(['%(protocol)s %(url)s %(id)s %(http_headers)j']));
   });
 
   it('Twitch falls back to yt-dlp when LIVE_TWITCH_CLIENT_ID is empty', async () => {
@@ -136,6 +141,7 @@ describe('ServerPullResolverService', () => {
       expect.any(URL),
       ['live-video.net'],
       expect.any(Number),
+      {},
     );
     fetcher.fetchObject.mockRejectedValueOnce(new Error('LIVE_UPSTREAM_FAILED'));
     await expect(service.probe(LivePlatform.KICK, youtube)).resolves.toBeNull();
@@ -143,7 +149,31 @@ describe('ServerPullResolverService', () => {
     await expect(service.probe(LivePlatform.RUMBLE, youtube)).resolves.toBeNull();
   });
 
-  it('runs at most 4 yt-dlp lookups at once and answers null (fallback) past that', async () => {
+  it("pins TikTok's second CDN (realcrius.com) and no other platform's", async () => {
+    runBoundedProcess.mockResolvedValue(
+      ytdlpLine('m3u8_native https://pull-hls-l1-sg01.tiktokcdn.com/game/stream.m3u8'),
+    );
+    const tiktok = await service.resolve(LivePlatform.TIKTOK, youtube, true);
+    expect(tiktok?.hostSuffixes).toEqual(['tiktokcdn.com', 'tiktokcdn-us.com', 'realcrius.com']);
+    const kick = await service.resolve(LivePlatform.KICK, youtube, true);
+    expect(kick?.hostSuffixes).toEqual(['tiktokcdn.com']);
+  });
+
+  it('refuses an encrypted live playlist (it would never caption), keeps METHOD=NONE', async () => {
+    runBoundedProcess.mockResolvedValue(ytdlpLine('m3u8 https://a.akamaized.net/p.m3u8'));
+    fetcher.fetchObject.mockResolvedValueOnce({
+      body: Buffer.from(
+        '#EXTM3U\n#EXT-X-KEY:METHOD=AES-128,URI="https://a.akamaized.net/k"\n#EXTINF:2,\ns.ts',
+      ),
+    });
+    await expect(service.probe(LivePlatform.RAIPLAY, youtube, true)).resolves.toBeNull();
+    fetcher.fetchObject.mockResolvedValueOnce({
+      body: Buffer.from('#EXTM3U\n#EXT-X-KEY:METHOD=NONE\n#EXTINF:2,\ns.ts'),
+    });
+    await expect(service.probe(LivePlatform.RAIPLAY, youtube, true)).resolves.not.toBeNull();
+  });
+
+  it('runs at most 4 yt-dlp lookups at once; a 5th waits for a free slot instead of failing', async () => {
     let release: () => void = () => {};
     const gate = new Promise<void>((done) => {
       release = done;
@@ -155,11 +185,34 @@ describe('ServerPullResolverService', () => {
     const pending = ['a', 'b', 'c', 'd'].map((id) =>
       service.resolve(LivePlatform.KICK, { ...youtube, id }),
     );
-    await expect(service.resolve(LivePlatform.KICK, { ...youtube, id: 'e' })).resolves.toBeNull();
+    const fifth = service.resolve(LivePlatform.KICK, { ...youtube, id: 'e' });
+    await new Promise((done) => setTimeout(done, 50));
     expect(runBoundedProcess).toHaveBeenCalledTimes(4);
     release();
     await Promise.all(pending);
-    await service.resolve(LivePlatform.KICK, { ...youtube, id: 'f' });
+    await expect(fifth).resolves.toMatchObject({ hostSuffixes: ['live-video.net'] });
     expect(runBoundedProcess).toHaveBeenCalledTimes(5);
+  });
+
+  it('retries YouTube with the android_vr client only when YouTube blocked the server', async () => {
+    runBoundedProcess
+      .mockResolvedValueOnce({
+        exitCode: 1,
+        stdout: Buffer.alloc(0),
+        stderrTail: "ERROR: [youtube] x: Sign in to confirm you're not a bot. Use --cookies",
+      })
+      .mockResolvedValueOnce(ytdlpLine('m3u8_native https://manifest.googlevideo.com/p.m3u8 vid'));
+    const youtubeLink = { ...youtube, watchUrl: 'https://www.youtube.com/watch?v=abcdefghijk' };
+    await expect(service.resolve(LivePlatform.YOUTUBE, youtubeLink)).resolves.toMatchObject({
+      hostSuffixes: ['googlevideo.com'],
+    });
+    const [, retryArgs] = runBoundedProcess.mock.calls[1] as [string, string[]];
+    expect(retryArgs).toContain('youtube:player_client=android_vr');
+
+    runBoundedProcess.mockClear();
+    runBoundedProcess.mockResolvedValueOnce(ytdlpLine('', 0));
+    await service.resolve(LivePlatform.YOUTUBE, { ...youtubeLink, id: 'not-live' });
+    // Not live is final: no second client.
+    expect(runBoundedProcess).toHaveBeenCalledTimes(1);
   });
 });

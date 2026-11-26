@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 
 import { LiveStreamEventType } from '../../../common/enums/live-stream-event-type.enum';
-import { baseLanguage } from '../../../common/utilities/language.utility';
+import { baseLanguage, isInLanguage } from '../../../common/utilities/language.utility';
 import { introducesLinksOrMarkup } from '../../../common/utilities/plain-text.utility';
 import { LivePipelineStage, LiveTranslationTarget } from '../../../generated/prisma';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
@@ -14,6 +14,7 @@ import {
   TRANSLATION_CAPTION_BATCH,
   TRANSLATION_CAPTION_MAX_WAIT_MS,
   TRANSLATION_LANGUAGE_CACHE_MS,
+  TRANSLATION_MAX_ATTEMPTS,
   TRANSLATION_MAX_OUTPUT_TOKENS,
 } from '../constants/processing.constants';
 import {
@@ -166,11 +167,32 @@ export class TranslationManager {
     }
   }
 
+  /**
+   * Translates caption lines into `language`, retrying the lines whose answer was missing, unsafe or
+   * not really in `language` (a model can echo the source), at most TRANSLATION_MAX_ATTEMPTS times.
+   */
   private async translateCaptionBatch(
     context: WorkerContext,
     lines: readonly TranscriptLine[],
     language: string,
   ): Promise<Map<string, string>> {
+    const accepted = new Map<string, string>();
+    for (let attempt = 0; attempt < TRANSLATION_MAX_ATTEMPTS; attempt += 1) {
+      const pending = lines.filter((line) => !accepted.has(line.id));
+      if (pending.length === 0) break;
+      const fresh = await this.translateCaptionAttempt(context, pending, language);
+      if (fresh === null) break;
+      for (const [id, text] of fresh) accepted.set(id, text);
+    }
+    return accepted;
+  }
+
+  /** One model call for `lines`; null when no model answered at all. */
+  private async translateCaptionAttempt(
+    context: WorkerContext,
+    lines: readonly TranscriptLine[],
+    language: string,
+  ): Promise<Map<string, string> | null> {
     const source = lines
       .map((line, index) => `${String(index)}: ${sanitizeStreamText(line.text)}`)
       .join('\n');
@@ -179,15 +201,17 @@ export class TranslationManager {
       CAPTION_TRANSLATION_SYSTEM_PROMPT,
       `TARGET_LANGUAGE: ${language}\n${streamDataBlock(source)}`,
     );
-    const parsed = reply
-      ? captionTranslationReplySchema.safeParse(extractJsonObject(reply.content))
-      : null;
+    if (!reply) return null;
+    const parsed = captionTranslationReplySchema.safeParse(extractJsonObject(reply.content));
     const accepted = new Map<string, string>();
-    for (const item of parsed?.success ? parsed.data.items : []) {
+    for (const item of parsed.success ? parsed.data.items : []) {
       const line = lines[item.id];
-      if (line && !introducesLinksOrMarkup(item.text, line.text)) accepted.set(line.id, item.text);
+      const usable =
+        line !== undefined &&
+        !introducesLinksOrMarkup(item.text, line.text) &&
+        isInLanguage(item.text, language);
+      if (line && usable) accepted.set(line.id, item.text);
     }
-    if (!reply) return accepted;
     await this.writer.commit(context.lease, async (tx) => {
       await this.recordCost(tx, context, reply, accepted.size > 0);
       for (const [targetId, text] of accepted) {
@@ -207,22 +231,37 @@ export class TranslationManager {
     return accepted;
   }
 
+  /** A card in `language`, retried when the answer is unusable or not really in `language`. */
   private async translateCardText(
     context: WorkerContext,
     card: CardTranslationTarget,
     language: string,
   ): Promise<{ title: string; text: string } | null> {
+    for (let attempt = 0; attempt < TRANSLATION_MAX_ATTEMPTS; attempt += 1) {
+      const result = await this.translateCardAttempt(context, card, language);
+      if (result.done) return result.value;
+    }
+    return null;
+  }
+
+  private async translateCardAttempt(
+    context: WorkerContext,
+    card: CardTranslationTarget,
+    language: string,
+  ): Promise<{ done: boolean; value: { title: string; text: string } | null }> {
     const source = `TITLE: ${sanitizeStreamText(card.title)}\nTEXT: ${sanitizeStreamText(card.body)}`;
     const reply = await this.call(
       context,
       CARD_TRANSLATION_SYSTEM_PROMPT,
       `TARGET_LANGUAGE: ${language}\n${streamDataBlock(source)}`,
     );
-    if (!reply) return null;
+    // No model answered: another try would fail the same way.
+    if (!reply) return { done: true, value: null };
     const parsed = cardTranslationReplySchema.safeParse(extractJsonObject(reply.content));
     const ok =
       parsed.success &&
-      !introducesLinksOrMarkup(`${parsed.data.title}\n${parsed.data.text}`, source);
+      !introducesLinksOrMarkup(`${parsed.data.title}\n${parsed.data.text}`, source) &&
+      isInLanguage(`${parsed.data.title} ${parsed.data.text}`, language);
     await this.writer.commit(context.lease, async (tx) => {
       await this.recordCost(tx, context, reply, ok);
       if (parsed.success && ok) {
@@ -239,7 +278,7 @@ export class TranslationManager {
         );
       }
     });
-    return parsed.success && ok ? parsed.data : null;
+    return parsed.success && ok ? { done: true, value: parsed.data } : { done: false, value: null };
   }
 
   private async store(

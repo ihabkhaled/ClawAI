@@ -31,6 +31,7 @@ describe('RunWorker', () => {
       dropRun: vi.fn(),
     },
     vision: { maybeSample: vi.fn() },
+    reports: { writeReport: vi.fn() },
   };
   const source = { poll: vi.fn(), dispose: vi.fn() };
   const worker = (): RunWorker => new RunWorker(deps as never, context, source as never);
@@ -101,6 +102,22 @@ describe('RunWorker', () => {
     const summarizeOrder = deps.summaries.summarize.mock.invocationCallOrder[0] ?? 0;
     const finalOrder = deps.summaries.summarizeFinal.mock.invocationCallOrder[0] ?? 0;
     expect(summarizeOrder).toBeLessThan(finalOrder);
+  });
+
+  it('writes the video report after the final card, and still ends when the report fails', async () => {
+    deps.writer.renew.mockResolvedValue(LiveRunStatus.ACTIVE);
+    source.poll.mockResolvedValueOnce({ chunks: [], ended: true, latestSegmentFile: null });
+    deps.reports.writeReport.mockRejectedValueOnce(new Error('model down'));
+    await worker().run();
+    const finalOrder = deps.summaries.summarizeFinal.mock.invocationCallOrder[0] ?? 0;
+    const reportOrder = deps.reports.writeReport.mock.invocationCallOrder[0] ?? 0;
+    expect(finalOrder).toBeLessThan(reportOrder);
+    expect(deps.lifecycle.finish).toHaveBeenCalledWith(
+      context,
+      LiveRunStatus.ENDED,
+      'SOURCE_ENDED',
+      0,
+    );
   });
 
   it('never re-summarizes at the end when everything was already summarized', async () => {

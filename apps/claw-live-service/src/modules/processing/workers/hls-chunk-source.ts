@@ -58,6 +58,8 @@ export class HlsChunkSource implements RunChunkSource {
   /** Server pull: the resolved playlist (its token expires), its CDN hosts and when it resolved. */
   private pulledOrigin: URL | null = null;
   private pulledSuffixes: readonly string[] = [];
+  /** The CDN's expected request headers for a pulled stream (yt-dlp's allow-listed ones). */
+  private pulledHeaders: Readonly<Record<string, string>> = {};
   private pulledAt = 0;
 
   constructor(
@@ -107,7 +109,12 @@ export class HlsChunkSource implements RunChunkSource {
   private async fetchMediaPlaylist(): Promise<ParsedPlaylist> {
     const url = this.mediaUrl ?? (await this.originUrl());
     const host = this.hostPin();
-    const fetched = await this.fetcher.fetchObject(url, host, HLS_PLAYLIST_MAX_BYTES);
+    const fetched = await this.fetcher.fetchObject(
+      url,
+      host,
+      HLS_PLAYLIST_MAX_BYTES,
+      this.pulledHeaders,
+    );
     const parsed = parsePlaylist(fetched.body.toString('utf8'));
     if (parsed.segments.length > 0 || parsed.variants.length === 0) {
       this.mediaUrl = url;
@@ -116,7 +123,12 @@ export class HlsChunkSource implements RunChunkSource {
     const variant = pickPlaylistVariant(parsed.variants, this.context.mode !== LiveMode.AUDIO);
     if (!variant) return parsed;
     this.mediaUrl = new URL(variant.uri, url);
-    const media = await this.fetcher.fetchObject(this.mediaUrl, host, HLS_PLAYLIST_MAX_BYTES);
+    const media = await this.fetcher.fetchObject(
+      this.mediaUrl,
+      host,
+      HLS_PLAYLIST_MAX_BYTES,
+      this.pulledHeaders,
+    );
     return parsePlaylist(media.body.toString('utf8'));
   }
 
@@ -128,6 +140,7 @@ export class HlsChunkSource implements RunChunkSource {
     if (resolved === null) throw new Error('LIVE_SERVER_PULL_UNAVAILABLE');
     this.pulledOrigin = resolved.playlist;
     this.pulledSuffixes = resolved.hostSuffixes;
+    this.pulledHeaders = resolved.headers;
     this.pulledAt = Date.now();
     return resolved.playlist;
   }
@@ -170,6 +183,7 @@ export class HlsChunkSource implements RunChunkSource {
         new URL(segment.uri, base),
         this.hostPin(),
         HLS_SEGMENT_MAX_BYTES,
+        this.pulledHeaders,
       );
       body = fetched.body;
       if (playlist.mapUri) {
@@ -178,6 +192,7 @@ export class HlsChunkSource implements RunChunkSource {
             new URL(playlist.mapUri, base),
             this.hostPin(),
             HLS_SEGMENT_MAX_BYTES,
+            this.pulledHeaders,
           )
         ).body;
         body = Buffer.concat([this.initSegment, body]);

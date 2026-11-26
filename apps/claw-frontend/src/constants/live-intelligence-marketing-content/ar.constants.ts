@@ -12,7 +12,7 @@ export const AR_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   eyebrow: 'جديد في ClawAI: Live & Video Intelligence',
   title: 'أي بث مباشر أو فيديو، مفهومًا بلغتك',
   intro:
-    'الصق رابط بث مباشر أو فيديو مسجّل من أكثر من 15 منصة. يتابعه ClawAI معك بترجمة نصية مباشرة وخلاصة متجددة من الملخصات وأبرز اللحظات، أو يحوّل الفيديو كاملًا إلى تقرير واحد واضح بنقرة واحدة. كل ذلك يعمل على خوادم ClawAI، لذا يعمل على أي جهاز، بما في ذلك هاتفك.',
+    'الصق رابط بث مباشر أو فيديو مسجّل من أكثر من 50 منصة. يتابعه ClawAI معك بترجمة نصية مباشرة وخلاصة متجددة من الملخصات وأبرز اللحظات، أو يحوّل الفيديو كاملًا إلى تقرير واحد واضح بنقرة واحدة. كل ذلك يعمل على خوادم ClawAI، لذا يعمل على أي جهاز، بما في ذلك هاتفك.',
   openCta: 'الصق رابطًا الآن',
   signUpCta: 'أنشئ حسابًا مجانيًا',
   howItWorksCta: 'تعرّف على طريقة العمل',
@@ -158,7 +158,7 @@ export const AR_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     'اختر أيًّا من لغات التطبيق الـ13: الإنجليزية أو العربية أو الألمانية أو الإسبانية أو الفارسية أو الفرنسية أو الهندية أو الإيطالية أو اليابانية أو البرتغالية أو الروسية أو التايلاندية أو الصينية. ويمكن للمتحدث أن يتكلم بأي لغة.',
     'حين يتحدث المتحدث بلغتك أصلًا، تقرأ كلماته كما قالها تمامًا. وحين لا يفعل، تُترجَم الترجمة النصية والملخصات وأبرز اللحظات، وتظهر الترجمة مكان الأصل.',
   ],
-  platformsTitle: 'أكثر من 15 منصة',
+  platformsTitle: 'أكثر من 50 منصة',
   platformsBody:
     'YouTube وTwitch وKick وFacebook وTikTok وInstagram وX (Twitter) وBilibili وNiconico وغيرها الكثير. يعمل مع البث المباشر والفيديوهات المسجّلة على حد سواء.',
   platformsCta: 'اطّلع على كل المنصات',
@@ -220,7 +220,7 @@ export const AR_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     {
       question: 'ما المنصات المدعومة؟',
       answer:
-        'أكثر من 15 منصة، منها YouTube وTwitch وKick وFacebook وTikTok وInstagram وX (Twitter) وBilibili وNiconico. وتجد القائمة الكاملة في صفحة المنصات. لا يمكن قراءة إلا الفيديوهات والبث العامة، وDiscord غير مدعوم لأنه لا يوفر روابط عامة.',
+        'أكثر من 50 منصة، منها YouTube وTwitch وKick وFacebook وTikTok وInstagram وX (Twitter) وBilibili وNiconico. وتجد القائمة الكاملة في صفحة المنصات. لا يمكن قراءة إلا الفيديوهات والبث العامة، وDiscord غير مدعوم لأنه لا يوفر روابط عامة.',
     },
     {
       question: 'هل ينشر ClawAI أو يدردش نيابةً عني؟',
@@ -328,7 +328,7 @@ export const AR_LIVE_INTELLIGENCE_MARKETING_SEO: LiveIntelligenceMarketingSeo = 
   overview: {
     title: 'Live & Video Intelligence: ترجمة نصية مباشرة وملخص فيديو بنقرة واحدة',
     description:
-      'الصق رابط بث مباشر أو فيديو من YouTube وTwitch وTikTok وأكثر من 15 منصة. احصل على ترجمة نصية مباشرة بلغتك، وخلاصة ذكية من الملخصات وأبرز اللحظات، أو ملخص فيديو بنقرة واحدة مع التوقيتات. يعمل على أي جهاز.',
+      'الصق رابط بث مباشر أو فيديو من YouTube وTwitch وTikTok وأكثر من 50 منصة. احصل على ترجمة نصية مباشرة بلغتك، وخلاصة ذكية من الملخصات وأبرز اللحظات، أو ملخص فيديو بنقرة واحدة مع التوقيتات. يعمل على أي جهاز.',
     keywords: [
       'ترجمة البث المباشر',
       'تلخيص فيديو بالذكاء الاصطناعي',

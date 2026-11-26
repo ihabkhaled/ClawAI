@@ -15,6 +15,7 @@ import type {
   LiveIntelligencePlatformsPageDictionary,
 } from '@/types/live-intelligence-marketing-content.types';
 import type {
+  LiveMarketingPlatform,
   LiveIntelligenceMarketingImageView,
   LiveIntelligenceMarketingVideoView,
   LiveMarketingPlatformGroupView,
@@ -81,4 +82,17 @@ export function groupLiveMarketingPlatforms(
 /** Every platform name, in registry order, for the teaser on the overview page. */
 export function listLiveMarketingPlatformNames(): string[] {
   return LIVE_MARKETING_PLATFORMS.map((platform) => platform.name);
+}
+
+/** How many listed platforms are claimed for live streams and for recorded videos. */
+export function countLiveMarketingPlatforms(): { live: number; videos: number } {
+  return {
+    live: LIVE_MARKETING_PLATFORMS.filter((platform) => platform.live).length,
+    videos: LIVE_MARKETING_PLATFORMS.filter((platform) => platform.recorded).length,
+  };
+}
+
+/** Every listed platform sorted by name, for the in-app list. */
+export function sortedLiveMarketingPlatforms(): LiveMarketingPlatform[] {
+  return LIVE_MARKETING_PLATFORMS.toSorted((a, b) => a.name.localeCompare(b.name));
 }

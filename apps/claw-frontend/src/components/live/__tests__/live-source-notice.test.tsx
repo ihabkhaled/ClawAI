@@ -67,6 +67,18 @@ describe('LiveSourceNotice', () => {
     expect(notice).toHaveTextContent('Platform: Dailymotion');
   });
 
+  it('LINK_ONLY after a failed server read: says ClawAI could not read it, never offers the device', () => {
+    renderNotice({
+      ...TWITCH,
+      capability: LiveCapability.LINK_ONLY,
+      reasonCode: 'SERVER_PULL_UNAVAILABLE',
+      platform: LivePlatform.YOUTUBE,
+    });
+    const notice = screen.getByTestId('live-link-only-notice');
+    expect(notice).toHaveTextContent('ClawAI could not read this YouTube link right now');
+    expect(notice).not.toHaveTextContent('device');
+  });
+
   it('BROWSER_CAPTURE after a failed server pull: explains the device audio fallback', () => {
     renderNotice({
       ...TWITCH,

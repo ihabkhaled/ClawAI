@@ -11,6 +11,9 @@ const IDENTICAL_ALLOWED = new Set([
   // "Video" and "Live & Videos" are the German and Italian words too (2026-11-24).
   'modal.videoBadge',
   'nav.live',
+  // The "Live" and "Video" tags of the supported-platforms list (2026-11-26), same words in de/it.
+  'platform.supportedLiveTag',
+  'platform.supportedVideoTag',
 ]);
 
 function flatten(node: unknown, prefix = ''): Record<string, string> {

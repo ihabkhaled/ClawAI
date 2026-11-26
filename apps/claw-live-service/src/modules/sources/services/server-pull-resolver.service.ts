@@ -3,11 +3,11 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { AppConfig } from '../../../app/config/app.config';
 import { pinnedGet } from '../../../common/utilities/pinned-request.utility';
-import { runBoundedProcess } from '../../../common/utilities/process.utility';
 import { LivePlatform } from '../../../generated/prisma';
 import {
   SERVER_PULL_CACHE_MAX_ENTRIES,
   SERVER_PULL_CACHE_TTL_MS,
+  SERVER_PULL_EXTRA_CDN_SUFFIXES,
   SERVER_PULL_PLATFORMS,
   SERVER_PULL_REQUEST_TIMEOUT_MS,
   TWITCH_CDN_HOST_SUFFIXES,
@@ -18,18 +18,20 @@ import {
   TWITCH_USHER_BASE_URL,
   TWITCH_USHER_RANDOM_MAX,
   YTDLP_ARGS,
-  YTDLP_BINARY,
-  YTDLP_MAX_CONCURRENT,
-  YTDLP_MAX_OUTPUT_BYTES,
   YTDLP_TIMEOUT_MS,
 } from '../constants/server-pull.constants';
 import { HLS_PLAYLIST_MAX_BYTES } from '../constants/sources.constants';
 import type { PlatformMatch } from '../types/platform.types';
 import type { ResolvedPull } from '../types/server-pull.types';
-import { parseYtdlpStreamLine, streamHostSuffix } from '../utilities/server-pull-url.utility';
+import {
+  isEncryptedPlaylist,
+  parseYtdlpStreamLine,
+  streamHostSuffix,
+} from '../utilities/server-pull-url.utility';
 import { parseTwitchPlaybackToken } from '../utilities/twitch-playback-token.utility';
 import { HlsFetcherService } from './hls-fetcher.service';
 import { SourceUrlGuardService } from './source-url-guard.service';
+import { YtdlpRunnerService } from './ytdlp-runner.service';
 
 /**
  * Turns a platform stream into its live HLS playlist (server pull). Twitch: the token its own web
@@ -45,11 +47,11 @@ export class ServerPullResolverService {
   private readonly logger = new Logger(ServerPullResolverService.name);
 
   private readonly cache = new Map<string, { at: number; pull: Promise<ResolvedPull | null> }>();
-  private ytdlpRunning = 0;
 
   constructor(
     private readonly guard: SourceUrlGuardService,
     private readonly fetcher: HlsFetcherService,
+    private readonly ytdlp: YtdlpRunnerService,
   ) {}
 
   supports(platform: LivePlatform | null): boolean {
@@ -73,13 +75,22 @@ export class ServerPullResolverService {
 
   /** True when the playlist resolves AND answers (an offline channel gets none or a 404). */
   /** The resolved pull when its playlist really answers (the stream is live and readable), else null. */
-  async probe(platform: LivePlatform | null, match: PlatformMatch): Promise<ResolvedPull | null> {
-    const pull = await this.resolve(platform, match);
+  async probe(
+    platform: LivePlatform | null,
+    match: PlatformMatch,
+    fresh = false,
+  ): Promise<ResolvedPull | null> {
+    const pull = await this.resolve(platform, match, fresh);
     return pull === null
       ? null
       : this.fetcher
-          .fetchObject(pull.playlist, pull.hostSuffixes, HLS_PLAYLIST_MAX_BYTES)
-          .then(() => pull)
+          .fetchObject(pull.playlist, pull.hostSuffixes, HLS_PLAYLIST_MAX_BYTES, pull.headers)
+          .then((fetched) => {
+            if (!isEncryptedPlaylist(fetched.body.toString('utf8'))) return pull;
+            // Encrypted segments never decode, so the run would caption nothing (RaiNews24, 2026-11-26).
+            this.logger.warn(`probe ${String(platform)}:${match.id} playlist is encrypted`);
+            return null;
+          })
           .catch(() => {
             this.logger.warn(`probe ${String(platform)}:${match.id} playlist did not answer`);
             return null;
@@ -93,7 +104,7 @@ export class ServerPullResolverService {
       channel &&
       AppConfig.get().LIVE_TWITCH_CLIENT_ID !== ''
       ? this.resolveTwitch(match.id)
-      : this.resolveWithYtdlp(match.watchUrl);
+      : this.resolveWithYtdlp(platform, match.watchUrl);
   }
 
   private remember(key: string, pull: Promise<ResolvedPull | null>): void {
@@ -106,35 +117,35 @@ export class ServerPullResolverService {
   }
 
   /**
-   * yt-dlp prints the chosen HLS format's protocol and URL; no shell, argv only, bounded in time,
-   * output and concurrency (a full slot table answers null at once: the caller falls back).
+   * yt-dlp prints the chosen HLS format's protocol and URL (through YtdlpRunnerService: argv only,
+   * bounded, a free slot waited for, YouTube's blocked default client retried with the fallbacks).
    */
-  private async resolveWithYtdlp(watchUrl: string): Promise<ResolvedPull | null> {
-    if (this.ytdlpRunning >= YTDLP_MAX_CONCURRENT) {
-      this.logger.warn('yt-dlp busy: concurrency cap reached, falling back');
-      return null;
-    }
-    this.ytdlpRunning += 1;
-    const result = await runBoundedProcess(YTDLP_BINARY, [...YTDLP_ARGS, '--', watchUrl], {
+  private async resolveWithYtdlp(
+    platform: LivePlatform,
+    watchUrl: string,
+  ): Promise<ResolvedPull | null> {
+    const result = await this.ytdlp.run({
+      args: YTDLP_ARGS,
+      watchUrl,
       timeoutMs: YTDLP_TIMEOUT_MS,
-      maxOutputBytes: YTDLP_MAX_OUTPUT_BYTES,
-    }).finally(() => {
-      this.ytdlpRunning -= 1;
+      accept: (run) =>
+        run.exitCode === 0 && parseYtdlpStreamLine(run.stdout.toString('utf8')) !== null,
     });
-    const playlist =
-      result.exitCode === 0 ? parseYtdlpStreamLine(result.stdout.toString('utf8')) : null;
-    if (playlist === null) {
-      // Exit code and the tail of yt-dlp's own error line only (no cookies or tokens are ever passed).
-      this.logger.warn(
-        `yt-dlp found no live HLS for ${watchUrl}: exit=${String(result.exitCode)} ${result.stderrTail.slice(-200).trim()}`,
-      );
-    }
+    const playlist = result === null ? null : parseYtdlpStreamLine(result.stdout.toString('utf8'));
     return playlist === null
       ? null
       : {
           playlist: playlist.url,
-          hostSuffixes: [streamHostSuffix(playlist.url)],
+          // The playlist's own domain plus the platform's reviewed second CDN (TikTok's variants
+          // live on realcrius.com, 2026-11-26); the SSRF guard still refuses private addresses.
+          hostSuffixes: [
+            ...new Set([
+              streamHostSuffix(playlist.url),
+              ...(SERVER_PULL_EXTRA_CDN_SUFFIXES.get(platform) ?? []),
+            ]),
+          ],
           videoId: playlist.videoId,
+          headers: playlist.headers,
         };
   }
 
@@ -164,6 +175,6 @@ export class ServerPullResolverService {
     playlist.searchParams.set('allow_source', 'true');
     playlist.searchParams.set('allow_audio_only', 'true');
     playlist.searchParams.set('p', String(randomInt(TWITCH_USHER_RANDOM_MAX)));
-    return { playlist, hostSuffixes: TWITCH_CDN_HOST_SUFFIXES, videoId: null };
+    return { playlist, hostSuffixes: TWITCH_CDN_HOST_SUFFIXES, videoId: null, headers: {} };
   }
 }

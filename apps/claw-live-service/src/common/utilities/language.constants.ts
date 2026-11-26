@@ -59,3 +59,18 @@ export const SCRIPT_MARKER_LANGUAGES: ReadonlySet<string> = new Set(['fa', 'ur',
 export const SCRIPT_LANGUAGES: ReadonlySet<string> = new Set(
   SCRIPT_LANGUAGE_RULES.map((rule) => rule.language),
 );
+
+/**
+ * Script languages whose translation must come back in exactly their own script (a Russian target
+ * answered in Ukrainian-looking Cyrillic still passes; an Arabic target answered in Persian does not
+ * need to fail, so Arabic-script languages are not strict).
+ */
+export const SCRIPT_LANGUAGES_STRICT: ReadonlySet<string> = new Set([
+  'ja',
+  'zh',
+  'ko',
+  'th',
+  'hi',
+  'el',
+  'he',
+]);

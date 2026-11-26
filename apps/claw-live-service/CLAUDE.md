@@ -59,10 +59,12 @@ this file disagree, fix one in the same change) - decision:
   is honoured) or, for everything else, the pinned `yt-dlp` binary (argv only, `--use-extractors default,-generic`, the
   canonical watch URL we built, only an https HLS result, 30 s, cached 60 s). One `PUBLIC` run serves every viewer; the
   worker's pin is the resolved CDN's registrable domain; policy `serverPullPlatforms: []` turns it off with no network
-  call. Never run yt-dlp through a shell or on the raw pasted URL. When the server cannot read a stream, YouTube, Kick,
-  Facebook and Twitch are `BROWSER_CAPTURE`: the viewer's own tab audio, or its
-  microphone on phones, posted as WAV chunks (owner-accepted terms risk, decision 2026-11-22). The other registry platforms are `LINK_ONLY` (session `UNSUPPORTED`, no run, no billing, like the old
-  `PLAYER_ONLY`); Discord is refused with `LIVE_DISCORD_PRIVATE`. YouTube `@handle` and vanity links are refused with
+  call. Never run yt-dlp through a shell or on the raw pasted URL; every call goes through `YtdlpRunnerService` (cap 4,
+  a 5th waits up to 30 s; YouTube retried with `player_client=android_vr` only on a bot-check). **Server only (owner
+  2026-11-26):** an unreadable link is read once more after 2 s, then it is `LINK_ONLY` with reason
+  `SERVER_PULL_UNAVAILABLE`; it NEVER falls back to the viewer's tab audio or microphone (`BROWSER_CAPTURE` is no
+  longer chosen; the capture code serves only old sessions). `LINK_ONLY` = session `UNSUPPORTED`, no run, no billing;
+  Discord is refused with `LIVE_DISCORD_PRIVATE`. YouTube `@handle` and vanity links are refused with
   `LIVE_YOUTUBE_HANDLE_UNSUPPORTED`.
 - **A capture run is private and AUDIO only.** Scope `PRIVATE:<userId>`; mode forced to `AUDIO`; `run.captureSessionId`
   is the only session allowed to push audio (the newest session of the viewer takes it over). No chunk for 20 s →
@@ -110,3 +112,21 @@ this file disagree, fix one in the same change) - decision:
 - **End of a run:** `RunWorker.summarizeTheRest` summarizes what was never summarized (and samples the last frame)
   before `summarizeFinal`, which only reads SUMMARY cards: a short video used to end with no report. Resolve returns
   `portrait` (reported frame size, else the link shape).
+
+## Round 2 (2026-11-26, ADR-221 addendum)
+
+- **Translations** are checked for the target script (`isInLanguage`) and asked again up to 3 times; never publish a
+  "translation" in the source language.
+- **Songs:** file-service marks sung lines with ♪; `lyricResearchQuery` searches the longest sung line + "lyrics"
+  when the model asked for no search (max 3 per run). Lyrics are never the singer's real state (every prompt says so).
+- **Agents:** `LiveCouncilService.draftThenMerge` runs the policy's `councilModelChain` (1..3) in parallel, then the
+  main chain merges. Summaries, highlights, FINAL and the report use it; captions never do. Add a new analysis call
+  through it, never through `LiveModelClient` directly.
+- **Video report:** `ReportManager.writeReport` runs after `summarizeFinal` on `SUMMARY:` runs only: 5-minute parts →
+  moments about every 10 s, then the overview; one `REPORT` event (`eventKey: report`) in the viewer's language.
+- **Pulling a stream (round 2):** yt-dlp prints `%(http_headers)j`; only an allow-list (user-agent, accept,
+  accept-language, referer, origin, sec-fetch-mode) is forwarded to the CDN by the probe and the worker, never a
+  cookie (Roya, RaiPlay, Odysee, VK answer 403 without them). An encrypted playlist (`#EXT-X-KEY` other than
+  `METHOD=NONE`) is refused at the probe. A second CDN joins the host pin only through the reviewed
+  `SERVER_PULL_EXTRA_CDN_SUFFIXES` (TikTok `realcrius.com`, CBS `cbsivideo.com`). A platform is claimed live only after
+  a real session produced captions (`live-language-matrix.mjs`, `LIVE_QA_PARALLEL=2`).

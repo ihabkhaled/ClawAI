@@ -51,10 +51,11 @@ export const TRANSCRIBE_CHUNK_UNAVAILABLE_MESSAGE =
  * stored with `language: null`, so a viewer in the speaker's own language got a "translation" of
  * the same words. The model names the spoken language in a tag on the first line; the tag is
  * stripped before the text is returned. Sung lyrics are words too: a stream of a song must caption.
+ * Sung lines start with ♪ (2026-11-26): live-service reads it as "a song" and searches the lyrics.
  */
 export const TRANSCRIBE_CHUNK_INSTRUCTION = [
   'Transcribe the attached audio verbatim, in the language and script it is spoken or sung in. Never translate.',
-  'Sung lyrics count as speech: transcribe them.',
+  'Sung lyrics count as speech: transcribe them, and start every sung line with the note sign ♪ so a reader knows it is a song, not speech.',
   'Start the answer with the tag [[lang:xx]] where xx is the ISO 639-1 code of the main spoken language (for example [[lang:ar]], [[lang:en]]), then the words.',
   'Output only the tag and the spoken words as plain text: no commentary, no summary, no timestamps, no speaker labels.',
   'If the audio contains no speech and no singing, output nothing at all.',
@@ -67,9 +68,9 @@ export const TRANSCRIBE_CHUNK_LANGUAGE_TAG =
 
 /**
  * A chunk "transcript" with no words: only digits, clock stamps and separators ("00:00 00:01 00:02",
- * seen on music, 2026-11-24). It is not speech and never becomes a caption.
+ * seen on music, 2026-11-24), or only note signs. It is not speech and never becomes a caption.
  */
-export const TRANSCRIBE_CHUNK_NUMBERS_ONLY = /^[\d\s:.,;\-–—]*$/u;
+export const TRANSCRIBE_CHUNK_NUMBERS_ONLY = /^[\d\s:.,;\-–—♪]*$/u;
 
 /** One bracketed sound tag ("[Music]", "(applause)"); a chunk made only of these is not speech. */
 export const TRANSCRIBE_CHUNK_SOUND_TAG = /[[(][^\])]{1,30}[\])]/gu;

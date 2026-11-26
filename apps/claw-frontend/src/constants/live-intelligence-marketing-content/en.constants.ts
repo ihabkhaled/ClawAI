@@ -8,7 +8,7 @@ import type {
  * The English source of truth for the public Live & Video Intelligence pages.
  *
  * Every claim comes from the owner's decisions of 2026-11-24 and ADR-221: a link to a live stream
- * or a recorded video from 15+ platforms is read on ClawAI's servers (any device, phones
+ * or a recorded video from 50+ platforms is read on ClawAI's servers (any device, phones
  * included); live analysis with captions about 7 to 12 seconds behind the speech, or a one-click
  * summary of a recorded video up to 3 hours long; captions, summaries and highlights in any of the
  * 13 app languages; Audio, Audio + Vision and Smart Auto; one optional web search for context;
@@ -20,7 +20,7 @@ export const EN_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
   eyebrow: 'New in ClawAI: Live & Video Intelligence',
   title: 'Any live stream or video, understood in your language',
   intro:
-    'Paste a link to a live stream or a recorded video from more than 15 platforms. ClawAI follows it with live captions, a running feed of summaries and highlights, or turns the whole video into one clear report with a single click. It runs on ClawAI’s servers, so it works on any device, your phone included.',
+    'Paste a link to a live stream or a recorded video from more than 50 platforms. ClawAI follows it with live captions, a running feed of summaries and highlights, or turns the whole video into one clear report with a single click. It runs on ClawAI’s servers, so it works on any device, your phone included.',
   openCta: 'Paste a link now',
   signUpCta: 'Create a free account',
   howItWorksCta: 'See how it works',
@@ -167,7 +167,7 @@ export const EN_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     'Choose any of the 13 languages of the app: English, Arabic, German, Spanish, Persian, French, Hindi, Italian, Japanese, Portuguese, Russian, Thai or Chinese. The speaker can talk in any language.',
     'When the speaker already talks in your language, you read their exact words. When they do not, the captions, summaries and highlights are translated, and the translation appears instead of the original.',
   ],
-  platformsTitle: 'More than 15 platforms',
+  platformsTitle: 'More than 50 platforms',
   platformsBody:
     'YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X (Twitter), Bilibili, Niconico and many more. Live streams and recorded videos both work.',
   platformsCta: 'See every platform',
@@ -229,7 +229,7 @@ export const EN_LIVE_INTELLIGENCE_MARKETING_CONTENT: LiveIntelligenceMarketingDi
     {
       question: 'Which platforms are supported?',
       answer:
-        'More than 15, including YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X (Twitter), Bilibili and Niconico. The platforms page lists them all. Only public videos and streams can be read, and Discord is not supported because it has no public links.',
+        'More than 50, including YouTube, Twitch, Kick, Facebook, TikTok, Instagram, X (Twitter), Bilibili and Niconico. The platforms page lists them all. Only public videos and streams can be read, and Discord is not supported because it has no public links.',
     },
     {
       question: 'Does ClawAI post or chat on my behalf?',
@@ -340,7 +340,7 @@ export const EN_LIVE_INTELLIGENCE_MARKETING_SEO: LiveIntelligenceMarketingSeo = 
   overview: {
     title: 'Live & Video Intelligence: live captions and one-click video summaries',
     description:
-      'Paste a live stream or video link from YouTube, Twitch, TikTok and 15+ platforms. Get live captions in your language, a smart feed of summaries and highlights, or a one-click video summary with timestamps. Works on any device.',
+      'Paste a live stream or video link from YouTube, Twitch, TikTok and 50+ platforms. Get live captions in your language, a smart feed of summaries and highlights, or a one-click video summary with timestamps. Works on any device.',
     keywords: [
       'live stream captions',
       'AI video summary',

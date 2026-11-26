@@ -7,7 +7,8 @@
 //
 //   LIVE_QA_CASES="<url>|<lang>;<url>|<lang>" node --env-file=.env scripts/qa/live-language-matrix.mjs
 //
-// LIVE_QA_MODE (AUDIO | AUDIO_VISION, default AUDIO_VISION), LIVE_QA_WATCH_SECONDS (default 150).
+// LIVE_QA_MODE (AUDIO | AUDIO_VISION, default AUDIO_VISION), LIVE_QA_WATCH_SECONDS (default 150),
+// LIVE_QA_PARALLEL (cases at once, default 2).
 // Credentials: LIVE_QA_EMAIL/LIVE_QA_PASSWORD, else ADMIN_EMAIL/ADMIN_PASSWORD (never printed).
 import { readFileSync } from 'node:fs';
 import { Agent, setGlobalDispatcher } from 'undici';
@@ -17,6 +18,7 @@ const EMAIL = process.env.LIVE_QA_EMAIL ?? process.env.ADMIN_EMAIL;
 const PASSWORD = process.env.LIVE_QA_PASSWORD ?? process.env.ADMIN_PASSWORD;
 const WATCH_SECONDS = Number(process.env.LIVE_QA_WATCH_SECONDS ?? 150);
 const MODE = process.env.LIVE_QA_MODE ?? 'AUDIO_VISION';
+const PARALLEL = Number(process.env.LIVE_QA_PARALLEL ?? 2);
 const CASES = (process.env.LIVE_QA_CASES ?? '')
   .split(';')
   .map((entry) => entry.trim())
@@ -45,6 +47,20 @@ function check(name, ok, detail = '') {
 }
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const base = (value) => (value ?? '').toLowerCase().split(/[-_]/u)[0];
+// The script each viewer language is written in (mirrors the page's LIVE_LANGUAGE_SCRIPT_PATTERNS).
+const SCRIPT_OF = {
+  ar: /\p{Script=Arabic}/gu, fa: /\p{Script=Arabic}/gu, ur: /\p{Script=Arabic}/gu,
+  ru: /\p{Script=Cyrillic}/gu, uk: /\p{Script=Cyrillic}/gu, hi: /\p{Script=Devanagari}/gu,
+  th: /\p{Script=Thai}/gu, zh: /\p{Script=Han}/gu, ja: /[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}]/gu,
+  ko: /\p{Script=Hangul}/gu, he: /\p{Script=Hebrew}/gu, el: /\p{Script=Greek}/gu,
+};
+/** True when at least half of the letters are in the viewer language's script (Latin by default). */
+function inViewerScript(text, language) {
+  const letters = String(text).match(/\p{L}/gu)?.length ?? 0;
+  if (letters === 0) return true;
+  const pattern = SCRIPT_OF[base(language)] ?? /\p{Script=Latin}/gu;
+  return (String(text).match(pattern)?.length ?? 0) / letters >= 0.5;
+}
 const NON_LATIN_VIEWERS = new Set([
   'ar',
   'fa',
@@ -203,6 +219,22 @@ async function runCase(token, { url, language }) {
       );
     }
   }
+  // Owner 2026-11-26: "English selected, but suddenly one highlight is Arabic". What the viewer reads
+  // (the copy in their language, else the original) must be in their script, cards and captions alike.
+  const copies = new Map(
+    events.list
+      .filter((event) => event.language !== undefined && base(event.language) === base(language))
+      .map((event) => [event.data?.eventId ?? event.data?.segmentId, event.data]),
+  );
+  const shown = sourceCards.map((event) => copies.get(event.data?.eventId) ?? event.data);
+  const wrongCards = shown.filter((data) => !inViewerScript(`${data?.title ?? ''} ${data?.body ?? data?.text ?? ''}`, language));
+  check(`${label}: every card the viewer reads is in ${base(language)}`, wrongCards.length === 0, `${wrongCards.length} of ${shown.length} in another script`);
+  for (const data of wrongCards.slice(0, 3)) console.log(`      wrong-script card: ${String(data?.title).slice(0, 80)}`);
+  const shownCaptions = captions.map((event) =>
+    base(event.data?.language) === base(language) ? event.data?.text : (copies.get(event.data?.segmentId)?.text ?? null),
+  ).filter((text) => text !== null);
+  const wrongCaptions = shownCaptions.filter((text) => !inViewerScript(text, language));
+  check(`${label}: every caption the viewer reads is in ${base(language)}`, wrongCaptions.length === 0, `${wrongCaptions.length} of ${shownCaptions.length}`);
   check(
     `${label}: summary cards`,
     cards.length > 0,
@@ -233,7 +265,13 @@ async function main() {
   const login = await call('POST', '/auth/login', null, { email: EMAIL, password: PASSWORD });
   if (login.status >= 300) throw new Error(`login failed ${login.status}`);
   const token = login.data.tokens.accessToken;
-  await Promise.all(CASES.map((entry) => runCase(token, entry)));
+  // At most LIVE_QA_PARALLEL cases at once: every case is one open session, and the policy caps how
+  // many a user may hold (20 at once answered LIVE_SESSION_LIMIT, 2026-11-26).
+  const queue = [...CASES];
+  const workers = Array.from({ length: Math.min(PARALLEL, queue.length) }, async () => {
+    while (queue.length > 0) await runCase(token, queue.shift());
+  });
+  await Promise.all(workers);
 }
 
 main()

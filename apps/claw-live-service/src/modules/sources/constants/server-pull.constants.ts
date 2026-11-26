@@ -39,13 +39,48 @@ export const YTDLP_ARGS: readonly string[] = [
   '--format',
   'w[protocol^=m3u8]/ba[protocol^=m3u8]/b[protocol^=m3u8]',
   '--print',
-  // The video id rides last: a YouTube channel link gets its live chat from it (2026-11-24).
-  '%(protocol)s %(url)s %(id)s',
+  // The video id: a YouTube channel link gets its live chat from it (2026-11-24). Then the request
+  // headers yt-dlp would send: some CDNs answer 403 without them (Roya, RaiPlay, Odysee, 2026-11-26).
+  '%(protocol)s %(url)s %(id)s %(http_headers)j',
 ];
+/** The only yt-dlp headers forwarded to a CDN (lower case): never a cookie or an authorization. */
+export const YTDLP_FORWARDED_HEADERS: ReadonlySet<string> = new Set([
+  'user-agent',
+  'accept',
+  'accept-language',
+  'referer',
+  'origin',
+  'sec-fetch-mode',
+]);
+/** A forwarded header value: printable ASCII, bounded. */
+export const YTDLP_HEADER_VALUE_PATTERN = /^[ -~]{1,512}$/u;
 export const YTDLP_TIMEOUT_MS = 30_000;
 export const YTDLP_MAX_OUTPUT_BYTES = 16 * 1024;
 /** yt-dlp runs at once per replica; past it a resolve fails fast to the capture/link fallback. */
 export const YTDLP_MAX_CONCURRENT = 4;
+/** A run waits this long for a free slot before giving up (it used to give up at once). */
+export const YTDLP_SLOT_WAIT_MS = 30_000;
+export const YTDLP_SLOT_POLL_MS = 250;
+/**
+ * YouTube clients tried, in order, after the default one failed (bot check from a data-centre
+ * address). `android_vr` returned live HLS and recorded videos from production on 2026-11-26 while
+ * the default client was blocked; no cookies or accounts are ever used.
+ */
+export const YTDLP_YOUTUBE_CLIENT_FALLBACKS: readonly (readonly string[])[] = [
+  ['--extractor-args', 'youtube:player_client=android_vr'],
+  ['--extractor-args', 'youtube:player_client=android_vr,web_safari'],
+];
+/** yt-dlp's stderr when YouTube refused this server (bot check, reload, formats withheld). */
+export const YTDLP_YOUTUBE_BLOCKED_PATTERN =
+  /not a bot|--cookies|page needs to be reloaded|Requested format is not available|No video formats found/iu;
+/** Hosts whose links get the YouTube client fallbacks. */
+export const YTDLP_YOUTUBE_HOSTS: ReadonlySet<string> = new Set([
+  'youtube.com',
+  'www.youtube.com',
+  'm.youtube.com',
+  'music.youtube.com',
+  'youtu.be',
+]);
 /** A resolved stream URL is reused this long (resolve-time probe, then the worker's first poll). */
 export const SERVER_PULL_CACHE_TTL_MS = 60_000;
 export const SERVER_PULL_CACHE_MAX_ENTRIES = 256;
@@ -71,3 +106,22 @@ export const PUBLIC_SECOND_LEVEL_LABEL = /^(?:co|com|net|org|ne|or|go|ac)$/u;
 
 /** A platform video id as yt-dlp prints it: letters, digits, `_` and `-` only. */
 export const YTDLP_VIDEO_ID_PATTERN = /^[\w-]{1,64}$/u;
+
+/** Resolve tries the server read once more after this pause when the first try failed. */
+export const RESOLVE_RETRY_DELAY_MS = 2_000;
+
+/** An HLS key line; any METHOD but NONE means encrypted segments the worker cannot decode. */
+export const HLS_KEY_TAG = '#EXT-X-KEY:';
+export const HLS_KEY_METHOD_NONE = 'METHOD=NONE';
+
+/**
+ * Reviewed CDN domains a platform's live playlist hands segments to besides its own (2026-11-26):
+ * TikTok's master on tiktokcdn.com lists variants on realcrius.com; CBS News's ad-stitched playlist
+ * on dai.google.com serves segments from cbsivideo.com. Only these are added to the host pin.
+ */
+export const SERVER_PULL_EXTRA_CDN_SUFFIXES: ReadonlyMap<LivePlatform, readonly string[]> = new Map(
+  [
+    [LivePlatform.TIKTOK, ['tiktokcdn.com', 'tiktokcdn-us.com', 'realcrius.com']],
+    [LivePlatform.CBS_NEWS, ['cbsivideo.com']],
+  ],
+);

@@ -63,7 +63,13 @@ export function LiveSourceNotice({
       <LiveNoticeBox
         testId="live-link-only-notice"
         title={t('live.platform.linkOnlyTitle', { platform })}
-        lines={[...recognised, t('live.platform.linkOnlyNotice', { platform })]}
+        lines={[
+          ...recognised,
+          // The server tried and could not read it: say so (never the viewer's device instead).
+          resolution.reasonCode === LIVE_SERVER_PULL_UNAVAILABLE_REASON
+            ? t('live.platform.unreadableNotice', { platform })
+            : t('live.platform.linkOnlyNotice', { platform }),
+        ]}
       />
     );
   }

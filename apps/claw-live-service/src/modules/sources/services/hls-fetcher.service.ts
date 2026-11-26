@@ -23,7 +23,12 @@ export class HlsFetcherService {
    * one https and re-checked on the same suffixes (YouTube 302s every segment to another
    * `*.googlevideo.com` edge; before 2026-11-24 such a stream polled forever with no audio).
    */
-  async fetchObject(url: URL, pin: HlsHostPin, maxBytes: number): Promise<HlsFetchedObject> {
+  async fetchObject(
+    url: URL,
+    pin: HlsHostPin,
+    maxBytes: number,
+    headers: Readonly<Record<string, string>> = {},
+  ): Promise<HlsFetchedObject> {
     let current = url;
     for (let hop = 0; ; hop += 1) {
       const addresses =
@@ -34,6 +39,7 @@ export class HlsFetcherService {
         const result = await pinnedGet(current, addresses, {
           timeoutMs: HLS_FETCH_TIMEOUT_MS,
           maxBytes,
+          headers,
         });
         return { contentType: result.contentType, body: result.body, url: current };
       } catch (error: unknown) {

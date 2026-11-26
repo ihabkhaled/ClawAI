@@ -55,6 +55,60 @@ export const VIDEO_PLATFORM_HOSTS: readonly VideoPlatformHosts[] = [
   { platform: LivePlatform.LIVE17, hosts: ['17.live', 'www.17.live'] },
   { platform: LivePlatform.MIXCLOUD, hosts: ['mixcloud.com', 'www.mixcloud.com'] },
   { platform: LivePlatform.BLUESKY, hosts: ['bsky.app'] },
+  // Round 2 (owner 2026-11-26): each read by yt-dlp with a real link that day (ADR-221).
+  {
+    platform: LivePlatform.VK_PLAY_LIVE,
+    hosts: ['live.vkvideo.ru', 'live.vkplay.ru', 'vkplay.live'],
+  },
+  { platform: LivePlatform.PEERTUBE, hosts: ['framatube.org', 'garr.tv'] },
+  { platform: LivePlatform.STEAM, hosts: ['store.steampowered.com', 'steamcommunity.com'] },
+  { platform: LivePlatform.GOODGAME, hosts: ['goodgame.ru', 'www.goodgame.ru'] },
+  { platform: LivePlatform.YOUNOW, hosts: ['younow.com', 'www.younow.com'] },
+  { platform: LivePlatform.RAIPLAY, hosts: ['raiplay.it', 'www.raiplay.it'] },
+  { platform: LivePlatform.RAIPLAY_SOUND, hosts: ['raiplaysound.it', 'www.raiplaysound.it'] },
+  { platform: LivePlatform.BFMTV, hosts: ['bfmtv.com', 'www.bfmtv.com'] },
+  { platform: LivePlatform.CBS_NEWS, hosts: ['cbsnews.com', 'www.cbsnews.com'] },
+  { platform: LivePlatform.LRT, hosts: ['lrt.lt', 'www.lrt.lt'] },
+  { platform: LivePlatform.FRANCE_TV, hosts: ['france.tv', 'www.france.tv'] },
+  { platform: LivePlatform.ROYA, hosts: ['roya.tv', 'www.roya.tv'] },
+  { platform: LivePlatform.MATCH_TV, hosts: ['matchtv.ru', 'www.matchtv.ru'] },
+  { platform: LivePlatform.RTVC_PLAY, hosts: ['rtvcplay.co', 'www.rtvcplay.co'] },
+  { platform: LivePlatform.TUNEIN, hosts: ['tunein.com', 'www.tunein.com'] },
+  {
+    platform: LivePlatform.WEBCAMERA_PL,
+    hosts: ['webcamera.pl', 'www.webcamera.pl'],
+    hostSuffixes: ['webcamera.pl'],
+  },
+  { platform: LivePlatform.TED, hosts: ['ted.com', 'www.ted.com', 'embed.ted.com'] },
+  {
+    platform: LivePlatform.SOUNDCLOUD,
+    hosts: ['soundcloud.com', 'www.soundcloud.com', 'm.soundcloud.com', 'on.soundcloud.com'],
+  },
+  { platform: LivePlatform.BANDCAMP, hosts: ['bandcamp.com'], hostSuffixes: ['bandcamp.com'] },
+  { platform: LivePlatform.ARCHIVE_ORG, hosts: ['archive.org', 'www.archive.org'] },
+  { platform: LivePlatform.NINEGAG, hosts: ['9gag.com', 'www.9gag.com'] },
+  { platform: LivePlatform.PINTEREST, hosts: ['pinterest.com', 'www.pinterest.com', 'pin.it'] },
+  {
+    platform: LivePlatform.BITCHUTE,
+    hosts: ['bitchute.com', 'www.bitchute.com', 'old.bitchute.com'],
+  },
+  { platform: LivePlatform.GOOGLE_DRIVE, hosts: ['drive.google.com'] },
+  {
+    platform: LivePlatform.DROPBOX,
+    hosts: ['dropbox.com', 'www.dropbox.com'],
+    keepQuery: ['rlkey'],
+  },
+  { platform: LivePlatform.LOOM, hosts: ['loom.com', 'www.loom.com'] },
+  { platform: LivePlatform.SPREAKER, hosts: ['spreaker.com', 'www.spreaker.com'] },
+  { platform: LivePlatform.APPLE_PODCASTS, hosts: ['podcasts.apple.com'], keepQuery: ['i'] },
+  { platform: LivePlatform.MEDAL, hosts: ['medal.tv', 'www.medal.tv'] },
+  { platform: LivePlatform.UN_WEB_TV, hosts: ['webtv.un.org'] },
+  { platform: LivePlatform.ZHIHU, hosts: ['zhihu.com', 'www.zhihu.com'] },
+  { platform: LivePlatform.CNN, hosts: ['cnn.com', 'www.cnn.com', 'edition.cnn.com'] },
+  { platform: LivePlatform.VIDLII, hosts: ['vidlii.com', 'www.vidlii.com'], keepQuery: ['v'] },
+  { platform: LivePlatform.FLICKR, hosts: ['flickr.com', 'www.flickr.com'] },
+  { platform: LivePlatform.ACFUN, hosts: ['acfun.cn', 'www.acfun.cn', 'm.acfun.cn'] },
+  { platform: LivePlatform.IMGUR, hosts: ['imgur.com', 'www.imgur.com', 'i.imgur.com'] },
 ];
 
 /** A path segment we keep: the characters any of these platforms put in a video, user or room id. */
@@ -66,3 +120,9 @@ export const DAILYMOTION_EMBED_BASE_URL = 'https://www.dailymotion.com/embed/vid
 export const DAILYMOTION_SHORT_HOST = 'dai.ly';
 export const VIMEO_EMBED_BASE_URL = 'https://player.vimeo.com/video/';
 export const VIMEO_VIDEO_ID_PATTERN = /^\d{5,15}$/u;
+
+/** VK's live listing links `live-<owner>_<id>`; only `video-<owner>_<id>` reads (2026-11-26). */
+export const VK_LIVE_PREFIX = 'live-';
+export const VK_VIDEO_PREFIX = 'video-';
+/** GoodGame's `/channel/<user>` page; the readable form is `/<user>`. */
+export const GOODGAME_CHANNEL_SEGMENT = 'channel';

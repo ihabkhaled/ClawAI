@@ -38,6 +38,7 @@ describe('RunWorkerFactory', () => {
       {} as never,
       {} as never,
       {} as never,
+      {} as never,
     );
     runs.findRunWithStream.mockResolvedValueOnce({
       id: 'run-1',
@@ -73,6 +74,7 @@ describe('RunWorkerFactory', () => {
     const fetcher = { fetchObject: vi.fn() };
     const factory = new RunWorkerFactory(
       runs as never,
+      {} as never,
       {} as never,
       {} as never,
       {} as never,
@@ -123,12 +125,15 @@ describe('RunWorkerFactory', () => {
     const playlist = new URL('https://usher.ttvnw.net/api/channel/hls/xqc.m3u8?sig=s&token=t');
     const serverPull = {
       supports: vi.fn().mockReturnValue(true),
-      resolve: vi
-        .fn()
-        .mockResolvedValue({ playlist, hostSuffixes: ['ttvnw.net', 'live-video.net'] }),
+      resolve: vi.fn().mockResolvedValue({
+        playlist,
+        hostSuffixes: ['ttvnw.net', 'live-video.net'],
+        headers: {},
+      }),
     };
     const factory = new RunWorkerFactory(
       runs as never,
+      {} as never,
       {} as never,
       {} as never,
       {} as never,
@@ -163,13 +168,14 @@ describe('RunWorkerFactory', () => {
       false,
     );
     const pins = ['ttvnw.net', 'live-video.net'];
-    expect(fetcher.fetchObject).toHaveBeenNthCalledWith(1, playlist, pins, expect.any(Number));
+    expect(fetcher.fetchObject).toHaveBeenNthCalledWith(1, playlist, pins, expect.any(Number), {});
     // AUDIO mode reads the lightest rendition: the audio-only one.
     expect(fetcher.fetchObject).toHaveBeenNthCalledWith(
       2,
       new URL('https://usher.ttvnw.net/api/channel/hls/audio.m3u8'),
       pins,
       expect.any(Number),
+      {},
     );
     await (worker as unknown as { source: { dispose: () => Promise<void> } }).source.dispose();
   });

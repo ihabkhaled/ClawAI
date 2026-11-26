@@ -22,6 +22,7 @@ import {
   revealLiveCaptions,
   resolveLiveDisplayStatus,
   revealLiveEvents,
+  withLiveCardLanguageState,
 } from '@/utilities/live-reveal.utility';
 import { liveSessionHlsSrc, liveStatusPresentation } from '@/utilities/live-session.utility';
 
@@ -90,8 +91,17 @@ export function useLiveModal(input: LiveCreateSessionInput): UseLiveModalResult 
   const { feed } = stream;
   const revealed = useMemo(
     () => ({
-      cards: revealLiveEvents(feed.cards, playbackAt),
-      highlights: revealLiveEvents(feed.highlights, playbackAt),
+      // A card in another language shows "Translating…" until its copy arrives (2026-11-26).
+      cards: withLiveCardLanguageState(
+        revealLiveEvents(feed.cards, playbackAt),
+        input.language,
+        Date.now(),
+      ),
+      highlights: withLiveCardLanguageState(
+        revealLiveEvents(feed.highlights, playbackAt),
+        input.language,
+        Date.now(),
+      ),
       captions: revealLiveCaptions(
         feed.captions,
         feed.captionTranslations,

@@ -99,6 +99,42 @@ export enum LivePlatform {
   LIVE17 = 'LIVE17',
   MIXCLOUD = 'MIXCLOUD',
   BLUESKY = 'BLUESKY',
+  VK_PLAY_LIVE = 'VK_PLAY_LIVE',
+  PEERTUBE = 'PEERTUBE',
+  STEAM = 'STEAM',
+  GOODGAME = 'GOODGAME',
+  YOUNOW = 'YOUNOW',
+  RAIPLAY = 'RAIPLAY',
+  RAIPLAY_SOUND = 'RAIPLAY_SOUND',
+  BFMTV = 'BFMTV',
+  CBS_NEWS = 'CBS_NEWS',
+  LRT = 'LRT',
+  FRANCE_TV = 'FRANCE_TV',
+  ROYA = 'ROYA',
+  MATCH_TV = 'MATCH_TV',
+  RTVC_PLAY = 'RTVC_PLAY',
+  TUNEIN = 'TUNEIN',
+  WEBCAMERA_PL = 'WEBCAMERA_PL',
+  TED = 'TED',
+  SOUNDCLOUD = 'SOUNDCLOUD',
+  BANDCAMP = 'BANDCAMP',
+  ARCHIVE_ORG = 'ARCHIVE_ORG',
+  NINEGAG = 'NINEGAG',
+  PINTEREST = 'PINTEREST',
+  BITCHUTE = 'BITCHUTE',
+  GOOGLE_DRIVE = 'GOOGLE_DRIVE',
+  DROPBOX = 'DROPBOX',
+  LOOM = 'LOOM',
+  SPREAKER = 'SPREAKER',
+  APPLE_PODCASTS = 'APPLE_PODCASTS',
+  MEDAL = 'MEDAL',
+  UN_WEB_TV = 'UN_WEB_TV',
+  ZHIHU = 'ZHIHU',
+  CNN = 'CNN',
+  VIDLII = 'VIDLII',
+  FLICKR = 'FLICKR',
+  ACFUN = 'ACFUN',
+  IMGUR = 'IMGUR',
 }
 
 export enum LiveCapability {
@@ -115,6 +151,16 @@ export enum LiveCapability {
   RECORDED = 'RECORDED',
 }
 
+/** Whether a feed card can be shown in the viewer's language yet (2026-11-26 consistency fix). */
+export enum LiveCardLanguageState {
+  /** Written in, or translated to, the viewer's language. */
+  READY = 'READY',
+  /** In another language and its translation has not arrived yet: show "Translating…". */
+  PENDING = 'PENDING',
+  /** No translation came in time: the original is shown, marked as such. */
+  ORIGINAL = 'ORIGINAL',
+}
+
 export enum LiveMode {
   AUDIO = 'AUDIO',
   AUDIO_VISION = 'AUDIO_VISION',
@@ -127,6 +173,8 @@ export enum LiveFeedEventKind {
   VISUAL = 'VISUAL',
   GAP = 'GAP',
   FINAL = 'FINAL',
+  /** The detailed report of a one-click video summary (moments about every 10 s, chapters). */
+  REPORT = 'REPORT',
 }
 
 export enum LiveHighlightType {
