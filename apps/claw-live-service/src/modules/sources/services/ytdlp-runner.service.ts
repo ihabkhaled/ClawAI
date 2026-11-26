@@ -13,6 +13,7 @@ import {
 } from '../constants/server-pull.constants';
 import type { YtdlpRun } from '../types/server-pull.types';
 import { isYoutubeWatchUrl } from '../utilities/server-pull-url.utility';
+import { logSafeText, logSafeUrl } from '../utilities/log-redaction.utility';
 
 /**
  * Every yt-dlp run of the service goes through here: argv only, bounded in time and output, at most
@@ -45,7 +46,7 @@ export class YtdlpRunnerService {
     }
     if (last !== null) {
       this.logger.warn(
-        `yt-dlp gave up on ${request.watchUrl} after ${String(variants.length)} tries: exit=${String(last.exitCode)} ${last.stderrTail.slice(-200).trim()}`,
+        `yt-dlp gave up on ${logSafeUrl(request.watchUrl)} after ${String(variants.length)} tries: exit=${String(last.exitCode)} ${logSafeText(last.stderrTail.slice(-200)).trim()}`,
       );
     }
     return null;

@@ -32,6 +32,7 @@ import { parseTwitchPlaybackToken } from '../utilities/twitch-playback-token.uti
 import { HlsFetcherService } from './hls-fetcher.service';
 import { SourceUrlGuardService } from './source-url-guard.service';
 import { YtdlpRunnerService } from './ytdlp-runner.service';
+import { logSafeId } from '../utilities/log-redaction.utility';
 
 /**
  * Turns a platform stream into its live HLS playlist (server pull). Twitch: the token its own web
@@ -88,11 +89,15 @@ export class ServerPullResolverService {
           .then((fetched) => {
             if (!isEncryptedPlaylist(fetched.body.toString('utf8'))) return pull;
             // Encrypted segments never decode, so the run would caption nothing (RaiNews24, 2026-11-26).
-            this.logger.warn(`probe ${String(platform)}:${match.id} playlist is encrypted`);
+            this.logger.warn(
+              `probe ${String(platform)}:${logSafeId(match.id)} playlist is encrypted`,
+            );
             return null;
           })
           .catch(() => {
-            this.logger.warn(`probe ${String(platform)}:${match.id} playlist did not answer`);
+            this.logger.warn(
+              `probe ${String(platform)}:${logSafeId(match.id)} playlist did not answer`,
+            );
             return null;
           });
   }

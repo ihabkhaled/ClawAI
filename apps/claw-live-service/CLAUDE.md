@@ -130,3 +130,6 @@ this file disagree, fix one in the same change) - decision:
   `METHOD=NONE`) is refused at the probe. A second CDN joins the host pin only through the reviewed
   `SERVER_PULL_EXTRA_CDN_SUFFIXES` (TikTok `realcrius.com`, CBS `cbsivideo.com`). A platform is claimed live only after
   a real session produced captions (`live-language-matrix.mjs`, `LIVE_QA_PARALLEL=2`).
+- **Never log a pasted link whole.** A share link is a secret (Google Drive file id, Dropbox `rlkey`, signed CDN
+  token). Log `logSafeUrl(url)` / `logSafeId(match.id)` (host + first path segment) and pass tool output through
+  `logSafeText` (commit security review 2026-11-26).

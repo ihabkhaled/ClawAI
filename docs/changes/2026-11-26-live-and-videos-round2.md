@@ -104,3 +104,16 @@ Owner report and answers 2026-11-26 (ADR-221 round-2 addendum).
 
 A yt-dlp upgrade or a platform changing its player (re-run the sweep and the live matrix), a change to the council or
 report prompts, or a new viewer language.
+
+## Follow-up: log redaction (commit security review)
+
+- `apps/claw-live-service/src/modules/sources/utilities/log-redaction.utility.ts`
+- `apps/claw-live-service/src/modules/sources/constants/log-redaction.constants.ts`
+- `apps/claw-live-service/src/modules/sources/utilities/__tests__/log-redaction.utility.spec.ts`
+- `apps/claw-live-service/src/modules/sources/services/ytdlp-runner.service.ts`
+- `apps/claw-live-service/src/modules/sources/services/server-pull-resolver.service.ts`
+- `apps/claw-live-service/src/modules/sources/services/share-link.service.ts`
+- `docs/qa-evidence/2026-11-26-live-and-videos-round2.md`
+
+yt-dlp and probe warnings logged the whole pasted link and yt-dlp's error text. A Google Drive or Dropbox share link
+is a secret, so logs now keep only the host and the first path segment.

@@ -9,6 +9,7 @@ import {
 import type { PlatformResolution } from '../types/platform.types';
 import { resolvePlatformUrl } from '../utilities/platform-registry.utility';
 import { SourceUrlGuardService } from './source-url-guard.service';
+import { logSafeId } from '../utilities/log-redaction.utility';
 
 /**
  * An app share link (`facebook.com/share/v/<code>`) names no video: the platform answers it with
@@ -34,7 +35,7 @@ export class ShareLinkService {
       target.definition.platform === resolution.definition.platform &&
       target.match.shareRedirectSuffix === undefined;
     if (!usable) {
-      this.logger.warn(`share link ${resolution.match.id} did not lead to a video page`);
+      this.logger.warn(`share link ${logSafeId(resolution.match.id)} did not lead to a video page`);
       return resolution;
     }
     return target;
