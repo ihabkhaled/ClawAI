@@ -118,3 +118,12 @@ report prompts, or a new viewer language.
 yt-dlp and probe warnings logged the whole pasted link and yt-dlp's error text. A Google Drive or Dropbox share link
 is a secret, so logs now keep only the host, and yt-dlp's error text is logged as a fixed category (a second review:
 any path segment or the echoed id can be the secret).
+
+## Follow-up: long TikTok share codes
+
+- `apps/claw-live-service/src/modules/sources/constants/platforms.constants.ts`
+- `apps/claw-live-service/src/modules/sources/utilities/__tests__/link-platform-url.utility.spec.ts`
+
+The owner's `vt.tiktok.com/ZS9PbUaoh9YFt-EaQxj/` (19 characters with a dash) was refused as "not supported": the share
+code pattern allowed 5-16 letters and digits. It now allows 5-32 with `-` and `_`. That link opens a TikTok LIVE that
+had ended, so it now resolves to TikTok with "can't be read right now" instead.

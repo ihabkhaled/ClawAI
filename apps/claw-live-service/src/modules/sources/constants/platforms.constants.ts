@@ -87,7 +87,8 @@ export const TIKTOK_WATCH_BASE_URL = 'https://www.tiktok.com/@';
 export const TIKTOK_WATCH_SUFFIX = '/live';
 /** The app's share-link hosts (`vt.` and `vm.`); `tiktok.com/t/<code>` is the web form. */
 export const TIKTOK_SHORT_HOSTS: ReadonlySet<string> = new Set(['vt.tiktok.com', 'vm.tiktok.com']);
-export const TIKTOK_SHORT_CODE_PATTERN = /^[A-Za-z0-9]{5,16}$/u;
+/** Share codes: `ZSsYongoV`, and newer ones up to ~20 characters with `-`/`_` (owner link 2026-11-26). */
+export const TIKTOK_SHORT_CODE_PATTERN = /^[A-Za-z0-9_-]{5,32}$/u;
 export const TIKTOK_VIDEO_ID_PATTERN = /^\d{10,25}$/u;
 export const TIKTOK_EMBED_BASE_URL = 'https://www.tiktok.com/embed/v2/';
 /** A video read without its author: yt-dlp reads `www.tiktok.com/@/video/<id>` (2026-11-26). */

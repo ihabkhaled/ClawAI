@@ -250,6 +250,11 @@ describe('parseDiscordUrl', () => {
       portrait: true,
     });
     expect(parseTiktokUrl(url('https://www.tiktok.com/t/ZTabc123/'))?.id).toBe('short:ZTabc123');
+    // The owner's link (2026-11-26): 19 characters with a dash used to be "not supported".
+    expect(parseTiktokUrl(url('https://vt.tiktok.com/ZS9PbUaoh9YFt-EaQxj/'))?.watchUrl).toBe(
+      'https://vt.tiktok.com/ZS9PbUaoh9YFt-EaQxj/',
+    );
+    expect(parseTiktokUrl(url('https://vt.tiktok.com/a.b/'))).toBeNull();
     expect(
       parseTiktokUrl(url('https://www.tiktok.com/@Some.User/video/7708131026584734996?lang=en')),
     ).toEqual({

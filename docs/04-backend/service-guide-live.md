@@ -155,3 +155,7 @@ An existing `.env` is never rewritten. Add `PG_LIVE_PASSWORD`, `LIVE_DATABASE_UR
 Migrations: `20261124120000_live_recorded_and_platforms` (enum values), `20261124130000_live_video_summary` (three
 columns with defaults). The seeder upgrades the active policy once (24 platforms, 3 h cap). Runbook: nothing manual —
 deploy runs `migrate deploy` then the seeder.
+
+- TikTok share links (`vt.`/`vm.tiktok.com/<code>`, `tiktok.com/t/<code>`): the code is 5-32 characters of letters,
+  digits, `-` and `_` (newer codes are ~20 characters with a dash; 2026-11-26). A share link to a LIVE that has ended
+  resolves to TikTok and shows "can't be read right now", not "unsupported".

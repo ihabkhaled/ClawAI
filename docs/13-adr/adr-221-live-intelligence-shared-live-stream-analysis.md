@@ -349,3 +349,5 @@ summary was not detailed. Owner decisions (2026-11-26):
   second CDN in the host pin (`SERVER_PULL_EXTRA_CDN_SUFFIXES`: realcrius.com, cbsivideo.com). Known gap: an OK.ru
   live broadcast reports neither "live" nor a length, so it is probed as a recorded video. The owner asked for 30
   live platforms; 22 are verified today.
+- **TikTok share codes (owner link, 2026-11-26):** newer `vt.tiktok.com` codes are up to ~20 characters with `-`; the
+  pattern was 5-16 alphanumerics, so the link read as unsupported. Now 5-32 with `-` and `_`.
