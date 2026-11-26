@@ -1,22 +1,35 @@
-import { logSafeId, logSafeText, logSafeUrl } from '../log-redaction.utility';
+import { logSafeId, logSafeUrl, ytdlpErrorCategory } from '../log-redaction.utility';
 
-describe('log redaction (share links are secrets)', () => {
-  it('keeps only the host and first path segment of a link', () => {
+describe('log redaction (share links and ids are secrets)', () => {
+  it('keeps only the host of a link', () => {
     expect(logSafeUrl('https://drive.google.com/file/d/0ByeS4oOUV/edit?usp=sharing')).toBe(
-      'drive.google.com/file/…',
+      'drive.google.com/…',
     );
-    expect(logSafeUrl('https://www.dropbox.com/s/abc/name.mp4?rlkey=secret&dl=0')).toBe(
-      'www.dropbox.com/s/…',
-    );
+    expect(logSafeUrl('https://imgur.com/A61SaA1')).toBe('imgur.com/…');
     expect(logSafeUrl('not a url')).toBe('/…');
   });
 
-  it('reduces match ids and every URL inside tool output', () => {
-    expect(logSafeId('drive.google.com/file/d/0ByeS4oOUV/edit')).toBe('drive.google.com/file/…');
-    const text = logSafeText(
-      'ERROR: [GoogleDrive] 0ByeS4: https://drive.google.com/file/d/0ByeS4/view?key=x is private',
+  it('keeps only the head of a match id', () => {
+    expect(logSafeId('drive.google.com/file/d/0ByeS4oOUV/edit')).toBe('drive.google.com/…');
+    expect(logSafeId('video:7712514899993971462')).toBe('video/…');
+    expect(logSafeId('xqc')).toBe('xqc/…');
+  });
+
+  it('turns yt-dlp error text into a fixed category, never the text', () => {
+    expect(ytdlpErrorCategory("ERROR: [youtube] abc: Sign in to confirm you're not a bot")).toBe(
+      'bot-check',
     );
-    expect(text).toBe('ERROR: [GoogleDrive] 0ByeS4: drive.google.com/file/… is private');
-    expect(text).not.toContain('key=x');
+    expect(ytdlpErrorCategory('ERROR: [chzzk:live] 22ab: The channel is not currently live')).toBe(
+      'not-live',
+    );
+    expect(
+      ytdlpErrorCategory(
+        '[RaiPlayLive] rai1: not available from your location due to geo restriction',
+      ),
+    ).toBe('geo-blocked');
+    expect(ytdlpErrorCategory('ERROR: No suitable extractor found for URL https://x.y/z')).toBe(
+      'no-extractor',
+    );
+    expect(ytdlpErrorCategory('')).toBe('other');
   });
 });

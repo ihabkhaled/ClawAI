@@ -116,4 +116,5 @@ report prompts, or a new viewer language.
 - `docs/qa-evidence/2026-11-26-live-and-videos-round2.md`
 
 yt-dlp and probe warnings logged the whole pasted link and yt-dlp's error text. A Google Drive or Dropbox share link
-is a secret, so logs now keep only the host and the first path segment.
+is a secret, so logs now keep only the host, and yt-dlp's error text is logged as a fixed category (a second review:
+any path segment or the echoed id can be the secret).
