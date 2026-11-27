@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
   canEdit: true,
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
+  toastApiError: vi.fn(),
 }));
 
 vi.mock('@/repositories/admin/system-settings.repository', () => ({
@@ -46,7 +47,11 @@ vi.mock('@/lib/i18n', () => ({
 }));
 vi.mock('@/utilities', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
-  showToast: { success: mocks.toastSuccess, error: mocks.toastError, apiError: vi.fn() },
+  showToast: {
+    success: mocks.toastSuccess,
+    error: mocks.toastError,
+    apiError: mocks.toastApiError,
+  },
 }));
 
 const STORED = [
@@ -485,5 +490,145 @@ describe('/admin/security/sign-up: check an address', () => {
     await checkAddress('mailinator.com');
     expect(await screen.findByTestId('security-email-check-outcome')).toBeInTheDocument();
     expect(mocks.set).not.toHaveBeenCalled();
+  });
+});
+
+const removeButtonOf = (key: SecuritySettingKey): HTMLElement | null =>
+  screen.queryByTestId(`security-remove-secret-${key}`);
+
+/** What GET /status answers once the saved Turnstile secret is gone and the server's takes over. */
+const STATUS_AFTER_REMOVAL: SignupProtectionStatus = {
+  ...STATUS_FOR_STORED,
+  turnstile: { ...STATUS_FOR_STORED.turnstile, secretKeySource: SecurityKeySource.ENVIRONMENT },
+};
+
+describe('/admin/security/sign-up: remove a saved secret', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.canEdit = true;
+    mocks.list.mockResolvedValue(STORED);
+    mocks.getStatus.mockResolvedValue(STATUS_FOR_STORED);
+    mocks.set.mockImplementation(async (key: string, value: string) => ({
+      key,
+      value,
+      updatedAt: '',
+    }));
+  });
+
+  it('is offered only for a secret saved on this page', async () => {
+    renderPage();
+    expect(
+      await screen.findByTestId(
+        `security-remove-secret-${SecuritySettingKey.TURNSTILE_SECRET_KEY}`,
+      ),
+    ).toHaveTextContent('adminSecurity.removeSecret.action');
+    expect(removeButtonOf(SecuritySettingKey.RECAPTCHA_SECRET_KEY)).not.toBeInTheDocument();
+    expect(screen.getAllByText('adminSecurity.removeSecret.action')).toHaveLength(1);
+  });
+
+  it('is not offered when no secret is saved here, even with server keys in force', async () => {
+    mocks.list.mockResolvedValue([]);
+    mocks.getStatus.mockResolvedValue(STATUS_FROM_ENVIRONMENT);
+    renderPage();
+    await screen.findByTestId('security-status-TURNSTILE');
+    expect(screen.queryByText('adminSecurity.removeSecret.action')).not.toBeInTheDocument();
+  });
+
+  it('is not offered to a read-only viewer', async () => {
+    mocks.canEdit = false;
+    renderPage();
+    await screen.findByTestId('security-read-only');
+    expect(
+      screen.getByTestId(`security-secret-${SecuritySettingKey.TURNSTILE_SECRET_KEY}`),
+    ).toHaveAttribute('data-configured', 'true');
+    expect(screen.queryByText('adminSecurity.removeSecret.action')).not.toBeInTheDocument();
+  });
+
+  it('sends an empty value for that key only, says what is in force now, and reloads', async () => {
+    mocks.checkEmail.mockResolvedValue({
+      domain: 'spam.example',
+      verdict: EmailDomainVerdict.ALLOWED,
+      reason: EmailDomainReason.MAIL_SERVER_FOUND,
+    });
+    renderPage();
+    await screen.findByTestId('security-status-TURNSTILE');
+    await checkAddress('spam.example');
+    await waitFor(() => expect(mocks.checkEmail).toHaveBeenCalledTimes(1));
+    expect(mocks.list).toHaveBeenCalledTimes(1);
+    expect(mocks.getStatus).toHaveBeenCalledTimes(1);
+    // What the server answers after the PUT: no saved secret row, the server's key in force.
+    mocks.list.mockResolvedValue(
+      STORED.filter((row) => row.key !== SecuritySettingKey.TURNSTILE_SECRET_KEY),
+    );
+    mocks.getStatus.mockResolvedValue(STATUS_AFTER_REMOVAL);
+
+    fireEvent.click(
+      screen.getByTestId(`security-remove-secret-${SecuritySettingKey.TURNSTILE_SECRET_KEY}`),
+    );
+
+    await waitFor(() => expect(mocks.set).toHaveBeenCalledTimes(1));
+    expect(mocks.set).toHaveBeenCalledWith(SecuritySettingKey.TURNSTILE_SECRET_KEY, '');
+    await waitFor(() =>
+      expect(mocks.toastSuccess).toHaveBeenCalledWith({
+        title: 'adminSecurity.removeSecret.removed',
+        description: 'adminSecurity.removeSecret.removedDetail',
+      }),
+    );
+    await waitFor(() => expect(mocks.list).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(mocks.getStatus).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(mocks.checkEmail).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(removeButtonOf(SecuritySettingKey.TURNSTILE_SECRET_KEY)).not.toBeInTheDocument(),
+    );
+    expect(placeholderOf(SecuritySettingKey.TURNSTILE_SECRET_KEY)).toBe(
+      'adminSecurity.fields.secretFromServer',
+    );
+    expect(mocks.set).toHaveBeenCalledTimes(1);
+    expect(mocks.toastError).not.toHaveBeenCalled();
+    expect(mocks.toastApiError).not.toHaveBeenCalled();
+  });
+
+  it('shows an error toast, reloads nothing and keeps the button when the server refuses', async () => {
+    const refusal = new ApiClientError({ message: 'Forbidden', status: 403 });
+    mocks.set.mockRejectedValueOnce(refusal);
+    renderPage();
+    const button = await screen.findByTestId(
+      `security-remove-secret-${SecuritySettingKey.TURNSTILE_SECRET_KEY}`,
+    );
+    fireEvent.click(button);
+    await waitFor(() =>
+      expect(mocks.toastApiError).toHaveBeenCalledWith(
+        refusal,
+        'adminSecurity.removeSecret.failed',
+        { translate: expect.any(Function) },
+      ),
+    );
+    expect(mocks.toastSuccess).not.toHaveBeenCalled();
+    expect(mocks.list).toHaveBeenCalledTimes(1);
+    expect(mocks.getStatus).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(button).toBeEnabled());
+  });
+
+  it('is disabled while the request runs and asks no browser confirmation', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm');
+    let answer: (value: unknown) => void = () => undefined;
+    mocks.set.mockReturnValueOnce(
+      new Promise((resolve) => {
+        answer = resolve;
+      }),
+    );
+    renderPage();
+    const button = await screen.findByTestId(
+      `security-remove-secret-${SecuritySettingKey.TURNSTILE_SECRET_KEY}`,
+    );
+    fireEvent.click(button);
+    await waitFor(() => expect(button).toBeDisabled());
+    expect(button).toHaveAttribute('aria-busy', 'true');
+    fireEvent.click(button);
+    expect(mocks.set).toHaveBeenCalledTimes(1);
+    expect(confirmSpy).not.toHaveBeenCalled();
+    answer({ key: SecuritySettingKey.TURNSTILE_SECRET_KEY, value: '', updatedAt: '' });
+    await waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalledTimes(1));
+    confirmSpy.mockRestore();
   });
 });

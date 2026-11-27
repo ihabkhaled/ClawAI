@@ -81,6 +81,10 @@ refusal in every locale.
   domains, always on.") and a box that calls `GET /api/v1/admin/security/sign-up/email-check?value=` and
   prints the verdict in plain words (built-in list, your blocked/allowed list, has / has no mail server,
   inconclusive). It runs the same rules as a sign-up, against the SAVED lists.
+- **Remove saved secret.** A secret saved on this page shows a "Remove saved secret" button (editors only). It sends
+  `PUT /api/v1/admin/settings/<key>` with an empty value at once (no dialog), then refreshes settings, status and
+  checks: the server's key takes over if one is set, otherwise that provider is off. It reloads the form, so text
+  typed in other fields but not saved is lost.
 - **Linked accounts** — the user detail dialog (users table, eye icon) has a "Linked accounts" button that
   opens `UserLinkedAccountsDialog` → `GET /api/v1/admin/users/:id/linked-accounts` (`ADMIN_USERS_MANAGE`,
   same as the page). Each row: email, status, banned badge, registered date, reasons (same device, same

@@ -74,6 +74,12 @@ and the page hides the controls; it does not half-enable them. A blank value in
 
 Claw uses 15 separate PostgreSQL instances, one per data-owning service.
 
+Every data store has its OWN password (`PG_<KEY>_PASSWORD` per database, `MONGO_PASSWORD`, `RABBITMQ_PASSWORD`,
+`REDIS_PASSWORD`, `FIRECRAWL_POSTGRES_PASSWORD`); the `claw_secret` defaults below are local-dev placeholders that
+`setup.sh` replaces. Production compose files REQUIRE each one (no default). Change them with
+`scripts/rotate-db-passwords.sh` (runbook-production-host-hardening §4), never by editing `.env` alone: a store keeps
+the password it was created with.
+
 A `*_PORT` value that the compose files publish on the host (`PG_*_PORT` host ports, `REDIS_PORT`, `FRONTEND_PORT`, …)
 is a bare number. The production compose files add `127.0.0.1:` themselves (rules/68), so a value such as
 `127.0.0.1:5458` becomes `127.0.0.1:127.0.0.1:5458` and `docker compose` refuses the whole file ("invalid IP address").

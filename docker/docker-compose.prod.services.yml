@@ -1061,7 +1061,7 @@ services:
       POSTGRES_HOST: firecrawl-postgres
       POSTGRES_PORT: '5432'
       POSTGRES_USER: firecrawl
-      POSTGRES_PASSWORD: ${FIRECRAWL_POSTGRES_PASSWORD:-firecrawl-internal}
+      POSTGRES_PASSWORD: ${FIRECRAWL_POSTGRES_PASSWORD:?FIRECRAWL_POSTGRES_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}
       # pg_cron (used by 010-nuq.sql) installs only into the `postgres` database;
       # naming it anything else aborted init and left an empty, crash-looping DB.
       POSTGRES_DB: postgres
@@ -1157,7 +1157,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: firecrawl
-      POSTGRES_PASSWORD: ${FIRECRAWL_POSTGRES_PASSWORD:-firecrawl-internal}
+      POSTGRES_PASSWORD: ${FIRECRAWL_POSTGRES_PASSWORD:?FIRECRAWL_POSTGRES_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}
       # pg_cron (used by 010-nuq.sql) installs only into the `postgres` database;
       # naming it anything else aborted init and left an empty, crash-looping DB.
       POSTGRES_DB: postgres

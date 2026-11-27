@@ -89,6 +89,12 @@ export const ANTI_ABUSE_TRANSLATIONS: Record<Locale, AntiAbuseLocaleTranslation>
         domainList: 'Enter domains like example.com, separated by commas.',
         tooLong: 'This value is too long.',
       },
+      removeSecret: {
+        action: 'Remove saved secret',
+        removed: 'Saved secret removed',
+        removedDetail: "The server's key is used if one is set; otherwise this provider is off.",
+        failed: 'The saved secret could not be removed. Try again.',
+      },
       status: {
         on: 'On',
         off: 'Off',
@@ -208,6 +214,12 @@ export const ANTI_ABUSE_TRANSLATIONS: Record<Locale, AntiAbuseLocaleTranslation>
         scoreRange: 'أدخل رقمًا من 0 إلى 1، مثل 0.5.',
         domainList: 'أدخل نطاقات مثل example.com مفصولة بفواصل.',
         tooLong: 'هذه القيمة طويلة جدًا.',
+      },
+      removeSecret: {
+        action: 'إزالة المفتاح السري المحفوظ',
+        removed: 'أُزيل المفتاح السري المحفوظ',
+        removedDetail: 'يُستخدم مفتاح الخادم إن كان مُعدًّا، وإلا يتوقف هذا المزوّد.',
+        failed: 'تعذّرت إزالة المفتاح السري المحفوظ. حاول مرة أخرى.',
       },
       status: {
         on: 'مفعّل',
@@ -338,6 +350,14 @@ export const ANTI_ABUSE_TRANSLATIONS: Record<Locale, AntiAbuseLocaleTranslation>
         domainList: 'Gib Domains wie example.com ein, durch Kommas getrennt.',
         tooLong: 'Dieser Wert ist zu lang.',
       },
+      removeSecret: {
+        action: 'Gespeicherten geheimen Schlüssel entfernen',
+        removed: 'Gespeicherter geheimer Schlüssel entfernt',
+        removedDetail:
+          'Ist auf dem Server ein Schlüssel eingerichtet, wird er verwendet; sonst ist dieser Anbieter aus.',
+        failed:
+          'Der gespeicherte geheime Schlüssel konnte nicht entfernt werden. Versuche es erneut.',
+      },
       status: {
         on: 'An',
         off: 'Aus',
@@ -467,6 +487,13 @@ export const ANTI_ABUSE_TRANSLATIONS: Record<Locale, AntiAbuseLocaleTranslation>
         domainList: 'Introduce dominios como example.com, separados por comas.',
         tooLong: 'Este valor es demasiado largo.',
       },
+      removeSecret: {
+        action: 'Quitar la clave secreta guardada',
+        removed: 'Clave secreta guardada eliminada',
+        removedDetail:
+          'Se usa la clave del servidor si hay una configurada; si no, este proveedor queda desactivado.',
+        failed: 'No se pudo quitar la clave secreta guardada. Vuelve a intentarlo.',
+      },
       status: {
         on: 'Activado',
         off: 'Desactivado',
@@ -593,6 +620,13 @@ export const ANTI_ABUSE_TRANSLATIONS: Record<Locale, AntiAbuseLocaleTranslation>
         scoreRange: 'عددی از 0 تا 1 وارد کنید، مثلاً 0.5.',
         domainList: 'دامنه‌هایی مانند example.com را با ویرگول جدا کنید.',
         tooLong: 'این مقدار بیش از حد طولانی است.',
+      },
+      removeSecret: {
+        action: 'حذف کلید محرمانهٔ ذخیره‌شده',
+        removed: 'کلید محرمانهٔ ذخیره‌شده حذف شد',
+        removedDetail:
+          'اگر کلیدی روی سرور تنظیم شده باشد از آن استفاده می‌شود؛ وگرنه این ارائه‌دهنده خاموش است.',
+        failed: 'کلید محرمانهٔ ذخیره‌شده حذف نشد. دوباره تلاش کنید.',
       },
       status: {
         on: 'روشن',
@@ -722,6 +756,13 @@ export const ANTI_ABUSE_TRANSLATIONS: Record<Locale, AntiAbuseLocaleTranslation>
         domainList: 'Saisissez des domaines comme example.com, séparés par des virgules.',
         tooLong: 'Cette valeur est trop longue.',
       },
+      removeSecret: {
+        action: 'Supprimer la clé secrète enregistrée',
+        removed: 'Clé secrète enregistrée supprimée',
+        removedDetail:
+          'La clé du serveur est utilisée si elle est définie ; sinon, ce fournisseur est désactivé.',
+        failed: "La clé secrète enregistrée n'a pas pu être supprimée. Réessayez.",
+      },
       status: {
         on: 'Activé',
         off: 'Désactivé',
@@ -841,6 +882,12 @@ export const ANTI_ABUSE_TRANSLATIONS: Record<Locale, AntiAbuseLocaleTranslation>
         scoreRange: '0 से 1 तक कोई संख्या डालें, जैसे 0.5।',
         domainList: 'example.com जैसे डोमेन कॉमा से अलग करके डालें।',
         tooLong: 'यह मान बहुत लंबा है।',
+      },
+      removeSecret: {
+        action: 'सहेजी गई गुप्त कुंजी हटाएँ',
+        removed: 'सहेजी गई गुप्त कुंजी हटा दी गई',
+        removedDetail: 'सर्वर पर कुंजी सेट हो तो वही इस्तेमाल होती है; नहीं तो यह प्रदाता बंद रहता है।',
+        failed: 'सहेजी गई गुप्त कुंजी हटाई नहीं जा सकी। फिर से कोशिश करें।',
       },
       status: {
         on: 'चालू',
@@ -970,6 +1017,13 @@ export const ANTI_ABUSE_TRANSLATIONS: Record<Locale, AntiAbuseLocaleTranslation>
         domainList: 'Inserisci domini come example.com, separati da virgole.',
         tooLong: 'Questo valore è troppo lungo.',
       },
+      removeSecret: {
+        action: 'Rimuovi la chiave segreta salvata',
+        removed: 'Chiave segreta salvata rimossa',
+        removedDetail:
+          'Viene usata la chiave del server, se impostata; altrimenti questo provider è disattivato.',
+        failed: 'Non è stato possibile rimuovere la chiave segreta salvata. Riprova.',
+      },
       status: {
         on: 'Attivo',
         off: 'Disattivato',
@@ -1098,6 +1152,13 @@ export const ANTI_ABUSE_TRANSLATIONS: Record<Locale, AntiAbuseLocaleTranslation>
         domainList: 'example.com のようなドメインをカンマ区切りで入力してください。',
         tooLong: '値が長すぎます。',
       },
+      removeSecret: {
+        action: '保存したシークレットキーを削除',
+        removed: '保存したシークレットキーを削除しました',
+        removedDetail:
+          'サーバーにキーが設定されていればそれが使われます。設定がなければこのプロバイダーはオフになります。',
+        failed: '保存したシークレットキーを削除できませんでした。もう一度お試しください。',
+      },
       status: {
         on: '有効',
         off: '無効',
@@ -1224,6 +1285,13 @@ export const ANTI_ABUSE_TRANSLATIONS: Record<Locale, AntiAbuseLocaleTranslation>
         scoreRange: 'Digite um número de 0 a 1, como 0.5.',
         domainList: 'Digite domínios como example.com, separados por vírgulas.',
         tooLong: 'Este valor é longo demais.',
+      },
+      removeSecret: {
+        action: 'Remover a chave secreta salva',
+        removed: 'Chave secreta salva removida',
+        removedDetail:
+          'A chave do servidor é usada se houver uma definida; caso contrário, este provedor fica desativado.',
+        failed: 'Não foi possível remover a chave secreta salva. Tente novamente.',
       },
       status: {
         on: 'Ativado',
@@ -1355,6 +1423,12 @@ export const ANTI_ABUSE_TRANSLATIONS: Record<Locale, AntiAbuseLocaleTranslation>
         domainList: 'Введите домены вида example.com через запятую.',
         tooLong: 'Слишком длинное значение.',
       },
+      removeSecret: {
+        action: 'Удалить сохранённый секретный ключ',
+        removed: 'Сохранённый секретный ключ удалён',
+        removedDetail: 'Используется ключ с сервера, если он задан; иначе этот провайдер выключен.',
+        failed: 'Не удалось удалить сохранённый секретный ключ. Попробуйте снова.',
+      },
       status: {
         on: 'Включено',
         off: 'Выключено',
@@ -1472,6 +1546,12 @@ export const ANTI_ABUSE_TRANSLATIONS: Record<Locale, AntiAbuseLocaleTranslation>
         domainList: 'ป้อนโดเมนอย่าง example.com คั่นด้วยจุลภาค',
         tooLong: 'ค่านี้ยาวเกินไป',
       },
+      removeSecret: {
+        action: 'ลบคีย์ลับที่บันทึกไว้',
+        removed: 'ลบคีย์ลับที่บันทึกไว้แล้ว',
+        removedDetail: 'หากตั้งค่าคีย์ไว้บนเซิร์ฟเวอร์ จะใช้คีย์นั้น มิฉะนั้นผู้ให้บริการนี้จะปิดอยู่',
+        failed: 'ไม่สามารถลบคีย์ลับที่บันทึกไว้ได้ โปรดลองอีกครั้ง',
+      },
       status: {
         on: 'เปิด',
         off: 'ปิด',
@@ -1584,6 +1664,12 @@ export const ANTI_ABUSE_TRANSLATIONS: Record<Locale, AntiAbuseLocaleTranslation>
         scoreRange: '请输入 0 到 1 之间的数字，例如 0.5。',
         domainList: '请输入以逗号分隔的域名，例如 example.com。',
         tooLong: '该值过长。',
+      },
+      removeSecret: {
+        action: '移除已保存的私密密钥',
+        removed: '已移除保存的私密密钥',
+        removedDetail: '如果服务器上设置了密钥，则使用该密钥；否则此服务商处于关闭状态。',
+        failed: '无法移除已保存的私密密钥。请重试。',
       },
       status: {
         on: '已开启',

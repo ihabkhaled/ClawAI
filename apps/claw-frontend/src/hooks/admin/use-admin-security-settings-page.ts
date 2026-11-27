@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 
 import { Permission } from '@/enums';
 import { useEmailDomainCheck } from '@/hooks/admin/use-email-domain-check';
+import { useRemoveSecuritySecret } from '@/hooks/admin/use-remove-security-secret';
 import { useSaveSecuritySettings } from '@/hooks/admin/use-save-security-settings';
 import { useSecuritySettingsForm } from '@/hooks/admin/use-security-settings-form';
 import { useSignupProtectionStatus } from '@/hooks/admin/use-signup-protection-status';
@@ -26,7 +27,8 @@ import {
  * `PUT /admin/settings/:key` enforces, so a viewer is shown a read-only form
  * rather than a button that 403s. The status query adds what the rows cannot
  * show (keys from the server environment, the built-in list); without it the
- * page still works from the rows alone.
+ * page still works from the rows alone. A secret saved on this page can be
+ * removed (an empty box is never sent by save).
  */
 export function useAdminSecuritySettingsPage(): UseAdminSecuritySettingsPageReturn {
   const { t, locale } = useTranslation();
@@ -36,6 +38,7 @@ export function useAdminSecuritySettingsPage(): UseAdminSecuritySettingsPageRetu
   const emailCheck = useEmailDomainCheck();
   const form = useSecuritySettingsForm(settings);
   const { save: saveChanges, isSaving } = useSaveSecuritySettings();
+  const { removeSecret, removingKey } = useRemoveSecuritySecret();
   const { validate } = form;
   const groups = useMemo(() => groupSecuritySettingFields(), []);
   const secretStatus = readSecretStatus(settings ?? []);
@@ -69,5 +72,7 @@ export function useAdminSecuritySettingsPage(): UseAdminSecuritySettingsPageRetu
     isSaving,
     setValue: form.setValue,
     save,
+    removeSecret,
+    removingSecretKey: removingKey,
   };
 }

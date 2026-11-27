@@ -28,7 +28,8 @@ param(
     [switch]$Reconfigure,
     [switch]$Resume,
     [switch]$Yes,
-    [switch]$Status
+    [switch]$Status,
+    [switch]$RotateDbPasswords
 )
 
 $ErrorActionPreference = "Stop"
@@ -552,6 +553,20 @@ Set-StateValue -Key 'ANSWER_MODE' -Value $ClawMode
 
 Apply-ModeComposePaths
 
+# -RotateDbPasswords: give every data store of THIS install a fresh, unique password and stop. The work is done by
+# scripts/rotate-db-passwords.sh (Git Bash or WSL bash), the same script install.sh and production use.
+if ($RotateDbPasswords) {
+    if (-not (Test-Path $envFile)) { Write-Fail "No .env at ${envFile}: run the installer first."; exit 1 }
+    $bash = Get-Command bash -ErrorAction SilentlyContinue
+    if ($null -eq $bash) { Write-Fail "bash is required (Git for Windows or WSL) to run scripts/rotate-db-passwords.sh"; exit 1 }
+    $rotateArgs = @((Join-Path $ProjectRoot 'scripts/rotate-db-passwords.sh'), '--env', $envFile, '--yes')
+    foreach ($composeFile in ($script:BaseComposeFiles -split ' ' | Where-Object { $_ -and $_ -ne '-f' })) {
+        $rotateArgs += @('--compose-file', (Join-Path $ProjectRoot $composeFile))
+    }
+    & $bash.Source @rotateArgs
+    exit $LASTEXITCODE
+}
+
 if ($ClawMode -eq 'prod') {
     $NodeEnvValue = 'production'
     Write-Ok "Mode: production (compose files: docker/docker-compose.prod.*.yml)"
@@ -724,7 +739,9 @@ if ([string]::IsNullOrWhiteSpace($rabbitPass)) { $rabbitPass = New-Password }
 $adminPass = New-Password
 $interServiceToken = New-SecretHex
 $githubWebhookSecret = New-SecretHex
-$firecrawlPostgresPassword = New-SecretHex
+# Kept on a re-run: the Firecrawl Postgres volume was created with it.
+$firecrawlPostgresPassword = Get-EnvValue -Path $envFile -Key 'FIRECRAWL_POSTGRES_PASSWORD'
+if ([string]::IsNullOrWhiteSpace($firecrawlPostgresPassword)) { $firecrawlPostgresPassword = New-SecretHex }
 $firecrawlBullAuthKey = New-SecretHex
 # Crawl4AI sidecar Bearer token (0.9.x binds 0.0.0.0 only when it is set).
 # Reused across re-runs so a running sidecar and research-service stay paired.
@@ -745,6 +762,13 @@ Write-Ok "Encryption key generated ($($encryptionKey.Length) hex chars)"
 Write-Ok "Database passwords generated (one distinct password per Postgres database)"
 if ($pgPreservedCount -gt 0) {
     Write-Ok "Preserved $pgPreservedCount PG_*_PASSWORD value(s) from existing .env (those volumes already use them)"
+    # An install made before per-database passwords shares ONE value across them (or keeps the placeholder).
+    $preservedValues = @($pgPasswords.Values | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    $sharedCount = @($preservedValues | Group-Object | Where-Object { $_.Count -gt 1 }).Count
+    if ($sharedCount -gt 0 -or ($preservedValues -contains 'claw_secret')) {
+        Write-Warn "Several databases share one password (or keep the claw_secret placeholder)."
+        Write-Warn "Give each its own: .\scripts\install.ps1 -RotateDbPasswords (changes them in place, keeps a backup)."
+    }
 }
 Write-Ok "Admin password generated"
 Write-Ok "Inter-service auth token generated ($($interServiceToken.Length) hex chars)"

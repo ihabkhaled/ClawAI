@@ -172,6 +172,16 @@ export type UseSaveSecuritySettingsReturn = {
   isSaving: boolean;
 };
 
+/** Reloads everything a security.* write changes: the rows, what is in force, address checks. */
+export type InvalidateSecuritySettings = () => void;
+
+export type UseRemoveSecuritySecretReturn = {
+  /** PUTs an empty value for one saved secret; the server's key (if any) then takes over. */
+  removeSecret: (key: SecuritySettingKey) => void;
+  /** The secret being removed right now, or null. */
+  removingKey: SecuritySettingKey | null;
+};
+
 export type UseAdminSecuritySettingsPageReturn = {
   t: TranslateFunction;
   isLoading: boolean;
@@ -191,6 +201,8 @@ export type UseAdminSecuritySettingsPageReturn = {
   isSaving: boolean;
   setValue: (key: SecuritySettingKey, value: string) => void;
   save: () => void;
+  removeSecret: (key: SecuritySettingKey) => void;
+  removingSecretKey: SecuritySettingKey | null;
 };
 
 export type SecuritySettingsGroupCardProps = {
@@ -202,7 +214,11 @@ export type SecuritySettingsGroupCardProps = {
   captchaStatus: CaptchaStatusView | undefined;
   emailTools: EmailDomainToolsView | undefined;
   disabled: boolean;
+  /** The admin may change settings, so a secret saved here can be removed. */
+  canRemoveSecrets: boolean;
+  removingSecretKey: SecuritySettingKey | null;
   onChange: (key: SecuritySettingKey, value: string) => void;
+  onRemoveSecret: (key: SecuritySettingKey) => void;
   t: TranslateFunction;
 };
 
@@ -213,7 +229,18 @@ export type SecuritySettingInputProps = {
   placeholder: SecurityCopy | null;
   isSecretConfigured: boolean;
   disabled: boolean;
+  canRemoveSecret: boolean;
+  removingSecretKey: SecuritySettingKey | null;
   onChange: (key: SecuritySettingKey, value: string) => void;
+  onRemoveSecret: (key: SecuritySettingKey) => void;
+  t: TranslateFunction;
+};
+
+export type SecuritySecretRemoveButtonProps = {
+  fieldKey: SecuritySettingKey;
+  isRemoving: boolean;
+  disabled: boolean;
+  onRemove: (key: SecuritySettingKey) => void;
   t: TranslateFunction;
 };
 

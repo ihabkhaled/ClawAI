@@ -48,6 +48,16 @@ if [ ! -f "$ENV_FILE" ]; then
   fi
   cp "$ENV_EXAMPLE" "$ENV_FILE"
   echo "  Created $ENV_FILE from .env.example (placeholder secrets — fine for local dev)."
+  # Every database gets its own password instead of the shared claw_secret placeholder (rules/68). Skipped when
+  # database volumes from an earlier install exist: those already use the placeholder, and changing them in
+  # place is what `bash scripts/install.sh --rotate-db-passwords` is for.
+  if command -v docker >/dev/null 2>&1 && docker volume ls -q 2>/dev/null | grep -qE '(^|_)pg-auth-data$'; then
+    echo "  Kept the placeholder database passwords: volumes from an earlier install exist."
+    echo "  Give each database its own password with: bash scripts/install.sh --rotate-db-passwords"
+  else
+    bash "$ROOT_DIR/scripts/rotate-db-passwords.sh" --env "$ENV_FILE" --fresh --yes >/dev/null
+    echo "  Gave every database its own random password."
+  fi
 else
   echo "  Skipped .env (already exists)"
 fi

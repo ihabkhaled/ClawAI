@@ -32,6 +32,7 @@ FRESH_INSTALL="false"
 RECONFIGURE="false"
 ASSUME_YES="false"
 STATUS_ONLY="false"
+ROTATE_DB_PASSWORDS="false"
 for arg in "$@"; do
   case "$arg" in
     --prod)        CLAW_MODE_ARG="prod" ;;
@@ -44,6 +45,7 @@ for arg in "$@"; do
     --resume)      FRESH_INSTALL="false" ;;
     --yes|-y)      ASSUME_YES="true"    ;;
     --status)      STATUS_ONLY="true"   ;;
+    --rotate-db-passwords) ROTATE_DB_PASSWORDS="true" ;;
   esac
 done
 CLAW_MODE="${CLAW_MODE_ARG:-${CLAW_MODE:-}}"
@@ -516,6 +518,19 @@ state_set "ANSWER_MODE" "$CLAW_MODE"
 
 apply_mode_compose_paths
 
+# --rotate-db-passwords: give every data store of THIS install a fresh, unique password (running stores are
+# changed in place, .env is rewritten with a backup, containers are recreated) and stop. Installs made before
+# per-database passwords shared one password across 14 databases (incident 2026-11-27, rules/68).
+if [ "$ROTATE_DB_PASSWORDS" = "true" ]; then
+  [ -f "$ENV_FILE" ] || { fail "No .env at $ENV_FILE: run the installer first."; exit 1; }
+  ROTATE_ARGS=(--env "$ENV_FILE" --yes)
+  for compose_file in $BASE_COMPOSE_FILES; do
+    [ "$compose_file" = "-f" ] || ROTATE_ARGS+=(--compose-file "$PROJECT_ROOT/$compose_file")
+  done
+  bash "$PROJECT_ROOT/scripts/rotate-db-passwords.sh" "${ROTATE_ARGS[@]}"
+  exit $?
+fi
+
 if [ "$CLAW_MODE" = "prod" ]; then
   NODE_ENV_VALUE="production"
   ok "Mode: ${BOLD}production${NC} (compose files: docker/docker-compose.prod.*.yml)"
@@ -831,6 +846,7 @@ if [ -f "$ENV_FILE" ]; then
   PREV_MONGO_PASS="$(get_env_value "MONGO_PASSWORD" "$ENV_FILE")"
   PREV_REDIS_PASS="$(get_env_value "REDIS_PASSWORD" "$ENV_FILE")"
   PREV_RABBIT_PASS="$(get_env_value "RABBITMQ_PASSWORD" "$ENV_FILE")"
+  PREV_FIRECRAWL_POSTGRES_PASSWORD="$(get_env_value "FIRECRAWL_POSTGRES_PASSWORD" "$ENV_FILE")"
   PREV_JWT_SECRET="$(get_env_value "JWT_SECRET" "$ENV_FILE")"
   PREV_ENCRYPTION_KEY="$(get_env_value "ENCRYPTION_KEY" "$ENV_FILE")"
   PREV_PAYMENT_TOKEN_KEY="$(get_env_value "PAYMENT_TOKEN_ENCRYPTION_KEY" "$ENV_FILE")"
@@ -847,6 +863,13 @@ if [ -f "$ENV_FILE" ]; then
   fi
   if [ "$PG_PRESERVED_COUNT" -gt 0 ]; then
     ok "Preserved $PG_PRESERVED_COUNT PG_*_PASSWORD value(s) from existing .env (those volumes already use them)"
+    # An install made before per-database passwords shares ONE value across them (or keeps the placeholder).
+    SHARED_PG_PASSWORDS="$(for pg_key in $PG_DB_KEYS; do get_env_value "PG_${pg_key}_PASSWORD" "$ENV_FILE"; done |
+      grep -v '^$' | sort | uniq -d | wc -l)"
+    if [ "$SHARED_PG_PASSWORDS" -gt 0 ] || grep -q '^PG_[A-Z_]*_PASSWORD=claw_secret$' "$ENV_FILE"; then
+      warn "Several databases share one password (or keep the claw_secret placeholder)."
+      warn "Give each its own: bash scripts/install.sh --rotate-db-passwords (changes them in place, keeps a backup)."
+    fi
   fi
   if [ -n "$PREV_REDIS_PASS" ]; then
     REDIS_PASS="$PREV_REDIS_PASS"
@@ -855,6 +878,11 @@ if [ -f "$ENV_FILE" ]; then
   if [ -n "$PREV_MONGO_PASS" ]; then
     MONGO_PASS="$PREV_MONGO_PASS"
     ok "Preserved MONGO_PASSWORD from existing .env"
+  fi
+  if [ -n "$PREV_FIRECRAWL_POSTGRES_PASSWORD" ]; then
+    # Its volume was created with this value; a fresh one would lock Firecrawl out of its own database.
+    FIRECRAWL_POSTGRES_PASSWORD="$PREV_FIRECRAWL_POSTGRES_PASSWORD"
+    ok "Preserved FIRECRAWL_POSTGRES_PASSWORD from existing .env"
   fi
   if [ -n "$PREV_RABBIT_PASS" ]; then
     RABBIT_PASS="$PREV_RABBIT_PASS"

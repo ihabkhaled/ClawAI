@@ -20,7 +20,10 @@ export function SecuritySettingsGroupCard({
   captchaStatus,
   emailTools,
   disabled,
+  canRemoveSecrets,
+  removingSecretKey,
   onChange,
+  onRemoveSecret,
   t,
 }: SecuritySettingsGroupCardProps): React.ReactElement {
   return (
@@ -46,7 +49,10 @@ export function SecuritySettingsGroupCard({
             placeholder={placeholders[field.key]}
             isSecretConfigured={secretStatus[field.key] === true}
             disabled={disabled}
+            canRemoveSecret={canRemoveSecrets}
+            removingSecretKey={removingSecretKey}
             onChange={onChange}
+            onRemoveSecret={onRemoveSecret}
             t={t}
           />
         ))}

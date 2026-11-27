@@ -1,7 +1,7 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 
+import { useInvalidateSecuritySettings } from '@/hooks/admin/use-invalidate-security-settings';
 import { useTranslation } from '@/lib/i18n';
-import { queryKeys } from '@/repositories/shared/query-keys';
 import { securitySettingsService } from '@/services/admin/security-settings.service';
 import type {
   SecuritySettingChange,
@@ -16,13 +16,11 @@ import { showToast } from '@/utilities';
  */
 export function useSaveSecuritySettings(): UseSaveSecuritySettingsReturn {
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
+  const invalidate = useInvalidateSecuritySettings();
   const mutation = useMutation({
     mutationFn: (changes: SecuritySettingChange[]) => securitySettingsService.save(changes),
     onSuccess: (result) => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.systemSettings });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.signupProtectionStatus });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.signupEmailChecks });
+      invalidate();
       if (result.failed.length === 0) {
         showToast.success({ title: t('adminSecurity.saved') });
       } else {

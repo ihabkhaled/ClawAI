@@ -370,7 +370,7 @@
       "file": "rules/67-turn-intent-is-semantic-keywords-are-only-the-fallback.md"
     },
     {
-      "bytes": 2344,
+      "bytes": 2628,
       "file": "rules/68-internal-surfaces-stay-internal.md"
     },
     {
@@ -696,7 +696,7 @@
       "file": "skills/inspect-affected-workspaces.md"
     },
     {
-      "bytes": 3357,
+      "bytes": 3553,
       "file": "skills/investigate-a-production-intrusion.md"
     },
     {

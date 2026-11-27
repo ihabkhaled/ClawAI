@@ -42,7 +42,8 @@ powershell -ExecutionPolicy Bypass -File scripts\install.ps1
 The script will:
 
 - Check that Docker, Node.js 22+, and Git are installed
-- Generate secure random secrets (JWT, encryption key, database passwords)
+- Generate secure random secrets (JWT, encryption key, and a separate password for every database, MongoDB,
+  RabbitMQ and Redis)
 - Prompt for admin email/password (with sensible defaults)
 - Create a fully configured `.env` file
 - Build and start the full development stack
@@ -56,13 +57,14 @@ skipped and answered questions are not asked again. This matters most on a
 server, where a dropped SSH session or a failed image build used to mean
 starting the whole interview from scratch.
 
-| Flag            | Effect                                                            |
-| --------------- | ----------------------------------------------------------------- |
-| _(none)_        | Resume — skip finished steps, reuse saved answers                 |
-| `--status`      | Print which steps are done and which answers are saved, then exit |
-| `--reconfigure` | Ask the questions again, but keep work that already succeeded     |
-| `--fresh`       | Forget all recorded state and start over                          |
-| `--yes` / `-y`  | Never prompt; use saved answers and defaults                      |
+| Flag                    | Effect                                                                           |
+| ----------------------- | -------------------------------------------------------------------------------- |
+| _(none)_                | Resume — skip finished steps, reuse saved answers                                |
+| `--status`              | Print which steps are done and which answers are saved, then exit                |
+| `--reconfigure`         | Ask the questions again, but keep work that already succeeded                    |
+| `--rotate-db-passwords` | Give every data store a fresh, unique password in place (backup kept), then exit |
+| `--fresh`               | Forget all recorded state and start over                                         |
+| `--yes` / `-y`          | Never prompt; use saved answers and defaults                                     |
 
 ```bash
 bash scripts/install.sh --status        # what is done so far

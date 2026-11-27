@@ -60,3 +60,7 @@ home; this page only collects them. Routed from [`AGENTS.md`](../AGENTS.md).
 - **Per-address limits do not stop a sign-up farm on rotating residential addresses.** The proof-of-work /
   Turnstile / reCAPTCHA checks, the disposable-email block, the device-fingerprint trial rule and the platform-wide
   velocity limit do ([ADR-222](../docs/13-adr/adr-222-sign-up-abuse-defences-and-internal-surfaces.md)).
+- **A data store keeps the password it was created with.** Editing a `*_PASSWORD` in `.env` does not change the
+  password inside Postgres, MongoDB, RabbitMQ or Redis; the store then refuses every service. Rotate only with
+  `scripts/rotate-db-passwords.sh` (store first, then `.env`, then restart). Every store has its own password; the
+  production compose files require each one ([runbook §4](../docs/11-runbooks/runbook-production-host-hardening.md)).

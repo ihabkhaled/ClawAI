@@ -1277,7 +1277,10 @@ Doc: `docs/05-frontend/sign-up-abuse-defences.md`. Traps:
   EMAIL_DOMAIN_UNDELIVERABLE go on the email field; SIGNUP_TEMPORARILY_LIMITED is matched by code BEFORE the bare-429
   fallback (it is the platform pausing sign-ups, not "too many attempts").
 - `/admin/security/sign-up`: secrets are write-only (empty box, empty box never sent);
-  route gated on `ADMIN_SYSTEM_VIEW`, saving on `ADMIN_CREDIT_MANAGE` (what `PUT /admin/settings/:key` enforces).
+  a secret saved on this page (row `configured`) shows "Remove saved secret" to an editor, which PUTs `''` at
+  once (no dialog, `useRemoveSecuritySecret`) and reloads the same three queries as a save
+  (`useInvalidateSecuritySettings`); the server's key, if any, then takes over (`secretKeySource` ENVIRONMENT/NONE).
+  Route gated on `ADMIN_SYSTEM_VIEW`, saving on `ADMIN_CREDIT_MANAGE` (what `PUT /admin/settings/:key` enforces).
   Linked accounts open from the user detail dialog (`UserLinkedAccountsDialog`, keyed body).
 - The settings rows alone mislead: production captcha keys live in the auth-service ENV and the ~10k built-in
   throwaway list is always on. `GET /admin/security/sign-up/status` (`useSignupProtectionStatus`) drives the On/Off

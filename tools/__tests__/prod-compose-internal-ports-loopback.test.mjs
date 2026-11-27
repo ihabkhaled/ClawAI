@@ -46,14 +46,65 @@ for (const relative of PROD_COMPOSE) {
 
   test(`${relative} publishes nothing but 80/443 beyond loopback`, () => {
     const exposed = services.flatMap(([name, service]) =>
-      (service.ports ?? []).filter((entry) => !isAllowedPort(entry)).map((entry) => `${name}: ${JSON.stringify(entry)}`),
+      (service.ports ?? [])
+        .filter((entry) => !isAllowedPort(entry))
+        .map((entry) => `${name}: ${JSON.stringify(entry)}`),
     );
     assert.deepEqual(exposed, [], `ports reachable from the internet:\n${exposed.join('\n')}`);
   });
 }
 
 test('the production Redis requires the password from REDIS_PASSWORD', () => {
-  const compose = parse(fs.readFileSync(repoPath('docker/docker-compose.prod.databases.yml'), 'utf8'));
+  const compose = parse(
+    fs.readFileSync(repoPath('docker/docker-compose.prod.databases.yml'), 'utf8'),
+  );
   const redis = compose.services.redis;
-  assert.deepEqual(redis.command, ['redis-server', '--requirepass', '${REDIS_PASSWORD:-}']);
+  assert.equal(redis.command[0], 'redis-server');
+  assert.equal(redis.command[1], '--requirepass');
+  assert.match(redis.command[2], /^\$\{REDIS_PASSWORD:\?[^}]+\}$/u);
 });
+
+// 2026-11-27: 14 production databases shared one password and the compose files fell back to `claw_secret` when a
+// value was missing. Every data-store password in a production compose file is now REQUIRED (`${VAR:?message}`):
+// a missing value stops the deploy instead of starting a database on a well-known password. Values are unique per
+// store (installers, scripts/rotate-db-passwords.sh).
+const PASSWORD_KEYS = [
+  'POSTGRES_PASSWORD',
+  'MONGO_INITDB_ROOT_PASSWORD',
+  'RABBITMQ_DEFAULT_PASS',
+  'REDIS_PASSWORD',
+];
+
+/** A password value that may stand in a production compose file: a required variable, nothing else. */
+function isRequiredVariable(value) {
+  return typeof value === 'string' && /^\$\{[A-Z_]+:\?[^}]+\}$/u.test(value);
+}
+
+test('isRequiredVariable accepts only ${VAR:?message}', () => {
+  assert.equal(isRequiredVariable('${PG_AUTH_PASSWORD:?PG_AUTH_PASSWORD is required}'), true);
+  assert.equal(isRequiredVariable('${PG_AUTH_PASSWORD:-claw_secret}'), false);
+  assert.equal(isRequiredVariable('${REDIS_PASSWORD:-}'), false);
+  assert.equal(isRequiredVariable('${PG_AUTH_PASSWORD}'), false);
+  assert.equal(isRequiredVariable('claw_secret'), false);
+});
+
+for (const relative of PROD_COMPOSE) {
+  const compose = parse(fs.readFileSync(repoPath(relative), 'utf8'));
+  test(`${relative} has no data-store password with a default`, () => {
+    const weak = Object.entries(compose.services ?? {}).flatMap(([name, service]) => {
+      // `environment` is a map or a list of KEY=value strings; read both.
+      const environment = Array.isArray(service.environment)
+        ? Object.fromEntries(
+            service.environment.map((entry) => [
+              entry.split('=')[0],
+              entry.slice(entry.indexOf('=') + 1),
+            ]),
+          )
+        : (service.environment ?? {});
+      return PASSWORD_KEYS.filter(
+        (key) => key in environment && !isRequiredVariable(environment[key]),
+      ).map((key) => `${name}: ${key}=${JSON.stringify(environment[key])}`);
+    });
+    assert.deepEqual(weak, [], `passwords that can fall back to a default:\n${weak.join('\n')}`);
+  });
+}

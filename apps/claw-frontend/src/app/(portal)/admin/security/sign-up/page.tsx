@@ -60,7 +60,10 @@ export default function AdminSecuritySignupPage(): ReactElement {
             captchaStatus={page.captchaStatus[group.definition.group]}
             emailTools={page.emailTools[group.definition.group]}
             disabled={!page.canEdit || page.isSaving}
+            canRemoveSecrets={page.canEdit}
+            removingSecretKey={page.removingSecretKey}
             onChange={page.setValue}
+            onRemoveSecret={page.removeSecret}
             t={page.t}
           />
         ))}

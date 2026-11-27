@@ -152,3 +152,10 @@ think tags into the chat UI.
 
 Full architecture:
 [`docs/03-architecture/runtime-progress.md`](../../docs/03-architecture/runtime-progress.md).
+
+## Version comes from package.json with an import attribute (2026-11-27)
+
+`SERVICE_VERSION` (`modules/health/constants/service-version.constants.ts`) is
+`import packageJson from '../../../../package.json' with { type: 'json' }`. Node's ESM loader refuses a JSON module
+without the attribute (`ERR_IMPORT_ATTRIBUTE_MISSING`), which crash-looped this service on Node 26 while the dev
+container still reported "starting". Never go back to a named import from `package.json`.

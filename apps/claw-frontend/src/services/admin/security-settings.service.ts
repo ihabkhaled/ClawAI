@@ -1,7 +1,9 @@
+import type { SecuritySettingKey } from '@/enums/security-setting-key.enum';
 import { systemSettingsRepository } from '@/repositories/admin/system-settings.repository';
 import type {
   SecuritySettingChange,
   SecuritySettingsSaveResult,
+  SystemSettingView,
 } from '@/types/admin-security-settings.types';
 
 /**
@@ -27,5 +29,14 @@ export const securitySettingsService = {
       }
     }
     return result;
+  },
+
+  /**
+   * Removes a secret saved on this page. An empty value clears any security.*
+   * key server-side; the server environment's key, if one is set, is then the
+   * one in force, otherwise the provider is off.
+   */
+  removeSecret(key: SecuritySettingKey): Promise<SystemSettingView> {
+    return systemSettingsRepository.set(key, '');
   },
 };

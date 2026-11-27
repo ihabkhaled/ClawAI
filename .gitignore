@@ -44,6 +44,9 @@ out/
 .env.development.local
 .env.test.local
 .env.production.local
+# .env backups written by scripts/rotate-db-passwords.sh and by hand: they hold every secret.
+.env.bak-*
+.env.bak*
 # Leftover local secrets from the retired Vercel deployment path — never
 # committed even though the automation that read it is gone.
 .env.vercel*

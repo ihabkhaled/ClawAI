@@ -55,6 +55,8 @@ sessions, trial redemptions, weighted usage and free-allowance rows before decid
 ## 6. Contain, then fix
 
 - Reversible first: firewall rules, fail2ban, admin bans (same fields as `POST /users/:id/ban`, sessions revoked).
-- Ask the owner before deleting data or rotating credentials that would restart services.
+- Ask the owner before deleting data or rotating credentials that would restart services. Data-store passwords
+  rotate with `sudo bash scripts/rotate-db-passwords.sh --env /srv/clawai/.env --yes` (`--dry-run` first): every
+  store gets its own new password in one window (runbook §4).
 - Then the repo: compose bindings, guards, limits, tests (rules/68 mechanisms), the incident report, ADR, runbook,
   QA evidence, memory.

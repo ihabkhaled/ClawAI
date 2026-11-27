@@ -54,13 +54,24 @@ connectors page.
   hand-set to `127.0.0.1:5457` / `127.0.0.1:5458`, and the compose file now adds `127.0.0.1:` itself. Reset to bare
   numbers (backup `.env.bak-2026-11-27-ports`) and the deploy re-run. Port values are bare numbers from now on.
 
-## Still to do
+## Done after the first release (2026-11-27)
 
-- Recreate the database containers from the current compose file in a maintenance window (localhost binding).
-- Redis `requirepass`: compose change, `REDIS_PASSWORD` + `REDIS_URL` in `/srv/clawai/.env`, recreate Redis and every
-  service in one short window (see the runbook).
-- Consider rotating the Postgres, MongoDB and RabbitMQ passwords (no evidence of compromise; they were exposed).
+- **Every data store has its own password.** 14 Postgres databases had shared one password and Redis had none.
+  `scripts/rotate-db-passwords.sh` changed all 20 running stores in place on production (Postgres x16, MongoDB,
+  RabbitMQ, Redis, Firecrawl Postgres) and gave the two unused databases unique values; 0 duplicates, every
+  container healthy, 0 authentication errors after the switch, an AUTO chat turn answered. Redis now answers
+  `NOAUTH` without the password. The same run recreated the stores, so the database ports are bound to 127.0.0.1.
+- The production compose files require every data-store password (no `claw_secret` fallback); installers give each
+  store its own value (`--rotate-db-passwords` / `-RotateDbPasswords` for an existing install; `setup.sh` too).
+- The admin Sign-up protection page shows what is in force (keys from the server, the built-in list size, an address
+  check) and can remove a secret saved on the page.
+
 - Captcha keys are live on production (2026-11-27). The first reCAPTCHA key lacked the `claw-ai.co` domain and broke
   sign-up for about 10 minutes (only test traffic hit it); both providers were switched off, the domain added, and
   both switched back on. reCAPTCHA is proven end to end (siteverify success, score 0.9, hostname claw-ai.co); the
-  Turnstile secret is valid, and a real-browser sign-up is the last open proof (automated browsers get 600010).
+  owner then signed up in a real browser through all three checks (automated browsers get Turnstile error 600010).
+
+## Still to do
+
+- Full-site Cloudflare proxy (needs the owner's registrar login): DDoS shield, WAF, origin IP hidden. nginx must then
+  trust `CF-Connecting-IP` only from Cloudflare ranges, and the host must accept 80/443 only from them.

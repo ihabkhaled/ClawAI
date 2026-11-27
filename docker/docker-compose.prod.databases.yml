@@ -38,7 +38,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${PG_AUTH_USER:-claw}
-      POSTGRES_PASSWORD: ${PG_AUTH_PASSWORD:-claw_secret}
+      POSTGRES_PASSWORD: ${PG_AUTH_PASSWORD:?PG_AUTH_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}
       POSTGRES_DB: ${PG_AUTH_DB:-claw_auth}
     ports:
       - '127.0.0.1:${PG_AUTH_PORT:-5441}:5432'
@@ -61,7 +61,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${PG_CHAT_USER:-claw}
-      POSTGRES_PASSWORD: ${PG_CHAT_PASSWORD:-claw_secret}
+      POSTGRES_PASSWORD: ${PG_CHAT_PASSWORD:?PG_CHAT_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}
       POSTGRES_DB: ${PG_CHAT_DB:-claw_chat}
     ports:
       - '127.0.0.1:${PG_CHAT_PORT:-5442}:5432'
@@ -84,7 +84,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${PG_CONNECTOR_USER:-claw}
-      POSTGRES_PASSWORD: ${PG_CONNECTOR_PASSWORD:-claw_secret}
+      POSTGRES_PASSWORD: ${PG_CONNECTOR_PASSWORD:?PG_CONNECTOR_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}
       POSTGRES_DB: ${PG_CONNECTOR_DB:-claw_connectors}
     ports:
       - '127.0.0.1:${PG_CONNECTOR_PORT:-5443}:5432'
@@ -111,7 +111,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${PG_ROUTING_USER:-claw}
-      POSTGRES_PASSWORD: ${PG_ROUTING_PASSWORD:-claw_secret}
+      POSTGRES_PASSWORD: ${PG_ROUTING_PASSWORD:?PG_ROUTING_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}
       POSTGRES_DB: ${PG_ROUTING_DB:-claw_routing}
     ports:
       - '127.0.0.1:${PG_ROUTING_PORT:-5444}:5432'
@@ -135,7 +135,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${PG_MEMORY_USER:-claw}
-      POSTGRES_PASSWORD: ${PG_MEMORY_PASSWORD:-claw_secret}
+      POSTGRES_PASSWORD: ${PG_MEMORY_PASSWORD:?PG_MEMORY_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}
       POSTGRES_DB: ${PG_MEMORY_DB:-claw_memory}
     ports:
       - '127.0.0.1:${PG_MEMORY_PORT:-5445}:5432'
@@ -158,7 +158,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${PG_FILES_USER:-claw}
-      POSTGRES_PASSWORD: ${PG_FILES_PASSWORD:-claw_secret}
+      POSTGRES_PASSWORD: ${PG_FILES_PASSWORD:?PG_FILES_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}
       POSTGRES_DB: ${PG_FILES_DB:-claw_files}
     ports:
       - '127.0.0.1:${PG_FILES_PORT:-5446}:5432'
@@ -184,7 +184,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${PG_OLLAMA_USER:-claw}
-      POSTGRES_PASSWORD: ${PG_OLLAMA_PASSWORD:-claw_secret}
+      POSTGRES_PASSWORD: ${PG_OLLAMA_PASSWORD:?PG_OLLAMA_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}
       POSTGRES_DB: ${PG_OLLAMA_DB:-claw_ollama}
     ports:
       - '127.0.0.1:${PG_OLLAMA_PORT:-5447}:5432'
@@ -210,7 +210,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${PG_IMAGES_USER:-claw}
-      POSTGRES_PASSWORD: ${PG_IMAGES_PASSWORD:-claw_secret}
+      POSTGRES_PASSWORD: ${PG_IMAGES_PASSWORD:?PG_IMAGES_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}
       POSTGRES_DB: ${PG_IMAGES_DB:-claw_images}
     ports:
       - '127.0.0.1:${PG_IMAGES_PORT:-5448}:5432'
@@ -236,7 +236,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${PG_WORKSPACE_USER:-claw}
-      POSTGRES_PASSWORD: ${PG_WORKSPACE_PASSWORD:-claw_secret}
+      POSTGRES_PASSWORD: ${PG_WORKSPACE_PASSWORD:?PG_WORKSPACE_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}
       POSTGRES_DB: ${PG_WORKSPACE_DB:-claw_workspace}
     ports:
       - '127.0.0.1:${PG_WORKSPACE_PORT:-5450}:5432'
@@ -266,7 +266,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${PG_RESEARCH_USER:-claw}
-      POSTGRES_PASSWORD: ${PG_RESEARCH_PASSWORD:-claw_secret}
+      POSTGRES_PASSWORD: ${PG_RESEARCH_PASSWORD:?PG_RESEARCH_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}
       POSTGRES_DB: ${PG_RESEARCH_DB:-claw_research}
     ports:
       - '127.0.0.1:${PG_RESEARCH_PORT:-5452}:5432'
@@ -291,7 +291,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${PG_THREAD_GENERATION_USER:-claw}
-      POSTGRES_PASSWORD: ${PG_THREAD_GENERATION_PASSWORD:-claw_secret}
+      POSTGRES_PASSWORD: ${PG_THREAD_GENERATION_PASSWORD:?PG_THREAD_GENERATION_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}
       POSTGRES_DB: ${PG_THREAD_GENERATION_DB:-claw_thread_generation}
     ports:
       - '127.0.0.1:${PG_THREAD_GENERATION_PORT:-5457}:5432'
@@ -318,7 +318,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${PG_THREADS_USER:-claw}
-      POSTGRES_PASSWORD: ${PG_THREADS_PASSWORD:-claw_secret}
+      POSTGRES_PASSWORD: ${PG_THREADS_PASSWORD:?PG_THREADS_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}
       POSTGRES_DB: ${PG_THREADS_DB:-claw_threads}
     ports:
       - '127.0.0.1:${PG_THREADS_PORT:-5458}:5432'
@@ -342,7 +342,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${PG_PLUGIN_USER:-claw}
-      POSTGRES_PASSWORD: ${PG_PLUGIN_PASSWORD:-claw_secret}
+      POSTGRES_PASSWORD: ${PG_PLUGIN_PASSWORD:?PG_PLUGIN_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}
       POSTGRES_DB: ${PG_PLUGIN_DB:-claw_plugin}
     ports:
       - '127.0.0.1:${PG_PLUGIN_PORT:-5459}:5432'
@@ -365,7 +365,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${PG_LIVE_USER:-claw}
-      POSTGRES_PASSWORD: ${PG_LIVE_PASSWORD:-claw_secret}
+      POSTGRES_PASSWORD: ${PG_LIVE_PASSWORD:?PG_LIVE_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}
       POSTGRES_DB: ${PG_LIVE_DB:-claw_live}
     ports:
       - '127.0.0.1:${PG_LIVE_PORT:-5460}:5432'
@@ -395,7 +395,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${PG_PAYMENTS_USER:-claw}
-      POSTGRES_PASSWORD: ${PG_PAYMENTS_PASSWORD:-claw_secret}
+      POSTGRES_PASSWORD: ${PG_PAYMENTS_PASSWORD:?PG_PAYMENTS_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}
       POSTGRES_DB: ${PG_PAYMENTS_DB:-claw_payments}
     ports:
       - '127.0.0.1:${PG_PAYMENTS_PORT:-5453}:5432'
@@ -422,7 +422,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${PG_AGENT_USER:-claw}
-      POSTGRES_PASSWORD: ${PG_AGENT_PASSWORD:-claw_secret}
+      POSTGRES_PASSWORD: ${PG_AGENT_PASSWORD:?PG_AGENT_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}
       POSTGRES_DB: ${PG_AGENT_DB:-claw_agent}
     ports:
       - '127.0.0.1:${PG_AGENT_PORT:-5451}:5432'
@@ -448,7 +448,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${PG_LLAMACPP_USER:-claw}
-      POSTGRES_PASSWORD: ${PG_LLAMACPP_PASSWORD:-claw_secret}
+      POSTGRES_PASSWORD: ${PG_LLAMACPP_PASSWORD:?PG_LLAMACPP_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}
       POSTGRES_DB: ${PG_LLAMACPP_DB:-claw_llamacpp}
     ports:
       - '127.0.0.1:${PG_LLAMACPP_PORT:-5440}:5432'
@@ -475,7 +475,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${PG_FILE_GENERATIONS_USER:-claw}
-      POSTGRES_PASSWORD: ${PG_FILE_GENERATIONS_PASSWORD:-claw_secret}
+      POSTGRES_PASSWORD: ${PG_FILE_GENERATIONS_PASSWORD:?PG_FILE_GENERATIONS_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}
       POSTGRES_DB: ${PG_FILE_GENERATIONS_DB:-claw_file_generations}
     ports:
       - '127.0.0.1:${PG_FILE_GENERATIONS_PORT:-5449}:5432'
@@ -505,7 +505,7 @@ services:
     restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-claw}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-claw_secret}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:?MONGO_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}
       MONGO_INITDB_DATABASE: ${MONGO_DB:-claw_audit}
     ports:
       - '127.0.0.1:${MONGO_PORT:-27018}:27017'
@@ -529,10 +529,15 @@ services:
     image: redis:7-alpine
     container_name: claw-redis
     # Password from REDIS_PASSWORD (security incident 2026-11-27: Redis was open with no password).
-    # Empty keeps the old no-password behaviour, so a host without the variable still starts.
-    command: ['redis-server', '--requirepass', '${REDIS_PASSWORD:-}']
+    # Required: production never starts a data store without its own password (rules/68).
+    command:
+      [
+        'redis-server',
+        '--requirepass',
+        '${REDIS_PASSWORD:?REDIS_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}',
+      ]
     environment:
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}
     restart: unless-stopped
     ports:
       - '127.0.0.1:${REDIS_PORT:-6380}:6379'
@@ -562,7 +567,7 @@ services:
     restart: unless-stopped
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-claw}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-claw_secret}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}
     ports:
       - '127.0.0.1:${RABBITMQ_PORT:-5672}:5672'
       - '127.0.0.1:${RABBITMQ_MANAGEMENT_PORT:-15672}:15672'

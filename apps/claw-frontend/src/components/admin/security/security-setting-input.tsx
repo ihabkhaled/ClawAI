@@ -1,5 +1,6 @@
 'use client';
 
+import { SecuritySecretRemoveButton } from '@/components/admin/security/security-secret-remove-button';
 import { PasswordInput } from '@/components/common/password-input';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,6 +13,7 @@ import type { SecuritySettingInputProps } from '@/types/admin-security-settings.
  * and anything typed replaces it on save. An empty site key shows the key the
  * server is using; other fields show the auth-service default, since an empty
  * value means "use the default". The placeholder is resolved by the controller.
+ * A secret saved on this page also offers "Remove saved secret".
  */
 export function SecuritySettingInput({
   field,
@@ -20,7 +22,10 @@ export function SecuritySettingInput({
   placeholder,
   isSecretConfigured,
   disabled,
+  canRemoveSecret,
+  removingSecretKey,
   onChange,
+  onRemoveSecret,
   t,
 }: SecuritySettingInputProps): React.ReactElement {
   const inputId = `security-setting-${field.key}`;
@@ -51,6 +56,15 @@ export function SecuritySettingInput({
           data-testid={`security-secret-${field.key}`}
           data-configured={isSecretConfigured}
           onChange={(event) => onChange(field.key, event.target.value)}
+        />
+      ) : null}
+      {isSecret && isSecretConfigured && canRemoveSecret ? (
+        <SecuritySecretRemoveButton
+          fieldKey={field.key}
+          isRemoving={removingSecretKey === field.key}
+          disabled={disabled || removingSecretKey !== null}
+          onRemove={onRemoveSecret}
+          t={t}
         />
       ) : null}
       {isList ? (

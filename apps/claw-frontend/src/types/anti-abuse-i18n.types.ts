@@ -68,6 +68,14 @@ export type AdminSecurityTranslation = {
     domainList: string;
     tooLong: string;
   };
+  /** The "Remove saved secret" button under a secret saved on this page, and its toasts. */
+  removeSecret: {
+    action: string;
+    removed: string;
+    /** What is in force afterwards: the server's key, or the provider is off. */
+    removedDetail: string;
+    failed: string;
+  };
   /** What a captcha card has in force (GET /admin/security/sign-up/status). */
   status: {
     on: string;

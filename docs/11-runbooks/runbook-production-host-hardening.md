@@ -40,18 +40,31 @@ After editing: `sudo sshd -t && sudo systemctl reload ssh`, then open a NEW sess
 - Status: `sudo fail2ban-client status claw-nginx-scan`. Unban: `sudo fail2ban-client set <jail> unbanip <ip>`.
 - Test a filter: `sudo fail2ban-regex /var/log/claw-nginx/access.log /etc/fail2ban/filter.d/claw-nginx-scan.conf`.
 
-## 4. Redis password (one short window, ~2 min)
+## 4. Data-store passwords (every store its own, rotated in one window)
 
-1. Generate: `openssl rand -hex 24`.
-2. In `/srv/clawai/.env` (the live one, owned by `deploy`): `REDIS_PASSWORD=<value>` and
-   `REDIS_URL=redis://:<value>@redis:6379`.
-3. Recreate Redis from the live compose: `cd /srv/clawai && docker compose --env-file .env -p claw -f
-docker/docker-compose.prod.databases.yml up -d redis` and wait for `healthy`.
-4. Recreate every service that reads `REDIS_URL` with the new env (no rebuild):
-   `docker compose --env-file .env -p claw -f docker/docker-compose.prod.databases.yml -f
-docker/docker-compose.prod.services.yml up -d --no-build --no-deps <services>`.
-5. Verify: `docker exec claw-redis redis-cli ping` answers `NOAUTH`; the site and `/api/v1/health` answer 200;
-   `docker logs --since 2m claw-auth-service | grep -i redis` shows no errors.
+Installs made before per-database passwords shared ONE password across 14 Postgres databases, and Redis had none
+(2026-11-27). Every store now has its own random password, and the production compose files refuse to start a store
+without one (`${VAR:?...}`, `tools/__tests__/prod-compose-internal-ports-loopback.test.mjs`).
+
+- **Rotate** (all stores, ~2-5 min of restarts): `cd /srv/clawai && sudo bash scripts/rotate-db-passwords.sh --env
+.env --yes`. Plan only: `--dry-run`. Some stores only: `--only REDIS,AUTH`. Installers: `bash scripts/install.sh
+--rotate-db-passwords` / `.\scripts\install.ps1 -RotateDbPasswords` (same script, the install's compose files).
+- What it does: checks each running store accepts the password `.env` has (stops on drift, nothing changed);
+  changes the password INSIDE each store (Postgres `ALTER USER`, MongoDB `changeUserPassword`, `rabbitmqctl
+change_password`, Redis `CONFIG SET requirepass`), putting every changed store back if one fails; backs `.env` up
+  (`.env.bak-<time>-rotation`, same owner and mode) and rewrites each `*_PASSWORD` and every URL whose host is a
+  rotated store; recreates the stores (which also applies the loopback port bindings) and every running app
+  container of the given compose files; waits for every container to be healthy and checks each new password.
+- Values never appear on a command line or in output; a container left in "Created" by a failed dependency is
+  started and reported.
+- Fresh installs: `install.sh` / `install.ps1` generate one password per store; `setup.sh` gives a copied
+  `.env.example` unique values (`--fresh`) unless database volumes from an earlier install exist.
+- **Roll back** only if the script stopped after writing `.env` and a service cannot recover: the old values are in
+  the backup; set each one back inside its store by hand (`ALTER USER ... PASSWORD '<old>'`, `changeUserPassword`,
+  `rabbitmqctl change_password`, `CONFIG SET requirepass`), `cp -p` the backup over `.env` and recreate the services.
+  Running the script again mints NEW values; it is a fix-forward, not a rollback.
+- Verify: `docker ps` all healthy; no `password authentication failed`, `NOAUTH`, `ACCESS_REFUSED` or `Authentication
+failed` in the last minutes of any service log; `docker exec claw-redis redis-cli ping` answers `NOAUTH`.
 
 ## 5. Captcha keys (Turnstile, reCAPTCHA v3)
 
