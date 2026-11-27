@@ -550,14 +550,17 @@ Free = 2 only when it creates the column.
 `POST /auth/register` never answers an expected failure with a raw 500. The web
 client maps each code to translated copy (`utilities/signup-failure.utility.ts`).
 
-| Failure                                                          | Status | Code                                                                 |
-| ---------------------------------------------------------------- | ------ | -------------------------------------------------------------------- |
-| Field format (email, password rules, names, phone E.164)         | 400    | `VALIDATION_FAILED` + `errors: { field: [RegisterValidationIssue] }` |
-| Weak password (manager defence in depth)                         | 400    | `WEAK_PASSWORD`                                                      |
-| Address already registered (incl. a concurrent P2002 on `email`) | 409    | `DUPLICATE_ENTITY`                                                   |
-| Throttled (route budget or global throttler)                     | 429    | `RATE_LIMITED` + `Retry-After` header (rules/58)                     |
-| Default plan could not be assigned                               | 503    | `SIGNUP_PLAN_ASSIGNMENT_FAILED`                                      |
-| Anything else                                                    | 500    | none (client shows the generic copy + `x-request-id`)                |
+| Failure                                                          | Status  | Code                                                                 |
+| ---------------------------------------------------------------- | ------- | -------------------------------------------------------------------- |
+| Field format (email, password rules, names, phone E.164)         | 400     | `VALIDATION_FAILED` + `errors: { field: [RegisterValidationIssue] }` |
+| Weak password (manager defence in depth)                         | 400     | `WEAK_PASSWORD`                                                      |
+| Address already registered (incl. a concurrent P2002 on `email`) | 409     | `DUPLICATE_ENTITY`                                                   |
+| Throttled (route budget or global throttler)                     | 429     | `RATE_LIMITED` + `Retry-After` header (rules/58)                     |
+| Bot check missing / failed (anti-abuse, 2026-11-27)              | 428/403 | `BOT_CHECK_REQUIRED` / `BOT_CHECK_FAILED`                            |
+| Disposable or undeliverable email domain                         | 400     | `DISPOSABLE_EMAIL` / `EMAIL_DOMAIN_UNDELIVERABLE` + `field: "email"` |
+| Sign-up velocity exceeded                                        | 429     | `SIGNUP_TEMPORARILY_LIMITED` + `Retry-After` header                  |
+| Default plan could not be assigned                               | 503     | `SIGNUP_PLAN_ASSIGNMENT_FAILED`                                      |
+| Anything else                                                    | 500     | none (client shows the generic copy + `x-request-id`)                |
 
 - **Duplicate email stays `DUPLICATE_ENTITY`.** It is the one enumeration surface
   ADR-096 / rules/43 §1 keep on purpose. Do not add a second.
@@ -569,9 +572,10 @@ client maps each code to translated copy (`utilities/signup-failure.utility.ts`)
   can never hit `DUPLICATE_ENTITY` on a half-made account.
 - **A failed verification email does not fail sign-up.** The account is complete;
   the response says `verificationEmailSent: false` and `/check-email` shows a
-  notice beside the resend button. Phone is not unique; there is no captcha and no
-  registration toggle. `/auth/register` has its own budget (5/h per IP, 3/h per
-  address) on top of the global throttler — see the next section.
+  notice beside the resend button. Phone is not unique; there is no registration
+  toggle. Bot checks, email-domain rules and sign-up velocity are the anti-abuse
+  screening (section at the end of this file). `/auth/register` has its own budget
+  (5/h per IP, 3/h per address) on top of the global throttler — see the next section.
 
 ## Sign-in / sign-up route budgets (rules/58, ADR-147, 2026-10-02)
 
@@ -754,3 +758,33 @@ settled vs released holds, NOT an HTTP success rate. Only the health queries rea
 - Entitlements are read fresh per call; nothing caches the mode. chat-service reads it only after the first 402 of a turn.
 - `STOP` ends the turn with the original credit refusal; `FALLBACK` answers from an included model with a notice. See [ADR-161](../../docs/13-adr/adr-161-used-up-credit-falls-back-to-an-included-model.md).
 - Honest gap: not run against a live database or API yet (QA record `2026-11-02-credit-fallback-user-setting`).
+
+## Anti-abuse screening (incident 2026-11-27, ADR-222)
+
+`modules/anti-abuse/` screens `POST /auth/register` and, after repeated failures, `POST /auth/login`. Full
+reference: [service guide, "Anti-abuse screening"](../../docs/04-backend/service-guide-auth.md#anti-abuse-screening-incident-2026-11-27).
+
+- **Register order:** bot check (proof of work always; Turnstile / reCAPTCHA v3 only when both of a provider's
+  keys resolve) -> email domain (admin block, admin allow, bundled CC0 list, DNS) -> velocity -> trial decision.
+  Codes: `BOT_CHECK_REQUIRED` 428, `BOT_CHECK_FAILED` 403, `DISPOSABLE_EMAIL` / `EMAIL_DOMAIN_UNDELIVERABLE` 400
+  with `field: "email"`, `SIGNUP_TEMPORARILY_LIMITED` 429 + `Retry-After`. Every refusal writes a security event
+  (email DOMAIN and an 8-char prefix of the PEPPERED fingerprint hash only).
+- **One trial per device:** no device object, a fingerprint or device id that already has a trial on any account,
+  or 3 trials from the registration /24 (IPv6 /48) in 24 h -> the redemption is written already over
+  (`expiresAt = startedAt`; `assignTrialPlanOnce(..., grantTrial = false)`). The CHECK is `expires_at >= started_at`
+  since migration `20261127120000_anti_abuse_user_devices`.
+- **Fail open, deliberately:** a Redis error (pow single-use claim, velocity, login-failure windows), a DNS
+  timeout (3 s for the whole check) and an unreachable captcha provider (once proof of work passed) all ALLOW.
+  Proof of work is the floor that never fails open.
+- **Keys:** the challenge HMAC key derives from `JWT_SECRET`; the device pepper from `ENCRYPTION_KEY` (so a
+  `JWT_SECRET` rotation does not orphan device hashes). No new secret env var. The four captcha keys are optional
+  env vars (`TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, `RECAPTCHA_SITE_KEY`, `RECAPTCHA_SECRET_KEY`); a non-empty
+  `security.*` SystemSetting wins.
+- **Settings API:** camelCase keys only under `security.`; an empty value clears a `security.*` key and is refused
+  (400 `SYSTEM_SETTING_VALUE_REQUIRED`) for any other key; `security.*.secretKey` reads back as `''` +
+  `configured`. Permissions unchanged (view `ADMIN_SYSTEM_VIEW`, save `ADMIN_CREDIT_MANAGE`).
+- **Login failure windows are not the rate limiter's.** They count `INVALID_CREDENTIALS` only, per IP and per typed
+  address, for any address (known or not), so "checks required" is not an enumeration oracle. Do not fold them
+  into `AUTH_RATE_LIMIT_POLICIES`: an address-only limiter window is a lockout a stranger can trigger.
+- **Local tests:** Windows Smart App Control blocks `@swc/core`, so the suite cannot start on the host; it runs in
+  a Linux container from the dev image with `vite` added (vitest 5 has it as a peer and the image lacks it).

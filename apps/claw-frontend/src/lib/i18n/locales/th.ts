@@ -2,6 +2,7 @@ import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { ADMIN_SESSIONS_TRANSLATIONS } from './admin-sessions-translations';
+import { ANTI_ABUSE_TRANSLATIONS } from './anti-abuse-translations';
 import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
@@ -119,6 +120,7 @@ export const th: TranslationDictionary = {
     phoneInvalid: 'ป้อนหมายเลขโทรศัพท์ที่ถูกต้อง',
   },
   auth: {
+    botCheck: ANTI_ABUSE_TRANSLATIONS.th.auth,
     rateLimit: {
       tryAgainInMinutes: 'พยายามหลายครั้งเกินไป ลองอีกครั้งใน {minutes} นาที',
       tryAgainInOneMinute: 'พยายามหลายครั้งเกินไป ลองอีกครั้งในหนึ่งนาที',
@@ -410,6 +412,7 @@ export const th: TranslationDictionary = {
     adminRuntimeProgress: 'การวินิจฉัยรันไทม์',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.th.navigationLabel,
     adminSecuritySessions: ADMIN_SESSIONS_TRANSLATIONS.th.navigationLabel,
+    adminSecuritySignup: ANTI_ABUSE_TRANSLATIONS.th.navigationLabel,
     adminPaymentGateways: 'เกตเวย์การชำระเงิน',
     adminSmartRouter: 'สมาร์ทเราเตอร์',
     adminModelCosts: 'ราคาโมเดล',
@@ -4777,6 +4780,7 @@ export const th: TranslationDictionary = {
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.th.section,
   adminSessions: ADMIN_SESSIONS_TRANSLATIONS.th.section,
+  adminSecurity: ANTI_ABUSE_TRANSLATIONS.th.admin,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.th,
   narration: NARRATION_TRANSLATIONS.th,
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.th,

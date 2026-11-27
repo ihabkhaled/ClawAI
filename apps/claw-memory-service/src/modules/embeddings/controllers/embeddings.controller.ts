@@ -1,6 +1,7 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 
 import { Public } from '../../../app/decorators/public.decorator';
+import { ServiceTokenGuard } from '../../../app/guards/service-token.guard';
 import { EmbeddingsService } from '../services/embeddings.service';
 import type {
   SearchResponse,
@@ -8,6 +9,11 @@ import type {
   UpsertWorkspaceObjectEmbeddingInput,
 } from '../types/embeddings.types';
 
+/**
+ * Service-to-service only. `@Public()` lifts the user JWT; the class-level ServiceTokenGuard is the
+ * real check (security audit 2026-11-27: these routes had no guard and took any userId).
+ */
+@UseGuards(ServiceTokenGuard)
 @Controller('internal/embeddings')
 export class EmbeddingsController {
   constructor(private readonly service: EmbeddingsService) {}
@@ -19,9 +25,7 @@ export class EmbeddingsController {
   @Public()
   @Post('upsert-workspace-object')
   @HttpCode(HttpStatus.CREATED)
-  async upsert(
-    @Body() body: UpsertWorkspaceObjectEmbeddingInput,
-  ): Promise<{ created: boolean }> {
+  async upsert(@Body() body: UpsertWorkspaceObjectEmbeddingInput): Promise<{ created: boolean }> {
     return this.service.upsert(body);
   }
 

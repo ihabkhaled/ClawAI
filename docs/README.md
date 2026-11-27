@@ -61,21 +61,23 @@
 
 ### Layer D: Backend & Frontend
 
-| Document                                                                            | Purpose                                                                                              |
-| ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| [Services Index](04-backend/services-index.md)                                      | All <!-- count:services -->22<!-- /count --> services: ports, DBs, controllers, events, dependencies |
-| [Controllers Reference](04-backend/controllers-reference.md)                        | Every route across all services                                                                      |
-| [Backend Coding Standards](04-backend/coding-standards.md)                          | Layer rules, ESLint, extraction, error handling                                                      |
-| [Shared Packages](04-backend/shared-packages.md)                                    | shared-types, shared-constants, shared-rabbitmq, shared-auth                                         |
-| [Workspace Service Guide](04-backend/service-guide-workspace.md)                    | Workspace sync, search, actions, OAuth                                                               |
-| [Agent Service Guide](04-backend/service-guide-agent.md)                            | Local agent sessions, approvals, repos, file events                                                  |
-| [Frontend Architecture](05-frontend/frontend-architecture.md)                       | Page->Hook->Service->Repo pattern, state management, i18n                                            |
-| [Frontend Coding Standards](05-frontend/coding-standards.md)                        | Component/hook/query patterns                                                                        |
-| [PWA Update Banner](05-frontend/pwa-update-banner.md)                               | How a new version is offered, and why it asks only once                                              |
-| [Trial Banner Dismissal](05-frontend/trial-banner-dismissal.md)                     | Snooze / hide-forever for the trial banner, and when it returns                                      |
-| [Observability Page](05-frontend/observability-page.md)                             | Service status (state, uptime, incidents) and usage, admin-only                                      |
-| [Admin Model Billing and Exposure](05-frontend/admin-model-billing-and-exposure.md) | Credit / Included badge source, responsive Model exposure panel                                      |
-| [Plugins: Installs and Admin](05-frontend/plugins-installs.md)                      | Install flow, Installed page, settings sheet, admin console, plan caps                               |
+| Document                                                                            | Purpose                                                                                                  |
+| ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| [Services Index](04-backend/services-index.md)                                      | All <!-- count:services -->22<!-- /count --> services: ports, DBs, controllers, events, dependencies     |
+| [Controllers Reference](04-backend/controllers-reference.md)                        | Every route across all services                                                                          |
+| [Backend Coding Standards](04-backend/coding-standards.md)                          | Layer rules, ESLint, extraction, error handling                                                          |
+| [Shared Packages](04-backend/shared-packages.md)                                    | shared-types, shared-constants, shared-rabbitmq, shared-auth                                             |
+| [Workspace Service Guide](04-backend/service-guide-workspace.md)                    | Workspace sync, search, actions, OAuth                                                                   |
+| [Agent Service Guide](04-backend/service-guide-agent.md)                            | Local agent sessions, approvals, repos, file events                                                      |
+| [Frontend Architecture](05-frontend/frontend-architecture.md)                       | Page->Hook->Service->Repo pattern, state management, i18n                                                |
+| [Frontend Coding Standards](05-frontend/coding-standards.md)                        | Component/hook/query patterns                                                                            |
+| [PWA Update Banner](05-frontend/pwa-update-banner.md)                               | How a new version is offered, and why it asks only once                                                  |
+| [Trial Banner Dismissal](05-frontend/trial-banner-dismissal.md)                     | Snooze / hide-forever for the trial banner, and when it returns                                          |
+| [Observability Page](05-frontend/observability-page.md)                             | Service status (state, uptime, incidents) and usage, admin-only                                          |
+| [Admin Model Billing and Exposure](05-frontend/admin-model-billing-and-exposure.md) | Credit / Included badge source, responsive Model exposure panel                                          |
+| [Plugins: Installs and Admin](05-frontend/plugins-installs.md)                      | Install flow, Installed page, settings sheet, admin console, plan caps                                   |
+| [Sign-up Abuse Defences](05-frontend/sign-up-abuse-defences.md)                     | Bot checks (proof-of-work, Turnstile, reCAPTCHA), device fingerprint, refusal copy, admin page (ADR-222) |
+| [Incident 2026-11-27](security/incident-2026-11-27-open-ports-and-signup-farm.md)   | Open ports + sign-up farm: findings, containment, follow-ups (rules/68)                                  |
 
 ### Layer E: Data & Integrations
 

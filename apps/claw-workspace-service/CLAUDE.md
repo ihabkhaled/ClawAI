@@ -275,7 +275,17 @@ own hardware.
 It calls chat-service `POST /internal/chat/threads/seeded` and agent-service
 `POST /internal/agent/terminal/seed-command`. `seedThread` writes a thread row and
 a USER message row and performs **no inference**; the spend happens later, when
-the user sends in that thread, and is metered by chat-service under `CHAT`.
+the user sends in that thread, and is metered by chat-service under `CHAT`. Both
+routes require the service token (security audit 2026-11-27), so both calls send
+`Authorization: buildAuthHeader()`; `ticket-planning/__tests__/impl-handoff.manager.spec.ts`
+asserts it.
+
+**This service's own `internal/*` routes take the service token too.**
+`internal/workspace/search` (chat-service's workspace context; the body carries a
+`userId`) and `internal/workspace/sync/health` carry a class-level
+`ServiceTokenGuard` from `app/guards/service-token.guard.ts`. The sync-health
+route is not a container probe: Docker, health-service and Prometheus use
+`/api/v1/health` and `/api/v1/metrics`.
 
 **`workspace/services/workspace-entitlement.service.ts` is not the gate.** It only
 exposes `resolve()`. Quota and credit enforcement live in auth-service, reached

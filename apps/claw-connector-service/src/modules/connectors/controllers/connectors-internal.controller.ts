@@ -15,6 +15,14 @@ import {
   type ConnectorPaygPolicyResult,
 } from '../types/connectors.types';
 
+/**
+ * Service-to-service only. `@Public()` on each route only lifts the user-JWT
+ * guard; the class-level ServiceTokenGuard is the real check on every route.
+ * Until the 2026-11-27 security audit only `config` carried it, and the four
+ * "secret-free" siblings were open to anything on the Docker network — which
+ * is a network fact, not an authorisation.
+ */
+@UseGuards(ServiceTokenGuard)
 @Controller('internal/connectors')
 export class ConnectorsInternalController {
   constructor(
@@ -22,12 +30,9 @@ export class ConnectorsInternalController {
     private readonly modelsSnapshotManager: ModelsSnapshotManager,
   ) {}
 
-  // Returns the DECRYPTED provider API key. `@Public()` only lifts the user JWT
-  // guard, so the service token is the sole check: without it any host that can
-  // reach this port reads every provider key. The routes below carry no secret
-  // and stay token-free.
+  // Returns the DECRYPTED provider API key: without the service token any host
+  // that can reach this port would read every provider key.
   @Public()
-  @UseGuards(ServiceTokenGuard)
   @Get('config')
   async getConfig(@Query('provider') provider: string): Promise<ConnectorConfigResult> {
     return this.connectorsService.getConnectorConfig(provider);
@@ -57,11 +62,6 @@ export class ConnectorsInternalController {
   // NO cache-bust event accompanies a toggle, deliberately: the caller caches
   // for PAYG_POLICY_CACHE_TTL_SECONDS (60 s), which already bounds the staleness
   // of an action taken a handful of times a year.
-  //
-  // @Public() matches every sibling on this controller. It is safe here and
-  // would not be on a money-moving route: the response carries no secret, no
-  // user, no balance and no amount — only which providers an operator has
-  // classified as paid, which the public pricing page states anyway.
   @Public()
   @Get('payg-policy')
   async getPaygPolicy(): Promise<ConnectorPaygPolicyResult> {

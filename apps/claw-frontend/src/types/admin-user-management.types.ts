@@ -136,5 +136,7 @@ export type UserDetailDialogProps = {
   onEdit: (user: AdminUser) => void;
   onBan: (user: AdminUser) => void;
   onUnban: (userId: string) => void;
+  /** Opens the "Linked accounts" dialog (same device / device id / sign-up network). */
+  onShowLinkedAccounts: (user: AdminUser) => void;
   t: TranslateFunction;
 };

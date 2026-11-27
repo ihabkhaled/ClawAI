@@ -16,6 +16,8 @@ const mocks = vi.hoisted(() => ({
   toastError: vi.fn(),
   toastApiError: vi.fn(),
   copy: vi.fn(),
+  collect: vi.fn(),
+  botCheck: { isChecking: false },
 }));
 
 vi.mock('next/navigation', () => ({
@@ -30,6 +32,17 @@ vi.mock('@/hooks/auth/use-register', () => ({
     isPending: false,
     isError: mocks.state.isError,
     error: mocks.state.error,
+  }),
+}));
+
+vi.mock('@/hooks/auth/use-bot-check', () => ({
+  useBotCheck: () => ({
+    status: 'IDLE',
+    isChecking: mocks.botCheck.isChecking,
+    setTurnstileContainer: vi.fn(),
+    collect: mocks.collect,
+    markRequired: vi.fn(),
+    isRequired: () => false,
   }),
 }));
 
@@ -62,6 +75,8 @@ describe('RegisterForm', () => {
     vi.clearAllMocks();
     mocks.state = { isError: false, error: null };
     mocks.copy.mockResolvedValue(true);
+    mocks.botCheck = { isChecking: false };
+    mocks.collect.mockResolvedValue({ pow: { token: 'pow-token', nonce: '99' } });
   });
 
   // The production screenshot: a toast AND an inline box, both carrying the
@@ -171,5 +186,59 @@ describe('RegisterForm', () => {
     renderForm(Locale.AR, ar);
     expect(screen.getByText(ar.auth.signup.rateLimitedTitle)).toBeInTheDocument();
     expect(screen.getByText(ar.auth.signup.rateLimitedDescription)).toBeInTheDocument();
+  });
+  it('sends the solved bot checks with the sign-up', async () => {
+    renderForm();
+    fireEvent.change(screen.getByLabelText(en.auth.firstName), { target: { value: 'Ada' } });
+    fireEvent.change(screen.getByLabelText(en.auth.lastName), { target: { value: 'Lovelace' } });
+    fireEvent.change(screen.getByLabelText(en.auth.email), {
+      target: { value: 'ada@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText(en.auth.password), { target: { value: 'Password1' } });
+    fireEvent.change(screen.getByLabelText(en.auth.confirmPassword), {
+      target: { value: 'Password1' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: en.auth.registerButton }));
+
+    await waitFor(() => expect(mocks.register).toHaveBeenCalledTimes(1));
+    expect(mocks.collect).toHaveBeenCalledTimes(1);
+    expect(mocks.register.mock.calls[0]?.[0]).toMatchObject({
+      email: 'ada@example.com',
+      botCheck: { pow: { token: 'pow-token', nonce: '99' } },
+    });
+  });
+
+  it('shows a quiet "Checking your browser" line while the check runs, typing stays enabled', () => {
+    mocks.botCheck = { isChecking: true };
+    renderForm();
+    expect(screen.getByRole('status')).toHaveTextContent(en.auth.botCheck.checking);
+    expect(screen.getByLabelText(en.auth.email)).not.toBeDisabled();
+  });
+
+  it('puts a disposable-email refusal on the email field', async () => {
+    mocks.state = {
+      isError: true,
+      error: new ApiClientError({ message: 'x', status: 400, code: 'DISPOSABLE_EMAIL' }),
+    };
+    renderForm();
+    expect(await screen.findByText(en.auth.botCheck.disposableEmail)).toBeInTheDocument();
+    expect(screen.getByLabelText(en.auth.email)).toHaveAttribute('aria-invalid', 'true');
+  });
+
+  it('explains a platform sign-up pause in Arabic, with the minutes from Retry-After', () => {
+    mocks.state = {
+      isError: true,
+      error: new ApiClientError({
+        message: 'x',
+        status: 429,
+        code: 'SIGNUP_TEMPORARILY_LIMITED',
+        retryAfterSeconds: 300,
+      }),
+    };
+    renderForm(Locale.AR, ar);
+    expect(screen.getByText(ar.auth.botCheck.signupLimitedTitle)).toBeInTheDocument();
+    expect(
+      screen.getByText(ar.auth.botCheck.signupLimitedInMinutes.replace('{minutes}', '5')),
+    ).toBeInTheDocument();
   });
 });

@@ -117,6 +117,10 @@ model User {
   // offline from the address (geoip-country) and is null for a private address.
   registrationIp          String?                  @map("registration_ip") @db.VarChar(45)
   registrationCountryCode String?                  @map("registration_country_code") @db.VarChar(2)
+  // The registration address's network (IPv4 /24 as "a.b.c.0/24", IPv6 /48 in
+  // Postgres' compressed text form). Same personal-data rule as registrationIp.
+  // Read by the one-trial-per-network rule and admin linked accounts (anti-abuse).
+  registrationNetwork     String?                  @map("registration_network") @db.VarChar(64)
   // Presence: touched at most once per 60 s (heartbeat, login, refresh).
   lastSeenAt              DateTime?                @map("last_seen_at")
   // Ban (ADR-200). bannedAt set with bannedUntil null = LIFETIME. A timed ban is
@@ -140,6 +144,7 @@ model User {
   trialRedemption         PlanTrialRedemption?
   emailChangeRequests     EmailChangeRequest[]
   threadJobBudgets        ThreadJobBudget[]
+  devices                 UserDevice[]
 
   @@index([email])
   @@index([status])
@@ -147,7 +152,33 @@ model User {
   @@index([activePlanId])
   @@index([lastSeenAt])
   @@index([bannedUntil])
+  @@index([registrationNetwork])
   @@map("users")
+}
+
+// A browser or app an account registered or signed in from (anti-abuse, incident
+// 2026-11-27). The fingerprint and the client's stored device id are HMAC-SHA256
+// hashes under a server pepper; the raw values are never stored. Feeds the
+// one-free-trial-per-device rule and the admin linked-accounts view. PERSONAL
+// DATA, ADMIN-ONLY, like users.registration_ip.
+model UserDevice {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  fingerprintHash String   @map("fingerprint_hash") @db.VarChar(64)
+  deviceIdHash    String   @map("device_id_hash") @db.VarChar(64)
+  firstIp         String?  @map("first_ip") @db.VarChar(45)
+  lastIp          String?  @map("last_ip") @db.VarChar(45)
+  userAgent       String?  @map("user_agent") @db.VarChar(512)
+  countryCode     String?  @map("country_code") @db.VarChar(2)
+  firstSeenAt     DateTime @default(now()) @map("first_seen_at")
+  lastSeenAt      DateTime @default(now()) @map("last_seen_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, fingerprintHash])
+  @@index([fingerprintHash])
+  @@index([deviceIdHash])
+  @@map("user_devices")
 }
 
 enum PlanAssignmentStatus {
@@ -406,6 +437,7 @@ model PlanTrialRedemption {
   assignment UserPlanAssignment @relation(fields: [assignmentId], references: [id])
 
   @@index([planId])
+  @@index([startedAt])
   @@map("plan_trial_redemptions")
 }
 

@@ -190,11 +190,14 @@ Claw uses 15 separate PostgreSQL instances, one per data-owning service.
 
 ## Redis
 
-| Variable     | Required | Default                   | Description           |
-| ------------ | -------- | ------------------------- | --------------------- |
-| `REDIS_HOST` | Yes      | `claw-redis`              | Redis host            |
-| `REDIS_PORT` | Yes      | `6379`                    | Redis port (internal) |
-| `REDIS_URL`  | No       | `redis://claw-redis:6379` | Redis connection URL  |
+| Variable                                      | Required  | Default                   | Description                                                                                                                                                                                     |
+| --------------------------------------------- | --------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `REDIS_HOST`                                  | Yes       | `claw-redis`              | Redis host                                                                                                                                                                                      |
+| `REDIS_PORT`                                  | Yes       | `6379`                    | Redis port (internal)                                                                                                                                                                           |
+| `REDIS_URL`                                   | No        | `redis://claw-redis:6379` | Redis connection URL                                                                                                                                                                            |
+| `REDIS_PASSWORD`                              | Prod: yes | empty                     | `redis-server --requirepass`; must also appear in `REDIS_URL` as `redis://:<password>@redis:6379`. Empty = no password (dev). Added after the 2026-11-27 incident (Redis was open without one). |
+| `TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` | No        | empty                     | Cloudflare Turnstile on sign-up and sign-in (ADR-222). Empty = off. A non-empty admin setting `security.turnstile.*` wins. Secret never logged or returned.                                     |
+| `RECAPTCHA_SITE_KEY` / `RECAPTCHA_SECRET_KEY` | No        | empty                     | Google reCAPTCHA v3 on sign-up and sign-in (ADR-222). Empty = off; min score from `security.recaptcha.minScore` (default 0.5).                                                                  |
 
 **Notes:**
 

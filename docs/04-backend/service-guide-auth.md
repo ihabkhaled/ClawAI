@@ -45,27 +45,43 @@ The auth service handles user registration, login, JWT issuance, refresh token r
 
 ### SystemSetting
 
-Key-value store for runtime configuration (e.g., maintenance mode, feature flags).
+Key-value store for runtime configuration (e.g., maintenance mode, feature flags,
+the PAYG kill switch and the `security.*` anti-abuse settings, see
+[Anti-abuse screening](#anti-abuse-screening-incident-2026-11-27)).
+
+### UserDevice (`user_devices`)
+
+One row per (user, device fingerprint), written at register and at every
+successful login. `fingerprintHash` and `deviceIdHash` are HMAC-SHA256 under a
+server pepper (never the raw values); `firstIp`, `lastIp`, `userAgent`,
+`countryCode`, `firstSeenAt`, `lastSeenAt`. Unique `(userId, fingerprintHash)`,
+indexed on both hashes, cascades with the user. `users.registration_network`
+(IPv4 /24 or IPv6 /48 of the registration IP) sits beside it. Both are personal
+data and admin-only, like `registration_ip`.
 
 ## API Endpoints
 
 ### Auth (`/api/v1/auth`)
 
-| Method | Path         | Auth   | Description              |
-| ------ | ------------ | ------ | ------------------------ |
-| POST   | /register    | Public | Create a pending account |
-| POST   | /login       | Public | Email + password login   |
-| POST   | /refresh     | Public | Refresh token rotation   |
-| POST   | /logout      | Bearer | Invalidate session       |
-| GET    | /me          | Bearer | Current user profile     |
-| PATCH  | /me          | Bearer | Update own profile/prefs |
-| PATCH  | /me/password | Bearer | Change own password      |
+| Method | Path                 | Auth   | Description                                       |
+| ------ | -------------------- | ------ | ------------------------------------------------- |
+| POST   | /register            | Public | Create a pending account (anti-abuse screened)    |
+| POST   | /login               | Public | Email + password login (bot check after failures) |
+| GET    | /bot-check/config    | Public | Which bot checks to solve (site keys only)        |
+| POST   | /bot-check/challenge | Public | A signed proof-of-work challenge                  |
+| POST   | /refresh             | Public | Refresh token rotation                            |
+| POST   | /logout              | Bearer | Invalidate session                                |
+| GET    | /me                  | Bearer | Current user profile                              |
+| PATCH  | /me                  | Bearer | Update own profile/prefs                          |
+| PATCH  | /me/password         | Bearer | Change own password                               |
 
 `POST /api/v1/auth/register` requires `firstName`, `lastName`, `email`,
 and `password`. Names are trimmed and limited to 64 characters. The optional
 `phone` field must use E.164 format (for example, `+15551234567`). The
 service derives the username from the email and always assigns the `USER`
 role and `PENDING` status; client-supplied role or status fields are ignored.
+It also takes `botCheck` and `device` (optional in the schema, required by
+policy), see [Anti-abuse screening](#anti-abuse-screening-incident-2026-11-27).
 
 ### Users (`/api/v1/users`)
 
@@ -723,3 +739,100 @@ fills NULLs only, from the table in `docs/03-architecture/model-price-ledger-202
 - Entitlements are read fresh per call; nothing caches the mode. chat-service reads it only after the first 402 of a turn.
 - `STOP` ends the turn with the original credit refusal; `FALLBACK` answers from an included model with a notice. See [ADR-161](../13-adr/adr-161-used-up-credit-falls-back-to-an-included-model.md).
 - Honest gap: not run against a live database or API yet (QA record `2026-11-02-credit-fallback-user-setting`).
+
+## Anti-abuse screening (incident 2026-11-27)
+
+A bot farm registered over a hundred accounts with disposable addresses from rotating residential IPs,
+posting straight to `/auth/register`, and every account got the free trial. Decision record:
+[ADR-222](../13-adr/adr-222-sign-up-abuse-defences-and-internal-surfaces.md). Code: `src/modules/anti-abuse/`
+(the two public bot-check routes live on `AuthModule`'s `BotCheckController`, because they use the auth route
+rate limiter).
+
+### Public routes
+
+- `GET /auth/bot-check/config[?action=register|login]` -> `{ pow: { enabled: true, difficulty }, turnstile:
+{ siteKey } | null, recaptcha: { siteKey, action } | null }`. Site keys only, never a secret. Policy
+  `BOT_CHECK_CONFIG` (60 / 15 min per IP).
+- `POST /auth/bot-check/challenge` -> `{ token, salt, difficulty, expiresAt }`. Stateless: the token is
+  `base64url(json).base64url(HMAC-SHA256)` over `{ v, salt, difficulty, exp }`, key derived from `JWT_SECRET`
+  (`deriveScopedKey`, context `claw:anti-abuse:pow-challenge:v1`), 5-minute life. Solve: a decimal `nonce` such that
+  SHA-256 of the UTF-8 text `salt + nonce` has `difficulty` leading zero BITS. Policy `BOT_CHECK_CHALLENGE`
+  (30 / 15 min per IP).
+
+### Register and login bodies
+
+Both take `botCheck: { pow?: { token, nonce }, turnstileToken?, recaptchaToken? }` and `device: { fingerprint
+(64 hex), deviceId, signals? }`, optional in the Zod schema and required by policy, so an old client gets a coded
+refusal instead of a 400. `signals` are bounded and ignored (never stored).
+
+### What register checks, in order (`RegistrationScreeningService`)
+
+| Check                                                                                               | Refusal                                                                                | Notes                                                                                                                                                                                                                                                                                                                                                                    |
+| --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Bot check: proof of work always; Turnstile / reCAPTCHA v3 when both of that provider's keys resolve | `BOT_CHECK_REQUIRED` 428 (missing) / `BOT_CHECK_FAILED` 403                            | All required tokens must be present before any is verified. A solved challenge is single use (Redis `SET NX` on the salt). A challenge minted below the difficulty now in force is refused. A provider that cannot be reached is allowed, because the proof of work passed (logged). reCAPTCHA must carry `success`, the flow's `action` and `score >= minScore`.        |
+| Email domain                                                                                        | `DISPOSABLE_EMAIL` 400 / `EMAIL_DOMAIN_UNDELIVERABLE` 400, both with `field: "email"`  | Admin blocklist, then admin allowlist (skips the bundled list and DNS), then the bundled list, subdomains always included. DNS: NXDOMAIN, a null MX, or no MX and no A/AAAA is undeliverable; anything else, or the whole check running past 3 s, is allowed.                                                                                                            |
+| Velocity                                                                                            | `SIGNUP_TEMPORARILY_LIMITED` 429 + `Retry-After` (and `retryAfterSeconds` in the body) | Fixed Redis windows: more than `maxPerDevicePerDay` per fingerprint or device id in 24 h (counted first), more than `maxPer10Min` across the platform in 10 min. Counted only after the bot and email checks pass.                                                                                                                                                       |
+| Trial decision                                                                                      | none (the account is created)                                                          | Trial NOT granted when there is no device object, when any account seen on the same fingerprint OR device id already holds a `PlanTrialRedemption`, or when the registration /24 (IPv6 /48) produced 3 redemptions in 24 h. A refused trial is written with `expiresAt = startedAt`, so the entitlement read treats it like a trial that ran out (`PLAN_TRIAL_EXPIRED`). |
+
+None of these refusals depends on whether the address has an account, so none is an enumeration oracle
+(rules/43 §1); `DUPLICATE_ENTITY` stays the one deliberate exception and is answered after all of them.
+
+### Login
+
+Bot checks are required only after 5 failed sign-ins (`INVALID_CREDENTIALS`) for the IP or for the typed address
+in 15 minutes. These are their OWN Redis windows (`auth:abuse:login-fail:*`, hashed keys), not the route rate
+limiter's: the limiter counts every attempt and has no address-only window, and adding one there would create a
+lockout a stranger could trigger. A success clears the address window and records the device. Every Redis read
+fails open.
+
+### Devices, network, linked accounts
+
+- `fingerprintHash` / `deviceIdHash` = HMAC-SHA256 under a pepper derived from `ENCRYPTION_KEY` (context
+  `claw:anti-abuse:device-pepper:v1`). `ENCRYPTION_KEY` is never rotated in place (it would also void every
+  encrypted column), so device hashes stay comparable across a `JWT_SECRET` rotation.
+- `users.registration_network` is written at sign-up in the exact text Postgres prints for
+  `network(set_masklen(ip::inet, 24|48))`; migration `20261127120000_anti_abuse_user_devices` backfilled existing
+  rows, so the accounts already in the table appear in the linked-accounts view by network.
+- `GET /api/v1/admin/users/:userId/linked-accounts` (ADMIN + `ADMIN_USERS_MANAGE`) -> `{ accounts: [{ id, email,
+status, bannedAt, createdAt, reasons: ('DEVICE' | 'DEVICE_ID' | 'REGISTRATION_IP')[] }] }`, newest first, at most 100. No hash or address is returned. 404 for an unknown user.
+
+### Security events
+
+Every refusal writes a structured log event (server-logs pipeline) with `action` = `signup_refused_bot_check`,
+`signup_refused_disposable`, `signup_velocity_limited`, `trial_denied_shared_device` or
+`login_bot_check_required`, `errorCode`, and `metadata: { ip, countryCode, userAgent, emailDomain,
+fingerprintPrefix, reason }`. Only the email DOMAIN and the first 8 characters of the PEPPERED fingerprint hash
+are written.
+
+### Settings (`SystemSetting`, admin settings API)
+
+| Key                                                                  | Default                                           | Notes                                                                            |
+| -------------------------------------------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `security.turnstile.siteKey` / `security.turnstile.secretKey`        | env `TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` | Provider on only when both resolve.                                              |
+| `security.recaptcha.siteKey` / `security.recaptcha.secretKey`        | env `RECAPTCHA_SITE_KEY` / `RECAPTCHA_SECRET_KEY` | Same.                                                                            |
+| `security.recaptcha.minScore`                                        | 0.5                                               | 0..1                                                                             |
+| `security.pow.difficulty`                                            | 18                                                | 12..24 leading zero bits                                                         |
+| `security.email.blockedDomains` / `security.email.allowedDomains`    | empty                                             | Comma, semicolon or whitespace separated; `@x.com` and `.x.com` read as `x.com`. |
+| `security.signup.maxPer10Min` / `security.signup.maxPerDevicePerDay` | 30 / 3                                            | 1..100000                                                                        |
+
+- A non-empty stored value wins over the environment; an empty one means unset. A value outside its bounds reads
+  as the default. Values are cached per process for 15 s (`SystemSettingService`).
+- The admin settings API (`GET/PUT /api/v1/admin/settings[/:key]`, view `ADMIN_SYSTEM_VIEW`, save
+  `ADMIN_CREDIT_MANAGE`, unchanged) accepts camelCase keys only under `security.` (every other key stays
+  lowercase), and an empty value only for `security.*` keys (any other key: 400 `SYSTEM_SETTING_VALUE_REQUIRED`).
+- `security.*.secretKey` is write-only: list, get and the reply to a save return `value: ''` plus
+  `configured: true | false`.
+
+### Refreshing the domain list
+
+`constants/disposable-email-domains.constants.ts` is generated from the CC0
+[disposable-email-domains](https://github.com/disposable-email-domains/disposable-email-domains) blocklist
+(`disposable_email_blocklist.conf`; the revision is in the file header). To refresh it, replace the array with the
+new file's lowercase domain lines, sorted. Domains seen in an incident but missing upstream go in
+`INCIDENT_DISPOSABLE_EMAIL_DOMAINS` (`anti-abuse.constants.ts`), never in the generated file.
+
+### Tests
+
+`src/modules/anti-abuse/**/__tests__/` (utilities, every service, both repositories, controllers, DTOs),
+`app/filters/__tests__/anti-abuse-refusal.filter.spec.ts`, the auth service/controller/manager specs, the plans
+repository spec (refused trial) and the system-settings specs (masking, camelCase keys, clearing).

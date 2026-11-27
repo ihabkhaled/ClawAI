@@ -3,6 +3,8 @@ export type SystemSettingView = {
   key: string;
   value: string;
   updatedAt: string;
+  /** Write-only keys only (`security.*.secretKey`): `value` is '' and this says whether one is stored. */
+  configured?: boolean;
 };
 
 /**

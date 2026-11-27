@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Controller } from 'react-hook-form';
 
+import { BotCheckNotice } from '@/components/auth/bot-check-notice';
 import { PasswordRulesChecklist } from '@/components/auth/password-rules-checklist';
 import { SignupFailureAlert } from '@/components/auth/signup-failure-alert';
 import { PasswordInput } from '@/components/common/password-input';
@@ -26,6 +27,10 @@ export function RegisterForm(): React.ReactElement {
     phoneServerErrorKey,
     signInHref,
     resetPasswordHref,
+    isCheckingBrowser,
+    setTurnstileContainer,
+    isSubmitting,
+    submitLabelKey,
     t,
   } = useRegisterForm();
   const { errors } = form.formState;
@@ -170,6 +175,11 @@ export function RegisterForm(): React.ReactElement {
               </p>
             ) : null}
           </div>
+          <BotCheckNotice
+            isChecking={isCheckingBrowser}
+            setTurnstileContainer={setTurnstileContainer}
+            t={t}
+          />
           {failureCopy ? (
             <SignupFailureAlert
               copy={failureCopy}
@@ -180,8 +190,8 @@ export function RegisterForm(): React.ReactElement {
               t={t}
             />
           ) : null}
-          <Button type="submit" className="w-full" isLoading={isPending}>
-            {isPending ? t('auth.registering') : t('auth.registerButton')}
+          <Button type="submit" className="w-full" isLoading={isSubmitting}>
+            {t(submitLabelKey)}
           </Button>
         </form>
         <p className="text-muted-foreground mt-4 text-center text-sm">

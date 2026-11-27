@@ -45,6 +45,12 @@ import type {
 } from '../types/internal-file.types';
 import { type PublishedCopyResult } from '../types/published-copy.types';
 
+/**
+ * Service-to-service only. `@Public()` on each route lifts the user JWT; the class-level
+ * ServiceTokenGuard is the real check on every route, so a new route cannot forget it (security
+ * audit 2026-11-27 moved the 15 per-route guards here).
+ */
+@UseGuards(ServiceTokenGuard)
 @Controller('internal/files')
 export class FilesInternalController {
   constructor(
@@ -62,7 +68,6 @@ export class FilesInternalController {
    * when the walk fails; 503 `TRANSCRIBE_CHUNK_UNAVAILABLE` with no provider.
    */
   @Public()
-  @UseGuards(ServiceTokenGuard)
   @Post('transcribe-chunk')
   @HttpCode(HttpStatus.OK)
   async transcribeChunk(
@@ -72,14 +77,12 @@ export class FilesInternalController {
   }
 
   @Public()
-  @UseGuards(ServiceTokenGuard)
   @Get(':id/chunks')
   async getChunks(@Param('id') fileId: string): Promise<FileChunk[]> {
     return this.fileChunksRepository.findByFileId(fileId);
   }
 
   @Public()
-  @UseGuards(ServiceTokenGuard)
   @Get(':id/content')
   async getContent(
     @Param('id') fileId: string,
@@ -100,7 +103,6 @@ export class FilesInternalController {
    * megabyte to learn a status.
    */
   @Public()
-  @UseGuards(ServiceTokenGuard)
   @Get(':id/ingestion-state')
   async getIngestionState(
     @Param('id') fileId: string,
@@ -117,7 +119,6 @@ export class FilesInternalController {
    * Frames are never persisted — extracted per request, cached briefly.
    */
   @Public()
-  @UseGuards(ServiceTokenGuard)
   @Post(':id/video-frames')
   @HttpCode(HttpStatus.OK)
   async getVideoFrames(
@@ -128,14 +129,12 @@ export class FilesInternalController {
   }
 
   @Public()
-  @UseGuards(ServiceTokenGuard)
   @Get('download/:id')
   async download(@Param('id') id: string, @Res() res: Response): Promise<void> {
     return this.filesService.downloadFilePublic(id, res);
   }
 
   @Public()
-  @UseGuards(ServiceTokenGuard)
   @Post('store-image')
   async storeImage(
     @Body() body: { userId: string; filename: string; mimeType: string; base64Data: string },
@@ -149,7 +148,6 @@ export class FilesInternalController {
    * owner is named in the body and downloads follow file ownership.
    */
   @Public()
-  @UseGuards(ServiceTokenGuard)
   @Post('store-generated-audio')
   @HttpCode(HttpStatus.CREATED)
   async storeGeneratedAudio(
@@ -164,7 +162,6 @@ export class FilesInternalController {
    * body and downloads follow file ownership.
    */
   @Public()
-  @UseGuards(ServiceTokenGuard)
   @Post('store-generated-video')
   @HttpCode(HttpStatus.CREATED)
   async storeGeneratedVideo(
@@ -179,7 +176,6 @@ export class FilesInternalController {
    * full FileSecurityManager pipeline (ClamAV + magic bytes + extension blocklist).
    */
   @Public()
-  @UseGuards(ServiceTokenGuard)
   @Post('upload-internal')
   @HttpCode(HttpStatus.CREATED)
   async uploadInternal(@Body() body: CreateInternalFileBody): Promise<{ fileId: string }> {
@@ -192,7 +188,6 @@ export class FilesInternalController {
    * attachment download proxy. Service-token guarded.
    */
   @Public()
-  @UseGuards(ServiceTokenGuard)
   @Get('download-internal/:id')
   async downloadInternal(@Param('id') id: string, @Res() res: Response): Promise<void> {
     return this.filesService.downloadFilePublic(id, res);
@@ -208,7 +203,6 @@ export class FilesInternalController {
    * publish. See docs/13-adr/adr-075-public-share-assets.md.
    */
   @Public()
-  @UseGuards(ServiceTokenGuard)
   @Post('publish-copy')
   @HttpCode(HttpStatus.OK)
   async publishCopy(
@@ -224,7 +218,6 @@ export class FilesInternalController {
    * so nothing else will ever reap it.
    */
   @Public()
-  @UseGuards(ServiceTokenGuard)
   @Delete('published-copy/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async deletePublishedCopy(@Param('id') id: string): Promise<void> {
@@ -238,7 +231,6 @@ export class FilesInternalController {
    * files after an hour (ADR-104).
    */
   @Public()
-  @UseGuards(ServiceTokenGuard)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteInternal(
@@ -250,7 +242,6 @@ export class FilesInternalController {
   }
 
   @Public()
-  @UseGuards(ServiceTokenGuard)
   @Get('metadata-internal/:id')
   async metadataInternal(@Param('id') id: string): Promise<File | null> {
     return this.filesRepository.findById(id);

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { UserLanguagePreference } from '../../../generated/prisma';
 import { RegisterValidationIssue } from '../enums/register-validation-issue.enum';
+import { botCheckSchema, deviceSchema } from '../../anti-abuse/dto/anti-abuse.dto';
 
 // Self-registration requires email, password, first name, and last name, and
 // accepts an optional phone. Role/plan/status are server-assigned; unknown
@@ -47,6 +48,11 @@ export const registerSchema = z.object({
   // from. Optional so an older client keeps working; the column default
   // covers it.
   languagePreference: z.nativeEnum(UserLanguagePreference).optional(),
+  // Anti-abuse (2026-11-27). Optional in the schema, required by policy: a
+  // missing proof of work is refused by the service with BOT_CHECK_REQUIRED
+  // (428), and a missing device means the account starts without a trial.
+  botCheck: botCheckSchema.optional(),
+  device: deviceSchema.optional(),
 });
 
 export type RegisterDto = z.infer<typeof registerSchema>;

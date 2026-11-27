@@ -1,10 +1,11 @@
 import { vi } from 'vitest';
 import { AppConfig } from '../../../app/config/app.config';
+import type * as Utilities from '../../../common/utilities';
 import { httpRequest } from '../../../common/utilities';
 import { ExposedModelsService } from '../services/exposed-models.service';
 
 vi.mock('../../../common/utilities', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../../common/utilities')>()),
+  ...(await importOriginal<typeof Utilities>()),
   httpRequest: vi.fn(),
 }));
 
@@ -42,6 +43,18 @@ describe('ExposedModelsService', () => {
     const keys = await new ExposedModelsService().exposedChatModels();
 
     expect([...(keys ?? [])].sort()).toEqual(['GEMINI/gemini-3.6-flash', 'OPENAI/gpt-5.5']);
+  });
+
+  it('sends the service token: the internal snapshot refuses anonymous callers (rules/68)', async () => {
+    vi.spyOn(AppConfig, 'get').mockReturnValue({
+      CONNECTOR_SERVICE_URL: 'http://connector.test',
+      INTER_SERVICE_AUTH_TOKEN: 'svc-token',
+    } as never);
+    mocked.mockResolvedValueOnce(snapshot as never);
+
+    await new ExposedModelsService().exposedChatModels();
+
+    expect(mocked.mock.calls[0]?.[0].headers).toEqual({ Authorization: 'Service svc-token' });
   });
 
   // An admin exposing a model must reach the router within a minute, no restart.

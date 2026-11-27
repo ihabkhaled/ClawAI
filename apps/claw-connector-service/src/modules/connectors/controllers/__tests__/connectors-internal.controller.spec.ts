@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { ConnectorsInternalController } from '../connectors-internal.controller';
 import { ConnectorsService } from '../../services/connectors.service';
@@ -62,8 +62,8 @@ describe('ConnectorsInternalController', () => {
       expect(providers.GEMINI).toBe(false);
     });
 
-    // No secret, no user, no balance, no amount — the reason @Public() is
-    // acceptable on this route and would not be on a money-moving one.
+    // No secret, no user, no balance, no amount: the route still needs the
+    // service token (class-level guard), but what it answers stays this small.
     it('returns nothing but provider names and booleans', async () => {
       serviceMock.getPaygPolicy.mockResolvedValue({ providers: { OPENAI: true } });
 

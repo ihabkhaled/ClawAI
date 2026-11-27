@@ -5,7 +5,7 @@ import {
 } from '@/constants/rate-limit.constants';
 import { ApiErrorCode } from '@/enums/api-error-code.enum';
 import type { TranslateFunction } from '@/types';
-import type { RateLimitMessage } from '@/types/rate-limit.types';
+import type { RateLimitMessage, RetryAfterCopyKeys } from '@/types/rate-limit.types';
 
 /**
  * A `Retry-After` header value as whole seconds, or undefined.
@@ -61,13 +61,23 @@ export function readRetryAfterSeconds(error: unknown): number | null {
  * is refused again. No header: the existing generic "wait, then try again".
  */
 export function resolveRateLimitMessage(retryAfterSeconds: number | null): RateLimitMessage {
+  return resolveRetryAfterMessage(retryAfterSeconds, RATE_LIMIT_COPY_KEYS);
+}
+
+/**
+ * The same "in N minutes" rounding for any refusal that carries Retry-After,
+ * with that refusal's own wording (e.g. the platform-wide sign-up pause, which
+ * is not "too many attempts" by this person).
+ */
+export function resolveRetryAfterMessage(
+  retryAfterSeconds: number | null,
+  keys: RetryAfterCopyKeys,
+): RateLimitMessage {
   if (retryAfterSeconds === null) {
-    return { key: RATE_LIMIT_COPY_KEYS.fallback };
+    return { key: keys.fallback };
   }
   const minutes = Math.max(1, Math.ceil(retryAfterSeconds / SECONDS_PER_MINUTE));
-  return minutes === 1
-    ? { key: RATE_LIMIT_COPY_KEYS.inOneMinute }
-    : { key: RATE_LIMIT_COPY_KEYS.inMinutes, params: { minutes } };
+  return minutes === 1 ? { key: keys.inOneMinute } : { key: keys.inMinutes, params: { minutes } };
 }
 
 /** The translated refusal for a rate-limited error, or null for any other error. */

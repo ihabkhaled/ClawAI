@@ -523,13 +523,22 @@ services:
     logging: *claw-logging
     image: redis:7-alpine
     container_name: claw-redis
+    # Password from REDIS_PASSWORD (security incident 2026-11-27: Redis was open with no password).
+    # Empty keeps the old no-password behaviour, so a host without the variable still starts.
+    command: ['redis-server', '--requirepass', '${REDIS_PASSWORD:-}']
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
     restart: unless-stopped
     ports:
       - '${REDIS_PORT:-6380}:6379'
     volumes:
       - redis-data:/data
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
+      test:
+        [
+          'CMD-SHELL',
+          'if [ -n "$$REDIS_PASSWORD" ]; then redis-cli -a "$$REDIS_PASSWORD" --no-auth-warning ping; else redis-cli ping; fi | grep -q PONG',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5

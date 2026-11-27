@@ -162,7 +162,7 @@
       "file": "rules/15-configuration-and-environment.md"
     },
     {
-      "bytes": 8264,
+      "bytes": 8346,
       "file": "rules/16-authentication-and-authorization.md"
     },
     {
@@ -330,7 +330,7 @@
       "file": "rules/57-memory-and-context-pack-integrity.md"
     },
     {
-      "bytes": 8079,
+      "bytes": 8546,
       "file": "rules/58-auth-route-rate-limits.md"
     },
     {
@@ -370,13 +370,17 @@
       "file": "rules/67-turn-intent-is-semantic-keywords-are-only-the-fallback.md"
     },
     {
-      "bytes": 9488,
+      "bytes": 2344,
+      "file": "rules/68-internal-surfaces-stay-internal.md"
+    },
+    {
+      "bytes": 9841,
       "file": "rules/README.md"
     }
   ],
   "skills": [
     {
-      "bytes": 38954,
+      "bytes": 40620,
       "file": "skills/00-index.md"
     },
     {
@@ -690,6 +694,10 @@
     {
       "bytes": 3008,
       "file": "skills/inspect-affected-workspaces.md"
+    },
+    {
+      "bytes": 3357,
+      "file": "skills/investigate-a-production-intrusion.md"
     },
     {
       "bytes": 8478,

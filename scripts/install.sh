@@ -738,6 +738,12 @@ echo "${BOLD}Step 3/9: Generating secrets${NC}"
 echo ""
 
 JWT_SECRET=$(gen_secret_b64)
+# Bot checks on sign-up and sign-in (ADR-222). Optional: empty = that provider is off; the built-in
+# proof-of-work always runs. A non-empty admin setting (security.turnstile.* / security.recaptcha.*) wins.
+TURNSTILE_SITE_KEY=
+TURNSTILE_SECRET_KEY=
+RECAPTCHA_SITE_KEY=
+RECAPTCHA_SECRET_KEY=
 ENCRYPTION_KEY=$(gen_secret_hex)
 # Separate from ENCRYPTION_KEY on purpose: vaulted gateway payment tokens are
 # encrypted under their own key so a payment-token compromise does not also
@@ -766,6 +772,8 @@ for pg_key in $PG_DB_KEYS; do
 done
 
 MONGO_PASS=$(gen_password)
+# Redis password (incident 2026-11-27: Redis was reachable with none). Hex keeps the URL safe.
+REDIS_PASS=$(gen_secret_hex)
 RABBIT_PASS=$(gen_password)
 ADMIN_PASS=$(gen_password)
 INTER_SERVICE_AUTH_TOKEN=$(gen_secret_hex)
@@ -821,6 +829,7 @@ if [ -f "$ENV_FILE" ]; then
   done
 
   PREV_MONGO_PASS="$(get_env_value "MONGO_PASSWORD" "$ENV_FILE")"
+  PREV_REDIS_PASS="$(get_env_value "REDIS_PASSWORD" "$ENV_FILE")"
   PREV_RABBIT_PASS="$(get_env_value "RABBITMQ_PASSWORD" "$ENV_FILE")"
   PREV_JWT_SECRET="$(get_env_value "JWT_SECRET" "$ENV_FILE")"
   PREV_ENCRYPTION_KEY="$(get_env_value "ENCRYPTION_KEY" "$ENV_FILE")"
@@ -838,6 +847,10 @@ if [ -f "$ENV_FILE" ]; then
   fi
   if [ "$PG_PRESERVED_COUNT" -gt 0 ]; then
     ok "Preserved $PG_PRESERVED_COUNT PG_*_PASSWORD value(s) from existing .env (those volumes already use them)"
+  fi
+  if [ -n "$PREV_REDIS_PASS" ]; then
+    REDIS_PASS="$PREV_REDIS_PASS"
+    ok "Preserved REDIS_PASSWORD from existing .env"
   fi
   if [ -n "$PREV_MONGO_PASS" ]; then
     MONGO_PASS="$PREV_MONGO_PASS"
@@ -1315,7 +1328,8 @@ MONGO_PORT=27018
 # =============================================================================
 # Redis
 # =============================================================================
-REDIS_URL=redis://redis:6379
+REDIS_PASSWORD=${REDIS_PASS}
+REDIS_URL=redis://:${REDIS_PASS}@redis:6379
 REDIS_PORT=6380
 
 # =============================================================================

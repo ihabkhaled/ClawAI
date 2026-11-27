@@ -1054,6 +1054,11 @@
         },
         {
           "method": "GET",
+          "route": "/admin/users/:userId/linked-accounts",
+          "source": "apps/claw-auth-service/src/modules/anti-abuse/controllers/admin-linked-accounts.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/admin/users/:userId/plan-overview",
           "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-user-statistics.controller.ts"
         },
@@ -1066,6 +1071,16 @@
           "method": "GET",
           "route": "/admin/users/:userId/usage-statistics",
           "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-user-statistics.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/auth/bot-check/challenge",
+          "source": "apps/claw-auth-service/src/modules/auth/controllers/bot-check.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/auth/bot-check/config",
+          "source": "apps/claw-auth-service/src/modules/auth/controllers/bot-check.controller.ts"
         },
         {
           "method": "POST",
@@ -7120,6 +7135,21 @@
       {
         "confidence": "verified",
         "source": ".env.example",
+        "value": "RECAPTCHA_SECRET_KEY"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "RECAPTCHA_SITE_KEY"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "REDIS_PASSWORD"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
         "value": "REDIS_PORT"
       },
       {
@@ -7351,6 +7381,16 @@
         "confidence": "verified",
         "source": ".env.example",
         "value": "TRUSTED_PROXY_ADDRESSES"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "TURNSTILE_SECRET_KEY"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "TURNSTILE_SITE_KEY"
       },
       {
         "confidence": "verified",
@@ -8867,6 +8907,11 @@
         "route": "/admin/security/sessions"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/admin/security/sign-up/page.tsx",
+        "kind": "page",
+        "route": "/admin/security/sign-up"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/admin/smart-router/model-costs/page.tsx",
         "kind": "page",
         "route": "/admin/smart-router/model-costs"
@@ -9615,7 +9660,7 @@
           "file": "rules/15-configuration-and-environment.md"
         },
         {
-          "bytes": 8264,
+          "bytes": 8346,
           "file": "rules/16-authentication-and-authorization.md"
         },
         {
@@ -9783,7 +9828,7 @@
           "file": "rules/57-memory-and-context-pack-integrity.md"
         },
         {
-          "bytes": 8079,
+          "bytes": 8546,
           "file": "rules/58-auth-route-rate-limits.md"
         },
         {
@@ -9823,13 +9868,17 @@
           "file": "rules/67-turn-intent-is-semantic-keywords-are-only-the-fallback.md"
         },
         {
-          "bytes": 9488,
+          "bytes": 2344,
+          "file": "rules/68-internal-surfaces-stay-internal.md"
+        },
+        {
+          "bytes": 9841,
           "file": "rules/README.md"
         }
       ],
       "skills": [
         {
-          "bytes": 38954,
+          "bytes": 40620,
           "file": "skills/00-index.md"
         },
         {
@@ -10145,6 +10194,10 @@
           "file": "skills/inspect-affected-workspaces.md"
         },
         {
+          "bytes": 3357,
+          "file": "skills/investigate-a-production-intrusion.md"
+        },
+        {
           "bytes": 8478,
           "file": "skills/keep-an-agent-honest.md"
         },
@@ -10311,7 +10364,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 6362
+        "value": 6365
       },
       "localeCount": 13,
       "locales": [
@@ -10780,14 +10833,14 @@
       },
       {
         "location": "=",
-        "port": 4007,
-        "service": "audit-service",
+        "port": 4001,
+        "service": "auth-service",
         "source": "infra/nginx/locations.conf"
       },
       {
         "location": "=",
-        "port": 4001,
-        "service": "auth-service",
+        "port": 4007,
+        "service": "audit-service",
         "source": "infra/nginx/locations.conf"
       },
       {
@@ -11686,6 +11739,11 @@
             "confidence": "verified",
             "source": "apps/claw-auth-service/prisma/schema.prisma",
             "value": "UserDeletionOutboxEvent"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "UserDevice"
           },
           {
             "confidence": "verified",
@@ -12866,7 +12924,7 @@
       },
       "claw-agent-service": {
         "runner": "vitest",
-        "testFiles": 65
+        "testFiles": 66
       },
       "claw-audit-service": {
         "runner": "vitest",
@@ -12874,11 +12932,11 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 228
+        "testFiles": 251
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 369
+        "testFiles": 370
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -12898,7 +12956,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 1085
+        "testFiles": 1095
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -12918,7 +12976,7 @@
       },
       "claw-memory-service": {
         "runner": "vitest",
-        "testFiles": 24
+        "testFiles": 25
       },
       "claw-ollama-service": {
         "runner": "vitest",
@@ -12954,7 +13012,7 @@
       },
       "claw-workspace-service": {
         "runner": "vitest",
-        "testFiles": 110
+        "testFiles": 114
       }
     },
     "workspaces": [
@@ -13828,10 +13886,10 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 60,
-    "endpointCount": 1004,
-    "envVarCount": 396,
+    "endpointCount": 1007,
+    "envVarCount": 401,
     "eventCount": 191,
-    "frontendRouteCount": 190,
+    "frontendRouteCount": 191,
     "localeCount": 13,
     "nginxRouteCount": 75,
     "permissionCount": 96,
@@ -13840,7 +13898,7 @@
     "serviceCount": 22,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 3058,
+    "totalTestFiles": 3098,
     "workspaceCount": 29
   }
 }

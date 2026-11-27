@@ -89,6 +89,14 @@ http {
         POST    $binary_remote_addr;
     }
     limit_req_zone $auth_post_key zone=auth_routes:10m rate=60r/m;
+    # Same edge budgets as nginx.conf (security incident 2026-11-27, rules/58, rules/68).
+    limit_req_zone $auth_post_key zone=auth_signup:10m rate=2r/m;
+    limit_req_zone $auth_post_key zone=auth_login:10m rate=12r/m;
+    limit_req_zone $auth_post_key zone=auth_bot_check:10m rate=20r/m;
+    limit_req_zone $auth_post_key zone=client_logs:10m rate=60r/m;
+    limit_conn_zone $binary_remote_addr zone=per_ip_conn:10m;
+    limit_conn_status 429;
+    limit_conn per_ip_conn 100;
     limit_req_status 429;
 
     # --- Security headers ---------------------------------------------------
@@ -235,6 +243,26 @@ http {
             set $backend https://$origin_auth;
             proxy_pass $backend;
             limit_req zone=auth_routes burst=30 nodelay;
+        }
+
+        location = /api/v1/auth/register {
+            set $backend https://$origin_auth;
+            proxy_pass $backend;
+            limit_req zone=auth_signup burst=3 nodelay;
+            limit_req zone=auth_routes burst=30 nodelay;
+        }
+
+        location = /api/v1/auth/login {
+            set $backend https://$origin_auth;
+            proxy_pass $backend;
+            limit_req zone=auth_login burst=10 nodelay;
+            limit_req zone=auth_routes burst=30 nodelay;
+        }
+
+        location = /api/v1/auth/bot-check/challenge {
+            set $backend https://$origin_auth;
+            proxy_pass $backend;
+            limit_req zone=auth_bot_check burst=10 nodelay;
         }
 
         location /api/v1/users {
@@ -800,6 +828,7 @@ http {
         location /api/v1/client-logs {
             set $backend https://$origin_client_logs;
             proxy_pass $backend;
+            limit_req zone=client_logs burst=30 nodelay;
         }
 
         # --- Ops read channel (read-only ops tokens, ADR-102) -> server-logs ---

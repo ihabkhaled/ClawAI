@@ -1,9 +1,16 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { Public } from '@claw/shared-auth';
 
+import { ServiceTokenGuard } from '../../../common/guards/service-token.guard';
 import { AgentTerminalSeedService } from '../services/agent-terminal-seed.service';
 import type { SeedCommandInput } from '../types/seed-command.types';
 
+/**
+ * Service-to-service only. `@Public()` lifts the user JWT; the class-level ServiceTokenGuard is the
+ * real check (security audit 2026-11-27: seed-command had no guard and queued a terminal command
+ * for any userId it was given).
+ */
+@UseGuards(ServiceTokenGuard)
 @Controller('internal/agent/terminal')
 export class AgentTerminalInternalController {
   constructor(private readonly service: AgentTerminalSeedService) {}

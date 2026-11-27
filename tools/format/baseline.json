@@ -468,7 +468,6 @@
     "apps/claw-memory-service/src/infrastructure/redis/redis.module.ts": "4cf9ef0c248a0a35b0e798da41740065eda9a07b16cad4fc3cf919266e4d3cff",
     "apps/claw-memory-service/src/infrastructure/redis/redis.service.ts": "95c8ae9b4edfea94ae62ac845509911e02bee7db007a3471fdf06d85f1d9d7ef",
     "apps/claw-memory-service/src/modules/context-packs/index.ts": "36b8f7a14547c3bbdcb0265efcfff21e770a6cfe761838d9397f1f66446bbf53",
-    "apps/claw-memory-service/src/modules/embeddings/controllers/embeddings.controller.ts": "917df683af2532434f530b0b6f24becaa2b4bdf37691d899ff36346328afc228",
     "apps/claw-memory-service/src/modules/embeddings/services/embeddings.service.ts": "ffc6adcc048bf48c030a356a425ebdcbb2c8e7dc56a2b17d72dd6c39f69f4ae8",
     "apps/claw-memory-service/src/modules/health/controllers/health.controller.ts": "b2b82afe3cf09b7333740573b3f708fc0e034b994358976fda0e11c1a4ab31d0",
     "apps/claw-memory-service/src/modules/health/health.module.ts": "c5065c259c9df336dc546cf878acb58b8cc004ba3482e81bd4b1b4dbe2f8e58c",

@@ -41,7 +41,7 @@
         "ScheduledCommand",
         "TerminalCommand"
       ],
-      "testFiles": 65,
+      "testFiles": 66,
       "testRunner": "vitest"
     },
     {
@@ -72,7 +72,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-auth-service",
-      "endpointCount": 162,
+      "endpointCount": 165,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -116,12 +116,13 @@
         "User",
         "UserCreditWallet",
         "UserDeletionOutboxEvent",
+        "UserDevice",
         "UserNotification",
         "UserNotificationPreference",
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 228,
+      "testFiles": 251,
       "testRunner": "vitest"
     },
     {
@@ -151,7 +152,7 @@
         "MessageAttachment",
         "PromptTemplate"
       ],
-      "testFiles": 369,
+      "testFiles": 370,
       "testRunner": "vitest"
     },
     {
@@ -389,7 +390,7 @@
         "MemoryUsage",
         "WorkspaceObjectEmbedding"
       ],
-      "testFiles": 24,
+      "testFiles": 25,
       "testRunner": "vitest"
     },
     {
@@ -711,7 +712,7 @@
         "WorkspaceProviderDefinition",
         "WorkspaceSyncRun"
       ],
-      "testFiles": 110,
+      "testFiles": 114,
       "testRunner": "vitest"
     }
   ]

@@ -194,8 +194,17 @@ multimodal QA lane; rule 42 item 13 is the same bug class.
 
 `GET /internal/connectors/credit-headroom?provider=` → `{ known, remainingMicroUsd }`
 (integer micro-USD; `known:true, remainingMicroUsd:null` = unlimited key). It
-is the OPERATOR's balance at the provider, so unlike its `@Public()` siblings
-it sits behind `ServiceTokenGuard`.
+is the OPERATOR's balance at the provider. Like every `internal/*` controller
+here it sits behind a class-level `ServiceTokenGuard`.
+
+**Every `internal/*` route needs the service token** (security audit
+2026-11-27). `ConnectorsInternalController` used to guard only `config`;
+`models-snapshot`, `health-snapshot`, `payg-policy` and
+`models/validate-exposed` were open to anything on the Docker network. The guard
+is now on the class, so every caller must send
+`Authorization: Service <INTER_SERVICE_AUTH_TOKEN>`.
+`tools/__tests__/internal-controllers-guarded.test.mjs` fails any internal
+controller without a class-level guard.
 
 - Which providers: those whose preset declares `creditHeadroom` (OpenRouter:
   `/key` `limit_remaining` and `/credits` `total_credits − total_usage`, smaller

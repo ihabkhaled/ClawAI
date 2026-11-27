@@ -105,6 +105,22 @@ describe('TranscriptionCapabilityClient', () => {
     await expect(client.findCapableModel()).resolves.toBeNull();
   });
 
+  it('sends the service token on the models-snapshot read (connector guards every internal route)', async () => {
+    mockedHttpGet.mockResolvedValue(
+      snapshot([{ provider: 'GEMINI', modelKey: 'gemini-flash', modalitiesIn: ['AUDIO'] }]),
+    );
+
+    await client.findCapableModel();
+
+    expect(mockedHttpGet).toHaveBeenCalledWith(
+      'http://connector-service:4003/api/v1/internal/connectors/models-snapshot',
+      expect.objectContaining({
+        headers: { Authorization: 'Service service-secret-token-0000000000' },
+      }),
+      expect.anything(),
+    );
+  });
+
   it('caches the answer so a batch of uploads makes one snapshot call', async () => {
     mockedHttpGet.mockResolvedValue(
       snapshot([{ provider: 'GEMINI', modelKey: 'gemini-flash', modalitiesIn: ['AUDIO'] }]),

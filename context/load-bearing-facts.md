@@ -52,3 +52,11 @@ home; this page only collects them. Routed from [`AGENTS.md`](../AGENTS.md).
 - **Shared packages are consumed through their `dist/`.** A dependent compiled
   against an old `dist` proves nothing; the hooks rebuild stale shared packages
   in dependency order ([rules/34](../rules/34-gate-economy-and-machine-resources.md)).
+- **Docker bypasses the host firewall.** Published container ports land in Docker's own iptables chains, so `ufw` /
+  `INPUT` rules do not protect them. In production only nginx 80/443 are public: every other port binds to loopback in
+  the compose files and is dropped in `DOCKER-USER` by `claw-docker-firewall.service`; fail2ban bans also go into
+  `DOCKER-USER` (`chain = DOCKER-USER`), or they would not stop web traffic
+  ([rules/68](../rules/68-internal-surfaces-stay-internal.md), incident 2026-11-27).
+- **Per-address limits do not stop a sign-up farm on rotating residential addresses.** The proof-of-work /
+  Turnstile / reCAPTCHA checks, the disposable-email block, the device-fingerprint trial rule and the platform-wide
+  velocity limit do ([ADR-222](../docs/13-adr/adr-222-sign-up-abuse-defences-and-internal-surfaces.md)).

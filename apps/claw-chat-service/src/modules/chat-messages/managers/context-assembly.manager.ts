@@ -1583,9 +1583,12 @@ ${RESEARCH_GROUNDING_REMINDER}`;
     try {
       const config = AppConfig.get();
       const url = `${config.WORKSPACE_SERVICE_URL}/api/v1/internal/workspace/search`;
+      // workspace-service guards this route with its ServiceTokenGuard: without
+      // the header the search 401s and chat silently loses workspace context.
       const response = await httpRequest<WorkspaceSearchApiResponse>({
         url,
         method: 'POST',
+        headers: { Authorization: buildInterServiceAuthHeader() },
         body: { query, userId, limit: WORKSPACE_CONTEXT_LIMIT },
         timeoutMs: 5_000,
       });

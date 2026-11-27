@@ -43,6 +43,11 @@ const PASSWORD = process.env.QA_LAB_PASSWORD ?? '';
 const SNAPSHOT_URL =
   args['snapshot-url'] ?? 'http://localhost:4003/api/v1/internal/connectors/models-snapshot';
 
+// The internal snapshot requires the service token since 2026-11-27 (rules/68).
+const SERVICE_HEADERS = process.env.INTER_SERVICE_AUTH_TOKEN
+  ? { Authorization: `Service ${process.env.INTER_SERVICE_AUTH_TOKEN}` }
+  : {};
+
 async function getJson(url, headers = {}) {
   const res = await fetch(url, { headers, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
   const text = await res.text();
@@ -70,7 +75,7 @@ async function loadLive() {
   let models;
   let generatedAt = null;
   if ((args.source ?? 'snapshot') === 'snapshot') {
-    const snapshot = await getJson(SNAPSHOT_URL);
+    const snapshot = await getJson(SNAPSHOT_URL, SERVICE_HEADERS);
     models = snapshot.models ?? [];
     generatedAt = snapshot.generatedAt ?? null;
   } else {

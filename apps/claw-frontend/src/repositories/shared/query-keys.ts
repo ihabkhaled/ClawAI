@@ -34,6 +34,8 @@ export const queryKeys = {
   auth: {
     me: ['auth', 'me'] as const,
     emailChange: ['auth', 'email-change'] as const,
+    // Which bot checks sign-up / a challenged sign-in must carry. Public, no user in the key.
+    botCheckConfig: ['auth', 'bot-check', 'config'] as const,
   },
   threadPublications: {
     all: ['thread-publications'] as const,
@@ -178,6 +180,10 @@ export const queryKeys = {
     userPlanOverview: (userId: string) => ['admin', 'users', 'plan-overview', userId] as const,
     userSubscriptionStatistics: (userId: string) =>
       ['admin', 'users', 'subscription-statistics', userId] as const,
+    // Accounts sharing this user's device or sign-up network (anti-abuse, 2026-11-27).
+    userLinkedAccounts: (userId: string) => ['admin', 'users', 'linked-accounts', userId] as const,
+    // Every SystemSetting row; the Sign-up protection page reads its security.* keys from it.
+    systemSettings: ['admin', 'system-settings'] as const,
     // Providers chat-service's credit breaker is skipping (ADR-125 addendum).
     providerBreakers: ['admin', 'provider-breakers'] as const,
   },

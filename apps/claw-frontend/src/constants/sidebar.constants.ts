@@ -282,6 +282,11 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
         superAdminOnly: true,
       },
       {
+        labelKey: 'nav.adminSecuritySignup',
+        href: ROUTES.ADMIN_SECURITY_SIGNUP,
+        icon: ShieldCheck,
+      },
+      {
         labelKey: 'nav.adminSmartRouter',
         href: ROUTES.ADMIN_SMART_ROUTER,
         icon: Router,

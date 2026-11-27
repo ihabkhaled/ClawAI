@@ -387,10 +387,10 @@ services:
       # Port 80 is published on a production host for two reasons: Let's Encrypt
       # fetches the HTTP-01 challenge over plain HTTP on the standard port and
       # nowhere else, and a visitor typing the bare domain arrives on :80 and
-      # must be redirected rather than refused. 4000 is kept so existing
-      # bookmarks and internal references keep working.
+      # must be redirected rather than refused. 4000 is local-only (security incident 2026-11-27): the
+      # internet reaches nginx on 80/443 only.
       - '80:80'
-      - '4000:80'
+      - '127.0.0.1:4000:80'
       - '443:443'
     volumes:
       - ../infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
@@ -841,7 +841,7 @@ services:
     restart: unless-stopped
     env_file: ../.env
     ports:
-      - '${FRONTEND_PORT:-3000}:3000'
+      - '127.0.0.1:${FRONTEND_PORT:-3000}:3000'
     depends_on:
       - nginx
     volumes:

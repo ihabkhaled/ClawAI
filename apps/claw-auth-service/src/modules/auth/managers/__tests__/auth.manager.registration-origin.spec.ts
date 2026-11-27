@@ -62,4 +62,15 @@ describe('AuthManager.register records where the account came from', () => {
     const result = await manager.register(dto, { ip: '41.33.1.1', countryCode: 'EG' });
     expect(JSON.stringify(result)).not.toContain('41.33.1.1');
   });
+
+  // The one-trial-per-network rule and admin linked accounts compare networks.
+  it('stores the registration /24 next to the IP', async () => {
+    await manager.register(dto, { ip: '41.33.1.1', countryCode: 'EG' });
+    expect(createUser.mock.calls[0]?.[0]).toMatchObject({ registrationNetwork: '41.33.1.0/24' });
+  });
+
+  it('stores no network when the address is unknown', async () => {
+    await manager.register(dto);
+    expect(createUser.mock.calls[0]?.[0]).toMatchObject({ registrationNetwork: null });
+  });
 });

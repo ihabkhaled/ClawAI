@@ -434,3 +434,10 @@ path params: Gemini keys carry a slash.
 ## Rate-card routes are admin-only (2026-11-02)
 
 `GET /router-models/costs`, `GET /router-models/costs/:provider/:model`, `POST /router-models/costs/estimate` and `POST /router-models/costs/price` return provider rate cards, which rule 37 keeps off every user surface. They were guarded only by the global auth guard, so any signed-in user could read them through the edge. They now carry `@Roles(ADMIN)` and `@RequirePermissions(ADMIN_MODELS_MANAGE)` (live check on the dev stack: a free user gets 403, the admin 200). The picker path is `POST /internal/router-models/costs/classes` behind the service token and returns bands only.
+
+## Internal routes need the service token (security audit 2026-11-27, rules/68)
+
+Every controller under `internal/...` here has a class-level `@UseGuards(ServiceTokenGuard)` (`@Public()` only lifts the
+user JWT), and every call this service makes to another service's internal route sends
+`Authorization: Service <INTER_SERVICE_AUTH_TOKEN>`. The repo test `tools/__tests__/internal-controllers-guarded.test.mjs`
+fails on an unguarded internal controller. An anonymous call to a sibling's internal route now gets 401.

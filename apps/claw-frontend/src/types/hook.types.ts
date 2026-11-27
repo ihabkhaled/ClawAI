@@ -24,6 +24,7 @@ import type {
 import type { ProfileIdentityFormValues } from '@/lib/validation/profile.schema';
 import type { RegisterFormValues } from '@/lib/validation/register.schema';
 import type { FollowOutputCallback, VirtuosoHandle } from '@/lib/virtuoso';
+import type { UseUserLinkedAccountsDialogStateReturn } from '@/types/admin-security-settings.types';
 import type {
   PresenceSummary,
   UseUserSecurityDialogStateReturn,
@@ -121,6 +122,12 @@ export type UseLoginFormReturn = {
   isError: boolean;
   /** Null unless the last attempt failed. Never the raw backend message. */
   failureCopy: LoginFailureCopy | null;
+  /** True while a challenged sign-in solves its bot checks before the retry. */
+  isCheckingBrowser: boolean;
+  /** Callback ref for the Turnstile widget, rendered only once the server asks for checks. */
+  setTurnstileContainer: (container: HTMLDivElement | null) => void;
+  /** The submit button's label: signing in, checking the browser, or idle. */
+  submitLabelKey: string;
   t: TranslateFunction;
 };
 
@@ -139,6 +146,14 @@ export type UseRegisterFormReturn = {
   phoneServerErrorKey: string | null;
   signInHref: string;
   resetPasswordHref: string;
+  /** True while the proof of work or a third-party check is still running. Typing is never blocked. */
+  isCheckingBrowser: boolean;
+  /** Callback ref for the Turnstile widget (rendered only when an admin configured it). */
+  setTurnstileContainer: (container: HTMLDivElement | null) => void;
+  /** True from the click until the request has gone out (checks, then the call). */
+  isSubmitting: boolean;
+  /** The submit button's label: creating the account, checking the browser, or idle. */
+  submitLabelKey: string;
   t: TranslateFunction;
 };
 
@@ -503,7 +518,8 @@ export type UseUserTableStateReturn = {
   subscriptionUser: AdminUser | null;
   openSubscription: (user: AdminUser) => void;
   closeSubscription: () => void;
-} & UseUserSecurityDialogStateReturn;
+} & UseUserSecurityDialogStateReturn &
+  UseUserLinkedAccountsDialogStateReturn;
 
 /**
  * Sub-hook composed FROM `useUserTableState`, not called directly from

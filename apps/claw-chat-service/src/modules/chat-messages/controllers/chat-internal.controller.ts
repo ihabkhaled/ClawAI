@@ -11,6 +11,11 @@ import { ServiceTokenGuard } from '../../../app/guards/service-token.guard';
 import type { ModelAuthorizationMetricsSnapshot } from '../types/model-authorization-metrics.types';
 import { respondWithGenerateStream } from '../utilities/internal-generate-response.utility';
 
+/**
+ * Service-to-service only. `@Public()` lifts the user JWT; the class-level ServiceTokenGuard is the
+ * real check on every route (security audit 2026-11-27: model-authorization-metrics was open).
+ */
+@UseGuards(ServiceTokenGuard)
 @Controller('internal/chat')
 export class ChatInternalController {
   constructor(
@@ -29,7 +34,6 @@ export class ChatInternalController {
   }
 
   @Public()
-  @UseGuards(ServiceTokenGuard)
   @Post('generate')
   @HttpCode(HttpStatus.OK)
   async generate(
@@ -54,7 +58,6 @@ export class ChatInternalController {
    * running to the provider's own timeout.
    */
   @Public()
-  @UseGuards(ServiceTokenGuard)
   @Post('generate-stream')
   async generateStream(
     @Body(new ZodValidationPipe(internalGenerateSchema)) dto: InternalGenerateDto,

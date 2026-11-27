@@ -274,8 +274,8 @@ Last updated: 2026-09-10
 <INTER_SERVICE_AUTH_TOKEN>` on every call. Its four construction sites
   (chat ×2, memory, workspace) pass the token from their own config; no new
   environment variable.
-  - `tools/__tests__/auth-internal-controllers-guarded.test.mjs` fails if any
-    `*-internal.controller.ts` in auth-service loses the guard.
+  - `tools/__tests__/internal-controllers-guarded.test.mjs` (repo-wide since the
+    2026-11-27 audit, rules/68) fails if any internal controller loses the guard.
   - Verified live from inside the service network: no token → 401, wrong
     token → 401, correct token → 200, and a chat file request still works.
 - **Deploy order**: auth-service and the four callers ship together. An

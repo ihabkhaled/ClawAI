@@ -2,6 +2,10 @@ import type { Direction } from '@/enums/direction.enum';
 import type { Locale } from '@/enums/locale.enum';
 import type { CostClass } from '@/enums/router-models.enum';
 import type { AdminSessionsSectionTranslation } from '@/types/admin-sessions-i18n.types';
+import type {
+  AdminSecurityTranslation,
+  BotCheckAuthTranslation,
+} from '@/types/anti-abuse-i18n.types';
 import type { FeedbackTranslation } from '@/types/i18n-feedback.types';
 import type { LiveLocaleTranslation } from '@/types/live-i18n.types';
 import type { PluginImportLocaleTranslation } from '@/types/plugin-import-i18n.types';
@@ -10,6 +14,8 @@ import type { PluginQaFixesLocaleTranslation } from '@/types/plugin-qa-fixes-i18
 export type TranslationDictionary = {
   /** Admin sessions page, system-wide session actions and their errors (ADR-204). */
   adminSessions: AdminSessionsSectionTranslation;
+  /** Admin "Sign-up protection" page and the linked-accounts view (anti-abuse-translations.ts). */
+  adminSecurity: AdminSecurityTranslation;
   /** Plugins and MCP access: sidebar, plan editor and upgrade label. */
   pluginsAccess: PluginsAccessLocaleTranslation;
   /** Plugins inside a conversation: the @ picker, call timeline and notices. */
@@ -94,6 +100,8 @@ export type TranslationDictionary = {
     phoneInvalid: string;
   };
   auth: {
+    /** The browser check and the anti-abuse refusals (anti-abuse-translations.ts). */
+    botCheck: BotCheckAuthTranslation;
     /** A 429 on a sign-in / sign-up route, with the server's Retry-After in minutes. */
     rateLimit: {
       tryAgainInMinutes: string;
@@ -369,6 +377,8 @@ export type TranslationDictionary = {
     adminRuntimeProgress: string;
     adminDeployment: string;
     adminSecuritySessions: string;
+    /** Sign-up protection (anti-abuse settings, 2026-11-27). */
+    adminSecuritySignup: string;
     adminPaymentGateways: string;
     adminSmartRouter: string;
     adminModelCosts: string;

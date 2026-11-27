@@ -1,3 +1,4 @@
+import { BOT_CHECK_COPY_KEYS, SIGNUP_LIMITED_COPY_KEYS } from '@/constants/bot-check.constants';
 import { RATE_LIMIT_COPY_KEYS } from '@/constants/rate-limit.constants';
 import {
   NETWORK_FAILURE_STATUS,
@@ -18,7 +19,7 @@ import type {
   SignupFieldError,
 } from '@/types';
 
-import { resolveRateLimitMessage } from './rate-limit.utility';
+import { resolveRateLimitMessage, resolveRetryAfterMessage } from './rate-limit.utility';
 
 function readErrorShape(error: unknown): SignupErrorShape {
   if (error === null || typeof error !== 'object') {
@@ -57,6 +58,19 @@ export function classifySignupFailure(error: unknown): SignupFailureReason {
       return SignupFailureReason.RATE_LIMITED;
     case ApiErrorCode.SIGNUP_PLAN_ASSIGNMENT_FAILED:
       return SignupFailureReason.ACCOUNT_SETUP_FAILED;
+    // The email codes are pinned to the email field (resolveSignupFieldErrors);
+    // the alert above the button says "fix the highlighted field".
+    case ApiErrorCode.DISPOSABLE_EMAIL:
+    case ApiErrorCode.EMAIL_DOMAIN_UNDELIVERABLE:
+      return SignupFailureReason.INVALID_DETAILS;
+    case ApiErrorCode.BOT_CHECK_REQUIRED:
+      return SignupFailureReason.BOT_CHECK_REQUIRED;
+    case ApiErrorCode.BOT_CHECK_FAILED:
+      return SignupFailureReason.BOT_CHECK_FAILED;
+    // Before the bare-429 fallback: this 429 is the platform pausing sign-ups,
+    // not this person retrying too often, and it says so.
+    case ApiErrorCode.SIGNUP_TEMPORARILY_LIMITED:
+      return SignupFailureReason.SIGNUP_LIMITED;
     default:
       break;
   }
@@ -98,6 +112,30 @@ export function resolveSignupFailureCopy(
       const message = resolveRateLimitMessage(retryAfterSeconds);
       return {
         titleKey: RATE_LIMIT_COPY_KEYS.title,
+        descriptionKey: message.key,
+        descriptionParams: message.params,
+        offersSignIn: false,
+        showsRequestId: false,
+      };
+    }
+    case SignupFailureReason.BOT_CHECK_REQUIRED:
+      return {
+        titleKey: BOT_CHECK_COPY_KEYS.requiredTitle,
+        descriptionKey: BOT_CHECK_COPY_KEYS.requiredDescription,
+        offersSignIn: false,
+        showsRequestId: false,
+      };
+    case SignupFailureReason.BOT_CHECK_FAILED:
+      return {
+        titleKey: BOT_CHECK_COPY_KEYS.failedTitle,
+        descriptionKey: BOT_CHECK_COPY_KEYS.failedDescription,
+        offersSignIn: false,
+        showsRequestId: false,
+      };
+    case SignupFailureReason.SIGNUP_LIMITED: {
+      const message = resolveRetryAfterMessage(retryAfterSeconds, SIGNUP_LIMITED_COPY_KEYS);
+      return {
+        titleKey: SIGNUP_LIMITED_COPY_KEYS.title,
         descriptionKey: message.key,
         descriptionParams: message.params,
         offersSignIn: false,
@@ -147,6 +185,14 @@ export function resolveSignupFieldErrors(error: unknown): SignupFieldError[] {
   const { code, errors } = readErrorShape(error);
   if (code === ApiErrorCode.WEAK_PASSWORD) {
     return [{ field: 'password', messageKey: REGISTER_FIELD_FALLBACK_KEYS.password }];
+  }
+  // Anti-abuse email refusals name the field in the contract; the code alone
+  // decides the copy, whatever the `errors` map carries.
+  if (code === ApiErrorCode.DISPOSABLE_EMAIL) {
+    return [{ field: 'email', messageKey: BOT_CHECK_COPY_KEYS.disposableEmail }];
+  }
+  if (code === ApiErrorCode.EMAIL_DOMAIN_UNDELIVERABLE) {
+    return [{ field: 'email', messageKey: BOT_CHECK_COPY_KEYS.emailUndeliverable }];
   }
   if (errors === null) {
     return [];

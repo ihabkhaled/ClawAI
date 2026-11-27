@@ -3,19 +3,22 @@
 // Free plan made every signup and every admin Free assignment fail with HTTP 500.
 // This reads the migration history and asserts that the CURRENT definition of
 // every trial constraint (the last migration that sets it) fixes no day count.
-import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
-
-const MIGRATIONS_DIR = join(__dirname, '..', '..', '..', '..', 'prisma', 'migrations');
+//
+// The migrations are loaded with Vite's import.meta.glob (as raw text, sorted by
+// folder name) rather than node:fs, so no file path is built at run time.
+const MIGRATIONS = import.meta.glob<string>('../../../../prisma/migrations/*/migration.sql', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+});
 const TRIAL_CONSTRAINTS = ['plans_trial_duration_check', 'plan_trial_redemptions_duration_check'];
 
 function lastDefinition(constraint: string): string {
-  const folders = readdirSync(MIGRATIONS_DIR)
-    .filter((name) => /^\d{14}_/u.test(name))
-    .sort();
+  const files = Object.entries(MIGRATIONS)
+    .filter(([path]) => /\/\d{14}_[^/]+\/migration\.sql$/u.test(path))
+    .sort(([a], [b]) => a.localeCompare(b));
   let latest = '';
-  for (const folder of folders) {
-    const sql = readFileSync(join(MIGRATIONS_DIR, folder, 'migration.sql'), 'utf8');
+  for (const [, sql] of files) {
     const statements = sql.split(';').filter((s) => s.includes(constraint) && /CHECK/iu.test(s));
     if (statements.length > 0) {
       latest = statements.at(-1) ?? latest;
@@ -35,9 +38,11 @@ describe('trial length is never hard-coded in the database', () => {
     expect(definition).not.toMatch(/trial_duration_days"?\s*=\s*\d+/iu);
   });
 
-  it('a redemption only has to end after it starts, so admins can extend it', () => {
+  // `>=` since the anti-abuse migration (2026-11-27): a trial refused by the
+  // one-trial-per-device rule is stored already over (expires_at = started_at).
+  it('a redemption only has to end at or after it starts, so admins can extend it', () => {
     expect(lastDefinition('plan_trial_redemptions_duration_check')).toMatch(
-      /"expires_at"\s*>\s*"started_at"/u,
+      /"expires_at"\s*>=\s*"started_at"/u,
     );
   });
 });

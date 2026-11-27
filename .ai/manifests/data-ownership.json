@@ -76,6 +76,7 @@
         "User",
         "UserCreditWallet",
         "UserDeletionOutboxEvent",
+        "UserDevice",
         "UserNotification",
         "UserNotificationPreference",
         "UserPlanAssignment",

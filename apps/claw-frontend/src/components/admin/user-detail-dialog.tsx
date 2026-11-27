@@ -41,6 +41,7 @@ export function UserDetailDialog({
   onEdit,
   onBan,
   onUnban,
+  onShowLinkedAccounts,
   t,
 }: UserDetailDialogProps): ReactElement {
   if (!user) {
@@ -155,6 +156,14 @@ export function UserDetailDialog({
               <Link href={ROUTES.ADMIN_USER_SESSIONS(user.id)} data-testid="detail-sessions-link">
                 {t('adminSessions.viewSessions')}
               </Link>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onShowLinkedAccounts(user)}
+              data-testid="detail-linked-accounts"
+            >
+              {t('adminSecurity.linkedAccounts.open')}
             </Button>
             <Button
               type="button"

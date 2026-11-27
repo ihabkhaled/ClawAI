@@ -28,6 +28,7 @@ import type { SessionClient } from '../types/token-session.types';
 import type { RegisterDto } from '../dto/register.dto';
 import { EMPTY_REGISTRATION_ORIGIN } from '../../users/constants/user-admin.constants';
 import { type RegistrationOrigin } from '../../users/types/user-admin.types';
+import { toRegistrationNetwork } from '../../anti-abuse/utilities/ip-network.utility';
 
 @Injectable()
 export class AuthManager {
@@ -48,9 +49,14 @@ export class AuthManager {
   // table in apps/claw-auth-service/CLAUDE.md): WEAK_PASSWORD, DUPLICATE_ENTITY
   // (the one enumeration surface ADR-096 deliberately keeps), and
   // SIGNUP_PLAN_ASSIGNMENT_FAILED. Only a genuinely unexpected fault is a 500.
+  //
+  // `grantTrial: false` (anti-abuse one-trial-per-device rule, decided by
+  // RegistrationScreeningService) still writes the trial redemption, but already
+  // over: expiresAt = startedAt. The account exists, the device has had its turn.
   async register(
     dto: RegisterDto,
     origin: RegistrationOrigin = EMPTY_REGISTRATION_ORIGIN,
+    grantTrial = true,
   ): Promise<RegisteredAccount> {
     this.logger.log(`register: attempting registration for email=${dto.email}`);
     const strength = validatePasswordStrength(dto.password);
@@ -64,7 +70,7 @@ export class AuthManager {
     }
 
     const user = await this.createPendingUser(dto, origin);
-    const planSlug = await this.assignDefaultPlanOrUndo(user);
+    const planSlug = await this.assignDefaultPlanOrUndo(user, grantTrial);
 
     this.logger.log(`register: created user ${user.id} role=USER plan=${planSlug ?? 'none'}`);
     return { verificationRequired: true, user: await this.toUserSummary(user) };
@@ -87,6 +93,7 @@ export class AuthManager {
         // Personal data, admin-only (ADR-200). Null when the address is unknown.
         registrationIp: origin.ip,
         registrationCountryCode: origin.countryCode,
+        registrationNetwork: toRegistrationNetwork(origin.ip),
         role: UserRole.USER,
         ...(roleId ? { roleRef: { connect: { id: roleId } } } : {}),
         status: UserStatus.PENDING,
@@ -108,14 +115,23 @@ export class AuthManager {
   // "address already registered" for an account nobody could use.
   // No default plan configured is not a failure (downstream treats it as
   // unrestricted); the seed always provides one.
-  private async assignDefaultPlanOrUndo(user: User): Promise<string | null> {
+  private async assignDefaultPlanOrUndo(user: User, grantTrial: boolean): Promise<string | null> {
     const defaultPlan = await this.plansRepository.findDefault();
     if (!defaultPlan) {
       return null;
     }
+    if (defaultPlan.isTrial && !grantTrial) {
+      this.logger.warn(`register: user ${user.id} starts with the trial over (device policy)`);
+    }
     try {
       await (defaultPlan.isTrial
-        ? this.plansRepository.assignTrialPlanOnce(user.id, defaultPlan.id, undefined, new Date())
+        ? this.plansRepository.assignTrialPlanOnce(
+            user.id,
+            defaultPlan.id,
+            undefined,
+            new Date(),
+            grantTrial,
+          )
         : this.plansRepository.assignDefaultPlan(user.id, defaultPlan.id));
       return defaultPlan.slug;
     } catch (error: unknown) {

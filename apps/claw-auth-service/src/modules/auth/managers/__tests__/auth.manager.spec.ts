@@ -299,6 +299,21 @@ describe('AuthManager', () => {
         expect(repository.deleteUserById).not.toHaveBeenCalled();
       });
 
+      it('grants the trial by default and passes a refusal from screening through', async () => {
+        plansRepository.findDefault.mockResolvedValue({
+          id: 'plan-free',
+          slug: 'free',
+          isTrial: true,
+        });
+        plansRepository.assignTrialPlanOnce.mockResolvedValue({ id: 'assignment' });
+
+        await manager.register(dto);
+        await manager.register({ ...dto, email: 'second@example.com' }, undefined, false);
+
+        expect(plansRepository.assignTrialPlanOnce.mock.calls[0]?.[4]).toBe(true);
+        expect(plansRepository.assignTrialPlanOnce.mock.calls[1]?.[4]).toBe(false);
+      });
+
       it('creates the account without a plan when none is configured', async () => {
         plansRepository.findDefault.mockResolvedValue(null);
 

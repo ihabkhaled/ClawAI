@@ -1,18 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AppConfig } from '../../../app/config/app.config';
-import { httpRequest } from '../../../common/utilities';
+import type { HttpResponse } from '../../../common/types';
+import { buildInterServiceAuthHeader, httpRequest } from '../../../common/utilities';
 import {
   CONNECTOR_MODELS_SNAPSHOT_URL_PATH,
   EXPOSED_MODELS_TIMEOUT_MS,
   EXPOSED_MODELS_TTL_MS,
-  MODEL_EXPOSURE_EXPOSED,
-  MODEL_KIND_CHAT,
 } from '../constants/cloud-router-eligibility.constants';
 import type {
   CachedExposedModels,
   ExposedModelSnapshotEntry,
 } from '../types/model-deployment.types';
-import { modelMatchKey } from '../utilities/cloud-router-candidates.utility';
+import { exposedChatKeys } from '../utilities/exposed-model-keys.utility';
 
 /**
  * The chat models an admin exposed to users, read from connector-service.
@@ -32,32 +31,35 @@ export class ExposedModelsService {
       return this.cached.keys;
     }
     try {
-      const response = await httpRequest<{ models?: ExposedModelSnapshotEntry[] }>({
-        url: `${AppConfig.get().CONNECTOR_SERVICE_URL}${CONNECTOR_MODELS_SNAPSHOT_URL_PATH}`,
-        method: 'GET',
-        timeoutMs: EXPOSED_MODELS_TIMEOUT_MS,
-      });
+      const response = await this.fetchSnapshot();
       if (!response.ok) {
         this.logger.warn(
           `exposedChatModels: connector-service returned ${String(response.status)}`,
         );
-        return this.cached?.keys ?? null;
+        return this.lastKeys();
       }
-      const keys = new Set(
-        (response.data.models ?? [])
-          .filter(
-            (model) =>
-              model.exposure === MODEL_EXPOSURE_EXPOSED &&
-              (model.kind ?? MODEL_KIND_CHAT) === MODEL_KIND_CHAT,
-          )
-          .map((model) => modelMatchKey(model.provider, model.modelKey)),
-      );
+      const keys = exposedChatKeys(response.data.models ?? []);
       this.cached = { keys, expiresAt: now() + EXPOSED_MODELS_TTL_MS };
       this.logger.debug(`exposedChatModels: ${String(keys.size)} exposed chat model(s)`);
       return keys;
     } catch (error: unknown) {
       this.logger.warn(`exposedChatModels: failed - ${(error as Error).message}`);
-      return this.cached?.keys ?? null;
+      return this.lastKeys();
     }
+  }
+
+  /** The last good answer, kept while connector-service cannot be read. */
+  private lastKeys(): ReadonlySet<string> | null {
+    return this.cached?.keys ?? null;
+  }
+
+  /** The connector models snapshot; the internal route requires the service token (rules/68, 2026-11-27). */
+  private fetchSnapshot(): Promise<HttpResponse<{ models?: ExposedModelSnapshotEntry[] }>> {
+    return httpRequest<{ models?: ExposedModelSnapshotEntry[] }>({
+      url: `${AppConfig.get().CONNECTOR_SERVICE_URL}${CONNECTOR_MODELS_SNAPSHOT_URL_PATH}`,
+      method: 'GET',
+      headers: { Authorization: buildInterServiceAuthHeader() },
+      timeoutMs: EXPOSED_MODELS_TIMEOUT_MS,
+    });
   }
 }

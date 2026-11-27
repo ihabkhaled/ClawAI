@@ -1,16 +1,20 @@
-import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
 import { Public } from '@claw/shared-auth';
 
+import { ServiceTokenGuard } from '../../../app/guards/service-token.guard';
 import { SyncHealthService } from '../services/sync-health.service';
 import type { InternalSyncHealth } from '../types/sync-health.types';
 
 /**
- * Internal health probe consumed by `claw-health-service`.
+ * Internal sync-health read for sibling services.
  *
- * The route is intentionally outside `/api/v1/` so nginx does NOT proxy it;
- * it is only reachable from inside the Docker network. Marked `@Public()` so
- * the AuthGuard lets service-to-service probe calls through.
+ * Not a container probe: Docker healthchecks, health-service and Prometheus all
+ * hit `/api/v1/health` or `/api/v1/metrics`, and nothing in the repo calls this
+ * route today (checked 2026-11-27). So it takes the service token like every
+ * other `internal/*` route; `@Public()` only lifts the user JWT. nginx not
+ * proxying `/api/v1/internal/*` is a network fact, not an authorisation.
  */
+@UseGuards(ServiceTokenGuard)
 @Controller('internal/workspace/sync')
 export class SyncHealthInternalController {
   constructor(private readonly service: SyncHealthService) {}

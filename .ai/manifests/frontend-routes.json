@@ -392,6 +392,11 @@
       "route": "/admin/security/sessions"
     },
     {
+      "file": "apps/claw-frontend/src/app/(portal)/admin/security/sign-up/page.tsx",
+      "kind": "page",
+      "route": "/admin/security/sign-up"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(portal)/admin/smart-router/model-costs/page.tsx",
       "kind": "page",
       "route": "/admin/smart-router/model-costs"

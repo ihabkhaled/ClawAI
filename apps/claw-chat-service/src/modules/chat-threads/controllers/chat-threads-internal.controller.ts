@@ -1,11 +1,18 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { Public } from '@claw/shared-auth';
 
+import { ServiceTokenGuard } from '../../../app/guards/service-token.guard';
 import { ChatThreadsRepository } from '../repositories/chat-threads.repository';
 import { ChatMessagesRepository } from '../../chat-messages/repositories/chat-messages.repository';
 import { MessageRole } from '../../../generated/prisma';
 import { type SeedThreadInput } from '../types/chat-threads.types';
 
+/**
+ * Service-to-service only. `@Public()` lifts the user JWT; the class-level ServiceTokenGuard is the
+ * real check (security audit 2026-11-27: threads/seeded had no guard and wrote a thread and a
+ * message for any userId it was given).
+ */
+@UseGuards(ServiceTokenGuard)
 @Controller('internal/chat')
 export class ChatThreadsInternalController {
   constructor(

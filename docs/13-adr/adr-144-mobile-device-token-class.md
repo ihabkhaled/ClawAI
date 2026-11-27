@@ -67,7 +67,7 @@ fails the test until classified. Removing the check in `DeviceAccessGuard` fails
    phone) is a product call.
 3. **Desktop device tokens are accepted by services that do not check audience** (above). Fix is to move those
    guards to `verifyUserAccessToken` or to derive the desktop key too; either has a rollout cost.
-4. **`POST /internal/agent/terminal/seed-command` is `@Public()` with no service-token guard** and relies on
-   nginx blocking `/api/v1/internal/*`. Unrelated to mobile; found while enumerating routes.
+4. ~~`POST /internal/agent/terminal/seed-command` is `@Public()` with no service-token guard~~ — fixed
+   2026-11-27: the controller requires `ServiceTokenGuard` at class level (rules/68, ADR-222).
 5. Refused-route attempts are logged (device id, class, no token) but not audited as events; a probing stolen
    token is visible in logs, not in the audit trail.

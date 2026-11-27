@@ -179,3 +179,10 @@ Import `AuthRateLimitModule` into any module whose controller uses the decorator
 deny, 403). Signed with a key derived from `JWT_SECRET`, never `JWT_SECRET` itself. Adding a phone route means adding
 it to `MOBILE_ROUTES` in `mobile-token-route-inventory.spec.ts`. See ADR-144 and
 `skills/pair-and-use-a-mobile-device-token.md`.
+
+## Internal routes need the service token (security audit 2026-11-27, rules/68)
+
+Every controller under `internal/...` here has a class-level `@UseGuards(ServiceTokenGuard)` (`@Public()` only lifts the
+user JWT), and every call this service makes to another service's internal route sends
+`Authorization: Service <INTER_SERVICE_AUTH_TOKEN>`. The repo test `tools/__tests__/internal-controllers-guarded.test.mjs`
+fails on an unguarded internal controller. An anonymous call to a sibling's internal route now gets 401.

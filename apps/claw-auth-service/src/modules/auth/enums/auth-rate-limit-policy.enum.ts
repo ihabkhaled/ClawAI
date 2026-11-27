@@ -16,4 +16,6 @@ export enum AuthRateLimitPolicy {
   EMAIL_CHANGE_CONFIRM = 'email-change-confirm',
   VSCODE_AUTHORIZE_INIT = 'vscode-authorize-init',
   VSCODE_AUTHORIZE_EXCHANGE = 'vscode-authorize-exchange',
+  BOT_CHECK_CONFIG = 'bot-check-config',
+  BOT_CHECK_CHALLENGE = 'bot-check-challenge',
 }

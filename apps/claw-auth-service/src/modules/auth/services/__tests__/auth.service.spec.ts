@@ -5,10 +5,16 @@ import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
 import { AuthService } from '../auth.service';
 import { AuthManager } from '../../managers/auth.manager';
-import { InvalidRefreshTokenException } from '../../../../common/errors';
+import {
+  BusinessException,
+  InvalidCredentialsException,
+  InvalidRefreshTokenException,
+} from '../../../../common/errors';
 import { UserRole } from '../../../../common/enums';
 import { SessionClientKind } from '../../enums/session-client-kind.enum';
 import { EmailVerificationService } from '../email-verification.service';
+import { RegistrationScreeningService } from '../../../anti-abuse/services/registration-screening.service';
+import { LoginScreeningService } from '../../../anti-abuse/services/login-screening.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -21,8 +27,20 @@ describe('AuthService', () => {
   };
   let rabbitMock: { publish: Mock };
   let sendForUser: Mock;
+  let registrationScreening: { screen: Mock; recordSignup: Mock };
+  let loginScreening: { assertAllowed: Mock; recordFailure: Mock; recordSuccess: Mock };
+  const GRANTED = { device: null, trial: { grant: true, reason: 'GRANTED' } };
 
   beforeEach(async () => {
+    registrationScreening = {
+      screen: vi.fn().mockResolvedValue(GRANTED),
+      recordSignup: vi.fn().mockResolvedValue(undefined),
+    };
+    loginScreening = {
+      assertAllowed: vi.fn().mockResolvedValue(undefined),
+      recordFailure: vi.fn().mockResolvedValue(undefined),
+      recordSuccess: vi.fn().mockResolvedValue(undefined),
+    };
     managerMock = {
       register: vi.fn(),
       login: vi.fn(),
@@ -39,6 +57,8 @@ describe('AuthService', () => {
         { provide: AuthManager, useValue: managerMock },
         { provide: RabbitMQService, useValue: rabbitMock },
         { provide: EmailVerificationService, useValue: { sendForUser } },
+        { provide: RegistrationScreeningService, useValue: registrationScreening },
+        { provide: LoginScreeningService, useValue: loginScreening },
       ],
     }).compile();
 
@@ -100,6 +120,34 @@ describe('AuthService', () => {
       );
       expect(created).toHaveLength(0);
     });
+
+    it('screens first and creates nothing when screening refuses', async () => {
+      registrationScreening.screen.mockRejectedValue(
+        new BusinessException('A bot check is required', 'BOT_CHECK_REQUIRED', 428),
+      );
+
+      await expect(service.register(dto)).rejects.toMatchObject({ code: 'BOT_CHECK_REQUIRED' });
+      expect(managerMock.register).not.toHaveBeenCalled();
+      expect(registrationScreening.recordSignup).not.toHaveBeenCalled();
+    });
+
+    it('hands the trial decision to account creation and records the sign-up', async () => {
+      const origin = { ip: '203.0.113.9', countryCode: 'DE', userAgent: 'Mozilla/5.0' };
+      const denied = { device: null, trial: { grant: false, reason: 'MISSING_DEVICE' } };
+      registrationScreening.screen.mockResolvedValue(denied);
+      managerMock.register.mockResolvedValue(account);
+
+      await service.register(dto, origin);
+
+      expect(registrationScreening.screen).toHaveBeenCalledWith(dto, origin);
+      expect(managerMock.register).toHaveBeenCalledWith(dto, origin, false);
+      expect(registrationScreening.recordSignup).toHaveBeenCalledWith(
+        'u1',
+        'new@example.com',
+        denied,
+        origin,
+      );
+    });
   });
 
   describe('login', () => {
@@ -149,6 +197,64 @@ describe('AuthService', () => {
       await service.login('a@b', 'p', client);
 
       expect(managerMock.login).toHaveBeenCalledWith('a@b', 'p', client);
+    });
+
+    it('asks login screening first and never checks the password when it refuses', async () => {
+      loginScreening.assertAllowed.mockRejectedValue(
+        new BusinessException('A bot check is required', 'BOT_CHECK_REQUIRED', 428),
+      );
+
+      await expect(service.login('a@b', 'p')).rejects.toMatchObject({
+        code: 'BOT_CHECK_REQUIRED',
+      });
+      expect(managerMock.login).not.toHaveBeenCalled();
+      expect(loginScreening.recordFailure).not.toHaveBeenCalled();
+    });
+
+    it('counts a wrong password as a failed sign-in', async () => {
+      managerMock.login.mockRejectedValue(new InvalidCredentialsException());
+
+      await expect(service.login('a@b', 'wrong')).rejects.toBeInstanceOf(
+        InvalidCredentialsException,
+      );
+      expect(loginScreening.recordFailure).toHaveBeenCalledWith('a@b', {
+        ip: null,
+        countryCode: null,
+        userAgent: null,
+      });
+    });
+
+    it('does not count a refusal that came after a correct password', async () => {
+      managerMock.login.mockRejectedValue(
+        new BusinessException('Email address is not verified', 'EMAIL_NOT_VERIFIED', 403),
+      );
+
+      await expect(service.login('a@b', 'right')).rejects.toBeInstanceOf(BusinessException);
+      expect(loginScreening.recordFailure).not.toHaveBeenCalled();
+    });
+
+    it('records the device and clears failures on success, with the session origin', async () => {
+      managerMock.login.mockResolvedValue({ tokens: {}, user: { id: 'u1', email: 'a@b' } });
+      const screening = { device: { fingerprint: 'f'.repeat(64), deviceId: 'device-0001' } };
+      const origin = {
+        ipAddress: '198.51.100.7',
+        countryCode: 'FR',
+        userAgent: 'Mozilla/5.0',
+        os: null,
+        browser: null,
+        deviceKind: null,
+      };
+
+      await service.login('a@b', 'p', { kind: SessionClientKind.WEB, origin }, screening);
+
+      const screeningOrigin = { ip: '198.51.100.7', countryCode: 'FR', userAgent: 'Mozilla/5.0' };
+      expect(loginScreening.assertAllowed).toHaveBeenCalledWith('a@b', screening, screeningOrigin);
+      expect(loginScreening.recordSuccess).toHaveBeenCalledWith(
+        'u1',
+        'a@b',
+        screening,
+        screeningOrigin,
+      );
     });
   });
 

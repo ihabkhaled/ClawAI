@@ -325,6 +325,12 @@ limit_req zone=auth_routes burst=30 nodelay;
   `code: RATE_LIMITED` and `Retry-After`. Runbook:
   [runbook-auth-rate-limits.md](../11-runbooks/runbook-auth-rate-limits.md).
 - Same zone, same location, in `nginx.distributed.conf.template`.
+- **Tighter edge budgets since the 2026-11-27 sign-up farm** (both templates):
+  `auth_signup` 2/min burst 3 on `= /api/v1/auth/register`, `auth_login` 12/min burst 10 on `= /api/v1/auth/login`,
+  `auth_bot_check` 20/min burst 10 on `= /api/v1/auth/bot-check/challenge`, `client_logs` 60/min burst 30 on
+  `/api/v1/client-logs`, and `limit_conn per_ip_conn 100` (concurrent connections per address, every route).
+  Exact-match locations keep `auth_routes` too. fail2ban bans repeat offenders on the host
+  ([runbook-production-host-hardening.md](../11-runbooks/runbook-production-host-hardening.md), rules/68).
 
 ---
 

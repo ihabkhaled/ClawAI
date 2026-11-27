@@ -395,6 +395,22 @@ describe('PlansRepository.assignTrialPlanOnce (dynamic trial length)', () => {
     ).resolves.toBeNull();
     expect(create).not.toHaveBeenCalled();
   });
+
+  // One trial per device (anti-abuse 2026-11-27): the rows exist, the trial is over.
+  it('writes a refused trial as already over: expiresAt = startedAt = now', async () => {
+    const { repository, create, redemptionCreate } = build({
+      id: 'plan-free',
+      trialDurationDays: 30,
+    });
+
+    await repository.assignTrialPlanOnce('user-1', 'plan-free', undefined, now, false);
+
+    expect(create.mock.calls[0]?.[0].data.entitlementValidUntil).toEqual(now);
+    expect(redemptionCreate.mock.calls[0]?.[0].data).toMatchObject({
+      startedAt: now,
+      expiresAt: now,
+    });
+  });
 });
 
 describe('PlansRepository admin trial grant and extension', () => {

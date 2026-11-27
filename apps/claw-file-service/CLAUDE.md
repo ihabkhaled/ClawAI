@@ -498,3 +498,10 @@ and service-auth rules as the generated-image route; the file is the user's, sou
 - Honest gaps: a real speech file through a real provider is proved only by the 2026-11-02 run (6 s, 29 micro-USD); audio duration is not capped beyond 12 MB (hold bounded at 7,200 s).
 
 - A video renamed as audio (`.mp3`) is probed and read through the video path, so it meets the plan's `maxVideoSeconds` gate (0 = disabled); cover art (mjpeg, png and other still codecs) keeps a file on the audio path. A probe that cannot read the bytes fails open to the audio path (ADR-216 amendment 2026-11-02).
+
+## Internal routes need the service token (security audit 2026-11-27, rules/68)
+
+Every controller under `internal/...` here has a class-level `@UseGuards(ServiceTokenGuard)` (`@Public()` only lifts the
+user JWT), and every call this service makes to another service's internal route sends
+`Authorization: Service <INTER_SERVICE_AUTH_TOKEN>`. The repo test `tools/__tests__/internal-controllers-guarded.test.mjs`
+fails on an unguarded internal controller. An anonymous call to a sibling's internal route now gets 401.

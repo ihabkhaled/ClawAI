@@ -716,6 +716,9 @@ foreach ($pgKey in $pgDbKeys) {
 # it rather than mint a new one.
 $mongoPass = Get-EnvValue -Path $envFile -Key 'MONGO_PASSWORD'
 if ([string]::IsNullOrWhiteSpace($mongoPass)) { $mongoPass = New-Password }
+# Redis password (incident 2026-11-27: Redis was reachable with none). Hex keeps the URL safe.
+$redisPass = Get-EnvValue -Path $envFile -Key 'REDIS_PASSWORD'
+if ([string]::IsNullOrWhiteSpace($redisPass)) { $redisPass = New-SecretHex }
 $rabbitPass = Get-EnvValue -Path $envFile -Key 'RABBITMQ_PASSWORD'
 if ([string]::IsNullOrWhiteSpace($rabbitPass)) { $rabbitPass = New-Password }
 $adminPass = New-Password
@@ -1148,7 +1151,8 @@ MONGO_PORT=27018
 # =============================================================================
 # Redis
 # =============================================================================
-REDIS_URL=redis://redis:6379
+REDIS_PASSWORD=$redisPass
+REDIS_URL=redis://:$redisPass@redis:6379
 REDIS_PORT=6380
 
 # =============================================================================
@@ -1164,6 +1168,12 @@ RABBITMQ_MANAGEMENT_PORT=15672
 # JWT
 # =============================================================================
 JWT_SECRET=$jwtSecret
+# Bot checks on sign-up and sign-in (ADR-222). Optional: empty = that provider is off; the built-in
+# proof-of-work always runs. A non-empty admin setting (security.turnstile.* / security.recaptcha.*) wins.
+TURNSTILE_SITE_KEY=
+TURNSTILE_SECRET_KEY=
+RECAPTCHA_SITE_KEY=
+RECAPTCHA_SECRET_KEY=
 JWT_ACCESS_EXPIRY=15m
 JWT_REFRESH_EXPIRY=7d
 

@@ -1027,6 +1027,11 @@
       },
       {
         "method": "GET",
+        "route": "/admin/users/:userId/linked-accounts",
+        "source": "apps/claw-auth-service/src/modules/anti-abuse/controllers/admin-linked-accounts.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/admin/users/:userId/plan-overview",
         "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-user-statistics.controller.ts"
       },
@@ -1039,6 +1044,16 @@
         "method": "GET",
         "route": "/admin/users/:userId/usage-statistics",
         "source": "apps/claw-auth-service/src/modules/admin-statistics/controllers/admin-user-statistics.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/auth/bot-check/challenge",
+        "source": "apps/claw-auth-service/src/modules/auth/controllers/bot-check.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/auth/bot-check/config",
+        "source": "apps/claw-auth-service/src/modules/auth/controllers/bot-check.controller.ts"
       },
       {
         "method": "POST",
@@ -5066,5 +5081,5 @@
     ]
   },
   "generated": true,
-  "total": 1004
+  "total": 1007
 }

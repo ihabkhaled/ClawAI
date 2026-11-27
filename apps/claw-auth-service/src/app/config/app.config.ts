@@ -59,6 +59,16 @@ const appConfigSchema = z.object({
   GITHUB_DEPLOY_REPOSITORY: z.string().min(1).optional(),
   GITHUB_DEPLOY_REF: z.string().min(1).optional(),
 
+  // Bot checks on sign-up / sign-in (anti-abuse, 2026-11-27). Optional; absent or
+  // empty means "not set here". A non-empty SystemSetting (security.turnstile.siteKey,
+  // ...) wins over these, so an operator can rotate a key from the admin page
+  // without a recreate. A provider runs only when BOTH its site key and secret key
+  // resolve. The secrets are never logged or returned.
+  TURNSTILE_SITE_KEY: z.string().max(512).optional(),
+  TURNSTILE_SECRET_KEY: z.string().max(512).optional(),
+  RECAPTCHA_SITE_KEY: z.string().max(512).optional(),
+  RECAPTCHA_SECRET_KEY: z.string().max(512).optional(),
+
   ADMIN_EMAIL: z.string().email().optional(),
   ADMIN_USERNAME: z.string().min(1).optional(),
   ADMIN_PASSWORD: z.string().min(8).optional(),
@@ -93,6 +103,6 @@ export class AppConfig {
   }
 
   static get(): AppConfigType {
-    return !cachedConfig ? AppConfig.validate() : cachedConfig;
+    return cachedConfig ?? AppConfig.validate();
   }
 }

@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { RedisModule } from '../../infrastructure/redis/redis.module';
 import { AuthController } from './controllers/auth.controller';
 import { VscodeAuthorizationController } from './controllers/vscode-authorization.controller';
+import { BotCheckController } from './controllers/bot-check.controller';
+import { AntiAbuseModule } from '../anti-abuse/anti-abuse.module';
 import { AuthService } from './services/auth.service';
 import { VscodeAuthorizationService } from './services/vscode-authorization.service';
 import { AuthManager } from './managers/auth.manager';
@@ -30,8 +32,8 @@ import { AuthRateLimitGuard } from './guards/auth-rate-limit.guard';
 import { AuthRateLimitSuccessInterceptor } from './interceptors/auth-rate-limit-success.interceptor';
 
 @Module({
-  imports: [RolesModule, PlansModule, RedisModule],
-  controllers: [AuthController, VscodeAuthorizationController],
+  imports: [RolesModule, PlansModule, RedisModule, AntiAbuseModule],
+  controllers: [AuthController, VscodeAuthorizationController, BotCheckController],
   providers: [
     AuthService,
     VscodeAuthorizationService,

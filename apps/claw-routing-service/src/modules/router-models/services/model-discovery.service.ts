@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AppConfig } from '../../../app/config/app.config';
-import { httpRequest } from '../../../common/utilities';
+import { buildInterServiceAuthHeader, httpRequest } from '../../../common/utilities';
 import {
   CONNECTOR_MODELS_SNAPSHOT_PATH,
   DISCOVERY_TIMEOUT_MS,
@@ -41,6 +41,8 @@ export class ModelDiscoveryService {
       const response = await httpRequest<{ models?: DiscoveredModel[] }>({
         url,
         method: 'GET',
+        // The internal snapshot requires the service token (rules/68, 2026-11-27).
+        headers: { Authorization: buildInterServiceAuthHeader() },
         timeoutMs: DISCOVERY_TIMEOUT_MS,
       });
 

@@ -116,6 +116,28 @@ describe('ContextAssemblyManager attachment ownership contract', () => {
     ]);
   });
 
+  it('sends the service token on the workspace search (workspace-service guards internal/*)', async () => {
+    // Without it the search 401s, fetchWorkspaceContext swallows the failure
+    // as "non-blocking", and every chat silently loses its workspace context.
+    const manager = new ContextAssemblyManager(
+      new ContextComposerManager(),
+      new CrossThreadRetrievalManager(stubCrossThreadRepository()),
+      { needsWeb: async () => ({ needsWeb: false, reason: 'test' }) } as never,
+      { hasResearchAccess: async () => true } as never,
+    );
+
+    await manager.assemble('tenant-user-1', [userMessage]);
+
+    expect(httpRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: 'http://workspace-service:4014/api/v1/internal/workspace/search',
+        method: 'POST',
+        headers: { Authorization: 'Service test-service-token' },
+        body: expect.objectContaining({ userId: 'tenant-user-1' }),
+      }),
+    );
+  });
+
   describe('cross-thread retrieval honours the thread memory switch', () => {
     function managerWithRetrieveSpy(): { manager: ContextAssemblyManager; retrieve: Mock } {
       const crossThread = new CrossThreadRetrievalManager(stubCrossThreadRepository());

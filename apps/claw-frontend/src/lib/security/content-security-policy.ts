@@ -4,6 +4,10 @@ import {
   ANALYTICS_IMG_HOSTS,
   GTM_HOST,
 } from '@/constants/analytics.constants';
+import {
+  BOT_CHECK_CSP_FRAME_SOURCES,
+  BOT_CHECK_CSP_SCRIPT_SOURCES,
+} from '@/constants/bot-check.constants';
 import { LIVE_FRAME_ORIGINS } from '@/constants/live-embed.constants';
 import { YOUTUBE_EMBED_ORIGIN } from '@/constants/marketing-videos.constants';
 import type { ContentSecurityPolicyOptions } from '@/types/security.types';
@@ -130,12 +134,17 @@ export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions
         // tag renders and the browser blocks it, which looks exactly like GTM
         // not being installed.
         GTM_HOST,
+        // Turnstile and reCAPTCHA v3 on the sign-up / sign-in pages (anti-abuse).
+        ...BOT_CHECK_CSP_SCRIPT_SOURCES,
         ...(adsenseEnabled ? GOOGLE_AD_SCRIPT_HOSTS : []),
       ]
     : [
         "'self'",
         `'nonce-${nonce}'`,
         "'strict-dynamic'",
+        // Turnstile and reCAPTCHA v3. Ignored by CSP3 browsers (strict-dynamic lets
+        // the nonce-trusted bundle that inserts them vouch for them); named for CSP2.
+        ...BOT_CHECK_CSP_SCRIPT_SOURCES,
         // CSP2-only fallback for AdSense. A CSP3 browser ignores 'unsafe-inline',
         // https: and http: whenever a nonce + 'strict-dynamic' are present, so they
         // only matter to older browsers that lack strict-dynamic. 'unsafe-eval' is
@@ -169,6 +178,9 @@ export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions
     // Live Intelligence players and platform chats (Twitch, Kick, Facebook, YouTube live chat).
     // frame-src only: none of these hosts is ever allowed to run script or be fetched from this page.
     ...LIVE_FRAME_ORIGINS.filter((origin) => origin !== YOUTUBE_EMBED_ORIGIN),
+    // The Turnstile widget and the reCAPTCHA v3 anchor/challenge are iframes. Not
+    // covered by strict-dynamic, so they are named in every environment.
+    ...BOT_CHECK_CSP_FRAME_SOURCES,
     ...(adsenseEnabled ? GOOGLE_AD_FRAME_HOSTS : []),
   ];
 

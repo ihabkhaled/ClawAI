@@ -2,6 +2,7 @@ import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { ADMIN_SESSIONS_TRANSLATIONS } from './admin-sessions-translations';
+import { ANTI_ABUSE_TRANSLATIONS } from './anti-abuse-translations';
 import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
@@ -118,6 +119,7 @@ export const zh: TranslationDictionary = {
     phoneInvalid: '请输入有效的电话号码',
   },
   auth: {
+    botCheck: ANTI_ABUSE_TRANSLATIONS.zh.auth,
     rateLimit: {
       tryAgainInMinutes: '尝试次数过多。请在 {minutes} 分钟后重试。',
       tryAgainInOneMinute: '尝试次数过多。请在 1 分钟后重试。',
@@ -407,6 +409,7 @@ export const zh: TranslationDictionary = {
     adminRuntimeProgress: '运行时诊断',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.zh.navigationLabel,
     adminSecuritySessions: ADMIN_SESSIONS_TRANSLATIONS.zh.navigationLabel,
+    adminSecuritySignup: ANTI_ABUSE_TRANSLATIONS.zh.navigationLabel,
     adminPaymentGateways: '支付网关',
     adminSmartRouter: '智能路由器',
     adminModelCosts: '模型价格',
@@ -4740,6 +4743,7 @@ export const zh: TranslationDictionary = {
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.zh.section,
   adminSessions: ADMIN_SESSIONS_TRANSLATIONS.zh.section,
+  adminSecurity: ANTI_ABUSE_TRANSLATIONS.zh.admin,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.zh,
   narration: NARRATION_TRANSLATIONS.zh,
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.zh,

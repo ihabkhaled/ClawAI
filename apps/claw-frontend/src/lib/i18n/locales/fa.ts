@@ -2,6 +2,7 @@ import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { ADMIN_SESSIONS_TRANSLATIONS } from './admin-sessions-translations';
+import { ANTI_ABUSE_TRANSLATIONS } from './anti-abuse-translations';
 import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
@@ -120,6 +121,7 @@ export const fa: TranslationDictionary = {
     phoneInvalid: 'یک شماره تلفن معتبر وارد کنید',
   },
   auth: {
+    botCheck: ANTI_ABUSE_TRANSLATIONS.fa.auth,
     rateLimit: {
       tryAgainInMinutes: 'تلاش‌های بیش از حد. {minutes} دقیقه دیگر دوباره تلاش کنید.',
       tryAgainInOneMinute: 'تلاش‌های بیش از حد. یک دقیقه دیگر دوباره تلاش کنید.',
@@ -430,6 +432,7 @@ export const fa: TranslationDictionary = {
     adminRuntimeProgress: 'تشخیص زمان اجرا',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.fa.navigationLabel,
     adminSecuritySessions: ADMIN_SESSIONS_TRANSLATIONS.fa.navigationLabel,
+    adminSecuritySignup: ANTI_ABUSE_TRANSLATIONS.fa.navigationLabel,
     adminPaymentGateways: 'درگاه‌های پرداخت',
     adminSmartRouter: 'مسیریاب هوشمند',
     adminModelCosts: 'قیمت مدل‌ها',
@@ -4950,6 +4953,7 @@ export const fa: TranslationDictionary = {
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.fa.section,
   adminSessions: ADMIN_SESSIONS_TRANSLATIONS.fa.section,
+  adminSecurity: ANTI_ABUSE_TRANSLATIONS.fa.admin,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.fa,
   narration: NARRATION_TRANSLATIONS.fa,
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.fa,

@@ -1,3 +1,4 @@
+import { BOT_CHECK_COPY_KEYS } from '@/constants/bot-check.constants';
 import { RATE_LIMIT_COPY_KEYS } from '@/constants/rate-limit.constants';
 import { ApiErrorCode, LoginFailureReason } from '@/enums';
 import type { LoginBanInfo, LoginFailureCopy } from '@/types';
@@ -47,6 +48,12 @@ export function classifyLoginFailure(error: unknown): LoginFailureReason {
       return LoginFailureReason.ACCOUNT_BANNED;
     case ApiErrorCode.INVALID_CREDENTIALS:
       return LoginFailureReason.INVALID_CREDENTIALS;
+    // Only reached after the one automatic retry WITH checks (useLogin), so the
+    // check genuinely could not run or was rejected.
+    case ApiErrorCode.BOT_CHECK_REQUIRED:
+      return LoginFailureReason.BOT_CHECK_REQUIRED;
+    case ApiErrorCode.BOT_CHECK_FAILED:
+      return LoginFailureReason.BOT_CHECK_FAILED;
     default:
       return LoginFailureReason.UNKNOWN;
   }
@@ -106,6 +113,20 @@ export function resolveLoginFailureCopy(
           ban === null || ban.permanent || ban.until === null
             ? undefined
             : { date: new Date(ban.until).toLocaleString() },
+        actionKey: null,
+        isRecoverable: false,
+      };
+    case LoginFailureReason.BOT_CHECK_REQUIRED:
+      return {
+        titleKey: BOT_CHECK_COPY_KEYS.requiredTitle,
+        descriptionKey: BOT_CHECK_COPY_KEYS.requiredDescription,
+        actionKey: null,
+        isRecoverable: false,
+      };
+    case LoginFailureReason.BOT_CHECK_FAILED:
+      return {
+        titleKey: BOT_CHECK_COPY_KEYS.failedTitle,
+        descriptionKey: BOT_CHECK_COPY_KEYS.failedDescription,
         actionKey: null,
         isRecoverable: false,
       };

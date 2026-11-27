@@ -15,4 +15,8 @@ export interface BusinessExceptionDetails {
   bannedUntil?: string | null;
   /** ACCOUNT_BANNED: true when the ban has no end date. */
   banPermanent?: boolean;
+  /** The request field a refusal is about (DISPOSABLE_EMAIL -> `email`), so a client can mark it. */
+  field?: string;
+  /** Seconds to wait; the filter also sends it as the `Retry-After` header. */
+  retryAfterSeconds?: number;
 }

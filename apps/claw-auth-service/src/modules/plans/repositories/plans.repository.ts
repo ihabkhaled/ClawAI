@@ -324,11 +324,18 @@ export class PlansRepository {
     ]);
   }
 
+  /**
+   * `grantTrial: false` writes the same rows with the trial already over
+   * (expiresAt = startedAt = now): the one-trial-per-device rule at sign-up.
+   * The redemption still exists, so the user cannot claim a trial later, and the
+   * entitlement read treats it exactly like a trial that ran out.
+   */
   async assignTrialPlanOnce(
     userId: string,
     planId: string,
     assignedByUserId: string | undefined,
     now: Date,
+    grantTrial = true,
   ): Promise<UserPlanAssignment | null> {
     try {
       return await this.prisma.$transaction(async (tx) => {
@@ -341,7 +348,7 @@ export class PlansRepository {
           return null;
         }
         // The length is the plan's own, set by the administrator — never a constant.
-        const expiresAt = addTrialDays(now, trialDays);
+        const expiresAt = grantTrial ? addTrialDays(now, trialDays) : now;
         await tx.userPlanAssignment.updateMany({
           where: { userId, status: 'ACTIVE' },
           data: { status: 'EXPIRED', endsAt: now },

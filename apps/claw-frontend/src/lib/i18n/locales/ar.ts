@@ -2,6 +2,7 @@ import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { ADMIN_SESSIONS_TRANSLATIONS } from './admin-sessions-translations';
+import { ANTI_ABUSE_TRANSLATIONS } from './anti-abuse-translations';
 import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
@@ -120,6 +121,7 @@ export const ar: TranslationDictionary = {
     phoneInvalid: 'أدخل رقم هاتف صالحًا',
   },
   auth: {
+    botCheck: ANTI_ABUSE_TRANSLATIONS.ar.auth,
     rateLimit: {
       tryAgainInMinutes: 'محاولات كثيرة جدًا. حاول مرة أخرى بعد {minutes} دقيقة.',
       tryAgainInOneMinute: 'محاولات كثيرة جدًا. حاول مرة أخرى بعد دقيقة.',
@@ -421,6 +423,7 @@ export const ar: TranslationDictionary = {
     adminRuntimeProgress: 'تشخيص بيئة التشغيل',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.ar.navigationLabel,
     adminSecuritySessions: ADMIN_SESSIONS_TRANSLATIONS.ar.navigationLabel,
+    adminSecuritySignup: ANTI_ABUSE_TRANSLATIONS.ar.navigationLabel,
     adminPaymentGateways: 'بوابات الدفع',
     adminSmartRouter: 'الموجّه الذكي',
     adminModelCosts: 'أسعار النماذج',
@@ -4846,6 +4849,7 @@ export const ar: TranslationDictionary = {
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.ar.section,
   adminSessions: ADMIN_SESSIONS_TRANSLATIONS.ar.section,
+  adminSecurity: ANTI_ABUSE_TRANSLATIONS.ar.admin,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.ar,
   narration: NARRATION_TRANSLATIONS.ar,
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.ar,

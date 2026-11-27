@@ -8,6 +8,7 @@ import { EditUserDialog } from '@/components/admin/edit-user-dialog';
 import { SetPasswordDialog } from '@/components/admin/set-password-dialog';
 import { TemporaryPasswordDialog } from '@/components/admin/temporary-password-dialog';
 import { UserDetailDialog } from '@/components/admin/user-detail-dialog';
+import { UserLinkedAccountsDialog } from '@/components/admin/user-linked-accounts/user-linked-accounts-dialog';
 import { UserPresenceDot } from '@/components/admin/user-presence-dot';
 import { UserSubscriptionDialog } from '@/components/admin/user-statistics/user-subscription-dialog';
 import { UserUsageDialog } from '@/components/admin/user-statistics/user-usage-dialog';
@@ -91,6 +92,9 @@ export function UserTable({
     passwordUser,
     openPassword,
     closePassword,
+    linkedAccountsUser,
+    openLinkedAccounts,
+    closeLinkedAccounts,
   } = useUserTableState();
   const { t, locale } = useTranslation();
   const activePlans = plans.filter((plan) => plan.isActive);
@@ -445,6 +449,17 @@ export function UserTable({
           closeDetail();
           security.onUnban(userId);
         }}
+        onShowLinkedAccounts={(user) => {
+          closeDetail();
+          openLinkedAccounts(user);
+        }}
+        t={t}
+      />
+      <UserLinkedAccountsDialog
+        open={linkedAccountsUser !== null}
+        user={linkedAccountsUser}
+        locale={locale}
+        onClose={closeLinkedAccounts}
         t={t}
       />
       <BanUserDialog

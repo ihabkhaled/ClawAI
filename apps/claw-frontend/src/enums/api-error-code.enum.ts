@@ -69,6 +69,17 @@ export enum ApiErrorCode {
   VALIDATION_FAILED = 'VALIDATION_FAILED',
   RATE_LIMITED = 'RATE_LIMITED',
   SIGNUP_PLAN_ASSIGNMENT_FAILED = 'SIGNUP_PLAN_ASSIGNMENT_FAILED',
+  // Anti-abuse refusals (security incident 2026-11-27). BOT_CHECK_REQUIRED is a
+  // 428 (a check is missing: sign-up always needs proof of work, sign-in only
+  // after repeated failures); BOT_CHECK_FAILED is a 403 (a check was wrong,
+  // expired, reused or scored too low). The two email codes are 400s pinned to
+  // the `email` field; SIGNUP_TEMPORARILY_LIMITED is the platform-wide sign-up
+  // velocity 429 and carries Retry-After.
+  BOT_CHECK_REQUIRED = 'BOT_CHECK_REQUIRED',
+  BOT_CHECK_FAILED = 'BOT_CHECK_FAILED',
+  DISPOSABLE_EMAIL = 'DISPOSABLE_EMAIL',
+  EMAIL_DOMAIN_UNDELIVERABLE = 'EMAIL_DOMAIN_UNDELIVERABLE',
+  SIGNUP_TEMPORARILY_LIMITED = 'SIGNUP_TEMPORARILY_LIMITED',
   // The generic 404 every service's BusinessException uses for a missing row;
   // read aloud names it because the reply can be deleted while the player is open.
   ENTITY_NOT_FOUND = 'ENTITY_NOT_FOUND',

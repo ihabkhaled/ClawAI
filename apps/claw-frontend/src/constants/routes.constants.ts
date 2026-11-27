@@ -102,6 +102,7 @@ export const ROUTES = {
   ADMIN_USERS: '/admin/users',
   ADMIN_USER_SESSIONS: (userId: string) => `/admin/users/${userId}/sessions` as const,
   ADMIN_SECURITY_SESSIONS: '/admin/security/sessions',
+  ADMIN_SECURITY_SIGNUP: '/admin/security/sign-up',
   ADMIN_FEEDBACK: '/admin/feedback',
   ADMIN_PLUGINS: '/admin/plugins',
   ADMIN_AI_ACTION_POLICIES: '/admin/ai-action-policies',

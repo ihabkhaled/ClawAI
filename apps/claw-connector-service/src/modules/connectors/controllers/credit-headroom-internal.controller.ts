@@ -10,9 +10,9 @@ import { type ProviderCreditHeadroom } from '../types/credit-headroom.types';
  * `max_tokens` cap.
  *
  * `@Public()` only lifts the USER JWT guard; `ServiceTokenGuard` is the real
- * check. Unlike its `@Public()` siblings on `internal/connectors`, this route
- * answers with money — the operator's balance at a provider — so a service
- * token is required even though nginx does not proxy `/api/v1/internal/*`.
+ * check, as on every `internal/*` controller. This route answers with money —
+ * the operator's balance at a provider — and nginx not proxying
+ * `/api/v1/internal/*` is a network fact, not an authorisation.
  */
 @Public()
 @UseGuards(ServiceTokenGuard)

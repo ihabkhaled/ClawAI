@@ -1260,3 +1260,24 @@ A public Thread page reads `?lang=` (an app language only; `readRequestedThreadL
   card (the one-click summary's detailed report) renders through `LiveReportBody` (`parseLiveReportBody`: a heading
   per blank-line section, `0:44` times on the start side). `/admin/live` picks the main, vision and 1-3 agent models
   with the chat `ModelPicker` (`admin-live-model-chain.tsx`); only Ollama and Gemini connectors are callable by Live.
+
+## Sign-up abuse defences (2026-11-27, ADR-222)
+
+Doc: `docs/05-frontend/sign-up-abuse-defences.md`. Traps:
+
+- Sign-up is eager (`useBotCheck(REGISTER, true)` solves the proof of work, renders Turnstile, loads reCAPTCHA on
+  mount); sign-in is lazy (`useBotCheck(LOGIN, false)`): no check and no third-party script until a 428, then
+  `authService.loginWithBotCheck` retries ONCE with checks and sends them up front afterwards. `device` is always
+  sent by `authService.register` / `loginWithBotCheck` (`lib/bot-check/device-fingerprint.ts`).
+- The PoW loop exists twice: `public/workers/pow-solver.js` (plain JS, not bundled) and `lib/bot-check/pow-solver.ts`
+  (client + main-thread fallback). Change both; `pow-solver.test.ts` runs the real worker file.
+- Every token is single use; a check that cannot run is left out, never fails the submit. Typing is never disabled
+  while checking; only the button label and the `BotCheckNotice` status line change.
+- Copy: `auth.botCheck.*` + `adminSecurity.*` in `locales/anti-abuse-translations.ts`. DISPOSABLE_EMAIL and
+  EMAIL_DOMAIN_UNDELIVERABLE go on the email field; SIGNUP_TEMPORARILY_LIMITED is matched by code BEFORE the bare-429
+  fallback (it is the platform pausing sign-ups, not "too many attempts").
+- `/admin/security/sign-up`: secrets are write-only (empty box, "Configured" placeholder, empty box never sent);
+  route gated on `ADMIN_SYSTEM_VIEW`, saving on `ADMIN_CREDIT_MANAGE` (what `PUT /admin/settings/:key` enforces).
+  Linked accounts open from the user detail dialog (`UserLinkedAccountsDialog`, keyed body).
+- CSP: Turnstile/reCAPTCHA hosts are in `script-src` and `frame-src` (`BOT_CHECK_CSP_*_SOURCES`), never in
+  `connect-src`/`img-src`.

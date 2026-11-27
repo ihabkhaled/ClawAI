@@ -3,7 +3,10 @@ import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { ROUTES } from '@/constants';
+import { BOT_CHECK_COPY_KEYS } from '@/constants/bot-check.constants';
+import { BotCheckAction } from '@/enums/bot-check-action.enum';
 import { useAuthSwitchHref } from '@/hooks/auth/use-auth-switch-href';
+import { useBotCheck } from '@/hooks/auth/use-bot-check';
 import { useRegister } from '@/hooks/auth/use-register';
 import { useLocalizedHref } from '@/hooks/common/use-localized-href';
 import { useTranslation } from '@/lib/i18n';
@@ -11,6 +14,7 @@ import { registerSchema } from '@/lib/validation/register.schema';
 import type { RegisterFormValues } from '@/lib/validation/register.schema';
 import type { UseRegisterFormReturn } from '@/types/hook.types';
 import { localeToLanguage, showToast } from '@/utilities';
+import { resolveAuthSubmitLabelKey } from '@/utilities/bot-check.utility';
 import { copyTextToClipboard } from '@/utilities/clipboard.utility';
 import { readRetryAfterSeconds } from '@/utilities/rate-limit.utility';
 import {
@@ -27,6 +31,8 @@ import {
 export function useRegisterForm(): UseRegisterFormReturn {
   const { t, locale } = useTranslation();
   const { register, isPending, isError, error } = useRegister();
+  // Proof of work (+ Turnstile / reCAPTCHA when configured) warms up as the form opens.
+  const botCheck = useBotCheck(BotCheckAction.REGISTER, true);
   const localise = useLocalizedHref();
   const signInHref = useAuthSwitchHref(ROUTES.LOGIN);
   const form = useForm<RegisterFormValues>({
@@ -59,8 +65,11 @@ export function useRegisterForm(): UseRegisterFormReturn {
   const password = form.watch('password');
   const passwordRules = useMemo(() => evaluatePasswordRules(password), [password]);
 
-  const submit = (values: RegisterFormValues): void => {
+  const submit = async (values: RegisterFormValues): Promise<void> => {
     const { confirmPassword: _confirmPassword, phone, ...request } = values;
+    // Usually already solved while the form was being filled in. Never throws:
+    // a check that could not run is left out and the server says what is missing.
+    const checks = await botCheck.collect();
     register({
       ...request,
       ...(phone ? { phone } : {}),
@@ -69,6 +78,7 @@ export function useRegisterForm(): UseRegisterFormReturn {
       // in it. There is no session yet for the server to read a preference
       // from, so if the client does not say, it defaults to English.
       languagePreference: localeToLanguage(locale),
+      botCheck: checks,
     });
   };
 
@@ -90,6 +100,7 @@ export function useRegisterForm(): UseRegisterFormReturn {
   };
 
   const phoneError = form.formState.errors.phone;
+  const isAwaitingChecks = form.formState.isSubmitting;
 
   return {
     form,
@@ -102,6 +113,14 @@ export function useRegisterForm(): UseRegisterFormReturn {
     phoneServerErrorKey: phoneError?.type === 'server' ? (phoneError.message ?? null) : null,
     signInHref,
     resetPasswordHref: localise(ROUTES.FORGOT_PASSWORD),
+    isCheckingBrowser: botCheck.isChecking && !isPending,
+    setTurnstileContainer: botCheck.setTurnstileContainer,
+    isSubmitting: isAwaitingChecks || isPending,
+    submitLabelKey: resolveAuthSubmitLabelKey(isPending, isAwaitingChecks, {
+      pending: 'auth.registering',
+      checking: BOT_CHECK_COPY_KEYS.checking,
+      idle: 'auth.registerButton',
+    }),
     t,
   };
 }

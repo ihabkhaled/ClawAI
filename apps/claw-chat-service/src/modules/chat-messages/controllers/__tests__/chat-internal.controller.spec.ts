@@ -49,19 +49,23 @@ class FakeResponse extends EventEmitter implements NdjsonResponse {
 }
 
 describe('ChatInternalController', () => {
-  it('requires service authentication for provider generation', () => {
-    const guards = Reflect.getMetadata(GUARDS_METADATA, ChatInternalController.prototype.generate);
+  it('requires service authentication on every route, at class level (security audit 2026-11-27)', () => {
+    // Class level, so generate, generate-stream and model-authorization-metrics
+    // (which had no guard at all) are covered, and a new route cannot forget it.
+    const guards = Reflect.getMetadata(GUARDS_METADATA, ChatInternalController) as unknown[];
 
     expect(guards).toContain(ServiceTokenGuard);
   });
 
-  it('requires service authentication for the streaming variant too', () => {
-    const guards = Reflect.getMetadata(
-      GUARDS_METADATA,
-      ChatInternalController.prototype.generateStream,
-    );
+  it('does not run the guard a second time on any handler', () => {
+    for (const name of ['generate', 'generateStream', 'modelAuthorizationMetrics'] as const) {
+      const guards = Reflect.getMetadata(
+        GUARDS_METADATA,
+        ChatInternalController.prototype[name],
+      ) as unknown[] | undefined;
 
-    expect(guards).toContain(ServiceTokenGuard);
+      expect(guards, name).toBeUndefined();
+    }
   });
 
   it('streams the stream variant through generateOnceStream and ends with the result line', async () => {

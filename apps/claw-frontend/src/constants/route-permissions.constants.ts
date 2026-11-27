@@ -23,6 +23,9 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<RoutePermission> = [
   },
   { prefix: ROUTES.ADMIN_WEBHOOK_DELIVERIES, permission: Permission.ADMIN_SYSTEM_VIEW },
   { prefix: ROUTES.ADMIN_DEPLOYMENT, permission: Permission.ADMIN_SYSTEM_VIEW },
+  // Sign-up protection: GET /admin/settings is ADMIN_SYSTEM_VIEW. Saving needs the
+  // PUT's own permission, which the page checks before enabling the button.
+  { prefix: ROUTES.ADMIN_SECURITY_SIGNUP, permission: Permission.ADMIN_SYSTEM_VIEW },
   // Reuses the routing-service's existing ADMIN_ROUTING_MANAGE permission —
   // the router-configuration-admin API is gated by the same permission as
   // /routing itself (see ROUTES.ROUTING below), no new permission needed.

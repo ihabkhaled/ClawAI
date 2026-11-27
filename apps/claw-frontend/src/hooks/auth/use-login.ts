@@ -4,19 +4,25 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n';
 import { authService } from '@/services/auth/auth.service';
 import type { LoginRequest } from '@/types';
+import type { LoginBotCheckHooks } from '@/types/bot-check.types';
 import { logger, showToast } from '@/utilities';
 import { saveCredential } from '@/utilities/credential-storage.utility';
 import { withLocaleOf } from '@/utilities/locale.utility';
 import { resolveLoginReturn } from '@/utilities/safe-return-route.utility';
 
-export function useLogin() {
+/**
+ * `botCheck` decides when sign-in carries bot checks: never up front, once after
+ * a 428 BOT_CHECK_REQUIRED (one automatic retry), and on every attempt after
+ * that. The device object is always sent (authService.loginWithBotCheck).
+ */
+export function useLogin(botCheck: LoginBotCheckHooks) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { t } = useTranslation();
 
   const mutation = useMutation({
-    mutationFn: (data: LoginRequest) => authService.login(data),
+    mutationFn: (data: LoginRequest) => authService.loginWithBotCheck(data, botCheck),
     // Trigger the browser's "Save password?" prompt via the Credential
     // Management API. SPA logins don't navigate, so Chrome/Edge can't
     // detect the form submission heuristically — store explicitly here.

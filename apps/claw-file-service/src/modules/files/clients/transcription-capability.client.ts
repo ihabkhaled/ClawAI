@@ -114,7 +114,11 @@ export class TranscriptionCapabilityClient {
       const url = `${base}/api/v1/internal/connectors/models-snapshot`;
       const snapshot = await httpGet<TranscriptionSnapshotResponse>(
         url,
-        { timeout: TRANSCRIPTION_CONNECTOR_TIMEOUT_MS },
+        {
+          timeout: TRANSCRIPTION_CONNECTOR_TIMEOUT_MS,
+          // connector-service guards every internal route with its service token.
+          headers: { Authorization: `Service ${AppConfig.get().INTER_SERVICE_AUTH_TOKEN}` },
+        },
         declaredHost(base),
       );
       models = Array.isArray(snapshot.models) ? snapshot.models : [];

@@ -133,7 +133,13 @@ describe('UserDetailDialog', () => {
     user: AdminUser,
     extra: Partial<React.ComponentProps<typeof UserDetailDialog>> = {},
   ) {
-    const handlers = { onClose: vi.fn(), onEdit: vi.fn(), onBan: vi.fn(), onUnban: vi.fn() };
+    const handlers = {
+      onClose: vi.fn(),
+      onEdit: vi.fn(),
+      onBan: vi.fn(),
+      onUnban: vi.fn(),
+      onShowLinkedAccounts: vi.fn(),
+    };
     render(
       <UserDetailDialog
         open
@@ -148,6 +154,16 @@ describe('UserDetailDialog', () => {
     );
     return handlers;
   }
+
+  it('opens the linked-accounts view for this user', async () => {
+    const user = makeUser();
+    const handlers = renderDetail(user);
+    await userEvent.click(screen.getByTestId('detail-linked-accounts'));
+    expect(handlers.onShowLinkedAccounts).toHaveBeenCalledWith(user);
+    expect(screen.getByTestId('detail-linked-accounts')).toHaveTextContent(
+      'adminSecurity.linkedAccounts.open',
+    );
+  });
 
   it('shows name, phone, registration IP and country, plan and not-banned state', () => {
     renderDetail(makeUser());
@@ -172,6 +188,7 @@ describe('UserDetailDialog', () => {
         onEdit={vi.fn()}
         onBan={vi.fn()}
         onUnban={vi.fn()}
+        onShowLinkedAccounts={vi.fn()}
         t={t}
       />,
     );
@@ -205,6 +222,7 @@ describe('UserDetailDialog', () => {
         onEdit={vi.fn()}
         onBan={vi.fn()}
         onUnban={vi.fn()}
+        onShowLinkedAccounts={vi.fn()}
         t={t}
       />,
     );

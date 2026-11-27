@@ -3,6 +3,7 @@
 import { Eye, EyeOff, Zap } from 'lucide-react';
 import Link from 'next/link';
 
+import { BotCheckNotice } from '@/components/auth/bot-check-notice';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,6 +26,9 @@ export function LoginForm(): React.ReactElement {
     isPending,
     isError,
     failureCopy,
+    isCheckingBrowser,
+    setTurnstileContainer,
+    submitLabelKey,
     t,
   } = useLoginForm();
 
@@ -130,6 +134,14 @@ export function LoginForm(): React.ReactElement {
               </Button>
             </div>
 
+            {/* Empty until the server asks for bot checks (428); then the
+                Turnstile widget, if configured, renders here. */}
+            <BotCheckNotice
+              isChecking={isCheckingBrowser}
+              setTurnstileContainer={setTurnstileContainer}
+              t={t}
+            />
+
             {/* One alert, but the copy is chosen from the server's error CODE
                 rather than its message. An unconfirmed address is the only
                 failure the user can fix from here, so it is the only one that
@@ -153,7 +165,7 @@ export function LoginForm(): React.ReactElement {
             ) : null}
 
             <Button type="submit" className="w-full" isLoading={isPending}>
-              {isPending ? t('auth.signingIn') : t('auth.loginButton')}
+              {t(submitLabelKey)}
             </Button>
           </form>
         </CardContent>

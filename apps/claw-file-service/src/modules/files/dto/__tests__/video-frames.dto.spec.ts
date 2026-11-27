@@ -43,11 +43,8 @@ describe('POST /internal/files/:id/video-frames guard', () => {
       switchToHttp: () => ({ getRequest: () => ({ headers: { authorization } }) }),
     }) as unknown as ExecutionContext;
 
-  it('is guarded by the service token', () => {
-    const guards = Reflect.getMetadata(
-      GUARDS_METADATA,
-      FilesInternalController.prototype.getVideoFrames,
-    ) as unknown[];
+  it('is guarded by the service token (class level, so every internal/files route is)', () => {
+    const guards = Reflect.getMetadata(GUARDS_METADATA, FilesInternalController) as unknown[];
     expect(guards).toContain(ServiceTokenGuard);
   });
 

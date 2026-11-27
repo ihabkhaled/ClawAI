@@ -121,10 +121,11 @@ export class FeedbackController {
   every service with a global `AuthGuard` also registers
   `SessionRevocationGuard` after it, so a revoked session is refused instead of
   working until its token expires (TD-033, ADR-112).
-- **Root test** — `tools/__tests__/auth-internal-controllers-guarded.test.mjs`:
-  every `*-internal.controller.ts` in auth-service carries
-  `@UseGuards(ServiceTokenGuard)`. Two of them once had no credential at all
-  and relied on nginx not routing `/api/v1/internal` (TD-035).
+- **Root test** — `tools/__tests__/internal-controllers-guarded.test.mjs`:
+  every internal controller in every service (`internal/...` route or
+  `*-internal.controller.ts`) carries a class-level `@UseGuards(ServiceTokenGuard)`.
+  Several once had no credential at all and relied on nginx not routing
+  `/api/v1/internal` (TD-035; 2026-11-27 audit, rules/68).
 - **Unit test** — permission/entitlement/ownership branches (401/403) asserted.
 - **Knowledge check** — `.ai/manifests/permissions.json` mirrors the enum.
 

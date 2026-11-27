@@ -437,6 +437,8 @@ await httpRequest({
 
 The wrapper lives at `src/common/utilities/inter-service-auth.utility.ts` and reads `AppConfig.get().INTER_SERVICE_AUTH_TOKEN`. Mirrors the pattern in `apps/claw-workspace-service/src/common/utilities/file-service-client.utility.ts#buildAuthHeader`. Forgetting the header will manifest as `401 Service token required` from file-service; users will see context-assembly silently skip attached files (caught as non-blocking) and judge/critic compare lanes will run without their attachments.
 
+**The same holds for every sibling's `internal/*` route, and for ours** (security audit 2026-11-27). `ChatInternalController` (`generate`, `generate-stream`, `model-authorization-metrics`) and `ChatThreadsInternalController` (`threads/seeded`) carry a class-level `ServiceTokenGuard`. Outbound, workspace-service's `internal/workspace/search` now requires the token too: `fetchWorkspaceContext` sends it, and a missing header would silently drop workspace context the same way. `tools/__tests__/internal-controllers-guarded.test.mjs` fails any internal controller without a class-level guard.
+
 ## chat-service runs 4 replicas (2026-08-28)
 
 **Superseded.** This was a correctness constraint while the stream lived in

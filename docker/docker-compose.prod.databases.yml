@@ -41,7 +41,7 @@ services:
       POSTGRES_PASSWORD: ${PG_AUTH_PASSWORD:-claw_secret}
       POSTGRES_DB: ${PG_AUTH_DB:-claw_auth}
     ports:
-      - '${PG_AUTH_PORT:-5441}:5432'
+      - '127.0.0.1:${PG_AUTH_PORT:-5441}:5432'
     volumes:
       - pg-auth-data:/var/lib/postgresql/data
     healthcheck:
@@ -64,7 +64,7 @@ services:
       POSTGRES_PASSWORD: ${PG_CHAT_PASSWORD:-claw_secret}
       POSTGRES_DB: ${PG_CHAT_DB:-claw_chat}
     ports:
-      - '${PG_CHAT_PORT:-5442}:5432'
+      - '127.0.0.1:${PG_CHAT_PORT:-5442}:5432'
     volumes:
       - pg-chat-data:/var/lib/postgresql/data
     healthcheck:
@@ -87,7 +87,7 @@ services:
       POSTGRES_PASSWORD: ${PG_CONNECTOR_PASSWORD:-claw_secret}
       POSTGRES_DB: ${PG_CONNECTOR_DB:-claw_connectors}
     ports:
-      - '${PG_CONNECTOR_PORT:-5443}:5432'
+      - '127.0.0.1:${PG_CONNECTOR_PORT:-5443}:5432'
     volumes:
       - pg-connector-data:/var/lib/postgresql/data
     healthcheck:
@@ -114,7 +114,7 @@ services:
       POSTGRES_PASSWORD: ${PG_ROUTING_PASSWORD:-claw_secret}
       POSTGRES_DB: ${PG_ROUTING_DB:-claw_routing}
     ports:
-      - '${PG_ROUTING_PORT:-5444}:5432'
+      - '127.0.0.1:${PG_ROUTING_PORT:-5444}:5432'
     volumes:
       - pg-routing-data:/var/lib/postgresql/data
     healthcheck:
@@ -138,7 +138,7 @@ services:
       POSTGRES_PASSWORD: ${PG_MEMORY_PASSWORD:-claw_secret}
       POSTGRES_DB: ${PG_MEMORY_DB:-claw_memory}
     ports:
-      - '${PG_MEMORY_PORT:-5445}:5432'
+      - '127.0.0.1:${PG_MEMORY_PORT:-5445}:5432'
     volumes:
       - pg-memory-data:/var/lib/postgresql/data
     healthcheck:
@@ -161,7 +161,7 @@ services:
       POSTGRES_PASSWORD: ${PG_FILES_PASSWORD:-claw_secret}
       POSTGRES_DB: ${PG_FILES_DB:-claw_files}
     ports:
-      - '${PG_FILES_PORT:-5446}:5432'
+      - '127.0.0.1:${PG_FILES_PORT:-5446}:5432'
     volumes:
       - pg-files-data:/var/lib/postgresql/data
     healthcheck:
@@ -187,7 +187,7 @@ services:
       POSTGRES_PASSWORD: ${PG_OLLAMA_PASSWORD:-claw_secret}
       POSTGRES_DB: ${PG_OLLAMA_DB:-claw_ollama}
     ports:
-      - '${PG_OLLAMA_PORT:-5447}:5432'
+      - '127.0.0.1:${PG_OLLAMA_PORT:-5447}:5432'
     volumes:
       - pg-ollama-data:/var/lib/postgresql/data
     healthcheck:
@@ -213,7 +213,7 @@ services:
       POSTGRES_PASSWORD: ${PG_IMAGES_PASSWORD:-claw_secret}
       POSTGRES_DB: ${PG_IMAGES_DB:-claw_images}
     ports:
-      - '${PG_IMAGES_PORT:-5448}:5432'
+      - '127.0.0.1:${PG_IMAGES_PORT:-5448}:5432'
     volumes:
       - pg-images-data:/var/lib/postgresql/data
     healthcheck:
@@ -239,7 +239,7 @@ services:
       POSTGRES_PASSWORD: ${PG_WORKSPACE_PASSWORD:-claw_secret}
       POSTGRES_DB: ${PG_WORKSPACE_DB:-claw_workspace}
     ports:
-      - '${PG_WORKSPACE_PORT:-5450}:5432'
+      - '127.0.0.1:${PG_WORKSPACE_PORT:-5450}:5432'
     volumes:
       - pg-workspace-data:/var/lib/postgresql/data
     healthcheck:
@@ -269,7 +269,7 @@ services:
       POSTGRES_PASSWORD: ${PG_RESEARCH_PASSWORD:-claw_secret}
       POSTGRES_DB: ${PG_RESEARCH_DB:-claw_research}
     ports:
-      - '${PG_RESEARCH_PORT:-5452}:5432'
+      - '127.0.0.1:${PG_RESEARCH_PORT:-5452}:5432'
     volumes:
       - pg-research-data:/var/lib/postgresql/data
     healthcheck:
@@ -294,7 +294,7 @@ services:
       POSTGRES_PASSWORD: ${PG_THREAD_GENERATION_PASSWORD:-claw_secret}
       POSTGRES_DB: ${PG_THREAD_GENERATION_DB:-claw_thread_generation}
     ports:
-      - '${PG_THREAD_GENERATION_PORT:-5457}:5432'
+      - '127.0.0.1:${PG_THREAD_GENERATION_PORT:-5457}:5432'
     volumes:
       - pg-thread-generation-data:/var/lib/postgresql/data
     healthcheck:
@@ -321,7 +321,7 @@ services:
       POSTGRES_PASSWORD: ${PG_THREADS_PASSWORD:-claw_secret}
       POSTGRES_DB: ${PG_THREADS_DB:-claw_threads}
     ports:
-      - '${PG_THREADS_PORT:-5458}:5432'
+      - '127.0.0.1:${PG_THREADS_PORT:-5458}:5432'
     volumes:
       - pg-threads-data:/var/lib/postgresql/data
     healthcheck:
@@ -345,7 +345,7 @@ services:
       POSTGRES_PASSWORD: ${PG_PLUGIN_PASSWORD:-claw_secret}
       POSTGRES_DB: ${PG_PLUGIN_DB:-claw_plugin}
     ports:
-      - '${PG_PLUGIN_PORT:-5459}:5432'
+      - '127.0.0.1:${PG_PLUGIN_PORT:-5459}:5432'
     volumes:
       - pg-plugin-data:/var/lib/postgresql/data
     healthcheck:
@@ -368,7 +368,7 @@ services:
       POSTGRES_PASSWORD: ${PG_LIVE_PASSWORD:-claw_secret}
       POSTGRES_DB: ${PG_LIVE_DB:-claw_live}
     ports:
-      - '${PG_LIVE_PORT:-5460}:5432'
+      - '127.0.0.1:${PG_LIVE_PORT:-5460}:5432'
     volumes:
       - pg-live-data:/var/lib/postgresql/data
     healthcheck:
@@ -398,7 +398,7 @@ services:
       POSTGRES_PASSWORD: ${PG_PAYMENTS_PASSWORD:-claw_secret}
       POSTGRES_DB: ${PG_PAYMENTS_DB:-claw_payments}
     ports:
-      - '${PG_PAYMENTS_PORT:-5453}:5432'
+      - '127.0.0.1:${PG_PAYMENTS_PORT:-5453}:5432'
     volumes:
       - pg-payments-data:/var/lib/postgresql/data
     healthcheck:
@@ -425,7 +425,7 @@ services:
       POSTGRES_PASSWORD: ${PG_AGENT_PASSWORD:-claw_secret}
       POSTGRES_DB: ${PG_AGENT_DB:-claw_agent}
     ports:
-      - '${PG_AGENT_PORT:-5451}:5432'
+      - '127.0.0.1:${PG_AGENT_PORT:-5451}:5432'
     volumes:
       - pg-agent-data:/var/lib/postgresql/data
     healthcheck:
@@ -451,7 +451,7 @@ services:
       POSTGRES_PASSWORD: ${PG_LLAMACPP_PASSWORD:-claw_secret}
       POSTGRES_DB: ${PG_LLAMACPP_DB:-claw_llamacpp}
     ports:
-      - '${PG_LLAMACPP_PORT:-5440}:5432'
+      - '127.0.0.1:${PG_LLAMACPP_PORT:-5440}:5432'
     volumes:
       - pg-llamacpp-data:/var/lib/postgresql/data
     healthcheck:
@@ -478,7 +478,7 @@ services:
       POSTGRES_PASSWORD: ${PG_FILE_GENERATIONS_PASSWORD:-claw_secret}
       POSTGRES_DB: ${PG_FILE_GENERATIONS_DB:-claw_file_generations}
     ports:
-      - '${PG_FILE_GENERATIONS_PORT:-5449}:5432'
+      - '127.0.0.1:${PG_FILE_GENERATIONS_PORT:-5449}:5432'
     volumes:
       - pg-file-generations-data:/var/lib/postgresql/data
     healthcheck:
@@ -508,7 +508,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-claw_secret}
       MONGO_INITDB_DATABASE: ${MONGO_DB:-claw_audit}
     ports:
-      - '${MONGO_PORT:-27018}:27017'
+      - '127.0.0.1:${MONGO_PORT:-27018}:27017'
     volumes:
       - mongo-data:/data/db
     healthcheck:
@@ -528,13 +528,22 @@ services:
     logging: *claw-logging
     image: redis:7-alpine
     container_name: claw-redis
+    # Password from REDIS_PASSWORD (security incident 2026-11-27: Redis was open with no password).
+    # Empty keeps the old no-password behaviour, so a host without the variable still starts.
+    command: ['redis-server', '--requirepass', '${REDIS_PASSWORD:-}']
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
     restart: unless-stopped
     ports:
-      - '${REDIS_PORT:-6380}:6379'
+      - '127.0.0.1:${REDIS_PORT:-6380}:6379'
     volumes:
       - redis-data:/data
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
+      test:
+        [
+          'CMD-SHELL',
+          'if [ -n "$$REDIS_PASSWORD" ]; then redis-cli -a "$$REDIS_PASSWORD" --no-auth-warning ping; else redis-cli ping; fi | grep -q PONG',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -555,8 +564,8 @@ services:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-claw}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-claw_secret}
     ports:
-      - '${RABBITMQ_PORT:-5672}:5672'
-      - '${RABBITMQ_MANAGEMENT_PORT:-15672}:15672'
+      - '127.0.0.1:${RABBITMQ_PORT:-5672}:5672'
+      - '127.0.0.1:${RABBITMQ_MANAGEMENT_PORT:-15672}:15672'
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
     healthcheck:
@@ -585,7 +594,7 @@ services:
     # the case where it dies anyway. See runbook-clamav-unreachable.md.
     oom_score_adj: -900
     ports:
-      - '${CLAMAV_PORT:-3310}:3310'
+      - '127.0.0.1:${CLAMAV_PORT:-3310}:3310'
     volumes:
       - clamav-data:/var/lib/clamav
     environment:

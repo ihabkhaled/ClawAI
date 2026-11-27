@@ -51,6 +51,9 @@ const HOUR = 60 * MINUTE;
  * - Refresh: 60 / min per IP. Every open tab refreshes, so this is loose.
  *   Not keyed per token family: that needs a database read before the limit.
  * - VS Code: init 10 / min, exchange 20 / min per IP.
+ * - Bot check (anti-abuse, 2026-11-27): config 60 / 15 min and challenge
+ *   30 / 15 min per IP. A form asks for one challenge per submit; a solver
+ *   farming challenges from one address is what this stops.
  */
 export const AUTH_RATE_LIMIT_POLICIES: ReadonlyMap<
   AuthRateLimitPolicy,
@@ -111,5 +114,13 @@ export const AUTH_RATE_LIMIT_POLICIES: ReadonlyMap<
   [
     AuthRateLimitPolicy.VSCODE_AUTHORIZE_EXCHANGE,
     [{ scope: AuthRateLimitScope.IP, limit: 20, windowSeconds: MINUTE }],
+  ],
+  [
+    AuthRateLimitPolicy.BOT_CHECK_CONFIG,
+    [{ scope: AuthRateLimitScope.IP, limit: 60, windowSeconds: FIFTEEN_MINUTES }],
+  ],
+  [
+    AuthRateLimitPolicy.BOT_CHECK_CHALLENGE,
+    [{ scope: AuthRateLimitScope.IP, limit: 30, windowSeconds: FIFTEEN_MINUTES }],
   ],
 ]);

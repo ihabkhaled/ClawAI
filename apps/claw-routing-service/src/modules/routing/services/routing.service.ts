@@ -9,7 +9,7 @@ import {
 } from '../../../generated/prisma';
 import { EntityNotFoundException } from '../../../common/errors';
 import { type PaginatedResult } from '../../../common/types';
-import { httpRequest, toInputJson } from '../../../common/utilities';
+import { buildInterServiceAuthHeader, httpRequest, toInputJson } from '../../../common/utilities';
 import { RoutingPoliciesRepository } from '../repositories/routing-policies.repository';
 import { RoutingDecisionsRepository } from '../repositories/routing-decisions.repository';
 import { RoutingManager } from '../managers/routing.manager';
@@ -154,7 +154,13 @@ export class RoutingService implements OnModuleInit {
       const url = `${AppConfig.get().CONNECTOR_SERVICE_URL}/api/v1/internal/connectors/health-snapshot`;
       const response = await httpRequest<{
         connectors: Array<{ provider: string; status: string }>;
-      }>({ url, method: 'GET', timeoutMs: 5000 });
+      }>({
+        url,
+        method: 'GET',
+        // The internal snapshot requires the service token (rules/68, 2026-11-27).
+        headers: { Authorization: buildInterServiceAuthHeader() },
+        timeoutMs: 5000,
+      });
       if (!response.ok) {
         this.logger.warn(`hydrateConnectorHealth: snapshot returned ${String(response.status)}`);
         return;

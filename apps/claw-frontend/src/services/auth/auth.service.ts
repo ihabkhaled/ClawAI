@@ -1,3 +1,4 @@
+import { collectDevicePayload } from '@/lib/bot-check/device-fingerprint';
 import { authRepository } from '@/repositories/auth/auth.repository';
 import { useAuthStore } from '@/stores/auth.store';
 import type {
@@ -13,7 +14,9 @@ import type {
   ConfirmPasswordResetRequest,
   ConfirmPasswordResetResponse,
 } from '@/types';
+import type { LoginBotCheckHooks } from '@/types/bot-check.types';
 import { clearBrowserSessionMarker, markBrowserSession } from '@/utilities';
+import { isBotCheckRequiredError } from '@/utilities/bot-check.utility';
 
 export const authService = {
   async login(data: LoginRequest): Promise<LoginResponse> {
@@ -28,8 +31,32 @@ export const authService = {
     return response;
   },
 
+  /**
+   * Sign-in that always carries the device, and carries bot checks only once the
+   * server asked for them: a 428 BOT_CHECK_REQUIRED is retried exactly once WITH
+   * checks, and every later attempt from this form sends them up front.
+   */
+  async loginWithBotCheck(data: LoginRequest, hooks: LoginBotCheckHooks): Promise<LoginResponse> {
+    const device = await collectDevicePayload();
+    const request: LoginRequest = device === null ? data : { ...data, device };
+    if (hooks.isBotCheckRequired()) {
+      return authService.login({ ...request, botCheck: await hooks.collectBotCheck() });
+    }
+    try {
+      return await authService.login(request);
+    } catch (error) {
+      if (!isBotCheckRequiredError(error)) {
+        throw error;
+      }
+      hooks.markBotCheckRequired();
+      return authService.login({ ...request, botCheck: await hooks.collectBotCheck() });
+    }
+  },
+
+  /** Sign-up always carries the device (no device: no free trial, server side). */
   async register(data: RegisterRequest): Promise<RegisterResponse> {
-    return authRepository.register(data);
+    const device = await collectDevicePayload();
+    return authRepository.register(device === null ? data : { ...data, device });
   },
 
   async logout(): Promise<void> {

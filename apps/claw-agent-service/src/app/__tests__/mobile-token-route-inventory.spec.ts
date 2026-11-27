@@ -47,9 +47,9 @@ const MOBILE_ROUTES = [
 /**
  * Routes that ask for no bearer at all. A phone gains nothing there (a mobile token is neither needed
  * nor read), and a new one needs a human look. They authenticate by other means: a one-time pairing
- * or device code, a refresh token, an HMAC signature, a SAML assertion, or the nginx block on
- * `/api/v1/internal/*` (the seed-command route has no service-token guard of its own; tracked in
- * the F097 ADR as a follow-up, unrelated to mobile).
+ * or device code, a refresh token, an HMAC signature or a SAML assertion. Every `internal/*` route
+ * is a service-token route, never anonymous: seed-command was the last one here until the
+ * 2026-11-27 security audit put ServiceTokenGuard on its controller.
  */
 const ANONYMOUS_ROUTES: string[] = [
   'GET /health',
@@ -61,7 +61,6 @@ const ANONYMOUS_ROUTES: string[] = [
   'POST /agent/channels/inbound/:userId',
   'POST /agent/organizations/:slug/sso/callback',
   'POST /agent/routines/webhook/:routineId',
-  'POST /internal/agent/terminal/seed-command',
 ];
 
 const ALL_MOBILE_SCOPES = Object.values(MobileDeviceScope);

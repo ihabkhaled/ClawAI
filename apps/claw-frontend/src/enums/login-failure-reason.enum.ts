@@ -27,6 +27,13 @@ export enum LoginFailureReason {
    * address before any lookup (rules/58).
    */
   RATE_LIMITED = 'RATE_LIMITED',
+  /**
+   * The server asked for bot checks (428) and the retry WITH them was still
+   * missing one: the browser check could not run here.
+   */
+  BOT_CHECK_REQUIRED = 'BOT_CHECK_REQUIRED',
+  /** A bot check was rejected (403). Says nothing about the account. */
+  BOT_CHECK_FAILED = 'BOT_CHECK_FAILED',
   /** Network failure, a 500, anything we cannot attribute. */
   UNKNOWN = 'UNKNOWN',
 }

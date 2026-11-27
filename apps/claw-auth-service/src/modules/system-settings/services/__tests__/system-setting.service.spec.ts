@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest';
+import { type Mock, vi } from 'vitest';
 import { PAYG_ENABLED_SETTING_KEY } from '@claw/shared-constants';
 
 import { type SystemSettingRepository } from '../../repositories/system-setting.repository';
@@ -78,6 +78,71 @@ describe('SystemSettingService', () => {
       });
       await expect(service.isEnabled(PAYG_ENABLED_SETTING_KEY, false)).resolves.toBe(true);
       expect(repository.findByKey).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  // Anti-abuse 2026-11-27: a captcha secret is write-only on every admin read.
+  describe('write-only secrets', () => {
+    const secretRow = {
+      key: 'security.turnstile.secretKey',
+      value: 'cf-secret-value',
+      updatedAt: new Date('2026-11-27T10:00:00.000Z'),
+    };
+
+    it('masks the secret in list, find and the reply to set', async () => {
+      repository.listAll.mockResolvedValue([secretRow]);
+      repository.findByKey.mockResolvedValue(secretRow);
+      repository.upsert.mockResolvedValue(secretRow);
+
+      const views = [
+        ...(await service.list()),
+        await service.find(secretRow.key),
+        await service.set(secretRow.key, secretRow.value),
+      ];
+
+      for (const view of views) {
+        expect(view).toMatchObject({ key: secretRow.key, value: '', configured: true });
+      }
+      expect(JSON.stringify(views)).not.toContain('cf-secret-value');
+    });
+
+    it('still hands the stored value to in-process readers', async () => {
+      repository.findByKey.mockResolvedValue(secretRow);
+      await expect(service.get(secretRow.key)).resolves.toBe('cf-secret-value');
+    });
+
+    it('reports a cleared secret as configured: false', async () => {
+      repository.listAll.mockResolvedValue([{ ...secretRow, value: '' }]);
+      await expect(service.list()).resolves.toEqual([
+        {
+          key: secretRow.key,
+          value: '',
+          configured: false,
+          updatedAt: secretRow.updatedAt.toISOString(),
+        },
+      ]);
+    });
+  });
+
+  describe('clearing a setting', () => {
+    it('stores an empty value for a security.* key (unset: env or default applies)', async () => {
+      repository.upsert.mockResolvedValue({
+        key: 'security.email.allowedDomains',
+        value: '',
+        updatedAt: new Date(),
+      });
+      await expect(service.set('security.email.allowedDomains', '')).resolves.toMatchObject({
+        value: '',
+      });
+      expect(repository.upsert).toHaveBeenCalledWith('security.email.allowedDomains', '');
+    });
+
+    it.each(['', '   '])('refuses the empty value %p for any other key', async (value) => {
+      await expect(service.set(PAYG_ENABLED_SETTING_KEY, value)).rejects.toMatchObject({
+        code: 'SYSTEM_SETTING_VALUE_REQUIRED',
+        status: 400,
+      });
+      expect(repository.upsert).not.toHaveBeenCalled();
     });
   });
 });

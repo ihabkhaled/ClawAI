@@ -2,6 +2,7 @@ import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { ADMIN_SESSIONS_TRANSLATIONS } from './admin-sessions-translations';
+import { ANTI_ABUSE_TRANSLATIONS } from './anti-abuse-translations';
 import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
@@ -120,6 +121,7 @@ export const ru: TranslationDictionary = {
     phoneInvalid: 'Введите действительный номер телефона',
   },
   auth: {
+    botCheck: ANTI_ABUSE_TRANSLATIONS.ru.auth,
     rateLimit: {
       tryAgainInMinutes: 'Слишком много попыток. Повторите через {minutes} мин.',
       tryAgainInOneMinute: 'Слишком много попыток. Повторите через минуту.',
@@ -433,6 +435,7 @@ export const ru: TranslationDictionary = {
     adminRuntimeProgress: 'Диагностика среды выполнения',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.ru.navigationLabel,
     adminSecuritySessions: ADMIN_SESSIONS_TRANSLATIONS.ru.navigationLabel,
+    adminSecuritySignup: ANTI_ABUSE_TRANSLATIONS.ru.navigationLabel,
     adminPaymentGateways: 'Платёжные шлюзы',
     adminSmartRouter: 'Умный маршрутизатор',
     adminModelCosts: 'Цены моделей',
@@ -5002,6 +5005,7 @@ export const ru: TranslationDictionary = {
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.ru.section,
   adminSessions: ADMIN_SESSIONS_TRANSLATIONS.ru.section,
+  adminSecurity: ANTI_ABUSE_TRANSLATIONS.ru.admin,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.ru,
   narration: NARRATION_TRANSLATIONS.ru,
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.ru,

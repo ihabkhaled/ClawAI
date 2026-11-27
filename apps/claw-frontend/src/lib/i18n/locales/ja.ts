@@ -2,6 +2,7 @@ import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { ADMIN_SESSIONS_TRANSLATIONS } from './admin-sessions-translations';
+import { ANTI_ABUSE_TRANSLATIONS } from './anti-abuse-translations';
 import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
@@ -120,6 +121,7 @@ export const ja: TranslationDictionary = {
     phoneInvalid: '有効な電話番号を入力してください',
   },
   auth: {
+    botCheck: ANTI_ABUSE_TRANSLATIONS.ja.auth,
     rateLimit: {
       tryAgainInMinutes: '試行回数が多すぎます。{minutes}分後にもう一度お試しください。',
       tryAgainInOneMinute: '試行回数が多すぎます。1分後にもう一度お試しください。',
@@ -433,6 +435,7 @@ export const ja: TranslationDictionary = {
     adminRuntimeProgress: 'ランタイム診断',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.ja.navigationLabel,
     adminSecuritySessions: ADMIN_SESSIONS_TRANSLATIONS.ja.navigationLabel,
+    adminSecuritySignup: ANTI_ABUSE_TRANSLATIONS.ja.navigationLabel,
     adminPaymentGateways: '決済ゲートウェイ',
     adminSmartRouter: 'スマートルーター',
     adminModelCosts: 'モデル料金',
@@ -4958,6 +4961,7 @@ export const ja: TranslationDictionary = {
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.ja.section,
   adminSessions: ADMIN_SESSIONS_TRANSLATIONS.ja.section,
+  adminSecurity: ANTI_ABUSE_TRANSLATIONS.ja.admin,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.ja,
   narration: NARRATION_TRANSLATIONS.ja,
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.ja,

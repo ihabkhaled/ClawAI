@@ -1,6 +1,7 @@
 import type { EmailChangeStage } from '@/enums/email-change-stage.enum';
 import type { UserLanguagePreference } from '@/enums/user-language-preference.enum';
 import type { RegisterFormValues } from '@/lib/validation/register.schema';
+import type { BotCheckPayload, DevicePayload } from '@/types/bot-check.types';
 
 import type { UserProfile } from './user.types';
 
@@ -9,6 +10,10 @@ export interface LoginRequest {
   password: string;
   /** "Remember me". false ends the session when the browser closes (ADR-106). */
   rememberMe?: boolean;
+  /** Sent only after the server answered 428 BOT_CHECK_REQUIRED (then once with checks). */
+  botCheck?: BotCheckPayload;
+  /** Always sent when the browser could compute it (anti-abuse, 2026-11-27). */
+  device?: DevicePayload;
 }
 
 export interface RegisterRequest {
@@ -22,6 +27,10 @@ export interface RegisterRequest {
   // in that language instead of English. There is no session yet for the
   // backend to read a preference from, so the client has to say.
   languagePreference?: UserLanguagePreference;
+  /** Proof of work plus Turnstile / reCAPTCHA tokens when configured. Sign-up always needs pow. */
+  botCheck?: BotCheckPayload;
+  /** Device fingerprint + device id. Without it the account gets no free trial. */
+  device?: DevicePayload;
 }
 
 export type TokenPair = {

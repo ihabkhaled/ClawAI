@@ -4,8 +4,11 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { ROUTES } from '@/constants';
+import { BOT_CHECK_COPY_KEYS } from '@/constants/bot-check.constants';
 import { REMEMBERED_EMAIL_STORAGE_KEY } from '@/constants/login.constants';
+import { BotCheckAction } from '@/enums/bot-check-action.enum';
 import { useAuthSwitchHref } from '@/hooks/auth/use-auth-switch-href';
+import { useBotCheck } from '@/hooks/auth/use-bot-check';
 import { useLogin } from '@/hooks/auth/use-login';
 import { useLocalizedHref } from '@/hooks/common/use-localized-href';
 import { useTranslation } from '@/lib/i18n';
@@ -15,6 +18,7 @@ import type { LoginBanInfo } from '@/types';
 import type { UseLoginFormReturn } from '@/types/hook.types';
 import { resolveLoginFormFailureCopy } from '@/utilities';
 import { takeBanNotice } from '@/utilities/ban-notice.utility';
+import { resolveAuthSubmitLabelKey } from '@/utilities/bot-check.utility';
 
 // Controller hook for the login page. Owns:
 //   1. the react-hook-form instance + submit handler
@@ -27,7 +31,13 @@ export function useLoginForm(): UseLoginFormReturn {
   const { t } = useTranslation();
   const localise = useLocalizedHref();
   const registerHref = useAuthSwitchHref(ROUTES.REGISTER);
-  const { login, isPending, isError, error } = useLogin();
+  // Not eager: no check runs and no third-party script loads until the server answers 428.
+  const botCheck = useBotCheck(BotCheckAction.LOGIN, false);
+  const { login, isPending, isError, error } = useLogin({
+    collectBotCheck: botCheck.collect,
+    isBotCheckRequired: botCheck.isRequired,
+    markBotCheckRequired: botCheck.markRequired,
+  });
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -113,7 +123,13 @@ export function useLoginForm(): UseLoginFormReturn {
     // decided against, because it invites the reader to guess which half was
     // wrong when the server deliberately refuses to say.
     failureCopy: resolveLoginFormFailureCopy(isError, error, banNotice),
-
+    isCheckingBrowser: botCheck.isChecking,
+    setTurnstileContainer: botCheck.setTurnstileContainer,
+    submitLabelKey: resolveAuthSubmitLabelKey(isPending, isPending && botCheck.isChecking, {
+      pending: 'auth.signingIn',
+      checking: BOT_CHECK_COPY_KEYS.checking,
+      idle: 'auth.loginButton',
+    }),
     t,
   };
 }

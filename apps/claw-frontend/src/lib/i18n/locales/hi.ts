@@ -2,6 +2,7 @@ import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { ADMIN_SESSIONS_TRANSLATIONS } from './admin-sessions-translations';
+import { ANTI_ABUSE_TRANSLATIONS } from './anti-abuse-translations';
 import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
@@ -120,6 +121,7 @@ export const hi: TranslationDictionary = {
     phoneInvalid: 'मान्य फ़ोन नंबर दर्ज करें',
   },
   auth: {
+    botCheck: ANTI_ABUSE_TRANSLATIONS.hi.auth,
     rateLimit: {
       tryAgainInMinutes: 'बहुत अधिक प्रयास। {minutes} मिनट बाद फिर से कोशिश करें।',
       tryAgainInOneMinute: 'बहुत अधिक प्रयास। एक मिनट बाद फिर से कोशिश करें।',
@@ -422,6 +424,7 @@ export const hi: TranslationDictionary = {
     adminRuntimeProgress: 'रनटाइम डायग्नोस्टिक्स',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.hi.navigationLabel,
     adminSecuritySessions: ADMIN_SESSIONS_TRANSLATIONS.hi.navigationLabel,
+    adminSecuritySignup: ANTI_ABUSE_TRANSLATIONS.hi.navigationLabel,
     adminPaymentGateways: 'भुगतान गेटवे',
     adminSmartRouter: 'स्मार्ट राउटर',
     adminModelCosts: 'मॉडल क़ीमतें',
@@ -4846,6 +4849,7 @@ export const hi: TranslationDictionary = {
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.hi.section,
   adminSessions: ADMIN_SESSIONS_TRANSLATIONS.hi.section,
+  adminSecurity: ANTI_ABUSE_TRANSLATIONS.hi.admin,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.hi,
   narration: NARRATION_TRANSLATIONS.hi,
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.hi,

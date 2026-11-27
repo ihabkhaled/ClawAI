@@ -2,6 +2,7 @@ import type { TranslationDictionary } from '@/types/i18n.types';
 
 import { ADMIN_MODEL_COSTS_TRANSLATIONS } from './admin-model-costs-translations';
 import { ADMIN_SESSIONS_TRANSLATIONS } from './admin-sessions-translations';
+import { ANTI_ABUSE_TRANSLATIONS } from './anti-abuse-translations';
 import { COMPOSER_MENU_TRANSLATIONS } from './composer-menu-translations';
 import { CREDIT_FALLBACK_TRANSLATIONS } from './credit-fallback-translations';
 import { DEPLOYMENT_TRANSLATIONS } from './deployment-translations';
@@ -120,6 +121,7 @@ export const pt: TranslationDictionary = {
     phoneInvalid: 'Digite um número de telefone válido',
   },
   auth: {
+    botCheck: ANTI_ABUSE_TRANSLATIONS.pt.auth,
     rateLimit: {
       tryAgainInMinutes: 'Tentativas demais. Tente novamente em {minutes} minutos.',
       tryAgainInOneMinute: 'Tentativas demais. Tente novamente em um minuto.',
@@ -430,6 +432,7 @@ export const pt: TranslationDictionary = {
     adminRuntimeProgress: 'Diagnóstico de runtime',
     adminDeployment: DEPLOYMENT_TRANSLATIONS.pt.navigationLabel,
     adminSecuritySessions: ADMIN_SESSIONS_TRANSLATIONS.pt.navigationLabel,
+    adminSecuritySignup: ANTI_ABUSE_TRANSLATIONS.pt.navigationLabel,
     adminPaymentGateways: 'Gateways de pagamento',
     adminSmartRouter: 'Roteador inteligente',
     adminModelCosts: 'Preços dos modelos',
@@ -5004,6 +5007,7 @@ export const pt: TranslationDictionary = {
   },
   adminDeployment: DEPLOYMENT_TRANSLATIONS.pt.section,
   adminSessions: ADMIN_SESSIONS_TRANSLATIONS.pt.section,
+  adminSecurity: ANTI_ABUSE_TRANSLATIONS.pt.admin,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.pt,
   narration: NARRATION_TRANSLATIONS.pt,
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.pt,

@@ -118,3 +118,9 @@ npm run migrate          # Run migrations (production)
 npm run migrate:dev      # Create + run migration (dev)
 npm run prisma:generate  # Regenerate Prisma client
 ```
+
+## Internal embeddings routes need the service token (2026-11-27)
+
+`internal/embeddings/*` (upsert, search, delete) take a `userId` in the body, so they require
+`@UseGuards(ServiceTokenGuard)` at class level like every internal controller (rules/68). The security audit found them
+`@Public()` with no guard. workspace-service sends `Authorization: Service <INTER_SERVICE_AUTH_TOKEN>` on every call.

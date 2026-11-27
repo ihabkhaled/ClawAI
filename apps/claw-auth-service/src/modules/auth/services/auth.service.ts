@@ -11,8 +11,12 @@ import {
 } from '../types/auth.types';
 import type { SessionClient } from '../types/token-session.types';
 import type { RegisterDto } from '../dto/register.dto';
-import { EMPTY_REGISTRATION_ORIGIN } from '../../users/constants/user-admin.constants';
-import { type RegistrationOrigin } from '../../users/types/user-admin.types';
+import { InvalidCredentialsException } from '../../../common/errors';
+import { EMPTY_SCREENING_ORIGIN } from '../../anti-abuse/constants/anti-abuse.constants';
+import { LoginScreeningService } from '../../anti-abuse/services/login-screening.service';
+import { RegistrationScreeningService } from '../../anti-abuse/services/registration-screening.service';
+import type { LoginScreeningInput, ScreeningOrigin } from '../../anti-abuse/types/device.types';
+import { screeningOriginOf } from '../../anti-abuse/utilities/screening-origin.utility';
 import { EmailVerificationService } from './email-verification.service';
 
 @Injectable()
@@ -24,6 +28,8 @@ export class AuthService {
     private readonly authManager: AuthManager,
     private readonly rabbitMQService: RabbitMQService,
     private readonly emailVerificationService: EmailVerificationService,
+    private readonly registrationScreening: RegistrationScreeningService,
+    private readonly loginScreening: LoginScreeningService,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
@@ -33,13 +39,17 @@ export class AuthService {
     );
   }
 
+  // Anti-abuse screening (bot check, email domain, velocity, trial decision)
+  // runs first and throws its own coded refusals, each with a security event.
   async register(
     dto: RegisterDto,
-    origin: RegistrationOrigin = EMPTY_REGISTRATION_ORIGIN,
+    origin: ScreeningOrigin = EMPTY_SCREENING_ORIGIN,
   ): Promise<RegisterResult> {
     this.logger.log(`register: attempting registration for email=${dto.email}`);
+    const verdict = await this.registrationScreening.screen(dto, origin);
     try {
-      const account = await this.authManager.register(dto, origin);
+      const account = await this.authManager.register(dto, origin, verdict.trial.grant);
+      await this.registrationScreening.recordSignup(account.user.id, dto.email, verdict, origin);
       const result: RegisterResult = {
         ...account,
         verificationEmailSent: await this.sendVerificationEmail(
@@ -90,14 +100,20 @@ export class AuthService {
     }
   }
 
+  // After repeated failures for the IP or the address, the bot checks are
+  // required before the password is even looked at (LoginScreeningService).
   async login(
     email: string,
     password: string,
     client: SessionClient = WEB_SESSION_CLIENT,
+    screening: LoginScreeningInput = {},
   ): Promise<LoginResult> {
     this.logger.log(`login: attempting login for email=${email}`);
+    const origin = screeningOriginOf(client.origin);
+    await this.loginScreening.assertAllowed(email, screening, origin);
     try {
       const result = await this.authManager.login(email, password, client);
+      await this.loginScreening.recordSuccess(result.user.id, email, screening, origin);
 
       this.structuredLogger.logAction({
         level: LogLevel.INFO,
@@ -115,6 +131,9 @@ export class AuthService {
 
       return result;
     } catch (error: unknown) {
+      if (error instanceof InvalidCredentialsException) {
+        await this.loginScreening.recordFailure(email, origin);
+      }
       this.structuredLogger.logAction({
         level: LogLevel.WARN,
         message: `Login failed for email: ${email}`,

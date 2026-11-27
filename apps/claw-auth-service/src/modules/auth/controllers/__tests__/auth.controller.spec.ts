@@ -88,7 +88,11 @@ describe('AuthController', () => {
       socket: { remoteAddress: undefined },
     } as unknown as Request);
 
-    expect(serviceMock.register).toHaveBeenCalledWith(dto, { ip: null, countryCode: null });
+    expect(serviceMock.register).toHaveBeenCalledWith(dto, {
+      ip: null,
+      countryCode: null,
+      userAgent: null,
+    });
   });
 
   it('login forwards email + password', async () => {
@@ -98,12 +102,12 @@ describe('AuthController', () => {
     };
     serviceMock.login.mockResolvedValue(expected);
     const result = await controller.login({ email: 'a@b', password: 'p' }, loginRequest());
-    expect(serviceMock.login).toHaveBeenCalledWith('a@b', 'p', {
-      kind: SessionClientKind.WEB,
-      name: 'ClawAI Web',
-      persistent: true,
-      origin: LOGIN_ORIGIN,
-    });
+    expect(serviceMock.login).toHaveBeenCalledWith(
+      'a@b',
+      'p',
+      { kind: SessionClientKind.WEB, name: 'ClawAI Web', persistent: true, origin: LOGIN_ORIGIN },
+      { botCheck: undefined, device: undefined },
+    );
     expect(result).toBe(expected);
   });
 
@@ -123,11 +127,42 @@ describe('AuthController', () => {
       loginRequest(),
     );
 
-    expect(serviceMock.login).toHaveBeenCalledWith('a@b', 'p', {
-      kind: SessionClientKind.VSCODE,
-      name: 'ClawAI for VS Code',
-      persistent: true,
-      origin: LOGIN_ORIGIN,
+    expect(serviceMock.login).toHaveBeenCalledWith(
+      'a@b',
+      'p',
+      {
+        kind: SessionClientKind.VSCODE,
+        name: 'ClawAI for VS Code',
+        persistent: true,
+        origin: LOGIN_ORIGIN,
+      },
+      { botCheck: undefined, device: undefined },
+    );
+  });
+
+  it('forwards the bot check and the device of a login body', async () => {
+    serviceMock.login.mockResolvedValue({ tokens: {}, user: { id: 'u1' } });
+    const botCheck = { pow: { token: 't.s', nonce: '42' } };
+    const device = { fingerprint: 'a'.repeat(64), deviceId: 'device-id-0001' };
+
+    await controller.login({ email: 'a@b', password: 'p', botCheck, device }, loginRequest());
+
+    expect(serviceMock.login).toHaveBeenCalledWith('a@b', 'p', expect.any(Object), {
+      botCheck,
+      device,
+    });
+  });
+
+  it('forwards the user agent of a sign-up as part of its origin', async () => {
+    serviceMock.register.mockResolvedValue({});
+    const dto = { email: 'n@example.com', password: 'Pass1word', firstName: 'A', lastName: 'B' };
+
+    await controller.register(dto, loginRequest());
+
+    expect(serviceMock.register).toHaveBeenCalledWith(dto, {
+      ip: null,
+      countryCode: null,
+      userAgent: 'curl/8.4.0',
     });
   });
 

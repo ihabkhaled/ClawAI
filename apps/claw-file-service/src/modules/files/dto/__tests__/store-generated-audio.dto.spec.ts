@@ -53,11 +53,8 @@ describe('storeGeneratedAudioSchema', () => {
 });
 
 describe('POST /internal/files/store-generated-audio guard', () => {
-  it('is guarded by the service token', () => {
-    const guards: unknown = Reflect.getMetadata(
-      GUARDS_METADATA,
-      FilesInternalController.prototype.storeGeneratedAudio,
-    );
+  it('is guarded by the service token (class level, so every internal/files route is)', () => {
+    const guards: unknown = Reflect.getMetadata(GUARDS_METADATA, FilesInternalController);
     expect(guards).toEqual([ServiceTokenGuard]);
   });
 });

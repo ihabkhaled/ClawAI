@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 
 import { useAssignPlanDialogState } from '@/hooks/admin/use-assign-plan-dialog-state';
+import { useUserLinkedAccountsDialogState } from '@/hooks/admin/use-user-linked-accounts-dialog-state';
 import { useUserSecurityDialogState } from '@/hooks/admin/use-user-security-dialog-state';
 import { useUserStatisticsDialogState } from '@/hooks/admin/use-user-statistics-dialog-state';
 import type { AdminUser, AdminUserUpdateRequest, UseUserTableStateReturn } from '@/types';
@@ -12,6 +13,7 @@ export function useUserTableState(): UseUserTableStateReturn {
   const assignPlan = useAssignPlanDialogState();
   const statistics = useUserStatisticsDialogState();
   const security = useUserSecurityDialogState();
+  const linkedAccounts = useUserLinkedAccountsDialogState();
 
   const handleRoleSelect = useCallback(
     (userId: string, role: string, onChangeRole: (userId: string, role: string) => void): void => {
@@ -75,5 +77,6 @@ export function useUserTableState(): UseUserTableStateReturn {
     ...assignPlan,
     ...statistics,
     ...security,
+    ...linkedAccounts,
   };
 }

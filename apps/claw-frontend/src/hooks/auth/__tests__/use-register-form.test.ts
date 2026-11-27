@@ -6,6 +6,7 @@ import { ApiClientError } from '@/services/shared/api-client';
 
 const mocks = vi.hoisted(() => ({
   register: vi.fn(),
+  collect: vi.fn(),
   state: { isError: false, error: null as unknown },
 }));
 
@@ -18,6 +19,17 @@ vi.mock('@/hooks/auth/use-register', () => ({
   }),
 }));
 
+vi.mock('@/hooks/auth/use-bot-check', () => ({
+  useBotCheck: () => ({
+    status: 'IDLE',
+    isChecking: false,
+    setTurnstileContainer: vi.fn(),
+    collect: mocks.collect,
+    markRequired: vi.fn(),
+    isRequired: () => false,
+  }),
+}));
+
 vi.mock('@/lib/i18n', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
@@ -27,6 +39,7 @@ describe('useRegisterForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.state = { isError: false, error: null };
+    mocks.collect.mockResolvedValue({ pow: { token: 'pow-token', nonce: '5' } });
   });
 
   function fail(error: ApiClientError): void {
@@ -54,6 +67,8 @@ describe('useRegisterForm', () => {
       email: 'ada@example.com',
       phone: '+15551234567',
       password: 'Password1!',
+      // Proof of work (and the third-party tokens when configured) ride along.
+      botCheck: { pow: { token: 'pow-token', nonce: '5' } },
     });
     expect(mocks.register.mock.calls[0]?.[0]).not.toHaveProperty('confirmPassword');
   });

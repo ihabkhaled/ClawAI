@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UsePipes } from '@nestjs/common';
 import type { Request } from 'express';
 import { resolveSessionOrigin } from '../utilities/session-origin.utility';
-import { resolveRegistrationOrigin } from '../../users/service.utilities/registration-origin.utility';
+import { resolveScreeningOrigin } from '../../anti-abuse/utilities/screening-origin.utility';
 import { AuthService } from '../services/auth.service';
 import { ConfirmEmailChangeDto, confirmEmailChangeSchema } from '../dto/email-change.dto';
 import { EmailChangeService } from '../services/email-change.service';
@@ -10,7 +10,7 @@ import type { RequestPasswordResetResult } from '../types/password-reset.types';
 import { Public } from '../../../app/decorators/public.decorator';
 import { CurrentUser } from '../../../app/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../../app/pipes/zod-validation.pipe';
-import { LoginDto, loginSchema, loginSessionClient } from '../dto/login.dto';
+import { LoginDto, loginSchema, loginScreeningInput, loginSessionClient } from '../dto/login.dto';
 import { RegisterDto, registerSchema } from '../dto/register.dto';
 import { RefreshTokenDto, refreshTokenSchema } from '../dto/refresh-token.dto';
 import { PasswordResetService } from '../services/password-reset.service';
@@ -47,7 +47,7 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ZodValidationPipe(registerSchema))
   async register(@Body() dto: RegisterDto, @Req() request: Request): Promise<RegisterResult> {
-    const origin = await resolveRegistrationOrigin(request.headers, request.socket.remoteAddress);
+    const origin = await resolveScreeningOrigin(request.headers, request.socket.remoteAddress);
     return this.authService.register(dto, origin);
   }
 
@@ -58,10 +58,12 @@ export class AuthController {
   @UsePipes(new ZodValidationPipe(loginSchema))
   async login(@Body() dto: LoginDto, @Req() request: Request): Promise<LoginResult> {
     const origin = await resolveSessionOrigin(request.headers, request.socket.remoteAddress);
-    return this.authService.login(dto.email, dto.password, {
-      ...loginSessionClient(dto),
-      origin,
-    });
+    return this.authService.login(
+      dto.email,
+      dto.password,
+      { ...loginSessionClient(dto), origin },
+      loginScreeningInput(dto),
+    );
   }
 
   @Public()

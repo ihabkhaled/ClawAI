@@ -10,6 +10,7 @@ import { isClientHttpError } from '@claw/shared-utilities';
 import { Response } from 'express';
 import { BusinessException } from '../../common/errors';
 import { type BusinessExceptionDetails } from '../../common/types';
+import { RETRY_AFTER_HEADER } from '../../modules/auth/constants/auth-rate-limit.constants';
 import { ErrorResponseBody } from './types/error-response-body.type';
 
 @Catch()
@@ -78,17 +79,30 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       body.errors = errors;
     }
 
-    // Copied field by field, not spread: only the declared keys may reach a
-    // response body a customer can read.
     if (details) {
-      body.availableMicroUsd = details.availableMicroUsd;
-      body.requiredMicroUsd = details.requiredMicroUsd;
-      if (details.banPermanent !== undefined) {
-        body.banPermanent = details.banPermanent;
-        body.bannedUntil = details.bannedUntil ?? null;
+      this.copyDetails(body, details);
+      if (details.retryAfterSeconds !== undefined) {
+        response.setHeader(RETRY_AFTER_HEADER, String(details.retryAfterSeconds));
       }
     }
 
     response.status(status).json(body);
+  }
+
+  // Copied field by field, not spread: only the declared keys may reach a
+  // response body a customer can read.
+  private copyDetails(body: ErrorResponseBody, details: BusinessExceptionDetails): void {
+    body.availableMicroUsd = details.availableMicroUsd;
+    body.requiredMicroUsd = details.requiredMicroUsd;
+    if (details.banPermanent !== undefined) {
+      body.banPermanent = details.banPermanent;
+      body.bannedUntil = details.bannedUntil ?? null;
+    }
+    if (details.field !== undefined) {
+      body.field = details.field;
+    }
+    if (details.retryAfterSeconds !== undefined) {
+      body.retryAfterSeconds = details.retryAfterSeconds;
+    }
   }
 }
