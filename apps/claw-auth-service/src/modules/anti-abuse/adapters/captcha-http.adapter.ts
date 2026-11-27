@@ -1,6 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { CAPTCHA_VERIFY_TIMEOUT_MS, FORM_CONTENT_TYPE } from '../constants/anti-abuse.constants';
+import { assertSafeRequestUrl } from '@claw/shared-utilities';
+
+import {
+  CAPTCHA_VERIFY_HOSTS,
+  CAPTCHA_VERIFY_TIMEOUT_MS,
+  FORM_CONTENT_TYPE,
+} from '../constants/anti-abuse.constants';
 
 /**
  * The only place a captcha siteverify call leaves the process.
@@ -18,7 +24,8 @@ export class CaptchaHttpAdapter {
     this.logger.debug(`postForm: verifying a token with ${new URL(url).host}`);
     let response: Response;
     try {
-      response = await fetch(url, {
+      const target = assertSafeRequestUrl(url, CAPTCHA_VERIFY_HOSTS).href;
+      response = await fetch(target, {
         method: 'POST',
         headers: { 'content-type': FORM_CONTENT_TYPE },
         body: form.toString(),

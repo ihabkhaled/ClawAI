@@ -83,6 +83,11 @@ export const FINGERPRINT_LOG_PREFIX_LENGTH = 8;
 
 export const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 export const RECAPTCHA_VERIFY_URL = 'https://www.google.com/recaptcha/api/siteverify';
+/** The only hosts a captcha verify call may reach (TD-038 URL guard). */
+export const CAPTCHA_VERIFY_HOSTS: ReadonlySet<string> = new Set([
+  new URL(TURNSTILE_VERIFY_URL).host,
+  new URL(RECAPTCHA_VERIFY_URL).host,
+]);
 export const CAPTCHA_VERIFY_TIMEOUT_MS = 4000;
 export const FORM_CONTENT_TYPE = 'application/x-www-form-urlencoded';
 
