@@ -60,5 +60,7 @@ connectors page.
 - Redis `requirepass`: compose change, `REDIS_PASSWORD` + `REDIS_URL` in `/srv/clawai/.env`, recreate Redis and every
   service in one short window (see the runbook).
 - Consider rotating the Postgres, MongoDB and RabbitMQ passwords (no evidence of compromise; they were exposed).
-- Captcha keys: create the Turnstile widget and the reCAPTCHA v3 keys for claw-ai.co, then save them as
-  `security.*` admin settings (or the four env vars). Proof of work runs until then.
+- Captcha keys are live on production (2026-11-27). The first reCAPTCHA key lacked the `claw-ai.co` domain and broke
+  sign-up for about 10 minutes (only test traffic hit it); both providers were switched off, the domain added, and
+  both switched back on. reCAPTCHA is proven end to end (siteverify success, score 0.9, hostname claw-ai.co); the
+  Turnstile secret is valid, and a real-browser sign-up is the last open proof (automated browsers get 600010).

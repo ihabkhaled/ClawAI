@@ -53,7 +53,22 @@ docker/docker-compose.prod.services.yml up -d --no-build --no-deps <services>`.
 5. Verify: `docker exec claw-redis redis-cli ping` answers `NOAUTH`; the site and `/api/v1/health` answer 200;
    `docker logs --since 2m claw-auth-service | grep -i redis` shows no errors.
 
-## 5. Recurring checks
+## 5. Captcha keys (Turnstile, reCAPTCHA v3)
+
+- Live in `/srv/clawai/.env` (`TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, `RECAPTCHA_SITE_KEY`, `RECAPTCHA_SECRET_KEY`) or
+  as `security.*` admin settings (a setting wins). After an `.env` change recreate auth-service only (`up -d --no-build
+--no-deps auth-service`); `GET /api/v1/auth/bot-check/config?action=register` must show both providers.
+- **Test before trusting a key** (2026-11-27: the first reCAPTCHA key broke sign-up for 10 minutes):
+  - reCAPTCHA badge "Invalid domain for site key" = the bare domain `claw-ai.co` is missing from the key's domain list
+    (google.com/recaptcha/admin → gear, or console.cloud.google.com/security/recaptcha → Edit key).
+  - Turnstile error `110200` = hostname not allowed; `600010` in an automated browser is expected (it blocks bots).
+  - A secret is valid when siteverify with a dummy token answers `invalid-input-response`
+    (`invalid-input-secret` = wrong secret).
+  - Final proof: a real (not automated) browser signs up with a `@mailinator.com` address and gets
+    `DISPOSABLE_EMAIL`, which is only reached after every bot check passed. No account is created.
+- **Roll back in one minute:** comment the four lines out and recreate auth-service; proof of work keeps running.
+
+## 6. Recurring checks
 
 - `sudo journalctl -u ssh --since "1 day ago" | grep Accepted` — only `ihabkhaled` (owner) and `deploy` (GitHub
   Actions ranges from `api.github.com/meta`).
