@@ -441,3 +441,11 @@ Every controller under `internal/...` here has a class-level `@UseGuards(Service
 user JWT), and every call this service makes to another service's internal route sends
 `Authorization: Service <INTER_SERVICE_AUTH_TOKEN>`. The repo test `tools/__tests__/internal-controllers-guarded.test.mjs`
 fails on an unguarded internal controller. An anonymous call to a sibling's internal route now gets 401.
+
+## HARNESS_COUNCIL assistant-model role (ADR-223, 2026-11-27)
+
+A fifth assistant-model role (migration `20261127170000_add_harness_council_role`). Unlike the others (tried in order),
+chat-service asks ALL its enabled entries in parallel and merges the votes. Seeded once by
+`AssistantModelService.onModuleInit` (fills an empty role only): `beam`, `deepseek-v4.1-flash`, `mimo-v2.6-flash`,
+`minimax-m3.1-flash` on `OLLAMA_CLOUD`, 10 s, 700 tokens. Same admin routes and permission as the other roles; an empty
+role is refilled on the next boot, so switch members off rather than deleting them all.

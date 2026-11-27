@@ -83,6 +83,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         'The voice models that read an assistant reply aloud when a user presses Read aloud. Tried in order. Gemini TTS models (names ending in -tts) and OpenAI tts-1 / tts-1-hd are supported; any other model is skipped.',
       ttsVoiceEmpty:
         'No voice configured: "Read aloud" stays visible but dimmed for every user until you add one.',
+      harnessCouncilTitle: 'Harness council',
+      harnessCouncilDescription:
+        'These models decide together, in parallel, whether a message needs research, how deep it goes and which languages to search. Every enabled model is asked at once and the majority wins; if none answer in time, the research gate below decides alone. Three or more models are recommended.',
+      harnessCouncilEmpty:
+        'No council member configured, so the research gate below decides alone.',
       researchGateTitle: 'Research gate',
       researchGateDescription:
         'The model asked whether a turn needs the web, before any answering model runs. Candidates are tried in order.',
@@ -258,6 +263,10 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         'نماذج الصوت التي تقرأ رد المساعد بصوت عالٍ عندما يضغط المستخدم على «القراءة بصوت عالٍ». تُجرَّب بالترتيب. نماذج Gemini TTS (التي تنتهي أسماؤها بـ ‎-tts) ونموذجا OpenAI tts-1 وtts-1-hd مدعومة؛ ويُتخطّى أي نموذج آخر.',
       ttsVoiceEmpty:
         'لا يوجد صوت مُعدّ: يبقى زر «القراءة بصوت عالٍ» ظاهرًا لكنه باهت لجميع المستخدمين حتى تضيف صوتًا.',
+      harnessCouncilTitle: 'مجلس Harness',
+      harnessCouncilDescription:
+        'تقرر هذه النماذج معًا وبالتوازي ما إذا كانت الرسالة تحتاج إلى بحث، ومدى عمقه، وبأي اللغات يُبحث. تُسأل كل النماذج المفعّلة في وقت واحد ويفوز رأي الأغلبية؛ وإن لم يُجب أي منها في الوقت المحدد، تقرر بوابة البحث أدناه وحدها. يُنصح بثلاثة نماذج أو أكثر.',
+      harnessCouncilEmpty: 'لم يُضبط أي عضو في المجلس، لذا تقرر بوابة البحث أدناه وحدها.',
       researchGateTitle: 'بوابة البحث',
       researchGateDescription:
         'النموذج الذي يُسأل إن كانت الرسالة تحتاج إلى الإنترنت، قبل تشغيل أي نموذج مُجيب. تُجرَّب المرشحات بالترتيب.',
@@ -429,6 +438,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         'Die Sprachmodelle, die eine Assistentenantwort vorlesen, wenn jemand auf „Vorlesen“ drückt. Werden der Reihe nach versucht. Unterstützt werden Gemini-TTS-Modelle (Namen, die auf -tts enden) sowie OpenAI tts-1 / tts-1-hd; jedes andere Modell wird übersprungen.',
       ttsVoiceEmpty:
         'Keine Stimme konfiguriert: „Vorlesen“ bleibt für alle Nutzer sichtbar, aber abgeblendet, bis du eine hinzufügst.',
+      harnessCouncilTitle: 'Harness-Rat',
+      harnessCouncilDescription:
+        'Diese Modelle entscheiden gemeinsam und parallel, ob eine Nachricht Recherche braucht, wie tief sie geht und in welchen Sprachen gesucht wird. Alle aktivierten Modelle werden gleichzeitig gefragt und die Mehrheit entscheidet; antwortet keines rechtzeitig, entscheidet das Recherche-Gate darunter allein. Drei oder mehr Modelle werden empfohlen.',
+      harnessCouncilEmpty:
+        'Kein Ratsmitglied konfiguriert, daher entscheidet das Recherche-Gate darunter allein.',
       researchGateTitle: 'Recherche-Gate',
       researchGateDescription:
         'Das Modell, das gefragt wird, ob eine Nachricht das Web braucht, bevor ein antwortendes Modell läuft. Kandidaten werden der Reihe nach versucht.',
@@ -610,6 +624,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         'Los modelos de voz que leen en voz alta una respuesta del asistente cuando el usuario pulsa «Leer en voz alta». Se prueban en orden. Se admiten los modelos TTS de Gemini (nombres que terminan en -tts) y OpenAI tts-1 / tts-1-hd; cualquier otro modelo se omite.',
       ttsVoiceEmpty:
         'No hay ninguna voz configurada: «Leer en voz alta» sigue visible pero atenuado para todos los usuarios hasta que añadas una.',
+      harnessCouncilTitle: 'Consejo Harness',
+      harnessCouncilDescription:
+        'Estos modelos deciden juntos, en paralelo, si un mensaje necesita investigación, con qué profundidad y en qué idiomas buscar. Se consulta a la vez a todos los modelos activados y gana la mayoría; si ninguno responde a tiempo, la puerta de investigación de abajo decide sola. Se recomiendan tres modelos o más.',
+      harnessCouncilEmpty:
+        'No hay ningún miembro del consejo configurado, así que la puerta de investigación de abajo decide sola.',
       researchGateTitle: 'Puerta de investigación',
       researchGateDescription:
         'El modelo al que se pregunta si un mensaje necesita la web, antes de que se ejecute cualquier modelo que responda. Los candidatos se prueban en orden.',
@@ -790,6 +809,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         'مدل‌های صوتی که وقتی کاربر «بلندخوانی» را می‌زند، پاسخ دستیار را با صدای بلند می‌خوانند. به ترتیب امتحان می‌شوند. مدل‌های Gemini TTS (نام‌هایی که به ‎-tts ختم می‌شوند) و OpenAI tts-1 / tts-1-hd پشتیبانی می‌شوند؛ هر مدل دیگری نادیده گرفته می‌شود.',
       ttsVoiceEmpty:
         'هیچ صدایی تنظیم نشده است: «بلندخوانی» برای همهٔ کاربران دیده می‌شود اما کم‌رنگ می‌ماند تا زمانی که یکی اضافه کنید.',
+      harnessCouncilTitle: 'شورای Harness',
+      harnessCouncilDescription:
+        'این مدل‌ها با هم و به‌صورت موازی تصمیم می‌گیرند که آیا پیامی به پژوهش نیاز دارد، پژوهش تا چه عمقی پیش برود و به چه زبان‌هایی جست‌وجو شود. همه مدل‌های فعال هم‌زمان پرسیده می‌شوند و رأی اکثریت برنده است؛ اگر هیچ‌کدام به‌موقع پاسخ ندهد، دروازه پژوهش در پایین به‌تنهایی تصمیم می‌گیرد. سه مدل یا بیشتر توصیه می‌شود.',
+      harnessCouncilEmpty:
+        'هیچ عضوی برای شورا تنظیم نشده است، بنابراین دروازه پژوهش در پایین به‌تنهایی تصمیم می‌گیرد.',
       researchGateTitle: 'دروازه پژوهش',
       researchGateDescription:
         'مدلی که پرسیده می‌شود آیا این پیام به وب نیاز دارد، پیش از اجرای هر مدل پاسخ‌دهنده. نامزدها به ترتیب آزموده می‌شوند.',
@@ -968,6 +992,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         "Les modèles vocaux qui lisent à voix haute une réponse de l'assistant lorsqu'un utilisateur appuie sur « Lire à voix haute ». Essayés dans l'ordre. Les modèles Gemini TTS (noms se terminant par -tts) et OpenAI tts-1 / tts-1-hd sont pris en charge ; tout autre modèle est ignoré.",
       ttsVoiceEmpty:
         "Aucune voix configurée : « Lire à voix haute » reste visible mais grisé pour tous les utilisateurs tant que vous n'en ajoutez pas une.",
+      harnessCouncilTitle: 'Conseil Harness',
+      harnessCouncilDescription:
+        "Ces modèles décident ensemble, en parallèle, si un message nécessite une recherche, à quelle profondeur et dans quelles langues chercher. Tous les modèles activés sont interrogés en même temps et la majorité l'emporte ; si aucun ne répond à temps, le filtre de recherche ci-dessous décide seul. Trois modèles ou plus sont recommandés.",
+      harnessCouncilEmpty:
+        "Aucun membre du conseil n'est configuré : le filtre de recherche ci-dessous décide donc seul.",
       researchGateTitle: 'Filtre de recherche',
       researchGateDescription:
         "Le modèle auquel on demande si un message nécessite le web, avant l'exécution de tout modèle de réponse. Les candidats sont essayés dans l'ordre.",
@@ -1147,6 +1176,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         'वे वॉइस मॉडल जो उपयोगकर्ता के "पढ़कर सुनाएँ" दबाने पर सहायक का उत्तर पढ़कर सुनाते हैं। क्रम से आज़माए जाते हैं। Gemini TTS मॉडल (जिनके नाम -tts पर ख़त्म होते हैं) और OpenAI tts-1 / tts-1-hd समर्थित हैं; कोई भी अन्य मॉडल छोड़ दिया जाता है।',
       ttsVoiceEmpty:
         'कोई आवाज़ कॉन्फ़िगर नहीं है: जब तक आप एक नहीं जोड़ते, "पढ़कर सुनाएँ" हर उपयोगकर्ता को दिखता रहेगा पर धुंधला रहेगा।',
+      harnessCouncilTitle: 'Harness परिषद',
+      harnessCouncilDescription:
+        'ये मॉडल मिलकर, समानांतर रूप से तय करते हैं कि किसी संदेश को शोध की आवश्यकता है या नहीं, शोध कितना गहरा हो और किन भाषाओं में खोजा जाए। सभी सक्षम मॉडलों से एक साथ पूछा जाता है और बहुमत का निर्णय मान्य होता है; यदि कोई भी समय पर उत्तर नहीं देता, तो नीचे दिया गया शोध गेट अकेले निर्णय लेता है। तीन या अधिक मॉडल रखने की सलाह दी जाती है।',
+      harnessCouncilEmpty:
+        'परिषद का कोई सदस्य कॉन्फ़िगर नहीं है, इसलिए नीचे दिया गया शोध गेट अकेले निर्णय लेता है।',
       researchGateTitle: 'शोध गेट',
       researchGateDescription:
         'वह मॉडल जिससे पूछा जाता है कि क्या किसी संदेश को वेब की आवश्यकता है, किसी भी उत्तर देने वाले मॉडल के चलने से पहले। उम्मीदवारों को क्रम में आज़माया जाता है।',
@@ -1323,6 +1357,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         "I modelli vocali che leggono ad alta voce una risposta dell'assistente quando l'utente preme «Leggi ad alta voce». Provati in ordine. Sono supportati i modelli Gemini TTS (nomi che terminano in -tts) e OpenAI tts-1 / tts-1-hd; qualsiasi altro modello viene saltato.",
       ttsVoiceEmpty:
         'Nessuna voce configurata: «Leggi ad alta voce» resta visibile ma attenuato per tutti gli utenti finché non ne aggiungi una.',
+      harnessCouncilTitle: 'Consiglio Harness',
+      harnessCouncilDescription:
+        'Questi modelli decidono insieme, in parallelo, se un messaggio richiede una ricerca, quanto deve essere approfondita e in quali lingue cercare. Tutti i modelli abilitati vengono interpellati contemporaneamente e vince la maggioranza; se nessuno risponde in tempo, decide da solo il filtro di ricerca qui sotto. Si consigliano tre o più modelli.',
+      harnessCouncilEmpty:
+        'Nessun membro del consiglio configurato, quindi decide da solo il filtro di ricerca qui sotto.',
       researchGateTitle: 'Filtro di ricerca',
       researchGateDescription:
         'Il modello a cui si chiede se un messaggio richiede il web, prima che venga eseguito qualsiasi modello di risposta. I candidati vengono provati in ordine.',
@@ -1502,6 +1541,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         'ユーザーが「読み上げ」を押したときにアシスタントの回答を読み上げる音声モデルです。上から順に試されます。Gemini TTS モデル（名前が -tts で終わるもの）と OpenAI の tts-1 / tts-1-hd に対応しており、それ以外のモデルはスキップされます。',
       ttsVoiceEmpty:
         '音声が未設定です：追加するまで、「読み上げ」はすべてのユーザーに表示されますが淡色表示のままになります。',
+      harnessCouncilTitle: 'Harness 評議会',
+      harnessCouncilDescription:
+        'これらのモデルが並行して一緒に判断します。メッセージにリサーチが必要か、どこまで深く調べるか、どの言語で検索するかです。有効なモデルすべてに同時に尋ね、多数決で決まります。時間内にどのモデルも応答しない場合は、下のリサーチゲートが単独で判断します。3つ以上のモデルを推奨します。',
+      harnessCouncilEmpty:
+        '評議会のメンバーが設定されていないため、下のリサーチゲートが単独で判断します。',
       researchGateTitle: 'リサーチゲート',
       researchGateDescription:
         '回答するモデルを実行する前に、その発言がウェブを必要とするかを尋ねるモデルです。候補は順に試されます。',
@@ -1676,6 +1720,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         'Os modelos de voz que leem em voz alta uma resposta do assistente quando o usuário pressiona "Ler em voz alta". Testados em ordem. São compatíveis os modelos Gemini TTS (nomes terminados em -tts) e OpenAI tts-1 / tts-1-hd; qualquer outro modelo é ignorado.',
       ttsVoiceEmpty:
         'Nenhuma voz configurada: "Ler em voz alta" continua visível, mas esmaecido, para todos os usuários até você adicionar uma.',
+      harnessCouncilTitle: 'Conselho Harness',
+      harnessCouncilDescription:
+        'Estes modelos decidem em conjunto, em paralelo, se uma mensagem precisa de pesquisa, com que profundidade e em que idiomas pesquisar. Todos os modelos ativados são consultados ao mesmo tempo e vence a maioria; se nenhum responder a tempo, a porta de pesquisa abaixo decide sozinha. Recomendam-se três ou mais modelos.',
+      harnessCouncilEmpty:
+        'Nenhum membro do conselho configurado, por isso a porta de pesquisa abaixo decide sozinha.',
       researchGateTitle: 'Porta de pesquisa',
       researchGateDescription:
         'O modelo a que se pergunta se uma mensagem precisa da web, antes de qualquer modelo de resposta ser executado. Os candidatos são tentados por ordem.',
@@ -1856,6 +1905,11 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         'Голосовые модели, которые читают ответ ассистента вслух, когда пользователь нажимает «Прочитать вслух». Пробуются по порядку. Поддерживаются модели Gemini TTS (имена, оканчивающиеся на -tts) и OpenAI tts-1 / tts-1-hd; любая другая модель пропускается.',
       ttsVoiceEmpty:
         'Голос не настроен: кнопка «Прочитать вслух» остаётся видимой, но приглушённой для всех пользователей, пока вы его не добавите.',
+      harnessCouncilTitle: 'Совет Harness',
+      harnessCouncilDescription:
+        'Эти модели вместе и параллельно решают, нужно ли сообщению исследование, насколько глубоким оно должно быть и на каких языках искать. Все включённые модели опрашиваются одновременно, и решает большинство; если ни одна не ответит вовремя, фильтр исследования ниже решает в одиночку. Рекомендуется три модели или больше.',
+      harnessCouncilEmpty:
+        'Участники совета не настроены, поэтому фильтр исследования ниже решает в одиночку.',
       researchGateTitle: 'Фильтр исследования',
       researchGateDescription:
         'Модель, у которой спрашивают, нужен ли сообщению интернет, прежде чем запустится отвечающая модель. Кандидаты пробуются по порядку.',
@@ -2031,6 +2085,10 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
         'โมเดลเสียงที่อ่านคำตอบของผู้ช่วยออกเสียงเมื่อผู้ใช้กด "อ่านออกเสียง" ลองตามลำดับ รองรับโมเดล Gemini TTS (ชื่อที่ลงท้ายด้วย -tts) และ OpenAI tts-1 / tts-1-hd ส่วนโมเดลอื่นจะถูกข้าม',
       ttsVoiceEmpty:
         'ยังไม่ได้ตั้งค่าเสียง: ปุ่ม "อ่านออกเสียง" จะยังแสดงแต่เป็นสีจางสำหรับผู้ใช้ทุกคนจนกว่าคุณจะเพิ่มเสียง',
+      harnessCouncilTitle: 'สภา Harness',
+      harnessCouncilDescription:
+        'โมเดลเหล่านี้ตัดสินใจร่วมกันแบบขนานว่าข้อความต้องการการค้นคว้าหรือไม่ ควรค้นคว้าลึกเพียงใด และควรค้นหาในภาษาใด ระบบจะถามโมเดลที่เปิดใช้งานทั้งหมดพร้อมกันและเสียงข้างมากเป็นฝ่ายชนะ หากไม่มีโมเดลใดตอบทันเวลา ประตูการค้นคว้าด้านล่างจะตัดสินใจเพียงลำพัง แนะนำให้ใช้สามโมเดลขึ้นไป',
+      harnessCouncilEmpty: 'ไม่ได้ตั้งค่าสมาชิกสภาไว้ ประตูการค้นคว้าด้านล่างจึงตัดสินใจเพียงลำพัง',
       researchGateTitle: 'ประตูการค้นคว้า',
       researchGateDescription:
         'โมเดลที่ถูกถามว่าข้อความนี้ต้องใช้เว็บหรือไม่ ก่อนที่โมเดลผู้ตอบจะทำงาน ตัวเลือกจะถูกลองตามลำดับ',
@@ -2202,6 +2260,10 @@ export const SMART_ROUTER_ADMIN_TRANSLATIONS: Record<Locale, SmartRouterAdminLoc
       ttsVoiceDescription:
         '用户点击“朗读”时，用于朗读助手回复的语音模型。按顺序尝试。支持 Gemini TTS 模型（名称以 -tts 结尾）以及 OpenAI 的 tts-1 / tts-1-hd；其他模型会被跳过。',
       ttsVoiceEmpty: '尚未配置语音：在添加之前，“朗读”按钮对所有用户仍然可见，但会显示为灰色。',
+      harnessCouncilTitle: 'Harness 委员会',
+      harnessCouncilDescription:
+        '这些模型以并行方式共同决定：一条消息是否需要研究、研究要多深，以及用哪些语言搜索。所有已启用的模型会被同时询问，以多数意见为准；如果没有模型在时限内回答，则由下方的研究门控单独决定。建议配置三个或更多模型。',
+      harnessCouncilEmpty: '未配置任何委员会成员，因此由下方的研究门控单独决定。',
       researchGateTitle: '研究门控',
       researchGateDescription:
         '在任何回答模型运行之前，用于判断该消息是否需要联网的模型。候选模型按顺序依次尝试。',

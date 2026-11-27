@@ -1,3 +1,4 @@
+import type { HarnessCouncilVerdict } from './harness-council.types';
 import type { PlannedResearchAction } from '../../../common/enums/planned-research-action.enum';
 import type { ResearchRenderHint } from '../../../common/enums/research-render-hint.enum';
 
@@ -7,6 +8,8 @@ export type ResearchGateVerdict = {
   needsWeb: boolean;
   /** Short justification, logged so a wrong verdict can be traced to its cause. */
   reason: string;
+  /** Present when the harness council decided (depth, languages, sub-questions, who voted). */
+  council?: HarnessCouncilVerdict;
 };
 
 /** The only field the gate reads back from the runtime's generate endpoint. */

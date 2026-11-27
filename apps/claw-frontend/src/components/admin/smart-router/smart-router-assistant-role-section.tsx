@@ -14,7 +14,9 @@ import { SmartRouterAssistantAddForm } from './smart-router-assistant-add-form';
  * One assistant-model role: its ordered candidates, add and remove.
  *
  * Candidates are tried in order, so the first row is the one that normally
- * answers and the rest exist for when it cannot be reached. The models used
+ * answers and the rest exist for when it cannot be reached. The harness
+ * council (`asksAllInParallel`) is the exception: every enabled row is asked at
+ * once, so none is badged "First choice". The models used
  * to live in environment variables or in code (the file writers were
  * hard-coded), which meant a redeploy per change and no validation at all.
  */
@@ -23,6 +25,7 @@ export function SmartRouterAssistantRoleSection({
   titleKey,
   descriptionKey,
   emptyKey,
+  asksAllInParallel = false,
   t,
 }: SmartRouterAssistantRoleSectionProps): React.ReactElement {
   const { entries, isLoading, isError, error, replace, isReplacePending } =
@@ -75,7 +78,7 @@ export function SmartRouterAssistantRoleSection({
                     <Badge variant="outline">
                       {t(SMART_ROUTER_PROVIDER_LABEL_KEYS[entry.provider])}
                     </Badge>
-                    {index === 0 ? (
+                    {index === 0 && !asksAllInParallel ? (
                       <Badge variant="secondary">
                         {t('smartRouterAdmin.assistant.firstChoiceBadge')}
                       </Badge>

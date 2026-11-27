@@ -59,6 +59,11 @@ answers, `isExplicitWebRequest` (a lookup verb AND a web word, or "google it") t
 an outage, never a second detector: a model verdict, yes or no, always wins. Without it
 the model answers "I cannot search the internet" to "please search internet for X".
 
+8b. **A council decides first** ([ADR-223](../docs/13-adr/adr-223-harness-council-decides-research.md)). When the admin's
+`HARNESS_COUNCIL` role has members, they are asked in parallel and the majority decides `needsWeb` and the depth;
+`plan` keeps the planner's query and URLs but follows the majority. A user's link and a plain order to search are never
+overruled. The single-model gate is the fallback, never removed.
+
 9. **Say how a page was read, from what was measured.** A page an escalated fetch tier
    served is narrated (`PAGE_READ`, built by `pageReadNarrations` from `EvidenceItem.fetch`),
    on every research path. Kind and outcome only: no URL, status, body or error text. A cache

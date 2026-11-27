@@ -1870,6 +1870,15 @@ Chat checks priced model classes from routing-service before provider execution.
 `POST /chat-messages/model-access` (ADR-198, `ModelAccessController`) tells the model picker which of up to 300 `{provider, model}` pairs the signed-in user may choose. It answers from `AccessControlService.isPrimaryModelAllowed`, the same function `assertModelAllowed` uses, with classes from one bulk `ModelExposureClient.getCostClasses` call to routing-service. A model routing could not answer for is not allowed, as on send. It decides nothing; the send path is still the gate.
 The cost-class cache key is `costClassKey(provider, model)` (a JSON pair), never `provider/model`: a model id can contain `/`, so a crafted provider name could otherwise overwrite a real model's cached class for everyone. `getCostClasses` (the picker's bulk lookup) only reads the gate's cache; it never writes to it, because its pairs come from the caller.
 
+## Harness council (ADR-223, 2026-11-27)
+
+`HarnessCouncilService` asks every `HARNESS_COUNCIL` member (routing assistant models, 60 s cache) in parallel and
+decides at the first strict majority of members ASKED (`isCouncilDecided`); a tie researches. It borrows the gate's
+`generate` (JSON, thinking off). `ResearchGateService.needsWeb` asks it first; `plan` runs it beside the planner and
+`applyCouncilToPlan` applies the majority (never over a user link or a plain order to search). Null → the single-model
+chain. Log: `council: needsWeb=… depth=… answered=x/y majority=[…] languages=[…] ms=…`. Specs:
+`services/__tests__/harness-council.spec.ts`.
+
 ## Research gateway (ADR-212)
 
 `utilities/research-gateway.utility.ts` is the ONLY code that calls research-service (rule 50, rule 59). `gatewaySearch` (user route), `gatewaySearchForUser` (service-token route; search-first and the `web_search` tool have no bearer), `gatewayFetchPages` (parallel batch, one shared phase deadline), `gatewayRun` (whole run), `gatewayToolFetch` (`web_fetch`). It never throws: `ok: false` plus a `ResearchGatewayFailure` (`TIMEOUT`, `HTTP_ERROR`, `EXCEPTION`, `UNAVAILABLE`).

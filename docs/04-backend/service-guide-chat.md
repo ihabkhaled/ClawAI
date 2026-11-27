@@ -1163,6 +1163,16 @@ durationMs, errorCode?}`. plugin-service owns ownership, plan gates, consent, qu
   "not approved"); no tool-capable-model preference in AUTO routing; no deferred catalog loading; own MCP servers are
   not offered by `resolve` yet. The two plugin-service internal routes exist (`PluginInternalController`, integrated 2026-10-14).
 
+## Harness council (ADR-223)
+
+The research decision is taken by the admin's `HARNESS_COUNCIL` models (routing assistant models; defaults `beam`,
+`deepseek-v4.1-flash`, `mimo-v2.6-flash`, `minimax-m3.1-flash`), asked in parallel by `HarnessCouncilService`. Each
+returns `{needsWeb, depth 0-5, languages, subQuestions, reason}`; the decision is taken at the first strict majority of
+members asked (a tie researches), depth = upper median of the winners, languages by count, sub-questions interleaved.
+`needsWeb` uses it first; `plan` runs it beside the planner and `applyCouncilToPlan` lets the majority decide whether
+and how deep (page floor per depth `HARNESS_COUNCIL_DEPTH_MIN_PAGES`), keeping the planner's query/URLs and never
+overruling a user link or a plain order to search. No council or no answer → the single-model `RESEARCH_GATE` chain.
+
 ## Research gateway (ADR-212)
 
 Every chat surface reaches research-service through one client, `utilities/research-gateway.utility.ts`; the old per-surface clients (enricher, search-first, orchestrator, explicit modes, context assembly) are gone, and `research-gateway-parity.spec.ts` fails if one comes back.

@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SmartRouterAssistantTab } from '@/components/admin/smart-router/smart-router-assistant-tab';
 
@@ -12,6 +12,90 @@ vi.mock('@/components/admin/smart-router/smart-router-assistant-add-form', () =>
 const t = (key: string): string => key;
 
 describe('SmartRouterAssistantTab', () => {
+  beforeEach(() => {
+    useAssistantModels.mockReset();
+  });
+
+  // The harness council asks every member IN PARALLEL and merges their votes;
+  // when none answers in time the research gate decides alone, so it sits first.
+  it('shows the harness council first, reading its own role, with its parallel-vote copy', () => {
+    const entriesByRole: Record<string, readonly object[]> = {
+      HARNESS_COUNCIL: [
+        {
+          id: 'c1',
+          order: 1,
+          provider: 'OLLAMA_CLOUD',
+          modelAlias: 'deepseek-v4.1-flash',
+          enabled: true,
+          timeoutMs: 8000,
+          maxTokens: 512,
+          deploymentId: null,
+        },
+        {
+          id: 'c2',
+          order: 2,
+          provider: 'OLLAMA_CLOUD',
+          modelAlias: 'mimo-v2.6-flash',
+          enabled: true,
+          timeoutMs: 8000,
+          maxTokens: 512,
+          deploymentId: null,
+        },
+      ],
+      RESEARCH_GATE: [
+        {
+          id: 'g1',
+          order: 1,
+          provider: 'GEMINI',
+          modelAlias: 'gemini-2.5-flash',
+          enabled: true,
+          timeoutMs: 5000,
+          maxTokens: 256,
+          deploymentId: null,
+        },
+      ],
+    };
+    useAssistantModels.mockImplementation((role: string) => ({
+      entries: entriesByRole[role] ?? [],
+      isLoading: false,
+      isError: false,
+      error: null,
+      replace: vi.fn(),
+      isReplacePending: false,
+    }));
+
+    render(<SmartRouterAssistantTab t={t} />);
+
+    expect(useAssistantModels.mock.calls[0]?.[0]).toBe('HARNESS_COUNCIL');
+    const titles = screen.getAllByText(/^smartRouterAdmin\.assistant\.\w+Title$/);
+    expect(titles[0]).toHaveTextContent('smartRouterAdmin.assistant.harnessCouncilTitle');
+    expect(titles[1]).toHaveTextContent('smartRouterAdmin.assistant.researchGateTitle');
+    expect(
+      screen.getByText('smartRouterAdmin.assistant.harnessCouncilDescription'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('deepseek-v4.1-flash')).toBeInTheDocument();
+    expect(screen.getByText('mimo-v2.6-flash')).toBeInTheDocument();
+    // Council members are asked at once, so none is a "first choice"; the
+    // research gate is still tried in order and keeps its badge.
+    expect(screen.getAllByText('smartRouterAdmin.assistant.firstChoiceBadge')).toHaveLength(1);
+  });
+
+  it('says the research gate decides alone when no council member is configured', () => {
+    useAssistantModels.mockImplementation(() => ({
+      entries: [],
+      isLoading: false,
+      isError: false,
+      error: null,
+      replace: vi.fn(),
+      isReplacePending: false,
+    }));
+
+    render(<SmartRouterAssistantTab t={t} />);
+
+    expect(useAssistantModels).toHaveBeenCalledWith('HARNESS_COUNCIL');
+    expect(screen.getByText('smartRouterAdmin.assistant.harnessCouncilEmpty')).toBeInTheDocument();
+  });
+
   // The file writer models used to be hard-coded; they are an admin choice now.
   it('shows the research gate and the file writer, each with its own role', () => {
     useAssistantModels.mockImplementation((role: string) => ({

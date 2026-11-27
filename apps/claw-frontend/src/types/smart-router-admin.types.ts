@@ -382,7 +382,14 @@ export type UseSmartRouterSelectableDeploymentsResult = {
   isError: boolean;
 };
 
-/** A model job that runs beside routing rather than inside it. */
+/**
+ * A model job that runs beside routing rather than inside it.
+ *
+ * Unlike every other role, the council asks ALL enabled entries in parallel
+ * and merges their answers (majority on "research or not", depth, languages,
+ * sub-questions). When no member answers in time, RESEARCH_GATE decides alone.
+ */
+export const ASSISTANT_MODEL_ROLE_HARNESS_COUNCIL = 'HARNESS_COUNCIL';
 export const ASSISTANT_MODEL_ROLE_RESEARCH_GATE = 'RESEARCH_GATE';
 export const ASSISTANT_MODEL_ROLE_FILE_WRITER = 'FILE_WRITER';
 export const ASSISTANT_MODEL_ROLE_VISION_HELPER = 'VISION_HELPER';
@@ -432,6 +439,11 @@ export type SmartRouterAssistantRoleSectionProps = {
   titleKey: string;
   descriptionKey: string;
   emptyKey: string;
+  /**
+   * True for a role whose entries are all asked at once (the harness council),
+   * so no row is badged "First choice". Omitted: entries are tried in order.
+   */
+  asksAllInParallel?: boolean;
   t: TranslateFunction;
 };
 

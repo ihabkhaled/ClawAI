@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { declaredHost } from '@claw/shared-utilities';
 
 import { AppConfig } from '../../../app/config/app.config';
@@ -36,7 +36,9 @@ import type {
   ResearchPlan,
 } from '../types/research-gate.types';
 import { parseResearchGateVerdict } from '../utilities/research-gate.utility';
+import { applyCouncilToPlan } from '../utilities/harness-council.utility';
 import { parseCrawlFollowUp, parseResearchPlan } from '../utilities/research-plan.utility';
+import { HarnessCouncilService } from './harness-council.service';
 
 /**
  * Asks a small model whether this turn needs the internet, before answering it.
@@ -84,10 +86,21 @@ export class ResearchGateService {
   private candidates: readonly ResearchGateCandidate[] | null = null;
   private candidatesExpireAt = 0;
 
+  /**
+   * The harness council decides first when an admin configured one (research engine, 2026-11-27); this gate's own
+   * single-model chain is the fallback. Optional so a hand-built gate (specs) keeps the single-model behaviour.
+   */
+  constructor(@Optional() private readonly council?: HarnessCouncilService) {}
+
   async needsWeb(message: string): Promise<ResearchGateVerdict> {
     const cached = this.readCache(message);
     if (cached !== null) {
       return cached;
+    }
+    const councilVerdict = await this.askCouncil(message);
+    if (councilVerdict !== null) {
+      this.writeCache(message, councilVerdict);
+      return councilVerdict;
     }
     const candidates = await this.resolveCandidates();
     if (candidates.length === 0) {
@@ -123,6 +136,45 @@ export class ResearchGateService {
     // caller in the same turn will not reach one either, and re-proving that
     // costs another full round of timeouts.
     this.writeCache(message, verdict);
+    return verdict;
+  }
+
+  /**
+   * The council's verdict as a gate verdict, or null when no council is configured or none of it answered. A plain
+   * order to use the internet always researches, whatever the vote: refusing it is the "I cannot search" bug.
+   */
+  private async askCouncil(message: string): Promise<ResearchGateVerdict | null> {
+    const council = await this.council?.decide(message, (candidate, prompt, minOutputTokens) =>
+      this.generate(candidate, prompt, minOutputTokens),
+    );
+    if (council === undefined || council === null) {
+      return null;
+    }
+    const tally = `${String(council.majority.length)}/${String(council.answered)} of ${String(council.asked)}`;
+    if (!council.needsWeb && isExplicitWebRequest(message)) {
+      return {
+        needsWeb: true,
+        reason: `explicit web request overrides the council (${tally} said no)`,
+        council: { ...council, needsWeb: true, depth: Math.max(council.depth, 1) },
+      };
+    }
+    return {
+      needsWeb: council.needsWeb,
+      reason: `council ${tally} (${council.majority.join(', ')}) depth ${String(council.depth)}`,
+      council,
+    };
+  }
+
+  /** The council's verdict for this message: the one needsWeb already cached, else a fresh vote (cached). */
+  private async councilVerdictFor(message: string): Promise<ResearchGateVerdict | null> {
+    const cached = this.readCache(message);
+    if (cached?.council !== undefined) {
+      return cached;
+    }
+    const verdict = await this.askCouncil(message);
+    if (verdict !== null) {
+      this.writeCache(message, verdict);
+    }
     return verdict;
   }
 
@@ -208,6 +260,32 @@ export class ResearchGateService {
       hasAttachments: attachmentDigest.length > 0,
       excludedUrls: attachmentUrls.filter((url) => !userUrls.includes(url)),
     };
+    // The council and the planner run side by side: the planner writes the query, URLs and narration, the
+    // council's majority decides WHETHER to research and how deep (research engine, 2026-11-27).
+    const [verdict, planned] = await Promise.all([
+      this.councilVerdictFor(message),
+      this.planWithModels(message, attachmentDigest, userUrls, planOptions),
+    ]);
+    const plan = applyCouncilToPlan(planned, verdict?.council, {
+      message,
+      hasUserLinks: userUrls.length > 0,
+      explicitWebRequest: isExplicitWebRequest(message),
+    });
+    if (plan !== planned) {
+      this.logger.log(
+        `plan: council changed action=${planned.action}->${plan.action} maxPages=${String(planned.maxPages)}->${String(plan.maxPages)} (${plan.decidedBy ?? ''})`,
+      );
+    }
+    return plan;
+  }
+
+  /** The admin's planner models, walked in order until one returns a usable plan; the user's own URLs otherwise. */
+  private async planWithModels(
+    message: string,
+    attachmentDigest: string,
+    userUrls: string[],
+    planOptions: { hasAttachments: boolean; excludedUrls: string[] },
+  ): Promise<ResearchPlan> {
     const candidates = await this.resolveCandidates();
     const digestBlock =
       attachmentDigest.length > 0

@@ -130,4 +130,18 @@ export const ASSISTANT_MODEL_SEED_ENTRIES: readonly AssistantModelSeedEntry[] = 
     timeoutMs: 60_000,
     maxTokens: 16_384,
   },
+  // HARNESS_COUNCIL: every member is asked at once and the votes are merged (2026-11-27, owner's choice). Large
+  // Ollama Cloud models with ~1M-token windows. Measured on production (JSON mode, thinking off, one Arabic
+  // research question): deepseek-v4.1-flash 0.8 s, mimo-v2.6-flash 1.7 s, minimax-m3.1-flash 2.9 s, beam 6.5 s.
+  // 700 output tokens: minimax was cut off at 400 on an Arabic plan. 10 s so beam still counts.
+  ...(['beam', 'deepseek-v4.1-flash', 'mimo-v2.6-flash', 'minimax-m3.1-flash'] as const).map(
+    (modelAlias, index) => ({
+      role: AssistantModelRole.HARNESS_COUNCIL,
+      order: index + 1,
+      provider: RouterProvider.OLLAMA_CLOUD,
+      modelAlias,
+      timeoutMs: 10_000,
+      maxTokens: 700,
+    }),
+  ),
 ]);

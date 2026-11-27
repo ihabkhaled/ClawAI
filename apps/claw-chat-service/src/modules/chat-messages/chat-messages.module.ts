@@ -18,6 +18,7 @@ import { TaskDecompositionManager } from './managers/task-decomposition.manager'
 import { ChatExecutionManager } from './managers/chat-execution.manager';
 import { GeminiFilesApiManager } from './managers/gemini-files-api.manager';
 import { ConsensusExecutionManager } from './managers/consensus-execution.manager';
+import { HarnessCouncilService } from './services/harness-council.service';
 import { ResearchGateService } from './services/research-gate.service';
 import { NarrationService } from './services/narration.service';
 import { ResearchOrchestratorManager } from './managers/research-orchestrator.manager';
@@ -124,6 +125,7 @@ import { RuntimeV2ThreadActivityService } from './services/runtime-v2-thread-act
     RuntimeV2ThreadActivityController,
   ],
   providers: [
+    HarnessCouncilService,
     ResearchGateService,
     // @mentioned plugin tools (rule 59): the loop is reached from the callProvider chokepoint;
     // the port is plugin-service's `/internal/plugins/*` routes.

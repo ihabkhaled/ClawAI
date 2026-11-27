@@ -277,6 +277,10 @@ enum AssistantModelRole {
   /// Reads an assistant reply aloud (text-to-speech, multimodal batch 9).
   /// chat-service tries candidates in order; metered on PaygSurface.TTS.
   TTS_VOICE
+  /// Harness council (research engine, 2026-11-27): ALL enabled entries are asked IN PARALLEL whether a turn needs
+  /// research, how deep (0-5), in which languages and with which sub-questions; chat-service merges the votes and
+  /// decides as soon as a majority cannot be overturned. Falls back to RESEARCH_GATE when none answers.
+  HARNESS_COUNCIL
 }
 
 enum RouterChainEntryRole {

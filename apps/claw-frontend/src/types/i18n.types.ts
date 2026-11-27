@@ -7467,6 +7467,9 @@ export type SmartRouterAdminLocaleTranslation = {
     ttsVoiceTitle: string;
     ttsVoiceDescription: string;
     ttsVoiceEmpty: string;
+    harnessCouncilTitle: string;
+    harnessCouncilDescription: string;
+    harnessCouncilEmpty: string;
     researchGateTitle: string;
     researchGateDescription: string;
     emptyMeansDisabled: string;

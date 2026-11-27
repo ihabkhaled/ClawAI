@@ -483,6 +483,13 @@ The general rule for this `<head>`: a component rendered there must produce the
 `AdSenseHead` both return `null` when unconfigured, which is safe — the count
 matches on both sides. A strategy that renders on only one side is not.
 
+## Smart Router → Assistant models: the harness council (ADR-223, 2026-11-27)
+
+The Assistant models tab renders one `smart-router-assistant-role-section.tsx` per role. `HARNESS_COUNCIL` comes first
+(`ASSISTANT_MODEL_ROLE_HARNESS_COUNCIL`), with `asksAllInParallel` so no row is badged "First choice": every enabled
+model is asked at once and the majority decides research. Copy `harnessCouncilTitle/Description/Empty` in all 13
+locales (`smart-router-admin-translations.ts`). Same GET/PUT `/routing/assistant-models/:role` as the other roles.
+
 ## Model prices: `/admin/smart-router/model-costs`
 
 The operator surface for `ModelCostVersion`. Linked from the Smart Router admin

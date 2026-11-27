@@ -1,6 +1,7 @@
 import { Separator } from '@/components/ui/separator';
 import {
   ASSISTANT_MODEL_ROLE_FILE_WRITER,
+  ASSISTANT_MODEL_ROLE_HARNESS_COUNCIL,
   ASSISTANT_MODEL_ROLE_RESEARCH_GATE,
   ASSISTANT_MODEL_ROLE_TTS_VOICE,
   ASSISTANT_MODEL_ROLE_VISION_HELPER,
@@ -11,6 +12,9 @@ import { SmartRouterAssistantRoleSection } from './smart-router-assistant-role-s
 
 /**
  * The small models that do jobs around an answer, each an admin choice:
+ * - Harness council: several models asked IN PARALLEL whether a turn needs
+ *   research, how deep and in which languages; the majority wins. When none
+ *   answers in time, the research gate below decides alone.
  * - Research gate: decides whether and how a turn uses the web.
  * - File writer: writes the content of an AI-generated file (F0, 2026-09-19;
  *   they were hard-coded and failed whenever the admin had not exposed them).
@@ -22,6 +26,15 @@ import { SmartRouterAssistantRoleSection } from './smart-router-assistant-role-s
 export function SmartRouterAssistantTab({ t }: SmartRouterAssistantTabProps): React.ReactElement {
   return (
     <div className="space-y-8">
+      <SmartRouterAssistantRoleSection
+        role={ASSISTANT_MODEL_ROLE_HARNESS_COUNCIL}
+        titleKey="smartRouterAdmin.assistant.harnessCouncilTitle"
+        descriptionKey="smartRouterAdmin.assistant.harnessCouncilDescription"
+        emptyKey="smartRouterAdmin.assistant.harnessCouncilEmpty"
+        asksAllInParallel
+        t={t}
+      />
+      <Separator />
       <SmartRouterAssistantRoleSection
         role={ASSISTANT_MODEL_ROLE_RESEARCH_GATE}
         titleKey="smartRouterAdmin.assistant.researchGateTitle"
