@@ -9,7 +9,7 @@ Welcome to the **ClawAI engineering and product Wiki**. This Wiki is generated f
 ## Current repository snapshot
 
 - **<!-- count:workspaces -->29<!-- /count --> npm workspaces**: <!-- count:services -->22<!-- /count --> backend services + 1 frontend + <!-- count:sharedPackages -->6<!-- /count --> shared packages.
-- **<!-- count:specFiles -->3099<!-- /count --> test files** tracked by the generated test manifest.
+- **<!-- count:specFiles -->3101<!-- /count --> test files** tracked by the generated test manifest.
 - **669 API endpoints** in the generated endpoint manifest.
 - **178 RabbitMQ event definitions** in the event graph.
 - **355 environment variables** in the generated environment manifest.

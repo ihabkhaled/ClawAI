@@ -15,6 +15,9 @@ import { useAdminSecuritySettingsPage } from '@/hooks/admin/use-admin-security-s
  * keys. Gated on ADMIN_SYSTEM_VIEW by ROUTE_PERMISSIONS; editing additionally
  * needs the permission the settings PUT enforces (see the controller hook).
  * No rows yet is not an empty state: every field then shows its default.
+ * The captcha cards also say what is really in force (keys may come from the
+ * server environment), and the Email domains card shows the always-on built-in
+ * list and an address check.
  */
 export default function AdminSecuritySignupPage(): ReactElement {
   const page = useAdminSecuritySettingsPage();
@@ -41,6 +44,11 @@ export default function AdminSecuritySignupPage(): ReactElement {
             {page.t('adminSecurity.readOnly')}
           </p>
         )}
+        {page.isStatusUnavailable ? (
+          <p className="text-muted-foreground text-sm" data-testid="security-status-unavailable">
+            {page.t('adminSecurity.status.loadFailed')}
+          </p>
+        ) : null}
         {page.groups.map((group) => (
           <SecuritySettingsGroupCard
             key={group.definition.group}
@@ -48,6 +56,9 @@ export default function AdminSecuritySignupPage(): ReactElement {
             values={page.values}
             errors={page.errors}
             secretStatus={page.secretStatus}
+            placeholders={page.placeholders}
+            captchaStatus={page.captchaStatus[group.definition.group]}
+            emailTools={page.emailTools[group.definition.group]}
             disabled={!page.canEdit || page.isSaving}
             onChange={page.setValue}
             t={page.t}

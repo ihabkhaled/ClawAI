@@ -44,6 +44,10 @@ export type AdminSecurityTranslation = {
     secretHelp: string;
     secretConfigured: string;
     secretNotConfigured: string;
+    /** The secret in force comes from the server environment. */
+    secretFromServer: string;
+    /** `{value}`: the site key the server environment supplies while the box is empty. */
+    siteKeyFromServer: string;
     minScore: string;
     minScoreHelp: string;
     powDifficulty: string;
@@ -63,6 +67,38 @@ export type AdminSecurityTranslation = {
     scoreRange: string;
     domainList: string;
     tooLong: string;
+  };
+  /** What a captcha card has in force (GET /admin/security/sign-up/status). */
+  status: {
+    on: string;
+    off: string;
+    /** `{siteKey}` / `{secretKey}`: one of the three source labels below. */
+    keySources: string;
+    sourceSetting: string;
+    sourceEnvironment: string;
+    sourceNone: string;
+    overrideNote: string;
+    loadFailed: string;
+  };
+  /** The Email domains card: the built-in list and the address check. */
+  emailCheck: {
+    /** `{count}`: the built-in list size, already formatted. */
+    builtInCount: string;
+    label: string;
+    placeholder: string;
+    submit: string;
+    checking: string;
+    help: string;
+    builtInList: string;
+    adminBlocked: string;
+    adminAllowed: string;
+    noMailServer: string;
+    mailServerFound: string;
+    mailCheckInconclusive: string;
+    allowed: string;
+    blocked: string;
+    invalid: string;
+    failed: string;
   };
   linkedAccounts: {
     open: string;

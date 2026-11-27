@@ -8,14 +8,16 @@ import type { SecuritySettingInputProps } from '@/types/admin-security-settings.
 
 /**
  * One setting. A secret is write-only: the box is always empty, its placeholder
- * says whether a value is stored, and anything typed replaces it on save. Other
- * fields show the auth-service default as their placeholder, since an empty
- * value means "use the default".
+ * says where the secret in force comes from (this page, the server, nowhere),
+ * and anything typed replaces it on save. An empty site key shows the key the
+ * server is using; other fields show the auth-service default, since an empty
+ * value means "use the default". The placeholder is resolved by the controller.
  */
 export function SecuritySettingInput({
   field,
   value,
   error,
+  placeholder,
   isSecretConfigured,
   disabled,
   onChange,
@@ -30,6 +32,7 @@ export function SecuritySettingInput({
       .join(' ') || undefined;
   const isSecret = field.kind === SecuritySettingKind.SECRET;
   const isList = field.kind === SecuritySettingKind.DOMAIN_LIST;
+  const placeholderText = placeholder === null ? undefined : t(placeholder.key, placeholder.params);
 
   return (
     <div className="min-w-0 space-y-2">
@@ -41,11 +44,7 @@ export function SecuritySettingInput({
           id={inputId}
           autoComplete="new-password"
           value={value}
-          placeholder={
-            isSecretConfigured
-              ? t('adminSecurity.fields.secretConfigured')
-              : t('adminSecurity.fields.secretNotConfigured')
-          }
+          placeholder={placeholderText}
           disabled={disabled}
           error={error !== undefined}
           aria-describedby={describedBy}
@@ -69,11 +68,7 @@ export function SecuritySettingInput({
         <Input
           id={inputId}
           value={value}
-          placeholder={
-            field.defaultValue === ''
-              ? undefined
-              : t('adminSecurity.fields.defaultPlaceholder', { value: field.defaultValue })
-          }
+          placeholder={placeholderText}
           inputMode={field.kind === SecuritySettingKind.TEXT ? undefined : 'decimal'}
           disabled={disabled}
           error={error !== undefined}

@@ -1004,6 +1004,16 @@
         },
         {
           "method": "GET",
+          "route": "/admin/security/sign-up/email-check",
+          "source": "apps/claw-auth-service/src/modules/anti-abuse/controllers/admin-signup-protection.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/security/sign-up/status",
+          "source": "apps/claw-auth-service/src/modules/anti-abuse/controllers/admin-signup-protection.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/admin/settings",
           "source": "apps/claw-auth-service/src/modules/system-settings/controllers/admin-system-setting.controller.ts"
         },
@@ -12932,7 +12942,7 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 252
+        "testFiles": 253
       },
       "claw-chat-service": {
         "runner": "vitest",
@@ -12956,7 +12966,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 1095
+        "testFiles": 1096
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -13886,7 +13896,7 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 60,
-    "endpointCount": 1007,
+    "endpointCount": 1009,
     "envVarCount": 401,
     "eventCount": 191,
     "frontendRouteCount": 191,
@@ -13898,7 +13908,7 @@
     "serviceCount": 22,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 3099,
+    "totalTestFiles": 3101,
     "workspaceCount": 29
   }
 }

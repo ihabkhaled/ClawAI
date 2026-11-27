@@ -1,3 +1,6 @@
+/** The request itself is invalid (VALIDATION_FAILED): sending it again unchanged cannot succeed. */
+export const HTTP_STATUS_BAD_REQUEST = 400;
+
 /** The request was understood and refused because the account may not do it (plan or role). */
 export const HTTP_STATUS_FORBIDDEN = 403;
 

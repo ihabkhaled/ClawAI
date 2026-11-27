@@ -184,6 +184,14 @@ export const queryKeys = {
     userLinkedAccounts: (userId: string) => ['admin', 'users', 'linked-accounts', userId] as const,
     // Every SystemSetting row; the Sign-up protection page reads its security.* keys from it.
     systemSettings: ['admin', 'system-settings'] as const,
+    // What is really in force on sign-up: captcha keys from a saved setting OR the
+    // server environment, and the built-in throwaway-list size. Refreshed on save.
+    signupProtectionStatus: ['admin', 'signup-protection', 'status'] as const,
+    // The page's address check, keyed by the value checked. Every save makes them
+    // all stale, since the answer reflects the saved settings.
+    signupEmailChecks: ['admin', 'signup-protection', 'email-check'] as const,
+    signupEmailCheck: (value: string) =>
+      ['admin', 'signup-protection', 'email-check', value] as const,
     // Providers chat-service's credit breaker is skipping (ADR-125 addendum).
     providerBreakers: ['admin', 'provider-breakers'] as const,
   },

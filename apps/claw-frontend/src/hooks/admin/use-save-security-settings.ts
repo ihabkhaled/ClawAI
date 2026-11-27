@@ -9,7 +9,11 @@ import type {
 } from '@/types/admin-security-settings.types';
 import { showToast } from '@/utilities';
 
-/** PUTs the changed security.* keys, then reloads the settings so the form re-seeds. */
+/**
+ * PUTs the changed security.* keys, then reloads the settings (so the form
+ * re-seeds), what is in force (a saved key overrides the server's) and any
+ * address-check answer (it reflects the saved settings).
+ */
 export function useSaveSecuritySettings(): UseSaveSecuritySettingsReturn {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -17,6 +21,8 @@ export function useSaveSecuritySettings(): UseSaveSecuritySettingsReturn {
     mutationFn: (changes: SecuritySettingChange[]) => securitySettingsService.save(changes),
     onSuccess: (result) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.admin.systemSettings });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.signupProtectionStatus });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.signupEmailChecks });
       if (result.failed.length === 0) {
         showToast.success({ title: t('adminSecurity.saved') });
       } else {

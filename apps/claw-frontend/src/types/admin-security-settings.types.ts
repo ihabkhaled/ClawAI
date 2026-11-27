@@ -1,4 +1,11 @@
+import type { FormEvent } from 'react';
+
+import type { CaptchaProvider } from '@/enums/captcha-provider.enum';
+import type { EmailCheckTone } from '@/enums/email-check-tone.enum';
+import type { EmailDomainReason } from '@/enums/email-domain-reason.enum';
+import type { EmailDomainVerdict } from '@/enums/email-domain-verdict.enum';
 import type { LinkedAccountReason } from '@/enums/linked-account-reason.enum';
+import type { SecurityKeySource } from '@/enums/security-key-source.enum';
 import type { SecuritySettingGroup } from '@/enums/security-setting-group.enum';
 import type { SecuritySettingKey } from '@/enums/security-setting-key.enum';
 import type { SecuritySettingKind } from '@/enums/security-setting-kind.enum';
@@ -55,6 +62,83 @@ export type SecuritySettingError = {
 
 export type SecuritySettingErrors = Partial<Record<SecuritySettingKey, SecuritySettingError>>;
 
+/** A line of page copy: an i18n key plus its parameters. */
+export type SecurityCopy = {
+  key: string;
+  params?: Record<string, string | number>;
+};
+
+/** Per field: what its empty box shows as the placeholder, or null for nothing. */
+export type SecuritySettingPlaceholders = Record<SecuritySettingKey, SecurityCopy | null>;
+
+/** One captcha provider as it is in force right now. Never carries a secret. */
+export type CaptchaProviderStatus = {
+  /** True only when both keys resolve, from this page or the server environment. */
+  active: boolean;
+  /** The effective (public) site key, or null when none resolves. */
+  siteKey: string | null;
+  siteKeySource: SecurityKeySource;
+  secretKeySource: SecurityKeySource;
+};
+
+/**
+ * GET /admin/security/sign-up/status: what the settings rows cannot show,
+ * because the production keys live in the server environment and the
+ * throwaway-domain list is built in. Keyed `turnstile` / `recaptcha`.
+ */
+export type SignupProtectionStatus = Record<CaptchaProvider, CaptchaProviderStatus> & {
+  builtInDisposableDomainCount: number;
+};
+
+/** GET /admin/security/sign-up/email-check: the verdict a sign-up with this domain would get, and why. */
+export type EmailDomainCheckResult = {
+  domain: string;
+  verdict: EmailDomainVerdict;
+  reason: EmailDomainReason;
+};
+
+/** The status line of a Turnstile or reCAPTCHA card. */
+export type CaptchaStatusView = {
+  active: boolean;
+  /** i18n keys naming where each key comes from. */
+  siteKeySourceKey: string;
+  secretKeySourceKey: string;
+};
+
+/** Only the captcha cards have one, and only once the status has loaded. */
+export type CaptchaStatusViews = Partial<Record<SecuritySettingGroup, CaptchaStatusView>>;
+
+/** The last answer of the address check, ready to render. */
+export type EmailCheckOutcome = {
+  tone: EmailCheckTone;
+  messageKey: string;
+  /** The domain the server checked; null when the check did not answer. */
+  domain: string | null;
+};
+
+export type UseSignupProtectionStatusReturn = {
+  status: SignupProtectionStatus | undefined;
+  isError: boolean;
+};
+
+export type UseEmailDomainCheckReturn = {
+  value: string;
+  canSubmit: boolean;
+  isChecking: boolean;
+  outcome: EmailCheckOutcome | null;
+  setValue: (value: string) => void;
+  submit: (event: FormEvent<HTMLFormElement>) => void;
+};
+
+/** What the Email domains card shows below its fields. */
+export type EmailDomainToolsView = UseEmailDomainCheckReturn & {
+  /** The built-in list size, formatted for the reader; null until the status loads. */
+  builtInCount: string | null;
+};
+
+/** Only the Email domains card has one. */
+export type EmailDomainToolsViews = Partial<Record<SecuritySettingGroup, EmailDomainToolsView>>;
+
 /** One PUT the save button sends. */
 export type SecuritySettingChange = {
   key: SecuritySettingKey;
@@ -98,6 +182,11 @@ export type UseAdminSecuritySettingsPageReturn = {
   values: SecuritySettingValues;
   errors: SecuritySettingErrors;
   secretStatus: SecuritySecretStatus;
+  placeholders: SecuritySettingPlaceholders;
+  captchaStatus: CaptchaStatusViews;
+  emailTools: EmailDomainToolsViews;
+  /** The status endpoint failed: the cards then show only what the settings rows say. */
+  isStatusUnavailable: boolean;
   hasChanges: boolean;
   isSaving: boolean;
   setValue: (key: SecuritySettingKey, value: string) => void;
@@ -109,6 +198,9 @@ export type SecuritySettingsGroupCardProps = {
   values: SecuritySettingValues;
   errors: SecuritySettingErrors;
   secretStatus: SecuritySecretStatus;
+  placeholders: SecuritySettingPlaceholders;
+  captchaStatus: CaptchaStatusView | undefined;
+  emailTools: EmailDomainToolsView | undefined;
   disabled: boolean;
   onChange: (key: SecuritySettingKey, value: string) => void;
   t: TranslateFunction;
@@ -118,9 +210,26 @@ export type SecuritySettingInputProps = {
   field: SecuritySettingField;
   value: string;
   error: SecuritySettingError | undefined;
+  placeholder: SecurityCopy | null;
   isSecretConfigured: boolean;
   disabled: boolean;
   onChange: (key: SecuritySettingKey, value: string) => void;
+  t: TranslateFunction;
+};
+
+export type SecurityCaptchaStatusProps = {
+  status: CaptchaStatusView;
+  testId: string;
+  t: TranslateFunction;
+};
+
+export type SecurityEmailDomainToolsProps = {
+  tools: EmailDomainToolsView;
+  t: TranslateFunction;
+};
+
+export type SecurityEmailCheckOutcomeProps = {
+  outcome: EmailCheckOutcome;
   t: TranslateFunction;
 };
 

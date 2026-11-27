@@ -8,11 +8,14 @@ import {
   DEVICE_SIGNAL_NUMBER_MAX,
   DEVICE_SIGNAL_SHORT_MAX_LENGTH,
   DEVICE_SIGNAL_TEXT_MAX_LENGTH,
+  EMAIL_CHECK_VALUE_INVALID,
+  EMAIL_CHECK_VALUE_MAX_LENGTH,
   LINKED_ACCOUNTS_USER_ID_MAX_LENGTH,
   POW_NONCE_PATTERN,
   POW_TOKEN_MAX_LENGTH,
 } from '../constants/anti-abuse.constants';
 import { BotCheckAction } from '../enums/bot-check-action.enum';
+import { toCheckedDomain } from '../utilities/email-domain.utility';
 
 // `botCheck` and `device` are optional IN THE SCHEMA and required by POLICY: a
 // missing check is refused by the service with BOT_CHECK_REQUIRED (428), not by
@@ -65,3 +68,21 @@ export const linkedAccountsParamSchema = z.object({
   userId: z.string().min(1).max(LINKED_ACCOUNTS_USER_ID_MAX_LENGTH),
 });
 export type LinkedAccountsParamDto = z.infer<typeof linkedAccountsParamSchema>;
+
+/** `GET /admin/security/sign-up/email-check?value=`: an address or a bare domain, read as its domain. */
+export const emailCheckQuerySchema = z.object({
+  value: z
+    .string()
+    .trim()
+    .min(1)
+    .max(EMAIL_CHECK_VALUE_MAX_LENGTH)
+    .transform((value, context) => {
+      const domain = toCheckedDomain(value);
+      if (domain === null) {
+        context.addIssue({ code: 'custom', message: EMAIL_CHECK_VALUE_INVALID });
+        return z.NEVER;
+      }
+      return domain;
+    }),
+});
+export type EmailCheckQueryDto = z.infer<typeof emailCheckQuerySchema>;

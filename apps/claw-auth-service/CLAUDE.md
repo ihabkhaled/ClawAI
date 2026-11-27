@@ -786,5 +786,8 @@ reference: [service guide, "Anti-abuse screening"](../../docs/04-backend/service
 - **Login failure windows are not the rate limiter's.** They count `INVALID_CREDENTIALS` only, per IP and per typed
   address, for any address (known or not), so "checks required" is not an enumeration oracle. Do not fold them
   into `AUTH_RATE_LIMIT_POLICIES`: an address-only limiter window is a lockout a stranger can trigger.
+- **Admin page companions:** `GET /admin/security/sign-up/status` (is each captcha provider on, are its keys from a
+  saved setting or the server env, built-in list size) and `GET /admin/security/sign-up/email-check?value=` (verdict
+  - reason from `EmailDomainPolicyService.explain`, the same rules `evaluate` runs). ADMIN + `ADMIN_SYSTEM_VIEW`.
 - **Local tests:** Windows Smart App Control blocks `@swc/core`, so the suite cannot start on the host; it runs in
   a Linux container from the dev image with `vite` added (vitest 5 has it as a peer and the image lacks it).

@@ -1276,8 +1276,15 @@ Doc: `docs/05-frontend/sign-up-abuse-defences.md`. Traps:
 - Copy: `auth.botCheck.*` + `adminSecurity.*` in `locales/anti-abuse-translations.ts`. DISPOSABLE_EMAIL and
   EMAIL_DOMAIN_UNDELIVERABLE go on the email field; SIGNUP_TEMPORARILY_LIMITED is matched by code BEFORE the bare-429
   fallback (it is the platform pausing sign-ups, not "too many attempts").
-- `/admin/security/sign-up`: secrets are write-only (empty box, "Configured" placeholder, empty box never sent);
+- `/admin/security/sign-up`: secrets are write-only (empty box, empty box never sent);
   route gated on `ADMIN_SYSTEM_VIEW`, saving on `ADMIN_CREDIT_MANAGE` (what `PUT /admin/settings/:key` enforces).
   Linked accounts open from the user detail dialog (`UserLinkedAccountsDialog`, keyed body).
+- The settings rows alone mislead: production captcha keys live in the auth-service ENV and the ~10k built-in
+  throwaway list is always on. `GET /admin/security/sign-up/status` (`useSignupProtectionStatus`) drives the On/Off
+  badge, the key source (SETTING wins, else ENVIRONMENT, else NONE), the secret placeholder per source and the
+  server's site key as an empty site-key box's placeholder; the page still works from the rows if it fails.
+  `GET .../email-check?value=` (`useEmailDomainCheck`, query on Check, `retry: false`, 400 = invalid value) answers
+  from SAVED settings, so a save invalidates `systemSettings`, `signupProtectionStatus` and `signupEmailChecks`.
+  Placeholders are resolved in `utilities/signup-protection-status.utility.ts`, never in the input.
 - CSP: Turnstile/reCAPTCHA hosts are in `script-src` and `frame-src` (`BOT_CHECK_CSP_*_SOURCES`), never in
   `connect-src`/`img-src`.

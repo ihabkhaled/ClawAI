@@ -159,6 +159,15 @@ export const INCIDENT_DISPOSABLE_EMAIL_DOMAINS: readonly string[] = [
   'temp-mail.io',
 ];
 
+/** One DNS label of a checked domain (letters, digits, hyphens; no edge hyphen, checked apart) and its top-level label. */
+export const CHECKED_DOMAIN_LABEL_PATTERN = /^[a-z0-9-]{1,63}$/u;
+export const CHECKED_DOMAIN_TLD_PATTERN = /^[a-z]{2,63}$/u;
+export const CHECKED_DOMAIN_MAX_LENGTH = 253;
+/** Longest value the admin address check accepts (an address is at most 320 characters). */
+export const EMAIL_CHECK_VALUE_MAX_LENGTH = 320;
+/** Validation issue of an address check value that is not an address or a host name. */
+export const EMAIL_CHECK_VALUE_INVALID = 'EMAIL_CHECK_VALUE_INVALID';
+
 export const DISPOSABLE_EMAIL_DOMAINS: ReadonlySet<string> = new Set([
   ...VENDORED_DISPOSABLE_EMAIL_DOMAINS,
   ...INCIDENT_DISPOSABLE_EMAIL_DOMAINS,

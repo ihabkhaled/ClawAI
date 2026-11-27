@@ -1,3 +1,4 @@
+import { SecurityKeySource } from '../enums/security-key-source.enum';
 import type { CaptchaKeys } from '../types/bot-check.types';
 
 /** An integer setting inside [min, max]; anything else (absent, text, out of range) is `fallback`. */
@@ -36,4 +37,17 @@ export function resolveKey(
 /** A provider is on only when BOTH keys are known: a site key alone cannot be verified. */
 export function toCaptchaKeys(siteKey: string, secretKey: string): CaptchaKeys | null {
   return siteKey.length > 0 && secretKey.length > 0 ? { siteKey, secretKey } : null;
+}
+
+/** Where `resolveKey` would take a key from: the saved setting wins, then the environment. */
+export function keySource(
+  settingValue: string | null,
+  environmentValue: string | undefined,
+): SecurityKeySource {
+  if ((settingValue?.trim() ?? '').length > 0) {
+    return SecurityKeySource.SETTING;
+  }
+  return (environmentValue?.trim() ?? '').length > 0
+    ? SecurityKeySource.ENVIRONMENT
+    : SecurityKeySource.NONE;
 }

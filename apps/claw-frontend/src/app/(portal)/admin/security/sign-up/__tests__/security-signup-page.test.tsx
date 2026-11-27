@@ -1,14 +1,22 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import AdminSecuritySignupPage from '@/app/(portal)/admin/security/sign-up/page';
 import { Permission } from '@/enums';
+import { EmailCheckTone } from '@/enums/email-check-tone.enum';
+import { EmailDomainReason } from '@/enums/email-domain-reason.enum';
+import { EmailDomainVerdict } from '@/enums/email-domain-verdict.enum';
+import { SecurityKeySource } from '@/enums/security-key-source.enum';
 import { SecuritySettingKey } from '@/enums/security-setting-key.enum';
+import { ApiClientError } from '@/services/shared/api-client';
+import type { SignupProtectionStatus } from '@/types/admin-security-settings.types';
 
 const mocks = vi.hoisted(() => ({
   list: vi.fn(),
   set: vi.fn(),
+  getStatus: vi.fn(),
+  checkEmail: vi.fn(),
   canEdit: true,
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
@@ -16,6 +24,9 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/repositories/admin/system-settings.repository', () => ({
   systemSettingsRepository: { list: mocks.list, set: mocks.set },
+}));
+vi.mock('@/repositories/admin/signup-protection.repository', () => ({
+  signupProtectionRepository: { getStatus: mocks.getStatus, checkEmail: mocks.checkEmail },
 }));
 vi.mock('@/hooks/auth/use-permissions', () => ({
   usePermissions: () => ({
@@ -30,6 +41,7 @@ vi.mock('@/lib/i18n', () => ({
   useTranslation: () => ({
     t: (key: string, params?: Record<string, string | number>) =>
       params === undefined ? key : `${key}|${JSON.stringify(params)}`,
+    locale: 'en',
   }),
 }));
 vi.mock('@/utilities', async (importOriginal) => ({
@@ -58,6 +70,40 @@ const STORED = [
   },
 ];
 
+/** What GET /status answers for STORED: Turnstile keys saved here, reCAPTCHA not set anywhere. */
+const STATUS_FOR_STORED: SignupProtectionStatus = {
+  turnstile: {
+    active: true,
+    siteKey: '0x4AAA-site',
+    siteKeySource: SecurityKeySource.SETTING,
+    secretKeySource: SecurityKeySource.SETTING,
+  },
+  recaptcha: {
+    active: false,
+    siteKey: null,
+    siteKeySource: SecurityKeySource.NONE,
+    secretKeySource: SecurityKeySource.NONE,
+  },
+  builtInDisposableDomainCount: 10455,
+};
+
+/** Production: nothing saved on the page, both Turnstile keys from the server environment. */
+const STATUS_FROM_ENVIRONMENT: SignupProtectionStatus = {
+  turnstile: {
+    active: true,
+    siteKey: '0x4AAA-env',
+    siteKeySource: SecurityKeySource.ENVIRONMENT,
+    secretKeySource: SecurityKeySource.ENVIRONMENT,
+  },
+  recaptcha: {
+    active: false,
+    siteKey: '6Lc-env',
+    siteKeySource: SecurityKeySource.ENVIRONMENT,
+    secretKeySource: SecurityKeySource.NONE,
+  },
+  builtInDisposableDomainCount: 10455,
+};
+
 function renderPage(): void {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
@@ -75,6 +121,7 @@ describe('/admin/security/sign-up', () => {
     vi.clearAllMocks();
     mocks.canEdit = true;
     mocks.list.mockResolvedValue(STORED);
+    mocks.getStatus.mockResolvedValue(STATUS_FOR_STORED);
     mocks.set.mockImplementation(async (key: string, value: string) => ({
       key,
       value,
@@ -170,5 +217,273 @@ describe('/admin/security/sign-up', () => {
     mocks.list.mockResolvedValue([]);
     fireEvent.click(screen.getByRole('button', { name: 'common.retry' }));
     expect(await screen.findByTestId(`security-group-POW`)).toBeInTheDocument();
+  });
+});
+
+const placeholderOf = (key: SecuritySettingKey): string | null =>
+  field(key).getAttribute('placeholder');
+
+const checkButton = (): HTMLElement =>
+  screen.getByRole('button', { name: /adminSecurity\.emailCheck\.(submit|checking)/u });
+
+async function checkAddress(value: string): Promise<void> {
+  const input = await screen.findByLabelText('adminSecurity.emailCheck.label');
+  fireEvent.change(input, { target: { value } });
+  fireEvent.click(checkButton());
+}
+
+describe('/admin/security/sign-up: what is in force', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.canEdit = true;
+    mocks.list.mockResolvedValue([]);
+    mocks.getStatus.mockResolvedValue(STATUS_FROM_ENVIRONMENT);
+    mocks.set.mockImplementation(async (key: string, value: string) => ({
+      key,
+      value,
+      updatedAt: '',
+    }));
+  });
+
+  it('shows On and the server keys when nothing is saved on the page', async () => {
+    renderPage();
+    const turnstile = await screen.findByTestId('security-status-TURNSTILE');
+    expect(turnstile).toHaveAttribute('data-active', 'true');
+    expect(within(turnstile).getByText('adminSecurity.status.on')).toBeInTheDocument();
+    expect(
+      within(turnstile).getByText(
+        'adminSecurity.status.keySources|{"siteKey":"adminSecurity.status.sourceEnvironment","secretKey":"adminSecurity.status.sourceEnvironment"}',
+      ),
+    ).toBeInTheDocument();
+    expect(within(turnstile).getByText('adminSecurity.status.overrideNote')).toBeInTheDocument();
+    expect(field(SecuritySettingKey.TURNSTILE_SITE_KEY)).toHaveValue('');
+    expect(placeholderOf(SecuritySettingKey.TURNSTILE_SITE_KEY)).toBe(
+      'adminSecurity.fields.siteKeyFromServer|{"value":"0x4AAA-env"}',
+    );
+    expect(placeholderOf(SecuritySettingKey.TURNSTILE_SECRET_KEY)).toBe(
+      'adminSecurity.fields.secretFromServer',
+    );
+  });
+
+  it('shows Off when only one key resolves, naming where each comes from', async () => {
+    renderPage();
+    const recaptcha = await screen.findByTestId('security-status-RECAPTCHA');
+    expect(recaptcha).toHaveAttribute('data-active', 'false');
+    expect(within(recaptcha).getByText('adminSecurity.status.off')).toBeInTheDocument();
+    expect(
+      within(recaptcha).getByText(
+        'adminSecurity.status.keySources|{"siteKey":"adminSecurity.status.sourceEnvironment","secretKey":"adminSecurity.status.sourceNone"}',
+      ),
+    ).toBeInTheDocument();
+    expect(placeholderOf(SecuritySettingKey.RECAPTCHA_SITE_KEY)).toBe(
+      'adminSecurity.fields.siteKeyFromServer|{"value":"6Lc-env"}',
+    );
+    expect(placeholderOf(SecuritySettingKey.RECAPTCHA_SECRET_KEY)).toBe(
+      'adminSecurity.fields.secretNotConfigured',
+    );
+  });
+
+  it('says a key saved on this page is saved here, and shows no server key over it', async () => {
+    mocks.list.mockResolvedValue(STORED);
+    mocks.getStatus.mockResolvedValue(STATUS_FOR_STORED);
+    renderPage();
+    const turnstile = await screen.findByTestId('security-status-TURNSTILE');
+    expect(
+      within(turnstile).getByText(
+        'adminSecurity.status.keySources|{"siteKey":"adminSecurity.status.sourceSetting","secretKey":"adminSecurity.status.sourceSetting"}',
+      ),
+    ).toBeInTheDocument();
+    expect(field(SecuritySettingKey.TURNSTILE_SITE_KEY)).toHaveValue('0x4AAA-site');
+    expect(placeholderOf(SecuritySettingKey.TURNSTILE_SITE_KEY)).toBeNull();
+    expect(placeholderOf(SecuritySettingKey.TURNSTILE_SECRET_KEY)).toBe(
+      'adminSecurity.fields.secretConfigured',
+    );
+    expect(placeholderOf(SecuritySettingKey.RECAPTCHA_SITE_KEY)).toBeNull();
+  });
+
+  it('falls back to the settings rows when the status cannot be loaded', async () => {
+    mocks.list.mockResolvedValue(STORED);
+    mocks.getStatus.mockRejectedValue(new Error('502'));
+    renderPage();
+    expect(await screen.findByTestId('security-status-unavailable')).toHaveTextContent(
+      'adminSecurity.status.loadFailed',
+    );
+    expect(screen.queryByTestId('security-status-TURNSTILE')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('security-built-in-count')).not.toBeInTheDocument();
+    expect(placeholderOf(SecuritySettingKey.TURNSTILE_SECRET_KEY)).toBe(
+      'adminSecurity.fields.secretConfigured',
+    );
+    expect(placeholderOf(SecuritySettingKey.RECAPTCHA_SECRET_KEY)).toBe(
+      'adminSecurity.fields.secretNotConfigured',
+    );
+  });
+
+  it('says the built-in throwaway list is always on, with its size', async () => {
+    renderPage();
+    expect(await screen.findByTestId('security-built-in-count')).toHaveTextContent(
+      'adminSecurity.emailCheck.builtInCount|{"count":"10,455"}',
+    );
+  });
+
+  it('refreshes the status and the last address check after a save', async () => {
+    mocks.checkEmail.mockResolvedValue({
+      domain: 'spam.example',
+      verdict: EmailDomainVerdict.ALLOWED,
+      reason: EmailDomainReason.MAIL_SERVER_FOUND,
+    });
+    renderPage();
+    await screen.findByTestId('security-status-TURNSTILE');
+    await checkAddress('spam.example');
+    await waitFor(() => expect(mocks.checkEmail).toHaveBeenCalledTimes(1));
+    expect(mocks.getStatus).toHaveBeenCalledTimes(1);
+    fireEvent.change(field(SecuritySettingKey.EMAIL_BLOCKED_DOMAINS), {
+      target: { value: 'spam.example' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'adminSecurity.save' }));
+    await waitFor(() => expect(mocks.getStatus).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(mocks.checkEmail).toHaveBeenCalledTimes(2));
+  });
+});
+
+describe('/admin/security/sign-up: check an address', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.canEdit = true;
+    mocks.list.mockResolvedValue(STORED);
+    mocks.getStatus.mockResolvedValue(STATUS_FOR_STORED);
+  });
+
+  it.each([
+    [
+      EmailDomainVerdict.DISPOSABLE,
+      EmailDomainReason.BUILT_IN_LIST,
+      'adminSecurity.emailCheck.builtInList',
+      EmailCheckTone.BLOCKED,
+    ],
+    [
+      EmailDomainVerdict.DISPOSABLE,
+      EmailDomainReason.ADMIN_BLOCKED,
+      'adminSecurity.emailCheck.adminBlocked',
+      EmailCheckTone.BLOCKED,
+    ],
+    [
+      EmailDomainVerdict.ALLOWED,
+      EmailDomainReason.ADMIN_ALLOWED,
+      'adminSecurity.emailCheck.adminAllowed',
+      EmailCheckTone.ALLOWED,
+    ],
+    [
+      EmailDomainVerdict.UNDELIVERABLE,
+      EmailDomainReason.NO_MAIL_SERVER,
+      'adminSecurity.emailCheck.noMailServer',
+      EmailCheckTone.BLOCKED,
+    ],
+    [
+      EmailDomainVerdict.ALLOWED,
+      EmailDomainReason.MAIL_SERVER_FOUND,
+      'adminSecurity.emailCheck.mailServerFound',
+      EmailCheckTone.ALLOWED,
+    ],
+    [
+      EmailDomainVerdict.ALLOWED,
+      EmailDomainReason.MAIL_CHECK_INCONCLUSIVE,
+      'adminSecurity.emailCheck.mailCheckInconclusive',
+      EmailCheckTone.ALLOWED,
+    ],
+  ])('%s / %s reads %s', async (verdict, reason, messageKey, tone) => {
+    mocks.checkEmail.mockResolvedValue({ domain: 'mailinator.com', verdict, reason });
+    renderPage();
+    await checkAddress('  someone@Mailinator.com ');
+    const outcome = await screen.findByTestId('security-email-check-outcome');
+    expect(mocks.checkEmail).toHaveBeenCalledWith('someone@Mailinator.com');
+    expect(outcome).toHaveTextContent(`mailinator.com${messageKey}`);
+    expect(outcome).toHaveAttribute('data-tone', tone);
+  });
+
+  it('falls back to the verdict for a reason this page does not know yet', async () => {
+    mocks.checkEmail.mockResolvedValue({
+      domain: 'new.example',
+      verdict: EmailDomainVerdict.DISPOSABLE,
+      reason: 'SOMETHING_NEW',
+    });
+    renderPage();
+    await checkAddress('new.example');
+    expect(await screen.findByTestId('security-email-check-outcome')).toHaveTextContent(
+      'new.exampleadminSecurity.emailCheck.blocked',
+    );
+  });
+
+  it('says the value is not an address or a domain on a 400', async () => {
+    mocks.checkEmail.mockRejectedValue(
+      new ApiClientError({ message: 'Validation failed', status: 400, code: 'VALIDATION_FAILED' }),
+    );
+    renderPage();
+    await checkAddress('not an address');
+    const outcome = await screen.findByTestId('security-email-check-outcome');
+    expect(outcome).toHaveTextContent('adminSecurity.emailCheck.invalid');
+    expect(outcome).toHaveAttribute('data-tone', EmailCheckTone.ERROR);
+    expect(mocks.checkEmail).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows a generic message when the check fails for another reason', async () => {
+    mocks.checkEmail.mockRejectedValue(new ApiClientError({ message: 'boom', status: 500 }));
+    renderPage();
+    await checkAddress('mailinator.com');
+    expect(await screen.findByTestId('security-email-check-outcome')).toHaveTextContent(
+      'adminSecurity.emailCheck.failed',
+    );
+  });
+
+  it('is disabled while empty and busy while checking', async () => {
+    let answer: (value: unknown) => void = () => undefined;
+    mocks.checkEmail.mockReturnValue(
+      new Promise((resolve) => {
+        answer = resolve;
+      }),
+    );
+    renderPage();
+    await screen.findByLabelText('adminSecurity.emailCheck.label');
+    expect(checkButton()).toBeDisabled();
+    await checkAddress('mailinator.com');
+    await waitFor(() =>
+      expect(checkButton()).toHaveAccessibleName('adminSecurity.emailCheck.checking'),
+    );
+    expect(checkButton()).toBeDisabled();
+    answer({
+      domain: 'mailinator.com',
+      verdict: EmailDomainVerdict.DISPOSABLE,
+      reason: EmailDomainReason.BUILT_IN_LIST,
+    });
+    expect(await screen.findByTestId('security-email-check-outcome')).toHaveTextContent(
+      'adminSecurity.emailCheck.builtInList',
+    );
+    expect(checkButton()).toHaveAccessibleName('adminSecurity.emailCheck.submit');
+  });
+
+  it('asks the server again when the same value is checked again', async () => {
+    mocks.checkEmail.mockResolvedValue({
+      domain: 'mailinator.com',
+      verdict: EmailDomainVerdict.DISPOSABLE,
+      reason: EmailDomainReason.BUILT_IN_LIST,
+    });
+    renderPage();
+    await checkAddress('mailinator.com');
+    await screen.findByTestId('security-email-check-outcome');
+    await waitFor(() => expect(checkButton()).toBeEnabled());
+    fireEvent.click(checkButton());
+    await waitFor(() => expect(mocks.checkEmail).toHaveBeenCalledTimes(2));
+  });
+
+  it('works for a read-only viewer, and checking saves nothing', async () => {
+    mocks.canEdit = false;
+    mocks.checkEmail.mockResolvedValue({
+      domain: 'mailinator.com',
+      verdict: EmailDomainVerdict.DISPOSABLE,
+      reason: EmailDomainReason.BUILT_IN_LIST,
+    });
+    renderPage();
+    await checkAddress('mailinator.com');
+    expect(await screen.findByTestId('security-email-check-outcome')).toBeInTheDocument();
+    expect(mocks.set).not.toHaveBeenCalled();
   });
 });

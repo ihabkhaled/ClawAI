@@ -7,6 +7,7 @@ import {
   DEFAULT_RECAPTCHA_MIN_SCORE,
   DEFAULT_SIGNUP_MAX_PER_10_MIN,
   DEFAULT_SIGNUP_MAX_PER_DEVICE_PER_DAY,
+  DISPOSABLE_EMAIL_DOMAINS,
   POW_DIFFICULTY_MAX,
   POW_DIFFICULTY_MIN,
   RECAPTCHA_MIN_SCORE_CEILING,
@@ -26,12 +27,17 @@ import {
 } from '../constants/anti-abuse.constants';
 import type { CaptchaKeys } from '../types/bot-check.types';
 import type {
+  CaptchaProviderStatus,
+  SignupProtectionStatus,
+} from '../types/signup-protection.types';
+import type {
   SecurityDomainLists,
   SecurityNumberSettings,
   SecuritySettings,
 } from '../types/security-settings.types';
 import { parseDomainList } from '../utilities/email-domain.utility';
 import {
+  keySource,
   parseBoundedInteger,
   parseBoundedNumber,
   resolveKey,
@@ -70,6 +76,48 @@ export class SecuritySettingsService {
       this.domainLists(),
     ]);
     return { turnstile, recaptcha, ...numbers, ...lists };
+  }
+
+  /**
+   * What the admin page cannot read from the settings rows: whether each captcha provider is on, where its
+   * keys come from (a saved setting, or the server environment the rows never show) and the size of the
+   * built-in disposable list. Site keys are public; a secret is never returned.
+   */
+  async status(): Promise<SignupProtectionStatus> {
+    const [turnstile, recaptcha] = await Promise.all([
+      this.providerStatus(
+        SECURITY_SETTING_TURNSTILE_SITE_KEY,
+        SECURITY_SETTING_TURNSTILE_SECRET_KEY,
+        AppConfig.get().TURNSTILE_SITE_KEY,
+        AppConfig.get().TURNSTILE_SECRET_KEY,
+      ),
+      this.providerStatus(
+        SECURITY_SETTING_RECAPTCHA_SITE_KEY,
+        SECURITY_SETTING_RECAPTCHA_SECRET_KEY,
+        AppConfig.get().RECAPTCHA_SITE_KEY,
+        AppConfig.get().RECAPTCHA_SECRET_KEY,
+      ),
+    ]);
+    return { turnstile, recaptcha, builtInDisposableDomainCount: DISPOSABLE_EMAIL_DOMAINS.size };
+  }
+
+  private async providerStatus(
+    siteSetting: string,
+    secretSetting: string,
+    siteEnv: string | undefined,
+    secretEnv: string | undefined,
+  ): Promise<CaptchaProviderStatus> {
+    const [site, secret] = await Promise.all([
+      this.settings.get(siteSetting),
+      this.settings.get(secretSetting),
+    ]);
+    const siteKey = resolveKey(site, siteEnv);
+    return {
+      active: toCaptchaKeys(siteKey, resolveKey(secret, secretEnv)) !== null,
+      siteKey: siteKey.length > 0 ? siteKey : null,
+      siteKeySource: keySource(site, siteEnv),
+      secretKeySource: keySource(secret, secretEnv),
+    };
   }
 
   private async captchaKeys(

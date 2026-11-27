@@ -795,6 +795,14 @@ fails open.
   rows, so the accounts already in the table appear in the linked-accounts view by network.
 - `GET /api/v1/admin/users/:userId/linked-accounts` (ADMIN + `ADMIN_USERS_MANAGE`) -> `{ accounts: [{ id, email,
 status, bannedAt, createdAt, reasons: ('DEVICE' | 'DEVICE_ID' | 'REGISTRATION_IP')[] }] }`, newest first, at most 100. No hash or address is returned. 404 for an unknown user.
+- `GET /api/v1/admin/security/sign-up/status` (ADMIN + `ADMIN_SYSTEM_VIEW`) -> `{ turnstile, recaptcha:
+{ active, siteKey, siteKeySource, secretKeySource }, builtInDisposableDomainCount }`. A source is `SETTING`
+  (saved on the page, wins), `ENVIRONMENT` (server env fallback, which the settings rows never show) or `NONE`.
+  The page reads it so env-provided keys do not look "Not configured". Never returns a secret.
+- `GET /api/v1/admin/security/sign-up/email-check?value=<address or domain>` (ADMIN + `ADMIN_SYSTEM_VIEW`) ->
+  `{ domain, verdict, reason }`, the exact rules a sign-up runs (`EmailDomainPolicyService.explain`): reason
+  `ADMIN_BLOCKED`, `ADMIN_ALLOWED`, `BUILT_IN_LIST`, `NO_MAIL_SERVER`, `MAIL_SERVER_FOUND` or
+  `MAIL_CHECK_INCONCLUSIVE`. A value that is not an address or a host name answers 400 `VALIDATION_FAILED`.
 
 ### Security events
 

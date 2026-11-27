@@ -1,4 +1,8 @@
+import { CaptchaProvider } from '@/enums/captcha-provider.enum';
+import { EmailCheckTone } from '@/enums/email-check-tone.enum';
+import { EmailDomainReason } from '@/enums/email-domain-reason.enum';
 import { LinkedAccountReason } from '@/enums/linked-account-reason.enum';
+import { SecurityKeySource } from '@/enums/security-key-source.enum';
 import { SecuritySettingGroup } from '@/enums/security-setting-group.enum';
 import { SecuritySettingKey } from '@/enums/security-setting-key.enum';
 import { SecuritySettingKind } from '@/enums/security-setting-kind.enum';
@@ -166,6 +170,73 @@ export const SECURITY_SETTING_ERROR_KEYS = {
   domains: 'adminSecurity.errors.domainList',
   tooLong: 'adminSecurity.errors.tooLong',
 } as const;
+
+/** Placeholder of a number or list field with an auth-service default. */
+export const SECURITY_DEFAULT_PLACEHOLDER_KEY = 'adminSecurity.fields.defaultPlaceholder';
+
+/** Placeholder of an empty site-key box while the server environment supplies the key. */
+export const SECURITY_SITE_KEY_FROM_SERVER_KEY = 'adminSecurity.fields.siteKeyFromServer';
+
+/** Which provider's status (GET /admin/security/sign-up/status) each captcha card shows. */
+export const SECURITY_GROUP_CAPTCHA_PROVIDERS: Readonly<
+  Partial<Record<SecuritySettingGroup, CaptchaProvider>>
+> = {
+  [SecuritySettingGroup.TURNSTILE]: CaptchaProvider.TURNSTILE,
+  [SecuritySettingGroup.RECAPTCHA]: CaptchaProvider.RECAPTCHA,
+};
+
+/** The public site-key fields: an empty one shows the key the server is using. */
+export const SECURITY_SITE_KEY_FIELDS: ReadonlySet<SecuritySettingKey> = new Set([
+  SecuritySettingKey.TURNSTILE_SITE_KEY,
+  SecuritySettingKey.RECAPTCHA_SITE_KEY,
+]);
+
+/** "Where the key comes from", as shown on a captcha card. */
+export const SECURITY_KEY_SOURCE_LABEL_KEYS: Readonly<Record<SecurityKeySource, string>> = {
+  [SecurityKeySource.SETTING]: 'adminSecurity.status.sourceSetting',
+  [SecurityKeySource.ENVIRONMENT]: 'adminSecurity.status.sourceEnvironment',
+  [SecurityKeySource.NONE]: 'adminSecurity.status.sourceNone',
+};
+
+/** The placeholder of a write-only secret box, by where the secret in force comes from. */
+export const SECURITY_SECRET_PLACEHOLDER_KEYS: Readonly<Record<SecurityKeySource, string>> = {
+  [SecurityKeySource.SETTING]: 'adminSecurity.fields.secretConfigured',
+  [SecurityKeySource.ENVIRONMENT]: 'adminSecurity.fields.secretFromServer',
+  [SecurityKeySource.NONE]: 'adminSecurity.fields.secretNotConfigured',
+};
+
+/** The address check's answer in plain words, by the reason the server gives. */
+export const EMAIL_CHECK_REASON_MESSAGE_KEYS: Readonly<Record<EmailDomainReason, string>> = {
+  [EmailDomainReason.ADMIN_BLOCKED]: 'adminSecurity.emailCheck.adminBlocked',
+  [EmailDomainReason.ADMIN_ALLOWED]: 'adminSecurity.emailCheck.adminAllowed',
+  [EmailDomainReason.BUILT_IN_LIST]: 'adminSecurity.emailCheck.builtInList',
+  [EmailDomainReason.NO_MAIL_SERVER]: 'adminSecurity.emailCheck.noMailServer',
+  [EmailDomainReason.MAIL_SERVER_FOUND]: 'adminSecurity.emailCheck.mailServerFound',
+  [EmailDomainReason.MAIL_CHECK_INCONCLUSIVE]: 'adminSecurity.emailCheck.mailCheckInconclusive',
+};
+
+/** Address-check copy that does not depend on a reason. */
+export const EMAIL_CHECK_MESSAGE_KEYS = {
+  /** A reason this page does not know yet: fall back to the verdict alone. */
+  allowed: 'adminSecurity.emailCheck.allowed',
+  blocked: 'adminSecurity.emailCheck.blocked',
+  /** 400 VALIDATION_FAILED: the value is neither an address nor a domain. */
+  invalid: 'adminSecurity.emailCheck.invalid',
+  failed: 'adminSecurity.emailCheck.failed',
+} as const;
+
+/** Text colour of the address check's answer. */
+export const EMAIL_CHECK_TONE_CLASS_NAMES: Readonly<Record<EmailCheckTone, string>> = {
+  [EmailCheckTone.ALLOWED]: 'text-success',
+  [EmailCheckTone.BLOCKED]: 'text-destructive',
+  [EmailCheckTone.ERROR]: 'text-destructive',
+};
+
+/** The longest value GET /admin/security/sign-up/email-check accepts (an email address's maximum). */
+export const EMAIL_CHECK_VALUE_MAX_LENGTH = 320;
+
+/** Every Check asks again: the answer depends on the saved settings and on live DNS. */
+export const EMAIL_CHECK_STALE_MS = 0;
 
 /** Badge copy for each reason two accounts are linked. */
 export const LINKED_ACCOUNT_REASON_LABEL_KEYS: Readonly<Record<LinkedAccountReason, string>> = {

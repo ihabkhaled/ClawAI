@@ -1,9 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { DISPOSABLE_EMAIL_DOMAINS } from '../constants/anti-abuse.constants';
+import { EmailDomainReason } from '../enums/email-domain-reason.enum';
 import { EmailDomainVerdict } from '../enums/email-domain-verdict.enum';
-import { MailDomainStatus } from '../enums/mail-domain-status.enum';
-import { extractEmailDomain, isDomainListed } from '../utilities/email-domain.utility';
+import type { EmailDomainExplanation } from '../types/signup-protection.types';
+import {
+  explainMailStatus,
+  extractEmailDomain,
+  isDomainListed,
+} from '../utilities/email-domain.utility';
 import { MailDomainService } from './mail-domain.service';
 import { SecuritySettingsService } from './security-settings.service';
 
@@ -26,23 +31,35 @@ export class EmailDomainPolicyService {
 
   async evaluate(email: string): Promise<EmailDomainVerdict> {
     const domain = extractEmailDomain(email);
-    if (domain === null) {
-      return EmailDomainVerdict.ALLOWED;
-    }
+    return domain === null ? EmailDomainVerdict.ALLOWED : (await this.explain(domain)).verdict;
+  }
+
+  /** The verdict and the rule that produced it; the admin page's address check shows both. */
+  async explain(domain: string): Promise<EmailDomainExplanation> {
     const { blockedDomains, allowedDomains } = await this.settings.resolve();
     if (isDomainListed(domain, new Set(blockedDomains))) {
-      return EmailDomainVerdict.DISPOSABLE;
+      return {
+        domain,
+        verdict: EmailDomainVerdict.DISPOSABLE,
+        reason: EmailDomainReason.ADMIN_BLOCKED,
+      };
     }
     if (isDomainListed(domain, new Set(allowedDomains))) {
-      return EmailDomainVerdict.ALLOWED;
+      return {
+        domain,
+        verdict: EmailDomainVerdict.ALLOWED,
+        reason: EmailDomainReason.ADMIN_ALLOWED,
+      };
     }
     if (isDomainListed(domain, DISPOSABLE_EMAIL_DOMAINS)) {
-      return EmailDomainVerdict.DISPOSABLE;
+      return {
+        domain,
+        verdict: EmailDomainVerdict.DISPOSABLE,
+        reason: EmailDomainReason.BUILT_IN_LIST,
+      };
     }
     const status = await this.mailDomain.check(domain);
-    this.logger.debug(`evaluate: domain=${domain} mail=${status}`);
-    return status === MailDomainStatus.UNDELIVERABLE
-      ? EmailDomainVerdict.UNDELIVERABLE
-      : EmailDomainVerdict.ALLOWED;
+    this.logger.debug(`explain: domain=${domain} mail=${status}`);
+    return explainMailStatus(domain, status);
   }
 }

@@ -71,6 +71,16 @@ refusal in every locale.
   normalised lower-case and de-duplicated), `security.signup.maxPer10Min/maxPerDevicePerDay`.
 - **Secrets are write-only.** The box is always empty; its placeholder says "Configured" when the server
   reports `configured: true`. An empty secret box is never sent; anything typed replaces the secret.
+- **What is really in force** (2026-11-27). The settings rows never show keys that come from the server
+  environment, so production keys used to read "Not configured" while both providers were on. The page now
+  also reads `GET /api/v1/admin/security/sign-up/status` (`useSignupProtectionStatus`): each captcha card shows
+  an On/Off badge and where each key comes from (saved on this page / from the server / not set); an empty
+  site key box shows "In use from the server: <key>" and the secret box "Set on the server". If the status
+  call fails, a line says so and the page works from the settings rows as before. A save refreshes it.
+- **Check an address.** The Email domains card shows the built-in list size ("Built-in list: 10,459 throwaway
+  domains, always on.") and a box that calls `GET /api/v1/admin/security/sign-up/email-check?value=` and
+  prints the verdict in plain words (built-in list, your blocked/allowed list, has / has no mail server,
+  inconclusive). It runs the same rules as a sign-up, against the SAVED lists.
 - **Linked accounts** — the user detail dialog (users table, eye icon) has a "Linked accounts" button that
   opens `UserLinkedAccountsDialog` → `GET /api/v1/admin/users/:id/linked-accounts` (`ADMIN_USERS_MANAGE`,
   same as the page). Each row: email, status, banned badge, registered date, reasons (same device, same

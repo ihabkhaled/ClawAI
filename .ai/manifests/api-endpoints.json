@@ -977,6 +977,16 @@
       },
       {
         "method": "GET",
+        "route": "/admin/security/sign-up/email-check",
+        "source": "apps/claw-auth-service/src/modules/anti-abuse/controllers/admin-signup-protection.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/admin/security/sign-up/status",
+        "source": "apps/claw-auth-service/src/modules/anti-abuse/controllers/admin-signup-protection.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/admin/settings",
         "source": "apps/claw-auth-service/src/modules/system-settings/controllers/admin-system-setting.controller.ts"
       },
@@ -5081,5 +5091,5 @@
     ]
   },
   "generated": true,
-  "total": 1007
+  "total": 1009
 }

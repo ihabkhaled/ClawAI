@@ -5,6 +5,7 @@ import { SystemSettingsModule } from '../system-settings/system-settings.module'
 import { CaptchaHttpAdapter } from './adapters/captcha-http.adapter';
 import { DnsLookupAdapter } from './adapters/dns-lookup.adapter';
 import { AdminLinkedAccountsController } from './controllers/admin-linked-accounts.controller';
+import { AdminSignupProtectionController } from './controllers/admin-signup-protection.controller';
 import { AntiAbuseCounterRepository } from './repositories/anti-abuse-counter.repository';
 import { UserDeviceRepository } from './repositories/user-device.repository';
 import { BotCheckService } from './services/bot-check.service';
@@ -31,7 +32,7 @@ import { SignupVelocityService } from './services/signup-velocity.service';
  */
 @Module({
   imports: [SystemSettingsModule, RedisModule],
-  controllers: [AdminLinkedAccountsController],
+  controllers: [AdminLinkedAccountsController, AdminSignupProtectionController],
   providers: [
     CaptchaHttpAdapter,
     DnsLookupAdapter,
