@@ -48,9 +48,17 @@ connectors page.
   (workspace search), workspace-service (memory embeddings search).
 - ADR-222: proof-of-work + Turnstile + reCAPTCHA v3, disposable-email block, device fingerprints, one trial per device.
 
+- The captcha siteverify adapter reaches only the Cloudflare and Google hosts (`assertSafeRequestUrl`), caught by
+  the repo-wide fetch-guard test before the push.
+- First release attempt failed safely (nothing rebuilt or restarted): two production `.env` port values had been
+  hand-set to `127.0.0.1:5457` / `127.0.0.1:5458`, and the compose file now adds `127.0.0.1:` itself. Reset to bare
+  numbers (backup `.env.bak-2026-11-27-ports`) and the deploy re-run. Port values are bare numbers from now on.
+
 ## Still to do
 
 - Recreate the database containers from the current compose file in a maintenance window (localhost binding).
 - Redis `requirepass`: compose change, `REDIS_PASSWORD` + `REDIS_URL` in `/srv/clawai/.env`, recreate Redis and every
   service in one short window (see the runbook).
 - Consider rotating the Postgres, MongoDB and RabbitMQ passwords (no evidence of compromise; they were exposed).
+- Captcha keys: create the Turnstile widget and the reCAPTCHA v3 keys for claw-ai.co, then save them as
+  `security.*` admin settings (or the four env vars). Proof of work runs until then.

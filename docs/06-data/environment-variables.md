@@ -74,6 +74,11 @@ and the page hides the controls; it does not half-enable them. A blank value in
 
 Claw uses 15 separate PostgreSQL instances, one per data-owning service.
 
+A `*_PORT` value that the compose files publish on the host (`PG_*_PORT` host ports, `REDIS_PORT`, `FRONTEND_PORT`, …)
+is a bare number. The production compose files add `127.0.0.1:` themselves (rules/68), so a value such as
+`127.0.0.1:5458` becomes `127.0.0.1:127.0.0.1:5458` and `docker compose` refuses the whole file ("invalid IP address").
+That blocked the 2026-11-27 release until two hand-edited production values were reset.
+
 | Variable                        | Required | Default                    | Description                            |
 | ------------------------------- | -------- | -------------------------- | -------------------------------------- |
 | `PG_AUTH_HOST`                  | Yes      | `claw-pg-auth`             | Auth database host                     |

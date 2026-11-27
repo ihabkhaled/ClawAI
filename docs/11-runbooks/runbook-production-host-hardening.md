@@ -13,6 +13,9 @@ not protect containers. Everything below lives on the host, outside the reposito
 - Check from OUTSIDE the server (not over SSH on it):
   `for p in 3000 5441 6380 15672 27018; do timeout 4 bash -c "echo > /dev/tcp/92.205.176.113/$p" && echo OPEN $p; done`
   must print nothing.
+- Port values in `/srv/clawai/.env` are bare numbers (`PG_THREADS_PORT=5458`): the compose files add `127.0.0.1:`.
+  A value that already carries a host (`127.0.0.1:5458`) makes `docker compose` refuse every file ("invalid IP
+  address: 127.0.0.1:127.0.0.1") and the deploy stops before building anything.
 - A new published port needs either an nginx route (preferred) or a line in that script. The compose files bind
   internal ports to `127.0.0.1`; the database containers take that binding only when recreated (the deploy never
   recreates databases).
