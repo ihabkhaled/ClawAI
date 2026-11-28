@@ -1056,6 +1056,7 @@ export const ja: TranslationDictionary = {
         researchQuery: '調査クエリを実行しました。',
         researchQueryFailed: '調査クエリが失敗したためスキップしました。',
         researchQuerySpendCap: '支出上限を超えないよう、調査クエリを1件スキップしました。',
+        topicReading: '非常に長いトピックを分割して読み込みました。',
         researchEmpty: 'リサーチで使える情報源が見つかりませんでした。',
         reviewNotPassed: '下書きがレビューを通過しませんでした。',
         citationInvalid: '出典リンクを確認できませんでした。',
@@ -1123,6 +1124,7 @@ export const ja: TranslationDictionary = {
         researchQuery: '対応は不要です。',
         researchQueryFailed: '残りのクエリで調査を続けます。',
         researchQuerySpendCap: 'すべてのクエリを実行するには支出上限を上げてください。',
+        topicReading: '対応は不要です。記事を計画する前に、すべての部分を読み込んでメモにします。',
         researchEmpty: 'トピックをより具体的に、または広くしてやり直してください。',
         reviewNotPassed: 'もう一度試すか、モデルを変えてください。',
         citationInvalid:

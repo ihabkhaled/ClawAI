@@ -90,6 +90,11 @@ retrieval, internal routes) and `apps/claw-chat-service`
     `context-assembly.manager.spec.ts` (an Arabic secret is selected for an Arabic question) and
     `context-tokens.utility.spec.ts`.
 
+22. **A file is never answered from a silent cut** ([ADR-231](../docs/13-adr/adr-231-read-it-all-write-it-all.md)).
+    A file larger than the answering model's window is read in parts and the model answers from complete notes of
+    every part (or each part's result, for whole-document requests); an answer cut by the output limit is continued.
+    Pinned by `long-input-reader.manager.spec.ts` and `long-output.manager.spec.ts`.
+
 ## How to check
 
 ```bash

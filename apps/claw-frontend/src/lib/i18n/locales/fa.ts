@@ -1051,6 +1051,7 @@ export const fa: TranslationDictionary = {
         researchQuery: 'یک پرس‌وجوی پژوهشی اجرا شد.',
         researchQueryFailed: 'یک پرس‌وجوی پژوهشی ناموفق بود و رد شد.',
         researchQuerySpendCap: 'برای ماندن زیر سقف هزینه، یک پرس‌وجوی پژوهشی رد شد.',
+        topicReading: 'یک موضوع بسیار طولانی بخش‌بخش خوانده شد.',
         researchEmpty: 'پژوهش منبع قابل استفاده‌ای پیدا نکرد.',
         reviewNotPassed: 'پیش‌نویس از بررسی‌ها عبور نکرد.',
         citationInvalid: 'پیوند یک منبع تأیید نشد.',
@@ -1118,6 +1119,8 @@ export const fa: TranslationDictionary = {
         researchQuery: 'نیازی به اقدام نیست.',
         researchQueryFailed: 'پژوهش با پرس‌وجوهای دیگر ادامه می‌یابد.',
         researchQuerySpendCap: 'اگر می‌خواهید همه پرس‌وجوها اجرا شوند، سقف هزینه را بالا ببرید.',
+        topicReading:
+          'نیازی به اقدام نیست. هر بخش پیش از برنامه‌ریزی مقاله خوانده و یادداشت می‌شود.',
         researchEmpty: 'موضوع را دقیق‌تر یا گسترده‌تر کنید و دوباره تلاش کنید.',
         reviewNotPassed: 'دوباره تلاش کنید یا مدل‌ها را تغییر دهید.',
         citationInvalid: 'دوباره تلاش کنید. اگر باز هم ناموفق بود، موضوع یا مدل‌ها را تغییر دهید.',

@@ -3,6 +3,7 @@ import { Locale, ThreadArticleLength, ThreadPublicationType } from '@claw/shared
 
 import { ACCEPTED_GAP_MAX_CHARS, ACCEPTED_GAPS_MAX } from '../constants/accepted-gaps.constants';
 import { healingPoolSchema, modelRoleSchema } from '../types/generation-pipeline.types';
+import { TOPIC_MAX_LENGTH } from '../constants/topic-reading.constants';
 
 export const enqueueGenerationSchema = z
   .object({
@@ -14,7 +15,7 @@ export const enqueueGenerationSchema = z
       .string()
       .regex(/^\d{1,16}$/u)
       .refine((amount) => Number.isSafeInteger(Number(amount)) && Number(amount) > 0),
-    topic: z.string().min(10).max(10_000),
+    topic: z.string().min(10).max(TOPIC_MAX_LENGTH),
     publicationType: z.nativeEnum(ThreadPublicationType),
     contentLocale: z.nativeEnum(Locale),
     publicIntentVersion: z.string().min(1).max(32),

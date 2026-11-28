@@ -1,3 +1,4 @@
+import type { OversizedFile } from './oversized-file.types';
 import { type ChatMessage, type RoutingMode } from '../../../generated/prisma';
 import type { ChatSurface } from '../../../common/enums/chat-surface.enum';
 import type { ToolTurn } from './tool-turn.types';
@@ -66,6 +67,11 @@ export type WorkspaceCitation = {
 export type PluginTurn = { threadId?: string | undefined; messageId?: string | undefined };
 
 export type AssembledContext = {
+  /**
+   * Files whose text did not fit the answering model's window, with their WHOLE text, so the answer step can read
+   * them in parts instead of answering from a cut (ADR-231). Absent or empty when everything fitted.
+   */
+  oversizedFiles?: readonly OversizedFile[];
   userId: string;
   systemPrompt: string | null;
   /**
@@ -286,6 +292,8 @@ export type PreparedContextAssembly = {
   researchEvidence: ResearchEvidenceCitation[];
   researchToolsUsed: string[];
   researchRequested: boolean;
+  /** Files the window fit had to cut, with their whole text (ADR-231). */
+  oversizedFiles: OversizedFile[];
 };
 
 export type BudgetedContextAssembly = {

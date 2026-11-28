@@ -15,6 +15,7 @@ import { useTranslation } from '@/lib/i18n';
 import { SUPPORTED_LOCALES } from '@/lib/i18n/i18n.constants';
 import type { ThreadPublicationType } from '@/types';
 import type { ThreadGenerationFormProps } from '@/types/thread-generation-progress.types';
+import { THREAD_TOPIC_MAX_LENGTH } from '@/utilities/thread-topic-length.utility';
 
 export function ThreadGenerationForm({ form }: ThreadGenerationFormProps): ReactElement {
   const { t } = useTranslation();
@@ -48,7 +49,7 @@ export function ThreadGenerationForm({ form }: ThreadGenerationFormProps): React
         {t('chat.threadTopic')}
         <Textarea
           required
-          maxLength={10000}
+          maxLength={THREAD_TOPIC_MAX_LENGTH}
           value={form.topic}
           onChange={(event) => form.setTopic(event.target.value)}
           className="min-h-24"

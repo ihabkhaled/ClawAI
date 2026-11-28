@@ -218,3 +218,7 @@ Format passes: only `FORMATTED` counts toward the 3-a-day limit; skips and failu
 ## Start check drops bad backups (ADR-220, 2026-11-22)
 
 `prepareStart` (was `assertCanStart`) returns a cleaned request: a fallback model that is not in the Threads catalog, not on the plan or unpriced is dropped and logged instead of failing the run with `THREAD_MODEL_UNKNOWN`. A bad primary pick is still refused. Retry still validates stored backups strictly.
+
+## Topic limit 1,000,000 characters (2026-11-28, ADR-231)
+
+`topic` on start and retry accepts 1 to 1,000,000 characters (was 10,000), minimum unchanged; the progress `selections.topic` allows the same. The service's Express JSON limit is 8 MB; nginx uses the global 75 MB for `/api/v1/thread-publications`. Long topics are read in parts by thread-generation-service.

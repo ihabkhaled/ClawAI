@@ -1,7 +1,11 @@
 import { z } from 'zod';
 
 import { ThreadGenerationErrorCode } from '../../../common/enums/thread-generation-error-code.enum';
-import { TOPIC_MIN_DENSE_CHARACTERS, TOPIC_MIN_WEIGHT } from '../constants/topic-length.constants';
+import {
+  TOPIC_MAX_LENGTH,
+  TOPIC_MIN_DENSE_CHARACTERS,
+  TOPIC_MIN_WEIGHT,
+} from '../constants/topic-length.constants';
 import { isTopicLongEnough } from '../utilities/topic-length.utility';
 
 /** In unicode mode a valid pair is one code point, so this matches only a lone surrogate half. */
@@ -26,8 +30,6 @@ export function safeText(min: number, max: number): z.ZodString {
       params: { code: ThreadGenerationErrorCode.TEXT_INVALID },
     });
 }
-
-export const TOPIC_MAX_LENGTH = 10_000;
 
 /**
  * A topic is trimmed first, then measured in user-perceived letters and numbers (script-aware, see

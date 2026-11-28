@@ -21,4 +21,8 @@ export enum NarrationKind {
   AI_THINKING = 'ai_thinking',
   /** The planner's own reasoning, model-written `text`, shown as the AI speaking. */
   AI_THOUGHT = 'ai_thought',
+  /** A file larger than the model's window is read in parts (ADR-231); params: name, parts, done. */
+  LONG_INPUT = 'long_input',
+  /** A long answer cut by the output limit is being continued (ADR-231); params: part. */
+  LONG_OUTPUT = 'long_output',
 }

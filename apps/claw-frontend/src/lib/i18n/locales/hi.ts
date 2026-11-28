@@ -1035,6 +1035,7 @@ export const hi: TranslationDictionary = {
         researchQuery: 'एक शोध क्वेरी चली।',
         researchQueryFailed: 'एक शोध क्वेरी विफल रही और छोड़ दी गई।',
         researchQuerySpendCap: 'खर्च सीमा के भीतर रहने के लिए एक शोध क्वेरी छोड़ी गई।',
+        topicReading: 'एक बहुत लंबा विषय हिस्सों में पढ़ा गया।',
         researchEmpty: 'रिसर्च में कोई उपयोगी स्रोत नहीं मिला।',
         reviewNotPassed: 'ड्राफ़्ट समीक्षाओं में पास नहीं हुआ।',
         citationInvalid: 'किसी स्रोत का लिंक सत्यापित नहीं हो सका।',
@@ -1096,6 +1097,8 @@ export const hi: TranslationDictionary = {
         researchQuery: 'किसी कार्रवाई की ज़रूरत नहीं है।',
         researchQueryFailed: 'शोध बाकी क्वेरी के साथ जारी रहता है।',
         researchQuerySpendCap: 'सभी क्वेरी चलाने के लिए खर्च सीमा बढ़ाएँ।',
+        topicReading:
+          'किसी कार्रवाई की जरूरत नहीं। लेख की योजना बनने से पहले हर हिस्सा पढ़ा और नोट किया जाता है।',
         researchEmpty: 'विषय को और खास या और व्यापक बनाएँ, फिर कोशिश करें।',
         reviewNotPassed: 'फिर कोशिश करें या मॉडल बदलें।',
         citationInvalid: 'दोबारा कोशिश करें। फिर भी विफल हो तो विषय या मॉडल बदलें।',

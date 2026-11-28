@@ -172,6 +172,14 @@ export const ZH_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
           ],
         },
         {
+          id: 'files-bigger-than-the-model',
+          heading: '比模型更大的文件，也会完整读完',
+          paragraphs: [
+            '文件可能远大于你所选模型的窗口。这时 ClawAI 会按适合该模型的大小分段读取，每段调用一次，并根据所有分段的完整笔记来写答案，而不只是开头和少数匹配的片段。工作日志会显示读取了多少段。',
+            '当你要求转换整份文档（翻译、改写、转换格式）时，每一段依次处理，结果按顺序拼接，不会遗漏任何内容。达到模型输出上限的回答会继续写，直到写完。',
+          ],
+        },
+        {
           id: 'scanning-and-retention',
           heading: '失败即拒绝的病毒扫描，以及保留期限',
           paragraphs: [

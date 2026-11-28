@@ -174,6 +174,14 @@ export const DE_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
           ],
         },
         {
+          id: 'files-bigger-than-the-model',
+          heading: 'Dateien, größer als das Modell, vollständig gelesen',
+          paragraphs: [
+            'Eine Datei kann weit größer sein als das Fenster des gewählten Modells. ClawAI liest sie dann in Teilen, die zu diesem Modell passen, ein Aufruf pro Teil, und die Antwort entsteht aus vollständigen Notizen aller Teile – nicht nur aus dem Anfang und einigen passenden Stellen. Das Arbeitsprotokoll zeigt, wie viele Teile gelesen wurden.',
+            'Soll das ganze Dokument umgewandelt werden – übersetzt, umgeschrieben, konvertiert –, wird jeder Teil nacheinander bearbeitet und die Ergebnisse werden der Reihe nach zusammengefügt, sodass nichts fehlt. Eine Antwort, die an die Ausgabegrenze des Modells stößt, wird fortgesetzt, bis sie fertig ist.',
+          ],
+        },
+        {
           id: 'scanning-and-retention',
           heading: 'Virenscan, der im Zweifel blockiert, und Aufbewahrung',
           paragraphs: [

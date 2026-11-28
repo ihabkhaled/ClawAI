@@ -152,7 +152,7 @@
         "MessageAttachment",
         "PromptTemplate"
       ],
-      "testFiles": 386,
+      "testFiles": 389,
       "testRunner": "vitest"
     },
     {
@@ -629,7 +629,7 @@
         "ThreadModelCommunication",
         "ThreadRevisionDraft"
       ],
-      "testFiles": 99,
+      "testFiles": 102,
       "testRunner": "vitest"
     },
     {

@@ -1061,6 +1061,7 @@ export const pt: TranslationDictionary = {
         researchQueryFailed: 'Uma consulta de pesquisa falhou e foi ignorada.',
         researchQuerySpendCap:
           'Uma consulta de pesquisa foi ignorada para ficar abaixo do limite de gasto.',
+        topicReading: 'Um tema muito longo foi lido em partes.',
         researchEmpty: 'A pesquisa não encontrou fontes utilizáveis.',
         reviewNotPassed: 'O rascunho não passou nas revisões.',
         citationInvalid: 'Não foi possível verificar o link de uma fonte.',
@@ -1143,6 +1144,8 @@ export const pt: TranslationDictionary = {
         researchQuery: 'Nenhuma ação necessária.',
         researchQueryFailed: 'A pesquisa continua com as outras consultas.',
         researchQuerySpendCap: 'Aumente o limite de gasto se quiser executar todas as consultas.',
+        topicReading:
+          'Nenhuma ação necessária. Cada parte é lida e resumida antes de planejar o artigo.',
         researchEmpty: 'Torne o tema mais específico ou mais amplo e tente de novo.',
         reviewNotPassed: 'Tente de novo ou mude os modelos.',
         citationInvalid: 'Tente de novo. Se continuar falhando, mude o tema ou os modelos.',

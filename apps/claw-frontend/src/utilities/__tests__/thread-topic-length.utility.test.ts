@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { isThreadTopicLongEnough } from '../thread-topic-length.utility';
+import {
+  isThreadTopicLongEnough,
+  THREAD_TOPIC_MAX_LENGTH,
+  threadTopicWeight,
+} from '../thread-topic-length.utility';
 
 describe('isThreadTopicLongEnough', () => {
   it.each([
@@ -28,5 +32,18 @@ describe('isThreadTopicLongEnough', () => {
     ['ten Latin letters', 'tenletters'],
   ])('accepts %s', (_name, topic) => {
     expect(isThreadTopicLongEnough(topic)).toBe(true);
+  });
+});
+
+describe('a topic of up to a million characters', () => {
+  it('has the same limit as the services', () => {
+    expect(THREAD_TOPIC_MAX_LENGTH).toBe(1_000_000);
+  });
+
+  it('is judged long enough without counting every character', () => {
+    const topic = 'word '.repeat(200_000);
+    expect(isThreadTopicLongEnough(topic)).toBe(true);
+    expect(threadTopicWeight(topic, 10)).toBeLessThan(20);
+    expect(threadTopicWeight('abcdef')).toBe(6);
   });
 });

@@ -1079,6 +1079,7 @@ export const de: TranslationDictionary = {
         researchQueryFailed: 'Eine Recherche-Abfrage ist fehlgeschlagen und wurde übersprungen.',
         researchQuerySpendCap:
           'Eine Recherche-Abfrage wurde übersprungen, um unter dem Ausgabenlimit zu bleiben.',
+        topicReading: 'Ein sehr langes Thema wurde in Teilen gelesen.',
         researchEmpty: 'Die Recherche hat keine brauchbaren Quellen gefunden.',
         reviewNotPassed: 'Der Entwurf hat die Prüfungen nicht bestanden.',
         citationInvalid: 'Ein Quellenlink konnte nicht überprüft werden.',
@@ -1167,6 +1168,8 @@ export const de: TranslationDictionary = {
         researchQuery: 'Keine Aktion nötig.',
         researchQueryFailed: 'Die Recherche läuft mit den anderen Abfragen weiter.',
         researchQuerySpendCap: 'Erhöhe das Ausgabenlimit, wenn jede Abfrage laufen soll.',
+        topicReading:
+          'Keine Aktion nötig. Jeder Teil wird gelesen und zusammengefasst, bevor der Artikel geplant wird.',
         researchEmpty: 'Formuliere das Thema genauer oder weiter und versuche es erneut.',
         reviewNotPassed: 'Versuche es erneut oder ändere die Modelle.',
         citationInvalid:

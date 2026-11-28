@@ -1336,3 +1336,10 @@ reload. No new UI string. Test: `use-thread-detail.test.tsx` "keeps waiting whil
 - A card with its own surface inside the user bubble sets its own text colour (`bg-card text-card-foreground`,
   `bg-muted text-foreground`): the bubble is `text-primary-foreground`, which in dark mode is dark, so the name and the
   Open / Download buttons were dark on a dark card. Checked in a phone browser in both themes.
+
+## Big files and long answers in the work log (ADR-231, 2026-11-28)
+
+`NarrationKind.LONG_INPUT` (params `name`, `parts`, `done`) renders "Reading all N parts of X" / "Read D of N parts" /
+"Read all N parts"; `LONG_OUTPUT` (`part`) renders "The answer is long — writing part N". Keys `narration.longInput*`
+and `narration.longOutputPart` in all 13 locales; test `narration-long-input.utility.test.ts` checks every locale. The
+Threads topic box takes up to 1,000,000 characters (`THREAD_TOPIC_MAX_LENGTH`).

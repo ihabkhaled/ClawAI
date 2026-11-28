@@ -87,7 +87,7 @@ export class ArticleBriefPlanner {
   }
 }
 
-function isCancellation(error: unknown, input: GenerationPipelineInput): boolean {
+export function isCancellation(error: unknown, input: GenerationPipelineInput): boolean {
   return (
     input.signal?.aborted === true ||
     error instanceof ThreadGenerationCancelledError ||

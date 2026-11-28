@@ -1073,6 +1073,7 @@ export const it: TranslationDictionary = {
         researchQueryFailed: 'Una query di ricerca è fallita ed è stata saltata.',
         researchQuerySpendCap:
           'Una query di ricerca è stata saltata per restare sotto il limite di spesa.',
+        topicReading: 'Un argomento molto lungo è stato letto a parti.',
         researchEmpty: 'La ricerca non ha trovato fonti utilizzabili.',
         reviewNotPassed: 'La bozza non ha superato le revisioni.',
         citationInvalid: 'Il link di una fonte non è stato verificato.',
@@ -1161,6 +1162,8 @@ export const it: TranslationDictionary = {
         researchQuery: 'Nessuna azione necessaria.',
         researchQueryFailed: 'La ricerca continua con le altre query.',
         researchQuerySpendCap: 'Alza il limite di spesa se vuoi eseguire tutte le query.',
+        topicReading:
+          'Nessuna azione necessaria. Ogni parte viene letta e riassunta prima di pianificare l’articolo.',
         researchEmpty: 'Rendi l’argomento più specifico o più ampio, poi riprova.',
         reviewNotPassed: 'Riprova o cambia i modelli.',
         citationInvalid: 'Riprova. Se continua a fallire, cambia argomento o modelli.',

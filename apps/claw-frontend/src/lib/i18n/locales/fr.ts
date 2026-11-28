@@ -1073,6 +1073,7 @@ export const fr: TranslationDictionary = {
         researchQueryFailed: 'Une requête de recherche a échoué et a été ignorée.',
         researchQuerySpendCap:
           'Une requête de recherche a été ignorée pour rester sous le plafond de dépense.',
+        topicReading: 'Un sujet très long a été lu par parties.',
         researchEmpty: 'La recherche n’a trouvé aucune source exploitable.',
         reviewNotPassed: 'Le brouillon n’a pas passé les relectures.',
         citationInvalid: 'Le lien d’une source n’a pas pu être vérifié.',
@@ -1157,6 +1158,8 @@ export const fr: TranslationDictionary = {
         researchQuery: 'Aucune action nécessaire.',
         researchQueryFailed: 'La recherche continue avec les autres requêtes.',
         researchQuerySpendCap: 'Augmentez le plafond de dépense pour exécuter toutes les requêtes.',
+        topicReading:
+          'Aucune action nécessaire. Chaque partie est lue et résumée avant la planification de l’article.',
         researchEmpty: 'Précisez ou élargissez le sujet, puis réessayez.',
         reviewNotPassed: 'Réessayez ou changez les modèles.',
         citationInvalid: 'Réessayez. Si cela persiste, changez le sujet ou les modèles.',

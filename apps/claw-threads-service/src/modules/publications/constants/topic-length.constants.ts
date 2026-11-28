@@ -9,3 +9,10 @@ export const TOPIC_DENSE_WEIGHT = TOPIC_MIN_WEIGHT / TOPIC_MIN_DENSE_CHARACTERS;
 export const TOPIC_DENSE_SCRIPT =
   /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u;
 export const TOPIC_LETTER_OR_NUMBER = /[\p{L}\p{N}]/u;
+
+/**
+ * The topic box takes up to a million characters (owner order 2026-11-28): a long brief is read in
+ * parts by thread-generation-service, never refused. Keep the same value in that service's DTOs and
+ * the frontend box (`THREAD_TOPIC_MAX_LENGTH`).
+ */
+export const TOPIC_MAX_LENGTH = 1_000_000;

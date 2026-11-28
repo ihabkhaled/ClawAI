@@ -2056,3 +2056,21 @@ transcript only (`earlierVideoAsTranscript`); `withQuotedContext` appends an ear
 Not yet: Compare, Consensus, Escalation, labs (rule 59 gap). Specs: `search-continuation-turn.spec.ts`,
 `search-continuation.manager.spec.ts`, `pending-search.utility.spec.ts`, `search-continuation.utility.spec.ts`,
 `earlier-sources.utility.spec.ts`, `planner-date.utility.spec.ts`, `context-assembly-attachment-awareness.spec.ts`.
+
+## Read it all, write it all (ADR-231, 2026-11-28)
+
+- `fitFixedContext` records every file it had to cut as `AssembledContext.oversizedFiles` (whole text kept). Never drop
+  that record: it is the only way the answer step knows a file was not seen in full.
+- `ChatMessagesService.readOversizedFiles` → `LongInputReaderManager.readAll` before the answer call: one judge call
+  (`LONG_INPUT_MODE_JUDGE_PROMPT`, planner chain) picks _notes_ (parts of half the window, notes replace the file's text,
+  merged again when too long) or _each part_ (parts of a quarter window; each part's result, continued when cut, is the
+  answer itself, streamed in order with `emitContentDelta`, no final call). One `callProvider` per part (metered,
+  `workflow: 'long-input-read'`, request ids `<message>:read|each|merge:<file>:<part>`), 3 in parallel, at most 400
+  parts (even sample above, said in the notes), failures stay as gap lines. Narration `NarrationKind.LONG_INPUT`.
+- `finishLongAnswer` → `LongOutputManager.complete`: a `length` / `max_tokens` finish is continued up to 20 times with
+  the partial answer as the model's turn (`LONG_OUTPUT_CONTINUE_NOTE`), joined into one stored answer; a Stop ends it.
+  Narration `NarrationKind.LONG_OUTPUT`.
+- Gap (rule 59): Compare, Consensus, Escalation and the labs still answer from the fitted cut.
+- Specs: `long-input.utility.spec.ts`, `long-input-reader.manager.spec.ts`, `long-output.manager.spec.ts`,
+  `search-continuation-turn.spec.ts` ("read it all"). Live: the owner's file on a 4,095-token model, QA record of
+  2026-11-28.

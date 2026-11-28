@@ -25,6 +25,7 @@ const SERVICE_FILES = [
   'managers/generation-pipeline.manager.ts',
   'constants/healing.constants.ts',
   'constants/research-queries.constants.ts',
+  'constants/topic-reading.constants.ts',
   'constants/failure-class.constants.ts',
   'repositories/generation-jobs.repository.ts',
 ];

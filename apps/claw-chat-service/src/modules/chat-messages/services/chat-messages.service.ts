@@ -126,6 +126,9 @@ import {
   SEARCH_NOT_AVAILABLE_NOTE,
 } from '../constants/search-continuation.constants';
 import { SearchContinuationManager } from '../managers/search-continuation.manager';
+import { LongInputReaderManager } from '../managers/long-input-reader.manager';
+import { LongOutputManager } from '../managers/long-output.manager';
+import type { LongInputResult } from '../types/long-input.types';
 import type {
   AnswerContext,
   ContinuedAnswer,
@@ -297,6 +300,10 @@ export class ChatMessagesService implements OnModuleInit {
     @Optional() private readonly derivedDescriptions?: DerivedImageDescriptionStore,
     // Optional for the same reason. Absent → a reply that only promises a search is kept as the answer.
     @Optional() private readonly searchContinuation?: SearchContinuationManager,
+    // Optional for the same reason. Absent → an oversized file is answered from its fitted cut, as before ADR-231.
+    @Optional() private readonly longInputReader?: LongInputReaderManager,
+    // Optional for the same reason. Absent → an answer cut by the output limit stays cut.
+    @Optional() private readonly longOutput?: LongOutputManager,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
@@ -1837,23 +1844,33 @@ export class ChatMessagesService implements OnModuleInit {
     this.logger.debug(
       `runLlmAndStore: calling LLM execution for ${effectivePayload.selectedProvider}/${effectivePayload.selectedModel}`,
     );
-    const executed = await this.chatExecutionManager.execute(
+    const read = await this.readOversizedFiles(
       effectivePayload,
       context,
       threadSettings,
-      this.extractCrawlRetrieval(latestUserMetadata),
+      chronologicalMessages,
     );
-    const answer = await this.finishPromisedSearch({
+    const readContext = read.context;
+    const executed =
+      read.answer ??
+      (await this.chatExecutionManager.execute(
+        effectivePayload,
+        readContext,
+        threadSettings,
+        this.extractCrawlRetrieval(latestUserMetadata),
+      ));
+    const promised = await this.finishPromisedSearch({
       executed,
       effectivePayload,
       originalPayload,
-      context,
+      context: readContext,
       threadSettings,
       fileIds,
       thread,
       chronologicalMessages,
       latestUserMetadata,
     });
+    const answer = await this.finishLongAnswer(promised, effectivePayload, threadSettings);
     await this.storeAndCompleteAnswer(answer, {
       originalPayload,
       fileIds,
@@ -1861,6 +1878,43 @@ export class ChatMessagesService implements OnModuleInit {
       chronologicalMessages,
       contextSave,
     });
+  }
+
+  /** A file larger than the model's window is read in parts and answered from complete notes (ADR-231). */
+  private async readOversizedFiles(
+    payload: MessageRoutedData,
+    context: AssembledContext,
+    threadSettings: ThreadSettings | undefined,
+    messages: ChatMessage[],
+  ): Promise<LongInputResult> {
+    if (this.longInputReader === undefined || (context.oversizedFiles ?? []).length === 0) {
+      return { context, answer: null };
+    }
+    return this.longInputReader.readAll({
+      context,
+      payload,
+      threadSettings,
+      request: latestUserTurnText(messages) ?? '',
+    });
+  }
+
+  /** An answer cut by the output limit is continued until it ends (ADR-231). */
+  private async finishLongAnswer(
+    answer: ContinuedAnswer,
+    payload: MessageRoutedData,
+    threadSettings: ThreadSettings | undefined,
+  ): Promise<ContinuedAnswer> {
+    if (!this.longOutput?.isCut(answer.response)) {
+      return answer;
+    }
+    const response = await this.longOutput.complete({
+      response: answer.response,
+      context: answer.context,
+      payload,
+      threadSettings,
+      anchor: [...answer.context.threadMessages].reverse().find((m) => m.role === 'USER'),
+    });
+    return { ...answer, response };
   }
 
   /** Stores the answer, writes its receipt, ends the stream and publishes the completion. */

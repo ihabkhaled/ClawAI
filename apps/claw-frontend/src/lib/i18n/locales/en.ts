@@ -1052,6 +1052,7 @@ export const en: TranslationDictionary = {
         researchQuery: 'A research query ran.',
         researchQueryFailed: 'A research query failed and was skipped.',
         researchQuerySpendCap: 'A research query was skipped to stay under the spend cap.',
+        topicReading: 'A very long topic was read in parts.',
         researchEmpty: 'Research found no usable sources.',
         reviewNotPassed: 'The draft did not pass the reviews.',
         citationInvalid: 'A source link could not be verified.',
@@ -1119,6 +1120,8 @@ export const en: TranslationDictionary = {
         researchQuery: 'No action needed.',
         researchQueryFailed: 'The research continues with the other queries.',
         researchQuerySpendCap: 'Raise the spend cap if you want every query to run.',
+        topicReading:
+          'No action needed. Every part is read and noted before the article is planned.',
         researchEmpty: 'Make the topic more specific or broader, then retry.',
         reviewNotPassed: 'Retry, or change the models and try again.',
         citationInvalid: 'Retry. If it keeps failing, change the topic or the models.',

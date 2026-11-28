@@ -108,13 +108,13 @@ describe('generation progress schemas', () => {
       expect(parse({ steps: [{ ...step, excerpt: 'x'.repeat(1201) }] })).toBe(false);
     });
 
-    it('accepts a topic of exactly 10000 characters', () => {
-      const selections = { ...validProgress.selections, topic: 'x'.repeat(10_000) };
+    it('accepts a topic of exactly 1,000,000 characters', () => {
+      const selections = { ...validProgress.selections, topic: 'x'.repeat(1_000_000) };
       expect(parse({ selections })).toBe(true);
     });
 
     it('rejects an oversized topic', () => {
-      const selections = { ...validProgress.selections, topic: 'x'.repeat(10_001) };
+      const selections = { ...validProgress.selections, topic: 'x'.repeat(1_000_001) };
       expect(parse({ selections })).toBe(false);
     });
 

@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useTranslation } from '@/lib/i18n';
 import type { ThreadGenerationRetryFormProps } from '@/types/thread-generation-progress.types';
 import { threadRoleLabelKey } from '@/utilities/thread-generation-progress.utility';
+import { THREAD_TOPIC_MAX_LENGTH } from '@/utilities/thread-topic-length.utility';
 
 /** "Retry with changes": the owner can change topic, spend cap and every role's model first. */
 export function ThreadGenerationRetryForm({ form }: ThreadGenerationRetryFormProps): ReactElement {
@@ -41,7 +42,7 @@ export function ThreadGenerationRetryForm({ form }: ThreadGenerationRetryFormPro
             <Textarea
               ref={form.topicRef}
               required
-              maxLength={10000}
+              maxLength={THREAD_TOPIC_MAX_LENGTH}
               value={form.topic}
               onChange={(event) => form.setTopic(event.target.value)}
               className="min-h-24"

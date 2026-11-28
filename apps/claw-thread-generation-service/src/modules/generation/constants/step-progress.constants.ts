@@ -28,6 +28,8 @@ export const ROLE_KEY_PREFIXES: ReadonlyArray<{ prefix: string; info: RoleStepIn
   { prefix: 'format', info: { stage: 'FORMAT', roleKind: 'SYSTEM' } },
   // The planning call before research (`BRIEF_ROLE_ID`); its rows read "Planning the article".
   { prefix: 'brief', info: { stage: 'BRIEF', roleKind: 'SYSTEM' } },
+  // One part of a very long topic read into notes (`TOPIC_PART_ROLE_PREFIX`); filed under BRIEF.
+  { prefix: 'topic-part', info: { stage: 'BRIEF', roleKind: 'SYSTEM' } },
   { prefix: 'judge', info: { stage: 'JUDGE', roleKind: 'JUDGE' } },
   { prefix: 'critic', info: { stage: 'CRITIC', roleKind: 'CRITIC' } },
 ];

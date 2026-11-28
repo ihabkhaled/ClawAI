@@ -73,8 +73,9 @@ describe('topic validation (D-04, D-12, N-03e)', () => {
   });
 
   it('still enforces the upper bound', () => {
-    expect(topicIssue('x'.repeat(10_001))).not.toBeNull();
-    expect(topicIssue('x'.repeat(10_000))).toBeNull();
+    expect(topicIssue('x'.repeat(1_000_001))).not.toBeNull();
+    expect(topicIssue('x'.repeat(1_000_000))).toBeNull();
+    expect(topicIssue('x'.repeat(10_001))).toBeNull();
   });
 
   it('applies the same rules to a retry topic and leaves it optional', () => {

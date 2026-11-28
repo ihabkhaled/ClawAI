@@ -17,6 +17,8 @@ export enum NarrationKind {
   /** A page was read by an escalated fetch tier; params: host, strategy, blocked. */
   PAGE_READ = 'page_read',
   AI_THINKING = 'ai_thinking',
+  LONG_INPUT = 'long_input',
+  LONG_OUTPUT = 'long_output',
   /** The planner's own reasoning, model-written text shown as the AI speaking. */
   AI_THOUGHT = 'ai_thought',
 }

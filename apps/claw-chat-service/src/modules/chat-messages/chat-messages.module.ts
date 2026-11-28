@@ -23,6 +23,8 @@ import { ResearchGateService } from './services/research-gate.service';
 import { NarrationService } from './services/narration.service';
 import { ResearchOrchestratorManager } from './managers/research-orchestrator.manager';
 import { SearchContinuationManager } from './managers/search-continuation.manager';
+import { LongInputReaderManager } from './managers/long-input-reader.manager';
+import { LongOutputManager } from './managers/long-output.manager';
 import { ContextAssemblyManager } from './managers/context-assembly.manager';
 import { SaveToContextManager } from './managers/save-to-context.manager';
 import { ContextSaveOrchestratorManager } from './managers/context-save-orchestrator.manager';
@@ -140,6 +142,9 @@ import { RuntimeV2ThreadActivityService } from './services/runtime-v2-thread-act
     ResearchOrchestratorManager,
     // A reply that only promised a search is finished, not stored as the answer (ADR-227).
     SearchContinuationManager,
+    // Read it all, write it all (ADR-231).
+    LongInputReaderManager,
+    LongOutputManager,
     ChatMessagesService,
     AnswerRepairManager,
     BestOfNManager,

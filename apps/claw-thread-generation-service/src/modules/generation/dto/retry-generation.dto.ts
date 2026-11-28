@@ -3,12 +3,13 @@ import { z } from 'zod';
 
 import { ACCEPTED_GAP_MAX_CHARS, ACCEPTED_GAPS_MAX } from '../constants/accepted-gaps.constants';
 import { healingPoolSchema } from '../types/generation-pipeline.types';
+import { TOPIC_MAX_LENGTH } from '../constants/topic-reading.constants';
 
 export const retryGenerationSchema = z
   .object({
     ownerId: z.string().min(1).max(64),
     idempotencyKey: z.string().min(1).max(200),
-    topic: z.string().min(10).max(10_000).optional(),
+    topic: z.string().min(10).max(TOPIC_MAX_LENGTH).optional(),
     spendCapUsd: z.number().positive().max(1_000_000).optional(),
     models: z
       .array(

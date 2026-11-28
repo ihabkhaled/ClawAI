@@ -61,6 +61,7 @@ export const THREAD_GENERATION_CODE_KEYS: Readonly<Record<string, string>> = {
   RESEARCH_QUERY: 'researchQuery',
   RESEARCH_QUERY_FAILED: 'researchQueryFailed',
   RESEARCH_QUERY_SPEND_CAP: 'researchQuerySpendCap',
+  TOPIC_READING: 'topicReading',
   REVIEW_NOT_PASSED: 'reviewNotPassed',
   REVIEWERS_NOT_INDEPENDENT: 'reviewersNotIndependent',
   CITATION_INVALID: 'citationInvalid',

@@ -91,6 +91,8 @@ import { RoleHealer } from './role-healer';
 import type { ResearchPassBase } from '../types/research-queries.types';
 import { ArticleFormatter } from './article-formatter';
 import { ArticleBriefPlanner } from './article-brief-planner';
+import { TopicReader } from './topic-reader';
+import { TOPIC_PART_EVIDENCE_HASH } from '../constants/topic-reading.constants';
 import type { CandidateHealth, RolePrompt } from '../types/healing.types';
 import {
   NON_RETRYABLE_STEP_CODES,
@@ -132,6 +134,7 @@ export class GenerationPipelineManager {
   private readonly healer: RoleHealer;
   private readonly formatter: ArticleFormatter;
   private readonly briefPlanner: ArticleBriefPlanner;
+  private readonly topicReader: TopicReader;
   /** The article subject the planner named, per job attempt, for the evidence-gap queries. */
   private readonly researchSubjects = new WeakMap<GenerationPipelineInput, string>();
   /** The model that really answered each review, per job attempt: a fallback is named, not hidden. */
@@ -171,6 +174,37 @@ export class GenerationPipelineManager {
       call: (input, budget, spec) => this.healer.call(input, budget, spec),
       spentMicroUsd: (jobId) => this.jobs.readSpentMicroUsd(jobId),
     });
+    this.topicReader = new TopicReader({
+      call: (input, budget, spec) => this.healer.call(input, budget, spec),
+      spentMicroUsd: (jobId) => this.jobs.readSpentMicroUsd(jobId),
+      windowTokens: (provider, model) => this.models.contextWindowTokens(provider, model),
+      record: (jobId, step) => this.recorder.record(jobId, step),
+      loadPart: async (jobId, roleId, inputHash) => {
+        const saved = await this.jobs.findCommunication(
+          jobId,
+          roleId,
+          1,
+          TOPIC_PART_EVIDENCE_HASH,
+          inputHash,
+        );
+        const notes = (saved as { notes?: unknown } | null)?.notes;
+        return typeof notes === 'string' ? notes : null;
+      },
+      savePart: async (input, roleId, inputHash, response, notes) => {
+        const saved = await this.jobs.saveCommunication({
+          jobId: input.jobId,
+          attempt: input.attempt,
+          role: roleId,
+          round: 1,
+          inputHash,
+          evidenceHash: TOPIC_PART_EVIDENCE_HASH,
+          response,
+          output: { notes },
+        });
+        if (!saved) throw new ThreadGenerationLeaseLostError();
+      },
+      hash: (value) => this.hash(value),
+    });
   }
 
   async generate(input: GenerationPipelineInput): Promise<GenerationPipelineResult> {
@@ -199,7 +233,9 @@ export class GenerationPipelineManager {
     }
   }
 
-  private async runGenerate(job: GenerationPipelineInput): Promise<GenerationPipelineResult> {
+  private async runGenerate(unread: GenerationPipelineInput): Promise<GenerationPipelineResult> {
+    // A topic too long for the models is read in parts first; every stage below sees the notes.
+    const job = await this.topicReader.read(unread);
     const evidence = await this.resolveEvidence(job);
     const evidenceItems = this.evidenceItems(evidence.bundle);
     await this.throwIfCancelled(job);
@@ -645,11 +681,12 @@ export class GenerationPipelineManager {
   }
 
   private async runRevisionReview(
-    job: GenerationPipelineInput,
+    unread: GenerationPipelineInput,
     draft: AuthorDraft,
     evidenceBundle: Record<string, unknown>,
     evidenceHash: string,
   ): Promise<GenerationPipelineResult> {
+    const job = await this.topicReader.read(unread);
     const evidenceItems = this.evidenceItems(evidenceBundle);
     await this.checkCitations(job, 1, [draft], evidenceItems);
     const draftHash = revisionDraftHash(draft);

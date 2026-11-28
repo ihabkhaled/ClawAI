@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { Locale, ThreadPublicationType } from '@claw/shared-types';
 
 import { authorDraftSchema, modelRoleSchema } from '../types/generation-pipeline.types';
+import { TOPIC_MAX_LENGTH } from '../constants/topic-reading.constants';
 
 const spendCapSchema = z
   .string()
@@ -22,7 +23,7 @@ export const enqueueRevisionReviewSchema = z
 export const revisionReviewJobRequestSchema = enqueueRevisionReviewSchema
   .extend({
     kind: z.literal('revision-review'),
-    topic: z.string().min(10).max(10_000),
+    topic: z.string().min(10).max(TOPIC_MAX_LENGTH),
     publicationType: z.nativeEnum(ThreadPublicationType),
     contentLocale: z.nativeEnum(Locale),
     authors: z.array(modelRoleSchema).min(3).max(5),

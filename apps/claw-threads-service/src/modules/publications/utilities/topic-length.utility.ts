@@ -12,16 +12,18 @@ import {
  * 10 letters of an alphabetic script. Keep this identical in meaning to the frontend copy
  * (apps/claw-frontend/src/utilities/thread-topic-length.utility.ts); both have the same vectors.
  */
-export function topicLengthWeight(topic: string): number {
+export function topicLengthWeight(topic: string, stopAt = Number.POSITIVE_INFINITY): number {
   const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
   let weight = 0;
   for (const { segment } of segmenter.segment(topic)) {
     if (!TOPIC_LETTER_OR_NUMBER.test(segment)) continue;
     weight += TOPIC_DENSE_SCRIPT.test(segment) ? TOPIC_DENSE_WEIGHT : 1;
+    // A topic may be a million characters; the minimum test stops as soon as it is met.
+    if (weight >= stopAt) break;
   }
   return weight;
 }
 
 export function isTopicLongEnough(topic: string): boolean {
-  return topicLengthWeight(topic) >= TOPIC_MIN_WEIGHT;
+  return topicLengthWeight(topic, TOPIC_MIN_WEIGHT) >= TOPIC_MIN_WEIGHT;
 }

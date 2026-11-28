@@ -1,3 +1,4 @@
+import type { OversizedFile } from '../types/oversized-file.types';
 import { randomUUID } from 'node:crypto';
 
 import { withQuotedContext } from '../utilities/quoted-turn.utility';
@@ -232,7 +233,12 @@ export class ContextAssemblyManager {
       .map((file) => file.id);
     const retrievalMs = Date.now() - retrievalStartedAt;
     this.logAttachmentOnlyTurn(lastUserContent, filteredFileContents, fileIds?.length ?? 0);
-    this.fitFixedContext(fetched, filteredFileContents, threadSettings, lastUserContent);
+    const oversizedFiles = this.fitFixedContext(
+      fetched,
+      filteredFileContents,
+      threadSettings,
+      lastUserContent,
+    );
     const researchWarnings = this.extractResearchWarnings(fetched.researchRun);
     const researchEvidence = this.fitResearchEvidence(
       fetched.researchRun,
@@ -260,6 +266,7 @@ export class ContextAssemblyManager {
       researchEvidence,
       researchToolsUsed,
       researchRequested,
+      oversizedFiles,
     });
   }
 
@@ -377,9 +384,11 @@ export class ContextAssemblyManager {
       researchWarnings,
       researchRequested,
       researchToolsUsed,
+      oversizedFiles,
     } = prepared;
     return {
       userId,
+      ...(oversizedFiles.length > 0 ? { oversizedFiles } : {}),
       systemPrompt: threadSettings?.systemPrompt ?? null,
       platformOrigin,
       threadMessages: selected.included,
@@ -1740,7 +1749,7 @@ ${RESEARCH_GROUNDING_REMINDER}`;
     files: FileContentResponse[],
     threadSettings: ThreadSettings | undefined,
     question: string,
-  ): void {
+  ): OversizedFile[] {
     const windowChars =
       resolveModelTokenBudget({
         contextWindowTokens: threadSettings?.contextWindowTokens ?? null,
@@ -1789,8 +1798,14 @@ ${RESEARCH_GROUNDING_REMINDER}`;
       question,
     );
     const fittedFileTextValues = fileTexts.texts[Symbol.iterator]();
+    // A file the fit had to cut keeps its whole text aside: the answer step reads it in parts (ADR-231).
+    const oversized: OversizedFile[] = [];
     for (const file of textFiles) {
+      const whole = file.extractedText ?? '';
       file.extractedText = fittedFileTextValues.next().value ?? '';
+      if (file.extractedText !== whole) {
+        oversized.push({ fileId: file.id, filename: file.filename, text: whole });
+      }
     }
 
     if (memories.dropped + packs.dropped + fileTexts.dropped > 0) {
@@ -1799,6 +1814,7 @@ ${RESEARCH_GROUNDING_REMINDER}`;
           `packItems=${String(packs.dropped)} files=${String(fileTexts.dropped)}`,
       );
     }
+    return oversized;
   }
 
   private formatResearchBlock(context: AssembledContext): string {

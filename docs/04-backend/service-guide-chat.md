@@ -1195,6 +1195,12 @@ overruling a user link or a plain order to search. No council or no answer → t
   `StreamCancellationService.carryStop` leaves a 20 s Redis marker so the answer that follows, on any replica, starts
   stopped. A run replaced by a newer one (`STREAM_RUN_REPLACED_MESSAGE`) is never carried.
 
+## Read it all, write it all (ADR-231, 2026-11-28)
+
+A file larger than the answering model's window is read in model-sized parts (one metered call each) and answered from
+complete notes, or, for whole-document requests such as translation, each part's result is the answer, joined in
+order. An answer cut by the output limit is continued until it ends.
+
 ## A promised search is finished (ADR-227, 2026-11-28)
 
 A reply that only promises a search (or asks for an unoffered web tool) is stored as its own message, the search runs

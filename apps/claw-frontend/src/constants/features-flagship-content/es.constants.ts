@@ -185,6 +185,14 @@ export const ES_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
           ],
         },
         {
+          id: 'files-bigger-than-the-model',
+          heading: 'Archivos más grandes que el modelo, leídos por completo',
+          paragraphs: [
+            'Un archivo puede ser mucho más grande que la ventana del modelo que elegiste. ClawAI lo lee entonces por partes del tamaño adecuado para ese modelo, una llamada por parte, y la respuesta se escribe a partir de notas completas de todas las partes, no solo del comienzo y de algunos pasajes coincidentes. El registro de trabajo muestra cuántas partes se leyeron.',
+            'Si pides transformar el documento entero —traducirlo, reescribirlo, convertirlo—, cada parte se procesa por turno y los resultados se unen en orden, así que no se omite nada. Una respuesta que alcanza el límite de salida del modelo continúa hasta terminar.',
+          ],
+        },
+        {
           id: 'scanning-and-retention',
           heading: 'Análisis antivirus que bloquea ante la duda, y retención',
           paragraphs: [

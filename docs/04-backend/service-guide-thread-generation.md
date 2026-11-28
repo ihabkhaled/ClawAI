@@ -325,3 +325,7 @@ role prompt the healer cannot shrink, so it stays under half of chat-service's 2
 ## Chat source and author instructions (ADR-220, 2026-11-22)
 
 A Thread from a chat gets the chat as `sourceConversation` (fitted per role model window: duplicates once, all turns in order, beginning+end of long messages, an omission note, attachment text included) and the topic box as `authorInstructions`. A planning call reads both in any language and names the subject and research queries before research; its failure falls back to searching the box and the chat. See [ADR-220](../13-adr/adr-220-a-thread-from-a-chat-is-sourced-from-the-whole-chat.md).
+
+## Huge topics are read in parts (2026-11-28, ADR-231)
+
+A topic of up to 1,000,000 characters is accepted (DTO limit, Express body limit 16 MB). When it is longer than half of the smallest model window among the reader, authors, Judge and Critic, `TopicReader` splits it on paragraph, line or sentence boundaries, reads at most 400 parts (3 at a time, sampled evenly above that) with one metered call each of the cheapest allowed model, and replaces the topic for every later stage with the first 2,000 characters plus the notes. Failed or spend-skipped parts leave a one-line gap marker. Each part reply is saved as a checkpoint (`topic-part-<n>`), so retries do not pay again. The step log shows `TOPIC_READING` rows with `{done,total}`. Constants: `constants/topic-reading.constants.ts`.

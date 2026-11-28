@@ -83,6 +83,10 @@ export function describeNarrationEntry(
           })
         : t('narration.pageRead', { host, strategy });
     }
+    case NarrationKind.LONG_INPUT:
+      return describeLongInput(params, t);
+    case NarrationKind.LONG_OUTPUT:
+      return t('narration.longOutputPart', { part: Number(params['part'] ?? 2) });
     case NarrationKind.AI_THINKING: {
       const model = String(params['model'] ?? '');
       return model.length > 0
@@ -92,6 +96,19 @@ export function describeNarrationEntry(
     default:
       return '';
   }
+}
+
+/** "Reading all 12 parts of x.txt", "Read 30 of 120 parts of x.txt", "Read all 12 parts of x.txt" (ADR-231). */
+function describeLongInput(params: Record<string, string | number>, t: TranslateFunction): string {
+  const name = String(params['name'] ?? '');
+  const parts = Number(params['parts'] ?? 0);
+  const done = Number(params['done'] ?? 0);
+  if (done <= 0) {
+    return t('narration.longInputReading', { name, parts });
+  }
+  return done >= parts
+    ? t('narration.longInputDone', { name, parts })
+    : t('narration.longInputProgress', { name, parts, done });
 }
 
 /** A fetch tier's name in the reader's language; an unknown kind is shown as-is (a newer server). */

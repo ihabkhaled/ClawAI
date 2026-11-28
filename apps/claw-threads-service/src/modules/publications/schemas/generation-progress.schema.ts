@@ -8,6 +8,8 @@ import {
   ThreadHealingStrategy,
 } from '@claw/shared-types';
 
+import { TOPIC_MAX_LENGTH } from '../constants/topic-length.constants';
+
 const roleKindSchema = z.enum(['AUTHOR', 'JUDGE', 'CRITIC', 'RESEARCH', 'SYSTEM']);
 const shortString = z.string().max(200);
 const nullableString = shortString.nullable();
@@ -32,7 +34,7 @@ const stepSchema = z.object({
 });
 
 const selectionsSchema = z.object({
-  topic: z.string().max(10_000),
+  topic: z.string().max(TOPIC_MAX_LENGTH),
   publicationType: shortString,
   contentLocale: shortString,
   sourceThreadId: shortString,

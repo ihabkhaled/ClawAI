@@ -981,6 +981,7 @@ export type TranslationDictionary = {
         researchQuery: string;
         researchQueryFailed: string;
         researchQuerySpendCap: string;
+        topicReading: string;
         researchEmpty: string;
         reviewNotPassed: string;
         citationInvalid: string;
@@ -1039,6 +1040,7 @@ export type TranslationDictionary = {
         researchQuery: string;
         researchQueryFailed: string;
         researchQuerySpendCap: string;
+        topicReading: string;
         researchEmpty: string;
         reviewNotPassed: string;
         citationInvalid: string;
@@ -6998,6 +7000,10 @@ export type NarrationLocaleTranslation = {
   researchFailed: string;
   aiThinking: string;
   aiThinkingWithModel: string;
+  longInputReading: string;
+  longInputProgress: string;
+  longInputDone: string;
+  longOutputPart: string;
   pageRead: string;
   pageReadAfter: string;
   strategyLabel: string;

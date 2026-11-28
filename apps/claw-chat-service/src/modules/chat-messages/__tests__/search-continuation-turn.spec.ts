@@ -91,6 +91,8 @@ type Options = {
   userMetadata?: Record<string, unknown> | null;
   researchAccess?: boolean;
   run?: unknown;
+  longInput?: unknown;
+  longOutput?: unknown;
 };
 
 type Harness = {
@@ -185,6 +187,8 @@ function build(options: Options): Harness {
     undefined,
     undefined,
     { inspect: vi.fn().mockResolvedValue(options.pending) } as never,
+    options.longInput as never,
+    options.longOutput as never,
   );
   return { service, execute, create, updateMetadata, searchPromised, stream };
 }
@@ -290,5 +294,57 @@ describe('a reply that only promised a search (ADR-227)', () => {
     expect(assistantRows(h.create)).toHaveLength(1);
     expect(h.searchPromised).not.toHaveBeenCalled();
     expect(h.stream['emitSearchContinuation']).not.toHaveBeenCalled();
+  });
+});
+
+describe('read it all, write it all (ADR-231)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    appConfigGet.mockReturnValue({ PUBLIC_SITE_URL: 'https://claw.local' });
+  });
+
+  it('reads an oversized file before answering and continues a cut answer', async () => {
+    const readAll = vi.fn(async (input: { context: Record<string, unknown> }) => ({
+      context: { ...input.context, systemPrompt: 'NOTES READ' },
+      answer: null,
+    }));
+    const complete = vi.fn(async () => ({
+      content: 'one two three',
+      provider: 'OLLAMA_CLOUD',
+      model: 'some-model',
+      inputTokens: 1,
+      outputTokens: 3,
+      latencyMs: 3,
+      usedFallback: false,
+      finishReason: 'stop',
+    }));
+    const h = build({
+      pending: null,
+      longInput: { readAll },
+      longOutput: { isCut: vi.fn().mockReturnValue(true), complete },
+    });
+    // The assembled context reports one oversized file.
+    const assemble = (
+      h.service as unknown as {
+        contextAssemblyManager: {
+          assemble: (() => Promise<unknown>) & { mockResolvedValue: (value: unknown) => void };
+        };
+      }
+    ).contextAssemblyManager.assemble;
+    const base = (await assemble()) as Record<string, unknown>;
+    assemble.mockResolvedValue({
+      ...base,
+      oversizedFiles: [{ fileId: 'f', filename: 'big.txt', text: 'x' }],
+    });
+
+    await h.service.handleMessageRouted(ROUTED);
+
+    expect(readAll).toHaveBeenCalledTimes(1);
+    expect((h.execute.mock.calls[0]?.[1] as { systemPrompt: string }).systemPrompt).toBe(
+      'NOTES READ',
+    );
+    expect(complete).toHaveBeenCalledTimes(1);
+    const rows = assistantRows(h.create);
+    expect(rows.at(-1)?.['content']).toBe('one two three');
   });
 });
