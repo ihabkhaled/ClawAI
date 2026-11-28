@@ -9,7 +9,12 @@ import type {
 import type { FeedbackTranslation } from '@/types/i18n-feedback.types';
 import type { LiveLocaleTranslation } from '@/types/live-i18n.types';
 import type { PluginImportLocaleTranslation } from '@/types/plugin-import-i18n.types';
-import type { PluginQaFixesLocaleTranslation } from '@/types/plugin-qa-fixes-i18n.types';
+import type {
+  PluginQaFixesLocaleTranslation,
+  PluralForms,
+  RawPluralForms,
+} from '@/types/plugin-qa-fixes-i18n.types';
+import type { ResearchPlatformsLocaleTranslation } from '@/types/research-platforms-i18n.types';
 
 export type TranslationDictionary = {
   /** Admin sessions page, system-wide session actions and their errors (ADR-204). */
@@ -357,6 +362,7 @@ export type TranslationDictionary = {
     workspaceFigma: string;
     workspaceWorkflows: string;
     researchProviders: string;
+    researchPlatforms: string;
     researchRuns: string;
     research: string;
     workspaceInbox: string;
@@ -4691,6 +4697,7 @@ export type TranslationDictionary = {
   };
   routerTrace: RouterTraceLocaleTranslation;
   narration: NarrationLocaleTranslation;
+  researchPlatforms: ResearchPlatformsLocaleTranslation;
   pickedModel: PickedModelLocaleTranslation;
   creditFallback: CreditFallbackLocaleTranslation;
   live: LiveLocaleTranslation;
@@ -7007,6 +7014,32 @@ export type NarrationLocaleTranslation = {
   strategiesDescription: string;
   strategyAvailable: string;
   strategyOff: string;
+  /** Research rounds and counters (B2/B3); every key below is used only when chat-service sent the param. */
+  backToAiRound: string;
+  searchStartedRound: string;
+  searchStartedRoundInLanguages: string;
+  searchStartedQueries: string;
+  searchStartedQueriesInLanguages: string;
+  searchStartedWithQueryInLanguages: string;
+  searchStartedInLanguages: string;
+  roundLabel: string;
+  platformsLabel: string;
+  count: NarrationCountTranslation;
+};
+
+/** Counted phrases in the work log, in every plural form; each holds `{count}`. */
+export type NarrationCountTranslation = {
+  queries: PluralForms;
+  moreQueries: PluralForms;
+  newQueries: PluralForms;
+  languages: PluralForms;
+  duplicatesRemoved: PluralForms;
+  reusedFromThread: PluralForms;
+};
+
+/** The narration dictionary as written per language, before the missing plural forms are filled in. */
+export type RawNarrationLocaleTranslation = Omit<NarrationLocaleTranslation, 'count'> & {
+  count: Record<keyof NarrationCountTranslation, RawPluralForms>;
 };
 
 export type RouterTraceLocaleTranslation = {
@@ -8074,11 +8107,13 @@ export type MarketingVideosLocaleTranslation = {
   shortsSection: MarketingVideoSectionCopyLocaleTranslation;
   threadsSection: MarketingVideoSectionCopyLocaleTranslation;
   stepsSection: MarketingVideoSectionCopyLocaleTranslation;
+  researchSection: MarketingVideoSectionCopyLocaleTranslation;
   durationLabel: string;
   facade: { play: string; frameTitle: string };
   local: {
     combined: MarketingVideoCopyLocaleTranslation;
     part: MarketingVideoCopyLocaleTranslation;
+    research: MarketingVideoCopyLocaleTranslation;
   };
 };
 

@@ -37,6 +37,7 @@ const PLACEMENT_HOSTS: Readonly<Record<MarketingVideoPlacement, string>> = {
   [MarketingVideoPlacement.HOW_IT_WORKS]: 'app/(marketing)/how-it-works/page.tsx',
   [MarketingVideoPlacement.ARCHITECTURE]: 'app/(marketing)/architecture/page.tsx',
   [MarketingVideoPlacement.INTEGRATIONS]: 'app/(marketing)/integrations/page.tsx',
+  [MarketingVideoPlacement.RESEARCH]: 'components/marketing/features/feature-capability-page.tsx',
 };
 
 describe('MARKETING_VIDEOS registry', () => {
@@ -46,7 +47,7 @@ describe('MARKETING_VIDEOS registry', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('has the four local videos and the nine Shorts', () => {
+  it('has the five local videos and the nine Shorts', () => {
     const local = MARKETING_VIDEOS.filter(isLocalVideo);
     const shorts = MARKETING_VIDEOS.filter((entry) => entry.kind === MarketingVideoKind.SHORT);
 
@@ -55,6 +56,7 @@ describe('MARKETING_VIDEOS registry', () => {
       'clawai-part-1',
       'clawai-part-2',
       'clawai-part-3',
+      'research-rounds',
     ]);
     expect(shorts).toHaveLength(9);
   });
@@ -98,6 +100,7 @@ describe('MARKETING_VIDEOS registry', () => {
       'clawai-part-1': 10,
       'clawai-part-2': 10,
       'clawai-part-3': 10,
+      'research-rounds': 30,
     });
   });
 
@@ -190,6 +193,7 @@ describe('MARKETING_VIDEOS registry', () => {
       MarketingVideoPlacement.THREADS_DISCOVER,
     ]);
     expect(placed('clawai-part-2')).toEqual([MarketingVideoPlacement.THREADS_OVERVIEW_STEPS]);
+    expect(placed('research-rounds')).toEqual([MarketingVideoPlacement.RESEARCH]);
     expect(placed('ZuKqBODBH2k')).toEqual([MarketingVideoPlacement.HOME_ACTION]);
     expect(placed('CfxYCdcNibQ')).toEqual([MarketingVideoPlacement.HOME_ACTION]);
     expect(placed('3tsb9axusWA')).toEqual([MarketingVideoPlacement.HOME_ACTION]);

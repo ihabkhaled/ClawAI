@@ -118,7 +118,7 @@ describe('ContextAssemblyManager', () => {
   // the same distance. Assistant output is conversational state and stays.
   // Memory filtering below is unchanged — a topical memory is still filtered
   // by relevance, a standing PREFERENCE is still always injected.
-  it('keeps prior assistant content, and still filters topical memories, for self-contained prompts', () => {
+  it('keeps prior assistant content and every saved memory for self-contained prompts', () => {
     const context = buildContext();
     context.threadMessages = [
       {
@@ -159,8 +159,10 @@ describe('ContextAssemblyManager', () => {
     const prompt = manager.buildPromptString(context);
 
     expect(prompt).toContain('Semi-Circle Shape Concept');
-    expect(prompt).not.toContain('likes logo concepts');
+    // Memory is never dropped for sharing no words with the question (owner report 2026-11-28).
+    expect(prompt).toContain('likes logo concepts');
     expect(prompt).toContain('prefers concise technical answers');
+    expect(prompt).toContain('things this user asked ClawAI to remember');
     expect(prompt).toContain('Refactor a callback-heavy handler');
   });
 
@@ -581,12 +583,36 @@ describe('ContextAssemblyManager memory selection', () => {
     expect(manager.selectMemoriesForPrompt([pinned], 'explain postgres vacuum')).toHaveLength(1);
   });
 
-  it('still drops an unrelated topical fact', () => {
-    // The filter is not removed, only narrowed: an off-topic fact is still
-    // noise, and letting everything through would crowd out the thread itself.
+  it('keeps an unrelated fact, after the matching one (it used to be dropped)', () => {
     const unrelated = memory('m4', MemoryRecordType.FACT, 'The office is in Cairo.');
+    const matching = memory('m6', MemoryRecordType.FACT, 'Postgres vacuum is scheduled nightly.');
 
-    expect(manager.selectMemoriesForPrompt([unrelated], 'explain postgres vacuum')).toHaveLength(0);
+    expect(
+      manager
+        .selectMemoriesForPrompt([unrelated, matching], 'explain postgres vacuum')
+        .map((m) => m.id),
+    ).toEqual(['m6', 'm4']);
+  });
+
+  it('finds a saved Arabic secret for an Arabic question (owner report 2026-11-28)', () => {
+    const secret = memory('s1', MemoryRecordType.FACT, 'السرّ بتاعي هو المانجا');
+    const other = memory('s2', MemoryRecordType.FACT, 'The office is in Cairo.');
+
+    const selected = manager.selectMemoriesForPrompt([other, secret], 'إيه السر اللي قلتهولك؟');
+
+    expect(selected.map((m) => m.id)).toEqual(['s1', 's2']);
+  });
+
+  it('keeps every standing memory and at most 50 in all', () => {
+    const instruction = memory('i1', MemoryRecordType.INSTRUCTION, 'Always reply in bullets.');
+    const facts = Array.from({ length: 70 }, (_, i) =>
+      memory(`f${String(i)}`, MemoryRecordType.FACT, `Fact number ${String(i)}.`),
+    );
+
+    const selected = manager.selectMemoriesForPrompt([...facts, instruction], 'anything');
+
+    expect(selected).toHaveLength(50);
+    expect(selected[0]?.id).toBe('i1');
   });
 
   it('keeps a topical fact that matches the question', () => {

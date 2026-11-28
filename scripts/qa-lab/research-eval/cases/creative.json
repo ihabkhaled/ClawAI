@@ -1,0 +1,162 @@
+[
+  {
+    "id": "en-creative-01",
+    "lang": "en",
+    "category": "creative",
+    "text": "Write a short poem about autumn rain.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ar-creative-01",
+    "lang": "ar",
+    "category": "creative",
+    "text": "اكتب قصيدة قصيرة عن الغربة والحنين إلى الوطن.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ar-LB-creative-01",
+    "lang": "ar-LB",
+    "category": "creative",
+    "text": "احكيلي قصة قصيرة عن قطة عم تدور على بيتها.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ar-SA-creative-01",
+    "lang": "ar-SA",
+    "category": "creative",
+    "text": "اكتب لي قصة قصيرة عن صياد لؤلؤ في الخليج قديماً.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "fr-creative-01",
+    "lang": "fr",
+    "category": "creative",
+    "text": "Écris-moi un haïku sur la mer en hiver.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "es-creative-01",
+    "lang": "es",
+    "category": "creative",
+    "text": "Inventa un cuento corto sobre un dragón que le tiene miedo al fuego.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "pt-BR-creative-01",
+    "lang": "pt-BR",
+    "category": "creative",
+    "text": "Escreva uma letra de música sobre saudade.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "de-creative-01",
+    "lang": "de",
+    "category": "creative",
+    "text": "Schreibe ein kurzes Gedicht über den Morgen im Wald.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "it-creative-01",
+    "lang": "it",
+    "category": "creative",
+    "text": "Scrivimi una breve filastrocca per bambini sulla luna.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "fa-creative-01",
+    "lang": "fa",
+    "category": "creative",
+    "text": "یک داستان کوتاه درباره‌ی گربه‌ای که هرگز دریا را ندیده بنویس.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ur-creative-01",
+    "lang": "ur",
+    "category": "creative",
+    "text": "بارش پر ایک چھوٹی سی نظم لکھو۔",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "bn-creative-01",
+    "lang": "bn",
+    "category": "creative",
+    "text": "বর্ষাকালের উপর একটা ছোট কবিতা লিখে দাও।",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ru-creative-01",
+    "lang": "ru",
+    "category": "creative",
+    "text": "Придумай короткую сказку про ёжика и звёздное небо.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "uk-creative-01",
+    "lang": "uk",
+    "category": "creative",
+    "text": "Напиши короткий вірш про осінній Київ.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ja-creative-01",
+    "lang": "ja",
+    "category": "creative",
+    "text": "桜をテーマにした短い俳句を作ってください。",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "sw-creative-01",
+    "lang": "sw",
+    "category": "creative",
+    "text": "Tunga shairi fupi kuhusu mama na upendo wake.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  }
+]

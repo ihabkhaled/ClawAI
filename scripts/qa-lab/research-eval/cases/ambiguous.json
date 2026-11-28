@@ -1,0 +1,146 @@
+[
+  {
+    "id": "en-ambiguous-01",
+    "lang": "en",
+    "category": "ambiguous",
+    "text": "Tell me about Mercury.",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "ar-ambiguous-01",
+    "lang": "ar",
+    "category": "ambiguous",
+    "text": "حدثني عن مصر.",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "ar-EG-ambiguous-01",
+    "lang": "ar-EG",
+    "category": "ambiguous",
+    "text": "قولي عن آبل.",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "fr-ambiguous-01",
+    "lang": "fr",
+    "category": "ambiguous",
+    "text": "Parle-moi de Python.",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "es-ambiguous-01",
+    "lang": "es",
+    "category": "ambiguous",
+    "text": "¿Qué sabes sobre Java?",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "pt-BR-ambiguous-01",
+    "lang": "pt-BR",
+    "category": "ambiguous",
+    "text": "Me fale sobre o Amazonas.",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "de-ambiguous-01",
+    "lang": "de",
+    "category": "ambiguous",
+    "text": "Erzähl mir etwas über die Bank.",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "it-ambiguous-01",
+    "lang": "it",
+    "category": "ambiguous",
+    "text": "Dimmi qualcosa su Jaguar.",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "tr-ambiguous-01",
+    "lang": "tr",
+    "category": "ambiguous",
+    "text": "Bana Apple hakkında bilgi ver.",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "fa-ambiguous-01",
+    "lang": "fa",
+    "category": "ambiguous",
+    "text": "درباره‌ی شیراز بگو.",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "hi-ambiguous-01",
+    "lang": "hi",
+    "category": "ambiguous",
+    "text": "मुझे सेब के बारे में बताओ।",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "hi-Latn-ambiguous-01",
+    "lang": "hi-Latn",
+    "category": "ambiguous",
+    "text": "Mujhe Tesla ke baare mein batao.",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "bn-ambiguous-01",
+    "lang": "bn",
+    "category": "ambiguous",
+    "text": "আমাকে পদ্মা সম্পর্কে বলো।",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "ru-ambiguous-01",
+    "lang": "ru",
+    "category": "ambiguous",
+    "text": "Расскажи мне про Волгу.",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "zh-CN-ambiguous-01",
+    "lang": "zh-CN",
+    "category": "ambiguous",
+    "text": "跟我说说苹果。",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "ko-ambiguous-01",
+    "lang": "ko",
+    "category": "ambiguous",
+    "text": "미국에 대해 알려줘.",
+    "expect": {
+      "research": "either"
+    }
+  }
+]

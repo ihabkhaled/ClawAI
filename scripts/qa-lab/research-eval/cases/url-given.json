@@ -1,0 +1,146 @@
+[
+  {
+    "id": "en-url-given-01",
+    "lang": "en",
+    "category": "url-given",
+    "text": "Please read https://en.wikipedia.org/wiki/Alan_Turing and summarize it in five bullet points.",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ar-url-given-01",
+    "lang": "ar",
+    "category": "url-given",
+    "text": "اقرأ هذه الصفحة ولخصها لي: https://en.wikipedia.org/wiki/Cairo",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ar-EG-url-given-01",
+    "lang": "ar-EG",
+    "category": "url-given",
+    "text": "افتح اللينك ده ولخصلي اللي فيه: https://en.wikipedia.org/wiki/Nile",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "fr-url-given-01",
+    "lang": "fr",
+    "category": "url-given",
+    "text": "Lis cette page et résume-la : https://fr.wikipedia.org/wiki/Paris",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "es-url-given-01",
+    "lang": "es",
+    "category": "url-given",
+    "text": "Lee este enlace y dime las ideas principales: https://es.wikipedia.org/wiki/Madrid",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "pt-BR-url-given-01",
+    "lang": "pt-BR",
+    "category": "url-given",
+    "text": "Leia esta página e resuma: https://pt.wikipedia.org/wiki/Brasil",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "de-url-given-01",
+    "lang": "de",
+    "category": "url-given",
+    "text": "Fasse diesen Artikel zusammen: https://de.wikipedia.org/wiki/Berlin",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "it-url-given-01",
+    "lang": "it",
+    "category": "url-given",
+    "text": "Leggi questa pagina e dimmi di cosa parla: https://it.wikipedia.org/wiki/Roma",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "tr-url-given-01",
+    "lang": "tr",
+    "category": "url-given",
+    "text": "Bu sayfayı oku ve özetle: https://tr.wikipedia.org/wiki/Istanbul",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "hi-url-given-01",
+    "lang": "hi",
+    "category": "url-given",
+    "text": "इस लिंक को पढ़कर सार बताओ: https://en.wikipedia.org/wiki/India",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ru-url-given-01",
+    "lang": "ru",
+    "category": "url-given",
+    "text": "Прочитай статью и кратко перескажи: https://en.wikipedia.org/wiki/Moscow",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "zh-CN-url-given-01",
+    "lang": "zh-CN",
+    "category": "url-given",
+    "text": "请阅读这个网页并总结要点：https://en.wikipedia.org/wiki/Great_Wall_of_China",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ja-url-given-01",
+    "lang": "ja",
+    "category": "url-given",
+    "text": "このページを読んで要約してください：https://en.wikipedia.org/wiki/Mount_Fuji",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ko-url-given-01",
+    "lang": "ko",
+    "category": "url-given",
+    "text": "이 링크 내용을 읽고 요약해 줘: https://en.wikipedia.org/wiki/Seoul",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "id-url-given-01",
+    "lang": "id",
+    "category": "url-given",
+    "text": "Baca halaman ini lalu ringkas: https://id.wikipedia.org/wiki/Jakarta",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "vi-url-given-01",
+    "lang": "vi",
+    "category": "url-given",
+    "text": "Đọc trang này và tóm tắt giúp mình: https://en.wikipedia.org/wiki/Hanoi",
+    "expect": {
+      "research": "yes"
+    }
+  }
+]

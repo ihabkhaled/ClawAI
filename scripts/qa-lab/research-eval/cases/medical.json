@@ -1,0 +1,146 @@
+[
+  {
+    "id": "en-medical-01",
+    "lang": "en",
+    "category": "medical",
+    "text": "What are the common side effects of ibuprofen, and when should I see a doctor?",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "ar-medical-01",
+    "lang": "ar",
+    "category": "medical",
+    "text": "ما هي أعراض نقص فيتامين د وكيف يتم علاجه؟",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "ar-EG-medical-01",
+    "lang": "ar-EG",
+    "category": "medical",
+    "text": "عندي صداع نصفي كتير، إيه الأدوية الآمنة اللي ممكن آخدها؟",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "ar-SA-medical-01",
+    "lang": "ar-SA",
+    "category": "medical",
+    "text": "وش الفرق بين الإنفلونزا ونزلة البرد وكيف أتعامل معهم؟",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "fr-medical-01",
+    "lang": "fr",
+    "category": "medical",
+    "text": "Quels sont les symptômes d'une carence en fer ?",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "es-medical-01",
+    "lang": "es",
+    "category": "medical",
+    "text": "¿Cuál es la dosis recomendada de paracetamol para un adulto?",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "pt-BR-medical-01",
+    "lang": "pt-BR",
+    "category": "medical",
+    "text": "Quais são os sintomas de diabetes tipo 2?",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "de-medical-01",
+    "lang": "de",
+    "category": "medical",
+    "text": "Welche Nebenwirkungen kann Metformin haben?",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "it-medical-01",
+    "lang": "it",
+    "category": "medical",
+    "text": "Come si cura una gastrite? Quali sono i rimedi?",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "tr-medical-01",
+    "lang": "tr",
+    "category": "medical",
+    "text": "Yüksek tansiyon belirtileri nelerdir, nasıl kontrol altına alınır?",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "fa-medical-01",
+    "lang": "fa",
+    "category": "medical",
+    "text": "علائم کمبود ویتامین B12 چیست؟",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "hi-medical-01",
+    "lang": "hi",
+    "category": "medical",
+    "text": "सर्दी-जुकाम में कौन सी घरेलू चीज़ें असरदार होती हैं?",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "bn-medical-01",
+    "lang": "bn",
+    "category": "medical",
+    "text": "ডেঙ্গু জ্বরের লক্ষণ কী কী এবং কখন হাসপাতালে যেতে হবে?",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "id-medical-01",
+    "lang": "id",
+    "category": "medical",
+    "text": "Apa saja gejala asam lambung dan cara mengatasinya?",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "ru-medical-01",
+    "lang": "ru",
+    "category": "medical",
+    "text": "Какие продукты помогают снизить уровень холестерина?",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "zh-CN-medical-01",
+    "lang": "zh-CN",
+    "category": "medical",
+    "text": "高血压患者平时饮食要注意什么？",
+    "expect": {
+      "research": "either"
+    }
+  }
+]

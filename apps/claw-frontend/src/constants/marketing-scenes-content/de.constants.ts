@@ -12,6 +12,10 @@ export const DE_MARKETING_SCENES_CONTENT: MarketingScenesLocaleContent = {
       alt: 'Das ClawAI-Eingabefeld mit geöffneter Modellauswahl, die die wählbaren Modelle auflistet.',
       caption: 'Wähle ein Modell selbst oder lass AUTO wählen.',
     },
+    [MarketingSceneId.CHAT_RESEARCH_ROUNDS]: {
+      alt: 'Ein ClawAI-Chat mit Recherche-Protokoll: mehrere Suchrunden mit Anzahl der Suchen, Sprachen und Quellenarten, danach eine Antwort mit Quellen.',
+      caption: 'Die Recherche arbeitet in Runden und sagt, wonach sie gesucht hat.',
+    },
     [MarketingSceneId.CHAT_RESEARCH]: {
       alt: 'Das Eingabefeld mit eingeschalteter Websuche und sichtbarer Auswahl des Suchanbieters.',
       caption: 'Schalte die Websuche ein und wähle, wie gesucht wird.',

@@ -152,7 +152,7 @@
         "MessageAttachment",
         "PromptTemplate"
       ],
-      "testFiles": 371,
+      "testFiles": 380,
       "testRunner": "vitest"
     },
     {
@@ -390,7 +390,7 @@
         "MemoryUsage",
         "WorkspaceObjectEmbedding"
       ],
-      "testFiles": 25,
+      "testFiles": 26,
       "testRunner": "vitest"
     },
     {
@@ -506,7 +506,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-research-service",
-      "endpointCount": 26,
+      "endpointCount": 32,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -524,14 +524,16 @@
         "FetchStrategyConfig",
         "HostStrategyMemory",
         "PageCache",
+        "ResearchPlatform",
         "ResearchRun",
+        "ResearchSource",
         "RuntimeCrawlConfig",
         "RuntimeCrawlPage",
         "RuntimeCrawlRun",
         "SearchProvider",
         "SearchRun"
       ],
-      "testFiles": 75,
+      "testFiles": 89,
       "testRunner": "vitest"
     },
     {

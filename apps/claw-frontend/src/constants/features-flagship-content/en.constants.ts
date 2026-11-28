@@ -12,7 +12,7 @@ export const EN_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
     [FeatureCapability.SMART_ATTACHMENTS]:
       'Drop documents, code, media or whole archives into the chat; every upload is virus-scanned and its text extracted for the model.',
     [FeatureCapability.NARRATED_RESEARCH]:
-      'A research loop that decides whether to search or crawl, narrates each step as it works, and respects robots.txt on every fetch.',
+      'Research that searches in rounds and several languages, across the web, academic and developer sources, narrates each step and respects robots.txt.',
     [FeatureCapability.ORCHESTRATION_LABS]:
       'Dedicated labs that put several models on one problem — compare with a judge, consensus, escalation, verification and more.',
     [FeatureCapability.CONVERSATION_TOOLS]:
@@ -204,7 +204,7 @@ export const EN_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
       seo: {
         title: 'Narrated research and web crawling in ClawAI',
         description:
-          'How ClawAI researches the web: a planner that chooses to search or crawl, a live narrated work log, tiered fetching that respects robots.txt, and cited sources.',
+          'How ClawAI researches: several rounds of multilingual search across the web, academic and developer sources, a live work log, polite fetching and cited sources.',
         keywords: ['AI web research', 'AI website crawler', 'AI research with sources'],
       },
       eyebrow: 'Feature',
@@ -235,6 +235,30 @@ export const EN_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
             'robots.txt is honoured on every fetch under the ClawAI-ResearchBot user agent, and a disallowed page is not retried another way. Sign-in walls and legal blocks stop the fetch, captchas are never solved, every redirect is checked against private network addresses, and an archived copy is always labelled as one.',
           ],
         },
+        {
+          id: 'research-in-rounds',
+          heading: 'Research in rounds, in several languages',
+          paragraphs: [
+            'When a question needs it, several models vote in parallel on whether to use the web, how deep to go, which languages to search in and which questions to ask. One search then covers several of those questions at once.',
+            'After each round, ClawAI checks what is still missing and searches again for exactly that, up to three rounds within a fixed research time budget. Pressing Stop ends the research and the answer that would follow it.',
+          ],
+        },
+        {
+          id: 'more-than-a-web-search',
+          heading: 'More than a web search',
+          paragraphs: [
+            'Depending on the question, research also asks free official APIs directly: OpenAlex, Semantic Scholar, arXiv, PubMed, Crossref for studies; GitHub, Stack Overflow, Hacker News for code; Wikipedia for background. It also searches named news, official and community sites.',
+            'Only public pages and public APIs are used: no sign-ins, no getting past CAPTCHAs and no paywall bypass. Platforms without a lawful public API are reached through ordinary search results.',
+          ],
+        },
+        {
+          id: 'evidence-you-can-trace',
+          heading: 'Evidence you can trace',
+          paragraphs: [
+            'Each source is kept with the search question that found it. A page already read in the same chat within the last 24 hours is not fetched again, and identical copies of the same text are dropped.',
+            'Text taken from web pages reaches the model marked as untrusted data, apart from your instructions, and the model is told never to follow instructions found inside a page.',
+          ],
+        },
       ],
       faq: [
         {
@@ -251,6 +275,16 @@ export const EN_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
           question: 'Is web research available on every plan?',
           answer:
             'Research modes are plan features (RESEARCH_MODE, WEB_SEARCH, WEB_FETCH and WEB_EXTRACT) with their own allowances, which the operator sets per plan. The pricing page shows what each plan includes.',
+        },
+        {
+          question: 'Does research search in other languages?',
+          answer:
+            'Yes. The planning models choose the languages most likely to hold the answer and write search questions in them, so research is not limited to the language you asked in.',
+        },
+        {
+          question: 'Which sources can research search?',
+          answer:
+            'General web search plus a managed list of sources: academic databases, developer sites, reference works, news, official and community sites. The operator can switch sources on or off, and your plan decides which research modes you have.',
         },
       ],
       productNote:

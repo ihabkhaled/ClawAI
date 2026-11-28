@@ -12,7 +12,7 @@ export const DE_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
     [FeatureCapability.SMART_ATTACHMENTS]:
       'Ziehen Sie Dokumente, Code, Medien oder ganze Archive in den Chat; jeder Upload wird auf Viren geprüft und sein Text für das Modell extrahiert.',
     [FeatureCapability.NARRATED_RESEARCH]:
-      'Eine Recherche-Schleife, die entscheidet, ob gesucht oder gecrawlt wird, jeden Schritt während der Arbeit kommentiert und bei jedem Abruf robots.txt respektiert.',
+      'Recherche in mehreren Runden und Sprachen, über Web, Wissenschafts- und Entwicklerquellen, mit kommentierten Schritten und Beachtung von robots.txt.',
     [FeatureCapability.ORCHESTRATION_LABS]:
       'Eigene Labs, die mehrere Modelle auf ein Problem ansetzen — Vergleich mit Richter, Konsens, Eskalation, Verifikation und mehr.',
     [FeatureCapability.CONVERSATION_TOOLS]:
@@ -205,7 +205,7 @@ export const DE_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
       seo: {
         title: 'Kommentierte Recherche und Web-Crawling in ClawAI',
         description:
-          'Wie ClawAI im Web recherchiert: ein Planer, der zwischen Suchen und Crawlen wählt, ein live kommentiertes Arbeitsprotokoll, gestuftes Abrufen unter Beachtung von robots.txt und belegte Quellen.',
+          'Wie ClawAI recherchiert: mehrere Runden mehrsprachiger Suche in Web, Wissenschaft und Entwicklerquellen, ein Live-Protokoll, rücksichtsvolles Abrufen und Quellenangaben.',
         keywords: ['KI-Webrecherche', 'KI-Website-Crawler', 'KI-Recherche mit Quellen'],
       },
       eyebrow: 'Funktion',
@@ -236,6 +236,30 @@ export const DE_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
             'robots.txt wird bei jedem Abruf unter dem User-Agent ClawAI-ResearchBot beachtet, und eine gesperrte Seite wird nicht auf anderem Weg erneut versucht. Anmeldeschranken und rechtliche Sperren beenden den Abruf, Captchas werden nie gelöst, jede Weiterleitung wird gegen private Netzwerkadressen geprüft, und eine archivierte Kopie wird immer als solche gekennzeichnet.',
           ],
         },
+        {
+          id: 'research-in-rounds',
+          heading: 'Recherche in Runden und mehreren Sprachen',
+          paragraphs: [
+            'Wenn eine Frage es braucht, stimmen mehrere Modelle parallel ab: ob das Web nötig ist, wie tief gesucht wird, in welchen Sprachen und mit welchen Fragen. Eine Suche deckt dann mehrere dieser Fragen zugleich ab.',
+            'Nach jeder Runde prüft ClawAI, was noch fehlt, und sucht gezielt danach, höchstens drei Runden innerhalb eines festen Zeitbudgets. Mit „Stopp“ enden die Recherche und die Antwort, die darauf folgen würde.',
+          ],
+        },
+        {
+          id: 'more-than-a-web-search',
+          heading: 'Mehr als eine Websuche',
+          paragraphs: [
+            'Je nach Frage fragt die Recherche zusätzlich kostenlose offizielle APIs direkt ab: OpenAlex, Semantic Scholar, arXiv, PubMed, Crossref für Studien; GitHub, Stack Overflow, Hacker News für Code; Wikipedia für Hintergründe. Außerdem durchsucht sie benannte Nachrichten-, Behörden- und Community-Seiten.',
+            'Genutzt werden nur öffentliche Seiten und öffentliche APIs: keine Anmeldungen, kein Lösen von CAPTCHAs, kein Umgehen von Bezahlschranken. Plattformen ohne zulässige öffentliche API werden über gewöhnliche Suchergebnisse erreicht.',
+          ],
+        },
+        {
+          id: 'evidence-you-can-trace',
+          heading: 'Nachvollziehbare Belege',
+          paragraphs: [
+            'Jede Quelle wird mit der Suchfrage gespeichert, die sie gefunden hat. Eine im selben Chat in den letzten 24 Stunden gelesene Seite wird nicht erneut abgerufen, und identische Kopien desselben Textes werden entfernt.',
+            'Text aus Webseiten erreicht das Modell als nicht vertrauenswürdige Daten gekennzeichnet und getrennt von Ihren Anweisungen; das Modell wird angewiesen, Anweisungen aus Seiten niemals zu befolgen.',
+          ],
+        },
       ],
       faq: [
         {
@@ -252,6 +276,16 @@ export const DE_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
           question: 'Ist die Webrecherche in jedem Plan verfügbar?',
           answer:
             'Die Recherchemodi sind Planfunktionen (RESEARCH_MODE, WEB_SEARCH, WEB_FETCH und WEB_EXTRACT) mit eigenen Kontingenten, die der Betreiber pro Plan festlegt. Die Preisseite zeigt, was jeder Plan enthält.',
+        },
+        {
+          question: 'Sucht die Recherche auch in anderen Sprachen?',
+          answer:
+            'Ja. Die Planungsmodelle wählen die Sprachen, in denen die Antwort am ehesten steht, und formulieren Suchfragen darin. Die Recherche ist also nicht auf die Sprache Ihrer Frage beschränkt.',
+        },
+        {
+          question: 'Welche Quellen kann die Recherche durchsuchen?',
+          answer:
+            'Die allgemeine Websuche und eine verwaltete Quellenliste: wissenschaftliche Datenbanken, Entwicklerseiten, Nachschlagewerke, Nachrichten sowie offizielle und Community-Seiten. Der Betreiber kann Quellen ein- oder ausschalten; Ihr Tarif bestimmt, welche Recherchemodi Sie haben.',
         },
       ],
       productNote:

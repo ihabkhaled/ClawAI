@@ -1,0 +1,162 @@
+[
+  {
+    "id": "en-sports-results-01",
+    "lang": "en",
+    "category": "sports-results",
+    "text": "Who won the Premier League matches last weekend? Give me the scores.",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "ar-sports-results-01",
+    "lang": "ar",
+    "category": "sports-results",
+    "text": "ما نتيجة مباراة ريال مدريد الأخيرة؟",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "ar-EG-sports-results-01",
+    "lang": "ar-EG",
+    "category": "sports-results",
+    "text": "الأهلي كسب ولا خسر في آخر ماتش؟",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "ar-SA-sports-results-01",
+    "lang": "ar-SA",
+    "category": "sports-results",
+    "text": "كم نتيجة مباراة الهلال الأخيرة؟",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "ar-MA-sports-results-01",
+    "lang": "ar-MA",
+    "category": "sports-results",
+    "text": "شنو كانت نتيجة آخر ماتش ديال الوداد؟",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "fr-sports-results-01",
+    "lang": "fr",
+    "category": "sports-results",
+    "text": "Quel a été le score du dernier match du PSG ?",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "es-sports-results-01",
+    "lang": "es",
+    "category": "sports-results",
+    "text": "¿Cómo quedó el último clásico entre Madrid y Barça?",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "pt-BR-sports-results-01",
+    "lang": "pt-BR",
+    "category": "sports-results",
+    "text": "Qual foi o resultado do jogo do Flamengo ontem?",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "de-sports-results-01",
+    "lang": "de",
+    "category": "sports-results",
+    "text": "Wie hat Bayern München am letzten Spieltag gespielt?",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "it-sports-results-01",
+    "lang": "it",
+    "category": "sports-results",
+    "text": "Com'è finita l'ultima partita della Juventus?",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "tr-sports-results-01",
+    "lang": "tr",
+    "category": "sports-results",
+    "text": "Galatasaray'ın son maçı kaç kaç bitti?",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "hi-Latn-sports-results-01",
+    "lang": "hi-Latn",
+    "category": "sports-results",
+    "text": "India ka last cricket match kaun jeeta aur score kya tha?",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "id-sports-results-01",
+    "lang": "id",
+    "category": "sports-results",
+    "text": "Hasil pertandingan timnas Indonesia terakhir gimana?",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "ru-sports-results-01",
+    "lang": "ru",
+    "category": "sports-results",
+    "text": "Какой счёт в последнем матче «Зенита»?",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "ko-sports-results-01",
+    "lang": "ko",
+    "category": "sports-results",
+    "text": "토트넘 어제 경기 결과 알려줘.",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "sw-sports-results-01",
+    "lang": "sw",
+    "category": "sports-results",
+    "text": "Matokeo ya mechi ya Simba na Yanga ya mwisho yalikuwaje?",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  }
+]

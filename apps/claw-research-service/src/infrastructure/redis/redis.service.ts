@@ -36,6 +36,46 @@ export class RedisService implements OnModuleDestroy {
     await this.client.publish(channel, message);
   }
 
+  /**
+   * GET / SET EX / DEL bounded by `timeoutMs`. The client is built with
+   * `maxRetriesPerRequest: null`, so while Redis is down a command waits in the
+   * offline queue forever; a caller on a request path must not. These reject
+   * on timeout or error; the caller treats that as a miss.
+   */
+  async getBounded(key: string, timeoutMs: number): Promise<string | null> {
+    return this.bounded(this.client.get(key), timeoutMs);
+  }
+
+  async setBounded(
+    key: string,
+    value: string,
+    ttlSeconds: number,
+    timeoutMs: number,
+  ): Promise<void> {
+    await this.bounded(this.client.set(key, value, 'EX', ttlSeconds), timeoutMs);
+  }
+
+  async delBounded(key: string, timeoutMs: number): Promise<void> {
+    await this.bounded(this.client.del(key), timeoutMs);
+  }
+
+  private async bounded<T>(command: Promise<T>, timeoutMs: number): Promise<T> {
+    command.catch(() => {});
+    let timer: NodeJS.Timeout | undefined;
+    try {
+      return await Promise.race([
+        command,
+        new Promise<never>((_resolve, reject) => {
+          timer = setTimeout(() => {
+            reject(new Error(`Redis command timed out after ${String(timeoutMs)}ms`));
+          }, timeoutMs);
+        }),
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   async onModuleDestroy(): Promise<void> {
     await this.client.quit();
   }

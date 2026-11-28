@@ -58,29 +58,29 @@ enum ResearchRunStatus {
 /// A DB-backed search provider definition. Admin-managed.
 /// Credentials live in `encryptedSecret` (AES-256-GCM) — never in .env.
 model SearchProvider {
-  id              String               @id @default(cuid())
-  kind            SearchProviderKind
-  name            String               @unique
-  description     String?
+  id               String               @id @default(cuid())
+  kind             SearchProviderKind
+  name             String               @unique
+  description      String?
   /// Base URL for the provider (e.g. https://api.tavily.com, SearXNG host, or Ollama host).
-  baseUrl         String
+  baseUrl          String
   /// Encrypted secret blob — typically {"apiKey": "..."} JSON.
-  encryptedSecret String?
-  secretVersion   Int                  @default(0)
-  enabled         Boolean              @default(true)
-  priority        Int                  @default(100)
-  status          SearchProviderStatus @default(ACTIVE)
+  encryptedSecret  String?
+  secretVersion    Int                  @default(0)
+  enabled          Boolean              @default(true)
+  priority         Int                  @default(100)
+  status           SearchProviderStatus @default(ACTIVE)
   /// Additional provider-specific non-secret config (e.g. {"maxResults":10}).
-  publicConfig    Json                 @default("{}")
+  publicConfig     Json                 @default("{}")
   /// Per-provider domain allow/block lists.
-  allowlistDomains String[]            @default([])
-  blocklistDomains String[]            @default([])
+  allowlistDomains String[]             @default([])
+  blocklistDomains String[]             @default([])
   /// Per-run timeout in ms.
-  timeoutMs       Int                  @default(15000)
-  lastValidatedAt DateTime?
-  validationError String?
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
+  timeoutMs        Int                  @default(15000)
+  lastValidatedAt  DateTime?
+  validationError  String?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
 
   runs SearchRun[]
 
@@ -91,23 +91,23 @@ model SearchProvider {
 
 /// A single search execution against a provider.
 model SearchRun {
-  id          String          @id @default(cuid())
-  providerId  String
-  provider    SearchProvider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
-  userId      String
-  query       String
-  status      SearchRunStatus @default(RUNNING)
+  id           String          @id @default(cuid())
+  providerId   String
+  provider     SearchProvider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  userId       String
+  query        String
+  status       SearchRunStatus @default(RUNNING)
   /// Number of normalized results returned.
-  resultCount Int             @default(0)
+  resultCount  Int             @default(0)
   /// Latency in ms from start to completion.
-  latencyMs   Int?
+  latencyMs    Int?
   errorMessage String?
   /// Full normalized result payload for later inspection.
-  results     Json            @default("[]")
+  results      Json            @default("[]")
   /// Optional filters: provider-specific knobs (site, lang, freshness, etc).
-  filters     Json            @default("{}")
-  startedAt   DateTime        @default(now())
-  completedAt DateTime?
+  filters      Json            @default("{}")
+  startedAt    DateTime        @default(now())
+  completedAt  DateTime?
 
   @@index([userId, startedAt])
   @@index([providerId, startedAt])
@@ -116,32 +116,32 @@ model SearchRun {
 
 /// A web page fetch for a given URL. We keep a cache and log each attempt.
 model FetchJob {
-  id          String         @id @default(cuid())
-  userId      String
+  id           String             @id @default(cuid())
+  userId       String
   /// Normalized URL (lowercased scheme+host, kept query + path as-is).
-  url         String
-  finalUrl    String?
-  status      FetchJobStatus @default(RUNNING)
-  httpStatus  Int?
-  mimeType    String?
+  url          String
+  finalUrl     String?
+  status       FetchJobStatus     @default(RUNNING)
+  httpStatus   Int?
+  mimeType     String?
   /// Raw byte size (pre-extraction).
-  byteSize    Int?
+  byteSize     Int?
   /// Extracted clean content (truncated to MAX length).
-  content     String?
+  content      String?
   /// Extracted page title.
-  title       String?
+  title        String?
   /// Outbound links discovered on the page.
-  links       String[]       @default([])
+  links        String[]           @default([])
   /// Was the response served from the PageCache rather than fetched live?
-  cacheHit    Boolean        @default(false)
+  cacheHit     Boolean            @default(false)
   /// Which escalation strategy served a live fetch (ADR-121); null on cache hits and failures.
-  servedBy    FetchStrategyKind?
+  servedBy     FetchStrategyKind?
   /// Capture time when the content is an archived copy, never set for a live page.
-  archivedAt  DateTime?
+  archivedAt   DateTime?
   errorMessage String?
-  latencyMs   Int?
-  startedAt   DateTime       @default(now())
-  completedAt DateTime?
+  latencyMs    Int?
+  startedAt    DateTime           @default(now())
+  completedAt  DateTime?
 
   @@index([userId, startedAt])
   @@index([url, startedAt])
@@ -151,18 +151,18 @@ model FetchJob {
 /// Shared cache of page content keyed by URL (or URL + variant).
 model PageCache {
   /// Cache key: SHA256 of the normalized URL.
-  key         String   @id
-  url         String
-  finalUrl    String?
-  httpStatus  Int
-  mimeType    String?
-  title       String?
-  content     String
-  links       String[] @default([])
-  byteSize    Int
-  fetchedAt   DateTime @default(now())
+  key        String   @id
+  url        String
+  finalUrl   String?
+  httpStatus Int
+  mimeType   String?
+  title      String?
+  content    String
+  links      String[] @default([])
+  byteSize   Int
+  fetchedAt  DateTime @default(now())
   /// TTL expires-at; consumers must re-fetch beyond this instant.
-  expiresAt   DateTime
+  expiresAt  DateTime
 
   @@index([url])
   @@index([expiresAt])
@@ -172,24 +172,128 @@ model PageCache {
 /// A research orchestration run — user intent, workflow, and the produced
 /// evidence bundle. This is what chat-service passes to the final model.
 model ResearchRun {
-  id              String            @id @default(cuid())
-  userId          String
+  id                String               @id @default(cuid())
+  userId            String
   /// Model the user picked for the final answer — preserved through the run.
-  requestedModel  String?
+  requestedModel    String?
   requestedProvider String?
-  workflow        ResearchWorkflowKind
-  intent          String
-  status          ResearchRunStatus @default(RUNNING)
+  workflow          ResearchWorkflowKind
+  intent            String
+  status            ResearchRunStatus    @default(RUNNING)
   /// Array of normalized evidence items — see EvidenceBundle types.
-  bundle          Json              @default("{}")
+  bundle            Json                 @default("{}")
   /// Free-form trace entries: search/fetch/error phases with timings.
-  trace           Json              @default("[]")
-  errorMessage    String?
-  startedAt       DateTime          @default(now())
-  completedAt     DateTime?
+  trace             Json                 @default("[]")
+  errorMessage      String?
+  /// The chat thread the run answered (research engine B1). Null for callers that send none.
+  threadId          String?
+  startedAt         DateTime             @default(now())
+  completedAt       DateTime?
+
+  sources ResearchSource[]
 
   @@index([userId, startedAt])
+  @@index([threadId, startedAt])
   @@map("research_runs")
+}
+
+/// One source a completed research run produced (evidence store, research engine B1).
+/// Written fire-and-forget after the run; a failed write never fails the run.
+/// Read back as thread memory (same user + thread, last 24 h). Rows older than
+/// 30 days are swept hourly (`ResearchSourceRetentionService`).
+model ResearchSource {
+  id            String      @id @default(cuid())
+  runId         String
+  run           ResearchRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  userId        String
+  threadId      String?
+  url           String
+  /// `canonicalUrlKey(url)`: the dedupe and thread-reuse key.
+  canonicalKey  String
+  host          String
+  title         String?
+  /// The bundle text for this source, capped at 12,000 characters in code.
+  excerpt       String
+  /// sha256 hex of the normalised (lower-case, whitespace-collapsed) text.
+  contentHash   String
+  language      String?
+  /// The search query that found it, when a search did.
+  query         String?
+  round         Int         @default(1)
+  /// `ResearchSourceDiscovery`: SEARCH | DIRECT | CRAWL | THREAD_MEMORY.
+  discoveredVia String
+  providerKind  String?
+  /// 'OK' only for a page that was actually read; null for a search hit's snippet.
+  fetchStatus   String?
+  publishedAt   DateTime?
+  retrievedAt   DateTime    @default(now())
+  score         Float       @default(0)
+  createdAt     DateTime    @default(now())
+
+  @@index([threadId, createdAt])
+  @@index([runId])
+  @@index([canonicalKey])
+  @@map("research_sources")
+}
+
+// ─── Platform registry (research engine B3) ───────────────
+
+enum PlatformCategory {
+  NEWS
+  ACADEMIC
+  TECHNICAL
+  SOCIAL
+  VIDEO
+  FORUM
+  OFFICIAL
+  REFERENCE
+  COMMERCE
+}
+
+enum PlatformAccessMethod {
+  SITE_SEARCH
+  OFFICIAL_API
+}
+
+enum PlatformApiKind {
+  OPENALEX
+  SEMANTIC_SCHOLAR
+  PUBMED
+  CROSSREF
+  ARXIV
+  STACK_EXCHANGE
+  HN_ALGOLIA
+  GITHUB
+  WIKIPEDIA
+}
+
+/// One research platform: a free official API (`OFFICIAL_API` + `apiKind`) or a
+/// site reached through the search engines (`SITE_SEARCH`, `site:<first domain>`).
+/// Admin-managed (`/research/platforms`). Seeded at boot create-if-missing by slug:
+/// a row an admin edited is never overwritten. `domains` also tag any search hit
+/// whose host ends with one of them. Public APIs and public pages only.
+model ResearchPlatform {
+  id           String               @id @default(cuid())
+  slug         String               @unique
+  name         String
+  category     PlatformCategory
+  accessMethod PlatformAccessMethod
+  /// Required when `accessMethod` is OFFICIAL_API; null for SITE_SEARCH.
+  apiKind      PlatformApiKind?
+  domains      String[]             @default([])
+  /// ISO 639 codes this platform serves; empty = any language.
+  languages    String[]             @default([])
+  enabled      Boolean              @default(true)
+  /// Lower runs first.
+  priority     Int                  @default(100)
+  maxResults   Int                  @default(5)
+  timeoutMs    Int                  @default(8000)
+  notes        String?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  @@index([enabled, priority])
+  @@map("research_platforms")
 }
 
 // ─── Fetch strategies (ADR-121) ───────────────────────────

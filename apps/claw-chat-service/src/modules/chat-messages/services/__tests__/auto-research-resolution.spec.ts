@@ -3,10 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppConfig } from '../../../../app/config/app.config';
 import { ResearchMode } from '../../../../common/enums/research-mode.enum';
 import { runResearch } from '../../../../common/utilities';
+import type * as CommonUtilities from '../../../../common/utilities';
 import { ChatMessagesService } from '../chat-messages.service';
 
 vi.mock('../../../../common/utilities', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../../../common/utilities')>()),
+  ...(await importOriginal<typeof CommonUtilities>()),
   runResearch: vi.fn(),
 }));
 
@@ -90,6 +91,15 @@ describe('ChatMessagesService research modes', () => {
     expect(mockedRunResearch).toHaveBeenCalledTimes(1);
     // An explicit mode narrates how pages were read, same as AUTO (rule 59).
     expect(narratePagesRead).toHaveBeenCalledWith('thread-1', RUN);
+  });
+
+  // Research engine B1: every research request that has a thread names it (thread memory), explicit modes too.
+  it('sends the thread id with an explicit-mode run', async () => {
+    await run('test', ResearchMode.SEARCH_FETCH);
+    expect(mockedRunResearch).toHaveBeenCalledWith(
+      'http://research.test',
+      expect.objectContaining({ threadId: 'thread-1', correlationId: 'thread-1' }),
+    );
   });
 
   it('does nothing when research is off', async () => {

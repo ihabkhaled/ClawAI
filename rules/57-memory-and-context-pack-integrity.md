@@ -83,6 +83,13 @@ retrieval, internal routes) and `apps/claw-chat-service`
 
 20. **A save plan with no real material saves nothing, and a named model that cannot answer says so** (2026-10-03). `guardSaveVerdict` drops a pack save whose text is only the command ("save all info about X as a context pack", a bare "save this" with no previous answer) and a memory sentence that repeats the command; with nothing left the turn goes to the answering model, which writes the material and tells the user to press Save. "use grok to …" strips the directive for the target model (`namedModelPrompt`) and an unusable named model produces a notice (`namedModelNotice`) the answer states; see [routing engine](../docs/03-architecture/routing-engine.md). Local exposure of Grok/Claude for testing: [`skills/expose-models-for-local-testing.md`](../skills/expose-models-for-local-testing.md).
 
+21. **No filter stands between a saved memory and the model** ([ADR-226](../docs/13-adr/adr-226-every-turn-sees-the-users-whole-context.md),
+    2026-11-28). Retrieval returns up to 50 memories; no relevance threshold, no fast-path cut; relevance orders, only
+    the window fit shortens. Any text matching used for context works in every language
+    (`context-tokens.utility.ts`): a `[^a-z0-9]` split is prohibited in context, memory and cross-chat code. Pinned by
+    `context-assembly.manager.spec.ts` (an Arabic secret is selected for an Arabic question) and
+    `context-tokens.utility.spec.ts`.
+
 ## How to check
 
 ```bash

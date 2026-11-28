@@ -124,3 +124,10 @@ npm run prisma:generate  # Regenerate Prisma client
 `internal/embeddings/*` (upsert, search, delete) take a `userId` in the body, so they require
 `@UseGuards(ServiceTokenGuard)` at class level like every internal controller (rules/68). The security audit found them
 `@Public()` with no guard. workspace-service sends `Authorization: Service <INTER_SERVICE_AUTH_TOKEN>` on every call.
+
+## Retrieval returns the user's memories, in any language (ADR-226, 2026-11-28)
+
+- `DEFAULT_SEMANTIC_BUDGET_MEMORY` is 50 (was 5, from 15 candidates: most of a user's memories never reached chat).
+  chat-service asks for 50; the context preview uses the same default, so it matches the prompt.
+- Word-overlap scoring uses `common/utilities/context-tokens.utility.ts` (the chat-service copy's twin): Unicode
+  words, Arabic letter forms folded. Never split on `[^a-z0-9]`.

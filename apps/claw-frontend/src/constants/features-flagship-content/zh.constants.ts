@@ -12,7 +12,7 @@ export const ZH_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
     [FeatureCapability.SMART_ATTACHMENTS]:
       '把文档、代码、媒体甚至整个压缩包拖进聊天；每次上传都会经过病毒扫描，并为模型提取其中的文本。',
     [FeatureCapability.NARRATED_RESEARCH]:
-      '一个会自行决定搜索还是抓取的调研循环，边做边讲解每一步，并在每次抓取时遵守 robots.txt。',
+      '分多轮、用多种语言研究网络以及学术和开发者来源，实时说明每一步，并遵守 robots.txt。',
     [FeatureCapability.ORCHESTRATION_LABS]:
       '让多个模型共同处理一个问题的专属实验室——带评审的对比、共识、升级、核验等等。',
     [FeatureCapability.CONVERSATION_TOOLS]:
@@ -203,7 +203,7 @@ export const ZH_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
       seo: {
         title: 'ClawAI 中带讲解的调研与网页抓取',
         description:
-          'ClawAI 如何在网上做调研：由规划模型决定搜索还是抓取整个网站，实时讲解每一步的工作日志，遵守 robots.txt 的分级抓取，以及附带实际引用来源、可自行核对的回答。',
+          '了解 ClawAI 如何做研究：针对网络、学术论文和开发者社区等多种来源，分多轮、用多种语言进行搜索；工作过程以实时日志逐步讲解，抓取网页时遵守网站规则，最终回答会附上它真正读过的引用来源，方便你逐条核对。',
         keywords: ['AI 网络调研', 'AI 网站爬虫', '带来源的 AI 调研'],
       },
       eyebrow: '功能',
@@ -234,6 +234,30 @@ export const ZH_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
             '每次抓取都以 ClawAI-ResearchBot 用户代理遵守 robots.txt，被禁止的页面不会换一种方式重试。登录墙和法律限制会让抓取停止，验证码永远不会被破解，每次重定向都会检查是否指向私有网络地址，存档副本也始终会被标明是存档。',
           ],
         },
+        {
+          id: 'research-in-rounds',
+          heading: '分轮次、多语言研究',
+          paragraphs: [
+            '当问题需要时，多个模型会并行投票：是否需要联网、研究到多深、用哪些语言搜索、提出哪些问题。随后一次搜索即可同时覆盖其中多个问题。',
+            '每一轮结束后，ClawAI 会检查还缺什么，并专门搜索缺失内容，在固定的研究时间内最多三轮。点击“停止”会同时终止研究和随后的回答。',
+          ],
+        },
+        {
+          id: 'more-than-a-web-search',
+          heading: '不止于网页搜索',
+          paragraphs: [
+            '根据问题不同，研究还会直接查询免费的官方 API：研究论文用 OpenAlex, Semantic Scholar, arXiv, PubMed, Crossref；代码问题用 GitHub, Stack Overflow, Hacker News；背景知识用 Wikipedia。它还会搜索指定的新闻、官方和社区网站。',
+            '只使用公开网页和公开 API：不登录账户、不破解 CAPTCHA、不绕过付费墙。没有合法公开 API 的平台，只能通过普通搜索结果访问。',
+          ],
+        },
+        {
+          id: 'evidence-you-can-trace',
+          heading: '可追溯的证据',
+          paragraphs: [
+            '每个来源都会连同找到它的搜索词一起保存。同一对话中过去 24 小时内读过的页面不会重复抓取，内容完全相同的副本会被去除。',
+            '网页文本以“不可信数据”的标记交给模型，并与您的指令分开；模型被要求绝不执行网页内容中出现的任何指令。',
+          ],
+        },
       ],
       faq: [
         {
@@ -250,6 +274,16 @@ export const ZH_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
           question: '每个方案都能使用网络调研吗？',
           answer:
             '调研模式属于方案功能（RESEARCH_MODE、WEB_SEARCH、WEB_FETCH 和 WEB_EXTRACT），各有自己的额度，由运营方按方案设定。价格页面列出了每个方案包含的内容。',
+        },
+        {
+          question: '研究会用其他语言搜索吗？',
+          answer:
+            '会。规划模型会挑选最可能包含答案的语言，并用这些语言编写搜索词，因此研究不局限于您提问所用的语言。',
+        },
+        {
+          question: '研究可以搜索哪些来源？',
+          answer:
+            '通用网页搜索，以及一份受管理的来源清单：学术数据库、开发者网站、参考资料、新闻、官方和社区网站。运营方可以启用或停用来源，可用的研究模式由您的套餐决定。',
         },
       ],
       productNote:

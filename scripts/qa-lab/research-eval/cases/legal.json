@@ -1,0 +1,146 @@
+[
+  {
+    "id": "en-legal-01",
+    "lang": "en",
+    "category": "legal",
+    "text": "What is the difference between a copyright and a trademark?",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "ar-legal-01",
+    "lang": "ar",
+    "category": "legal",
+    "text": "ما هي حقوق الموظف عند الفصل التعسفي بشكل عام؟",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "ar-EG-legal-01",
+    "lang": "ar-EG",
+    "category": "legal",
+    "text": "إيه الفرق بين عقد الإيجار القديم والجديد في مصر؟",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "ar-SA-legal-01",
+    "lang": "ar-SA",
+    "category": "legal",
+    "text": "كيف أسجل علامة تجارية في السعودية؟ وش الخطوات؟",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "fr-legal-01",
+    "lang": "fr",
+    "category": "legal",
+    "text": "Quelles sont les règles pour rompre un bail de location en France ?",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "es-legal-01",
+    "lang": "es",
+    "category": "legal",
+    "text": "¿Qué diferencia hay entre un contrato indefinido y uno temporal en España?",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "pt-BR-legal-01",
+    "lang": "pt-BR",
+    "category": "legal",
+    "text": "Quais são os direitos do consumidor em caso de produto com defeito no Brasil?",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "de-legal-01",
+    "lang": "de",
+    "category": "legal",
+    "text": "Wie lange ist die Kündigungsfrist für Mieter in Deutschland?",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "it-legal-01",
+    "lang": "it",
+    "category": "legal",
+    "text": "Come funziona la successione ereditaria in Italia senza testamento?",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "tr-legal-01",
+    "lang": "tr",
+    "category": "legal",
+    "text": "Kiracı olarak ev sahibi beni çıkarmak isterse haklarım nelerdir?",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "ur-legal-01",
+    "lang": "ur",
+    "category": "legal",
+    "text": "پاکستان میں وراثت کے قانون کے بنیادی اصول کیا ہیں؟",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "hi-legal-01",
+    "lang": "hi",
+    "category": "legal",
+    "text": "भारत में उपभोक्ता शिकायत कैसे दर्ज की जाती है?",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "id-legal-01",
+    "lang": "id",
+    "category": "legal",
+    "text": "Apa perbedaan PHK dan pengunduran diri menurut hukum ketenagakerjaan Indonesia?",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "ru-legal-01",
+    "lang": "ru",
+    "category": "legal",
+    "text": "Какие документы нужны для оформления договора купли-продажи квартиры?",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "ko-legal-01",
+    "lang": "ko",
+    "category": "legal",
+    "text": "전세 계약 시 보증금을 지키려면 어떤 절차를 밟아야 하나요?",
+    "expect": {
+      "research": "either"
+    }
+  },
+  {
+    "id": "sw-legal-01",
+    "lang": "sw",
+    "category": "legal",
+    "text": "Haki za mpangaji ni zipi kwa mujibu wa sheria ya Kenya?",
+    "expect": {
+      "research": "either"
+    }
+  }
+]

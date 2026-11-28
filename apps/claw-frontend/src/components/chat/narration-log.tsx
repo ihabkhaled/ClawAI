@@ -2,9 +2,10 @@
 
 import { Bot, Circle } from 'lucide-react';
 
+import { useNarrationLog } from '@/hooks/chat/use-narration-log';
 import { cn } from '@/lib/utils';
 import type { NarrationLogProps } from '@/types/narration.types';
-import { describeNarrationEntry, isAiVoice } from '@/utilities/narration.utility';
+import { isAiVoice } from '@/utilities/narration.utility';
 
 /**
  * The narrated work log: what the AI decided, what it crawled and searched, and
@@ -17,6 +18,7 @@ import { describeNarrationEntry, isAiVoice } from '@/utilities/narration.utility
  * collapsed once the answer is there — the answer is what the user came for.
  */
 export function NarrationLog({ entries, isLive, t }: NarrationLogProps): React.ReactElement | null {
+  const { describe } = useNarrationLog(t);
   if (entries.length === 0) {
     return null;
   }
@@ -59,7 +61,7 @@ export function NarrationLog({ entries, isLive, t }: NarrationLogProps): React.R
                   aiVoice ? 'text-foreground italic' : 'text-muted-foreground',
                 )}
               >
-                {describeNarrationEntry(entry, t)}
+                {describe(entry)}
               </span>
             </li>
           );

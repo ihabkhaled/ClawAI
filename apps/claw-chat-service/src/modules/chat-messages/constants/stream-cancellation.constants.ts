@@ -30,3 +30,16 @@ export const STREAM_CANCEL_ACTIVE_KEY_PREFIX = 'claw:chat:run:';
  * run, so it never truncates a live one.
  */
 export const STREAM_CANCEL_ACTIVE_TTL_SECONDS = 3600;
+
+/**
+ * A Stop pressed while research runs must also stop the answer that follows it. Research runs on the
+ * replica that took the HTTP request; the answer runs on whichever replica consumes the RabbitMQ job.
+ * So research leaves this marker, and the next `register` for the thread (on any replica) consumes it
+ * and starts already aborted, through the normal cancel path. Short, so a turn whose answer never
+ * registers cannot stop the user's next message.
+ */
+export const STREAM_CANCEL_CARRY_KEY_PREFIX = 'claw:chat:stop-carry:';
+export const STREAM_CANCEL_CARRY_TTL_SECONDS = 20;
+
+/** Abort message when `register` replaces a run on the same key: not a user Stop, so never carried. */
+export const STREAM_RUN_REPLACED_MESSAGE = 'Replaced by a newer run on the same thread';

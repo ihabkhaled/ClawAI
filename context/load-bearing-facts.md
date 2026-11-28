@@ -64,3 +64,6 @@ home; this page only collects them. Routed from [`AGENTS.md`](../AGENTS.md).
   password inside Postgres, MongoDB, RabbitMQ or Redis; the store then refuses every service. Rotate only with
   `scripts/rotate-db-passwords.sh` (store first, then `.env`, then restart). Every store has its own password; the
   production compose files require each one ([runbook §4](../docs/11-runbooks/runbook-production-host-hardening.md)).
+- **Never split context text on `[^a-z0-9]`.** It deletes every non-Latin word: memories, older turns and other chats
+  written in Arabic silently never matched. Use `context-tokens.utility.ts` (chat and memory services). And no filter
+  stands between a saved memory and the model ([ADR-226](../docs/13-adr/adr-226-every-turn-sees-the-users-whole-context.md)).

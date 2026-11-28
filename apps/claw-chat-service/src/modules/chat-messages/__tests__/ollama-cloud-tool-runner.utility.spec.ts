@@ -30,7 +30,7 @@ describe('OllamaCloudToolRunner', () => {
     });
   });
 
-  it('executes a web_search call and returns the stringified result', async () => {
+  it('executes a web_search call and returns each hit in an untrusted web_source fence', async () => {
     const onDispatch = vi.fn(async () => {});
     httpRequest.mockResolvedValueOnce({
       ok: true,
@@ -61,7 +61,9 @@ describe('OllamaCloudToolRunner', () => {
       timeoutMs: 5_000,
     });
     expect(result).toContain('example.com');
-    expect(result).toContain('"results"');
+    expect(result).toContain(
+      '<web_source n="1" url="https://example.com" trust="untrusted">\nTitle: Example\nsnippet\n</web_source>',
+    );
     expect(onDispatch).toHaveBeenCalledTimes(1);
   });
 
@@ -176,14 +178,15 @@ describe('OllamaCloudToolRunner', () => {
     expect(truncated).toContain('[truncated:');
   });
 
-  it('truncates the executeOllamaCloudToolCall return value when the upstream payload is huge', async () => {
+  it('keeps a huge upstream payload inside the cap, its fence closed', async () => {
     const big = 'b'.repeat(OLLAMA_TOOL_RESULT_MAX_CHARS + 5_000);
     httpRequest.mockResolvedValueOnce({ ok: true, status: 200, data: big });
     const result = await executeOllamaCloudToolCall(
       { function: { name: 'web_search', arguments: { query: 'x' } } },
       { baseUrl: 'https://ollama.com/api', apiKey: 'k', timeoutMs: 5_000 },
     );
-    expect(result.startsWith('b')).toBe(true);
-    expect(result).toContain('[truncated:');
+    expect(result.length).toBeLessThanOrEqual(OLLAMA_TOOL_RESULT_MAX_CHARS);
+    expect(result).toContain('[truncated]');
+    expect(result.trimEnd().endsWith('</web_source>')).toBe(true);
   });
 });

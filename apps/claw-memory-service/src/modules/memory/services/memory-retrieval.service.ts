@@ -16,12 +16,14 @@ import {
   type MemoryRecord,
   MemorySensitivity,
 } from '../../../generated/prisma';
+import type { ContextPackWithItems } from '../../context-packs/types/context-packs.types';
 import { ContextPackEmbeddingManager } from '../../context-packs/managers/context-pack-embedding.manager';
 import { ContextPacksRepository } from '../../context-packs/repositories/context-packs.repository';
 import {
   CONTEXT_RETRIEVAL_MAX,
   DEFAULT_SEMANTIC_BUDGET_CONTEXT,
   DEFAULT_SEMANTIC_BUDGET_MEMORY,
+  MEMORY_MATCH_MIN_LATIN_LENGTH,
   MEMORY_RETRIEVAL_MAX,
 } from '../../../common/constants/memory-retrieval.constants';
 import { MemoryAuditService } from '../../memory-audit/services/memory-audit.service';
@@ -29,6 +31,7 @@ import { MemoryPreferenceService } from '../../memory-preferences/services/memor
 import { MemoryUsageService } from '../../memory-usage/services/memory-usage.service';
 import { MemoryEmbeddingManager } from '../managers/memory-embedding.manager';
 import { MemoryRepository } from '../repositories/memory.repository';
+import { contextTokens } from '../../../common/utilities/context-tokens.utility';
 import { maskSecrets } from '../../../common/utilities/mask-secrets.utility';
 
 @Injectable()
@@ -59,60 +62,10 @@ export class MemoryRetrievalService {
     if (!request.includeMemory) {
       warnings.push('memory_disabled_for_this_call');
     }
-    const semanticBudget = Math.min(
-      request.semanticBudgetMemory ?? DEFAULT_SEMANTIC_BUDGET_MEMORY,
-      MEMORY_RETRIEVAL_MAX,
-    );
-    const candidates = memoryAllowed
-      ? await this.memoryRepo.findByUserScopeForRetrieval(
-          request.userId,
-          request.threadId,
-          request.workspaceId,
-          request.projectId,
-          semanticBudget * 3,
-        )
-      : [];
-    const intent = request.intent.trim();
-    const explicitIds = new Set(request.attachedMemoryIds);
-    // Run semantic search in parallel; failure is logged inside the manager
-    // and returns []. Lexical scoring still works as the fallback.
-    const semanticHits = memoryAllowed
-      ? await this.embeddingManager.search(
-          {
-            userId: request.userId,
-            threadId: request.threadId,
-            workspaceId: request.workspaceId,
-            projectId: request.projectId,
-          },
-          intent,
-          semanticBudget,
-        )
-      : [];
-    const semanticScoreMap = new Map<string, number>(
-      semanticHits.map((hit) => [hit.memoryId, hit.score]),
-    );
-    if (semanticHits.length > 0) {
-      this.logger.debug(`retrieve: semantic hits=${String(semanticHits.length)}`);
-    } else if (intent.length > 0) {
-      warnings.push('semantic_fallback_to_lexical');
-    }
-    const scored = candidates.map((memory) =>
-      this.scoreCandidate(
-        memory,
-        intent,
-        explicitIds.has(memory.id),
-        semanticScoreMap.get(memory.id),
-      ),
-    );
-    scored.sort((a, b) => b.score - a.score);
-    const memories: RetrievalMemoryItem[] = memoryAllowed
-      ? scored
-          .slice(0, semanticBudget)
-          .map((entry) => this.toBundleItem(entry.memory, entry.score, entry.reason))
-      : [];
+    const memories = memoryAllowed ? await this.rankMemories(request, warnings) : [];
 
     const packItems: RetrievalPackItem[] = request.includeContext
-      ? await this.buildPackItems(request, intent, warnings)
+      ? await this.buildPackItems(request, request.intent.trim(), warnings)
       : [];
     if (!request.includeContext) {
       warnings.push('context_disabled_for_this_call');
@@ -135,22 +88,70 @@ export class MemoryRetrievalService {
     };
   }
 
+  /** The user's memories for this turn, best first: explicit and pinned, then semantic, then word overlap. */
+  private async rankMemories(
+    request: RetrievalRequest,
+    warnings: string[],
+  ): Promise<RetrievalMemoryItem[]> {
+    const semanticBudget = Math.min(
+      request.semanticBudgetMemory ?? DEFAULT_SEMANTIC_BUDGET_MEMORY,
+      MEMORY_RETRIEVAL_MAX,
+    );
+    const candidates = await this.memoryRepo.findByUserScopeForRetrieval(
+      request.userId,
+      request.threadId,
+      request.workspaceId,
+      request.projectId,
+      semanticBudget * 3,
+    );
+    const intent = request.intent.trim();
+    const explicitIds = new Set(request.attachedMemoryIds);
+    const semanticScores = await this.semanticScores(request, intent, semanticBudget, warnings);
+    return candidates
+      .map((memory) =>
+        this.scoreCandidate(
+          memory,
+          intent,
+          explicitIds.has(memory.id),
+          semanticScores.get(memory.id),
+        ),
+      )
+      .sort((a, b) => b.score - a.score)
+      .slice(0, semanticBudget)
+      .map((entry) => this.toBundleItem(entry.memory, entry.score, entry.reason));
+  }
+
+  /** Semantic similarity per memory; the manager logs a failure and returns [], so word overlap still ranks. */
+  private async semanticScores(
+    request: RetrievalRequest,
+    intent: string,
+    semanticBudget: number,
+    warnings: string[],
+  ): Promise<Map<string, number>> {
+    const hits = await this.embeddingManager.search(
+      {
+        userId: request.userId,
+        threadId: request.threadId,
+        workspaceId: request.workspaceId,
+        projectId: request.projectId,
+      },
+      intent,
+      semanticBudget,
+    );
+    if (hits.length > 0) {
+      this.logger.debug(`retrieve: semantic hits=${String(hits.length)}`);
+    } else if (intent.length > 0) {
+      warnings.push('semantic_fallback_to_lexical');
+    }
+    return new Map(hits.map((hit) => [hit.memoryId, hit.score]));
+  }
+
   private async buildPackItems(
     request: RetrievalRequest,
     intent: string,
     warnings: string[],
   ): Promise<RetrievalPackItem[]> {
-    const packIds = request.attachedPackIds.slice(0, 20);
-    if (packIds.length === 0) {
-      return [];
-    }
-    const packs = await Promise.all(
-      packIds.map((id) => this.contextPacksRepo.findById(id).catch(() => null)),
-    );
-    const visiblePacks = packs.filter(
-      (pack): pack is NonNullable<typeof pack> =>
-        pack !== null && pack.isEnabled && this.isUserVisible(pack, request.userId),
-    );
+    const visiblePacks = await this.visiblePacks(request);
     if (visiblePacks.length === 0) {
       return [];
     }
@@ -186,6 +187,19 @@ export class MemoryRetrievalService {
       pinned: item.pinned,
       tokenCountEstimate: item.tokenCountEstimate,
     }));
+  }
+
+  /** The attached packs (at most 20) that exist, are on and belong to this user. */
+  private async visiblePacks(request: RetrievalRequest): Promise<ContextPackWithItems[]> {
+    const packs = await Promise.all(
+      request.attachedPackIds
+        .slice(0, 20)
+        .map((id) => this.contextPacksRepo.findById(id).catch(() => null)),
+    );
+    return packs.filter(
+      (pack): pack is ContextPackWithItems =>
+        pack !== null && pack.isEnabled && this.isUserVisible(pack, request.userId),
+    );
   }
 
   private scorePackItem(item: ContextPackItem, scoreMap: Map<string, number>): number {
@@ -301,13 +315,7 @@ export class MemoryRetrievalService {
 
   private tokenOverlap(a: string, b: string): number {
     const tokens = (s: string): Set<string> =>
-      new Set(
-        s
-          .toLowerCase()
-          .replaceAll(/[^a-z0-9\s]+/g, ' ')
-          .split(/\s+/)
-          .filter((t) => t.length >= 4),
-      );
+      new Set(contextTokens(s, MEMORY_MATCH_MIN_LATIN_LENGTH));
     const aT = tokens(a);
     const bT = tokens(b);
     if (aT.size === 0 || bT.size === 0) return 0;

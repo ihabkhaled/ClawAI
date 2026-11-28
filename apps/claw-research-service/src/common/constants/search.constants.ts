@@ -88,3 +88,25 @@ export const SEARCH_BREAKER_FAILURE_THRESHOLD = 3;
 export const SEARCH_BREAKER_COOLDOWN_MS = 30_000;
 /** Upper bound on providers tracked by the breaker map. */
 export const SEARCH_BREAKER_MAX_TRACKED = 200;
+/** Redis key of an open breaker, shared across restarts and replicas: value = openedAt epoch ms. */
+export const SEARCH_BREAKER_KEY_PREFIX = 'research:breaker:';
+/** Redis key prefix of a cached merged search answer (research engine B2). */
+export const SEARCH_CACHE_KEY_PREFIX = 'research:search:v1:';
+/** How long a merged search answer is served from Redis. */
+export const SEARCH_CACHE_TTL_SECONDS = 600;
+/**
+ * Longest a Redis command may take on the search path. The client queues
+ * commands while disconnected (`maxRetriesPerRequest: null`), so an unbounded
+ * await would hang the search; past this it is a miss.
+ */
+export const SEARCH_REDIS_TIMEOUT_MS = 250;
+/**
+ * Provider kinds that run EXPANSION queries by default (cost rule: no new paid
+ * search spend). `publicConfig.expansion` (boolean) overrides per provider.
+ */
+export const SEARCH_EXPANSION_PROVIDER_KINDS: ReadonlySet<string> = new Set<string>([
+  SearchProviderKind.OLLAMA_WEB,
+  SearchProviderKind.SEARXNG,
+]);
+/** The `publicConfig` key that overrides `SEARCH_EXPANSION_PROVIDER_KINDS`. */
+export const SEARCH_EXPANSION_CONFIG_KEY = 'expansion';

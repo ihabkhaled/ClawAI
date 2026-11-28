@@ -1,0 +1,146 @@
+[
+  {
+    "id": "en-local-info-01",
+    "lang": "en",
+    "category": "local-info",
+    "text": "What are the opening hours of the British Museum and is it free today?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ar-local-info-01",
+    "lang": "ar",
+    "category": "local-info",
+    "text": "ما هي أقرب صيدلية مفتوحة الآن في وسط عمّان؟",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ar-EG-local-info-01",
+    "lang": "ar-EG",
+    "category": "local-info",
+    "text": "فين أقرب صيدلية فاتحة دلوقتي في مدينة نصر؟",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ar-SA-local-info-01",
+    "lang": "ar-SA",
+    "category": "local-info",
+    "text": "وش أفضل مطاعم مفتوحة الحين في الرياض حي العليا؟",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ar-LB-local-info-01",
+    "lang": "ar-LB",
+    "category": "local-info",
+    "text": "وين في مطاعم منيحة وفاتحة هلق بالحمرا؟",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ar-MA-local-info-01",
+    "lang": "ar-MA",
+    "category": "local-info",
+    "text": "فين نلقى صيدلية دايرة الليلة فمراكش؟",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "fr-local-info-01",
+    "lang": "fr",
+    "category": "local-info",
+    "text": "Quels sont les horaires du musée du Louvre et y a-t-il des jours de fermeture ?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "es-local-info-01",
+    "lang": "es",
+    "category": "local-info",
+    "text": "¿A qué hora cierra el Museo del Prado hoy y cuánto cuesta la entrada?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "pt-BR-local-info-01",
+    "lang": "pt-BR",
+    "category": "local-info",
+    "text": "Quais são os melhores restaurantes abertos agora perto da Avenida Paulista?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "de-local-info-01",
+    "lang": "de",
+    "category": "local-info",
+    "text": "Wo gibt es in Berlin Mitte gerade geöffnete Apotheken mit Notdienst?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "it-local-info-01",
+    "lang": "it",
+    "category": "local-info",
+    "text": "Quali sono gli orari dei traghetti da Napoli a Capri oggi?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "tr-local-info-01",
+    "lang": "tr",
+    "category": "local-info",
+    "text": "Kadıköy'de şu an açık olan en iyi kahve dükkanları hangileri?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "hi-local-info-01",
+    "lang": "hi",
+    "category": "local-info",
+    "text": "दिल्ली में इस वक्त खुले हुए अच्छे रेस्टोरेंट कौन से हैं?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "id-local-info-01",
+    "lang": "id",
+    "category": "local-info",
+    "text": "Jam buka Taman Mini Indonesia Indah hari ini dan harga tiketnya berapa?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ja-local-info-01",
+    "lang": "ja",
+    "category": "local-info",
+    "text": "東京駅周辺で今開いているおすすめのラーメン店を教えてください。",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "sw-local-info-01",
+    "lang": "sw",
+    "category": "local-info",
+    "text": "Ni wapi ninaweza kupata duka la dawa lililo wazi sasa hivi jijini Nairobi?",
+    "expect": {
+      "research": "yes"
+    }
+  }
+]

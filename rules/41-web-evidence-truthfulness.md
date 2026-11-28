@@ -248,7 +248,9 @@ from the missing capability statement, and neither knew about the other.**
     later — its order is not the prompt's. When SEARCH_FIRST applied, the prompt carries a SECOND
     `[1]..[k]` list, so the answer stores NO citations (its `[n]` stays text). Renumbering the block means changing
     `toStoredCitations` in the same commit —
-    `context-assembly-citation-numbering.spec.ts` fails otherwise.
+    `context-assembly-citation-numbering.spec.ts` fails otherwise. Each numbered source is printed inside
+    `<web_source n="<n>" url="…" trust="untrusted">…</web_source>` (ADR-224): web text is DATA, the closing tag is
+    defanged and hostile characters are stripped (`untrusted-fence.utility.ts`); the number is the `n` attribute.
 
 17. **A GitHub repository URL scopes a crawl to that repository path.** For
     `github.com/<owner>/<repo>`, reject sibling repositories and GitHub marketing

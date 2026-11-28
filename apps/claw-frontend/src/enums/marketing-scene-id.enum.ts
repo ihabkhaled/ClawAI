@@ -6,6 +6,7 @@ export enum MarketingSceneId {
   CHAT_CONVERSATION = 'chat-conversation',
   CHAT_MODEL_PICKER = 'chat-model-picker',
   CHAT_RESEARCH = 'chat-research',
+  CHAT_RESEARCH_ROUNDS = 'chat-research-rounds',
   CHAT_CONTEXT_MENU = 'chat-context-menu',
   CHAT_SHARE_DIALOG = 'chat-share-dialog',
   COMPARE_SETUP = 'compare-setup',

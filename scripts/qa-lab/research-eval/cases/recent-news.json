@@ -1,0 +1,162 @@
+[
+  {
+    "id": "en-recent-news-01",
+    "lang": "en",
+    "category": "recent-news",
+    "text": "What are the biggest news stories today?",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "ar-recent-news-01",
+    "lang": "ar",
+    "category": "recent-news",
+    "text": "ما آخر الأخبار العاجلة اليوم في العالم؟",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "ar-EG-recent-news-01",
+    "lang": "ar-EG",
+    "category": "recent-news",
+    "text": "إيه آخر الأخبار في مصر النهاردة؟",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "ar-SA-recent-news-01",
+    "lang": "ar-SA",
+    "category": "recent-news",
+    "text": "وش آخر أخبار الاقتصاد في السعودية هالأسبوع؟",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "ar-LB-recent-news-01",
+    "lang": "ar-LB",
+    "category": "recent-news",
+    "text": "شو آخر الأخبار بلبنان اليوم؟",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "ar-MA-recent-news-01",
+    "lang": "ar-MA",
+    "category": "recent-news",
+    "text": "شنو واقع فالمغرب دابا؟ بغيت آخر الأخبار.",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "fr-recent-news-01",
+    "lang": "fr",
+    "category": "recent-news",
+    "text": "Quelles sont les dernières actualités économiques en Europe cette semaine ?",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "es-recent-news-01",
+    "lang": "es",
+    "category": "recent-news",
+    "text": "¿Qué noticias importantes han salido hoy sobre inteligencia artificial?",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "pt-BR-recent-news-01",
+    "lang": "pt-BR",
+    "category": "recent-news",
+    "text": "Quais são as últimas notícias do Brasil hoje?",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "de-recent-news-01",
+    "lang": "de",
+    "category": "recent-news",
+    "text": "Was sind die aktuellen Nachrichten aus Deutschland heute?",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "tr-recent-news-01",
+    "lang": "tr",
+    "category": "recent-news",
+    "text": "Bugün Türkiye'de neler oldu? Son dakika haberleri neler?",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "ru-recent-news-01",
+    "lang": "ru",
+    "category": "recent-news",
+    "text": "Какие главные новости произошли за последние сутки?",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "zh-CN-recent-news-01",
+    "lang": "zh-CN",
+    "category": "recent-news",
+    "text": "今天有哪些重要的科技新闻？",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "ja-recent-news-01",
+    "lang": "ja",
+    "category": "recent-news",
+    "text": "今日の主要なニュースを教えてください。",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "ko-recent-news-01",
+    "lang": "ko",
+    "category": "recent-news",
+    "text": "오늘 한국 주요 뉴스가 뭐야?",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  },
+  {
+    "id": "id-recent-news-01",
+    "lang": "id",
+    "category": "recent-news",
+    "text": "Apa berita terbaru hari ini di Indonesia?",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["news"]
+    }
+  }
+]

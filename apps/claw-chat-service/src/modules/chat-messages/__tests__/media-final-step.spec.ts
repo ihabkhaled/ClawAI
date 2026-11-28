@@ -434,7 +434,8 @@ describe('Stop on an orchestrated turn, with the real StreamCancellationService'
     const handlers: Array<(channel: string, key: string) => void> = [];
     const redis = {
       set: vi.fn().mockResolvedValue('OK'),
-      del: vi.fn().mockResolvedValue(1),
+      // Like real Redis: the run marker exists, a carried Stop does not.
+      del: vi.fn((key: string) => Promise.resolve(key.includes('stop-carry') ? 0 : 1)),
       eval: vi.fn((_s: string, _n: number, channel: string, key: string) => {
         for (const handler of handlers) handler(channel, key);
         return Promise.resolve(1);

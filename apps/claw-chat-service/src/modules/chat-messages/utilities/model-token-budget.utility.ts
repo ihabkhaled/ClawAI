@@ -18,6 +18,12 @@ const LARGE_WINDOW_PROVIDERS: ReadonlySet<string> = new Set([
   'ANTHROPIC',
   'OPENAI',
   'GEMINI',
+  'OLLAMA_CLOUD',
+  'OPENROUTER',
+  'XAI',
+  'GROK',
+  'DEEPSEEK',
+  'MISTRAL',
 ]);
 
 /**

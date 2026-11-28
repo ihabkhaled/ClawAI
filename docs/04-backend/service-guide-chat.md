@@ -1167,11 +1167,39 @@ durationMs, errorCode?}`. plugin-service owns ownership, plan gates, consent, qu
 
 The research decision is taken by the admin's `HARNESS_COUNCIL` models (routing assistant models; defaults `beam`,
 `deepseek-v4.1-flash`, `mimo-v2.6-flash`, `minimax-m3.1-flash`), asked in parallel by `HarnessCouncilService`. Each
-returns `{needsWeb, depth 0-5, languages, subQuestions, reason}`; the decision is taken at the first strict majority of
+returns `{needsWeb, depth 0-5, languages, subQuestions, platforms, reason}`; the decision is taken at the first strict majority of
 members asked (a tie researches), depth = upper median of the winners, languages by count, sub-questions interleaved.
 `needsWeb` uses it first; `plan` runs it beside the planner and `applyCouncilToPlan` lets the majority decide whether
 and how deep (page floor per depth `HARNESS_COUNCIL_DEPTH_MIN_PAGES`), keeping the planner's query/URLs and never
 overruling a user link or a plain order to search. No council or no answer → the single-model `RESEARCH_GATE` chain.
+
+## Research rounds, depth and the web-source fence (ADR-224, 2026-11-28)
+
+- **Fence.** Every web source a model reads is printed as `<web_source n="<n>" url="…" trust="untrusted">` (research
+  block on every surface, search-first, `web_search` / `web_fetch` / `get_crawled_page` results, crawl summary, gap
+  check), sanitised by `untrusted-fence.utility.ts` (shared with plugin results, whose output is unchanged).
+  `WEB_SOURCE_UNTRUSTED_INSTRUCTION` tells the model the blocks are data. `[n]` numbering and stored citations are
+  unchanged.
+- **Plan → run.** `ResearchPlan` carries the council's `subQuestions`, `languages` (base codes), `platforms` (source
+  kinds, ADR-225; research-service searches its registry for them from depth 2) and `depth` (clamped to
+  `RESEARCH_MAX_DEPTH = 3`; no council = depth 1). The search step sends `threadId`, `queries` (sub-questions minus the
+  primary, capped by `RESEARCH_DEPTH_QUERY_BUDGET`, a mirror of research-service's table), `languages`, `depth`,
+  `round` and `excludeUrls` (`research-request.utility.ts`). The council's `maxPages` sizes crawls only; depth sizes
+  searches.
+- **Rounds.** `ResearchOrchestratorManager`: after round 1, depth ≥ 2 asks `ResearchGateService.gapCheck` what is
+  missing; new queries run as the next round without re-reading this turn's URLs; `mergeResearchRuns` joins them. At
+  most `depth` rounds; a round starts only while 20 s of the 60 s budget remain (`RESEARCH_ROUND_MIN_REMAINING_MS`,
+  `RESEARCH_ROUNDS_BUDGET_MS`). Narration params: `round`, `queries`, `languages`, `duplicatesRemoved`,
+  `reusedFromThread` (from `bundle.stats`).
+- **Stop.** Research holds the thread's Stop key while it runs; a user Stop ends research (evidence kept) and
+  `StreamCancellationService.carryStop` leaves a 20 s Redis marker so the answer that follows, on any replica, starts
+  stopped. A run replaced by a newer one (`STREAM_RUN_REPLACED_MESSAGE`) is never carried.
+
+## Whole-context awareness (ADR-226, 2026-11-28)
+
+Memory is never filtered (up to 50 memories per turn, ordered by relevance), the fast path keeps memory and history,
+every text matcher works in any language, research plans from the whole chat plus memories, text lookups search the
+exact words, near-identical lines count as matches, and `【n】` / `[2, 4]` citations are normalised to linkable `[n]`.
 
 ## Research gateway (ADR-212)
 

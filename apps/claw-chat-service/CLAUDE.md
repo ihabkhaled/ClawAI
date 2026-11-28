@@ -216,8 +216,8 @@ uses it and prefills the edited question without sending it.
 ## Answers store the evidence the model was shown (2026-09-30, ADR-133)
 
 `runLlmAndStore` writes `metadata.citations = toStoredCitations(context.researchEvidence)`
-— `[{ index, title, url, snippet }]`, `index` = the `[n]` `formatResearchBlock`
-printed. The frontend links an answer's `[n]` ONLY through this list (rule 41
+— `[{ index, title, url, snippet }]`, `index` = the `n` of the `<web_source n="…">` fence
+`formatResearchBlock` printed (cited as `[n]`). The frontend links an answer's `[n]` ONLY through this list (rule 41
 §16). Change the block's numbering and `toStoredCitations` together
 (`context-assembly-citation-numbering.spec.ts` fails otherwise). When
 SEARCH_FIRST applied, NO citations are stored — its search list is a second
@@ -353,18 +353,11 @@ Four defects, all measured before and after:
    AND workspace context. "the codename?" got nothing. Only a pleasantry is
    skipped now.
 
-2. **Standing memories were filtered by topic.** `filterMemoriesForIntent` kept
-   a memory only if it looked preference-like by keyword or shared >= 0.28
-   lexical overlap with the question. An `INSTRUCTION` — "always end every reply
-   with X" — shares no vocabulary with "what is a database index", so it was
-   dropped from every prompt that did not happen to discuss instructions.
-   `selectMemoriesForPrompt` now splits **standing** (INSTRUCTION, PREFERENCE,
-   pinned) from **topical** (FACT, SUMMARY). Standing memories are never
-   filtered by topic; the overlap test and the cap apply to topical only.
+2. **Standing memories were filtered by topic.** Fixed then for standing ones only; since ADR-226 (2026-11-28)
+   **no memory is filtered at all**: `selectMemoriesForPrompt` returns standing memories first, then every other one
+   ordered by Unicode word overlap, capped at `PROMPT_MEMORY_LIMIT` (50). Only the window fit may shorten them.
 
-3. **The cap was three, across all kinds.** Five saved facts reached the model as
-   three. `PROMPT_TOPICAL_MEMORY_LIMIT` is 8 and applies to topical memories
-   only, so facts can never crowd out an instruction.
+3. **The cap was three, across all kinds.** Gone with the topical filter (ADR-226).
 
 4. **The reported count was the fetched count.** `metadata.memoryCount` used
    `context.memories.length` — everything retrieved — while the prompt carried
@@ -1611,7 +1604,8 @@ crawl (no planner) sends none.
 `dispatchOneToolCall` sends `web_fetch` to `executeResearchWebFetch` (`fetchPageViaResearch` ->
 `/internal/research/fetch`, service token) instead of Ollama Cloud's hosted fetch, so robots.txt,
 SSRF and the escalation tiers apply. A refusal fails the tool call; there is no fallback to the
-hosted fetch. `web_search` is unchanged (hosted).
+hosted fetch. `web_search` goes through the research gateway (ADR-212); both results reach the model
+as untrusted `web_source` fences (research engine B1).
 
 ## An explicit fetch command runs even with research off (2026-09-30)
 
@@ -1848,8 +1842,8 @@ message metadata; the context gateway turns them into `AssembledContext.pluginRe
 - **Never edit around the chokepoint.** Each tool round re-enters `callProvider` without `pluginRefs` and
   with its own PAYG key (`paygForPluginRound`). A plugin tool call costs nothing here; plugin-service meters it.
 - **@mentioned plugins are grounding material.** `ChatExecutionManager.hasGroundingMaterial` counts `pluginRefs`, so the AUTO fast path (1k-token context trim, 512-token cap) is never taken for a mention. Without this the model answered "tool not available" in AUTO mode (QA 2026-10-15). The loop also gets `threadId` + `messageId` from `AssembledContext.pluginTurn` (set beside `pluginRefs`) so plugin-service can store them on the consent request.
-- **A tool result is untrusted data.** It goes to the model only through `fencePluginResult`, and into
-  metadata only as a capped plain-text excerpt. Never put arguments or full results in metadata or logs.
+- **A tool result is untrusted data.** It goes to the model only through `fencePluginResult` (the shared
+  untrusted-fence sanitiser web sources use), and into metadata only as a capped plain-text excerpt. Never put arguments or full results in metadata or logs.
 - **A new surface that answers the user** goes in `PLUGIN_TOOL_SURFACES`, stores `pluginRefsMetadata` on its
   user message and spreads `pluginFields` on its DTO. `orchestration-parity.spec.ts` checks the last two.
 - **plugin-service down is not an error.** The message answers without the tools and records a notice.
@@ -1872,12 +1866,23 @@ The cost-class cache key is `costClassKey(provider, model)` (a JSON pair), never
 
 ## Harness council (ADR-223, 2026-11-27)
 
-`HarnessCouncilService` asks every `HARNESS_COUNCIL` member (routing assistant models, 60 s cache) in parallel and
+Each vote is `{needsWeb, depth, languages, subQuestions, platforms, reason}`; platforms are ranked by how many winning
+members named them (unknown values dropped). `HarnessCouncilService` asks every `HARNESS_COUNCIL` member (routing assistant models, 60 s cache) in parallel and
 decides at the first strict majority of members ASKED (`isCouncilDecided`); a tie researches. It borrows the gate's
 `generate` (JSON, thinking off). `ResearchGateService.needsWeb` asks it first; `plan` runs it beside the planner and
 `applyCouncilToPlan` applies the majority (never over a user link or a plain order to search). Null → the single-model
 chain. Log: `council: needsWeb=… depth=… answered=x/y majority=[…] languages=[…] ms=…`. Specs:
 `services/__tests__/harness-council.spec.ts`.
+
+**The council's plan reaches research-service (research engine B1).** A researching council fills
+`ResearchPlan.subQuestions`, `languages` and `depth` (clamped to `RESEARCH_MAX_DEPTH` = 3; L4-L5 wait for per-plan
+budgets, B8). No council: `[]`, `[]`, depth 1 for a plan with a search step, 0 otherwise. The orchestrator's search
+sends `queries` (sub-questions minus the primary query, `expansionQueries`), `languages` (base ISO codes: `pt-BR` →
+`pt`), `platforms` (the council's source kinds, `ResearchPlatformCategory`, at most 4; research-service searches its
+platform registry for them from depth 2), `depth`, `round`, `threadId`, and `excludeUrls` from round 2 or after a crawl (`buildResearchEngineFields`
+bounds them to the wire contract: ≤ 12 queries, ≤ 6 languages, ≤ 60 URLs, thread id ≤ 64). `depth` sizes a SEARCH run;
+`maxPages` is read by SITE_CRAWL only (before B1 the council's page budget never reached a search). Every research
+request that has a thread sends `threadId` (AUTO, explicit modes, context-gateway research).
 
 ## Research gateway (ADR-212)
 
@@ -1889,7 +1894,64 @@ chain. Log: `council: needsWeb=… depth=… answered=x/y majority=[…] languag
 - **`providers[]` and `mode`** (ADR-210) are optional on the wire: `parseGatewayProviders` returns `[]` for the old shape. `SEARCH_DONE` narration carries `providers` / `providerCount`. Never derive `searchRequestCount` from `providers.length`.
 - **`web_search` tool** (`executeResearchWebSearch`): configured providers through the gateway; the hosted Ollama search only when research-service is down or has no provider. Chat records no `WEB_SEARCH` unit on the research path (research-service records one per provider call); only the hosted fallback records one. A turn's tool calls run in parallel, limit `RESEARCH_TOOL_CALL_PARALLEL_LIMIT` (4), `mapWithConcurrency` keeps the model's call order and ids.
 - **Search-first** is skipped when the turn already carries research evidence (it would search twice).
-- Tests: `research-gateway.utility.spec.ts`, `research-gateway-parity.spec.ts`, `research-wait-before-model.spec.ts`, `research-web-search-tool.utility.spec.ts`, `bounded-parallel.utility.spec.ts`.
+- **New wire fields are optional and sent only when set** (`researchEngineFields` in `runResearch`): `threadId`, `queries`, `languages`, `depth`, `round`, `excludeUrls`. Empty lists are left off, so old callers send the old body. `bundle.stats` and the item provenance fields (`query`, `round`, `contentHash`, `reusedFromRunId`) are read defensively.
+- Tests: `research-gateway.utility.spec.ts`, `research-gateway-parity.spec.ts`, `research-wait-before-model.spec.ts`, `research-web-search-tool.utility.spec.ts`, `bounded-parallel.utility.spec.ts`, `research-client.utility.spec.ts`.
+
+## Web evidence is untrusted data (research engine B1, 2026-11-27)
+
+Every place web content reaches a model wraps each source as
+`<web_source n="<n>" url="<sanitised url>" trust="untrusted">\nTitle: …\n<text>\n</web_source>` (`fenceWebSource` /
+`fenceWebSources`, `utilities/untrusted-fence.utility.ts`): `formatResearchBlock` (chat), the enricher's
+`buildEvidenceBlock` (Compare, Consensus, Escalation, labs), search-first, the `web_search` / `web_fetch` /
+`get_crawled_page` tool results (`web-tool-result-fence.utility.ts`, hosted Ollama fallback included), and the
+planner's post-crawl summary and gap-check evidence. Each builder also prints `WEB_SOURCE_UNTRUSTED_INSTRUCTION`
+(`research-grounding.constants.ts`): blocks are DATA, instructions inside are ignored, cite by `n` as `[n]`.
+
+- **The sanitiser is shared with plugin results** (`fencePluginResult` keeps its exact output): NFC, controls /
+  zero-width / bidi / BOM stripped, then every opening and closing `web_source` spelling (case, spaces, `-`, HTML
+  entities, full-width brackets, a tag cut off before `>`) is defanged to `[web_source]` / `[/web_source]`; the URL
+  attribute percent-encodes quotes, brackets, backticks and spaces.
+- **`n` is unchanged**: index + 1, the number `toStoredCitations` stores (rule 41 §16).
+- **A capped list never cuts a fence open**: `fenceWebSources` shortens texts to the room left and leaves out (and
+  counts) a source that does not fit; tool results stay within `OLLAMA_TOOL_RESULT_MAX_CHARS`.
+- `EVIDENCE_FIT_PER_ITEM_OVERHEAD_CHARS` is 72 (was 12) for the fence framing, and the overhead estimate measures the
+  fenced form; an undersized number let a 150-page crawl overflow an 8k model.
+- Specs: `untrusted-fence.utility.spec.ts`, `web-tool-result-fence.utility.spec.ts`,
+  `context-assembly-citation-numbering.spec.ts`, `plugin-utilities.spec.ts`.
+
+## Research rounds, gap check and Stop (research engine B2, 2026-11-27)
+
+`ResearchOrchestratorManager.searchRounds`: round 1 searches the plan's query with the council's other sub-questions;
+when the depth allows another round (`maxRoundsForDepth`: depth ≤ 1 → 1, 2 → 2, 3 → 3), `ResearchGateService.gapCheck`
+asks the gate's models (same walk and JSON call as `followUpAfterCrawl`; message, queries already run and fenced
+evidence as data) for `{done, queries ≤ 4, narration, thinking}` (`parseResearchGapCheck`: code fence and cut-off
+replies still count; an unusable reply is null so the next model is asked; no usable reply → done). The next round
+sends those queries with `round` = n and `excludeUrls` = every URL already read; new items merge by URL.
+
+- **Stops** when: the gap check says done; it offers no query not already searched; a round read nothing new or
+  failed; the round cap; less than `RESEARCH_ROUND_MIN_REMAINING_MS` (20 s) of the `RESEARCH_ROUNDS_BUDGET_MS`
+  (60 s since the research began) is left (checked before the gap check and again before the gateway call; round 1 and
+  a user-named crawl always run; measured: a round takes 10-25 s); or the user pressed Stop. A round sends at most
+  `RESEARCH_DEPTH_QUERY_BUDGET[depth]` queries, the mirror of research-service's table.
+- **Stop**: the orchestrator holds the thread's Stop key while it runs (`StreamCancellationService.register(threadId)`,
+  released in `finally`, so the answering model registers its own after research), or listens to the controller a run
+  on this replica already holds (never re-registers: that would abort it). The signal is checked before every round
+  and every gateway call; a stopped turn keeps the evidence it read and narrates no failure. A user Stop during
+  research also stops the answer that follows: `carryStop` leaves a Redis marker (`claw:chat:stop-carry:<thread>`,
+  20 s) that the next `register` on ANY replica consumes (the answer runs on whichever replica takes the job). A run
+  replaced by a newer one (`STREAM_RUN_REPLACED_MESSAGE`, `wasReplaced`) is never carried.
+- **Narration uses the existing kinds** (no new `NarrationKind`; UI strings follow): `BACK_TO_AI {round}`,
+  `REPLANNED {round, queries}`, `SEARCH_STARTED {query, round, queries, languages}`, `SEARCH_DONE {count, warnings,
+providers, providerCount, round, queries, languages, duplicatesRemoved, reusedFromThread}` — the last four only
+  from `bundle.stats` when research-service measured them (`statsNarrationParams`).
+- Log lines: `rounds: stop before round N - gap check says done|no new query`, `rounds: round N not started - the
+user pressed Stop|research budget spent (Xms)`, `rounds: round N read nothing new - stopping`,
+  `gapCheck: done=… queries=…`.
+- Specs: `research-orchestrator-rounds.manager.spec.ts`, `research-gap-check.utility.spec.ts`,
+  `research-gate-gap-check.spec.ts`, `research-request.utility.spec.ts`.
+- **Rule 59 gap (unchanged)**: Compare, Consensus, Escalation and the labs still decide AUTO research from markers
+  (`resolveEffectiveResearchMode` in the enricher) and the context-gateway path runs one `needsWeb`-gated run; neither
+  reaches the orchestrator, so neither gets the council plan or rounds yet. They do get the untrusted fence.
 
 ## Media tools (2026-10-31)
 
@@ -1943,3 +2005,26 @@ Gemini video is `gemini-omni-1.1-flash` (Interactions API, about $0.10/s, routin
 
 - `POST /chat-messages/model-access` entries: `{ provider, model, allowed, costClass?, coveredByAllowance? }` (`types/access-control.types.ts`). `costClass` is the band only (rule 37). `coveredByAllowance` is `allowed` minus models above the free plan's ADR-162 price limit: when the plan has one, chat-service asks routing's internal `POST /internal/router-models/costs/classes` with `freeModelPriceCap` and gets a yes/no per model (`aboveFreeCap`, never the rate; an outage marks nothing dear). The send path stays the gate.
 - `listModelAccess` always fetches the bands (one cached batched call to routing's `POST /internal/router-models/costs/classes`). A failed lookup leaves the fields absent. Never put a rate in this response.
+
+## Every turn sees the whole context (ADR-226, 2026-11-28)
+
+Do not add a filter between memory/context and the model. Five silent ones made a saved secret invisible and search
+blind to the chat. Invariants:
+
+- chat asks memory-service for `MEMORY_RETRIEVE_MAX_ITEMS` (50); the **fast path trims workspace citations only**;
+  `MEMORY_BLOCK_INSTRUCTION` tells the model the list is the user's own information.
+- **All text matching uses `common/utilities/context-tokens.utility.ts`** (`contextTokens` folds Arabic forms, pairs
+  Chinese/Japanese/Thai; `searchableWords` for database search keeps stored letter forms). Never write another
+  `[^a-z0-9]` split: it deletes every non-Latin word (memory, older turns and other chats all broke that way).
+- Cross-chat search: `CROSS_THREAD_MIN_INTENT_TOKENS` 2; `OPENROUTER`, `XAI`, `GROK`, `DEEPSEEK`, `MISTRAL`,
+  `OLLAMA_CLOUD` count as large-window providers when the catalog has no window.
+- **Research reads the whole chat**: `researchConversation` = saved memories (unless `useMemory` is off) + up to 60
+  turns / 16,000 chars (first message kept) from `buildResearchConversation`, passed to `ResearchGateService.plan`
+  (planner and every council member) on AUTO, and as a self-contained `searchQuery` in explicit search modes.
+- **Text lookup** (`exactText` in a council vote, kept when at least half the winners name one): primary query = the
+  exact text, quoted phrase first among the others, SOCIAL and VIDEO platforms first, depth >= 2.
+- `RESEARCH_TEXT_MATCH_INSTRUCTION`: a near-identical line IS a match. `normaliseCitationMarkers` turns `【3】` and
+  `[2, 4]` into `[3]` / `[2][4]` outside code; stored citations keep up to 200 sources (was 50, below what rounds read).
+- Specs: `context-tokens.utility.spec.ts`, `salient-terms-languages.utility.spec.ts`, `harness-council.spec.ts` (text
+  lookup), `research-conversation.utility.spec.ts`, `context-assembly.manager.spec.ts` (memory selection),
+  `stored-citations.utility.spec.ts`. Live: scratch scripts described in the QA record of 2026-11-28.

@@ -1,3 +1,4 @@
+import type { ResearchPlatformCategory } from '../../../common/enums/research-platform-category.enum';
 import type { HarnessCouncilVerdict } from './harness-council.types';
 import type { PlannedResearchAction } from '../../../common/enums/planned-research-action.enum';
 import type { ResearchRenderHint } from '../../../common/enums/research-render-hint.enum';
@@ -47,6 +48,26 @@ export type ResearchPlan = {
   thinking: string;
   /** Which model decided, for the log and the stored narration. */
   decidedBy: string | null;
+  /** The council's sub-questions (research engine B1); the search step sends them as extra queries. [] without one. */
+  subQuestions: string[];
+  /** Languages the council expects the answer to be published in, ranked; [] without a council. */
+  languages: string[];
+  /**
+   * Research depth, already clamped to `RESEARCH_MAX_DEPTH`: sizes a search run and caps its rounds. The council's
+   * depth when it decided; otherwise 1 for a plan with a search step and 0 for "answer" or a crawl.
+   */
+  depth: number;
+  /** Source kinds the council wants searched; [] without a council. */
+  platforms: ResearchPlatformCategory[];
+};
+
+/** The gate's look after a search round (research engine B2): is anything still missing, and what to search next. */
+export type ResearchGapCheck = {
+  done: boolean;
+  /** New queries for the next round, ≤ `RESEARCH_GAP_CHECK_MAX_QUERIES`; [] when done. */
+  queries: string[];
+  narration: string;
+  thinking: string;
 };
 
 /** The planner's second look, after a crawl, at whether a web search is still needed. */

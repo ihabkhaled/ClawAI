@@ -1,8 +1,16 @@
 import { FETCH_STRATEGY_KEYS } from '@/constants/research.constants';
+import { Locale } from '@/enums/locale.enum';
 import { NarrationKind } from '@/enums/narration-kind.enum';
 import type { TranslateFunction } from '@/types/i18n.types';
 import type { NarrationEntry } from '@/types/narration.types';
 import { formatNarratedProviders } from '@/utilities/context-warning.utility';
+import {
+  describeBackToAi,
+  describeReplanned,
+  describeSearchCounters,
+  describeSearchStarted,
+  withNarrationCounters,
+} from '@/utilities/narration-counters.utility';
 
 const KINDS = new Set<string>(Object.values(NarrationKind));
 
@@ -24,14 +32,23 @@ export function isAiVoice(entry: NarrationEntry): boolean {
  * its kind and params, so "Done crawling: 14 pages read" reads correctly in all
  * thirteen locales. A count here is always what was READ, never what was found
  * (rule 41).
+ *
+ * `locale` picks plural forms and names languages ("Spanisch" for a German
+ * reader); research-round counters are added only when chat-service sent them
+ * (narration-counters.utility.ts).
  */
-export function describeNarrationEntry(entry: NarrationEntry, t: TranslateFunction): string {
+export function describeNarrationEntry(
+  entry: NarrationEntry,
+  t: TranslateFunction,
+  locale: string = Locale.EN,
+): string {
   const params = entry.params ?? {};
   switch (entry.kind) {
     case NarrationKind.PLANNED:
-    case NarrationKind.REPLANNED:
     case NarrationKind.AI_THOUGHT:
       return entry.text ?? '';
+    case NarrationKind.REPLANNED:
+      return describeReplanned(entry.text ?? '', params, t, locale);
     case NarrationKind.CRAWL_STARTED:
       return t('narration.crawlStarted', { urls: String(params['urls'] ?? '') });
     case NarrationKind.CRAWL_PROGRESS:
@@ -39,20 +56,18 @@ export function describeNarrationEntry(entry: NarrationEntry, t: TranslateFuncti
     case NarrationKind.CRAWL_DONE:
       return t('narration.crawlDone', { count: Number(params['count'] ?? 0) });
     case NarrationKind.BACK_TO_AI:
-      return t('narration.backToAi');
-    case NarrationKind.SEARCH_STARTED: {
-      const query = String(params['query'] ?? '');
-      return query.length > 0
-        ? t('narration.searchStartedWithQuery', { query })
-        : t('narration.searchStarted');
-    }
+      return describeBackToAi(params, t);
+    case NarrationKind.SEARCH_STARTED:
+      return describeSearchStarted(params, t, locale);
     case NarrationKind.SEARCH_DONE: {
       const count = Number(params['count'] ?? 0);
       // Older chat-service builds omit `providers`; they keep the plain line.
       const providers = formatNarratedProviders(params['providers']);
-      return providers.length > 0
-        ? t('narration.searchDoneWithProviders', { providers, count })
-        : t('narration.searchDone', { count });
+      const base =
+        providers.length > 0
+          ? t('narration.searchDoneWithProviders', { providers, count })
+          : t('narration.searchDone', { count });
+      return withNarrationCounters(base, describeSearchCounters(params, t, locale));
     }
     case NarrationKind.RESEARCH_FAILED:
       return t('narration.researchFailed');

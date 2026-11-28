@@ -195,7 +195,7 @@ describe('ResearchEnricherManager (chat-messages contract)', () => {
     }
     expect(result.evidence).toContain('## Web research evidence (mode: SEARCH');
     expect(result.evidence).toContain(
-      'TypeScript 5.9 release notes — https://typescriptlang.org/blog/5-9',
+      '<web_source n="1" url="https://typescriptlang.org/blog/5-9" trust="untrusted">\nTitle: TypeScript 5.9 release notes',
     );
   });
 

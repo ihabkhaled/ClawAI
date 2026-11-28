@@ -12,6 +12,10 @@ export const IT_MARKETING_SCENES_CONTENT: MarketingScenesLocaleContent = {
       alt: 'La casella di messaggio di ClawAI con il selettore del modello aperto, che elenca i modelli tra cui scegliere.',
       caption: 'Scegli tu il modello, oppure lascia scegliere ad AUTO.',
     },
+    [MarketingSceneId.CHAT_RESEARCH_ROUNDS]: {
+      alt: 'Una chat di ClawAI con il registro di ricerca: più giri con il numero di ricerche, le lingue e i tipi di fonte, poi una risposta con citazioni.',
+      caption: 'La ricerca procede a giri e dice che cosa ha cercato.',
+    },
     [MarketingSceneId.CHAT_RESEARCH]: {
       alt: 'La casella di messaggio con la ricerca web attiva e il selettore del provider di ricerca visibile.',
       caption: 'Attiva la ricerca web e scegli come cercare.',

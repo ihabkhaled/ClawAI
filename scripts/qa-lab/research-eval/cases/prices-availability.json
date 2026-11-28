@@ -1,0 +1,146 @@
+[
+  {
+    "id": "en-prices-availability-01",
+    "lang": "en",
+    "category": "prices-availability",
+    "text": "How much is a PlayStation 5 right now and is it in stock anywhere?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ar-prices-availability-01",
+    "lang": "ar",
+    "category": "prices-availability",
+    "text": "كم سعر الذهب عيار 21 اليوم؟",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ar-EG-prices-availability-01",
+    "lang": "ar-EG",
+    "category": "prices-availability",
+    "text": "سعر الدولار النهاردة كام في البنوك؟",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ar-SA-prices-availability-01",
+    "lang": "ar-SA",
+    "category": "prices-availability",
+    "text": "كم سعر جرام الذهب اليوم في السعودية؟",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ar-Latn-prices-availability-01",
+    "lang": "ar-Latn",
+    "category": "prices-availability",
+    "text": "se3r el dollar el naharda kam fel bank?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "fr-prices-availability-01",
+    "lang": "fr",
+    "category": "prices-availability",
+    "text": "Quel est le prix actuel du Bitcoin en euros ?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "es-prices-availability-01",
+    "lang": "es",
+    "category": "prices-availability",
+    "text": "¿Cuánto cuesta ahora mismo un iPhone 16 en España y hay stock?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "pt-BR-prices-availability-01",
+    "lang": "pt-BR",
+    "category": "prices-availability",
+    "text": "Qual é a cotação do dólar hoje em reais?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "de-prices-availability-01",
+    "lang": "de",
+    "category": "prices-availability",
+    "text": "Was kostet aktuell ein Liter Diesel in Deutschland?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "tr-prices-availability-01",
+    "lang": "tr",
+    "category": "prices-availability",
+    "text": "Bugün altın gram fiyatı ne kadar?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "hi-prices-availability-01",
+    "lang": "hi",
+    "category": "prices-availability",
+    "text": "आज दिल्ली में सोने का भाव क्या है?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "hi-Latn-prices-availability-01",
+    "lang": "hi-Latn",
+    "category": "prices-availability",
+    "text": "Aaj petrol ka rate Mumbai mein kitna hai?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "id-prices-availability-01",
+    "lang": "id",
+    "category": "prices-availability",
+    "text": "Berapa harga emas Antam hari ini?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "vi-prices-availability-01",
+    "lang": "vi",
+    "category": "prices-availability",
+    "text": "Giá vàng SJC hôm nay bao nhiêu một lượng?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ru-prices-availability-01",
+    "lang": "ru",
+    "category": "prices-availability",
+    "text": "Какой сейчас курс евро к рублю?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ja-prices-availability-01",
+    "lang": "ja",
+    "category": "prices-availability",
+    "text": "今のドル円レートはいくらですか？",
+    "expect": {
+      "research": "yes"
+    }
+  }
+]

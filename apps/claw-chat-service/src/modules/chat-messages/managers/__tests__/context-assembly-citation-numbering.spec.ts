@@ -3,6 +3,7 @@ import { vi } from 'vitest';
 // index toStoredCitations stores are the SAME number for the same source. If
 // either side is renumbered alone, an answer's [3] opens the wrong page.
 import { ContextAssemblyManager } from '../context-assembly.manager';
+import { RESEARCH_TEXT_MATCH_INSTRUCTION } from '../../constants/research-grounding.constants';
 import { toStoredCitations } from '../../utilities/stored-citations.utility';
 import { type ChatMessage } from '../../../../generated/prisma';
 import { type AssembledContext, type ResearchEvidenceCitation } from '../../types/context.types';
@@ -48,7 +49,8 @@ const contextWith = (researchEvidence: ResearchEvidenceCitation[]): AssembledCon
   }) as AssembledContext;
 
 describe('research block numbering equals stored citation numbering', () => {
-  it('prints "[n] title — url" for exactly the index and url toStoredCitations stores', () => {
+  // Research engine B1: the source is printed in an untrusted fence whose n attribute is the [n] the model cites.
+  it('fences each source as n="index" url="url" for exactly what toStoredCitations stores', () => {
     const manager = new ContextAssemblyManager(
       { select: vi.fn() } as never,
       { retrieve: vi.fn() } as never,
@@ -65,8 +67,12 @@ describe('research block numbering equals stored citation numbering', () => {
 
     for (const citation of toStoredCitations(items)) {
       expect(prompt).toContain(
-        `[${String(citation.index)}] ${citation.title ?? ''} — ${citation.url}`,
+        `<web_source n="${String(citation.index)}" url="${citation.url}" trust="untrusted">\nTitle: ${citation.title ?? ''}`,
       );
     }
+    // Plain brackets, said outright: gpt-oss otherwise cites as 【n】, which the UI cannot link.
+    expect(prompt).toContain('Cite a block by its n attribute as [n]: plain square brackets');
+    // A lyric or quote that differs by spelling is the same text (owner report 2026-11-28).
+    expect(prompt).toContain(RESEARCH_TEXT_MATCH_INSTRUCTION);
   });
 });

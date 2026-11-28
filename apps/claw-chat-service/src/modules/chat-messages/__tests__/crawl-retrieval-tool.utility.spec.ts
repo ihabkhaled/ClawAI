@@ -38,15 +38,14 @@ describe('buildGetCrawledPageToolDefinition', () => {
 });
 
 describe('executeGetCrawledPage', () => {
-  it('returns the full page content for a URL that was crawled', () => {
+  // Research engine B1: crawled web text is fenced as untrusted data like every other web page.
+  it('returns the full page content for a URL that was crawled, in an untrusted fence', () => {
     const result = executeGetCrawledPage(buildCall('https://example.com/about'), buildRetrieval());
 
-    const parsed = JSON.parse(result) as { url: string; title: string | null; content: string };
-    expect(parsed).toEqual({
-      url: 'https://example.com/about',
-      title: 'About',
-      content: 'About page content',
-    });
+    expect(result).toContain('Web content arrives inside <web_source');
+    expect(result).toContain(
+      '<web_source n="1" url="https://example.com/about" trust="untrusted">\nTitle: About\nAbout page content\n</web_source>',
+    );
   });
 
   it('returns an error naming the available URLs when the URL was not crawled', () => {
@@ -75,7 +74,8 @@ describe('executeGetCrawledPage', () => {
 
     const result = executeGetCrawledPage(buildCall('https://example.com/long'), retrieval);
 
-    expect(result.length).toBeLessThan(longContent.length);
-    expect(result).toContain('[truncated:');
+    expect(result.length).toBeLessThanOrEqual(OLLAMA_TOOL_RESULT_MAX_CHARS);
+    expect(result).toContain('[truncated]');
+    expect(result.trimEnd().endsWith('</web_source>')).toBe(true);
   });
 });

@@ -1,0 +1,162 @@
+[
+  {
+    "id": "en-chitchat-01",
+    "lang": "en",
+    "category": "chitchat",
+    "text": "I'm kind of bored. Tell me something to cheer me up.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "it-chitchat-01",
+    "lang": "it",
+    "category": "chitchat",
+    "text": "Mi sento un po' giù oggi, mi fai compagnia per un po'?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "fa-chitchat-01",
+    "lang": "fa",
+    "category": "chitchat",
+    "text": "امروز حوصله‌ام سر رفته، یه کم باهام حرف بزن.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ur-chitchat-01",
+    "lang": "ur",
+    "category": "chitchat",
+    "text": "آج دل نہیں لگ رہا، کچھ باتیں کرو میرے ساتھ۔",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "hi-chitchat-01",
+    "lang": "hi",
+    "category": "chitchat",
+    "text": "आज मन थोड़ा उदास है, कुछ मज़ेदार बातें करो न।",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "bn-chitchat-01",
+    "lang": "bn",
+    "category": "chitchat",
+    "text": "আজ মনটা ভালো নেই, একটু গল্প করবে?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "id-chitchat-01",
+    "lang": "id",
+    "category": "chitchat",
+    "text": "Lagi gabut nih, ngobrol santai yuk.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ru-chitchat-01",
+    "lang": "ru",
+    "category": "chitchat",
+    "text": "Мне скучно, давай просто поболтаем о чём-нибудь.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "uk-chitchat-01",
+    "lang": "uk",
+    "category": "chitchat",
+    "text": "Мені нудно, давай просто поговоримо про щось.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "zh-CN-chitchat-01",
+    "lang": "zh-CN",
+    "category": "chitchat",
+    "text": "我今天有点无聊，陪我随便聊聊吧。",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "vi-chitchat-01",
+    "lang": "vi",
+    "category": "chitchat",
+    "text": "Hôm nay mình chán quá, nói chuyện phiếm với mình đi.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ar-EG-chitchat-01",
+    "lang": "ar-EG",
+    "category": "chitchat",
+    "text": "أنا زهقان النهاردة، احكيلي حاجة تضحكني.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ar-SA-chitchat-01",
+    "lang": "ar-SA",
+    "category": "chitchat",
+    "text": "اليوم مزاجي مو حلو، سولف معي شوي.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ar-Latn-chitchat-01",
+    "lang": "ar-Latn",
+    "category": "chitchat",
+    "text": "ana ta3ban shwaya, 7ekili 7aga t5alini a7san.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "fr-chitchat-01",
+    "lang": "fr",
+    "category": "chitchat",
+    "text": "J'ai passé une journée difficile, on peut discuter un peu ?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "es-chitchat-01",
+    "lang": "es",
+    "category": "chitchat",
+    "text": "Estoy aburrido, cuéntame algo curioso sobre ti.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  }
+]

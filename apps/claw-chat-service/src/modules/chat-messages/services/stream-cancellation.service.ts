@@ -11,7 +11,10 @@ import type {
 import {
   STREAM_CANCEL_ACTIVE_KEY_PREFIX,
   STREAM_CANCEL_ACTIVE_TTL_SECONDS,
+  STREAM_CANCEL_CARRY_KEY_PREFIX,
+  STREAM_CANCEL_CARRY_TTL_SECONDS,
   STREAM_CANCEL_CHANNEL,
+  STREAM_RUN_REPLACED_MESSAGE,
 } from '../constants/stream-cancellation.constants';
 import { describeStreamError } from '../utilities/chat-stream-frame.utility';
 
@@ -59,13 +62,52 @@ export class StreamCancellationService implements OnModuleInit {
   register(key: string): AbortController {
     const existing = this.controllers.get(key);
     if (existing !== undefined) {
-      existing.abort();
+      existing.abort(new DOMException(STREAM_RUN_REPLACED_MESSAGE, 'AbortError'));
     }
     const controller = new AbortController();
     this.controllers.set(key, controller);
     void this.markActive(key);
+    void this.applyCarriedStop(key, controller);
     this.logger.debug(`register: stream run registered key=${key}`);
     return controller;
+  }
+
+  /** True when `signal` was aborted because `register` replaced its run, not by a user Stop. */
+  static wasReplaced(signal: AbortSignal): boolean {
+    const reason: unknown = signal.reason;
+    return reason instanceof DOMException && reason.message === STREAM_RUN_REPLACED_MESSAGE;
+  }
+
+  /**
+   * Research was stopped by the user: the answer that follows it (on any replica) must start stopped.
+   * See STREAM_CANCEL_CARRY_KEY_PREFIX.
+   */
+  carryStop(key: string): void {
+    void this.redis
+      .set(`${STREAM_CANCEL_CARRY_KEY_PREFIX}${key}`, '1', 'EX', STREAM_CANCEL_CARRY_TTL_SECONDS)
+      .then(() =>
+        this.logger.log(`carryStop: the answer after research will start stopped key=${key}`),
+      )
+      .catch((error: unknown) =>
+        this.logger.warn(`carryStop: could not carry Stop — ${describeStreamError(error)}`),
+      );
+  }
+
+  /** Consumes a carried Stop (DEL is atomic: only one registration takes it) and aborts this run. */
+  private async applyCarriedStop(key: string, controller: AbortController): Promise<void> {
+    try {
+      const carried = (await this.redis.del(`${STREAM_CANCEL_CARRY_KEY_PREFIX}${key}`)) > 0;
+      if (!carried) {
+        return;
+      }
+      controller.abort();
+      if (this.controllers.get(key) === controller) {
+        this.controllers.delete(key);
+      }
+      this.logger.log(`register: run starts stopped - Stop was pressed during research key=${key}`);
+    } catch (error: unknown) {
+      this.logger.warn(`register: could not read carried Stop — ${describeStreamError(error)}`);
+    }
   }
 
   /**

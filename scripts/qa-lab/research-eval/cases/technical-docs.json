@@ -1,0 +1,162 @@
+[
+  {
+    "id": "en-technical-docs-01",
+    "lang": "en",
+    "category": "technical-docs",
+    "text": "How do I use the new use hook in the latest React version? Check the official docs.",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["docs"]
+    }
+  },
+  {
+    "id": "ar-technical-docs-01",
+    "lang": "ar",
+    "category": "technical-docs",
+    "text": "ما هي الطريقة الصحيحة لاستخدام Server Actions في أحدث إصدار من Next.js؟ راجع التوثيق الرسمي.",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["docs"]
+    }
+  },
+  {
+    "id": "ar-EG-technical-docs-01",
+    "lang": "ar-EG",
+    "category": "technical-docs",
+    "text": "إزاي أعمل deploy لتطبيق Node على Docker حسب التوثيق الرسمي الحالي؟",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["docs"]
+    }
+  },
+  {
+    "id": "fr-technical-docs-01",
+    "lang": "fr",
+    "category": "technical-docs",
+    "text": "Quelle est la syntaxe actuelle de la configuration Tailwind CSS dans la dernière version ? Vérifie la doc.",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["docs"]
+    }
+  },
+  {
+    "id": "es-technical-docs-01",
+    "lang": "es",
+    "category": "technical-docs",
+    "text": "¿Cómo se configura la autenticación en la versión más reciente de Django según la documentación oficial?",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["docs"]
+    }
+  },
+  {
+    "id": "pt-BR-technical-docs-01",
+    "lang": "pt-BR",
+    "category": "technical-docs",
+    "text": "Qual é a API atual do Kubernetes para configurar um HorizontalPodAutoscaler na última versão?",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["docs"]
+    }
+  },
+  {
+    "id": "de-technical-docs-01",
+    "lang": "de",
+    "category": "technical-docs",
+    "text": "Wie sieht die aktuelle Syntax für Prisma-Migrationen aus? Schau in die offizielle Dokumentation.",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["docs"]
+    }
+  },
+  {
+    "id": "it-technical-docs-01",
+    "lang": "it",
+    "category": "technical-docs",
+    "text": "Quali sono le novità dell'ultima versione di TypeScript? Consulta le note di rilascio ufficiali.",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["docs"]
+    }
+  },
+  {
+    "id": "tr-technical-docs-01",
+    "lang": "tr",
+    "category": "technical-docs",
+    "text": "Python'un son sürümünde gelen yeni özellikleri resmi dokümantasyona bakarak anlat.",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["docs"]
+    }
+  },
+  {
+    "id": "ru-technical-docs-01",
+    "lang": "ru",
+    "category": "technical-docs",
+    "text": "Как в последней версии PostgreSQL настроить секционирование таблиц? Посмотри официальную документацию.",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["docs"]
+    }
+  },
+  {
+    "id": "zh-CN-technical-docs-01",
+    "lang": "zh-CN",
+    "category": "technical-docs",
+    "text": "最新版本的 Vue 3 中 defineModel 怎么用？请查阅官方文档。",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["docs"]
+    }
+  },
+  {
+    "id": "ja-technical-docs-01",
+    "lang": "ja",
+    "category": "technical-docs",
+    "text": "最新版のRustでasyncトレイトを使う方法を公式ドキュメントで確認して教えてください。",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["docs"]
+    }
+  },
+  {
+    "id": "ko-technical-docs-01",
+    "lang": "ko",
+    "category": "technical-docs",
+    "text": "최신 Spring Boot 버전에서 설정 파일 변경점이 뭐야? 공식 문서 기준으로 알려줘.",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["docs"]
+    }
+  },
+  {
+    "id": "hi-Latn-technical-docs-01",
+    "lang": "hi-Latn",
+    "category": "technical-docs",
+    "text": "Latest Next.js mein middleware kaise likhte hain? Official docs dekh ke batao.",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["docs"]
+    }
+  },
+  {
+    "id": "id-technical-docs-01",
+    "lang": "id",
+    "category": "technical-docs",
+    "text": "Bagaimana cara memakai fitur terbaru Laravel untuk antrean job? Cek dokumentasi resminya.",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["docs"]
+    }
+  },
+  {
+    "id": "vi-technical-docs-01",
+    "lang": "vi",
+    "category": "technical-docs",
+    "text": "API mới nhất của Flutter để điều hướng giữa các màn hình là gì? Xem tài liệu chính thức giúp mình.",
+    "expect": {
+      "research": "yes",
+      "sourceTypes": ["docs"]
+    }
+  }
+]

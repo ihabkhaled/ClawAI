@@ -80,6 +80,8 @@ export const ROUTE_PERMISSIONS: ReadonlyArray<RoutePermission> = [
   // research sub-pages, each its own switch. Longest-prefix-first, so these
   // MUST precede the parent entry they sit under.
   { prefix: ROUTES.RESEARCH_PROVIDERS, permission: Permission.RESEARCH_PROVIDERS_MANAGE },
+  // Platforms share the providers switch: research-service guards /research/platforms with it.
+  { prefix: ROUTES.RESEARCH_PLATFORMS, permission: Permission.RESEARCH_PROVIDERS_MANAGE },
   { prefix: ROUTES.RESEARCH_RUNS, permission: Permission.RESEARCH_RUNS_VIEW },
 
   // routing sub-pages, each its own switch. Longest-prefix-first, so these

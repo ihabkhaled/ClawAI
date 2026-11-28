@@ -12,6 +12,10 @@ export const EN_MARKETING_SCENES_CONTENT: MarketingScenesLocaleContent = {
       alt: 'The ClawAI message box with the model picker open, listing the models you can choose from.',
       caption: 'Pick a model yourself, or let AUTO choose.',
     },
+    [MarketingSceneId.CHAT_RESEARCH_ROUNDS]: {
+      alt: 'A ClawAI chat showing the research work log: several rounds of searching with the number of searches, the languages and the source types, then a cited answer.',
+      caption: 'Research works in rounds and says what it searched.',
+    },
     [MarketingSceneId.CHAT_RESEARCH]: {
       alt: 'The message box with web research switched on and the chooser for the search provider showing.',
       caption: 'Turn on web research and choose how it searches.',

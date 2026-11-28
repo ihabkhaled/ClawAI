@@ -64,6 +64,9 @@ describe('ResearchOrchestratorManager', () => {
       narration: 'No web needed.',
       thinking: '',
       decidedBy: 'm1',
+      subQuestions: [],
+      languages: [],
+      depth: 1,
     });
 
     await expect(manager.run(input)).resolves.toBeNull();
@@ -80,6 +83,9 @@ describe('ResearchOrchestratorManager', () => {
       narration: 'Reading it.',
       thinking: '',
       decidedBy: 'm1',
+      subQuestions: [],
+      languages: [],
+      depth: 1,
     });
     mockedRunResearch.mockResolvedValue(runWith('SITE_CRAWL', ['https://example.com/']) as never);
 
@@ -111,6 +117,9 @@ describe('ResearchOrchestratorManager', () => {
       narration: 'Site first.',
       thinking: 'They want the company explained, so the site comes first.',
       decidedBy: 'm1',
+      subQuestions: [],
+      languages: [],
+      depth: 1,
     });
     followUpAfterCrawl.mockResolvedValue({
       needsSearch: true,
@@ -159,6 +168,9 @@ describe('ResearchOrchestratorManager', () => {
       narration: '',
       thinking: '',
       decidedBy: 'm1',
+      subQuestions: [],
+      languages: [],
+      depth: 1,
     });
     followUpAfterCrawl.mockResolvedValue({
       needsSearch: false,
@@ -183,6 +195,9 @@ describe('ResearchOrchestratorManager', () => {
       narration: '',
       thinking: '',
       decidedBy: 'm1',
+      subQuestions: [],
+      languages: [],
+      depth: 1,
     });
     mockedRunResearch.mockResolvedValue(null);
 
@@ -223,6 +238,9 @@ describe('ResearchOrchestratorManager', () => {
       narration: '',
       thinking: '',
       decidedBy: 'm1',
+      subQuestions: [],
+      languages: [],
+      depth: 1,
     });
     mockedRunResearch.mockResolvedValue(
       runWith('SITE_CRAWL', ['https://app.example.com/']) as never,
@@ -241,6 +259,9 @@ describe('ResearchOrchestratorManager', () => {
       narration: '',
       thinking: '',
       decidedBy: 'm1',
+      subQuestions: [],
+      languages: [],
+      depth: 1,
     });
     await manager.run(input);
     expect(mockedRunResearch.mock.calls.at(-1)?.[1]).not.toHaveProperty('render');
@@ -295,6 +316,9 @@ describe('ResearchOrchestratorManager', () => {
       narration: 'Searching.',
       thinking: '',
       decidedBy: 'm1',
+      subQuestions: [],
+      languages: [],
+      depth: 1,
     };
     const searchDoneParams = (): Record<string, unknown> | undefined =>
       append.mock.calls
@@ -332,7 +356,7 @@ describe('ResearchOrchestratorManager', () => {
         runWith('SEARCH_THEN_FETCH', ['https://a.test']) as never,
       );
       await manager.run(input);
-      expect(searchDoneParams()).toEqual({ count: 1, warnings: 0 });
+      expect(searchDoneParams()).toEqual({ count: 1, warnings: 0, round: 1 });
     });
   });
 
@@ -345,6 +369,9 @@ describe('ResearchOrchestratorManager', () => {
       narration: '',
       thinking: '',
       decidedBy: 'm1',
+      subQuestions: [],
+      languages: [],
+      depth: 1,
     });
     let release!: (value: unknown) => void;
     mockedRunResearch.mockReturnValue(

@@ -25,6 +25,7 @@ export const MARKETING_SCENES: Record<MarketingSceneId, MarketingSceneAsset> = {
   [MarketingSceneId.CHAT_CONVERSATION]: desktopScene(MarketingSceneId.CHAT_CONVERSATION),
   [MarketingSceneId.CHAT_MODEL_PICKER]: desktopScene(MarketingSceneId.CHAT_MODEL_PICKER),
   [MarketingSceneId.CHAT_RESEARCH]: desktopScene(MarketingSceneId.CHAT_RESEARCH),
+  [MarketingSceneId.CHAT_RESEARCH_ROUNDS]: desktopScene(MarketingSceneId.CHAT_RESEARCH_ROUNDS),
   [MarketingSceneId.CHAT_CONTEXT_MENU]: desktopScene(MarketingSceneId.CHAT_CONTEXT_MENU),
   [MarketingSceneId.CHAT_SHARE_DIALOG]: desktopScene(MarketingSceneId.CHAT_SHARE_DIALOG),
   [MarketingSceneId.COMPARE_SETUP]: desktopScene(MarketingSceneId.COMPARE_SETUP),
@@ -83,6 +84,7 @@ export const FEATURE_CAPABILITY_SCENES: Record<
     MarketingSceneId.MOBILE_CHAT,
   ],
   [FeatureCapability.NARRATED_RESEARCH]: [
+    MarketingSceneId.CHAT_RESEARCH_ROUNDS,
     MarketingSceneId.CHAT_RESEARCH,
     MarketingSceneId.CHAT_CONVERSATION,
   ],

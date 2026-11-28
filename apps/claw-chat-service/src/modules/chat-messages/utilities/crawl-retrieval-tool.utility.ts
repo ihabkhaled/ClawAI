@@ -1,5 +1,6 @@
 import { TOOL_GET_CRAWLED_PAGE } from '../constants/ollama-cloud-tools.constants';
 import { truncateResult } from './ollama-cloud-tool-runner.utility';
+import { fenceCrawledPageToolResult } from './web-tool-result-fence.utility';
 import type { CrawlRetrievalContext } from '../types/crawl-retrieval.types';
 import type {
   OllamaCloudToolCall,
@@ -58,7 +59,8 @@ export function executeGetCrawledPage(
       availableUrls: retrieval.pages.map((candidate) => candidate.url),
     });
   }
+  // Crawled web text: fenced as untrusted data like every other web page (research engine B1).
   return truncateResult(
-    JSON.stringify({ url: page.url, title: page.title, content: page.content }),
+    fenceCrawledPageToolResult({ url: page.url, title: page.title, content: page.content }),
   );
 }

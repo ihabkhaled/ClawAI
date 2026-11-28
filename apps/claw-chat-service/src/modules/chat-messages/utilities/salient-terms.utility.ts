@@ -1,8 +1,12 @@
+import { CONTEXT_UNSPACED_SCRIPT_PATTERN } from '../../../common/constants/context-tokens.constants';
+import { searchableWords } from '../../../common/utilities/context-tokens.utility';
 import {
   MIN_MATCH_TOKEN_LENGTH,
   PLANTED_IDENTIFIER_PATTERN,
 } from '../constants/context-composer.constants';
 import {
+  SALIENT_LATIN_WORD_PATTERN,
+  SALIENT_NON_LATIN_MIN_LENGTH,
   SALIENT_SEARCH_WORD_LIMIT,
   SALIENT_TERM_LIMIT,
   SALIENT_TERM_STOPWORDS,
@@ -27,13 +31,12 @@ import { type SalientTerms } from '../types/salient-terms.types';
 export function extractSalientTerms(intent: string): SalientTerms {
   const identifiers = [...intent.matchAll(PLANTED_IDENTIFIER_PATTERN)].map((match) => match[0]);
 
-  const words = intent
-    .toLowerCase()
-    .replaceAll(/[^a-z0-9\s-]+/g, ' ')
-    .split(/\s+/)
+  // Every language: this used to delete every non-Latin letter, so an Arabic question searched other chats for
+  // nothing at all (owner report 2026-11-28).
+  const words = searchableWords(intent)
     .filter(
       (token) =>
-        token.length >= MIN_MATCH_TOKEN_LENGTH &&
+        token.length >= minimumLength(token) &&
         !(SALIENT_TERM_STOPWORDS as ReadonlySet<string>).has(token),
     )
     // Longer words are more discriminating than shorter ones at equal frequency.
@@ -43,6 +46,14 @@ export function extractSalientTerms(intent: string): SalientTerms {
     identifiers: dedupe(identifiers, SALIENT_TERM_LIMIT),
     words: dedupe(words, SALIENT_SEARCH_WORD_LIMIT),
   };
+}
+
+/** Latin words keep the longer minimum; other scripts carry meaning in fewer letters, Chinese in pairs. */
+function minimumLength(token: string): number {
+  if (SALIENT_LATIN_WORD_PATTERN.test(token)) {
+    return MIN_MATCH_TOKEN_LENGTH;
+  }
+  return CONTEXT_UNSPACED_SCRIPT_PATTERN.test(token) ? 2 : SALIENT_NON_LATIN_MIN_LENGTH;
 }
 
 function dedupe(terms: readonly string[], limit: number): string[] {

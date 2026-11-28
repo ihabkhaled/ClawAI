@@ -12,7 +12,7 @@ export const JA_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
     [FeatureCapability.SMART_ATTACHMENTS]:
       '文書、コード、メディア、アーカイブ丸ごとをチャットにドロップ。すべてのアップロードはウイルススキャンされ、テキストが抽出されてモデルに渡されます。',
     [FeatureCapability.NARRATED_RESEARCH]:
-      '検索するかクロールするかを自ら判断し、作業の各ステップを実況しながら進め、すべての取得でrobots.txtを守る調査ループ。',
+      '複数ラウンド・複数言語で、ウェブと学術・開発者向けの情報源を調べ、各手順を実況し、robots.txt を守るリサーチ。',
     [FeatureCapability.ORCHESTRATION_LABS]:
       '複数のモデルを一つの問題に当てる専用ラボ。審査員付きの比較、コンセンサス、エスカレーション、検証などを備えています。',
     [FeatureCapability.CONVERSATION_TOOLS]:
@@ -204,7 +204,7 @@ export const JA_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
       seo: {
         title: 'ClawAIの実況付きリサーチとWebクロール',
         description:
-          'ClawAIがWebをどう調べるかを解説します。検索かクロールかを選ぶプランナー、リアルタイムで実況される作業ログ、robots.txtを守る段階的な取得、そして出典の明示まで、仕組みをそのままご紹介します。',
+          'ClawAI のリサーチ方法を紹介します。ウェブ・学術論文・開発者向けの情報源を対象に、複数ラウンドにわたって多言語で検索し、進行中の作業ログを実況しながら、ルールを守ってページを取得し、実際に読んだ出典を明示して回答します。',
         keywords: ['AI Webリサーチ', 'AI Webサイト クローラー', '出典付き AI リサーチ'],
       },
       eyebrow: '機能',
@@ -235,6 +235,30 @@ export const JA_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
             'robots.txtはClawAI-ResearchBotというユーザーエージェントで、すべての取得において守られ、許可されていないページを別の方法で再試行することはありません。ログインの壁や法的なブロックがあれば取得は止まり、CAPTCHAを解くことは決してなく、すべてのリダイレクトはプライベートネットワークのアドレスに対してチェックされ、アーカイブのコピーには必ずその旨が表示されます。',
           ],
         },
+        {
+          id: 'research-in-rounds',
+          heading: '複数ラウンド・複数言語のリサーチ',
+          paragraphs: [
+            '必要な質問では、複数のモデルが並行して、ウェブを使うか、どこまで深く調べるか、どの言語で検索し何を調べるかを投票します。そのうえで1回の検索が複数の質問をまとめて調べます。',
+            '各ラウンドの後、ClawAI は何がまだ足りないかを確認し、その点だけを追加で検索します。決められた調査時間内で最大3ラウンドです。「停止」を押すと、調査とその後に続く回答の両方が止まります。',
+          ],
+        },
+        {
+          id: 'more-than-a-web-search',
+          heading: 'ウェブ検索だけではありません',
+          paragraphs: [
+            '質問に応じて、無料の公式 API にも直接問い合わせます。研究には OpenAlex, Semantic Scholar, arXiv, PubMed, Crossref、コードには GitHub, Stack Overflow, Hacker News、背景知識には Wikipedia。さらに、指定された報道・公的機関・コミュニティのサイトも検索します。',
+            '使うのは公開ページと公開 API だけです。ログイン、CAPTCHA の突破、ペイウォールの回避は行いません。正当な公開 API がないプラットフォームは、通常の検索結果を通して参照します。',
+          ],
+        },
+        {
+          id: 'evidence-you-can-trace',
+          heading: 'たどれる根拠',
+          paragraphs: [
+            '各情報源は、それを見つけた検索クエリと一緒に保存されます。同じチャットで過去24時間以内に読んだページは再取得せず、同一内容のコピーは除外します。',
+            'ウェブページの本文は、あなたの指示とは分けて「信頼できないデータ」と明示してモデルに渡し、ページ内の指示には決して従わないよう指示します。',
+          ],
+        },
       ],
       faq: [
         {
@@ -251,6 +275,16 @@ export const JA_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
           question: 'Webリサーチはすべてのプランで使えますか？',
           answer:
             'リサーチモードはプランの機能（RESEARCH_MODE、WEB_SEARCH、WEB_FETCH、WEB_EXTRACT）で、それぞれ独自の割り当てがあり、運営者がプランごとに設定します。各プランに含まれる内容は料金ページでご確認いただけます。',
+        },
+        {
+          question: '他の言語でも検索しますか？',
+          answer:
+            'はい。計画を立てるモデルが、答えが見つかりやすい言語を選び、その言語で検索クエリを作るため、質問に使った言語に限定されません。',
+        },
+        {
+          question: 'どの情報源を検索できますか？',
+          answer:
+            '一般的なウェブ検索に加え、管理された情報源リストがあります。学術データベース、開発者向けサイト、参考資料、ニュース、公的機関やコミュニティのサイトです。運営者は情報源のオン・オフを切り替えられ、使えるリサーチモードはプランで決まります。',
         },
       ],
       productNote:

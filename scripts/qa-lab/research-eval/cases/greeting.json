@@ -1,0 +1,162 @@
+[
+  {
+    "id": "en-greeting-01",
+    "lang": "en",
+    "category": "greeting",
+    "text": "Hey there! How's it going?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ar-greeting-01",
+    "lang": "ar",
+    "category": "greeting",
+    "text": "السلام عليكم ورحمة الله، كيف حالك اليوم؟",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ar-EG-greeting-01",
+    "lang": "ar-EG",
+    "category": "greeting",
+    "text": "إزيك يا باشا؟ عامل إيه؟",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ar-SA-greeting-01",
+    "lang": "ar-SA",
+    "category": "greeting",
+    "text": "هلا والله، شلونك اليوم؟",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ar-LB-greeting-01",
+    "lang": "ar-LB",
+    "category": "greeting",
+    "text": "مرحبا، كيفك؟ شو أخبارك؟",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ar-MA-greeting-01",
+    "lang": "ar-MA",
+    "category": "greeting",
+    "text": "السلام، لاباس عليك؟ كيداير؟",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ar-Latn-greeting-01",
+    "lang": "ar-Latn",
+    "category": "greeting",
+    "text": "ezayak ya basha, 3amel eh el yom?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "fr-greeting-01",
+    "lang": "fr",
+    "category": "greeting",
+    "text": "Salut ! Ça va bien aujourd'hui ?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "es-greeting-01",
+    "lang": "es",
+    "category": "greeting",
+    "text": "¡Buenas! ¿Qué tal todo?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "pt-BR-greeting-01",
+    "lang": "pt-BR",
+    "category": "greeting",
+    "text": "Oi, tudo bem com você?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "de-greeting-01",
+    "lang": "de",
+    "category": "greeting",
+    "text": "Hallo! Wie geht's dir heute?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "tr-greeting-01",
+    "lang": "tr",
+    "category": "greeting",
+    "text": "Merhaba, nasılsın bugün?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "uk-greeting-01",
+    "lang": "uk",
+    "category": "greeting",
+    "text": "Привіт! Як справи сьогодні?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ja-greeting-01",
+    "lang": "ja",
+    "category": "greeting",
+    "text": "こんにちは！今日は元気ですか？",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ko-greeting-01",
+    "lang": "ko",
+    "category": "greeting",
+    "text": "안녕하세요! 오늘 기분 어떠세요?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "sw-greeting-01",
+    "lang": "sw",
+    "category": "greeting",
+    "text": "Habari yako leo? Hujambo!",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  }
+]

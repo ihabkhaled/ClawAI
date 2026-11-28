@@ -28,6 +28,7 @@ import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
 import { PLUGINS_SERVERS_TRANSLATIONS } from './plugins-servers-translations';
 import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
 import { PLUGINS_TRANSLATIONS } from './plugins-translations';
+import { RESEARCH_PLATFORMS_TRANSLATIONS } from './research-platforms-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -412,6 +413,7 @@ export const fa: TranslationDictionary = {
     workspaceFigma: 'Figma',
     workspaceWorkflows: 'گردش کار',
     researchProviders: 'ارائه دهندگان تحقیقات',
+    researchPlatforms: 'پلتفرم‌های پژوهش',
     researchRuns: 'اجراهای تحقیقاتی',
     research: 'تحقیق کنید',
     workspaceInbox: 'صندوق ورودی',
@@ -4956,6 +4958,7 @@ export const fa: TranslationDictionary = {
   adminSecurity: ANTI_ABUSE_TRANSLATIONS.fa.admin,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.fa,
   narration: NARRATION_TRANSLATIONS.fa,
+  researchPlatforms: RESEARCH_PLATFORMS_TRANSLATIONS.fa,
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.fa,
   pickedModel: PICKED_MODEL_TRANSLATIONS.fa,
   creditFallback: CREDIT_FALLBACK_TRANSLATIONS.fa,

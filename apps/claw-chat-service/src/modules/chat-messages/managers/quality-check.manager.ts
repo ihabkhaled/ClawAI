@@ -1,3 +1,5 @@
+import { contextTokens } from '../../../common/utilities/context-tokens.utility';
+import { MIN_MATCH_TOKEN_LENGTH } from '../constants/context-composer.constants';
 import { Injectable, Logger } from '@nestjs/common';
 
 import {
@@ -214,10 +216,7 @@ export class QualityCheckManager {
     }
     const shorter = a.length < b.length ? a : b;
     const longer = a.length >= b.length ? a : b;
-    if (longer.includes(shorter)) {
-      return shorter.length / longer.length;
-    }
-    return 0;
+    return longer.includes(shorter) ? shorter.length / longer.length : 0;
   }
 
   private calculateContainmentSimilarity(a: string, b: string): number {
@@ -272,20 +271,17 @@ export class QualityCheckManager {
       'procurement',
       'executive',
     ]);
-    return value
-      .toLowerCase()
-      .replaceAll(/[^a-z0-9\s]+/g, ' ')
-      .split(/\s+/)
-      .filter((token) => token.length >= 4 && !ignoredTokens.has(token));
+    return contextTokens(value, MIN_MATCH_TOKEN_LENGTH).filter(
+      (token) => !ignoredTokens.has(token),
+    );
   }
 
   private normalizeIntentText(value: string): string {
     const trimmed = value.trim();
     const commaIndex = trimmed.indexOf(',');
-    if (trimmed.startsWith('As ') && commaIndex > 0) {
-      return trimmed.slice(commaIndex + 1).trim();
-    }
-    return trimmed;
+    return trimmed.startsWith('As ') && commaIndex > 0
+      ? trimmed.slice(commaIndex + 1).trim()
+      : trimmed;
   }
 
   private getMinimumLength(userPrompt: string): number {
@@ -354,12 +350,10 @@ export class QualityCheckManager {
     }
 
     const promptWords = prompt.split(/\s+/).filter((word) => word.length > 0);
-    if (promptWords.length <= 3) {
-      return true;
-    }
-
-    return /^(hi|hello|hey|yo|thanks|thank you|good (morning|afternoon|evening))(?:[!.?]*)$/.test(
-      prompt,
-    );
+    return promptWords.length <= 3
+      ? true
+      : /^(hi|hello|hey|yo|thanks|thank you|good (morning|afternoon|evening))(?:[!.?]*)$/.test(
+          prompt,
+        );
   }
 }

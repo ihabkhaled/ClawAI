@@ -8,6 +8,11 @@
  */
 export const SALIENT_TERM_LIMIT = 6;
 
+/** The shortest non-Latin word searched for; two letters would match almost every Arabic message. */
+export const SALIENT_NON_LATIN_MIN_LENGTH = 3;
+/** Latin-script words keep the matcher's minimum. */
+export const SALIENT_LATIN_WORD_PATTERN = /^[\p{Script=Latin}\p{N}-]+$/u;
+
 /**
  * Conversational filler — words that describe the sentence rather than its
  * subject.
@@ -85,6 +90,31 @@ export const SALIENT_TERM_STOPWORDS: ReadonlySet<string> = new Set([
   'with',
   'would',
   'your',
+  // Arabic filler (Egyptian and standard): "do you remember what I told you before"
+  'فاكر',
+  'فاكرة',
+  'ايه',
+  'إيه',
+  'اللي',
+  'الي',
+  'كده',
+  'كدة',
+  'بتاع',
+  'بتاعة',
+  'بتاعت',
+  'بتاعي',
+  'كانت',
+  'قبل',
+  'قلت',
+  'قلتلك',
+  'قلتهولك',
+  'عايز',
+  'ممكن',
+  'تاني',
+  'ماذا',
+  'هل',
+  'على',
+  'علي',
 ]);
 
 /**

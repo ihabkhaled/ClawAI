@@ -1,0 +1,146 @@
+[
+  {
+    "id": "en-weather-01",
+    "lang": "en",
+    "category": "weather",
+    "text": "What's the weather like in London tomorrow?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ar-weather-01",
+    "lang": "ar",
+    "category": "weather",
+    "text": "كيف الطقس في دبي هذا الأسبوع؟",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ar-EG-weather-01",
+    "lang": "ar-EG",
+    "category": "weather",
+    "text": "الجو هيبقى عامل إزاي في إسكندرية بكرة؟",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ar-LB-weather-01",
+    "lang": "ar-LB",
+    "category": "weather",
+    "text": "شو وضع الطقس ببيروت هالويكند؟",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ar-MA-weather-01",
+    "lang": "ar-MA",
+    "category": "weather",
+    "text": "كيفاش غادي يكون الجو فكازا غدا؟",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ar-Latn-weather-01",
+    "lang": "ar-Latn",
+    "category": "weather",
+    "text": "el gaw ezay fel iskandareya bokra, hayetmatar?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "fr-weather-01",
+    "lang": "fr",
+    "category": "weather",
+    "text": "Quel temps fera-t-il à Lyon ce week-end ?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "es-weather-01",
+    "lang": "es",
+    "category": "weather",
+    "text": "¿Va a llover mañana en Bogotá?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "pt-BR-weather-01",
+    "lang": "pt-BR",
+    "category": "weather",
+    "text": "Vai chover em São Paulo amanhã?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "de-weather-01",
+    "lang": "de",
+    "category": "weather",
+    "text": "Wie wird das Wetter morgen in Hamburg?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "it-weather-01",
+    "lang": "it",
+    "category": "weather",
+    "text": "Che tempo farà a Napoli nei prossimi giorni?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "tr-weather-01",
+    "lang": "tr",
+    "category": "weather",
+    "text": "İstanbul'da yarın hava nasıl olacak?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "fa-weather-01",
+    "lang": "fa",
+    "category": "weather",
+    "text": "هوای تهران فردا چطوره؟",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "hi-weather-01",
+    "lang": "hi",
+    "category": "weather",
+    "text": "कल दिल्ली में मौसम कैसा रहेगा?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "bn-weather-01",
+    "lang": "bn",
+    "category": "weather",
+    "text": "আগামীকাল ঢাকায় বৃষ্টি হবে কি?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "vi-weather-01",
+    "lang": "vi",
+    "category": "weather",
+    "text": "Thời tiết Hà Nội ngày mai thế nào?",
+    "expect": {
+      "research": "yes"
+    }
+  }
+]

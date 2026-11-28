@@ -74,6 +74,10 @@ describe('route-permission.utility', () => {
       expect(requiredPermissionForPath('/research/providers')).toBe(
         Permission.RESEARCH_PROVIDERS_MANAGE,
       );
+      // Platforms share the providers switch (research-service guards both with it).
+      expect(requiredPermissionForPath('/research/platforms')).toBe(
+        Permission.RESEARCH_PROVIDERS_MANAGE,
+      );
       // so normal users don't see the standalone Research section. The
       // RESEARCH_USE permission stays for backend research endpoints (used
       // by the in-chat / in-compare research selector and the compare

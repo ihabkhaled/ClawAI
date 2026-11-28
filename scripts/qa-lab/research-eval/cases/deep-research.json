@@ -1,0 +1,168 @@
+[
+  {
+    "id": "en-deep-research-01",
+    "lang": "en",
+    "category": "deep-research",
+    "text": "Compare all the evidence on whether intermittent fasting improves long-term health outcomes.",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2,
+      "sourceTypes": ["academic"]
+    }
+  },
+  {
+    "id": "ar-deep-research-01",
+    "lang": "ar",
+    "category": "deep-research",
+    "text": "اجمع كل الأدلة العلمية حول تأثير القهوة على صحة القلب وقارن بين الدراسات.",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2,
+      "sourceTypes": ["academic"]
+    }
+  },
+  {
+    "id": "ar-EG-deep-research-01",
+    "lang": "ar-EG",
+    "category": "deep-research",
+    "text": "عايز بحث شامل عن تأثير السوشيال ميديا على الصحة النفسية للمراهقين، وقارن كل الدراسات.",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2,
+      "sourceTypes": ["academic"]
+    }
+  },
+  {
+    "id": "ar-LB-deep-research-01",
+    "lang": "ar-LB",
+    "category": "deep-research",
+    "text": "بدي دراسة معمقة عن مستقبل الطاقة الشمسية بالشرق الأوسط مع مصادر متعددة.",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2
+    }
+  },
+  {
+    "id": "fr-deep-research-01",
+    "lang": "fr",
+    "category": "deep-research",
+    "text": "Fais une recherche approfondie sur l'impact du télétravail sur la productivité, avec toutes les études disponibles.",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2,
+      "sourceTypes": ["academic"]
+    }
+  },
+  {
+    "id": "es-deep-research-01",
+    "lang": "es",
+    "category": "deep-research",
+    "text": "Investiga a fondo los efectos de la semana laboral de cuatro días y compara todas las evidencias.",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2
+    }
+  },
+  {
+    "id": "pt-BR-deep-research-01",
+    "lang": "pt-BR",
+    "category": "deep-research",
+    "text": "Faça uma pesquisa aprofundada sobre carros elétricos versus híbridos no Brasil, comparando todas as fontes.",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2
+    }
+  },
+  {
+    "id": "de-deep-research-01",
+    "lang": "de",
+    "category": "deep-research",
+    "text": "Recherchiere umfassend, wie wirksam Wärmepumpen im Vergleich zu Gasheizungen sind, und vergleiche alle Studien.",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2,
+      "sourceTypes": ["academic"]
+    }
+  },
+  {
+    "id": "it-deep-research-01",
+    "lang": "it",
+    "category": "deep-research",
+    "text": "Fai una ricerca approfondita sull'effetto del cambiamento climatico sull'agricoltura mediterranea, confrontando tutte le fonti.",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2
+    }
+  },
+  {
+    "id": "tr-deep-research-01",
+    "lang": "tr",
+    "category": "deep-research",
+    "text": "Yapay zekanın iş piyasasına etkisi hakkında tüm kaynakları karşılaştırarak derin bir araştırma yap.",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2
+    }
+  },
+  {
+    "id": "fa-deep-research-01",
+    "lang": "fa",
+    "category": "deep-research",
+    "text": "یک تحقیق جامع درباره‌ی تاثیر خواب بر حافظه انجام بده و همه‌ی شواهد را مقایسه کن.",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2,
+      "sourceTypes": ["academic"]
+    }
+  },
+  {
+    "id": "hi-deep-research-01",
+    "lang": "hi",
+    "category": "deep-research",
+    "text": "भारत में ऑनलाइन शिक्षा के प्रभाव पर सभी उपलब्ध शोधों की तुलना करते हुए गहन अध्ययन करो।",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2
+    }
+  },
+  {
+    "id": "bn-deep-research-01",
+    "lang": "bn",
+    "category": "deep-research",
+    "text": "বাংলাদেশে জলবায়ু পরিবর্তনের প্রভাব নিয়ে সব গবেষণা তুলনা করে বিস্তারিত অনুসন্ধান করো।",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2
+    }
+  },
+  {
+    "id": "ru-deep-research-01",
+    "lang": "ru",
+    "category": "deep-research",
+    "text": "Проведи глубокое исследование: как влияет сокращение рабочей недели на продуктивность, сравни все данные.",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2
+    }
+  },
+  {
+    "id": "zh-CN-deep-research-01",
+    "lang": "zh-CN",
+    "category": "deep-research",
+    "text": "请对“电动汽车是否真的比燃油车更环保”做一次深入研究，并比较所有证据。",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2
+    }
+  },
+  {
+    "id": "ko-deep-research-01",
+    "lang": "ko",
+    "category": "deep-research",
+    "text": "한국의 저출산 원인에 대해 가능한 모든 자료를 비교하며 심층 조사해 줘.",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2
+    }
+  }
+]

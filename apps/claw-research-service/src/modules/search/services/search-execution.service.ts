@@ -24,7 +24,10 @@ import { SearchProviderRepository } from '../repositories/search-provider.reposi
 import { SearchRunRepository } from '../repositories/search-run.repository';
 import { SearchProviderHealthService } from './search-provider-health.service';
 import { SearchProviderService } from './search-provider.service';
+import { SearchResultCacheService } from './search-result-cache.service';
 import { classifySearchError } from '../utilities/classify-search-error.utility';
+import { narrowToExpansionProviders } from '../utilities/expansion-provider.utility';
+import { languageFilterOf, searchCacheKey } from '../utilities/search-cache-key.utility';
 import type { ExecuteSearchDto } from '../dto/execute-search.dto';
 import type { Prisma, SearchProvider, SearchRun } from '../../../generated/prisma';
 import type {
@@ -56,11 +59,81 @@ export class SearchExecutionService {
     private readonly adapterFactory: SearchAdapterFactory,
     private readonly researchUsage: ResearchUsageService,
     private readonly health: SearchProviderHealthService,
+    private readonly cache: SearchResultCacheService,
   ) {}
 
   async execute(userId: string, dto: ExecuteSearchDto): Promise<SearchExecutionResult> {
     const maxResults = dto.maxResults ?? SEARCH_DEFAULT_MAX_RESULTS;
     const selection = await this.resolveProviders(dto.providerId, dto.filters);
+    return this.runSelection(userId, dto, selection, maxResults);
+  }
+
+  /**
+   * Research engine (B2): the PRIMARY query, on every enabled provider exactly
+   * like `execute` (ADR-210), optionally served from the Redis cache. An
+   * explicit `providerId` always bypasses the cache.
+   */
+  async executeCached(
+    userId: string,
+    dto: ExecuteSearchDto,
+    useCache: boolean,
+  ): Promise<SearchExecutionResult> {
+    const selection = await this.resolveProviders(dto.providerId, dto.filters);
+    return this.executeSelectionCached(userId, dto, selection, useCache);
+  }
+
+  /**
+   * Research engine (B2): an EXPANSION query, run only on expansion providers
+   * (cost rule: `isExpansionProvider`). Null when no enabled provider qualifies;
+   * the caller skips expansion with one warning. Each adapter call still
+   * records its `WEB_SEARCH` unit; a cache hit records none.
+   */
+  async executeExpansion(
+    userId: string,
+    dto: ExecuteSearchDto,
+    useCache: boolean,
+  ): Promise<SearchExecutionResult | null> {
+    const selection = narrowToExpansionProviders(
+      await this.resolveProviders(dto.providerId, dto.filters),
+    );
+    return selection === null
+      ? null
+      : this.executeSelectionCached(userId, dto, selection, useCache);
+  }
+
+  private async executeSelectionCached(
+    userId: string,
+    dto: ExecuteSearchDto,
+    selection: ProviderSelection,
+    useCache: boolean,
+  ): Promise<SearchExecutionResult> {
+    const maxResults = dto.maxResults ?? SEARCH_DEFAULT_MAX_RESULTS;
+    const key =
+      useCache && dto.providerId === undefined
+        ? searchCacheKey(
+            dto.query,
+            selection.candidates.map((provider) => provider.id),
+            maxResults,
+            languageFilterOf(dto.filters),
+          )
+        : null;
+    const cached = key === null ? null : await this.cache.read(key);
+    if (cached !== null) {
+      return cached;
+    }
+    const result = await this.runSelection(userId, dto, selection, maxResults);
+    if (key !== null) {
+      void this.cache.write(key, result);
+    }
+    return result;
+  }
+
+  private async runSelection(
+    userId: string,
+    dto: ExecuteSearchDto,
+    selection: ProviderSelection,
+    maxResults: number,
+  ): Promise<SearchExecutionResult> {
     const run = await this.startRun(userId, dto, selection);
 
     const warnings: string[] = [];
@@ -184,6 +257,9 @@ export class SearchExecutionService {
     warnings: string[],
     networkCallIds: string[],
   ): Promise<ProviderCallEntry[]> {
+    if (selection.executionMode === SearchExecutionMode.AUTO_ALL) {
+      await this.health.hydrate(selection.candidates.map((provider) => provider.id));
+    }
     const callable = this.selectCallable(selection);
     return Promise.all(
       selection.candidates.map(async (provider): Promise<ProviderCallEntry> => {

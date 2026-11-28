@@ -9,6 +9,19 @@ import {
 import { FetchRenderHint } from '../../fetch/enums/fetch-render-hint.enum';
 import { ExtractionProfile } from '../../scrape/enums/extraction-profile.enum';
 import { CRAWL_MAX_PAGES_CEILING } from '../../../common/constants/crawl.constants';
+import {
+  RESEARCH_EXCLUDE_URL_MAX_LENGTH,
+  RESEARCH_EXPANSION_QUERY_MAX_LENGTH,
+  RESEARCH_LANGUAGE_CODE_PATTERN,
+  RESEARCH_MAX_DEPTH,
+  RESEARCH_MAX_EXCLUDE_URLS,
+  RESEARCH_MAX_EXPANSION_QUERIES,
+  RESEARCH_MAX_LANGUAGES,
+  RESEARCH_MAX_PLATFORM_CATEGORIES,
+  RESEARCH_MAX_ROUND,
+  RESEARCH_THREAD_ID_MAX_LENGTH,
+} from '../../../common/constants/research-engine.constants';
+import { PlatformCategory } from '../../../generated/prisma';
 
 export const executeResearchSchema = z.object({
   /**
@@ -63,6 +76,40 @@ export const executeResearchSchema = z.object({
    */
   render: z.nativeEnum(FetchRenderHint).optional(),
   searchQuery: z.string().min(SEARCH_MIN_QUERY_LENGTH).max(500).optional(),
+  /*
+   * Research engine B1+B2 (2026-11-28). All optional and additive: a request
+   * that sends none of them runs exactly today's pipeline (no cache, no stats).
+   */
+  /** The chat thread: enables thread memory and is stored on the run and its sources. */
+  threadId: z.string().min(1).max(RESEARCH_THREAD_ID_MAX_LENGTH).optional(),
+  /** Extra search queries (expansion). The primary query stays `searchQuery ?? intent`. */
+  queries: z
+    .array(z.string().trim().min(SEARCH_MIN_QUERY_LENGTH).max(RESEARCH_EXPANSION_QUERY_MAX_LENGTH))
+    .max(RESEARCH_MAX_EXPANSION_QUERIES)
+    .optional(),
+  /** ISO 639-1/-3 lower-case codes; recorded now, used for retrieval in B3. */
+  languages: z
+    .array(z.string().regex(RESEARCH_LANGUAGE_CODE_PATTERN))
+    .max(RESEARCH_MAX_LANGUAGES)
+    .optional(),
+  /** Research depth 0-5: drives query count and pages fetched (`RESEARCH_DEPTH_BUDGETS`). */
+  depth: z.number().int().min(0).max(RESEARCH_MAX_DEPTH).optional(),
+  /** Which research round of this turn; stored on sources, echoed in `bundle.stats`. */
+  round: z.number().int().min(1).max(RESEARCH_MAX_ROUND).optional(),
+  /** URLs already read earlier in this turn: never fetched again, search hits for them dropped. */
+  excludeUrls: z
+    .array(z.string().min(1).max(RESEARCH_EXCLUDE_URL_MAX_LENGTH))
+    .max(RESEARCH_MAX_EXCLUDE_URLS)
+    .optional(),
+  /**
+   * Research engine B3: platform categories the council asked for. Used only
+   * with `depth >= 2` (official APIs + site searches of those categories);
+   * otherwise ignored, and it never switches a request into engine mode alone.
+   */
+  platforms: z
+    .array(z.nativeEnum(PlatformCategory))
+    .max(RESEARCH_MAX_PLATFORM_CATEGORIES)
+    .optional(),
 });
 
 export type ExecuteResearchDto = z.infer<typeof executeResearchSchema>;

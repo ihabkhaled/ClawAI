@@ -16,6 +16,7 @@ import { SearchExecutionService } from './services/search-execution.service';
 import { SearchProviderBootstrapService } from './services/search-provider-bootstrap.service';
 import { SearchProviderHealthService } from './services/search-provider-health.service';
 import { SearchProviderService } from './services/search-provider.service';
+import { SearchResultCacheService } from './services/search-result-cache.service';
 
 @Module({
   controllers: [SearchProviderController, SearchController],
@@ -26,6 +27,7 @@ import { SearchProviderService } from './services/search-provider.service';
     SearchProviderService,
     SearchExecutionService,
     SearchProviderHealthService,
+    SearchResultCacheService,
     SearchAdapterFactory,
     TavilyAdapter,
     OllamaWebSearchAdapter,

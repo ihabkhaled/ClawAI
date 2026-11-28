@@ -109,7 +109,11 @@ import { type RegenerateMessageDto } from '../dto/regenerate-message.dto';
 import { resolveRegenerateRouting } from '../utilities/regenerate-routing.utility';
 import { type MessageQuote } from '../types/message-quote.types';
 import { type StoredContextMetadata } from '../types/message-citation.types';
-import { toStoredCitations } from '../utilities/stored-citations.utility';
+import { normaliseCitationMarkers, toStoredCitations } from '../utilities/stored-citations.utility';
+import { buildResearchConversation } from '../utilities/research-conversation.utility';
+import { ResearchWorkflow } from '../../../common/enums/research-workflow.enum';
+import { detectPromptUrls } from '../../../common/utilities/prompt-url.utility';
+import { RESEARCH_CONVERSATION_MAX_MESSAGES } from '../../../common/constants/research-gate.constants';
 import { fetchStrategiesOf } from '../utilities/research-orchestration.utility';
 import { gatewayRun } from '../utilities/research-gateway.utility';
 import { type ContextSaveDecision, type ContextSaveRecord } from '../types/context-save.types';
@@ -668,6 +672,7 @@ export class ChatMessagesService implements OnModuleInit {
     // "Listen to this clip and research the person mentioned": the planner
     // sees a SHORT digest of the attachments' derived text (multimodal batch 8).
     const attachmentDigest = await this.attachmentDigest(userId, options.fileIds);
+    const conversation = await this.researchConversation(userId, threadId, intent);
     // A question about the platform itself crawls its own public site, even on AUTO.
     const selfSiteUrl =
       buildSelfInspectIntent(intent, AppConfig.get().PUBLIC_SITE_URL) === null
@@ -683,6 +688,7 @@ export class ChatMessagesService implements OnModuleInit {
       forcedProvider: options.forcedProvider,
       forcedModel: options.forcedModel,
       ...(attachmentDigest.length > 0 ? { attachmentDigest } : {}),
+      ...(conversation.length > 0 ? { conversation } : {}),
     });
     if (run !== null) {
       const bundle = this.extractResearchBundle(run);
@@ -772,15 +778,19 @@ export class ChatMessagesService implements OnModuleInit {
     // Announced only once research is actually going to run, so every start
     // the user sees is followed by a completion.
     this.chatStreamService.emitResearchStarted(threadId, resolvedMode);
+    const workflow = classifyResearchWorkflow(resolvedMode, intent);
+    const searchQuery = await this.standaloneSearchQuery(userId, threadId, intent, workflow);
     const run = await gatewayRun({
       userToken,
       userId,
       intent,
-      workflow: classifyResearchWorkflow(resolvedMode, intent),
+      workflow,
+      ...(searchQuery === undefined ? {} : { searchQuery }),
       searchProviderId: options.providerId,
       requestedProvider: options.forcedProvider,
       requestedModel: options.forcedModel,
       correlationId: threadId,
+      threadId,
     });
     if (run === null) {
       this.logger.warn(`research: run failed for user ${userId} — continuing without evidence`);
@@ -796,6 +806,25 @@ export class ChatMessagesService implements OnModuleInit {
       bundle.fetchStrategies,
     );
     return run;
+  }
+
+  /**
+   * In an explicit research mode too, a follow-up ("search again with the lyrics above") must search what it means.
+   * Only when there is a conversation and the run searches; a crawl reads the URLs the message names.
+   */
+  private async standaloneSearchQuery(
+    userId: string,
+    threadId: string,
+    intent: string,
+    workflow: ResearchWorkflow,
+  ): Promise<string | undefined> {
+    if (workflow === ResearchWorkflow.SITE_CRAWL || detectPromptUrls(intent).length > 0) {
+      return undefined;
+    }
+    const conversation = await this.researchConversation(userId, threadId, intent);
+    return conversation.length === 0
+      ? undefined
+      : this.researchOrchestrator.standaloneQuery(intent, conversation);
   }
 
   /** Metadata payload attached to a USER message when research has run. */
@@ -1786,12 +1815,13 @@ export class ChatMessagesService implements OnModuleInit {
     this.logger.debug(
       `runLlmAndStore: calling LLM execution for ${effectivePayload.selectedProvider}/${effectivePayload.selectedModel}`,
     );
-    const llmResponse = await this.chatExecutionManager.execute(
+    const executed = await this.chatExecutionManager.execute(
       effectivePayload,
       context,
       threadSettings,
       this.extractCrawlRetrieval(latestUserMetadata),
     );
+    const llmResponse = this.withLinkableCitations(executed, context);
     const assistantMessage = await this.storeAssistantResponse(
       originalPayload,
       llmResponse,
@@ -1814,6 +1844,13 @@ export class ChatMessagesService implements OnModuleInit {
       thread,
       chronologicalMessages,
     );
+  }
+
+  /** A researched answer's `【n】` marks become `[n]`, the only form the UI can link to its source. */
+  private withLinkableCitations(response: LlmResponse, context: AssembledContext): LlmResponse {
+    const sourceCount = context.researchEvidence?.length ?? 0;
+    const content = normaliseCitationMarkers(response.content, sourceCount);
+    return content === response.content ? response : { ...response, content };
   }
 
   private buildStoredContextMetadata(
@@ -3168,6 +3205,49 @@ export class ChatMessagesService implements OnModuleInit {
   }
 
   /** A short digest of the attachments' derived text for the research planner. */
+  /** The whole recent chat and the user's memories for the research plan; a failed read only narrows it. */
+  private async researchConversation(
+    userId: string,
+    threadId: string,
+    intent: string,
+  ): Promise<string> {
+    try {
+      const recent = await this.chatMessagesRepository.findRecentByThreadId(
+        threadId,
+        RESEARCH_CONVERSATION_MAX_MESSAGES + 1,
+      );
+      return buildResearchConversation(
+        recent,
+        intent,
+        await this.researchMemories(userId, threadId, intent),
+      );
+    } catch (error) {
+      this.logger.warn(
+        `research: conversation unavailable for ${threadId} - ${(error as Error).message}`,
+      );
+      return '';
+    }
+  }
+
+  /** Saved memories, unless this chat has memory switched off; never a reason to fail research. */
+  private async researchMemories(
+    userId: string,
+    threadId: string,
+    intent: string,
+  ): Promise<string[]> {
+    try {
+      const thread = await this.chatThreadsRepository.findById(threadId);
+      return thread?.useMemory === false
+        ? []
+        : await this.contextAssemblyManager.memoriesForPlanning(userId, intent, threadId);
+    } catch (error) {
+      this.logger.warn(
+        `research: memories unavailable for ${threadId} - ${(error as Error).message}`,
+      );
+      return [];
+    }
+  }
+
   private async attachmentDigest(
     userId: string,
     fileIds: readonly string[] | undefined,

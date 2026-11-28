@@ -3755,6 +3755,36 @@
       },
       {
         "method": "GET",
+        "route": "/research/platforms",
+        "source": "apps/claw-research-service/src/modules/platforms/controllers/research-platform.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/research/platforms",
+        "source": "apps/claw-research-service/src/modules/platforms/controllers/research-platform.controller.ts"
+      },
+      {
+        "method": "DELETE",
+        "route": "/research/platforms/:id",
+        "source": "apps/claw-research-service/src/modules/platforms/controllers/research-platform.controller.ts"
+      },
+      {
+        "method": "GET",
+        "route": "/research/platforms/:id",
+        "source": "apps/claw-research-service/src/modules/platforms/controllers/research-platform.controller.ts"
+      },
+      {
+        "method": "PATCH",
+        "route": "/research/platforms/:id",
+        "source": "apps/claw-research-service/src/modules/platforms/controllers/research-platform.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/research/platforms/:id/test",
+        "source": "apps/claw-research-service/src/modules/platforms/controllers/research-platform.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/research/runs",
         "source": "apps/claw-research-service/src/modules/research/controllers/research.controller.ts"
       },
@@ -5091,5 +5121,5 @@
     ]
   },
   "generated": true,
-  "total": 1009
+  "total": 1015
 }

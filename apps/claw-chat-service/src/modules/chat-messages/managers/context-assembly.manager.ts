@@ -6,6 +6,8 @@ import {
   buildMentalHealthAccuracyNote,
   buildPlatformIdentityBlock,
 } from '../utilities/platform-identity.utility';
+import { contextTokens } from '../../../common/utilities/context-tokens.utility';
+import { MIN_MATCH_TOKEN_LENGTH } from '../constants/context-composer.constants';
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import {
   CONTEXT_PACK_FIT_BUDGET_SHARE,
@@ -17,6 +19,7 @@ import { fitFileTextsByRelevance, fitTextsByRelevance } from '../utilities/relev
 import {
   CONTEXT_PACK_BLOCK_HEADER,
   MEMORY_BLOCK_HEADER,
+  MEMORY_BLOCK_INSTRUCTION,
   VERBATIM_QUOTE_INSTRUCTION,
 } from '../constants/relevant-chunks.constants';
 import type { FixedContextSources } from '../types/evidence-fit.types';
@@ -42,12 +45,14 @@ import {
   RESEARCH_GROUNDING_MARKER,
   RESEARCH_GROUNDING_NO_INVENT_INSTRUCTION,
   RESEARCH_GROUNDING_REMINDER,
+  RESEARCH_TEXT_MATCH_INSTRUCTION,
+  WEB_SOURCE_UNTRUSTED_INSTRUCTION,
 } from '../constants/research-grounding.constants';
 import { hasGithubRepositoryEvidence } from '../utilities/research-prompt.utility';
+import { fenceWebSource } from '../utilities/untrusted-fence.utility';
 import {
   APPROX_CHARS_PER_TOKEN,
-  PROMPT_TOPICAL_MEMORY_LIMIT,
-  TOPICAL_MEMORY_OVERLAP_THRESHOLD,
+  PROMPT_MEMORY_LIMIT,
   WORKSPACE_CONTEXT_LIMIT,
 } from '../../../common/constants';
 import { type ChatMessage, MessageRole, RoutingMode } from '../../../generated/prisma';
@@ -88,6 +93,7 @@ import { resolveModelTokenBudget } from '../utilities/model-token-budget.utility
 import {
   CONTEXT_PACKS_FOR_CHAT_MAX,
   CONTEXT_PACKS_FOR_CHAT_PATH,
+  MEMORY_RETRIEVE_MAX_ITEMS,
   MEMORY_RETRIEVE_PATH,
   MEMORY_RETRIEVE_TIMEOUT_MS,
   MEMORY_RETRIEVE_TOKEN_BUDGET,
@@ -450,9 +456,12 @@ export class ContextAssemblyManager {
       tokens += estimateTokensFromText(`${citation.title}
 ${citation.snippet ?? ''}`);
     }
-    for (const evidence of parts.researchEvidence) {
-      tokens += estimateTokensFromText(`${evidence.title ?? ''}
-${evidence.snippet}`);
+    // Measured on the fenced form the model is shown (tags, URL attribute and title line included).
+    for (const [index, evidence] of parts.researchEvidence.entries()) {
+      tokens += estimateTokensFromText(this.fenceEvidence(index + 1, evidence));
+    }
+    if (parts.researchEvidence.length > 0) {
+      tokens += estimateTokensFromText(WEB_SOURCE_UNTRUSTED_INSTRUCTION);
     }
     if (hasGithubRepositoryEvidence(parts.researchEvidence.map(({ url }) => url))) {
       tokens += estimateTokensFromText(GITHUB_REPOSITORY_COVERAGE_NOTE);
@@ -698,6 +707,8 @@ ${evidence.snippet}`);
       // it runs invisibly — the user watches a spinner with no idea a site is
       // being read.
       correlationId: threadId,
+      // Thread memory (research engine B1): the run and its sources are stored against the thread.
+      ...(threadId === undefined ? {} : { threadId }),
     });
     if (run === null) {
       this.logger.warn(
@@ -1031,7 +1042,7 @@ ${evidence.snippet}`);
   private formatMemoryBlock(memories: AssembledContext['memories']): string | null {
     if (memories.length === 0) return null;
     const block = memories.map((m) => `[${m.type}] ${m.content}`).join('\n');
-    return `${MEMORY_BLOCK_HEADER}\n${block}\n${VERBATIM_QUOTE_INSTRUCTION}`;
+    return `${MEMORY_BLOCK_HEADER}\n${MEMORY_BLOCK_INSTRUCTION}\n${block}\n${VERBATIM_QUOTE_INSTRUCTION}`;
   }
 
   buildChatMessages(context: AssembledContext): OpenAiChatMessage[] {
@@ -1333,6 +1344,19 @@ ${RESEARCH_GROUNDING_REMINDER}`;
    * Still non-blocking. Memory is an enhancement; a memory-service outage must
    * cost recall, never the answer.
    */
+  /** The memories a research plan may read, so "news about my company" knows which company. */
+  async memoriesForPlanning(userId: string, intent: string, threadId: string): Promise<string[]> {
+    const memories = await this.fetchMemories(
+      userId,
+      intent,
+      threadId,
+      MEMORY_RETRIEVE_TOKEN_BUDGET,
+    );
+    return this.selectMemoriesForPrompt(memories, intent)
+      .map((memory) => memory.content)
+      .filter((content) => content.length > 0);
+  }
+
   private async fetchMemories(
     userId: string,
     intent: string,
@@ -1352,6 +1376,8 @@ ${RESEARCH_GROUNDING_REMINDER}`;
           attachedPackIds: [],
           attachedMemoryIds: [],
           tokenBudget,
+          // Every memory the user saved, not the old default of 5.
+          semanticBudgetMemory: MEMORY_RETRIEVE_MAX_ITEMS,
           includeMemory: true,
           // Context packs are fetched separately and attached explicitly by the
           // thread; asking retrieval for them too would double-count them.
@@ -1775,6 +1801,8 @@ ${RESEARCH_GROUNDING_REMINDER}`;
       "Do not say that you can't browse the web or access the internet.",
       'If the evidence is incomplete, state the uncertainty briefly and give the best supported answer.',
       RESEARCH_GROUNDING_NO_INVENT_INSTRUCTION,
+      RESEARCH_TEXT_MATCH_INSTRUCTION,
+      WEB_SOURCE_UNTRUSTED_INSTRUCTION,
       'LIVE RESEARCH EVIDENCE (ground your answer strictly in these sources — cite them as [n]):',
     ];
     if (hasGithubRepositoryEvidence(context.researchEvidence.map(({ url }) => url))) {
@@ -1786,11 +1814,9 @@ ${RESEARCH_GROUNDING_REMINDER}`;
         'Say plainly that the web step ran and returned nothing usable, name the reason if one is listed below, and answer from your own knowledge only if you label it as such.',
       );
     }
+    // `n` is the [n] `toStoredCitations` stores for this source (rule 41 §16): index + 1, unchanged.
     for (const [index, item] of context.researchEvidence.entries()) {
-      lines.push(`[${String(index + 1)}] ${item.title ?? '(no title)'} — ${item.url}`);
-      if (item.snippet.length > 0) {
-        lines.push(item.snippet);
-      }
+      lines.push(this.fenceEvidence(index + 1, item));
     }
     if (context.researchWarnings.length > 0) {
       lines.push('WARNINGS:');
@@ -1799,6 +1825,11 @@ ${RESEARCH_GROUNDING_REMINDER}`;
       }
     }
     return lines.join('\n');
+  }
+
+  /** One evidence item as the model sees it: an untrusted `web_source` fence numbered as it is cited. */
+  private fenceEvidence(n: number, item: ResearchEvidenceCitation): string {
+    return fenceWebSource({ n, url: item.url, title: item.title, text: item.snippet });
   }
 
   private truncateToTokenBudget(text: string, tokenBudget: number): string {
@@ -2022,23 +2053,15 @@ ${RESEARCH_GROUNDING_REMINDER}`;
   }
 
   /**
-   * Chooses which memories reach the prompt.
+   * Chooses which memories reach the prompt: every one memory-service returned, standing ones first, then the rest
+   * ordered by how well they match the question (retrieval order on a tie), capped at `PROMPT_MEMORY_LIMIT`.
    *
-   * Public because the count reported back to the user has to be the count that
-   * was actually injected. It used to be `context.memories.length` — everything
-   * fetched — so a user could be told a memory was in play while this method
-   * had already dropped it. "I see it written 1 memory but the model does not
-   * consider it" was exactly that gap.
+   * It used to DROP any fact whose words did not overlap the question by 28%, with a tokenizer that deleted every
+   * non-Latin letter: a saved secret was invisible to "what is the secret I told you?" in Arabic, and often in
+   * English (owner report 2026-11-28). Memory is what the user asked ClawAI to remember; relevance orders it, the
+   * window fit (`fitFixedContext`) is the only thing that may shorten it.
    *
-   * Two kinds, treated differently on purpose:
-   *
-   *   standing  — an instruction or a preference. It applies to every turn, so
-   *               relevance to the current question is not a meaningful test
-   *               and is not applied. "Always answer in bullet points" shares
-   *               no words with "what is a database index"; filtering it by
-   *               vocabulary overlap silently disabled it everywhere.
-   *   topical   — a fact or a summary, relevant only when the question is about
-   *               it. These keep the overlap test and the cap.
+   * Public because the count reported back to the user has to be the count that was actually injected.
    */
   selectMemoriesForPrompt(
     memories: MemoryRecordResponse[],
@@ -2051,14 +2074,14 @@ ${RESEARCH_GROUNDING_REMINDER}`;
     const standing = memories.filter((memory) => this.isStandingMemory(memory));
     const topical = memories
       .filter((memory) => !this.isStandingMemory(memory))
-      .filter(
-        (memory) =>
-          this.calculateTokenOverlap(memory.content, currentIntent) >=
-          TOPICAL_MEMORY_OVERLAP_THRESHOLD,
-      )
-      .slice(0, PROMPT_TOPICAL_MEMORY_LIMIT);
+      .map((memory) => ({
+        memory,
+        score: this.calculateTokenOverlap(memory.content, currentIntent),
+      }))
+      .sort((left, right) => right.score - left.score)
+      .map((entry) => entry.memory);
 
-    return [...standing, ...topical];
+    return [...standing, ...topical].slice(0, Math.max(standing.length, PROMPT_MEMORY_LIMIT));
   }
 
   /**
@@ -2146,11 +2169,9 @@ ${RESEARCH_GROUNDING_REMINDER}`;
       'procurement',
       'executive',
     ]);
-    return value
-      .toLowerCase()
-      .replaceAll(/[^a-z0-9\s]+/g, ' ')
-      .split(/\s+/)
-      .filter((token) => token.length >= 4 && !ignoredTokens.has(token));
+    return contextTokens(value, MIN_MATCH_TOKEN_LENGTH).filter(
+      (token) => !ignoredTokens.has(token),
+    );
   }
 
   private normalizeIntentText(value: string): string {

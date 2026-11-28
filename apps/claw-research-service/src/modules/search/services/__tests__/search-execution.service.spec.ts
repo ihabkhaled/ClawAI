@@ -125,6 +125,7 @@ describe('SearchExecutionService', () => {
       adapterFactory as unknown as SearchAdapterFactory,
       { record: recordUsage } as never,
       health,
+      { read: vi.fn(async () => null), write: vi.fn(async () => {}) } as never,
     );
   });
 

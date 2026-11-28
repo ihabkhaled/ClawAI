@@ -64,6 +64,26 @@ the model answers "I cannot search the internet" to "please search internet for 
 `plan` keeps the planner's query and URLs but follows the majority. A user's link and a plain order to search are never
 overruled. The single-model gate is the fallback, never removed.
 
+8c. **Depth sizes the run; rounds fill the gaps** ([ADR-224](../docs/13-adr/adr-224-evidence-store-multi-query-and-research-rounds.md)).
+The council's depth (clamped to `RESEARCH_MAX_DEPTH`, 3) picks research-service's budget: queries 1/2/4/6 and pages
+8/8/8/12 for depth 0-3; its other sub-questions, and every query of rounds 2+, run on expansion providers only, so a
+paid search provider still sees one call per turn. At depth ≥ 2 a gap check (the gate's model chain, evidence fenced as data) may start another round
+with new queries, never re-reading a URL of this turn: at most `depth` rounds, and a round starts only while 20 s of
+the 60 s research budget remain. Done, no new query, a round that read nothing new, or the user's Stop ends research;
+a Stop during research also stops the answer that follows (`StreamCancellationService.carryStop`, through Redis
+because the answer may run on another replica). Every round is narrated with real counters from `bundle.stats`, and
+only a round that will run gets a round number. The gap check writes its text in the user's language.
+
+8e. **Research plans from the whole chat, never from the message alone** ([ADR-226](../docs/13-adr/adr-226-every-turn-sees-the-users-whole-context.md)).
+The planner and the council read the conversation and the user's memories (fenced as data); every query is
+self-contained ("search again" is never a query). A text lookup (lyrics, a quote, an error message) searches the exact
+words first, always researches (models invent lyrics), and a near-identical line in the evidence is a match.
+
+8d. **Platforms are searched through the registry, never by a new fetch path** ([ADR-225](../docs/13-adr/adr-225-research-platform-registry.md)).
+Official free APIs on a host allow-list, or `site:` through expansion providers: public pages only, no login, CAPTCHA or
+paywall bypass, no caption or private endpoint a robots.txt disallows. A new platform is a registry row; a new API kind
+is an adapter with its host on the allow-list and a parser test.
+
 9. **Say how a page was read, from what was measured.** A page an escalated fetch tier
    served is narrated (`PAGE_READ`, built by `pageReadNarrations` from `EvidenceItem.fetch`),
    on every research path. Kind and outcome only: no URL, status, body or error text. A cache
@@ -102,6 +122,12 @@ overruled. The single-model gate is the fallback, never removed.
 | Unit      | `research-plan.utility.spec.ts` — null on unusable replies, user URLs never dropped, bounds                                                                                   |
 | Unit      | `research-gate.service.spec.ts` — the walk moves on after a bad reply; outage still crawls the user's link                                                                    |
 | Unit      | `research-orchestrator.manager.spec.ts` — crawl → back to AI → search only when asked; failures narrated                                                                      |
+| Unit      | `research-orchestrator-rounds.manager.spec.ts` — rounds stop on done / no new query / nothing new / cap / budget / Stop; Stop carried to the answer; query budget per depth   |
+| Unit      | `research-gap-check.utility.spec.ts` + `research-request.utility.spec.ts` — gap-check replies (fenced, truncated, junk); request fields sent only when set                    |
+| Unit      | research-service `platform-adapters.spec.ts` + `research-platform.service.spec.ts` + `keyword-query.utility.spec.ts` — allow-listed hosts only, parsers, admin rules          |
+| Unit      | `stream-cancellation.service.spec.ts` — a carried Stop starts the next run aborted, once; a replaced run is never carried                                                     |
+| Unit      | research-service `research-engine.spec.ts` + `search-engine-cache.spec.ts` — depth budgets, expansion only on expansion providers, fusion, cache hit = no unit, thread memory |
+| Live      | `scripts/qa-lab/research-eval/` — 336-case, 26-language decision and citation evaluation (README there)                                                                       |
 | Unit      | `context-assembly-evidence-fit.spec.ts` — a 150-page crawl fits a 16k model, dropped pages are announced, history budget stays above 0                                        |
 | Unit      | `site-crawl.manager.spec.ts` — link hops fill a large budget on a site with no sitemap; ceiling 200                                                                           |
 | Unit      | `auto-research-resolution.spec.ts` — plan gate before everything, including a URL                                                                                             |

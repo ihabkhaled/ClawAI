@@ -24,8 +24,10 @@ import {
 import { type AssembledContext } from '../types/context.types';
 import { ResearchGatewayFailure } from '../enums/research-gateway-failure.enum';
 import { type SearchFirstOutcome, type SearchFirstResult } from '../types/search-first.types';
+import { WEB_SOURCE_UNTRUSTED_INSTRUCTION } from '../constants/research-grounding.constants';
 import { fitSourcesToResearchBudget } from '../utilities/research-evidence-budget.utility';
 import { gatewaySearchForUser } from '../utilities/research-gateway.utility';
+import { fenceWebSource } from '../utilities/untrusted-fence.utility';
 
 @Injectable()
 export class SearchFirstManager {
@@ -159,25 +161,27 @@ export class SearchFirstManager {
   private buildSearchBlock(results: SearchFirstResult[]): string {
     const lines: string[] = [
       'You have just received fresh web search results for the user prompt. Cite the source URL when you use a result.',
+      WEB_SOURCE_UNTRUSTED_INSTRUCTION,
       '',
       '--- SEARCH RESULTS ---',
     ];
-    for (let i = 0; i < results.length; i++) {
-      const result = results.at(i);
-      if (!result) {
-        continue;
-      }
-      const num = String(i + 1);
-      const dateSuffix =
-        result.publishedAt !== null && result.publishedAt.length > 0
-          ? ` (${result.publishedAt})`
-          : '';
-      const snippetText = result.snippet ?? '(no snippet)';
-      lines.push(`[${num}] ${result.title}${dateSuffix}`);
-      lines.push(`    URL: ${result.url}`);
-      lines.push(`    Source: ${result.source}`);
-      lines.push(`    Snippet: ${snippetText}`);
-      lines.push('');
+    // Each result in its untrusted fence, numbered [n] as before (rule 41 §16: no citations are stored for it).
+    for (const [index, result] of results.entries()) {
+      lines.push(
+        fenceWebSource({
+          n: index + 1,
+          url: result.url,
+          title: result.title,
+          text: result.snippet ?? '(no snippet)',
+          details: [
+            ...(result.publishedAt !== null && result.publishedAt.length > 0
+              ? [`Published: ${result.publishedAt}`]
+              : []),
+            `Source: ${result.source}`,
+          ],
+        }),
+        '',
+      );
     }
     lines.push('--- END SEARCH RESULTS ---');
     return lines.join('\n');

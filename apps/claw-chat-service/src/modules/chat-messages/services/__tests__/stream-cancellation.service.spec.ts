@@ -1,19 +1,31 @@
 import { vi } from 'vitest';
-import { STREAM_CANCEL_CHANNEL } from '../../constants/stream-cancellation.constants';
+import {
+  STREAM_CANCEL_CARRY_KEY_PREFIX,
+  STREAM_CANCEL_CARRY_TTL_SECONDS,
+  STREAM_CANCEL_CHANNEL,
+  STREAM_RUN_REPLACED_MESSAGE,
+} from '../../constants/stream-cancellation.constants';
 import { StreamCancellationService } from '../stream-cancellation.service';
 
 type MessageHandler = (channel: string, payload: string) => void;
 
 function build(
-  overrides: { delResult?: number; delRejects?: boolean; evalRejects?: boolean } = {},
+  overrides: {
+    delResult?: number;
+    delRejects?: boolean;
+    evalRejects?: boolean;
+    carried?: boolean;
+  } = {},
 ) {
   let messageHandler: MessageHandler | null = null;
   const redis = {
-    del: vi.fn(() =>
-      overrides.delRejects === true
-        ? Promise.reject(new Error('redis down'))
-        : Promise.resolve(overrides.delResult ?? 1),
-    ),
+    del: vi.fn((key: string) => {
+      if (overrides.delRejects === true) return Promise.reject(new Error('redis down'));
+      if (key.startsWith(STREAM_CANCEL_CARRY_KEY_PREFIX)) {
+        return Promise.resolve(overrides.carried === true ? 1 : 0);
+      }
+      return Promise.resolve(overrides.delResult ?? 1);
+    }),
     set: vi.fn(() => Promise.resolve('OK')),
     eval: vi.fn(() =>
       overrides.evalRejects === true ? Promise.reject(new Error('redis down')) : Promise.resolve(1),
@@ -122,5 +134,61 @@ describe('StreamCancellationService', () => {
     service.release('thread-1');
 
     expect(redis.del).toHaveBeenCalledTimes(1);
+  });
+
+  describe('a Stop pressed during research carries to the answer', () => {
+    it('writes a short-lived carry marker for the thread', async () => {
+      const { service, redis } = build();
+      service.carryStop('thread-1');
+      await Promise.resolve();
+      expect(redis.set).toHaveBeenCalledWith(
+        `${STREAM_CANCEL_CARRY_KEY_PREFIX}thread-1`,
+        '1',
+        'EX',
+        STREAM_CANCEL_CARRY_TTL_SECONDS,
+      );
+    });
+
+    it('starts the next registered run already aborted and removes it from the map', async () => {
+      const { service } = build({ carried: true });
+      const controller = service.register('thread-1');
+      await vi.waitFor(() => expect(controller.signal.aborted).toBe(true));
+      expect(service.isActive('thread-1')).toBe(false);
+    });
+
+    it('leaves a run alone when no Stop was carried', async () => {
+      const { service, redis } = build();
+      const controller = service.register('thread-1');
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(redis.del).toHaveBeenCalledWith(`${STREAM_CANCEL_CARRY_KEY_PREFIX}thread-1`);
+      expect(controller.signal.aborted).toBe(false);
+      expect(service.isActive('thread-1')).toBe(true);
+    });
+
+    it('never fails a registration when Redis cannot be read', async () => {
+      const { service } = build({ delRejects: true });
+      const controller = service.register('thread-1');
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(controller.signal.aborted).toBe(false);
+    });
+
+    it('marks a replaced run as replaced, which is not a user Stop', () => {
+      const { service } = build();
+      const first = service.register('thread-1');
+      service.register('thread-1');
+      expect(first.signal.aborted).toBe(true);
+      expect(StreamCancellationService.wasReplaced(first.signal)).toBe(true);
+      expect((first.signal.reason as DOMException).message).toBe(STREAM_RUN_REPLACED_MESSAGE);
+    });
+
+    it('does not treat a broadcast Stop as a replacement', async () => {
+      const { service, broadcast } = build();
+      await service.onModuleInit();
+      const controller = service.register('thread-1');
+      broadcast('thread-1');
+      expect(StreamCancellationService.wasReplaced(controller.signal)).toBe(false);
+    });
   });
 });

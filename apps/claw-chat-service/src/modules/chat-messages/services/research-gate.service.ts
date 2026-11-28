@@ -14,6 +14,7 @@ import {
   RESEARCH_GATE_CANDIDATES_TTL_MS,
   RESEARCH_GATE_SYSTEM_PROMPT,
   RESEARCH_PLANNER_ATTACHMENT_DIGEST_LABEL,
+  RESEARCH_PLANNER_CONVERSATION_LABEL,
   RESEARCH_PLANNER_DEFAULT_MAX_PAGES,
   RESEARCH_PLANNER_MIN_OUTPUT_TOKENS,
   RESEARCH_PLANNER_SYSTEM_PROMPT,
@@ -29,15 +30,25 @@ import type { ConnectorConfigResponse } from '../types/execution.types';
 import type {
   CrawlFollowUp,
   OllamaCloudChatReply,
+  ResearchGapCheck,
   ResearchGateCacheEntry,
   ResearchGateCandidate,
   ResearchGateModelReply,
   ResearchGateVerdict,
   ResearchPlan,
 } from '../types/research-gate.types';
+import { RESEARCH_GAP_CHECK_FAILED_CLOSED } from '../constants/research-gap-check.constants';
 import { parseResearchGateVerdict } from '../utilities/research-gate.utility';
 import { applyCouncilToPlan } from '../utilities/harness-council.utility';
-import { parseCrawlFollowUp, parseResearchPlan } from '../utilities/research-plan.utility';
+import {
+  buildGapCheckPrompt,
+  parseResearchGapCheck,
+} from '../utilities/research-gap-check.utility';
+import {
+  defaultResearchDepth,
+  parseCrawlFollowUp,
+  parseResearchPlan,
+} from '../utilities/research-plan.utility';
 import { HarnessCouncilService } from './harness-council.service';
 
 /**
@@ -143,9 +154,14 @@ export class ResearchGateService {
    * The council's verdict as a gate verdict, or null when no council is configured or none of it answered. A plain
    * order to use the internet always researches, whatever the vote: refusing it is the "I cannot search" bug.
    */
-  private async askCouncil(message: string): Promise<ResearchGateVerdict | null> {
-    const council = await this.council?.decide(message, (candidate, prompt, minOutputTokens) =>
-      this.generate(candidate, prompt, minOutputTokens),
+  private async askCouncil(
+    message: string,
+    conversation = '',
+  ): Promise<ResearchGateVerdict | null> {
+    const council = await this.council?.decide(
+      message,
+      (candidate, prompt, minOutputTokens) => this.generate(candidate, prompt, minOutputTokens),
+      conversation,
     );
     if (council === undefined || council === null) {
       return null;
@@ -166,14 +182,19 @@ export class ResearchGateService {
   }
 
   /** The council's verdict for this message: the one needsWeb already cached, else a fresh vote (cached). */
-  private async councilVerdictFor(message: string): Promise<ResearchGateVerdict | null> {
-    const cached = this.readCache(message);
+  private async councilVerdictFor(
+    message: string,
+    conversation: string,
+  ): Promise<ResearchGateVerdict | null> {
+    // The same words mean different things after different turns ("search again"), so the history is in the key.
+    const key = conversation.length > 0 ? `${message}\u0000${conversation}` : message;
+    const cached = this.readCache(key);
     if (cached?.council !== undefined) {
       return cached;
     }
-    const verdict = await this.askCouncil(message);
+    const verdict = await this.askCouncil(message, conversation);
     if (verdict !== null) {
-      this.writeCache(message, verdict);
+      this.writeCache(key, verdict);
     }
     return verdict;
   }
@@ -251,7 +272,7 @@ export class ResearchGateService {
    * be planned. It is framed as data, and URLs inside it are never crawled on
    * their own: only the user's message is scanned for links.
    */
-  async plan(message: string, attachmentDigest = ''): Promise<ResearchPlan> {
+  async plan(message: string, attachmentDigest = '', conversation = ''): Promise<ResearchPlan> {
     const userUrls = detectPromptUrls(message);
     // A link read out of an attachment (OCR, a document) is data about the
     // file, not a site the user asked for: the planner may not crawl it.
@@ -263,8 +284,8 @@ export class ResearchGateService {
     // The council and the planner run side by side: the planner writes the query, URLs and narration, the
     // council's majority decides WHETHER to research and how deep (research engine, 2026-11-27).
     const [verdict, planned] = await Promise.all([
-      this.councilVerdictFor(message),
-      this.planWithModels(message, attachmentDigest, userUrls, planOptions),
+      this.councilVerdictFor(message, conversation),
+      this.planWithModels(message, { attachmentDigest, conversation }, userUrls, planOptions),
     ]);
     const plan = applyCouncilToPlan(planned, verdict?.council, {
       message,
@@ -273,7 +294,7 @@ export class ResearchGateService {
     });
     if (plan !== planned) {
       this.logger.log(
-        `plan: council changed action=${planned.action}->${plan.action} maxPages=${String(planned.maxPages)}->${String(plan.maxPages)} (${plan.decidedBy ?? ''})`,
+        `plan: council applied action=${planned.action}->${plan.action} maxPages=${String(planned.maxPages)}->${String(plan.maxPages)} depth=${String(plan.depth)} subQuestions=${String(plan.subQuestions.length)} languages=[${plan.languages.join(',')}] (${plan.decidedBy ?? ''})`,
       );
     }
     return plan;
@@ -282,19 +303,23 @@ export class ResearchGateService {
   /** The admin's planner models, walked in order until one returns a usable plan; the user's own URLs otherwise. */
   private async planWithModels(
     message: string,
-    attachmentDigest: string,
+    context: { attachmentDigest: string; conversation: string },
     userUrls: string[],
     planOptions: { hasAttachments: boolean; excludedUrls: string[] },
   ): Promise<ResearchPlan> {
     const candidates = await this.resolveCandidates();
     const digestBlock =
-      attachmentDigest.length > 0
-        ? `\n\n${RESEARCH_PLANNER_ATTACHMENT_DIGEST_LABEL}\n${attachmentDigest}`
+      context.attachmentDigest.length > 0
+        ? `\n\n${RESEARCH_PLANNER_ATTACHMENT_DIGEST_LABEL}\n${context.attachmentDigest}`
+        : '';
+    const historyBlock =
+      context.conversation.length > 0
+        ? `\n\n${RESEARCH_PLANNER_CONVERSATION_LABEL}\n<<<\n${context.conversation}\n>>>`
         : '';
     for (const candidate of candidates) {
       const raw = await this.generate(
         candidate,
-        `${RESEARCH_PLANNER_SYSTEM_PROMPT}
+        `${RESEARCH_PLANNER_SYSTEM_PROMPT}${historyBlock}
 
 User message:
 ${message}${digestBlock}`,
@@ -333,6 +358,10 @@ ${message}${digestBlock}`,
       narration: '',
       thinking: '',
       decidedBy: null,
+      subQuestions: [],
+      languages: [],
+      platforms: [],
+      depth: defaultResearchDepth(action),
     };
   }
 
@@ -365,6 +394,30 @@ ${summary}`,
       }
     }
     return { needsSearch: false, query: null, narration: '', thinking: '' };
+  }
+
+  /**
+   * After a search round (research engine B2): is anything still missing to answer the message, and what should the
+   * next round search? Same models, same JSON-only call and same walk as `followUpAfterCrawl`; the message, the queries
+   * already run and the evidence are fenced as data. Fails closed to "done": another round spends the user's search
+   * allowance, and the turn already holds the evidence it gathered.
+   */
+  async gapCheck(
+    message: string,
+    evidenceSummary: string,
+    queriesRun: readonly string[],
+  ): Promise<ResearchGapCheck> {
+    const gap = await this.askPlanner(
+      buildGapCheckPrompt(message, evidenceSummary, queriesRun),
+      RESEARCH_PLANNER_MIN_OUTPUT_TOKENS,
+      parseResearchGapCheck,
+    );
+    if (gap === null) {
+      this.logger.warn('gapCheck: no model gave a usable answer - research stops with what it has');
+      return { ...RESEARCH_GAP_CHECK_FAILED_CLOSED };
+    }
+    this.logger.log(`gapCheck: done=${String(gap.done)} queries=${String(gap.queries.length)}`);
+    return gap;
   }
 
   /**

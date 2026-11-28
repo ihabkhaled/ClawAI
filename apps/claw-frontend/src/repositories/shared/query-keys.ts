@@ -552,6 +552,10 @@ export const queryKeys = {
   researchFetchStrategies: {
     all: ['researchFetchStrategies'] as const,
   },
+  researchPlatforms: {
+    all: ['researchPlatforms'] as const,
+    list: () => ['researchPlatforms', 'list'] as const,
+  },
   researchRuns: {
     all: ['researchRuns'] as const,
     list: (limit: number) => ['researchRuns', 'list', limit] as const,

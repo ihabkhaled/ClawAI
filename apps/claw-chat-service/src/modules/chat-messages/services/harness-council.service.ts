@@ -44,13 +44,14 @@ export class HarnessCouncilService {
   async decide(
     message: string,
     generate: HarnessCouncilGenerate,
+    conversation = '',
   ): Promise<HarnessCouncilVerdict | null> {
     const members = await this.resolveMembers();
     if (members.length === 0) {
       return null;
     }
     const startedAt = Date.now();
-    const prompt = buildCouncilPrompt(HARNESS_COUNCIL_SYSTEM_PROMPT, message);
+    const prompt = buildCouncilPrompt(HARNESS_COUNCIL_SYSTEM_PROMPT, message, conversation);
     const verdict = await this.collect(members, (member) =>
       generate(member, prompt, HARNESS_COUNCIL_MIN_OUTPUT_TOKENS),
     );
@@ -59,7 +60,7 @@ export class HarnessCouncilService {
       return null;
     }
     this.logger.log(
-      `council: needsWeb=${String(verdict.needsWeb)} depth=${String(verdict.depth)} answered=${String(verdict.answered)}/${String(verdict.asked)} majority=[${verdict.majority.join(',')}] languages=[${verdict.languages.join(',')}] subQuestions=${String(verdict.subQuestions.length)} ms=${String(Date.now() - startedAt)}`,
+      `council: needsWeb=${String(verdict.needsWeb)} depth=${String(verdict.depth)} answered=${String(verdict.answered)}/${String(verdict.asked)} majority=[${verdict.majority.join(',')}] languages=[${verdict.languages.join(',')}] platforms=[${verdict.platforms.join(',')}] lookup=${String(verdict.exactText !== null)} subQuestions=${String(verdict.subQuestions.length)} ms=${String(Date.now() - startedAt)}`,
     );
     return verdict;
   }

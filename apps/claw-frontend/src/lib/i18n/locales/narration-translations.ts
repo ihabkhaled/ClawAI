@@ -1,5 +1,6 @@
 import { Locale } from '@/enums/locale.enum';
-import type { NarrationLocaleTranslation } from '@/types/i18n.types';
+import type { NarrationLocaleTranslation, RawNarrationLocaleTranslation } from '@/types/i18n.types';
+import { fillPluralForms } from '@/utilities/plural-forms.utility';
 
 /**
  * The narrated work log shown above an answer: what the AI decided, what it
@@ -9,8 +10,13 @@ import type { NarrationLocaleTranslation } from '@/types/i18n.types';
  * than a key rendering raw (`t()` takes a plain string and is not checked).
  * The planner's own sentences are shown as-is; everything here is the frame
  * around them. Real translations, not English placeholders.
+ *
+ * `count.*` are counted phrases for the research-round counters, written in the
+ * plural forms each language distinguishes (Arabic six, Russian four, Japanese
+ * one) and filled to all six below. `{languages}` / `{platforms}` arrive already
+ * joined in the reader's language (Intl.ListFormat), so a template only frames them.
  */
-export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> = {
+const RAW_TRANSLATIONS: Record<Locale, RawNarrationLocaleTranslation> = {
   [Locale.EN]: {
     title: 'How I worked on this',
     liveTitle: 'Working on it…',
@@ -46,6 +52,41 @@ export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> 
       'Which tiers can read a web page right now. "Off" means switched off, not that a page did not need it.',
     strategyAvailable: 'Available',
     strategyOff: 'Off',
+    backToAiRound: 'Back to the AI to plan round {round}',
+    searchStartedRound: 'Round {round}: researching {queries}',
+    searchStartedRoundInLanguages: 'Round {round}: researching {queries} in {languages}',
+    searchStartedQueries: 'Researching {queries}',
+    searchStartedQueriesInLanguages: 'Researching {queries} in {languages}',
+    searchStartedWithQueryInLanguages: 'Researching the web for “{query}” in {languages}',
+    searchStartedInLanguages: 'Researching the web in {languages}',
+    roundLabel: 'Round {round}',
+    platformsLabel: 'Platforms: {platforms}',
+    count: {
+      queries: {
+        one: '{count} query',
+        other: '{count} queries',
+      },
+      moreQueries: {
+        one: '{count} more query',
+        other: '{count} more queries',
+      },
+      newQueries: {
+        one: '{count} new query',
+        other: '{count} new queries',
+      },
+      languages: {
+        one: '{count} language',
+        other: '{count} languages',
+      },
+      duplicatesRemoved: {
+        one: '{count} duplicate removed',
+        other: '{count} duplicates removed',
+      },
+      reusedFromThread: {
+        one: '{count} source reused from earlier in this chat',
+        other: '{count} sources reused from earlier in this chat',
+      },
+    },
   },
   [Locale.AR]: {
     title: 'كيف عملت على هذا',
@@ -82,6 +123,65 @@ export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> 
       'أي المستويات يمكنها قراءة صفحة ويب الآن. "متوقف" يعني أنه مُعطَّل، وليس أن الصفحة لم تحتجه.',
     strategyAvailable: 'متاح',
     strategyOff: 'متوقف',
+    backToAiRound: 'العودة إلى الذكاء الاصطناعي لتخطيط الجولة {round}',
+    searchStartedRound: 'الجولة {round}: جارٍ تنفيذ {queries}',
+    searchStartedRoundInLanguages: 'الجولة {round}: جارٍ تنفيذ {queries} باللغة {languages}',
+    searchStartedQueries: 'جارٍ البحث عبر {queries}',
+    searchStartedQueriesInLanguages: 'جارٍ البحث عبر {queries} باللغة {languages}',
+    searchStartedWithQueryInLanguages: 'البحث في الويب عن «{query}» باللغة {languages}',
+    searchStartedInLanguages: 'البحث في الويب باللغة {languages}',
+    roundLabel: 'الجولة {round}',
+    platformsLabel: 'المنصات: {platforms}',
+    count: {
+      queries: {
+        zero: '{count} استعلام',
+        one: '{count} استعلام',
+        two: '{count} استعلامان',
+        few: '{count} استعلامات',
+        many: '{count} استعلامًا',
+        other: '{count} استعلام',
+      },
+      moreQueries: {
+        zero: '{count} استعلام إضافي',
+        one: '{count} استعلام إضافي',
+        two: '{count} استعلامان إضافيان',
+        few: '{count} استعلامات إضافية',
+        many: '{count} استعلامًا إضافيًا',
+        other: '{count} استعلام إضافي',
+      },
+      newQueries: {
+        zero: '{count} استعلام جديد',
+        one: '{count} استعلام جديد',
+        two: '{count} استعلامان جديدان',
+        few: '{count} استعلامات جديدة',
+        many: '{count} استعلامًا جديدًا',
+        other: '{count} استعلام جديد',
+      },
+      languages: {
+        zero: '{count} لغة',
+        one: '{count} لغة',
+        two: '{count} لغتان',
+        few: '{count} لغات',
+        many: '{count} لغةً',
+        other: '{count} لغة',
+      },
+      duplicatesRemoved: {
+        zero: 'أُزيل {count} تكرار',
+        one: 'أُزيل {count} تكرار',
+        two: 'أُزيل {count} تكراران',
+        few: 'أُزيلت {count} تكرارات',
+        many: 'أُزيل {count} تكرارًا',
+        other: 'أُزيل {count} تكرار',
+      },
+      reusedFromThread: {
+        zero: '{count} مصدر أُعيد استخدامه من هذه المحادثة',
+        one: '{count} مصدر أُعيد استخدامه من هذه المحادثة',
+        two: '{count} مصدران أُعيد استخدامهما من هذه المحادثة',
+        few: '{count} مصادر أُعيد استخدامها من هذه المحادثة',
+        many: '{count} مصدرًا أُعيد استخدامه من هذه المحادثة',
+        other: '{count} مصدر أُعيد استخدامه من هذه المحادثة',
+      },
+    },
   },
   [Locale.DE]: {
     title: 'So habe ich daran gearbeitet',
@@ -118,6 +218,41 @@ export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> 
       'Welche Stufen gerade eine Webseite lesen können. „Aus“ heißt abgeschaltet, nicht dass eine Seite sie nicht brauchte.',
     strategyAvailable: 'Verfügbar',
     strategyOff: 'Aus',
+    backToAiRound: 'Zurück zur KI, um Runde {round} zu planen',
+    searchStartedRound: 'Runde {round}: recherchiere {queries}',
+    searchStartedRoundInLanguages: 'Runde {round}: recherchiere {queries} auf {languages}',
+    searchStartedQueries: 'Recherchiere {queries}',
+    searchStartedQueriesInLanguages: 'Recherchiere {queries} auf {languages}',
+    searchStartedWithQueryInLanguages: 'Recherchiere im Web nach „{query}“ auf {languages}',
+    searchStartedInLanguages: 'Recherchiere im Web auf {languages}',
+    roundLabel: 'Runde {round}',
+    platformsLabel: 'Plattformen: {platforms}',
+    count: {
+      queries: {
+        one: '{count} Suchanfrage',
+        other: '{count} Suchanfragen',
+      },
+      moreQueries: {
+        one: '{count} weitere Suchanfrage',
+        other: '{count} weitere Suchanfragen',
+      },
+      newQueries: {
+        one: '{count} neue Suchanfrage',
+        other: '{count} neue Suchanfragen',
+      },
+      languages: {
+        one: '{count} Sprache',
+        other: '{count} Sprachen',
+      },
+      duplicatesRemoved: {
+        one: '{count} Duplikat entfernt',
+        other: '{count} Duplikate entfernt',
+      },
+      reusedFromThread: {
+        one: '{count} Quelle aus diesem Chat wiederverwendet',
+        other: '{count} Quellen aus diesem Chat wiederverwendet',
+      },
+    },
   },
   [Locale.ES]: {
     title: 'Cómo trabajé en esto',
@@ -154,6 +289,41 @@ export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> 
       'Qué niveles pueden leer una página web ahora. "Apagado" significa desactivado, no que una página no lo necesitara.',
     strategyAvailable: 'Disponible',
     strategyOff: 'Apagado',
+    backToAiRound: 'Volviendo a la IA para planificar la ronda {round}',
+    searchStartedRound: 'Ronda {round}: investigando {queries}',
+    searchStartedRoundInLanguages: 'Ronda {round}: investigando {queries} en {languages}',
+    searchStartedQueries: 'Investigando {queries}',
+    searchStartedQueriesInLanguages: 'Investigando {queries} en {languages}',
+    searchStartedWithQueryInLanguages: 'Investigando en la web «{query}» en {languages}',
+    searchStartedInLanguages: 'Investigando en la web en {languages}',
+    roundLabel: 'Ronda {round}',
+    platformsLabel: 'Plataformas: {platforms}',
+    count: {
+      queries: {
+        one: '{count} consulta',
+        other: '{count} consultas',
+      },
+      moreQueries: {
+        one: '{count} consulta más',
+        other: '{count} consultas más',
+      },
+      newQueries: {
+        one: '{count} consulta nueva',
+        other: '{count} consultas nuevas',
+      },
+      languages: {
+        one: '{count} idioma',
+        other: '{count} idiomas',
+      },
+      duplicatesRemoved: {
+        one: '{count} duplicado eliminado',
+        other: '{count} duplicados eliminados',
+      },
+      reusedFromThread: {
+        one: '{count} fuente reutilizada de antes en este chat',
+        other: '{count} fuentes reutilizadas de antes en este chat',
+      },
+    },
   },
   [Locale.FA]: {
     title: 'چگونه روی این کار کردم',
@@ -190,6 +360,35 @@ export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> 
       'کدام سطوح اکنون می‌توانند یک صفحه وب را بخوانند. «خاموش» یعنی غیرفعال شده، نه اینکه صفحه‌ای به آن نیاز نداشته.',
     strategyAvailable: 'در دسترس',
     strategyOff: 'خاموش',
+    backToAiRound: 'بازگشت به هوش مصنوعی برای برنامه‌ریزی دور {round}',
+    searchStartedRound: 'دور {round}: در حال جست‌وجوی {queries}',
+    searchStartedRoundInLanguages: 'دور {round}: در حال جست‌وجوی {queries} به زبان {languages}',
+    searchStartedQueries: 'در حال جست‌وجوی {queries}',
+    searchStartedQueriesInLanguages: 'در حال جست‌وجوی {queries} به زبان {languages}',
+    searchStartedWithQueryInLanguages: 'در حال جست‌وجوی «{query}» در وب به زبان {languages}',
+    searchStartedInLanguages: 'در حال جست‌وجو در وب به زبان {languages}',
+    roundLabel: 'دور {round}',
+    platformsLabel: 'پلتفرم‌ها: {platforms}',
+    count: {
+      queries: {
+        other: '{count} پرس‌وجو',
+      },
+      moreQueries: {
+        other: '{count} پرس‌وجوی دیگر',
+      },
+      newQueries: {
+        other: '{count} پرس‌وجوی تازه',
+      },
+      languages: {
+        other: '{count} زبان',
+      },
+      duplicatesRemoved: {
+        other: '{count} مورد تکراری حذف شد',
+      },
+      reusedFromThread: {
+        other: '{count} منبع از پیش‌تر در همین گفتگو دوباره استفاده شد',
+      },
+    },
   },
   [Locale.FR]: {
     title: "Comment j'ai travaillé là-dessus",
@@ -226,6 +425,41 @@ export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> 
       'Quels niveaux peuvent lire une page web en ce moment. « Désactivé » signifie coupé, pas qu’une page n’en avait pas besoin.',
     strategyAvailable: 'Disponible',
     strategyOff: 'Désactivé',
+    backToAiRound: "Retour à l'IA pour préparer le tour {round}",
+    searchStartedRound: 'Tour {round} : recherche de {queries}',
+    searchStartedRoundInLanguages: 'Tour {round} : recherche de {queries} en {languages}',
+    searchStartedQueries: 'Recherche de {queries}',
+    searchStartedQueriesInLanguages: 'Recherche de {queries} en {languages}',
+    searchStartedWithQueryInLanguages: 'Recherche sur le web de « {query} » en {languages}',
+    searchStartedInLanguages: 'Recherche sur le web en {languages}',
+    roundLabel: 'Tour {round}',
+    platformsLabel: 'Plateformes : {platforms}',
+    count: {
+      queries: {
+        one: '{count} requête',
+        other: '{count} requêtes',
+      },
+      moreQueries: {
+        one: '{count} requête supplémentaire',
+        other: '{count} requêtes supplémentaires',
+      },
+      newQueries: {
+        one: '{count} nouvelle requête',
+        other: '{count} nouvelles requêtes',
+      },
+      languages: {
+        one: '{count} langue',
+        other: '{count} langues',
+      },
+      duplicatesRemoved: {
+        one: '{count} doublon supprimé',
+        other: '{count} doublons supprimés',
+      },
+      reusedFromThread: {
+        one: '{count} source reprise de cette conversation',
+        other: '{count} sources reprises de cette conversation',
+      },
+    },
   },
   [Locale.HI]: {
     title: 'मैंने इस पर कैसे काम किया',
@@ -262,6 +496,38 @@ export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> 
       'अभी कौन से स्तर वेब पेज पढ़ सकते हैं। "बंद" का मतलब बंद किया गया है, यह नहीं कि किसी पेज को इसकी जरूरत नहीं थी।',
     strategyAvailable: 'उपलब्ध',
     strategyOff: 'बंद',
+    backToAiRound: 'राउंड {round} की योजना बनाने के लिए AI पर वापस',
+    searchStartedRound: 'राउंड {round}: {queries} पर रिसर्च जारी',
+    searchStartedRoundInLanguages: 'राउंड {round}: {languages} में {queries} पर रिसर्च जारी',
+    searchStartedQueries: '{queries} पर रिसर्च जारी',
+    searchStartedQueriesInLanguages: '{languages} में {queries} पर रिसर्च जारी',
+    searchStartedWithQueryInLanguages: 'वेब पर {languages} में “{query}” खोजा जा रहा है',
+    searchStartedInLanguages: 'वेब पर {languages} में खोज जारी',
+    roundLabel: 'राउंड {round}',
+    platformsLabel: 'प्लेटफ़ॉर्म: {platforms}',
+    count: {
+      queries: {
+        other: '{count} क्वेरी',
+      },
+      moreQueries: {
+        other: '{count} और क्वेरी',
+      },
+      newQueries: {
+        other: '{count} नई क्वेरी',
+      },
+      languages: {
+        one: '{count} भाषा',
+        other: '{count} भाषाएँ',
+      },
+      duplicatesRemoved: {
+        one: '{count} डुप्लिकेट हटाया गया',
+        other: '{count} डुप्लिकेट हटाए गए',
+      },
+      reusedFromThread: {
+        one: '{count} स्रोत इसी चैट से दोबारा इस्तेमाल हुआ',
+        other: '{count} स्रोत इसी चैट से दोबारा इस्तेमाल हुए',
+      },
+    },
   },
   [Locale.IT]: {
     title: 'Come ci ho lavorato',
@@ -298,6 +564,41 @@ export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> 
       'Quali livelli possono leggere una pagina web in questo momento. "Spento" significa disattivato, non che una pagina non ne avesse bisogno.',
     strategyAvailable: 'Disponibile',
     strategyOff: 'Spento',
+    backToAiRound: "Torno all'IA per pianificare il turno {round}",
+    searchStartedRound: 'Turno {round}: ricerca di {queries}',
+    searchStartedRoundInLanguages: 'Turno {round}: ricerca di {queries} in {languages}',
+    searchStartedQueries: 'Ricerca di {queries}',
+    searchStartedQueriesInLanguages: 'Ricerca di {queries} in {languages}',
+    searchStartedWithQueryInLanguages: 'Ricerca sul web di «{query}» in {languages}',
+    searchStartedInLanguages: 'Ricerca sul web in {languages}',
+    roundLabel: 'Turno {round}',
+    platformsLabel: 'Piattaforme: {platforms}',
+    count: {
+      queries: {
+        one: '{count} query',
+        other: '{count} query',
+      },
+      moreQueries: {
+        one: '{count} query in più',
+        other: '{count} query in più',
+      },
+      newQueries: {
+        one: '{count} nuova query',
+        other: '{count} nuove query',
+      },
+      languages: {
+        one: '{count} lingua',
+        other: '{count} lingue',
+      },
+      duplicatesRemoved: {
+        one: '{count} duplicato rimosso',
+        other: '{count} duplicati rimossi',
+      },
+      reusedFromThread: {
+        one: '{count} fonte riutilizzata da questa chat',
+        other: '{count} fonti riutilizzate da questa chat',
+      },
+    },
   },
   [Locale.JA]: {
     title: 'この回答の作業手順',
@@ -334,6 +635,35 @@ export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> 
       '現在どの段階でウェブページを読み取れるかを示します。「オフ」は無効化されている意味で、ページに不要だったという意味ではありません。',
     strategyAvailable: '利用可能',
     strategyOff: 'オフ',
+    backToAiRound: 'ラウンド {round} を計画するため AI に戻ります',
+    searchStartedRound: 'ラウンド {round}：{queries}を調べています',
+    searchStartedRoundInLanguages: 'ラウンド {round}：{languages}で{queries}を調べています',
+    searchStartedQueries: '{queries}を調べています',
+    searchStartedQueriesInLanguages: '{languages}で{queries}を調べています',
+    searchStartedWithQueryInLanguages: '「{query}」を{languages}でウェブ検索しています',
+    searchStartedInLanguages: '{languages}でウェブを調べています',
+    roundLabel: 'ラウンド {round}',
+    platformsLabel: 'プラットフォーム：{platforms}',
+    count: {
+      queries: {
+        other: '{count} 件のクエリ',
+      },
+      moreQueries: {
+        other: '追加の {count} 件のクエリ',
+      },
+      newQueries: {
+        other: '新しいクエリ {count} 件',
+      },
+      languages: {
+        other: '{count} 言語',
+      },
+      duplicatesRemoved: {
+        other: '重複 {count} 件を除外',
+      },
+      reusedFromThread: {
+        other: 'このチャットの以前の情報源 {count} 件を再利用',
+      },
+    },
   },
   [Locale.PT]: {
     title: 'Como trabalhei nisto',
@@ -370,6 +700,41 @@ export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> 
       'Quais níveis podem ler uma página web agora. "Desligado" significa desativado, não que uma página não precisou dele.',
     strategyAvailable: 'Disponível',
     strategyOff: 'Desligado',
+    backToAiRound: 'Voltando à IA para planejar a rodada {round}',
+    searchStartedRound: 'Rodada {round}: pesquisando {queries}',
+    searchStartedRoundInLanguages: 'Rodada {round}: pesquisando {queries} em {languages}',
+    searchStartedQueries: 'Pesquisando {queries}',
+    searchStartedQueriesInLanguages: 'Pesquisando {queries} em {languages}',
+    searchStartedWithQueryInLanguages: 'Pesquisando na web por “{query}” em {languages}',
+    searchStartedInLanguages: 'Pesquisando na web em {languages}',
+    roundLabel: 'Rodada {round}',
+    platformsLabel: 'Plataformas: {platforms}',
+    count: {
+      queries: {
+        one: '{count} consulta',
+        other: '{count} consultas',
+      },
+      moreQueries: {
+        one: 'mais {count} consulta',
+        other: 'mais {count} consultas',
+      },
+      newQueries: {
+        one: '{count} consulta nova',
+        other: '{count} consultas novas',
+      },
+      languages: {
+        one: '{count} idioma',
+        other: '{count} idiomas',
+      },
+      duplicatesRemoved: {
+        one: '{count} duplicata removida',
+        other: '{count} duplicatas removidas',
+      },
+      reusedFromThread: {
+        one: '{count} fonte reaproveitada desta conversa',
+        other: '{count} fontes reaproveitadas desta conversa',
+      },
+    },
   },
   [Locale.RU]: {
     title: 'Как я над этим работал',
@@ -406,6 +771,53 @@ export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> 
       'Какие уровни сейчас могут прочитать веб-страницу. «Выкл.» означает, что уровень отключён, а не то, что странице он не понадобился.',
     strategyAvailable: 'Доступно',
     strategyOff: 'Выкл.',
+    backToAiRound: 'Возвращаюсь к ИИ, чтобы спланировать раунд {round}',
+    searchStartedRound: 'Раунд {round}: выполняю {queries}',
+    searchStartedRoundInLanguages: 'Раунд {round}: выполняю {queries} (языки: {languages})',
+    searchStartedQueries: 'Выполняю {queries}',
+    searchStartedQueriesInLanguages: 'Выполняю {queries} (языки: {languages})',
+    searchStartedWithQueryInLanguages: 'Ищу в интернете «{query}» (языки: {languages})',
+    searchStartedInLanguages: 'Ищу в интернете (языки: {languages})',
+    roundLabel: 'Раунд {round}',
+    platformsLabel: 'Платформы: {platforms}',
+    count: {
+      queries: {
+        one: '{count} запрос',
+        few: '{count} запроса',
+        many: '{count} запросов',
+        other: '{count} запроса',
+      },
+      moreQueries: {
+        one: '{count} дополнительный запрос',
+        few: '{count} дополнительных запроса',
+        many: '{count} дополнительных запросов',
+        other: '{count} дополнительного запроса',
+      },
+      newQueries: {
+        one: '{count} новый запрос',
+        few: '{count} новых запроса',
+        many: '{count} новых запросов',
+        other: '{count} нового запроса',
+      },
+      languages: {
+        one: '{count} язык',
+        few: '{count} языка',
+        many: '{count} языков',
+        other: '{count} языка',
+      },
+      duplicatesRemoved: {
+        one: 'удалён {count} дубликат',
+        few: 'удалено {count} дубликата',
+        many: 'удалено {count} дубликатов',
+        other: 'удалено {count} дубликата',
+      },
+      reusedFromThread: {
+        one: '{count} источник взят из этого чата',
+        few: '{count} источника взяты из этого чата',
+        many: '{count} источников взято из этого чата',
+        other: '{count} источника взято из этого чата',
+      },
+    },
   },
   [Locale.TH]: {
     title: 'ขั้นตอนที่ฉันใช้ทำงานนี้',
@@ -442,6 +854,35 @@ export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> 
       'ระดับใดที่อ่านหน้าเว็บได้ในขณะนี้ "ปิด" หมายถึงถูกปิดใช้งาน ไม่ได้หมายความว่าหน้านั้นไม่จำเป็นต้องใช้',
     strategyAvailable: 'พร้อมใช้งาน',
     strategyOff: 'ปิด',
+    backToAiRound: 'กลับไปหา AI เพื่อวางแผนรอบที่ {round}',
+    searchStartedRound: 'รอบที่ {round}: กำลังค้นคว้า {queries}',
+    searchStartedRoundInLanguages: 'รอบที่ {round}: กำลังค้นคว้า {queries} ในภาษา{languages}',
+    searchStartedQueries: 'กำลังค้นคว้า {queries}',
+    searchStartedQueriesInLanguages: 'กำลังค้นคว้า {queries} ในภาษา{languages}',
+    searchStartedWithQueryInLanguages: 'กำลังค้นหา “{query}” บนเว็บในภาษา{languages}',
+    searchStartedInLanguages: 'กำลังค้นคว้าบนเว็บในภาษา{languages}',
+    roundLabel: 'รอบที่ {round}',
+    platformsLabel: 'แพลตฟอร์ม: {platforms}',
+    count: {
+      queries: {
+        other: '{count} คำค้น',
+      },
+      moreQueries: {
+        other: 'อีก {count} คำค้น',
+      },
+      newQueries: {
+        other: 'คำค้นใหม่ {count} รายการ',
+      },
+      languages: {
+        other: '{count} ภาษา',
+      },
+      duplicatesRemoved: {
+        other: 'ตัดรายการซ้ำ {count} รายการ',
+      },
+      reusedFromThread: {
+        other: 'ใช้แหล่งข้อมูลเดิมจากแชตนี้ {count} แหล่ง',
+      },
+    },
   },
   [Locale.ZH]: {
     title: '我是如何完成的',
@@ -477,5 +918,55 @@ export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> 
     strategiesDescription: '当前哪些层级可以读取网页。“关闭”表示已被停用，而不是某个页面不需要它。',
     strategyAvailable: '可用',
     strategyOff: '关闭',
+    backToAiRound: '回到 AI 规划第 {round} 轮',
+    searchStartedRound: '第 {round} 轮：正在研究{queries}',
+    searchStartedRoundInLanguages: '第 {round} 轮：正在用{languages}研究{queries}',
+    searchStartedQueries: '正在研究 {queries}',
+    searchStartedQueriesInLanguages: '正在用{languages}研究 {queries}',
+    searchStartedWithQueryInLanguages: '正在用{languages}在网上搜索“{query}”',
+    searchStartedInLanguages: '正在用{languages}在网上研究',
+    roundLabel: '第 {round} 轮',
+    platformsLabel: '平台：{platforms}',
+    count: {
+      queries: {
+        other: '{count} 个查询',
+      },
+      moreQueries: {
+        other: '另外 {count} 个查询',
+      },
+      newQueries: {
+        other: '{count} 个新查询',
+      },
+      languages: {
+        other: '{count} 种语言',
+      },
+      duplicatesRemoved: {
+        other: '已去除 {count} 条重复',
+      },
+      reusedFromThread: {
+        other: '复用了本对话中之前的 {count} 个来源',
+      },
+    },
   },
 };
+
+function fillLocale(raw: RawNarrationLocaleTranslation): NarrationLocaleTranslation {
+  const { count } = raw;
+  return {
+    ...raw,
+    count: {
+      queries: fillPluralForms(count.queries),
+      moreQueries: fillPluralForms(count.moreQueries),
+      newQueries: fillPluralForms(count.newQueries),
+      languages: fillPluralForms(count.languages),
+      duplicatesRemoved: fillPluralForms(count.duplicatesRemoved),
+      reusedFromThread: fillPluralForms(count.reusedFromThread),
+    },
+  };
+}
+
+/** Every locale with all six plural keys, so the dictionaries stay key-for-key identical. */
+export const NARRATION_TRANSLATIONS: Record<Locale, NarrationLocaleTranslation> =
+  Object.fromEntries(
+    Object.entries(RAW_TRANSLATIONS).map(([locale, raw]) => [locale, fillLocale(raw)]),
+  ) as Record<Locale, NarrationLocaleTranslation>;

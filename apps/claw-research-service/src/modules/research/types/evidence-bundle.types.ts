@@ -1,8 +1,9 @@
-import type { FetchStrategyKind } from '../../../generated/prisma';
+import type { FetchStrategyKind, PlatformCategory } from '../../../generated/prisma';
 import type { PageExtractionKind } from '../../fetch/enums/page-extraction-kind.enum';
 import type { ProviderSelectionMode } from '../../../common/enums/provider-selection-mode.enum';
 import type { ResearchWorkflowKind } from '../../../common/enums/research-workflow-kind.enum';
 import type { AuditFinding } from './audit-finding.types';
+import type { ResearchRunStats } from './research-engine.types';
 import type {
   EvidenceFetchReportEntry,
   EvidenceFetchSummary,
@@ -53,6 +54,21 @@ export type EvidenceItem = {
    * search hit whose page was opened, and on the fetched page itself.
    */
   fetchStatus?: FetchBatchStatus;
+  /** Research engine (B2), additive: the query that found this item (primary first). */
+  query?: string;
+  /** Research engine (B1), additive: the research round of the turn that produced it. */
+  round?: number;
+  /** Research engine (B2), additive: sha256 hex of the normalised (lower-case, whitespace-collapsed) text. */
+  contentHash?: string;
+  /** Research engine (B1), additive: served from this thread's earlier run, not fetched now. */
+  reusedFromRunId?: string;
+  /**
+   * Research engine (B3), additive, platform runs only: slug of the registry
+   * platform that returned it, or whose domain its host matches.
+   */
+  platform?: string;
+  /** Research engine (B3), additive: that platform's category. */
+  platformCategory?: PlatformCategory;
 };
 
 /** A trace entry describing a phase of the research run. */
@@ -98,6 +114,8 @@ export type EvidenceBundle = {
   fetchReport?: EvidenceFetchReportEntry[];
   /** Wall time versus summed page time of the fetch phases (ADR-211). */
   fetchSummary?: EvidenceFetchSummary;
+  /** Research engine B1+B2 counters; present only when the request sent an engine field. */
+  stats?: ResearchRunStats;
 };
 
 export type BuildEvidenceInput = {

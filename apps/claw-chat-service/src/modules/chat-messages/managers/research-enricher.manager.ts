@@ -23,8 +23,11 @@ import { resolveEffectiveResearchMode } from '../utilities/auto-research-mode.ut
 import {
   GITHUB_REPOSITORY_COVERAGE_NOTE,
   RESEARCH_GROUNDING_NO_INVENT_INSTRUCTION,
+  RESEARCH_TEXT_MATCH_INSTRUCTION,
+  WEB_SOURCE_UNTRUSTED_INSTRUCTION,
 } from '../constants/research-grounding.constants';
 import { hasGithubRepositoryEvidence } from '../utilities/research-prompt.utility';
+import { fenceWebSource } from '../utilities/untrusted-fence.utility';
 import {
   RESEARCH_ENRICHER_ASSUMED_WINDOW_TOKENS,
   RESEARCH_ENRICHER_DEFAULT_TOP_FETCH,
@@ -483,6 +486,8 @@ export class ResearchEnricherManager {
       "Do not say that you can't browse the web or access the internet.",
       'If the evidence is incomplete, state the uncertainty briefly and give the best supported answer.',
       RESEARCH_GROUNDING_NO_INVENT_INSTRUCTION,
+      RESEARCH_TEXT_MATCH_INSTRUCTION,
+      WEB_SOURCE_UNTRUSTED_INSTRUCTION,
       ...(hasGithubRepositoryEvidence(sources.map(({ url }) => url))
         ? [GITHUB_REPOSITORY_COVERAGE_NOTE]
         : []),
@@ -498,12 +503,17 @@ export class ResearchEnricherManager {
     return [header, '', ...blocks, ...omittedNote].join('\n').trimEnd();
   }
 
+  /** One source in its untrusted `web_source` fence, numbered as the model cites it ([n]). */
   private formatSource(num: number, source: ResearchSource): string {
-    const body = source.extracted ?? source.snippet ?? '(no snippet)';
-    const via =
-      source.foundBy !== undefined && source.foundBy.length > 0
-        ? ` (found by ${source.foundBy.join(', ')})`
-        : '';
-    return `[${String(num)}] ${source.title} — ${source.url}${via}\n${body}\n`;
+    return `${fenceWebSource({
+      n: num,
+      url: source.url,
+      title: source.title,
+      text: source.extracted ?? source.snippet ?? '(no snippet)',
+      details:
+        source.foundBy !== undefined && source.foundBy.length > 0
+          ? [`Found by: ${source.foundBy.join(', ')}`]
+          : [],
+    })}\n`;
   }
 }

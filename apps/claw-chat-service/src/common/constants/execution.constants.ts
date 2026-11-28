@@ -57,29 +57,8 @@ export const THREAD_HISTORY_FETCH_LIMIT = 400;
 
 export const MEMORY_FETCH_LIMIT = 20;
 
-/**
- * How many *topical* memories may reach the prompt.
- *
- * Topical means a fact or a summary — something relevant only when the question
- * is about it. Standing memories (an instruction, a preference) are not counted
- * here and are never dropped: an instruction that applies "only when you happen
- * to ask about it" is not an instruction.
- *
- * The previous cap was 3, applied to every kind at once, so five saved facts
- * reached the model as three and a standing instruction could be crowded out by
- * unrelated facts.
- */
-export const PROMPT_TOPICAL_MEMORY_LIMIT = 8;
-
-/**
- * Minimum lexical overlap for a topical memory to be considered relevant.
- *
- * Only ever applied to topical memories. Applying it to a standing instruction
- * was the bug: "always end every reply with X" shares no vocabulary with "what
- * is a database index", so the instruction was silently dropped from every
- * prompt that did not happen to talk about instructions.
- */
-export const TOPICAL_MEMORY_OVERLAP_THRESHOLD = 0.28;
+/** Most memories one prompt lists; standing instructions are never cut. The window fit may shorten the texts. */
+export const PROMPT_MEMORY_LIMIT = 50;
 
 export const WORKSPACE_CONTEXT_LIMIT = 5;
 

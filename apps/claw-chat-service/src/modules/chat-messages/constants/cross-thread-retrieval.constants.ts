@@ -75,7 +75,7 @@ export const CROSS_THREAD_MESSAGE_SCORE_THRESHOLD = 0.22;
  * "ok", "thanks" and "go on" match many old conversations weakly and none of
  * them strongly. Retrieval on such a prompt is noise by construction.
  */
-export const CROSS_THREAD_MIN_INTENT_TOKENS = 3;
+export const CROSS_THREAD_MIN_INTENT_TOKENS = 2;
 
 /**
  * How much a recent thread's existing relevance is amplified.

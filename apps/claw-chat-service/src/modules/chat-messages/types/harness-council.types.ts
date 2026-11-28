@@ -1,3 +1,4 @@
+import type { ResearchPlatformCategory } from '../../../common/enums/research-platform-category.enum';
 import type { ResearchGateCandidate } from './research-gate.types';
 
 /** One council member's parsed answer. */
@@ -8,6 +9,10 @@ export type HarnessCouncilVote = {
   depth: number;
   languages: string[];
   subQuestions: string[];
+  /** Source kinds worth searching. */
+  platforms: ResearchPlatformCategory[];
+  /** The exact words a text lookup searches verbatim (lyrics, a quote, an error), or null. */
+  exactText: string | null;
   reason: string;
 };
 
@@ -17,6 +22,8 @@ export type HarnessCouncilVerdict = {
   depth: number;
   languages: string[];
   subQuestions: string[];
+  platforms: ResearchPlatformCategory[];
+  exactText: string | null;
   /** How many members answered with a usable vote, and how many were asked. */
   answered: number;
   asked: number;

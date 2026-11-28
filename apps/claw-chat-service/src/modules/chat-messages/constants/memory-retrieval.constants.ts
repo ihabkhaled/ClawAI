@@ -19,6 +19,9 @@ export const MEMORY_RETRIEVE_PATH = '/api/v1/internal/memories/retrieve';
  */
 export const MEMORY_RETRIEVE_TOKEN_BUDGET = 4096;
 
+/** Memories asked for per turn: memory-service's own ceiling (its default of 5 hid most of a user's memories). */
+export const MEMORY_RETRIEVE_MAX_ITEMS = 50;
+
 /** Short: memory is an enhancement, and a slow one costs the whole turn. */
 export const MEMORY_RETRIEVE_TIMEOUT_MS = 5_000;
 

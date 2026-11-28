@@ -1298,3 +1298,25 @@ Doc: `docs/05-frontend/sign-up-abuse-defences.md`. Traps:
   Placeholders are resolved in `utilities/signup-protection-status.utility.ts`, never in the input.
 - CSP: Turnstile/reCAPTCHA hosts are in `script-src` and `frame-src` (`BOT_CHECK_CSP_*_SOURCES`), never in
   `connect-src`/`img-src`.
+
+## Research rounds in the work log, and the platforms page (research engine B2/B3, 2026-11-28)
+
+- **Counters are optional params.** chat-service adds `round`, `queries`, `languages` (ISO list),
+  `duplicatesRemoved`, `reusedFromThread`, `platforms` (slugs) to BACK_TO_AI, REPLANNED, SEARCH_STARTED and
+  SEARCH_DONE. `utilities/narration-counters.utility.ts` renders them; a line without them is the old string exactly
+  (tested). Round 1 is not a follow-up. Zero and one-item counters are left out; a non-integer is ignored, never shown.
+- **The locale comes from `LocaleContext`** (`useNarrationLog`, the one hook in `narration-log.tsx`), not from `t`:
+  it picks plural forms (`narration.count.*`, filled to six forms like `pluginQa.count`) and names languages via
+  `Intl.DisplayNames` (`utilities/language-name.utility.ts`), joined by `Intl.ListFormat` (`list-format.utility.ts`).
+  A single language equal to the reader's own is not named. Platform slugs get brand names from
+  `RESEARCH_PLATFORM_DISPLAY_NAMES` (unknown slug: title-cased).
+- **`/research/platforms`** (nav `nav.researchPlatforms`, under Research next to Providers) is gated on
+  `RESEARCH_PROVIDERS_MANAGE`, the permission research-service enforces. Controller `useResearchPlatformsPage`
+  composes list / filter / form / delete / toggle / tests hooks; repository `research-platform.repository.ts`;
+  validation `lib/validation/research-platform.schema.ts` (slug pattern, API kind for OFFICIAL_API, a domain for
+  SITE_SEARCH). The slug is fixed after create (never in the PATCH). A save error shows translated text by status
+  (409 slug taken, 400 invalid), never the server message. Several rows can test at once (pending per row).
+  Test ids: `research-platform-row|toggle|test|test-result|edit|delete-<slug>`, `research-platforms-add|empty|error`.
+  API kind names are product names in `RESEARCH_PLATFORM_API_KIND_LABELS`, not in the dictionaries (the ja/th/zh
+  completeness tests reject values equal to English). Copy: `researchPlatforms.*` in
+  `locales/research-platforms-translations.ts` (13 locales). Coded against the B3 contract before the backend landed.

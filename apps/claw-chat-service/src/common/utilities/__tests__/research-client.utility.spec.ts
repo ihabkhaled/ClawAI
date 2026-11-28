@@ -111,6 +111,68 @@ describe('runResearch', () => {
     );
   });
 
+  // Research engine B1/B2: the new fields are additive and travel only when set, so an older research-service
+  // and every caller that sets none (threads-service included) see exactly the old body.
+  it('sends the research engine fields when set', async () => {
+    mockedHttpRequest.mockResolvedValue({ ok: true, status: 200, data: { id: 'run-4' } } as never);
+
+    await runResearch('http://localhost:4016', {
+      userToken: 'token',
+      userId: 'u1',
+      intent: 'why did the ceo quit',
+      workflow: ResearchWorkflow.SEARCH_THEN_FETCH,
+      threadId: 'thread-7',
+      queries: ['who replaced him'],
+      languages: ['en', 'ar'],
+      depth: 2,
+      round: 2,
+      excludeUrls: ['https://a.example/'],
+    });
+
+    expect(mockedHttpRequest.mock.calls[0]?.[0].body).toMatchObject({
+      threadId: 'thread-7',
+      queries: ['who replaced him'],
+      languages: ['en', 'ar'],
+      depth: 2,
+      round: 2,
+      excludeUrls: ['https://a.example/'],
+    });
+  });
+
+  it('leaves every research engine field off the body when none is set, or a list is empty', async () => {
+    mockedHttpRequest.mockResolvedValue({ ok: true, status: 200, data: { id: 'run-5' } } as never);
+
+    await runResearch('http://localhost:4016', {
+      userToken: 'token',
+      userId: 'u1',
+      intent: 'latest news',
+      workflow: ResearchWorkflow.SEARCH_THEN_FETCH,
+      queries: [],
+      languages: [],
+      excludeUrls: [],
+    });
+
+    const body = mockedHttpRequest.mock.calls[0]?.[0].body as Record<string, unknown>;
+    for (const key of ['threadId', 'queries', 'languages', 'depth', 'round', 'excludeUrls']) {
+      expect(body).not.toHaveProperty(key);
+    }
+  });
+
+  it('sends depth 0 and round 1 as real values, not as absent', async () => {
+    mockedHttpRequest.mockResolvedValue({ ok: true, status: 200, data: { id: 'run-6' } } as never);
+
+    await runResearch('http://localhost:4016', {
+      userToken: 'token',
+      userId: 'u1',
+      intent: 'x',
+      workflow: ResearchWorkflow.SEARCH_THEN_FETCH,
+      depth: 0,
+      round: 1,
+    });
+
+    expect(mockedHttpRequest.mock.calls[0]?.[0].body).toMatchObject({ depth: 0, round: 1 });
+  });
+
   it('returns null on non-2xx responses', async () => {
     mockedHttpRequest.mockResolvedValue({
       ok: false,

@@ -1,0 +1,162 @@
+[
+  {
+    "id": "en-translation-01",
+    "lang": "en",
+    "category": "translation",
+    "text": "Translate into French: \"The library closes at nine tonight.\"",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ar-translation-01",
+    "lang": "ar",
+    "category": "translation",
+    "text": "ترجم إلى الإنجليزية: «الصبر مفتاح الفرج».",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ar-MA-translation-01",
+    "lang": "ar-MA",
+    "category": "translation",
+    "text": "ترجم ليا هاد الجملة للفرنسية: بغيت نمشي للسوق.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ar-EG-translation-01",
+    "lang": "ar-EG",
+    "category": "translation",
+    "text": "ترجملي الجملة دي للإنجليزي: أنا رايح الشغل بكرة بدري.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "fr-translation-01",
+    "lang": "fr",
+    "category": "translation",
+    "text": "Traduis en anglais : « Je voudrais réserver une table pour deux personnes. »",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "es-translation-01",
+    "lang": "es",
+    "category": "translation",
+    "text": "Traduce al alemán: «¿Dónde está la estación de tren?»",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "pt-BR-translation-01",
+    "lang": "pt-BR",
+    "category": "translation",
+    "text": "Traduza para o espanhol: \"Eu gosto muito de café com leite.\"",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "de-translation-01",
+    "lang": "de",
+    "category": "translation",
+    "text": "Übersetze ins Italienische: „Ich habe heute keine Zeit.“",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "it-translation-01",
+    "lang": "it",
+    "category": "translation",
+    "text": "Traduci in inglese: «Buon compleanno, ti auguro tutto il bene del mondo.»",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "tr-translation-01",
+    "lang": "tr",
+    "category": "translation",
+    "text": "Şu cümleyi İngilizceye çevir: \"Yarın sabah erken kalkmam gerekiyor.\"",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "hi-translation-01",
+    "lang": "hi",
+    "category": "translation",
+    "text": "इसे अंग्रेज़ी में अनुवाद करो: \"मुझे चाय बहुत पसंद है।\"",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ru-translation-01",
+    "lang": "ru",
+    "category": "translation",
+    "text": "Переведи на английский: «Где здесь ближайшая аптека?»",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "zh-CN-translation-01",
+    "lang": "zh-CN",
+    "category": "translation",
+    "text": "请把这句话翻译成英文：“今天天气很好，我们去公园吧。”",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ja-translation-01",
+    "lang": "ja",
+    "category": "translation",
+    "text": "次の文を英語に翻訳してください：「お先に失礼します。」",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ko-translation-01",
+    "lang": "ko",
+    "category": "translation",
+    "text": "다음 문장을 영어로 번역해 줘: \"내일 회의는 오후 세 시에 시작해요.\"",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "vi-translation-01",
+    "lang": "vi",
+    "category": "translation",
+    "text": "Dịch sang tiếng Anh giúp mình: \"Cảm ơn bạn đã giúp đỡ mình hôm nay.\"",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  }
+]

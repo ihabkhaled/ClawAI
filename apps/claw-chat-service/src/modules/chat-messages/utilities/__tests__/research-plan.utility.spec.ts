@@ -6,6 +6,22 @@ describe('parseResearchPlan', () => {
   const plan = (raw: unknown, userUrls: string[] = []) =>
     parseResearchPlan(typeof raw === 'string' ? raw : JSON.stringify(raw), userUrls);
 
+  // Research engine B1: with no council, a plan with a search step researches at depth 1; nothing else does.
+  it('gives a plan no council sized empty sub-questions and languages, and depth 1 only when it searches', () => {
+    expect(plan({ action: 'search', query: 'q q' })).toMatchObject({
+      subQuestions: [],
+      languages: [],
+      depth: 1,
+    });
+    expect(
+      plan({ action: 'crawl_then_search', urls: ['https://a.example.com/'] }, [
+        'https://a.example.com/',
+      ])?.depth,
+    ).toBe(1);
+    expect(plan({ action: 'answer' })?.depth).toBe(0);
+    expect(plan({ action: 'crawl' }, ['https://a.example.com/'])?.depth).toBe(0);
+  });
+
   it('reads a well-formed search plan', () => {
     expect(
       plan({

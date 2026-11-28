@@ -12,7 +12,7 @@ export const PT_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
     [FeatureCapability.SMART_ATTACHMENTS]:
       'Solte documentos, código, mídia ou arquivos compactados inteiros no chat; cada envio passa por antivírus e tem o texto extraído para o modelo.',
     [FeatureCapability.NARRATED_RESEARCH]:
-      'Um ciclo de pesquisa que decide se deve buscar ou rastrear, narra cada etapa enquanto trabalha e respeita o robots.txt em cada acesso.',
+      'Pesquisa em várias rodadas e idiomas, na web e em fontes acadêmicas e de desenvolvedores, que narra cada passo e respeita o robots.txt.',
     [FeatureCapability.ORCHESTRATION_LABS]:
       'Laboratórios dedicados que colocam vários modelos no mesmo problema — comparação com juiz, consenso, escalonamento, verificação e muito mais.',
     [FeatureCapability.CONVERSATION_TOOLS]:
@@ -213,7 +213,7 @@ export const PT_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
       seo: {
         title: 'Pesquisa narrada e rastreamento da web na ClawAI',
         description:
-          'Como a ClawAI pesquisa na web: um planejador que escolhe entre buscar e rastrear, um registro de trabalho narrado ao vivo, acesso em níveis que respeita o robots.txt e fontes citadas.',
+          'Como o ClawAI pesquisa: várias rodadas de busca multilíngue na web e em fontes acadêmicas e de código, registro ao vivo, coleta respeitosa e fontes citadas.',
         keywords: [
           'pesquisa na web com IA',
           'rastreador de sites com IA',
@@ -248,6 +248,30 @@ export const PT_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
             'O robots.txt é respeitado em cada acesso sob o user agent ClawAI-ResearchBot, e uma página não permitida não é tentada de outra forma. Barreiras de login e bloqueios legais interrompem o acesso, captchas nunca são resolvidos, cada redirecionamento é verificado contra endereços de rede privada e uma cópia arquivada é sempre identificada como tal.',
           ],
         },
+        {
+          id: 'research-in-rounds',
+          heading: 'Pesquisa em rodadas e em vários idiomas',
+          paragraphs: [
+            'Quando a pergunta exige, vários modelos votam em paralelo se é preciso usar a web, até que profundidade ir, em quais idiomas buscar e que perguntas fazer. Uma busca cobre então várias dessas perguntas de uma vez.',
+            'Após cada rodada, o ClawAI verifica o que ainda falta e busca exatamente isso, em até três rodadas dentro de um tempo de pesquisa definido. Ao tocar em «Parar», a pesquisa e a resposta que viria depois são interrompidas.',
+          ],
+        },
+        {
+          id: 'more-than-a-web-search',
+          heading: 'Mais que uma busca na web',
+          paragraphs: [
+            'Conforme a pergunta, a pesquisa também consulta diretamente APIs oficiais gratuitas: OpenAlex, Semantic Scholar, arXiv, PubMed, Crossref para estudos; GitHub, Stack Overflow, Hacker News para código; Wikipedia para contexto. Também busca em sites específicos de notícias, oficiais e de comunidades.',
+            'Só são usadas páginas e APIs públicas: sem login, sem resolver CAPTCHA e sem contornar paywall. Plataformas sem uma API pública lícita são alcançadas pelos resultados comuns de busca.',
+          ],
+        },
+        {
+          id: 'evidence-you-can-trace',
+          heading: 'Evidências rastreáveis',
+          paragraphs: [
+            'Cada fonte é guardada com a consulta que a encontrou. Uma página já lida na mesma conversa nas últimas 24 horas não é buscada de novo, e cópias idênticas do mesmo texto são descartadas.',
+            'O texto das páginas chega ao modelo marcado como dado não confiável, separado das suas instruções, e o modelo é instruído a nunca seguir instruções encontradas dentro de uma página.',
+          ],
+        },
       ],
       faq: [
         {
@@ -264,6 +288,16 @@ export const PT_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
           question: 'A pesquisa na web está disponível em todos os planos?',
           answer:
             'Os modos de pesquisa são recursos de plano (RESEARCH_MODE, WEB_SEARCH, WEB_FETCH e WEB_EXTRACT) com cotas próprias, que o operador define por plano. A página de preços mostra o que cada plano inclui.',
+        },
+        {
+          question: 'A pesquisa busca em outros idiomas?',
+          answer:
+            'Sim. Os modelos de planejamento escolhem os idiomas em que a resposta provavelmente está e escrevem as buscas neles, então a pesquisa não se limita ao idioma da sua pergunta.',
+        },
+        {
+          question: 'Quais fontes a pesquisa pode consultar?',
+          answer:
+            'A busca geral na web e uma lista gerenciada de fontes: bases acadêmicas, sites para desenvolvedores, obras de referência, notícias, sites oficiais e de comunidades. O operador pode ativar ou desativar fontes, e seu plano define os modos de pesquisa disponíveis.',
         },
       ],
       productNote:

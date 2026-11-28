@@ -118,9 +118,15 @@ describe('ResearchEnricherManager', () => {
       snippet: 'OpenAI shipped GPT-5 today.',
     });
     expect(result.evidence).toContain('## Web research evidence (mode: SEARCH');
-    expect(result.evidence).toContain('[1] GPT-5 launches — https://news/gpt5');
+    // Research engine B1: each source in an untrusted fence, numbered as the model cites it.
+    expect(result.evidence).toContain(
+      '<web_source n="1" url="https://news/gpt5" trust="untrusted">\nTitle: GPT-5 launches',
+    );
     expect(result.evidence).toContain('OpenAI shipped GPT-5 today.');
-    expect(result.evidence).toContain('[2] Reactions — https://news/reactions');
+    expect(result.evidence).toContain(
+      '<web_source n="2" url="https://news/reactions" trust="untrusted">\nTitle: Reactions',
+    );
+    expect(result.evidence).toContain('Web content arrives inside <web_source');
   });
 
   it('warns orchestration modes that GitHub repository evidence is not exhaustive', async () => {

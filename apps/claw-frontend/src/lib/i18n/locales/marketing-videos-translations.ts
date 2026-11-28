@@ -26,6 +26,10 @@ export const MARKETING_VIDEOS_TRANSLATIONS: Record<Locale, MarketingVideosLocale
       title: 'Watch the ClawAI Threads video in three parts',
       body: 'Three short clips from ClawAI Threads.',
     },
+    researchSection: {
+      title: 'Watch research work',
+      body: 'A real research turn in the app, sped up. No sound.',
+    },
     durationLabel: '{seconds} seconds',
     facade: { play: 'Play video: {title}', frameTitle: '{title} (YouTube video)' },
     local: {
@@ -36,6 +40,11 @@ export const MARKETING_VIDEOS_TRANSLATIONS: Record<Locale, MarketingVideosLocale
       part: {
         title: 'ClawAI Threads video, part {n} of {total}',
         description: 'One of three short clips from ClawAI Threads.',
+      },
+      research: {
+        title: 'Research in rounds, in the app',
+        description:
+          'A question about intermittent fasting and heart disease: ClawAI searches the web and academic sources, checks what is missing, searches again, then answers with numbered sources.',
       },
     },
   },
@@ -56,6 +65,10 @@ export const MARKETING_VIDEOS_TRANSLATIONS: Record<Locale, MarketingVideosLocale
       title: 'شاهد فيديو ClawAI Threads في ثلاثة أجزاء',
       body: 'ثلاثة مقاطع قصيرة من ClawAI Threads.',
     },
+    researchSection: {
+      title: 'شاهد البحث أثناء العمل',
+      body: 'عملية بحث حقيقية داخل التطبيق، بسرعة مضاعفة. بلا صوت.',
+    },
     durationLabel: '{seconds} ثانية',
     facade: { play: 'تشغيل الفيديو: {title}', frameTitle: '{title} (فيديو YouTube)' },
     local: {
@@ -66,6 +79,11 @@ export const MARKETING_VIDEOS_TRANSLATIONS: Record<Locale, MarketingVideosLocale
       part: {
         title: 'فيديو ClawAI Threads، الجزء {n} من {total}',
         description: 'أحد ثلاثة مقاطع قصيرة من ClawAI Threads.',
+      },
+      research: {
+        title: 'البحث على جولات داخل التطبيق',
+        description:
+          'سؤال عن الصيام المتقطع ومرض القلب: تبحث ClawAI في الويب والمصادر الأكاديمية، وتتحقق مما ينقص، ثم تبحث مرة أخرى وتجيب مع مصادر مرقّمة.',
       },
     },
   },
@@ -86,6 +104,10 @@ export const MARKETING_VIDEOS_TRANSLATIONS: Record<Locale, MarketingVideosLocale
       title: 'Regardez la vidéo ClawAI Threads en trois parties',
       body: 'Trois courts extraits de ClawAI Threads.',
     },
+    researchSection: {
+      title: 'La recherche en action',
+      body: 'Une vraie recherche dans l’application, en accéléré. Sans son.',
+    },
     durationLabel: '{seconds} secondes',
     facade: { play: 'Lire la vidéo : {title}', frameTitle: '{title} (vidéo YouTube)' },
     local: {
@@ -96,6 +118,11 @@ export const MARKETING_VIDEOS_TRANSLATIONS: Record<Locale, MarketingVideosLocale
       part: {
         title: 'Vidéo ClawAI Threads, partie {n} sur {total}',
         description: 'Un des trois courts extraits de ClawAI Threads.',
+      },
+      research: {
+        title: 'La recherche par tours dans l’application',
+        description:
+          'Une question sur le jeûne intermittent et les maladies cardiaques : ClawAI cherche sur le web et dans les sources scientifiques, vérifie ce qui manque, cherche à nouveau puis répond avec des sources numérotées.',
       },
     },
   },
@@ -116,6 +143,10 @@ export const MARKETING_VIDEOS_TRANSLATIONS: Record<Locale, MarketingVideosLocale
       title: 'Guarda il video di ClawAI Threads in tre parti',
       body: 'Tre brevi clip di ClawAI Threads.',
     },
+    researchSection: {
+      title: 'La ricerca in azione',
+      body: 'Una vera ricerca nell’app, accelerata. Senza audio.',
+    },
     durationLabel: '{seconds} secondi',
     facade: { play: 'Riproduci il video: {title}', frameTitle: '{title} (video YouTube)' },
     local: {
@@ -126,6 +157,11 @@ export const MARKETING_VIDEOS_TRANSLATIONS: Record<Locale, MarketingVideosLocale
       part: {
         title: 'Video di ClawAI Threads, parte {n} di {total}',
         description: 'Una delle tre brevi clip di ClawAI Threads.',
+      },
+      research: {
+        title: 'Ricerca a giri nell’app',
+        description:
+          'Una domanda su digiuno intermittente e malattie cardiache: ClawAI cerca sul web e in fonti accademiche, controlla che cosa manca, cerca di nuovo e risponde con fonti numerate.',
       },
     },
   },
@@ -146,6 +182,10 @@ export const MARKETING_VIDEOS_TRANSLATIONS: Record<Locale, MarketingVideosLocale
       title: 'Das ClawAI-Threads-Video in drei Teilen',
       body: 'Drei kurze Clips zu ClawAI Threads.',
     },
+    researchSection: {
+      title: 'So arbeitet die Recherche',
+      body: 'Eine echte Recherche in der App, beschleunigt. Ohne Ton.',
+    },
     durationLabel: '{seconds} Sekunden',
     facade: { play: 'Video abspielen: {title}', frameTitle: '{title} (YouTube-Video)' },
     local: {
@@ -156,6 +196,11 @@ export const MARKETING_VIDEOS_TRANSLATIONS: Record<Locale, MarketingVideosLocale
       part: {
         title: 'ClawAI-Threads-Video, Teil {n} von {total}',
         description: 'Einer von drei kurzen Clips zu ClawAI Threads.',
+      },
+      research: {
+        title: 'Recherche in Runden in der App',
+        description:
+          'Eine Frage zu Intervallfasten und Herzkrankheiten: ClawAI durchsucht Web und wissenschaftliche Quellen, prüft, was fehlt, sucht erneut und antwortet mit nummerierten Quellen.',
       },
     },
   },
@@ -176,6 +221,10 @@ export const MARKETING_VIDEOS_TRANSLATIONS: Record<Locale, MarketingVideosLocale
       title: 'Mira el video de ClawAI Threads en tres partes',
       body: 'Tres clips cortos de ClawAI Threads.',
     },
+    researchSection: {
+      title: 'Mira cómo investiga',
+      body: 'Una investigación real en la app, acelerada. Sin sonido.',
+    },
     durationLabel: '{seconds} segundos',
     facade: { play: 'Reproducir vídeo: {title}', frameTitle: '{title} (vídeo de YouTube)' },
     local: {
@@ -186,6 +235,11 @@ export const MARKETING_VIDEOS_TRANSLATIONS: Record<Locale, MarketingVideosLocale
       part: {
         title: 'Video de ClawAI Threads, parte {n} de {total}',
         description: 'Uno de los tres clips cortos de ClawAI Threads.',
+      },
+      research: {
+        title: 'Investigación por rondas en la app',
+        description:
+          'Una pregunta sobre ayuno intermitente y enfermedad cardíaca: ClawAI busca en la web y en fuentes académicas, comprueba qué falta, vuelve a buscar y responde con fuentes numeradas.',
       },
     },
   },
@@ -206,6 +260,10 @@ export const MARKETING_VIDEOS_TRANSLATIONS: Record<Locale, MarketingVideosLocale
       title: 'Видео о ClawAI Threads в трёх частях',
       body: 'Три коротких ролика о ClawAI Threads.',
     },
+    researchSection: {
+      title: 'Как идёт исследование',
+      body: 'Настоящее исследование в приложении, ускоренное. Без звука.',
+    },
     durationLabel: '{seconds} сек.',
     facade: { play: 'Воспроизвести видео: {title}', frameTitle: '{title} (видео YouTube)' },
     local: {
@@ -216,6 +274,11 @@ export const MARKETING_VIDEOS_TRANSLATIONS: Record<Locale, MarketingVideosLocale
       part: {
         title: 'Видео о ClawAI Threads, часть {n} из {total}',
         description: 'Один из трёх коротких роликов о ClawAI Threads.',
+      },
+      research: {
+        title: 'Исследование раундами в приложении',
+        description:
+          'Вопрос об интервальном голодании и болезнях сердца: ClawAI ищет в вебе и научных источниках, проверяет, чего не хватает, ищет снова и отвечает с пронумерованными источниками.',
       },
     },
   },
@@ -236,6 +299,10 @@ export const MARKETING_VIDEOS_TRANSLATIONS: Record<Locale, MarketingVideosLocale
       title: 'Assista ao vídeo do ClawAI Threads em três partes',
       body: 'Três clipes curtos do ClawAI Threads.',
     },
+    researchSection: {
+      title: 'Veja a pesquisa em ação',
+      body: 'Uma pesquisa real no app, acelerada. Sem som.',
+    },
     durationLabel: '{seconds} segundos',
     facade: { play: 'Reproduzir vídeo: {title}', frameTitle: '{title} (vídeo do YouTube)' },
     local: {
@@ -246,6 +313,11 @@ export const MARKETING_VIDEOS_TRANSLATIONS: Record<Locale, MarketingVideosLocale
       part: {
         title: 'Vídeo do ClawAI Threads, parte {n} de {total}',
         description: 'Um dos três clipes curtos do ClawAI Threads.',
+      },
+      research: {
+        title: 'Pesquisa em rodadas no app',
+        description:
+          'Uma pergunta sobre jejum intermitente e doença cardíaca: o ClawAI busca na web e em fontes acadêmicas, verifica o que falta, busca de novo e responde com fontes numeradas.',
       },
     },
   },
@@ -266,6 +338,10 @@ export const MARKETING_VIDEOS_TRANSLATIONS: Record<Locale, MarketingVideosLocale
       title: 'ClawAI Threads वीडियो तीन भागों में देखें',
       body: 'ClawAI Threads के तीन छोटे क्लिप।',
     },
+    researchSection: {
+      title: 'शोध को काम करते देखें',
+      body: 'ऐप में एक वास्तविक शोध, तेज़ गति में। बिना आवाज़।',
+    },
     durationLabel: '{seconds} सेकंड',
     facade: { play: 'वीडियो चलाएँ: {title}', frameTitle: '{title} (YouTube वीडियो)' },
     local: {
@@ -276,6 +352,11 @@ export const MARKETING_VIDEOS_TRANSLATIONS: Record<Locale, MarketingVideosLocale
       part: {
         title: 'ClawAI Threads वीडियो, भाग {n} / {total}',
         description: 'ClawAI Threads के तीन छोटे क्लिप में से एक।',
+      },
+      research: {
+        title: 'ऐप में कई दौर का शोध',
+        description:
+          'इंटरमिटेंट फ़ास्टिंग और हृदय रोग पर एक प्रश्न: ClawAI वेब और शैक्षणिक स्रोतों में खोजता है, जाँचता है कि क्या बाकी है, फिर खोजता है और क्रमांकित स्रोतों के साथ उत्तर देता है।',
       },
     },
   },
@@ -296,6 +377,10 @@ export const MARKETING_VIDEOS_TRANSLATIONS: Record<Locale, MarketingVideosLocale
       title: 'ClawAI Threads の動画を3つのパートで見る',
       body: 'ClawAI Threads の短いクリップ3本です。',
     },
+    researchSection: {
+      title: '調査の様子を見る',
+      body: 'アプリ内の実際の調査を早送りで。音声はありません。',
+    },
     durationLabel: '{seconds} 秒',
     facade: { play: '動画を再生: {title}', frameTitle: '{title}(YouTube 動画)' },
     local: {
@@ -306,6 +391,11 @@ export const MARKETING_VIDEOS_TRANSLATIONS: Record<Locale, MarketingVideosLocale
       part: {
         title: 'ClawAI Threads の動画 パート{n}/{total}',
         description: 'ClawAI Threads の短いクリップ3本のうちの1本です。',
+      },
+      research: {
+        title: 'アプリで進むラウンド制の調査',
+        description:
+          '間欠的断食と心臓病についての質問。ClawAI はウェブと学術情報源を検索し、足りない点を確認して再び検索し、番号付きの出典を添えて回答します。',
       },
     },
   },
@@ -326,6 +416,10 @@ export const MARKETING_VIDEOS_TRANSLATIONS: Record<Locale, MarketingVideosLocale
       title: 'ดูวิดีโอ ClawAI Threads แบบสามตอน',
       body: 'คลิปสั้นสามคลิปจาก ClawAI Threads',
     },
+    researchSection: {
+      title: 'ดูการค้นคว้าขณะทำงาน',
+      body: 'การค้นคว้าจริงในแอป เร่งความเร็ว ไม่มีเสียง',
+    },
     durationLabel: '{seconds} วินาที',
     facade: { play: 'เล่นวิดีโอ: {title}', frameTitle: '{title} (วิดีโอ YouTube)' },
     local: {
@@ -336,6 +430,11 @@ export const MARKETING_VIDEOS_TRANSLATIONS: Record<Locale, MarketingVideosLocale
       part: {
         title: 'วิดีโอ ClawAI Threads ตอนที่ {n} จาก {total}',
         description: 'หนึ่งในสามคลิปสั้นจาก ClawAI Threads',
+      },
+      research: {
+        title: 'การค้นคว้าหลายรอบในแอป',
+        description:
+          'คำถามเรื่องการอดอาหารเป็นช่วงกับโรคหัวใจ: ClawAI ค้นเว็บและแหล่งวิชาการ ตรวจว่ายังขาดอะไร ค้นอีกครั้ง แล้วตอบพร้อมแหล่งอ้างอิงที่มีหมายเลข',
       },
     },
   },
@@ -356,6 +455,10 @@ export const MARKETING_VIDEOS_TRANSLATIONS: Record<Locale, MarketingVideosLocale
       title: 'ویدیوی ClawAI Threads را در سه بخش ببینید',
       body: 'سه کلیپ کوتاه از ClawAI Threads.',
     },
+    researchSection: {
+      title: 'پژوهش را در حال کار ببینید',
+      body: 'یک پژوهش واقعی در برنامه، با سرعت بیشتر. بدون صدا.',
+    },
     durationLabel: '{seconds} ثانیه',
     facade: { play: 'پخش ویدیو: {title}', frameTitle: '{title} (ویدیوی YouTube)' },
     local: {
@@ -366,6 +469,11 @@ export const MARKETING_VIDEOS_TRANSLATIONS: Record<Locale, MarketingVideosLocale
       part: {
         title: 'ویدیوی ClawAI Threads، بخش {n} از {total}',
         description: 'یکی از سه کلیپ کوتاه ClawAI Threads.',
+      },
+      research: {
+        title: 'پژوهش مرحله‌ای در برنامه',
+        description:
+          'پرسشی درباره روزه‌داری متناوب و بیماری قلبی: ClawAI در وب و منابع علمی جستجو می‌کند، کمبودها را بررسی می‌کند، دوباره جستجو می‌کند و با منابع شماره‌دار پاسخ می‌دهد.',
       },
     },
   },
@@ -386,6 +494,10 @@ export const MARKETING_VIDEOS_TRANSLATIONS: Record<Locale, MarketingVideosLocale
       title: '分三部分观看 ClawAI Threads 视频',
       body: '来自 ClawAI Threads 的三个短片段。',
     },
+    researchSection: {
+      title: '查看研究过程',
+      body: '应用内一次真实研究的快放，无声音。',
+    },
     durationLabel: '{seconds} 秒',
     facade: { play: '播放视频：{title}', frameTitle: '{title}（YouTube 视频）' },
     local: {
@@ -396,6 +508,11 @@ export const MARKETING_VIDEOS_TRANSLATIONS: Record<Locale, MarketingVideosLocale
       part: {
         title: 'ClawAI Threads 视频，第 {n} 部分，共 {total} 部分',
         description: 'ClawAI Threads 三个短片段之一。',
+      },
+      research: {
+        title: '应用内的分轮研究',
+        description:
+          '一个关于间歇性断食与心脏病的问题：ClawAI 搜索网络和学术来源，检查还缺什么，再次搜索，然后给出带编号来源的回答。',
       },
     },
   },

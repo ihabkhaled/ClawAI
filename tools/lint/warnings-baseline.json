@@ -447,9 +447,6 @@
     "apps/claw-chat-service/src/modules/chat-messages/managers/provider-stream-executor.manager.ts": {
       "security/detect-object-injection": 1
     },
-    "apps/claw-chat-service/src/modules/chat-messages/managers/quality-check.manager.ts": {
-      "unicorn/prefer-ternary": 5
-    },
     "apps/claw-chat-service/src/modules/chat-messages/managers/video-delivery.manager.ts": {
       "security/detect-object-injection": 2
     },
@@ -467,9 +464,6 @@
     },
     "apps/claw-chat-service/src/modules/chat-messages/repositories/provider-breaker.store.ts": {
       "security/detect-object-injection": 1
-    },
-    "apps/claw-chat-service/src/modules/chat-messages/services/__tests__/auto-research-resolution.spec.ts": {
-      "@typescript-eslint/consistent-type-imports": 1
     },
     "apps/claw-chat-service/src/modules/chat-messages/services/__tests__/research-gate.service.spec.ts": {
       "@typescript-eslint/consistent-type-imports": 1
@@ -945,10 +939,6 @@
     },
     "apps/claw-memory-service/src/modules/memory/__tests__/memory.service.spec.ts": {
       "@typescript-eslint/prefer-nullish-coalescing": 1
-    },
-    "apps/claw-memory-service/src/modules/memory/services/memory-retrieval.service.ts": {
-      "complexity": 1,
-      "max-lines-per-function": 2
     },
     "apps/claw-memory-service/src/modules/memory/services/memory.service.ts": {
       "complexity": 2,

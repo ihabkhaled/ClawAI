@@ -28,6 +28,7 @@ import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
 import { PLUGINS_SERVERS_TRANSLATIONS } from './plugins-servers-translations';
 import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
 import { PLUGINS_TRANSLATIONS } from './plugins-translations';
+import { RESEARCH_PLATFORMS_TRANSLATIONS } from './research-platforms-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -420,6 +421,7 @@ export const de: TranslationDictionary = {
     workspaceFigma: 'Figma',
     workspaceWorkflows: 'Workflows',
     researchProviders: 'Research-Provider',
+    researchPlatforms: 'Recherche-Plattformen',
     researchRuns: 'Research-Läufe',
     research: 'Recherche',
     workspaceInbox: 'Posteingang',
@@ -5070,6 +5072,7 @@ export const de: TranslationDictionary = {
   adminSecurity: ANTI_ABUSE_TRANSLATIONS.de.admin,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.de,
   narration: NARRATION_TRANSLATIONS.de,
+  researchPlatforms: RESEARCH_PLATFORMS_TRANSLATIONS.de,
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.de,
   pickedModel: PICKED_MODEL_TRANSLATIONS.de,
   creditFallback: CREDIT_FALLBACK_TRANSLATIONS.de,

@@ -12,6 +12,10 @@ export const AR_MARKETING_SCENES_CONTENT: MarketingScenesLocaleContent = {
       alt: 'مربع الرسالة في ClawAI مع قائمة اختيار النموذج مفتوحة وتعرض النماذج التي يمكنك الاختيار منها.',
       caption: 'اختر النموذج بنفسك، أو دع AUTO يختار.',
     },
+    [MarketingSceneId.CHAT_RESEARCH_ROUNDS]: {
+      alt: 'محادثة في ClawAI تعرض سجل البحث: عدة جولات من البحث مع عدد عمليات البحث واللغات وأنواع المصادر، ثم إجابة موثّقة.',
+      caption: 'يعمل البحث على جولات ويوضّح ما الذي بحث عنه.',
+    },
     [MarketingSceneId.CHAT_RESEARCH]: {
       alt: 'مربع الرسالة مع تفعيل البحث على الويب وظهور أداة اختيار مزوّد البحث.',
       caption: 'فعّل البحث على الويب واختر طريقة البحث.',

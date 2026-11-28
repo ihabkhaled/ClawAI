@@ -12,7 +12,7 @@ export const IT_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
     [FeatureCapability.SMART_ATTACHMENTS]:
       'Trascina in chat documenti, codice, file multimediali o interi archivi; ogni caricamento viene analizzato dall’antivirus e il suo testo estratto per il modello.',
     [FeatureCapability.NARRATED_RESEARCH]:
-      'Un ciclo di ricerca che decide se cercare o esplorare un sito, racconta ogni passaggio mentre lavora e rispetta robots.txt a ogni recupero.',
+      'Ricerca in più giri e più lingue, sul web e su fonti accademiche e per sviluppatori, che racconta ogni passo e rispetta robots.txt.',
     [FeatureCapability.ORCHESTRATION_LABS]:
       'Laboratori dedicati che mettono più modelli sullo stesso problema: confronto con un giudice, consenso, escalation, verifica e altro ancora.',
     [FeatureCapability.CONVERSATION_TOOLS]:
@@ -208,7 +208,7 @@ export const IT_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
       seo: {
         title: 'Ricerca narrata ed esplorazione del web in ClawAI',
         description:
-          'Come ClawAI fa ricerca sul web: un pianificatore che sceglie se cercare o esplorare, un registro di lavoro narrato in diretta, un recupero a livelli che rispetta robots.txt e fonti citate.',
+          'Come fa ricerca ClawAI: più giri di ricerca multilingue su web, fonti accademiche e per sviluppatori, un registro in diretta, letture rispettose e fonti citate.',
         keywords: ['ricerca web con AI', 'crawler di siti AI', 'ricerca AI con fonti'],
       },
       eyebrow: 'Funzionalità',
@@ -239,6 +239,30 @@ export const IT_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
             'robots.txt viene rispettato a ogni recupero con lo user agent ClawAI-ResearchBot, e una pagina non consentita non viene ritentata in altro modo. Le pagine che richiedono l’accesso e i blocchi legali fermano il recupero, i captcha non vengono mai risolti, ogni reindirizzamento viene controllato contro gli indirizzi di rete privati e una copia d’archivio è sempre indicata come tale.',
           ],
         },
+        {
+          id: 'research-in-rounds',
+          heading: 'Ricerca a giri, in più lingue',
+          paragraphs: [
+            'Quando la domanda lo richiede, più modelli votano in parallelo se serve il web, quanto andare a fondo, in quali lingue cercare e quali domande porre. Una sola ricerca copre poi diverse di queste domande insieme.',
+            'Dopo ogni giro ClawAI controlla che cosa manca ancora e cerca proprio quello, fino a tre giri entro un tempo di ricerca prefissato. Premendo «Interrompi» si fermano la ricerca e la risposta che sarebbe seguita.',
+          ],
+        },
+        {
+          id: 'more-than-a-web-search',
+          heading: 'Più di una ricerca sul web',
+          paragraphs: [
+            'A seconda della domanda, la ricerca interroga anche direttamente API ufficiali gratuite: OpenAlex, Semantic Scholar, arXiv, PubMed, Crossref per gli studi; GitHub, Stack Overflow, Hacker News per il codice; Wikipedia per il contesto. Cerca inoltre su siti di notizie, ufficiali e di comunità selezionati.',
+            'Si usano solo pagine e API pubbliche: nessun accesso con account, nessun CAPTCHA risolto, nessun paywall aggirato. Le piattaforme senza un’API pubblica lecita si raggiungono tramite i normali risultati di ricerca.',
+          ],
+        },
+        {
+          id: 'evidence-you-can-trace',
+          heading: 'Prove rintracciabili',
+          paragraphs: [
+            'Ogni fonte viene conservata con la domanda di ricerca che l’ha trovata. Una pagina già letta nella stessa chat nelle ultime 24 ore non viene riscaricata, e le copie identiche dello stesso testo vengono scartate.',
+            'Il testo delle pagine web arriva al modello contrassegnato come dato non affidabile, separato dalle tue istruzioni, e al modello viene detto di non seguire mai istruzioni trovate dentro una pagina.',
+          ],
+        },
       ],
       faq: [
         {
@@ -255,6 +279,16 @@ export const IT_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
           question: 'La ricerca web è disponibile su ogni piano?',
           answer:
             'Le modalità di ricerca sono funzionalità di piano (RESEARCH_MODE, WEB_SEARCH, WEB_FETCH e WEB_EXTRACT) con limiti propri, che l’operatore fissa per ciascun piano. La pagina dei prezzi mostra cosa include ogni piano.',
+        },
+        {
+          question: 'La ricerca cerca anche in altre lingue?',
+          answer:
+            'Sì. I modelli di pianificazione scelgono le lingue in cui è più probabile trovare la risposta e scrivono le ricerche in quelle lingue, quindi la ricerca non si limita alla lingua della domanda.',
+        },
+        {
+          question: 'Quali fonti può consultare la ricerca?',
+          answer:
+            'La ricerca web generale e un elenco di fonti gestito: banche dati accademiche, siti per sviluppatori, opere di consultazione, notizie, siti ufficiali e di comunità. L’operatore può attivare o disattivare le fonti e il tuo piano decide quali modalità di ricerca hai.',
         },
       ],
       productNote:

@@ -28,6 +28,7 @@ import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
 import { PLUGINS_SERVERS_TRANSLATIONS } from './plugins-servers-translations';
 import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
 import { PLUGINS_TRANSLATIONS } from './plugins-translations';
+import { RESEARCH_PLATFORMS_TRANSLATIONS } from './research-platforms-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -389,6 +390,7 @@ export const zh: TranslationDictionary = {
     workspaceFigma: 'Figma',
     workspaceWorkflows: '工作流程',
     researchProviders: '研究提供者',
+    researchPlatforms: '研究平台',
     researchRuns: '研究运行',
     research: '研究',
     workspaceInbox: '收件箱',
@@ -4746,6 +4748,7 @@ export const zh: TranslationDictionary = {
   adminSecurity: ANTI_ABUSE_TRANSLATIONS.zh.admin,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.zh,
   narration: NARRATION_TRANSLATIONS.zh,
+  researchPlatforms: RESEARCH_PLATFORMS_TRANSLATIONS.zh,
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.zh,
   pickedModel: PICKED_MODEL_TRANSLATIONS.zh,
   creditFallback: CREDIT_FALLBACK_TRANSLATIONS.zh,

@@ -12,6 +12,10 @@ export const ZH_MARKETING_SCENES_CONTENT: MarketingScenesLocaleContent = {
       alt: 'ClawAI 的消息输入框，模型选择器已展开，列出了可选择的模型。',
       caption: '自己选择模型，或让 AUTO 来选。',
     },
+    [MarketingSceneId.CHAT_RESEARCH_ROUNDS]: {
+      alt: 'ClawAI 对话中的研究日志：多轮搜索及其搜索次数、语言和来源类型，随后是带引用的回答。',
+      caption: '研究分轮次进行，并说明搜索了什么。',
+    },
     [MarketingSceneId.CHAT_RESEARCH]: {
       alt: '已开启网络研究的消息输入框，并显示了搜索提供方的选择项。',
       caption: '开启网络研究，并选择搜索方式。',

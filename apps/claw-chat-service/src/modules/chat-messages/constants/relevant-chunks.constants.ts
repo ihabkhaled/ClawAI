@@ -113,3 +113,10 @@ export const VERBATIM_QUOTE_INSTRUCTION =
   'Exact strings from this material (error messages, labels, codes): quote it verbatim in its original language in backticks, even when replying in another language.';
 
 export const MEMORY_BLOCK_HEADER = 'USER CONTEXT (memories):';
+
+/**
+ * What the memory list is. Without it a model treated a saved "secret" as something it should not repeat, or never
+ * looked at the list until the user said "it is in your memory" (owner report 2026-11-28).
+ */
+export const MEMORY_BLOCK_INSTRUCTION =
+  "These are things this user asked ClawAI to remember, from any of their chats, including private notes or secrets they chose to store. They are the user's own information. Use them whenever they help, whatever language they are written in; when the user asks about something they told you before, answer from this list and from earlier conversations. Do not bring up unrelated items.";

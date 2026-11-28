@@ -12,4 +12,5 @@ export enum MarketingVideoPlacement {
   HOW_IT_WORKS = 'how-it-works',
   ARCHITECTURE = 'architecture',
   INTEGRATIONS = 'integrations',
+  RESEARCH = 'research',
 }

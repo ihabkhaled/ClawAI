@@ -1,0 +1,146 @@
+[
+  {
+    "id": "en-explicit-search-01",
+    "lang": "en",
+    "category": "explicit-search",
+    "text": "Search the web for the latest reviews of the Framework Laptop 16.",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ar-explicit-search-01",
+    "lang": "ar",
+    "category": "explicit-search",
+    "text": "ابحث في الإنترنت عن أحدث الدراسات حول فوائد الصيام المتقطع.",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ar-EG-explicit-search-01",
+    "lang": "ar-EG",
+    "category": "explicit-search",
+    "text": "دوّر على النت واعرفلي أحسن مطاعم كشري في القاهرة.",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ar-SA-explicit-search-01",
+    "lang": "ar-SA",
+    "category": "explicit-search",
+    "text": "ابحث لي في الإنترنت عن أفضل الأماكن السياحية في أبها.",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ar-Latn-explicit-search-01",
+    "lang": "ar-Latn",
+    "category": "explicit-search",
+    "text": "ebhath fel internet 3an a7san 3oroud el laptop el esbou3 da.",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "fr-explicit-search-01",
+    "lang": "fr",
+    "category": "explicit-search",
+    "text": "Fais une recherche sur le web concernant les aides à l'achat d'un vélo électrique.",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "es-explicit-search-01",
+    "lang": "es",
+    "category": "explicit-search",
+    "text": "Busca en internet las últimas novedades sobre el telescopio James Webb.",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "pt-BR-explicit-search-01",
+    "lang": "pt-BR",
+    "category": "explicit-search",
+    "text": "Pesquise na web sobre as regras atuais para tirar passaporte no Brasil.",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "de-explicit-search-01",
+    "lang": "de",
+    "category": "explicit-search",
+    "text": "Such im Internet nach aktuellen Tests von E-Bikes unter 2000 Euro.",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "it-explicit-search-01",
+    "lang": "it",
+    "category": "explicit-search",
+    "text": "Cerca sul web le ultime recensioni dei nuovi smartphone Google Pixel.",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "fa-explicit-search-01",
+    "lang": "fa",
+    "category": "explicit-search",
+    "text": "در اینترنت جستجو کن و آخرین اخبار درباره‌ی هوش مصنوعی را بیاور.",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ur-explicit-search-01",
+    "lang": "ur",
+    "category": "explicit-search",
+    "text": "انٹرنیٹ پر تلاش کرو کہ پاکستان میں بہترین لیپ ٹاپ کون سے ہیں۔",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "hi-explicit-search-01",
+    "lang": "hi",
+    "category": "explicit-search",
+    "text": "इंटरनेट पर खोजो कि भारत में सबसे अच्छे इलेक्ट्रिक स्कूटर कौन से हैं।",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ru-explicit-search-01",
+    "lang": "ru",
+    "category": "explicit-search",
+    "text": "Поищи в интернете свежие обзоры на новые смартфоны Xiaomi.",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "zh-CN-explicit-search-01",
+    "lang": "zh-CN",
+    "category": "explicit-search",
+    "text": "请上网搜索一下最新的国产电动汽车评测。",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ko-explicit-search-01",
+    "lang": "ko",
+    "category": "explicit-search",
+    "text": "인터넷에서 요즘 인기 있는 노트북 후기를 검색해 줘.",
+    "expect": {
+      "research": "yes"
+    }
+  }
+]

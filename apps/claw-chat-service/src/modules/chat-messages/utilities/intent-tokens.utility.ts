@@ -1,3 +1,4 @@
+import { contextTokens } from '../../../common/utilities/context-tokens.utility';
 import { MIN_MATCH_TOKEN_LENGTH } from '../constants/context-composer.constants';
 
 /**
@@ -12,11 +13,5 @@ import { MIN_MATCH_TOKEN_LENGTH } from '../constants/context-composer.constants'
  * gate and the scoring cannot disagree about what a meaningful word is.
  */
 export function meaningfulTokenCount(intent: string): number {
-  return new Set(
-    intent
-      .toLowerCase()
-      .replaceAll(/[^a-z0-9\s-]+/g, ' ')
-      .split(/\s+/)
-      .filter((token) => token.length >= MIN_MATCH_TOKEN_LENGTH),
-  ).size;
+  return new Set(contextTokens(intent, MIN_MATCH_TOKEN_LENGTH)).size;
 }

@@ -8,6 +8,7 @@ import { allocateCharBudget } from './fetch-targets.utility';
 import { sanitizeForLlm } from '../../../common/utilities/content-safety.utility';
 import type { FetchStrategyKind } from '../../../generated/prisma';
 import type { FetchAttemptSummary, FetchResult } from '../../fetch/types/fetch.types';
+import type { PlatformTaggedResult } from '../../platforms/types/platform.types';
 import type {
   BuildEvidenceInput,
   EvidenceBundle,
@@ -146,6 +147,43 @@ export function fetchProvenanceOf(
       ...(result.thinContent === true ? { thin: true as const } : {}),
     },
   };
+}
+
+/**
+ * A search hit as an evidence item; `query` is set only when a fused (engine)
+ * hit carries one, `platform`/`platformCategory` only when a platform run (B3)
+ * tagged it. A platform API hit's `providerKind` is `PLATFORM:<slug>`.
+ */
+export function searchResultToEvidence(
+  result: PlatformTaggedResult & { query?: string },
+): EvidenceItem {
+  return {
+    id: result.id,
+    title: result.title,
+    url: result.url,
+    snippet: result.snippet ?? '',
+    source: 'search',
+    providerKind: result.providerKind,
+    publishedAt: result.publishedAt,
+    fetchedAt: null,
+    confidence: result.score,
+    ...(result.query === undefined ? {} : { query: result.query }),
+    ...platformFieldsOf(result),
+  };
+}
+
+/** `{ platform, platformCategory }` when the source carries a platform tag; `{}` otherwise. Spread it. */
+export function platformFieldsOf(
+  source: Pick<EvidenceItem, 'platform' | 'platformCategory'>,
+): Pick<EvidenceItem, 'platform' | 'platformCategory'> {
+  return source.platform === undefined
+    ? {}
+    : {
+        platform: source.platform,
+        ...(source.platformCategory === undefined
+          ? {}
+          : { platformCategory: source.platformCategory }),
+      };
 }
 
 function dedupeByUrl(items: EvidenceItem[]): EvidenceItem[] {

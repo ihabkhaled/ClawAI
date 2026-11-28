@@ -12,7 +12,7 @@ export const FR_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
     [FeatureCapability.SMART_ATTACHMENTS]:
       'Déposez des documents, du code, des médias ou des archives entières dans le chat ; chaque envoi est analysé par un antivirus et son texte extrait pour le modèle.',
     [FeatureCapability.NARRATED_RESEARCH]:
-      'Une boucle de recherche qui décide s’il faut chercher ou explorer un site, raconte chaque étape en direct et respecte robots.txt à chaque récupération.',
+      'Une recherche en plusieurs tours et langues, sur le web et les sources scientifiques et pour développeurs, qui raconte chaque étape et respecte robots.txt.',
     [FeatureCapability.ORCHESTRATION_LABS]:
       'Des laboratoires dédiés qui mettent plusieurs modèles sur un même problème — comparaison avec juge, consensus, escalade, vérification et plus encore.',
     [FeatureCapability.CONVERSATION_TOOLS]:
@@ -209,7 +209,7 @@ export const FR_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
       seo: {
         title: 'Recherche commentée et exploration web dans ClawAI',
         description:
-          'Comment ClawAI fait ses recherches sur le web : un planificateur qui choisit de chercher ou d’explorer, un journal de travail commenté en direct, une récupération par paliers qui respecte robots.txt, et des sources citées.',
+          'Comment ClawAI fait ses recherches : plusieurs tours multilingues sur le web, les sources scientifiques et techniques, un journal en direct et des sources citées.',
         keywords: [
           'recherche web par IA',
           'robot d’exploration de sites IA',
@@ -244,6 +244,30 @@ export const FR_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
             'robots.txt est respecté à chaque récupération sous l’agent utilisateur ClawAI-ResearchBot, et une page interdite n’est pas retentée par un autre moyen. Les murs de connexion et les blocages juridiques arrêtent la récupération, les captchas ne sont jamais résolus, chaque redirection est vérifiée contre les adresses de réseau privé, et une copie archivée est toujours signalée comme telle.',
           ],
         },
+        {
+          id: 'research-in-rounds',
+          heading: 'Une recherche par tours, en plusieurs langues',
+          paragraphs: [
+            'Quand la question l’exige, plusieurs modèles votent en parallèle : faut-il le web, jusqu’où aller, dans quelles langues chercher et quelles questions poser. Une recherche couvre alors plusieurs de ces questions à la fois.',
+            'Après chaque tour, ClawAI vérifie ce qui manque encore et le recherche précisément, jusqu’à trois tours dans un temps de recherche fixé. Le bouton « Arrêter » met fin à la recherche et à la réponse qui devait suivre.',
+          ],
+        },
+        {
+          id: 'more-than-a-web-search',
+          heading: 'Plus qu’une recherche web',
+          paragraphs: [
+            'Selon la question, la recherche interroge aussi directement des API officielles gratuites : OpenAlex, Semantic Scholar, arXiv, PubMed, Crossref pour les études ; GitHub, Stack Overflow, Hacker News pour le code ; Wikipedia pour le contexte. Elle cherche aussi sur des sites d’actualité, officiels et communautaires désignés.',
+            'Seules des pages et des API publiques sont utilisées : aucune connexion à un compte, aucun CAPTCHA résolu, aucun mur payant contourné. Les plateformes sans API publique licite sont atteintes par les résultats de recherche ordinaires.',
+          ],
+        },
+        {
+          id: 'evidence-you-can-trace',
+          heading: 'Des preuves traçables',
+          paragraphs: [
+            'Chaque source est conservée avec la requête qui l’a trouvée. Une page déjà lue dans la même conversation au cours des 24 dernières heures n’est pas rechargée, et les copies identiques d’un même texte sont écartées.',
+            'Le texte des pages web parvient au modèle marqué comme donnée non fiable, séparé de vos instructions, et le modèle a pour consigne de ne jamais suivre des instructions trouvées dans une page.',
+          ],
+        },
       ],
       faq: [
         {
@@ -260,6 +284,16 @@ export const FR_FEATURES_FLAGSHIP_CONTENT: FeaturesFlagshipDictionary = {
           question: 'La recherche web est-elle disponible sur tous les forfaits ?',
           answer:
             'Les modes de recherche sont des fonctionnalités de forfait (RESEARCH_MODE, WEB_SEARCH, WEB_FETCH et WEB_EXTRACT) avec leurs propres quotas, que l’opérateur fixe pour chaque forfait. La page des tarifs indique ce que comprend chaque forfait.',
+        },
+        {
+          question: 'La recherche se fait-elle aussi dans d’autres langues ?',
+          answer:
+            'Oui. Les modèles de planification choisissent les langues les plus susceptibles de contenir la réponse et rédigent des requêtes dans ces langues ; la recherche ne se limite pas à la langue de votre question.',
+        },
+        {
+          question: 'Quelles sources la recherche peut-elle consulter ?',
+          answer:
+            'La recherche web générale et une liste de sources administrée : bases scientifiques, sites pour développeurs, ouvrages de référence, actualités, sites officiels et communautaires. L’opérateur peut activer ou désactiver des sources, et votre offre détermine les modes de recherche disponibles.',
         },
       ],
       productNote:

@@ -5,7 +5,6 @@ import {
   EVIDENCE_FETCH_CONCURRENCY,
   EVIDENCE_FETCH_MAX_PER_HOST,
   EVIDENCE_FETCH_PHASE_DEADLINE_MS,
-  EVIDENCE_FETCH_TOP_N,
 } from '../../../common/constants/evidence.constants';
 import { CRAWL_SITE_CONCURRENCY } from '../../../common/constants/crawl.constants';
 import { DIRECT_FETCH_CONFIDENCE } from '../../../common/constants/url-detection.constants';
@@ -21,15 +20,20 @@ import { ScrapeService } from '../../scrape/services/scrape.service';
 import { SearchExecutionService } from '../../search/services/search-execution.service';
 import { ResearchRunRepository } from '../repositories/research-run.repository';
 import { ResearchUsageService } from '../../../common/services/research-usage.service';
+import { ResearchEvidenceStoreService } from '../services/research-evidence-store.service';
 import {
   buildEvidenceBundle,
   fetchProvenanceOf,
+  platformFieldsOf,
   pushFetchToolMarker,
+  searchResultToEvidence,
   traceEntry,
 } from '../utilities/evidence-builder.utility';
 import { hostLaneKey, runFetchBatch } from '../utilities/fetch-batch.utility';
 import { canonicalUrlKey, selectFetchTargets } from '../utilities/fetch-targets.utility';
 import { FetchPhaseState } from '../utilities/fetch-phase-state.utility';
+import { ResearchRunState } from '../utilities/research-run-state.utility';
+import { MultiQuerySearchManager } from './multi-query-search.manager';
 import { SiteAuditManager } from './site-audit.manager';
 import { SiteCrawlManager } from './site-crawl.manager';
 import type { ExecuteResearchDto } from '../dto/execute-research.dto';
@@ -39,7 +43,7 @@ import type {
   EvidenceItem,
   ResearchTraceEntry,
 } from '../types/evidence-bundle.types';
-import type { SearchResult } from '../../search/types/search.types';
+import type { FetchBatchOutcome } from '../types/fetch-batch.types';
 import type { FetchResult } from '../../fetch/types/fetch.types';
 
 @Injectable()
@@ -54,6 +58,8 @@ export class ResearchManager {
     private readonly researchUsage: ResearchUsageService,
     private readonly siteCrawlManager: SiteCrawlManager,
     private readonly siteAuditManager: SiteAuditManager,
+    private readonly multiQuerySearch: MultiQuerySearchManager,
+    private readonly evidenceStore: ResearchEvidenceStoreService,
   ) {}
 
   async run(userId: string, dto: ExecuteResearchDto): Promise<ResearchRun> {
@@ -64,86 +70,133 @@ export class ResearchManager {
       workflow: dto.workflow,
       intent: dto.intent,
       status: ResearchRunStatus.RUNNING,
+      ...(dto.threadId === undefined ? {} : { threadId: dto.threadId }),
     });
 
     const trace: ResearchTraceEntry[] = [];
     const warnings: string[] = [];
     const toolsUsed: string[] = [];
     const items: EvidenceItem[] = [];
-    const phase = new FetchPhaseState();
+    // Research engine B1+B2: identity of today's pipeline unless the request
+    // sent an engine field (threadId, queries, languages, depth, round, excludeUrls).
+    const state = new ResearchRunState(dto);
 
     try {
       // A URL the user wrote is opened FIRST and on its own terms. It used to
       // reach the search engine as a keyword, so the page a person explicitly
-      // named was fetched only if the engine happened to return it.
-      const requestedUrls = detectUrlsInText(dto.intent);
+      // named was fetched only if the engine happened to return it. A URL read
+      // earlier in this turn (`excludeUrls`) is not opened again.
+      const requestedUrls = detectUrlsInText(dto.intent).filter((url) => !state.excludes(url));
 
       // SITE_CRAWL has no search step at all: it needs the URL to crawl and
       // nothing else, and none of the search/fetch/extract pipeline below
       // applies to it.
-      if (dto.workflow === ResearchWorkflowKind.SITE_CRAWL) {
-        return await this.runSiteCrawl(
-          userId,
-          requestedUrls,
-          dto,
-          run.id,
-          trace,
-          toolsUsed,
-          warnings,
-          items,
-        );
-      }
-
-      // The pasted-URL fetch and the search call are independent, so they run
-      // side by side (ADR-211); the hits are fetched the moment search returns,
-      // without waiting for the pasted URLs to finish.
-      const directPromise = this.runDirectFetch(
-        userId,
-        requestedUrls,
-        dto,
-        trace,
-        toolsUsed,
-        warnings,
-        phase,
-      );
-      const search = await this.runSearch(userId, dto, trace, toolsUsed, warnings);
-      if (this.needsFetch(dto.workflow)) {
-        // Never fetch a page twice in one run: a search hit for a URL the user
-        // already pasted is the same page, and the direct fetch has the better
-        // provenance.
-        const pasted = new Set(requestedUrls.map((url) => canonicalUrlKey(url)));
-        const searchTargets = search.items.filter((item) => !pasted.has(canonicalUrlKey(item.url)));
-        const [direct, fetch] = await Promise.all([
-          directPromise,
-          this.runFetch(userId, searchTargets, trace, toolsUsed, warnings, phase),
-        ]);
-        const fresh = this.dropDuplicatePages(direct.items, fetch.items, trace);
-        items.push(...direct.items, ...search.items, ...fresh);
-        if (this.needsExtract(dto.workflow)) {
-          await this.runExtract(
-            userId,
-            run.id,
-            [...direct.items, ...fresh],
-            new Map([...direct.rawByUrl, ...fetch.rawByUrl]),
-            dto,
-            trace,
-            toolsUsed,
-            warnings,
-          );
-        }
-      } else {
-        const direct = await directPromise;
-        items.push(...direct.items, ...search.items);
-      }
-
-      const bundle = this.finalize(dto, search.providerSelection, items, warnings, toolsUsed);
-      return await this.completeRun(run.id, { ...bundle, ...phase.bundleFields() }, trace);
+      const outcome =
+        dto.workflow === ResearchWorkflowKind.SITE_CRAWL
+          ? this.runSiteCrawl(userId, requestedUrls, dto, run.id, trace, toolsUsed, warnings, items)
+          : this.runSearchFamily(
+              userId,
+              dto,
+              run.id,
+              requestedUrls,
+              state,
+              trace,
+              toolsUsed,
+              warnings,
+            );
+      return await outcome;
     } catch (error) {
       const message = describeFetchFailure(error);
       this.logger.warn(`Research run ${run.id} failed: ${message}`);
       trace.push(traceEntry('run.failed', 'error', null, message));
       return this.failRun(run.id, trace, message);
     }
+  }
+
+  /**
+   * SEARCH_ONLY / SEARCH_THEN_FETCH / SEARCH_FETCH_EXTRACT: search, open pages,
+   * extract, then complete the run, log its counters and store its sources.
+   */
+  private async runSearchFamily(
+    userId: string,
+    dto: ExecuteResearchDto,
+    runId: string,
+    requestedUrls: string[],
+    state: ResearchRunState,
+    trace: ResearchTraceEntry[],
+    toolsUsed: string[],
+    warnings: string[],
+  ): Promise<ResearchRun> {
+    const items: EvidenceItem[] = [];
+    const phase = new FetchPhaseState();
+    // The pasted-URL fetch and the search call are independent, so they run
+    // side by side (ADR-211); the hits are fetched the moment search returns,
+    // without waiting for the pasted URLs to finish. Thread memory loads
+    // alongside them (never rejects; nothing to load without a threadId).
+    const memory = this.loadThreadMemory(userId, dto, state);
+    const directPromise = this.runDirectFetch(
+      userId,
+      requestedUrls,
+      dto,
+      trace,
+      toolsUsed,
+      warnings,
+      phase,
+    );
+    const search = await this.runSearch(userId, dto, state, trace, toolsUsed, warnings);
+    const hits = state.keptHits(search.items, dto.maxResults);
+    await memory;
+    if (this.needsFetch(dto.workflow)) {
+      // Never fetch a page twice in one run: a search hit for a URL the user
+      // already pasted is the same page, and the direct fetch has the better
+      // provenance.
+      const pasted = new Set(requestedUrls.map((url) => canonicalUrlKey(url)));
+      const searchTargets = search.items.filter((item) => !pasted.has(canonicalUrlKey(item.url)));
+      const [direct, fetch] = await Promise.all([
+        directPromise,
+        this.runFetch(userId, searchTargets, state, trace, toolsUsed, warnings, phase),
+      ]);
+      const fresh = this.dropDuplicatePages(direct.items, fetch.items, trace, state);
+      const pages = [...direct.items, ...fresh];
+      state.noteDirect(direct.items);
+      state.notePagesRead(pages);
+      items.push(...direct.items, ...state.withoutReadHits(hits, pages), ...fresh);
+      if (this.needsExtract(dto.workflow)) {
+        await this.runExtract(
+          userId,
+          runId,
+          pages,
+          new Map([...direct.rawByUrl, ...fetch.rawByUrl]),
+          dto,
+          trace,
+          toolsUsed,
+          warnings,
+        );
+      }
+    } else {
+      const direct = await directPromise;
+      state.noteDirect(direct.items);
+      state.notePagesRead(direct.items);
+      items.push(...direct.items, ...hits);
+    }
+    items.push(...state.threadExtras(dto.intent, items));
+
+    const bundle = this.finalize(
+      dto,
+      search.providerSelection,
+      state.annotate(items),
+      warnings,
+      toolsUsed,
+      state.maxItemsFor(items, dto.maxPages),
+    );
+    const completed = await this.completeRun(
+      runId,
+      { ...bundle, ...phase.bundleFields(), ...state.bundleFields(items) },
+      trace,
+    );
+    this.logger.log(state.logLine(items));
+    this.persistSources(userId, dto, runId, bundle.items, state.directKeys);
+    return completed;
   }
 
   async getRun(id: string, userId: string): Promise<ResearchRun | null> {
@@ -225,11 +278,46 @@ export class ResearchManager {
     // pre-bundle `items` array, so a finding can never cite an id that was
     // trimmed out of the bundle it ends up living in.
     const auditFindings = this.siteAuditManager.analyze(bundle.items);
-    return this.completeRun(
+    const completed = await this.completeRun(
       runId,
       auditFindings.length > 0 ? { ...bundle, auditFindings } : bundle,
       trace,
     );
+    this.persistSources(userId, dto, runId, bundle.items, new Set());
+    return completed;
+  }
+
+  /** Thread memory (B1): this user's sources for this thread, last 24 h. Never rejects. */
+  private async loadThreadMemory(
+    userId: string,
+    dto: ExecuteResearchDto,
+    state: ResearchRunState,
+  ): Promise<void> {
+    if (dto.threadId === undefined) {
+      return;
+    }
+    const now = new Date();
+    state.attachMemory(await this.evidenceStore.loadThreadSources(userId, dto.threadId, now), now);
+  }
+
+  /** Evidence store (B1): one row per bundle item, fire-and-forget; never fails the run. */
+  private persistSources(
+    userId: string,
+    dto: ExecuteResearchDto,
+    runId: string,
+    items: readonly EvidenceItem[],
+    directKeys: ReadonlySet<string>,
+  ): void {
+    this.evidenceStore.persistInBackground({
+      runId,
+      userId,
+      threadId: dto.threadId ?? null,
+      round: dto.round ?? 1,
+      workflow: dto.workflow,
+      items,
+      directKeys,
+      now: new Date(),
+    });
   }
 
   private needsFetch(workflow: ResearchWorkflowKind): boolean {
@@ -246,6 +334,7 @@ export class ResearchManager {
   private async runSearch(
     userId: string,
     dto: ExecuteResearchDto,
+    state: ResearchRunState,
     trace: ResearchTraceEntry[],
     toolsUsed: string[],
     warnings: string[],
@@ -253,6 +342,9 @@ export class ResearchManager {
     items: EvidenceItem[];
     providerSelection: EvidenceBundle['providerSelection'];
   }> {
+    if (state.engine) {
+      return this.multiQuerySearch.run(userId, dto, state, trace, toolsUsed, warnings);
+    }
     const start = Date.now();
     // The provider takes a QUERY; the user wrote a prompt. Sending the prompt
     // verbatim used to 400 the whole run past 500 characters, which silently
@@ -294,8 +386,15 @@ export class ResearchManager {
         `${String(searchResult.results.length)} results from ${searchResult.providerName} (${searchResult.selectionMode}${searchResult.fallbackUsed ? ', fallback' : ''})${warningSummary}`,
       ),
     );
+    // Counters for the `research.run:` log line only; no bundle field on this path.
+    state.recordSearch({
+      queries: [clamped.query],
+      cachedSearches: 0,
+      providersUsed: searchResult.attemptedProviders,
+      resultsFound: searchResult.results.length,
+    });
     return {
-      items: searchResult.results.map((result) => this.searchResultToEvidence(result)),
+      items: searchResult.results.map((result) => searchResultToEvidence(result)),
       providerSelection: {
         providerId: searchResult.providerId,
         providerName: searchResult.providerName,
@@ -409,19 +508,27 @@ export class ResearchManager {
   private async runFetch(
     userId: string,
     searchItems: EvidenceItem[],
+    state: ResearchRunState,
     trace: ResearchTraceEntry[],
     toolsUsed: string[],
     warnings: string[],
     phase: FetchPhaseState,
   ): Promise<{ items: EvidenceItem[]; rawByUrl: Map<string, string> }> {
-    const targets = selectFetchTargets(
-      searchItems,
-      EVIDENCE_FETCH_TOP_N,
-      EVIDENCE_FETCH_MAX_PER_HOST,
-    );
-    const fetched: EvidenceItem[] = [];
+    const targets = selectFetchTargets(searchItems, state.fetchTopN, EVIDENCE_FETCH_MAX_PER_HOST);
+    // Thread memory (a): a target this thread read in the last 24 h is served
+    // from the stored excerpt, so it is not fetched (and not billed) again.
+    const reused = new Map<EvidenceItem, EvidenceItem>();
+    for (const target of targets) {
+      const page = state.reusedPageFor(target);
+      if (page !== null) {
+        reused.set(target, page);
+        trace.push(traceEntry('fetch.reused', 'ok', 0, `${target.url}: from thread memory`));
+      }
+    }
+    const live = targets.filter((target) => !reused.has(target));
+    const fetchedByTarget = new Map<EvidenceItem, EvidenceItem>();
     const rawByUrl = new Map<string, string>();
-    const outcomes = await runFetchBatch(targets, {
+    const outcomes = await runFetchBatch(live, {
       urlOf: (item) => item.url,
       worker: (item) => this.fetchService.fetchPage(userId, { url: item.url }),
       concurrency: EVIDENCE_FETCH_CONCURRENCY,
@@ -430,56 +537,81 @@ export class ResearchManager {
     phase.record(outcomes, 'search');
     this.logBatch('search', outcomes);
     for (const outcome of outcomes) {
-      const item = targets[outcome.index];
-      if (item === undefined) {
-        continue;
+      const item = live[outcome.index];
+      const evidence =
+        item === undefined
+          ? null
+          : this.acceptFetched(item, outcome, trace, toolsUsed, warnings, rawByUrl);
+      if (item !== undefined && evidence !== null) {
+        fetchedByTarget.set(item, evidence);
       }
-      item.fetchStatus = outcome.status;
-      const took = this.tookMs(outcome);
-      if (outcome.status !== 'OK' || outcome.value === undefined) {
-        const reason = outcome.error ?? outcome.status;
-        warnings.push(`Fetch failed for ${item.url}: ${reason}`);
-        trace.push(
-          traceEntry('fetch', 'warning', took, `${item.url}: [${outcome.status}] ${reason}`),
-        );
-        continue;
-      }
-      const result = outcome.value;
-      pushFetchToolMarker(toolsUsed, result);
-      const evidence = { ...this.fetchResultToEvidence(item, result), fetchStatus: 'OK' as const };
-      fetched.push(evidence);
-      if (result.rawHtml !== undefined) {
-        rawByUrl.set(evidence.url, result.rawHtml);
-      }
-      trace.push(
-        traceEntry(
-          'fetch',
-          'ok',
-          took,
-          `${item.url} (${String(result.byteSize)} bytes${result.cacheHit ? ', cached' : ''})`,
-        ),
-      );
     }
-    return { items: fetched, rawByUrl };
+    // Rank order of the targets, whichever way each page was obtained.
+    const items = targets.flatMap((target) => {
+      const page = reused.get(target) ?? fetchedByTarget.get(target);
+      return page === undefined ? [] : [page];
+    });
+    return { items, rawByUrl };
+  }
+
+  /** One search-hit fetch outcome: the page as evidence, or a warning and null. */
+  private acceptFetched(
+    item: EvidenceItem,
+    outcome: FetchBatchOutcome<FetchResult>,
+    trace: ResearchTraceEntry[],
+    toolsUsed: string[],
+    warnings: string[],
+    rawByUrl: Map<string, string>,
+  ): EvidenceItem | null {
+    item.fetchStatus = outcome.status;
+    const took = this.tookMs(outcome);
+    if (outcome.status !== 'OK' || outcome.value === undefined) {
+      const reason = outcome.error ?? outcome.status;
+      warnings.push(`Fetch failed for ${item.url}: ${reason}`);
+      trace.push(
+        traceEntry('fetch', 'warning', took, `${item.url}: [${outcome.status}] ${reason}`),
+      );
+      return null;
+    }
+    const result = outcome.value;
+    pushFetchToolMarker(toolsUsed, result);
+    const evidence = { ...this.fetchResultToEvidence(item, result), fetchStatus: 'OK' as const };
+    if (result.rawHtml !== undefined) {
+      rawByUrl.set(evidence.url, result.rawHtml);
+    }
+    trace.push(
+      traceEntry(
+        'fetch',
+        'ok',
+        took,
+        `${item.url} (${String(result.byteSize)} bytes${result.cacheHit ? ', cached' : ''})`,
+      ),
+    );
+    return evidence;
   }
 
   /**
    * Same page reached by two routes (a redirect, a mirror, tracking params):
-   * keep the first by rank. Direct pages win over search pages.
+   * keep the first by rank. Direct pages win over search pages. In an engine
+   * run the body key is the normalised sha256 (`contentHash`, stamped on every
+   * page), so a syndicated copy that differs only in case or spacing is
+   * dropped too; each drop is counted in `stats.duplicatesRemoved`.
    */
   private dropDuplicatePages(
     direct: EvidenceItem[],
     fetched: EvidenceItem[],
     trace: ResearchTraceEntry[],
+    state: ResearchRunState,
   ): EvidenceItem[] {
     const seenUrl = new Set(direct.map((item) => canonicalUrlKey(item.url)));
-    const seenBody = new Set(direct.map((item) => sha1Short(item.snippet)));
+    const seenBody = new Set(direct.map((item) => state.bodyKeyOf(item)));
     const kept: EvidenceItem[] = [];
     for (const item of fetched) {
       const urlKey = canonicalUrlKey(item.url);
-      const bodyKey = sha1Short(item.snippet);
+      const bodyKey = state.bodyKeyOf(item);
       if (seenUrl.has(urlKey) || (item.snippet.length > 0 && seenBody.has(bodyKey))) {
         trace.push(traceEntry('fetch.dedupe', 'skipped', null, `${item.url}: duplicate page`));
+        state.duplicatesRemoved += 1;
         continue;
       }
       seenUrl.add(urlKey);
@@ -598,6 +730,7 @@ export class ResearchManager {
     items: EvidenceItem[],
     warnings: string[],
     toolsUsed: string[],
+    maxItems: number | undefined = dto.maxPages,
   ): EvidenceBundle {
     return buildEvidenceBundle({
       intent: dto.intent,
@@ -610,7 +743,7 @@ export class ResearchManager {
       items,
       warnings,
       mode: dto.mode,
-      maxItems: dto.maxPages,
+      maxItems,
     });
   }
 
@@ -638,20 +771,6 @@ export class ResearchManager {
       errorMessage,
       completedAt: new Date(),
     });
-  }
-
-  private searchResultToEvidence(result: SearchResult): EvidenceItem {
-    return {
-      id: result.id,
-      title: result.title,
-      url: result.url,
-      snippet: result.snippet ?? '',
-      source: 'search',
-      providerKind: result.providerKind,
-      publishedAt: result.publishedAt,
-      fetchedAt: null,
-      confidence: result.score,
-    };
   }
 
   /**
@@ -688,6 +807,8 @@ export class ResearchManager {
       fetchedAt: new Date().toISOString(),
       confidence: Math.min(1, searchItem.confidence + 0.05),
       ...fetchProvenanceOf(result),
+      ...(searchItem.query === undefined ? {} : { query: searchItem.query }),
+      ...platformFieldsOf(searchItem),
     };
   }
 }

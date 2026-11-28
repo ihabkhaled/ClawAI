@@ -32,6 +32,8 @@ export const MARKETING_ARABIC_SCRIPT_PATTERN = /\p{Script=Arabic}/u;
 /** How many parts the split Threads video has. */
 export const MARKETING_LOCAL_VIDEO_PART_COUNT = 3;
 
+const RESEARCH_VIDEO_SECONDS = 30;
+
 const VIDEO_BASE = `/${MARKETING_VIDEOS_PUBLIC_DIR}`;
 const SHORTS_BASE = `${VIDEO_BASE}/shorts`;
 const K = MARKETING_VIDEOS_KEY_PREFIX;
@@ -112,6 +114,10 @@ export const MARKETING_VIDEOS: ReadonlyArray<MarketingVideoEntry> = [
   shortVideo('zcdv4Jyo1LE', SHORT_TITLE_OPEN_SOURCE, [MarketingVideoPlacement.HOW_IT_WORKS], 2),
   shortVideo('apX5d9hJPQo', SHORT_TITLE_OPEN_SOURCE, [MarketingVideoPlacement.ARCHITECTURE], 3),
   shortVideo('VXdm870CELM', SHORT_TITLE_OPEN_SOURCE, [MarketingVideoPlacement.INTEGRATIONS], 4),
+  // Recorded from the running app with a throwaway demo account, sped up (docs/features/research-engine).
+  localVideo('research-rounds', 'research', RESEARCH_VIDEO_SECONDS, [
+    MarketingVideoPlacement.RESEARCH,
+  ]),
 ];
 
 const SHORTS_SECTION = {
@@ -161,4 +167,10 @@ export const MARKETING_VIDEO_PLACEMENTS: Readonly<
   [MarketingVideoPlacement.HOW_IT_WORKS]: { sectionId: 'videos', ...SHORTS_SECTION },
   [MarketingVideoPlacement.ARCHITECTURE]: { sectionId: 'videos', ...SHORTS_SECTION },
   [MarketingVideoPlacement.INTEGRATIONS]: { sectionId: 'videos', ...SHORTS_SECTION },
+  [MarketingVideoPlacement.RESEARCH]: {
+    sectionId: 'research-video',
+    layout: MarketingVideoLayout.FEATURE,
+    headingKey: `${K}.researchSection.title`,
+    introKey: `${K}.researchSection.body`,
+  },
 };

@@ -1,0 +1,146 @@
+[
+  {
+    "id": "en-fact-check-01",
+    "lang": "en",
+    "category": "fact-check",
+    "text": "Is it true that we only use 10 percent of our brains?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ar-fact-check-01",
+    "lang": "ar",
+    "category": "fact-check",
+    "text": "هل صحيح أن شرب الماء الساخن مع الليمون يحرق الدهون؟",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ar-EG-fact-check-01",
+    "lang": "ar-EG",
+    "category": "fact-check",
+    "text": "هو صحيح إن الموبايل بيسبب سرطان؟ شفت خبر على فيسبوك.",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ar-Latn-fact-check-01",
+    "lang": "ar-Latn",
+    "category": "fact-check",
+    "text": "howa s7i7 en el wi-fi bysabeb sarataan? shoft khabar 3ala facebook.",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ar-MA-fact-check-01",
+    "lang": "ar-MA",
+    "category": "fact-check",
+    "text": "واش صحيح أن الماء ديال الحنفية ماشي مزيان للشرب؟ سمعت هادشي فالفيديو.",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "fr-fact-check-01",
+    "lang": "fr",
+    "category": "fact-check",
+    "text": "Est-ce vrai que la Grande Muraille de Chine est visible depuis l'espace ?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "es-fact-check-01",
+    "lang": "es",
+    "category": "fact-check",
+    "text": "¿Es verdad que los murciélagos son ciegos?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "pt-BR-fact-check-01",
+    "lang": "pt-BR",
+    "category": "fact-check",
+    "text": "É verdade que beber café faz mal para o coração? Vi uma notícia ontem.",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "de-fact-check-01",
+    "lang": "de",
+    "category": "fact-check",
+    "text": "Stimmt es, dass Blitze nie zweimal an der gleichen Stelle einschlagen?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "it-fact-check-01",
+    "lang": "it",
+    "category": "fact-check",
+    "text": "È vero che il Colosseo è stato chiuso al pubblico per restauri questa settimana? L'ho letto in un post.",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "tr-fact-check-01",
+    "lang": "tr",
+    "category": "fact-check",
+    "text": "Güneş ışığı almak D vitamini eksikliğini gerçekten tamamen önler mi, doğru mu?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "hi-fact-check-01",
+    "lang": "hi",
+    "category": "fact-check",
+    "text": "क्या यह सच है कि प्लास्टिक की बोतल का पानी गर्म होने पर कैंसर करता है?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "hi-Latn-fact-check-01",
+    "lang": "hi-Latn",
+    "category": "fact-check",
+    "text": "Kya sach hai ki WhatsApp ab paise lega? Mere group mein message aaya hai.",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ur-fact-check-01",
+    "lang": "ur",
+    "category": "fact-check",
+    "text": "کیا یہ سچ ہے کہ چاند پر انسان کبھی گیا ہی نہیں؟",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "id-fact-check-01",
+    "lang": "id",
+    "category": "fact-check",
+    "text": "Benarkah makan malam di atas jam 8 membuat gemuk?",
+    "expect": {
+      "research": "yes"
+    }
+  },
+  {
+    "id": "ru-fact-check-01",
+    "lang": "ru",
+    "category": "fact-check",
+    "text": "Правда ли, что витамин C лечит простуду?",
+    "expect": {
+      "research": "yes"
+    }
+  }
+]

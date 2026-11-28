@@ -21,8 +21,12 @@ export const TEXT_BUDGET_MIN_ITEM_CHARS = 200;
 /** Below this a snippet stops being evidence and becomes a headline. */
 export const EVIDENCE_FIT_MIN_SNIPPET_CHARS = 240;
 
-/** "[n] " + " — " + newlines around each item. */
-export const EVIDENCE_FIT_PER_ITEM_OVERHEAD_CHARS = 12;
+/**
+ * The untrusted fence around each item (research engine B1): `<web_source n="NNN" url="` + `" trust="untrusted">`,
+ * the `Title: ` line, the closing `</web_source>` and the line breaks, before the URL, title and text it wraps.
+ * Was 12 for the old `[n] title — url` line; an undersized overhead let a 150-page crawl overflow an 8k model.
+ */
+export const EVIDENCE_FIT_PER_ITEM_OVERHEAD_CHARS = 72;
 
 /** A shortened history message keeps at least this much, so it still reads as a turn. */
 export const HISTORY_MIN_MESSAGE_CHARS = 200;

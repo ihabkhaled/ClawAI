@@ -1,6 +1,7 @@
 import { detectUrlsInText } from '@claw/shared-utilities';
 
 import {
+  RESEARCH_DEFAULT_SEARCH_DEPTH,
   RESEARCH_PLANNER_DEFAULT_MAX_PAGES,
   RESEARCH_PLANNER_MAX_PAGES,
 } from '../../../common/constants/research-gate.constants';
@@ -74,7 +75,20 @@ export function parseResearchPlan(
       options.hasAttachments === true && action === PlannedResearchAction.ANSWER,
     ),
     decidedBy: null,
+    // The planner writes no sub-questions, languages or depth: the council fills them (`applyCouncilToPlan`).
+    subQuestions: [],
+    languages: [],
+    platforms: [],
+    depth: defaultResearchDepth(action),
   };
+}
+
+/** Depth for a plan no council sized: a quick lookup when it searches, nothing otherwise. */
+export function defaultResearchDepth(action: PlannedResearchAction): number {
+  return action === PlannedResearchAction.SEARCH ||
+    action === PlannedResearchAction.CRAWL_THEN_SEARCH
+    ? RESEARCH_DEFAULT_SEARCH_DEPTH
+    : 0;
 }
 
 /**

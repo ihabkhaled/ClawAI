@@ -1,0 +1,162 @@
+[
+  {
+    "id": "en-stable-knowledge-01",
+    "lang": "en",
+    "category": "stable-knowledge",
+    "text": "Who wrote Hamlet?",
+    "expect": {
+      "research": "either",
+      "mustMention": ["Shakespeare"]
+    }
+  },
+  {
+    "id": "ar-stable-knowledge-01",
+    "lang": "ar",
+    "category": "stable-knowledge",
+    "text": "من هو مؤلف كتاب «الأيام» السيرة الذاتية الشهيرة؟",
+    "expect": {
+      "research": "either",
+      "mustMention": ["طه حسين"]
+    }
+  },
+  {
+    "id": "fr-stable-knowledge-01",
+    "lang": "fr",
+    "category": "stable-knowledge",
+    "text": "En quelle année a commencé la Révolution française ?",
+    "expect": {
+      "research": "either",
+      "mustMention": ["1789"]
+    }
+  },
+  {
+    "id": "es-stable-knowledge-01",
+    "lang": "es",
+    "category": "stable-knowledge",
+    "text": "¿Quién pintó La noche estrellada?",
+    "expect": {
+      "research": "either",
+      "mustMention": ["Van Gogh"]
+    }
+  },
+  {
+    "id": "pt-BR-stable-knowledge-01",
+    "lang": "pt-BR",
+    "category": "stable-knowledge",
+    "text": "Qual é a capital do Brasil?",
+    "expect": {
+      "research": "either",
+      "mustMention": ["Brasília"]
+    }
+  },
+  {
+    "id": "de-stable-knowledge-01",
+    "lang": "de",
+    "category": "stable-knowledge",
+    "text": "Wer hat die Relativitätstheorie entwickelt?",
+    "expect": {
+      "research": "either",
+      "mustMention": ["Einstein"]
+    }
+  },
+  {
+    "id": "it-stable-knowledge-01",
+    "lang": "it",
+    "category": "stable-knowledge",
+    "text": "Chi ha scritto la Divina Commedia?",
+    "expect": {
+      "research": "either",
+      "mustMention": ["Dante"]
+    }
+  },
+  {
+    "id": "tr-stable-knowledge-01",
+    "lang": "tr",
+    "category": "stable-knowledge",
+    "text": "Türkiye Cumhuriyeti hangi yılda kuruldu?",
+    "expect": {
+      "research": "either",
+      "mustMention": ["1923"]
+    }
+  },
+  {
+    "id": "fa-stable-knowledge-01",
+    "lang": "fa",
+    "category": "stable-knowledge",
+    "text": "شاعر کتاب شاهنامه کیست؟",
+    "expect": {
+      "research": "either",
+      "mustMention": ["فردوسی"]
+    }
+  },
+  {
+    "id": "hi-stable-knowledge-01",
+    "lang": "hi",
+    "category": "stable-knowledge",
+    "text": "ताजमहल किसने बनवाया था?",
+    "expect": {
+      "research": "either",
+      "mustMention": ["शाहजहाँ"]
+    }
+  },
+  {
+    "id": "id-stable-knowledge-01",
+    "lang": "id",
+    "category": "stable-knowledge",
+    "text": "Kapan Indonesia memproklamasikan kemerdekaan?",
+    "expect": {
+      "research": "either",
+      "mustMention": ["1945"]
+    }
+  },
+  {
+    "id": "ru-stable-knowledge-01",
+    "lang": "ru",
+    "category": "stable-knowledge",
+    "text": "Кто написал роман «Война и мир»?",
+    "expect": {
+      "research": "either",
+      "mustMention": ["Толстой"]
+    }
+  },
+  {
+    "id": "zh-CN-stable-knowledge-01",
+    "lang": "zh-CN",
+    "category": "stable-knowledge",
+    "text": "水的化学式是什么？",
+    "expect": {
+      "research": "either",
+      "mustMention": ["H2O"]
+    }
+  },
+  {
+    "id": "ja-stable-knowledge-01",
+    "lang": "ja",
+    "category": "stable-knowledge",
+    "text": "日本の初代内閣総理大臣は誰ですか？",
+    "expect": {
+      "research": "either",
+      "mustMention": ["伊藤博文"]
+    }
+  },
+  {
+    "id": "ko-stable-knowledge-01",
+    "lang": "ko",
+    "category": "stable-knowledge",
+    "text": "한글을 창제한 왕은 누구인가요?",
+    "expect": {
+      "research": "either",
+      "mustMention": ["세종"]
+    }
+  },
+  {
+    "id": "sw-stable-knowledge-01",
+    "lang": "sw",
+    "category": "stable-knowledge",
+    "text": "Mlima mrefu zaidi barani Afrika ni upi?",
+    "expect": {
+      "research": "either",
+      "mustMention": ["Kilimanjaro"]
+    }
+  }
+]

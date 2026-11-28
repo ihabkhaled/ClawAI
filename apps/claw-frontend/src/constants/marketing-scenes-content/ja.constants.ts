@@ -12,6 +12,10 @@ export const JA_MARKETING_SCENES_CONTENT: MarketingScenesLocaleContent = {
       alt: '選べるモデルの一覧を表示したモデル選択を開いた状態のClawAIのメッセージ欄。',
       caption: 'モデルは自分で選ぶことも、AUTOに任せることもできます。',
     },
+    [MarketingSceneId.CHAT_RESEARCH_ROUNDS]: {
+      alt: 'ClawAI のチャット画面に表示された調査ログ。検索回数・言語・情報源の種類を示す複数ラウンドの検索と、出典付きの回答。',
+      caption: '調査はラウンドごとに進み、何を検索したかを示します。',
+    },
     [MarketingSceneId.CHAT_RESEARCH]: {
       alt: 'Webリサーチをオンにし、検索プロバイダーの選択が表示されているメッセージ欄。',
       caption: 'Webリサーチをオンにして、検索方法を選べます。',

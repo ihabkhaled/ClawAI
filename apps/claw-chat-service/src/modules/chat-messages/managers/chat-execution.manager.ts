@@ -207,7 +207,6 @@ import {
   DEFAULT_MAX_OUTPUT_TOKENS,
   FAST_PATH_COMPLEXITY_PATTERN,
   FAST_PATH_CONTEXT_MAX_CITATIONS,
-  FAST_PATH_CONTEXT_MAX_MEMORIES,
   FAST_PATH_MAX_NEWLINES,
   FAST_PATH_MAX_OUTPUT_TOKENS,
   FAST_PATH_MAX_PROMPT_CHARS,
@@ -2488,7 +2487,8 @@ export class ChatExecutionManager implements OnModuleInit {
       return context;
     }
 
-    // The fast path trims RETRIEVAL, never conversation.
+    // The fast path trims workspace citations only, never conversation and never memory: it used to keep TWO
+    // memories, so a short "what is the secret I told you?" could not see the secret (owner report 2026-11-28).
     //
     // It used to also do `threadMessages.slice(-6)` and clamp the prompt to
     // 1024 tokens. That inverted the need: a short prompt like "what did we
@@ -2500,7 +2500,6 @@ export class ChatExecutionManager implements OnModuleInit {
     // that is what actually buys the latency. ADR-086.
     return {
       ...context,
-      memories: context.memories.slice(0, FAST_PATH_CONTEXT_MAX_MEMORIES),
       workspaceCitations: context.workspaceCitations.slice(0, FAST_PATH_CONTEXT_MAX_CITATIONS),
     };
   }

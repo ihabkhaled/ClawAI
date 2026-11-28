@@ -100,18 +100,4 @@ export const PLUGIN_CLOSING_TAG = /<\s*\/\s*tool_result\s*>/giu;
 export const PLUGIN_CLOSING_TAG_DEFANGED = '[/tool_result]';
 export const PLUGIN_ATTRIBUTE_UNSAFE = /[^a-z0-9_-]/giu;
 
-/**
- * Code point ranges stripped from anything a plugin returns: C0 and C1 controls (tab, newline
- * and carriage return stay), zero-width and joiner characters, bidi embeddings, overrides and
- * isolates, and the byte-order mark.
- */
-export const PLUGIN_HOSTILE_CODE_POINT_RANGES: ReadonlyArray<readonly [number, number]> = [
-  [0x00, 0x08],
-  [0x0b, 0x0c],
-  [0x0e, 0x1f],
-  [0x7f, 0x9f],
-  [0x200b, 0x200f],
-  [0x202a, 0x202e],
-  [0x2060, 0x206f],
-  [0xfeff, 0xfeff],
-];
+/** Hostile code points are stripped by the shared untrusted fence: `UNTRUSTED_HOSTILE_CODE_POINT_RANGES`. */

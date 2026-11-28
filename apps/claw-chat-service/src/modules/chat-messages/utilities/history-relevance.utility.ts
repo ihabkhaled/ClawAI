@@ -5,6 +5,7 @@ import {
   PLANTED_IDENTIFIER_PATTERN,
   RELEVANCE_WEIGHTS,
 } from '../constants/context-composer.constants';
+import { contextTokens } from '../../../common/utilities/context-tokens.utility';
 import { type ConversationTurn } from '../types/context-composer.types';
 
 /**
@@ -82,13 +83,7 @@ export function entityOverlap(a: string, b: string): number {
 }
 
 function wordSet(value: string): Set<string> {
-  return new Set(
-    value
-      .toLowerCase()
-      .replaceAll(/[^a-z0-9\s-]+/g, ' ')
-      .split(/\s+/)
-      .filter((token) => token.length >= MIN_MATCH_TOKEN_LENGTH),
-  );
+  return new Set(contextTokens(value, MIN_MATCH_TOKEN_LENGTH));
 }
 
 /**

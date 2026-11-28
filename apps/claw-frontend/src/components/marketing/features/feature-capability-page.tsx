@@ -7,6 +7,7 @@ import { FeatureCapabilityRail } from '@/components/marketing/features/feature-c
 import { EditorialPageShell } from '@/components/marketing/shared/editorial-page-shell';
 import { EditorialSectionNav } from '@/components/marketing/shared/editorial-section-nav';
 import { MarketingSceneGallery } from '@/components/marketing/shared/marketing-scene-gallery';
+import { MarketingVideoSection } from '@/components/marketing/shared/marketing-video-section';
 import {
   FEATURES_HUB_PATH,
   FEATURES_HUB_SLUG,
@@ -16,6 +17,8 @@ import {
 } from '@/constants/features-cluster.constants';
 import { LOCALE_REQUEST_HEADER } from '@/constants/locale-routing.constants';
 import { FEATURE_CAPABILITY_SCENES } from '@/constants/marketing-scenes.constants';
+import { FeatureCapability } from '@/enums/feature-capability.enum';
+import { MarketingVideoPlacement } from '@/enums/marketing-video-placement.enum';
 import { DEFAULT_LOCALE } from '@/lib/i18n/i18n.constants';
 import { getSiteUrl } from '@/lib/site/site-config';
 import type { FeatureCapabilityPageProps } from '@/types/features-component.types';
@@ -52,6 +55,15 @@ export async function FeatureCapabilityPage({
   const title = registryEntry?.title ?? content.title;
   const summary = registryEntry?.description ?? content.summary;
 
+  // Only the research capability has a recorded demo so far (rule 66).
+  const demoVideo =
+    capability === FeatureCapability.NARRATED_RESEARCH
+      ? await MarketingVideoSection({
+          placement: MarketingVideoPlacement.RESEARCH,
+          contained: false,
+        })
+      : null;
+
   const sections = content.sections.map((section) => ({ id: section.id, label: section.heading }));
   const navigationItems = [...sections, { id: 'faq', label: labels.faqTitle }];
 
@@ -85,6 +97,8 @@ export async function FeatureCapabilityPage({
             {' · '}
             {labels.lastReviewed}: <time dateTime={reviewDate}>{reviewDate}</time>
           </p>
+
+          {demoVideo}
 
           <MarketingSceneGallery locale={locale} scenes={FEATURE_CAPABILITY_SCENES[capability]} />
 

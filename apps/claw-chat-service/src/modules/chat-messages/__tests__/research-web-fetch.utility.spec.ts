@@ -20,7 +20,7 @@ const options = { researchServiceUrl: 'http://research.test', userId: 'u1' };
 describe('executeResearchWebFetch', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('reads the page through research-service for the named user and returns title/content/links', async () => {
+  it('reads the page through research-service for the named user and returns it fenced as untrusted', async () => {
     const onDispatch = vi.fn(async () => {});
     fetchPageViaResearch.mockResolvedValue({
       ok: true,
@@ -44,11 +44,12 @@ describe('executeResearchWebFetch', () => {
       expect.objectContaining({ userId: 'u1', url: 'https://example.com/' }),
     );
     expect(onDispatch).toHaveBeenCalledTimes(1);
-    expect(JSON.parse(result)).toEqual({
-      title: 'Example',
-      content: 'Body text',
-      links: ['https://example.com/a'],
-    });
+    // Research engine B1: the page is web data inside one untrusted fence, never bare text.
+    expect(result).toContain('Web content arrives inside <web_source');
+    expect(result).toContain(
+      '<web_source n="1" url="https://example.com/" trust="untrusted">\nTitle: Example\nBody text',
+    );
+    expect(result).toContain('Links on the page:\n- https://example.com/a\n</web_source>');
   });
 
   it('labels an archived copy for the model', async () => {
@@ -64,7 +65,9 @@ describe('executeResearchWebFetch', () => {
       },
     });
     const result = await executeResearchWebFetch(call({ url: 'https://example.com/' }), options);
-    expect(JSON.parse(result)).toMatchObject({ archivedAt: '2024-01-01T00:00:00.000Z' });
+    expect(result.split('\n')[0]).toContain(
+      'web_fetch result (an archived copy, captured 2024-01-01T00:00:00.000Z).',
+    );
   });
 
   it('a robots refusal fails the tool call and never falls back to a hosted fetch', async () => {

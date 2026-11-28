@@ -3782,6 +3782,36 @@
         },
         {
           "method": "GET",
+          "route": "/research/platforms",
+          "source": "apps/claw-research-service/src/modules/platforms/controllers/research-platform.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/research/platforms",
+          "source": "apps/claw-research-service/src/modules/platforms/controllers/research-platform.controller.ts"
+        },
+        {
+          "method": "DELETE",
+          "route": "/research/platforms/:id",
+          "source": "apps/claw-research-service/src/modules/platforms/controllers/research-platform.controller.ts"
+        },
+        {
+          "method": "GET",
+          "route": "/research/platforms/:id",
+          "source": "apps/claw-research-service/src/modules/platforms/controllers/research-platform.controller.ts"
+        },
+        {
+          "method": "PATCH",
+          "route": "/research/platforms/:id",
+          "source": "apps/claw-research-service/src/modules/platforms/controllers/research-platform.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/research/platforms/:id/test",
+          "source": "apps/claw-research-service/src/modules/platforms/controllers/research-platform.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/research/runs",
           "source": "apps/claw-research-service/src/modules/research/controllers/research.controller.ts"
         },
@@ -9287,6 +9317,11 @@
         "route": "/profile"
       },
       {
+        "file": "apps/claw-frontend/src/app/(portal)/research/platforms/page.tsx",
+        "kind": "page",
+        "route": "/research/platforms"
+      },
+      {
         "file": "apps/claw-frontend/src/app/(portal)/research/providers/page.tsx",
         "kind": "page",
         "route": "/research/providers"
@@ -9770,7 +9805,7 @@
           "file": "rules/40-chat-surface-layout-and-composer.md"
         },
         {
-          "bytes": 26476,
+          "bytes": 26744,
           "file": "rules/41-web-evidence-truthfulness.md"
         },
         {
@@ -9806,7 +9841,7 @@
           "file": "rules/49-qa-team-discipline-and-test-evidence.md"
         },
         {
-          "bytes": 9488,
+          "bytes": 12656,
           "file": "rules/50-agentic-research-loop-and-narration.md"
         },
         {
@@ -9834,7 +9869,7 @@
           "file": "rules/56-model-reasoning-never-in-the-answer.md"
         },
         {
-          "bytes": 12891,
+          "bytes": 13494,
           "file": "rules/57-memory-and-context-pack-integrity.md"
         },
         {
@@ -10374,7 +10409,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 6365
+        "value": 6367
       },
       "localeCount": 13,
       "locales": [
@@ -12456,7 +12491,17 @@
           {
             "confidence": "verified",
             "source": "apps/claw-research-service/prisma/schema.prisma",
+            "value": "ResearchPlatform"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-research-service/prisma/schema.prisma",
             "value": "ResearchRun"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-research-service/prisma/schema.prisma",
+            "value": "ResearchSource"
           },
           {
             "confidence": "verified",
@@ -12946,7 +12991,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 371
+        "testFiles": 380
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -12966,7 +13011,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 1096
+        "testFiles": 1100
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -12986,7 +13031,7 @@
       },
       "claw-memory-service": {
         "runner": "vitest",
-        "testFiles": 25
+        "testFiles": 26
       },
       "claw-ollama-service": {
         "runner": "vitest",
@@ -13002,7 +13047,7 @@
       },
       "claw-research-service": {
         "runner": "vitest",
-        "testFiles": 75
+        "testFiles": 89
       },
       "claw-routing-service": {
         "runner": "vitest",
@@ -13896,10 +13941,10 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 60,
-    "endpointCount": 1009,
+    "endpointCount": 1015,
     "envVarCount": 401,
     "eventCount": 191,
-    "frontendRouteCount": 191,
+    "frontendRouteCount": 192,
     "localeCount": 13,
     "nginxRouteCount": 75,
     "permissionCount": 96,
@@ -13908,7 +13953,7 @@
     "serviceCount": 22,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 3102,
+    "totalTestFiles": 3130,
     "workspaceCount": 29
   }
 }

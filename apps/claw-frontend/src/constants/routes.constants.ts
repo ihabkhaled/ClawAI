@@ -75,6 +75,7 @@ export const ROUTES = {
   PROFILE: '/profile',
   ADMIN: '/admin',
   RESEARCH_PROVIDERS: '/research/providers',
+  RESEARCH_PLATFORMS: '/research/platforms',
   RESEARCH_RUNS: '/research/runs',
   WORKSPACE: '/workspace',
   WORKSPACE_ACTIONS: '/workspace/actions',

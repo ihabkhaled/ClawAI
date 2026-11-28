@@ -53,6 +53,7 @@ export async function runResearch(
         maxPages: request.maxPages,
         render: request.render,
         searchQuery: request.searchQuery,
+        ...researchEngineFields(request),
       },
       timeoutMs:
         request.timeoutMs ??
@@ -105,6 +106,31 @@ export async function fetchPageViaResearch(
     logger.warn(`fetchPageViaResearch: failed for user=${request.userId}: ${message}`);
     return { ok: false, status: 0, message };
   }
+}
+
+/**
+ * The research engine's optional fields (B1/B2), each on the wire only when set, so an older research-service and
+ * every caller that sets none send exactly the old body. Bounds are applied where the request is built
+ * (`buildResearchEngineFields`), not here.
+ */
+function researchEngineFields(request: ResearchRequest): Partial<ResearchRequest> {
+  return {
+    ...(request.threadId === undefined ? {} : { threadId: request.threadId }),
+    ...(request.queries === undefined || request.queries.length === 0
+      ? {}
+      : { queries: request.queries }),
+    ...(request.languages === undefined || request.languages.length === 0
+      ? {}
+      : { languages: request.languages }),
+    ...(request.platforms === undefined || request.platforms.length === 0
+      ? {}
+      : { platforms: request.platforms }),
+    ...(request.depth === undefined ? {} : { depth: request.depth }),
+    ...(request.round === undefined ? {} : { round: request.round }),
+    ...(request.excludeUrls === undefined || request.excludeUrls.length === 0
+      ? {}
+      : { excludeUrls: request.excludeUrls }),
+  };
 }
 
 function inferDefaultMaxResults(workflow: ResearchWorkflow): number {

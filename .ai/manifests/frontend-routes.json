@@ -742,6 +742,11 @@
       "route": "/profile"
     },
     {
+      "file": "apps/claw-frontend/src/app/(portal)/research/platforms/page.tsx",
+      "kind": "page",
+      "route": "/research/platforms"
+    },
+    {
       "file": "apps/claw-frontend/src/app/(portal)/research/providers/page.tsx",
       "kind": "page",
       "route": "/research/providers"

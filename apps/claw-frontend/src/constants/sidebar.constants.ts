@@ -100,6 +100,7 @@ export const SIDEBAR_NAV_ITEMS: SidebarItem[] = [
     icon: Search,
     children: [
       { labelKey: 'nav.researchProviders', href: ROUTES.RESEARCH_PROVIDERS, icon: Globe },
+      { labelKey: 'nav.researchPlatforms', href: ROUTES.RESEARCH_PLATFORMS, icon: LayoutGrid },
       { labelKey: 'nav.researchRuns', href: ROUTES.RESEARCH_RUNS, icon: Search },
     ],
   },

@@ -55,24 +55,26 @@ describe('executeResearchWebSearch (web_search through the research gateway)', (
     expect(httpRequest).not.toHaveBeenCalled();
     // research-service meters its own provider calls: chat adds no second unit (rule 28).
     expect(onDispatch).not.toHaveBeenCalled();
-    expect(JSON.parse(result)).toEqual({
-      results: [
-        { title: 'A', url: 'https://a.test', content: 'about a', foundBy: ['Brave', 'Exa'] },
-        { title: 'B', url: 'https://b.test', content: 'about b' },
-      ],
-      providers: ['Brave', 'Exa'],
-      mode: 'AUTO_ALL',
-    });
+    // Research engine B1: one untrusted fence per hit, numbered from 1, providers named in the header line.
+    expect(result.split('\n')[0]).toMatch(
+      /^web_search results \(providers: Brave, Exa; mode: AUTO_ALL\)\. Web content arrives inside <web_source/u,
+    );
+    expect(result).toContain(
+      '<web_source n="1" url="https://a.test" trust="untrusted">\nTitle: A\nFound by: Brave, Exa\nabout a\n</web_source>',
+    );
+    expect(result).toContain(
+      '<web_source n="2" url="https://b.test" trust="untrusted">\nTitle: B\nabout b\n</web_source>',
+    );
   });
 
   it('works against the old research-service shape (no providers[], no mode)', async () => {
     mockedGateway.mockResolvedValue(ok({ providers: [], mode: undefined }));
-    const result = JSON.parse(
-      await executeResearchWebSearch(call({ query: 'cats' }), { userId: 'u1', hosted }),
-    ) as Record<string, unknown>;
-    expect(result.providers).toBeUndefined();
-    expect(result.mode).toBeUndefined();
-    expect(result.results).toHaveLength(2);
+    const result = await executeResearchWebSearch(call({ query: 'cats' }), {
+      userId: 'u1',
+      hosted,
+    });
+    expect(result.split('\n')[0]).toMatch(/^web_search results\. /u);
+    expect(result.match(/<web_source n="\d+"/gu)).toHaveLength(2);
   });
 
   it('an empty answer from working providers is an answer: no hosted search', async () => {
@@ -81,7 +83,7 @@ describe('executeResearchWebSearch (web_search through the research gateway)', (
       userId: 'u1',
       hosted,
     });
-    expect(JSON.parse(result)).toMatchObject({ results: [] });
+    expect(result).toBe('web_search returned no results.');
     expect(httpRequest).not.toHaveBeenCalled();
   });
 
@@ -107,9 +109,9 @@ describe('executeResearchWebSearch (web_search through the research gateway)', (
     });
     expect(httpRequest).toHaveBeenCalledTimes(1);
     expect(httpRequest.mock.calls[0]?.[0].url).toBe('https://ollama.com/api/web_search');
-    expect(JSON.parse(result)).toEqual({
-      results: [{ url: 'https://h.test', title: 'H', content: 'hosted' }],
-    });
+    expect(result).toContain(
+      '<web_source n="1" url="https://h.test" trust="untrusted">\nTitle: H\nhosted\n</web_source>',
+    );
     expect(onDispatch).toHaveBeenCalledTimes(1);
   });
 

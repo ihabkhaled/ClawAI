@@ -31,4 +31,6 @@ export type SearchExecutionResult = {
   results: SearchResult[];
   latencyMs: number;
   warnings?: string[];
+  /** Research engine (B2), additive: served from the Redis search cache — no provider call, no unit. */
+  cached?: boolean;
 };

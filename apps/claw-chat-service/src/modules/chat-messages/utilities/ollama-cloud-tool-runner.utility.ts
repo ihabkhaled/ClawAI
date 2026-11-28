@@ -21,15 +21,20 @@ import {
   gatewayToolFetch,
   isNoProviderConfigured,
 } from './research-gateway.utility';
+import {
+  fenceHostedWebToolResult,
+  fenceWebFetchToolResult,
+  fenceWebSearchToolResult,
+} from './web-tool-result-fence.utility';
 
 export { OLLAMA_CLOUD_TOOL_DEFINITIONS };
 
 const logger = new Logger('OllamaCloudToolRunner');
 
 // Dispatches a single Ollama Cloud tool_call to its matching endpoint
-// (web_search or web_fetch), returns the JSON-stringified result
-// truncated to OLLAMA_TOOL_RESULT_MAX_CHARS so the next chat turn's
-// context stays bounded.
+// (web_search or web_fetch) and returns the result as untrusted
+// `web_source` fences (research engine B1), within
+// OLLAMA_TOOL_RESULT_MAX_CHARS so the next chat turn's context stays bounded.
 //
 // Throws BusinessException with code OLLAMA_TOOL_CALL_FAILED on:
 //   - unknown tool name
@@ -91,13 +96,15 @@ export async function executeOllamaCloudToolCall(
   logger.log(
     `executeOllamaCloudToolCall: tool=${toolName} ok — resultChars=${String(serialized.length)}`,
   );
-  return truncateResult(serialized);
+  // Web content, so it is fenced as untrusted data; the requested URL names a fetched page.
+  const requestedUrl = typeof payload.url === 'string' ? payload.url : '';
+  return truncateResult(fenceHostedWebToolResult(response.data, serialized, requestedUrl));
 }
 
 // The `web_fetch` tool, read through research-service instead of Ollama Cloud's
 // hosted fetch, so domain policy, robots.txt, the escalation tiers (Crawl4AI,
 // FlareSolverr, Firecrawl when enabled) and the SSRF checks apply (ADR-121,
-// rule 50). Same result contract as the hosted call (a truncated JSON string);
+// rule 50). Same result contract as the hosted call (the page in a `web_source` fence);
 // throws OLLAMA_TOOL_CALL_FAILED when the page is refused or cannot be read,
 // and never falls back to the hosted fetch, which would bypass robots.txt.
 export async function executeResearchWebFetch(
@@ -122,16 +129,17 @@ export async function executeResearchWebFetch(
       'OLLAMA_TOOL_CALL_FAILED',
     );
   }
-  const serialized = stringifyResult({
+  const fenced = fenceWebFetchToolResult({
+    url: outcome.view.url.length > 0 ? outcome.view.url : url,
     title: outcome.view.title,
     content: outcome.view.content,
     links: outcome.view.links,
     ...(outcome.view.archivedAt === null ? {} : { archivedAt: outcome.view.archivedAt }),
   });
   logger.log(
-    `executeResearchWebFetch: ok servedBy=${outcome.view.servedBy ?? 'unknown'} resultChars=${String(serialized.length)}`,
+    `executeResearchWebFetch: ok servedBy=${outcome.view.servedBy ?? 'unknown'} resultChars=${String(fenced.length)}`,
   );
-  return truncateResult(serialized);
+  return truncateResult(fenced);
 }
 
 // The `web_search` tool, answered by the platform's CONFIGURED search providers through
@@ -143,8 +151,8 @@ export async function executeResearchWebFetch(
 // Metering: research-service records one unit per provider call itself, so `onDispatch`
 // (chat's own WEB_SEARCH unit) runs only when the hosted fallback answers instead.
 //
-// Same result contract as the hosted call: a truncated JSON string
-// `{ results: [{ title, url, content }] }`, plus the providers that searched.
+// Same result contract as the hosted call: one untrusted `web_source` fence per hit
+// (research engine B1), with the providers that searched named in the header line.
 export async function executeResearchWebSearch(
   call: OllamaCloudToolCall,
   options: ExecuteResearchWebSearchOptions,
@@ -168,8 +176,8 @@ export async function executeResearchWebSearch(
     return executeOllamaCloudToolCall(call, { ...options.hosted, onDispatch: options.onDispatch });
   }
   const providers = describeGatewayProviders(outcome.providers);
-  const serialized = stringifyResult({
-    results: outcome.entries.map((entry) => ({
+  const fenced = fenceWebSearchToolResult({
+    hits: outcome.entries.map((entry) => ({
       title: entry.title ?? entry.url,
       url: entry.url,
       content: entry.snippet ?? '',
@@ -177,13 +185,13 @@ export async function executeResearchWebSearch(
         ? { foundBy: entry.providers }
         : {}),
     })),
-    ...(providers.length > 0 ? { providers } : {}),
+    providers,
     ...(outcome.mode === undefined ? {} : { mode: outcome.mode }),
   });
   logger.log(
-    `executeResearchWebSearch: ok providers=${String(providers.length)} results=${String(outcome.entries.length)} resultChars=${String(serialized.length)}`,
+    `executeResearchWebSearch: ok providers=${String(providers.length)} results=${String(outcome.entries.length)} resultChars=${String(fenced.length)}`,
   );
-  return truncateResult(serialized);
+  return truncateResult(fenced);
 }
 
 // Hard-truncates a stringified tool result to OLLAMA_TOOL_RESULT_MAX_CHARS.

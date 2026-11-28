@@ -505,3 +505,30 @@ Decision: [ADR-211](../13-adr/adr-211-research-fetches-and-crawls-in-parallel-ba
 - **Crawl.** Up to 3 sites at once (`CRAWL_SITE_CONCURRENCY`); every crawl page fetch passes a process-wide `Semaphore` (`CRAWL_GLOBAL_WORKER_CAP = 12`), so sites x 8 workers is bounded. Robots + homepage and sitemap + feed are fetched together.
 - **Log.** `research.fetch.batch origin= pages=host[STATUS start..end ms]` (hosts only) shows the overlap.
 - **Unchanged:** `FetchService.fetchPage` is still the only fetch path (SSRF on every hop, robots, 2 MB cap, 60 s / 6 attempts per URL).
+
+## Update 2026-11-28 - evidence store, thread memory, multi-query and rounds (ADR-224)
+
+- New optional run fields: `threadId`, `queries`, `languages`, `depth`, `round`, `excludeUrls`. A request without any
+  of them (threads-service) runs the old pipeline unchanged.
+- `RESEARCH_DEPTH_BUDGETS`: total queries 1/2/4/6/10/14 and pages 8/8/8/12/16/20 for depth 0-5. Round 1's primary query
+  runs on every provider (ADR-210); expansion queries and every query of rounds 2+ run on expansion providers only
+  (`OLLAMA_WEB`, `SEARXNG`, or `publicConfig.expansion: true`). Hits merge by reciprocal-rank fusion; identical page
+  text is dropped by content hash.
+- Redis search cache (10 min, engine requests only, complete answers only; a hit records no `WEB_SEARCH` unit) and the
+  open-breaker mirror in Redis (`research:breaker:<id>`).
+- Evidence store `research_sources` (one row per bundle item, written after the run, 30-day retention swept hourly);
+  `research_runs.threadId`. Thread memory: pages read in the thread within 24 h are not fetched again; up to 3
+  matching earlier sources are offered again.
+- `bundle.stats` = round, queriesRun, queries, languages, providersUsed, resultsFound, pagesRead, duplicatesRemoved,
+  reusedFromThread, cachedSearches. Log: `research.run: queries= cached= results= pages= dupes= reused= round= depth= ms=`.
+
+## Update 2026-11-28 - platform registry (ADR-225)
+
+- Table `research_platforms` (migration `20261128100000_research_platforms`), 36 rows seeded create-if-missing at boot.
+- Admin: `GET/POST /research/platforms`, `GET/PATCH/DELETE /research/platforms/:id`, `POST /research/platforms/:id/test`
+  (answers `{slug, ok, resultCount, latencyMs, errorCode}`); admin role + `RESEARCH_PROVIDERS_MANAGE`.
+- A run with `depth ≥ 2` and `platforms` (≤ 6 categories) also searches up to 6 official APIs and 4 `site:` searches;
+  items gain `platform` / `platformCategory`, `bundle.stats.platforms` lists the ones that returned results.
+- Official APIs go only to the fixed host allow-list, with the platform row's timeout; GitHub and Stack Overflow get a
+  4-keyword query. Log: `research.platform slug= ok= count= ms= code=` (debug, never the query).
+- Fixed on the old path too: a search hit whose page was read is no longer kept in place of that page.

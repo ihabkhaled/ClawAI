@@ -28,6 +28,7 @@ import { PLUGINS_INSTALL_TRANSLATIONS } from './plugins-install-translations';
 import { PLUGINS_SERVERS_TRANSLATIONS } from './plugins-servers-translations';
 import { PLUGINS_STATUS_TRANSLATIONS } from './plugins-status-translations';
 import { PLUGINS_TRANSLATIONS } from './plugins-translations';
+import { RESEARCH_PLATFORMS_TRANSLATIONS } from './research-platforms-translations';
 import { ROUTER_TRACE_TRANSLATIONS } from './router-trace-translations';
 import { SKIPPED_PROVIDERS_TRANSLATIONS } from './skipped-providers-translations';
 import { SMART_ROUTER_ADMIN_TRANSLATIONS } from './smart-router-admin-translations';
@@ -415,6 +416,7 @@ export const ja: TranslationDictionary = {
     workspaceFigma: 'figma',
     workspaceWorkflows: 'ワークフロー',
     researchProviders: '研究プロバイダー',
+    researchPlatforms: 'リサーチプラットフォーム',
     researchRuns: '研究の実施',
     research: '研究',
     workspaceInbox: '受信箱',
@@ -4964,6 +4966,7 @@ export const ja: TranslationDictionary = {
   adminSecurity: ANTI_ABUSE_TRANSLATIONS.ja.admin,
   routerTrace: ROUTER_TRACE_TRANSLATIONS.ja,
   narration: NARRATION_TRANSLATIONS.ja,
+  researchPlatforms: RESEARCH_PLATFORMS_TRANSLATIONS.ja,
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.ja,
   pickedModel: PICKED_MODEL_TRANSLATIONS.ja,
   creditFallback: CREDIT_FALLBACK_TRANSLATIONS.ja,

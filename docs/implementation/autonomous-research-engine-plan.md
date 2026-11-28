@@ -1,6 +1,14 @@
 # Autonomous Research & Intelligence Engine — audit and plan
 
-Status: IN PROGRESS (2026-11-27). Owner decisions in §8. Done: the harness council (§3, [ADR-223](../13-adr/adr-223-harness-council-decides-research.md)) — decides need and depth, feeds the first sub-question to search. Next: B1. Source: the owner's brief "ClawAI — Advanced
+Status: IN PROGRESS (2026-11-28). Owner decisions in §8. Done: the harness council (§3, [ADR-223](../13-adr/adr-223-harness-council-decides-research.md));
+B1 + B2 ([ADR-224](../13-adr/adr-224-evidence-store-multi-query-and-research-rounds.md): web-source fence, evidence
+store, thread memory, depth budgets, query expansion, search cache, rounds with a gap check, Stop, real counters);
+the evaluation golden set (`scripts/qa-lab/research-eval/`, 336 cases, 26 languages); B3
+([ADR-225](../13-adr/adr-225-research-platform-registry.md): 36-platform registry with admin page, nine free official
+APIs, site-scoped social/news search, the council picks source kinds). Owner-reported fixes ([ADR-226](../13-adr/adr-226-every-turn-sees-the-users-whole-context.md)):
+research reads the whole chat and memories, exact-text lookups, near-identical matches, memory never filtered,
+any-language matching. Next: B5 (source scoring, syndication, claim assessment with evidence statuses). Video research reads public watch pages only:
+YouTube's robots.txt disallows `/api/` (captions), so autonomous research never fetches captions (§6). Source: the owner's brief "ClawAI — Advanced
 Autonomous Research & Intelligence Engine" plus "a 3-model harness". Intake per
 [rules/26](../../rules/26-prompt-pack-intake-protocol.md): audit first, plan second, deviations stated.
 
@@ -141,6 +149,10 @@ QA evidence record (rules/60), local first, then production behind its flag.
   the rest is best-effort and labelled.
 - The council never sits inside the request path without a deadline; on timeout the current single-model path
   answers, so no turn becomes slower than the cap.
+- Video and audio: autonomous research reads only what a crawler may read (the public watch page: title, channel,
+  description, chapters). Caption endpoints are robots-disallowed (YouTube `Disallow: /api/`), so captions and
+  speech-to-text run only on media the user explicitly provides (the existing videos and attachment features), never on
+  pages research found by itself.
 
 ## 7. Risks
 
@@ -162,3 +174,13 @@ flag with a measured before/after.
    built with the registry. Production has Ollama Web, SerpApi, Exa and Firecrawl active.
 4. **Depth per plan** (default, adjustable per plan): Free up to L2, Starter L3, Plus/Pro L4, Team/Scale L5 with L5 off
    until an admin enables it.
+
+## Open items after the 2026-11-28 batch
+
+- Continue a turn when a model only announces a search (store the announcement, search, answer in a second message).
+- Carry earlier attachments, voice and video transcripts and earlier search results into later turns.
+- On a plan without research, tell the model it cannot browse, so it never presents remembered text as recent news.
+- Put today's date in the planner and council prompts; do not let a planner invent a link to crawl.
+- Run the large multilingual decision set (2,415 cases built on 2026-11-28) and fix what it finds.
+- Compare, Consensus and the labs still plan research from markers.
+- Owner action: add an API key to the Ollama Web Search provider (local and production).

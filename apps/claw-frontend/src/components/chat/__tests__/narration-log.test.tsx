@@ -2,7 +2,11 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { NarrationLog } from '@/components/chat/narration-log';
+import { Direction } from '@/enums/direction.enum';
+import { Locale } from '@/enums/locale.enum';
 import { NarrationKind } from '@/enums/narration-kind.enum';
+import { LocaleContext } from '@/lib/i18n/locale-context';
+import { getDictionary, getTranslation } from '@/lib/i18n/translations';
 import type { NarrationEntry } from '@/types/narration.types';
 import { getStoredNarration } from '@/utilities/narration.utility';
 
@@ -95,6 +99,37 @@ describe('NarrationLog', () => {
 
     rerender(<NarrationLog entries={[entry(NarrationKind.BACK_TO_AI)]} isLive={false} t={t} />);
     expect(screen.getByTestId('narration-log')).not.toHaveAttribute('open');
+  });
+
+  // The research counters name languages and pick plural forms in the reader's
+  // language, which comes from the locale provider, not from `t`.
+  it("names searched languages in the provider's locale", () => {
+    const de = (key: string, params?: Record<string, string | number>): string =>
+      getTranslation(Locale.DE, key, params);
+    render(
+      <LocaleContext.Provider
+        value={{
+          locale: Locale.DE,
+          dir: Direction.LTR,
+          dictionary: getDictionary(Locale.DE),
+          setLocale: () => undefined,
+        }}
+      >
+        <NarrationLog
+          entries={[
+            entry(NarrationKind.SEARCH_STARTED, {
+              params: { query: 'q', queries: 4, languages: 'en, es' },
+            }),
+          ]}
+          isLive={false}
+          t={de}
+        />
+      </LocaleContext.Provider>,
+    );
+
+    expect(
+      screen.getByText('Recherchiere 4 Suchanfragen auf Englisch und Spanisch'),
+    ).toBeInTheDocument();
   });
 
   it('renders nothing for an answer that had no work log', () => {

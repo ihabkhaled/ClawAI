@@ -1,0 +1,162 @@
+[
+  {
+    "id": "en-coding-01",
+    "lang": "en",
+    "category": "coding",
+    "text": "Write a Python function that reverses a linked list.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ar-EG-coding-01",
+    "lang": "ar-EG",
+    "category": "coding",
+    "text": "اكتبلي دالة بايثون تعكس نص.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ar-coding-01",
+    "lang": "ar",
+    "category": "coding",
+    "text": "اشرح لي الفرق بين let و const في جافاسكربت مع مثال.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "de-coding-01",
+    "lang": "de",
+    "category": "coding",
+    "text": "Wie schreibe ich in TypeScript eine generische Funktion, die das erste Element eines Arrays zurückgibt?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "fr-coding-01",
+    "lang": "fr",
+    "category": "coding",
+    "text": "Peux-tu m'écrire une requête SQL qui compte les commandes par client ?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "es-coding-01",
+    "lang": "es",
+    "category": "coding",
+    "text": "Escribe una función en Rust que calcule el factorial de un número.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "pt-BR-coding-01",
+    "lang": "pt-BR",
+    "category": "coding",
+    "text": "Como faço um loop for em Go que percorre um mapa?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "it-coding-01",
+    "lang": "it",
+    "category": "coding",
+    "text": "Spiegami come funziona un decoratore in Python.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "tr-coding-01",
+    "lang": "tr",
+    "category": "coding",
+    "text": "JavaScript'te bir dizideki tekrar eden elemanları nasıl silerim?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ru-coding-01",
+    "lang": "ru",
+    "category": "coding",
+    "text": "Напиши регулярное выражение, которое проверяет формат email.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "zh-CN-coding-01",
+    "lang": "zh-CN",
+    "category": "coding",
+    "text": "用 Java 写一个二分查找函数。",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ja-coding-01",
+    "lang": "ja",
+    "category": "coding",
+    "text": "Pythonでリストを重複なしでソートする方法を教えて。",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "ko-coding-01",
+    "lang": "ko",
+    "category": "coding",
+    "text": "리액트에서 useEffect 클린업 함수는 언제 호출되나요?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "hi-Latn-coding-01",
+    "lang": "hi-Latn",
+    "category": "coding",
+    "text": "Python mein ek list ko reverse karne ka code likh do.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "id-coding-01",
+    "lang": "id",
+    "category": "coding",
+    "text": "Tolong buatkan fungsi JavaScript untuk mengecek palindrom.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  },
+  {
+    "id": "vi-coding-01",
+    "lang": "vi",
+    "category": "coding",
+    "text": "Viết giúp mình hàm C++ tính số Fibonacci thứ n.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0
+    }
+  }
+]

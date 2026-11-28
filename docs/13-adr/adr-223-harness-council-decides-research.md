@@ -32,9 +32,9 @@ error.
   three fast members usually agree before the largest one finishes).
 - Four model calls per turn instead of one. They are Ollama Cloud calls the platform absorbs (owner default), not
   metered to the user.
-- The council's languages and sub-questions are produced now but only the first sub-question is used (as the search
-  query). Multi-query, multilingual rounds use them in the research engine's next batches
-  (`docs/implementation/autonomous-research-engine-plan.md`).
+- The council's depth, languages and sub-questions now size and widen the search run, and rounds follow up on gaps
+  ([ADR-224](adr-224-evidence-store-multi-query-and-research-rounds.md), 2026-11-28). Before that only the first
+  sub-question was used, and the council's page budget never reached a search run (only site crawls read it).
 - Emptying the council role is not "off": the seed refills an empty role on the next boot. Disable members instead.
 - Orchestration surfaces (Compare, Consensus, labs) still decide research from markers (rule 59 known gap); they move
   to the council with the research engine's orchestrator.

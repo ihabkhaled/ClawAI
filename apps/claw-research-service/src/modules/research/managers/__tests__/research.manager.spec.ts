@@ -6,7 +6,9 @@ import { ProviderSelectionMode } from '../../../../common/enums/provider-selecti
 import { ResearchWorkflowKind } from '../../../../common/enums/research-workflow-kind.enum';
 import { SearchProviderKind } from '../../../../common/enums/search-provider-kind.enum';
 import { FetchRenderHint } from '../../../fetch/enums/fetch-render-hint.enum';
+import { MultiQuerySearchManager } from '../multi-query-search.manager';
 import { ResearchManager } from '../research.manager';
+import type { ResearchEvidenceStoreService } from '../../services/research-evidence-store.service';
 import type { SiteAuditManager } from '../site-audit.manager';
 import type { SiteCrawlManager } from '../site-crawl.manager';
 import type { FetchService } from '../../../fetch/services/fetch.service';
@@ -42,6 +44,7 @@ describe('ResearchManager', () => {
   let researchUsage: { record: Mock };
   let siteCrawlManager: { crawl: Mock };
   let siteAuditManager: { analyze: Mock };
+  let evidenceStore: { persistInBackground: Mock; loadThreadSources: Mock };
 
   beforeEach(() => {
     runs = {
@@ -99,6 +102,7 @@ describe('ResearchManager', () => {
     researchUsage = { record: vi.fn(async () => {}) };
     siteCrawlManager = { crawl: vi.fn(async () => []) };
     siteAuditManager = { analyze: vi.fn(() => []) };
+    evidenceStore = { persistInBackground: vi.fn(), loadThreadSources: vi.fn(async () => []) };
 
     manager = new ResearchManager(
       runs as unknown as ResearchRunRepository,
@@ -108,6 +112,8 @@ describe('ResearchManager', () => {
       researchUsage as unknown as ResearchUsageService,
       siteCrawlManager as unknown as SiteCrawlManager,
       siteAuditManager as unknown as SiteAuditManager,
+      new MultiQuerySearchManager(search as unknown as SearchExecutionService, {} as never),
+      evidenceStore as unknown as ResearchEvidenceStoreService,
     );
   });
 

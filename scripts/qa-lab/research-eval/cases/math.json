@@ -1,0 +1,178 @@
+[
+  {
+    "id": "en-math-01",
+    "lang": "en",
+    "category": "math",
+    "text": "What is 17 times 23?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0,
+      "mustMention": ["391"]
+    }
+  },
+  {
+    "id": "ar-math-01",
+    "lang": "ar",
+    "category": "math",
+    "text": "ما ناتج ضرب 45 في 12؟",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0,
+      "mustMention": ["540"]
+    }
+  },
+  {
+    "id": "ar-EG-math-01",
+    "lang": "ar-EG",
+    "category": "math",
+    "text": "احسبلي 15% من 240 كام؟",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0,
+      "mustMention": ["36"]
+    }
+  },
+  {
+    "id": "ar-Latn-math-01",
+    "lang": "ar-Latn",
+    "category": "math",
+    "text": "144 madroob fi 3 kam? 7esabha liya.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0,
+      "mustMention": ["432"]
+    }
+  },
+  {
+    "id": "fr-math-01",
+    "lang": "fr",
+    "category": "math",
+    "text": "Résous l'équation 2x + 6 = 20.",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0,
+      "mustMention": ["7"]
+    }
+  },
+  {
+    "id": "es-math-01",
+    "lang": "es",
+    "category": "math",
+    "text": "¿Cuánto es la raíz cuadrada de 169?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0,
+      "mustMention": ["13"]
+    }
+  },
+  {
+    "id": "pt-BR-math-01",
+    "lang": "pt-BR",
+    "category": "math",
+    "text": "Quanto é 25% de 480?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0,
+      "mustMention": ["120"]
+    }
+  },
+  {
+    "id": "de-math-01",
+    "lang": "de",
+    "category": "math",
+    "text": "Was ist 18 mal 14?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0,
+      "mustMention": ["252"]
+    }
+  },
+  {
+    "id": "tr-math-01",
+    "lang": "tr",
+    "category": "math",
+    "text": "Bir dik üçgenin dik kenarları 6 ve 8 ise hipotenüs kaç olur?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0,
+      "mustMention": ["10"]
+    }
+  },
+  {
+    "id": "hi-math-01",
+    "lang": "hi",
+    "category": "math",
+    "text": "125 का घनमूल क्या होता है?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0,
+      "mustMention": ["5"]
+    }
+  },
+  {
+    "id": "id-math-01",
+    "lang": "id",
+    "category": "math",
+    "text": "Berapa hasil dari 1200 dibagi 48?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0,
+      "mustMention": ["25"]
+    }
+  },
+  {
+    "id": "ru-math-01",
+    "lang": "ru",
+    "category": "math",
+    "text": "Сколько будет 7 в квадрате?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0,
+      "mustMention": ["49"]
+    }
+  },
+  {
+    "id": "zh-CN-math-01",
+    "lang": "zh-CN",
+    "category": "math",
+    "text": "请计算 (15 + 27) × 3 等于多少？",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0,
+      "mustMention": ["126"]
+    }
+  },
+  {
+    "id": "ja-math-01",
+    "lang": "ja",
+    "category": "math",
+    "text": "1から100までの整数の合計はいくつですか？",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0,
+      "mustMention": ["5050"]
+    }
+  },
+  {
+    "id": "ko-math-01",
+    "lang": "ko",
+    "category": "math",
+    "text": "3의 5제곱은 얼마인가요?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0,
+      "mustMention": ["243"]
+    }
+  },
+  {
+    "id": "bn-math-01",
+    "lang": "bn",
+    "category": "math",
+    "text": "১২ এর বর্গ কত?",
+    "expect": {
+      "research": "no",
+      "maxDepth": 0,
+      "mustMention": ["144"]
+    }
+  }
+]

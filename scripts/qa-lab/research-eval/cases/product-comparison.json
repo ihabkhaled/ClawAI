@@ -1,0 +1,162 @@
+[
+  {
+    "id": "en-product-comparison-01",
+    "lang": "en",
+    "category": "product-comparison",
+    "text": "Compare the iPhone 16 and the Samsung Galaxy S25: camera, battery and price.",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2
+    }
+  },
+  {
+    "id": "ar-product-comparison-01",
+    "lang": "ar",
+    "category": "product-comparison",
+    "text": "قارن بين تويوتا كورولا وهيونداي إلنترا من حيث السعر والاستهلاك.",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2
+    }
+  },
+  {
+    "id": "ar-EG-product-comparison-01",
+    "lang": "ar-EG",
+    "category": "product-comparison",
+    "text": "قارنلي بين ماك بوك اير ولابتوب ديل XPS: الأداء والسعر.",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2
+    }
+  },
+  {
+    "id": "ar-SA-product-comparison-01",
+    "lang": "ar-SA",
+    "category": "product-comparison",
+    "text": "وش الأفضل بين تويوتا كامري وهوندا أكورد من ناحية السعر وقطع الغيار؟",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2
+    }
+  },
+  {
+    "id": "fr-product-comparison-01",
+    "lang": "fr",
+    "category": "product-comparison",
+    "text": "Compare les aspirateurs robots Roborock et Dyson : prix, autonomie, avis.",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2
+    }
+  },
+  {
+    "id": "es-product-comparison-01",
+    "lang": "es",
+    "category": "product-comparison",
+    "text": "Compara las freidoras de aire de Philips y Xiaomi: precio, capacidad y opiniones.",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2
+    }
+  },
+  {
+    "id": "pt-BR-product-comparison-01",
+    "lang": "pt-BR",
+    "category": "product-comparison",
+    "text": "Compare o Kindle e o Kobo: preço, tela e bateria.",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2
+    }
+  },
+  {
+    "id": "de-product-comparison-01",
+    "lang": "de",
+    "category": "product-comparison",
+    "text": "Vergleiche den Tesla Model 3 mit dem BMW i4: Preis, Reichweite, Ladezeit.",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2
+    }
+  },
+  {
+    "id": "it-product-comparison-01",
+    "lang": "it",
+    "category": "product-comparison",
+    "text": "Confronta le cuffie Sony WH-1000XM5 e Bose QuietComfort Ultra: prezzo e qualità audio.",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2
+    }
+  },
+  {
+    "id": "tr-product-comparison-01",
+    "lang": "tr",
+    "category": "product-comparison",
+    "text": "Xiaomi ve Samsung akıllı saatleri karşılaştır: fiyat, pil ömrü, özellikler.",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2
+    }
+  },
+  {
+    "id": "hi-Latn-product-comparison-01",
+    "lang": "hi-Latn",
+    "category": "product-comparison",
+    "text": "iPhone 16 vs Samsung S25 compare karo, kaunsa paisa vasool hai?",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2
+    }
+  },
+  {
+    "id": "id-product-comparison-01",
+    "lang": "id",
+    "category": "product-comparison",
+    "text": "Bandingkan Honda Vario dan Yamaha Nmax: harga, irit bensin, perawatan.",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2
+    }
+  },
+  {
+    "id": "ru-product-comparison-01",
+    "lang": "ru",
+    "category": "product-comparison",
+    "text": "Сравни стиральные машины Bosch и LG: цена, надёжность, отзывы.",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2
+    }
+  },
+  {
+    "id": "zh-CN-product-comparison-01",
+    "lang": "zh-CN",
+    "category": "product-comparison",
+    "text": "请对比小米14和华为Mate 60：拍照、续航、价格。",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2
+    }
+  },
+  {
+    "id": "ja-product-comparison-01",
+    "lang": "ja",
+    "category": "product-comparison",
+    "text": "ソニーとパナソニックのミラーレスカメラを価格と性能で比較してください。",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2
+    }
+  },
+  {
+    "id": "ko-product-comparison-01",
+    "lang": "ko",
+    "category": "product-comparison",
+    "text": "갤럭시 북과 맥북 에어를 가격, 성능, 배터리로 비교해 줘.",
+    "expect": {
+      "research": "yes",
+      "minDepth": 2
+    }
+  }
+]

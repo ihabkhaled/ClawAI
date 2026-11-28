@@ -19,6 +19,7 @@ import { GlobalExceptionFilter } from './filters/global-exception.filter';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { FetchModule } from '../modules/fetch/fetch.module';
 import { HealthModule } from '../modules/health/health.module';
+import { PlatformsModule } from '../modules/platforms/platforms.module';
 import { ResearchModule } from '../modules/research/research.module';
 import { RuntimeCrawlModule } from '../modules/runtime-crawl/runtime-crawl.module';
 import { ScrapeModule } from '../modules/scrape/scrape.module';
@@ -86,6 +87,7 @@ import { ResearchUsageModule } from '../common/services/research-usage.module';
     SearchModule,
     FetchModule,
     ScrapeModule,
+    PlatformsModule,
     ResearchModule,
     RuntimeCrawlModule,
   ],
