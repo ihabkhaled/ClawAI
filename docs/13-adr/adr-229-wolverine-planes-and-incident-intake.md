@@ -172,9 +172,11 @@ These do not change without the owner. They are tested, and a change to one is a
 
 ## Consequences
 
-- New: `apps/claw-agent-service/src/modules/agent-incidents/` (NEW) with controller, guards, key service, budget
-  repository, nonce store, sanitizer, grouping, queue publisher, config service, admin controller, pull controller; Prisma
-  models for installation keys, incident events, incidents, DLQ records and config; migration; admin audit rows.
+- New service `apps/claw-incident-service/` (NEW, owner decision 2026-11-28) with controller, guards, key service,
+  budget repository, nonce store, sanitizer, grouping, queue publisher, config service, admin controller, pull
+  controller; its own database and Prisma models for installation keys, incident events, incidents, DLQ records and
+  config; migration; admin audit rows. Delivered with the full new-service checklist (`skills/add-a-new-service.md`:
+  every compose file, nginx, health, CI, installers, production `.env`, i18n).
 - nginx: a `incident_ingest` zone, a `location` for the intake with a body cap, timeouts and `limit_conn`, in `nginx.conf`,
   `nginx.distributed.conf.template` and every compose file that mounts nginx config (ADV-238).
 - The extension (B5): consent, capture points, bounded local queue, key in SecretStorage, signing, user view and delete.
@@ -182,7 +184,7 @@ These do not change without the owner. They are tested, and a change to one is a
   unauthorised side effect is a blocking failure.
 - Cost: one module of real size, a fail-closed repository that duplicates a small amount of Redis logic on purpose, and
   a loss of telemetry during a Redis outage (accepted, the interactive path is separate).
-- Docs to move with the code (rule 63): service guide for agent-service, the env and config docs, the runbooks for kill
+- Docs to move with the code (rule 63): a new `docs/04-backend/service-guide-incident.md`, the env and config docs, the runbooks for kill
   switch, incident handling and rollback, the ADR index, the workspace `CLAUDE.md`.
 
 ## Conflicts found while reading the code
@@ -195,7 +197,7 @@ Where the plan and the code disagree. Each is reflected in the decisions above.
 2. **"Already has rate limits and webhook signing."** The limiter fails open, `incrWithTtl` treats a malformed reply as an
    allow, and the signing is symmetric and server-derived. Resolution: new fail-closed repository and an asymmetric signature.
 3. **Kill switches as DB config.** agent-service has no config table or admin settings controller; the precedent lives in
-   auth-service and research-service. Resolution: a NEW table in agent-service.
+   auth-service and research-service. Resolution: a NEW config table in claw-incident-service.
 4. **nginx limit zone.** The plan assumes a `limit_req` zone is easy to add; `location /api/v1/agent` has none, the zones are
    keyed by address only, and the distributed template and compose files must all carry it.
 5. **Decompression limits.** The plan asks for them; the agent-service body parser limit and gzip behaviour were not read
