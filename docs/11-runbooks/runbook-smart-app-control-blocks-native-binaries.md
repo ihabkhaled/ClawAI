@@ -21,15 +21,26 @@ Both print `ok`: nothing is blocked; run tests and push normally. Stop here.
 
 **2. Run the specs in Linux instead.** The specs do not need Windows; any Linux Node 24 with the
 repo works. Use a throwaway container with the checkout mounted read-only and its own
-`node_modules`, so the Windows binaries are never loaded:
+`node_modules`, so the Windows binaries are never loaded. Copy **only tracked files**: a plain
+`cp -a` or `tar .` of the checkout also copies `.claude/` session worktrees, `.worktrees/` and
+other local folders (several GB, over 25 minutes, and tar aborts with "file changed as we read
+it" on `.ai/local`). The submodule (`apps/claw-coding-agent`, mode 160000) is skipped:
 
 ```sh
 MSYS_NO_PATHCONV=1 docker run --rm -v "$PWD":/src:ro -w /work node:24-bookworm sh -c \
-  'cp -a /src/. /work && npm ci --ignore-scripts >/dev/null && \
-   npm run build --workspace=@claw/shared-types --workspace=@claw/shared-constants \
-     --workspace=@claw/shared-utilities >/dev/null && \
+  'git config --global --add safe.directory /src && cd /src && \
+   git ls-files -s | awk '"'"'$1 != "160000" { sub(/^[^\t]*\t/, ""); print }'"'"' \
+     | tar --verbatim-files-from -T - -cf - | tar -xf - -C /work && \
+   cd /work && npm ci --ignore-scripts >/dev/null && \
+   (npm run build --workspace=@claw/shared-types --workspace=@claw/shared-constants \
+     --workspace=@claw/shared-utilities >/dev/null || true) && \
    cd apps/<service> && npx prisma generate >/dev/null 2>&1; npx vitest run <spec paths>'
 ```
+
+Proven 2026-11-28 on `apps/claw-auth-service` (`hashing.utility.spec.ts`, which loads argon2):
+copy 224 MB, `npm ci` ok, 5 of 5 tests passed, about 3 minutes in all. The shared-package build
+exits non-zero in that container but the service specs still run; read the spec result, not
+the build line. Untracked new files are not copied: `git add` them first.
 
 The running dev containers are NOT a substitute: they hold a production-style install with no
 Vitest (`ERR_MODULE_NOT_FOUND`, checked 2026-11-23).

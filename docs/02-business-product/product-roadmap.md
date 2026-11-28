@@ -127,6 +127,20 @@ owner-approved publishing, moderated community actions, and independent
 discovery. The eight-batch delivery plan and launch gates are in
 [`docs/superpowers/plans/2026-10-04-clawai-threads-implementation-plan.md`](../superpowers/plans/2026-10-04-clawai-threads-implementation-plan.md).
 
+### Self-healing coding agent (owner brief, 2026-11-28)
+
+Parity with Claude Code, Codex, Cursor and Antigravity, a main model with two
+supporting reviewer models, and a separate 24/7 agent that turns every opt-in,
+redacted failure report into a ticket, a tested fix and a release. Security is
+built first. Plan (four pillars, milestones M0-M7, batches K1-K3 and B0-B9):
+[`docs/implementation/self-healing-coding-agent-plan.md`](../implementation/self-healing-coding-agent-plan.md);
+requirement ledger:
+[`docs/implementation/self-healing-coding-agent-ledger.md`](../implementation/self-healing-coding-agent-ledger.md);
+the owner's master prompt pack:
+[`docs/implementation/wolverine-master-prompt/`](../implementation/wolverine-master-prompt/README.md);
+competitor research:
+[`docs/implementation/coding-agent-parity-research-2026-11.md`](../implementation/coding-agent-parity-research-2026-11.md).
+
 ### Short-Term (Next Quarter)
 
 | Feature                | Priority | Description                                           |
