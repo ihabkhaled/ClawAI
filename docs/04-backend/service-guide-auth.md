@@ -851,3 +851,122 @@ new file's lowercase domain lines, sorted. Domains seen in an incident but missi
 `src/modules/anti-abuse/**/__tests__/` (utilities, every service, both repositories, controllers, DTOs),
 `app/filters/__tests__/anti-abuse-refusal.filter.spec.ts`, the auth service/controller/manager specs, the plans
 repository spec (refused trial) and the system-settings specs (masking, camelCase keys, clearing).
+
+## Abuse defence (ADR-233)
+
+Decision record: [ADR-233](../13-adr/adr-233-abuse-auto-suspension-and-token-hardening.md). Code:
+`src/modules/abuse-defense/`. It sits below `AuthModule`, `AntiAbuseModule` and `UsersModule` (all import it), so it
+imports none of them and re-provides the stateless pieces it shares (`UsersRepository`,
+`SessionRevocationCacheService`, `AntiAbuseCounterRepository`, `UserDeviceRepository`).
+
+**The rule:** a victim is never punished. Only a signal produced by the actor's OWN valid access token counts toward
+suspending that account. A failed sign-in, a bad token, a flood on a public route or a replayed refresh token never
+suspends anyone.
+
+### Flow
+
+`AbuseSignalService.record({ userId, code, source })` is the one entry point. It never throws (it sits in the exception
+filter and in sign-in paths). One Redis fixed-window hit (`auth:abuse:sig:<code>:<sha256(userId)>`, window
+`security.abuse.windowMinutes`) decides everything:
+
+1. Below the code's threshold: stored as a per-minute bucket in `abuse_signals`, at most once a minute per (account,
+   code) (`auth:abuse:sig-persist:*`), carrying the window count. The exact crossing is always stored.
+2. At or past it with the kill switch ON: `AbuseSuspensionService.suspend` (after a per-minute Redis lock,
+   `auth:abuse:sig-suspend:*`). It refuses administrators, super administrators and accounts already banned, picks the
+   rung from the count of this account's un-lifted suspensions inside `escalationWindowDays`, writes the ban columns and
+   the `abuse_suspensions` row in ONE transaction (`AbuseSuspensionRepository.apply`), closes every session, publishes
+   the ids to the revocation cache, writes the audit event and publishes `user.updated` (actor
+   `system:abuse-defence`). The account's counters are then reset.
+3. With the kill switch OFF: stored and logged once at the crossing, nothing else.
+4. `TOKEN_REUSE` and `BANNED_DEVICE_SIGNIN` are UNCOUNTED: stored and flagged, never suspending.
+5. Redis down: nothing can be counted, the outcome says so, the request is untouched (fails open, like the other
+   anti-abuse counters).
+
+Where signals come from today: the `GlobalExceptionFilter` (a 429 or a plain `ForbiddenException` on a request whose
+`request.user` is set), `TokenSessionManager.rotate` (replay after the 30 s grace, and a lost rotation race that turns
+out to be a replay), `LoginScreeningService.recordSuccess` (a banned device), and the internal route
+`POST /api/v1/internal/abuse/signals` (service token, never proxied by nginx):
+
+```json
+{
+  "userId": "<account id>",
+  "code": "RATE_LIMIT_TRIPPED | FORBIDDEN_PROBE | SSRF_REFUSED",
+  "source": "chat-service"
+}
+```
+
+202 `{ "accepted": true }` always. `TOKEN_REUSE` and `BANNED_DEVICE_SIGNIN` are refused (400): only auth-service raises
+them. `.strict()` refuses any extra field, so a token or an address cannot ride along. Only the account's own
+authenticated token may be reported: a service must never report an account because of what a caller did TO it.
+
+### Settings (`SystemSetting`, `security.abuse.*`)
+
+Defaults live in code (`abuse-defense.constants.ts`) and the `abuse-defense` seeder v1 writes the same rows once; a spec
+keeps the two equal. A cleared value (`''`) or an out-of-range one reads as the default.
+
+| Key                                      | Default | Bounds        |
+| ---------------------------------------- | ------- | ------------- |
+| `security.abuse.autoSuspendEnabled`      | true    | kill switch   |
+| `security.abuse.windowMinutes`           | 15      | 1 - 1440      |
+| `security.abuse.rateLimitTrips`          | 300     | 1 - 1,000,000 |
+| `security.abuse.forbiddenProbes`         | 200     | 1 - 1,000,000 |
+| `security.abuse.ssrfRefusals`            | 10      | 1 - 1,000,000 |
+| `security.abuse.firstSuspensionMinutes`  | 60      | 1 - 525,600   |
+| `security.abuse.secondSuspensionMinutes` | 1440    | 1 - 525,600   |
+| `security.abuse.thirdSuspensionMinutes`  | 10,080  | 1 - 525,600   |
+| `security.abuse.escalationWindowDays`    | 30      | 1 - 365       |
+
+### Admin
+
+- `GET /api/v1/admin/users/:userId/abuse` (ADMIN + `ADMIN_USERS_MANAGE`) -> `{ autoSuspendEnabled, suspensions: [{ id,
+level, reasonCode, evidence: { <code>: <count> }, startedAt, endsAt, liftedAt, liftedByUserId, active }], signals:
+[{ code, source, count, counted, bucketStart }], bannedDeviceSignins, tokenReuseEvents }`. Counts and ids only.
+- Lifting is the existing `POST /users/:id/unban`. It also marks the running suspension lifted (who, when) and lifts
+  the account's banned-device marks. The users page shows "Auto-suspended" (a system-written `ban_reason` with the
+  `AUTO_ABUSE:` prefix and no admin actor) beside the end date.
+
+### Banned devices
+
+`banned_device_marks (hash_kind FINGERPRINT | DEVICE_ID, hash_value, source_user_id, reason_code, lifted_at)`. A lifetime
+admin ban marks every hash in the account's `user_devices` rows (`BannedDeviceService.markForLifetimeBan`, best effort,
+never throws). `RegistrationScreeningService` refuses a NEW sign-up on a marked device with `403 SIGNUP_UNAVAILABLE`
+(after the bot check, before the email-domain check); `LoginScreeningService` flags an existing account's sign-in on one.
+No foreign key on `source_user_id` on purpose (deleting the account must not free its device).
+
+### What the user sees
+
+An automatic suspension is an `ACCOUNT_BANNED` 403 with `bannedUntil`, `banPermanent: false` and `autoSuspended: true`
+(`AccountBanGateService` decides from the same two columns the admin list uses). The sign-in page and the post-refresh
+notice say "temporarily suspended ... unusual activity ... until {date}" (`auth.loginSuspendedAuto*`). No signal, count
+or threshold is on the wire.
+
+### Token, JWT and session audit (2026-11-28)
+
+| Item                         | Finding                                                                                                                                                                                                            | Where                                                                                                                              | Status                                                                  |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Algorithm pinned             | HS256 only, in both signing and verifying; no `none`, no alg confusion                                                                                                                                             | `shared-constants/src/index.ts:69`, `shared-utilities/src/jwt/jwt-verifier.utility.ts:73-77`, `common/utilities/jwt.utility.ts:22` | OK                                                                      |
+| Issuer, audience, expiry     | `verifyUserAccessToken` checks `iss`, `aud`, `exp` and the payload shape (`tokenKind`, `sessionId`). The generic `verifyAccessToken<T>` checks the algorithm only                                                  | `jwt-verifier.utility.ts:33-46, 72-84`                                                                                             | OK for user tokens; **recommended**: add iss/aud to the generic variant |
+| Secret length and source     | `JWT_SECRET` min 32 chars, from the environment through `AppConfig` only; narrow tokens (Grafana cookie, PoW challenge, device pepper) use DERIVED keys. Length is checked, entropy is not                         | `app/config/app.config.ts:9`, `scoped-token.utility.ts:20`                                                                         | OK; **recommended**: reject low-entropy secrets at boot                 |
+| Access token lifetime        | 15 min (`JWT_ACCESS_EXPIRY`), and a revoked session is refused at every service's guard (ADR-112)                                                                                                                  | `app.config.ts:10`, `token-session.constants.ts:4`                                                                                 | OK                                                                      |
+| Refresh token                | 48 random bytes (hex), stored only as HMAC-SHA256 with a `JWT_SECRET`-derived pepper, rotated on every use                                                                                                         | `jwt.utility.ts:43`, `token-session.manager.ts:277`                                                                                | OK                                                                      |
+| Reuse detection              | Replay after the 30 s grace revokes the whole family and now also flags the account for an administrator; the grace is the ADR-106 trade-off                                                                       | `token-session.manager.ts:100-103, 181-186`                                                                                        | OK                                                                      |
+| Session lifetime             | Refresh slides on every rotation with no absolute cap: a session used at least weekly never expires                                                                                                                | `token-session.constants.ts:21-27`                                                                                                 | **Recommended**: absolute cap (e.g. 90 d), user impact                  |
+| Revocation honoured          | Logout, ban, admin close and reuse publish the ids. **Gaps fixed**: password reset (hard delete, nothing published), deactivation, temporary password and rename published nothing                                 | `password-reset.manager.ts:64-84`, `users.service.ts:258, 289, 463, 548`                                                           | **Fixed**                                                               |
+| Password change              | Closed no other session, so a stolen session survived the change meant to shut it out                                                                                                                              | `users.service.ts:463`                                                                                                             | **Fixed** (other logins closed; user-visible)                           |
+| Single-use reset token       | Password was written before the token was claimed; two requests with one token both rewrote it                                                                                                                     | `password-reset.manager.ts:64`                                                                                                     | **Fixed** (claim first)                                                 |
+| Cookies                      | The only cookie is the Grafana one: `httpOnly`, `Secure`, `SameSite=Lax`, `Path=/grafana`, 15 min, signed with a derived key and checked against the revocation key                                                | `grafana-access-cookie.utility.ts:40-43`                                                                                           | OK                                                                      |
+| CSRF posture                 | Every API route authenticates by `Authorization: Bearer`, which a cross-site request cannot attach. The one cookie route (`GET grafana-access/verify`) changes no state; minting the cookie needs the Bearer token | `grafana-access.controller.ts`                                                                                                     | OK                                                                      |
+| Logout                       | Revokes the session row and publishes its id; another tab's sibling session (ADR-106 grace) stays valid until it expires                                                                                           | `token-session.manager.ts:160-169`                                                                                                 | OK; **recommended**: revoke the family on logout                        |
+| Password hashing             | argon2id, 64 MiB, 3 passes, 4 lanes (above the OWASP minimum); no rehash when the parameters later rise                                                                                                            | `hashing.constants.ts:1-3`, `hashing.utility.ts:11`                                                                                | OK; **recommended**: `argon2.needsRehash` on sign-in                    |
+| Timing-safe compares         | The service token uses `timingSafeEqual` (length leaks only); bearer secrets are looked up by their HMAC, never compared in application code                                                                       | `constant-time-equal.utility.ts`, `service-token.guard.ts:27`                                                                      | OK                                                                      |
+| Enumeration on sign-in       | Password verified first; an unknown address burns an equal argon2 verification                                                                                                                                     | `auth.manager.ts:176-182`                                                                                                          | OK                                                                      |
+| Enumeration on reset request | Cooldown claimed before the lookup (OK), but the reset email is awaited for a known address only, so the response is slower for a registered one                                                                   | `password-reset.service.ts:44`                                                                                                     | **Recommended**: send through a queue (design change)                   |
+| Account JWT claims           | `role` is signed into the token and stays until the next refresh (ADR-112 "staleness"); no `isSuperAdmin` claim by design                                                                                          | `token-session.manager.ts:240-246`                                                                                                 | Known, documented                                                       |
+
+### Abuse defence tests
+
+`src/modules/abuse-defense/__tests__/` (signal service, suspension ladder, settings, banned devices, audit redaction,
+utilities, controllers and DTO, admin view, repositories), `app/filters/__tests__/abuse-signal.filter.spec.ts` (the
+victim is never punished), `app/__tests__/app-module-wiring.spec.ts` (compiles the real module graph),
+`managers/__tests__/password-reset.manager.spec.ts`, the token-session, screening, users and filter specs, and
+`prisma/seeders/__tests__/abuse-defense.seeder.spec.ts`.

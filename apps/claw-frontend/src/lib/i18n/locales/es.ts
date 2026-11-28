@@ -11,6 +11,7 @@ import { LIVE_TRANSLATIONS } from './live-translations';
 import { MARKETING_VIDEOS_TRANSLATIONS } from './marketing-videos-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
+import { MODEL_SCALE_TRANSLATIONS } from './model-scale-translations';
 import { MODEL_VISIBILITY_TRANSLATIONS } from './model-visibility-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
@@ -293,6 +294,9 @@ export const es: TranslationDictionary = {
     loginBannedPermanentDescription:
       'Un administrador bloqueó esta cuenta de forma permanente. No puedes iniciar sesión.',
     loginBannedGeneric: 'Esta cuenta está bloqueada.',
+    loginSuspendedAutoTitle: 'Esta cuenta está suspendida temporalmente',
+    loginSuspendedAutoDescription:
+      'Pausamos esta cuenta por actividad inusual. Podrás iniciar sesión de nuevo después del {date}. Si crees que es un error, contacta con soporte.',
     loginSuspendedTitle: 'Esta cuenta está suspendida',
     loginSuspendedDescription:
       'Su contraseña era correcta, pero un administrador ha desactivado esta cuenta. Póngase en contacto con el soporte si cree que se trata de un error.',
@@ -2478,6 +2482,8 @@ export const es: TranslationDictionary = {
     banAction: 'Bloquear',
     unbanAction: 'Desbloquear',
     bannedBadge: 'Bloqueado',
+    autoSuspendedBadge: 'Suspendida automáticamente',
+    detailAutoSuspendedUntil: 'Suspendida automáticamente hasta el {date}',
     banDialogTitle: 'Bloquear a {username}',
     banDialogDescription:
       'Se cierra la sesión del usuario en todas partes al instante y no podrá iniciar sesión hasta que termine el bloqueo.',
@@ -5044,6 +5050,7 @@ export const es: TranslationDictionary = {
   researchPlatforms: RESEARCH_PLATFORMS_TRANSLATIONS.es,
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.es,
   pickedModel: PICKED_MODEL_TRANSLATIONS.es,
+  modelScale: MODEL_SCALE_TRANSLATIONS.es,
   creditFallback: CREDIT_FALLBACK_TRANSLATIONS.es,
   live: LIVE_TRANSLATIONS.es,
   mediaUi: MEDIA_UI_TRANSLATIONS.es,

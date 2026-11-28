@@ -21,6 +21,9 @@ tests are the floor, not the finish line.
    - **Browser by hand (L04)**: open https://claw.local, do the thing a user does with Playwright,
      take a screenshot, look at it yourself. Repeat at phone, tablet and desktop widths, in both
      orientations and in Arabic (right-to-left). Do it as admin, as a paid user and as a FREE user.
+   - **Security (L12) and performance (L13)**: run `npm run security:check`, then write the threats, run
+     the penetration-style trial and record the numbers
+     ([skills/secure-every-change.md](skills/secure-every-change.md), [rules/69](rules/69-security-pass-on-every-change.md)).
 5. **Fill the record**: every lane PASS (with the real command and output), FAIL, NOT_RUN or
    NOT_APPLICABLE (each with a reason). Verdict `DONE` only if nothing is open; otherwise `PARTIAL`.
 6. **Check it**: `npm run qa:evidence:check -- docs/qa-evidence/<file>.md`.

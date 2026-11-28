@@ -22,10 +22,18 @@ export function readLoginBanInfo(error: unknown): LoginBanInfo | null {
   if (errorCode(error) !== ApiErrorCode.ACCOUNT_BANNED) {
     return null;
   }
-  const { bannedUntil, banPermanent } = error as { bannedUntil?: unknown; banPermanent?: unknown };
+  const { bannedUntil, banPermanent, autoSuspended } = error as {
+    bannedUntil?: unknown;
+    banPermanent?: unknown;
+    autoSuspended?: unknown;
+  };
   const until =
     typeof bannedUntil === 'string' && !Number.isNaN(Date.parse(bannedUntil)) ? bannedUntil : null;
-  return { permanent: banPermanent === true || until === null, until };
+  return {
+    permanent: banPermanent === true || until === null,
+    until,
+    ...(autoSuspended === true ? { autoSuspended: true } : {}),
+  };
 }
 
 /**
@@ -101,6 +109,17 @@ export function resolveLoginFailureCopy(
         isRecoverable: false,
       };
     case LoginFailureReason.ACCOUNT_BANNED:
+      // An automatic suspension (ADR-233) is always timed. It says it is temporary and when it ends,
+      // and nothing about what triggered it (rule 43): "unusual activity" is all the user is told.
+      if (ban?.autoSuspended === true && ban.until !== null) {
+        return {
+          titleKey: 'auth.loginSuspendedAutoTitle',
+          descriptionKey: 'auth.loginSuspendedAutoDescription',
+          descriptionParams: { date: new Date(ban.until).toLocaleString() },
+          actionKey: null,
+          isRecoverable: false,
+        };
+      }
       // Only ever reached after the password verified, so naming it is safe. A timed ban says
       // when it ends; a lifetime one (or a reply with no usable date) says it is permanent.
       return {

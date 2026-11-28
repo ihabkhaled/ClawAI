@@ -19,6 +19,8 @@ export interface HfModelGgufFile {
 export interface HfModelDetails extends HfModelSummary {
   ggufFiles: HfModelGgufFile[];
   recommendedFile: HfModelGgufFile | null;
+  /** The window stored in the GGUF file's own metadata, or null when HuggingFace reports none. */
+  ggufContextLength: number | null;
 }
 
 export interface HfSearchQuery {

@@ -113,6 +113,16 @@ export function SmartRouterAddEntryForm({
                   {modelOptions.map((option) => (
                     <SelectItem key={option.id} value={option.providerModelId}>
                       {option.providerModelId}
+                      {option.scale === undefined ? null : (
+                        <span
+                          title={option.scale.title}
+                          data-testid="model-scale"
+                          dir="auto"
+                          className="text-muted-foreground ms-2 text-xs"
+                        >
+                          {option.scale.label}
+                        </span>
+                      )}
                       {option.isValidated
                         ? ''
                         : ` · ${t('smartRouterAdmin.entryForm.modelUnvalidatedSuffix')}`}

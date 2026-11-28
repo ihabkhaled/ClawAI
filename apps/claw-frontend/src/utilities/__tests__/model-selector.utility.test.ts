@@ -154,3 +154,38 @@ describe('plan lock on picker options', () => {
     ]);
   });
 });
+
+describe('groupedModelsToPickerGroups size (ADR-234)', () => {
+  it('forwards the size text of each model to its picker option', () => {
+    const groups = groupedModelsToPickerGroups([
+      {
+        provider: 'OPENROUTER',
+        label: 'OpenRouter',
+        models: [
+          {
+            provider: 'OPENROUTER',
+            model: 'moonshotai/kimi-k2',
+            displayName: 'Kimi K2',
+            scale: { label: '256K context · 1T params', title: '256K context · 1T params' },
+          },
+          { provider: 'OPENROUTER', model: 'mystery', displayName: 'Mystery' },
+        ],
+      },
+    ]);
+
+    expect(groups[0]?.options[0]?.scale?.label).toBe('256K context · 1T params');
+    expect(groups[0]?.options[1]?.scale).toBeUndefined();
+  });
+
+  it('keeps the size on a judge or critic option', () => {
+    const groups = judgeModelOptionsToPickerGroups([
+      {
+        value: 'OPENAI:gpt-5.4',
+        label: 'OPENAI · GPT 5.4',
+        scale: { label: '400K context', title: '400K context' },
+      },
+    ]);
+
+    expect(groups[0]?.options[0]).toMatchObject({ scale: { label: '400K context' } });
+  });
+});

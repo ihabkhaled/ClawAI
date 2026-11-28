@@ -22,7 +22,7 @@ describe('GlobalExceptionFilter: sign-up failure codes', () => {
   }
 
   beforeEach(() => {
-    filter = new GlobalExceptionFilter();
+    filter = new GlobalExceptionFilter({ record: vi.fn() });
     vi.spyOn(filter['logger'], 'error').mockImplementation(() => {});
   });
 

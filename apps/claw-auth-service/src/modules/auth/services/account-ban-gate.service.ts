@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AccountBannedException } from '../../../common/errors';
+import { isAutoSuspension } from '../../abuse-defense/utilities/auto-suspension.utility';
 import { UsersRepository } from '../../users/repositories/users.repository';
 import { resolveBanState } from '../../users/service.utilities/ban-state.utility';
 import { type BannableUser } from '../../users/types/user-admin.types';
@@ -22,7 +23,7 @@ export class AccountBanGateService {
       bannedUntil: user.bannedUntil ?? null,
     });
     if (state.status === 'ACTIVE') {
-      throw new AccountBannedException(state.until);
+      throw new AccountBannedException(state.until, isAutoSuspension(user));
     }
     if (state.status === 'EXPIRED') {
       try {

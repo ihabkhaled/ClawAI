@@ -1,0 +1,3 @@
+# The host refresher keeps the previous copy next to the live one and the updater writes through a temp file.
+*.prev
+.*.tmp-*

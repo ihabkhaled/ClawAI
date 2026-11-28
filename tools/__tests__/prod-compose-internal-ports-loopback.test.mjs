@@ -15,7 +15,8 @@ const PROD_COMPOSE = [
   'docker/docker-compose.prod.services.yml',
   'docker/docker-compose.prod.ollama.yml',
 ];
-const PUBLIC_PORTS = new Set(['80:80', '443:443']);
+// IPv4 only (ADR-232): a bare '443:443' also publishes on [::], where Docker's proxy hides the client address.
+const PUBLIC_PORTS = new Set(['0.0.0.0:80:80', '0.0.0.0:443:443']);
 const LOOPBACK_PREFIXES = ['127.0.0.1:', '[::1]:'];
 
 /** True when a short- or long-syntax port entry binds only to loopback, or is one of the public edge ports. */
@@ -26,13 +27,17 @@ function isAllowedPort(entry) {
   }
   if (entry === null || typeof entry !== 'object') return false;
   if (['127.0.0.1', '::1'].includes(entry.host_ip)) return true;
-  return PUBLIC_PORTS.has(`${String(entry.published)}:${String(entry.target)}`);
+  return (
+    entry.host_ip === '0.0.0.0' &&
+    PUBLIC_PORTS.has(`0.0.0.0:${String(entry.published)}:${String(entry.target)}`)
+  );
 }
 
 test('isAllowedPort accepts loopback and the edge ports, rejects every-interface ones', () => {
   assert.equal(isAllowedPort('127.0.0.1:${REDIS_PORT:-6380}:6379'), true);
   assert.equal(isAllowedPort('[::1]:5441:5432'), true);
-  assert.equal(isAllowedPort('443:443'), true);
+  assert.equal(isAllowedPort('0.0.0.0:443:443'), true);
+  assert.equal(isAllowedPort('443:443'), false);
   assert.equal(isAllowedPort({ host_ip: '127.0.0.1', target: 5432, published: 5441 }), true);
   assert.equal(isAllowedPort('${REDIS_PORT:-6380}:6379'), false);
   assert.equal(isAllowedPort('0.0.0.0:5441:5432'), false);
@@ -108,3 +113,96 @@ for (const relative of PROD_COMPOSE) {
     assert.deepEqual(weak, [], `passwords that can fall back to a default:\n${weak.join('\n')}`);
   });
 }
+
+// 2026-11-28: the Firecrawl sidecar's Redis answered PONG with no password and its RabbitMQ still had the default
+// guest user, on claw-scrapers, the network shared with crawl4ai, flaresolverr and the headless browsers that load
+// untrusted pages. Every store of the sidecar now has its own credential, from the environment (rules/68).
+const FIRECRAWL_STORES = ['firecrawl-redis', 'firecrawl-rabbitmq', 'firecrawl-postgres'];
+const DEV_COMPOSE = 'docker/docker-compose.dev.services.yml';
+const PROD_SERVICES = 'docker/docker-compose.prod.services.yml';
+
+/** The compose `environment` of a service as a plain object (map or KEY=value list). */
+function environmentOf(service) {
+  const environment = service.environment ?? {};
+  if (!Array.isArray(environment)) return environment;
+  return Object.fromEntries(
+    environment.map((entry) => [entry.split('=')[0], entry.slice(entry.indexOf('=') + 1)]),
+  );
+}
+
+test('the production Firecrawl Redis requires its own password and its healthcheck authenticates', () => {
+  const compose = parse(fs.readFileSync(repoPath(PROD_SERVICES), 'utf8'));
+  const redis = compose.services['firecrawl-redis'];
+  assert.equal(redis.command[0], 'redis-server');
+  const at = redis.command.indexOf('--requirepass');
+  assert.ok(at > 0, 'firecrawl-redis has no --requirepass');
+  assert.match(redis.command[at + 1], /^\$\{FIRECRAWL_REDIS_PASSWORD:\?[^}]+\}$/u);
+  assert.match(environmentOf(redis).REDIS_PASSWORD, /^\$\{FIRECRAWL_REDIS_PASSWORD:\?[^}]+\}$/u);
+  assert.match(
+    JSON.stringify(redis.healthcheck.test),
+    /redis-cli -a/u,
+    'the healthcheck must authenticate',
+  );
+});
+
+test('the production Firecrawl RabbitMQ has its own user and no guest', () => {
+  const compose = parse(fs.readFileSync(repoPath(PROD_SERVICES), 'utf8'));
+  const environment = environmentOf(compose.services['firecrawl-rabbitmq']);
+  assert.equal(environment.RABBITMQ_DEFAULT_USER, 'firecrawl');
+  assert.ok(isRequiredVariable(environment.RABBITMQ_DEFAULT_PASS));
+  assert.match(environment.RABBITMQ_DEFAULT_PASS, /FIRECRAWL_RABBITMQ_PASSWORD/u);
+});
+
+test('the production Firecrawl API connects to every store with its credential', () => {
+  const compose = parse(fs.readFileSync(repoPath(PROD_SERVICES), 'utf8'));
+  const environment = environmentOf(compose.services['firecrawl-api']);
+  assert.match(
+    environment.REDIS_URL,
+    /^redis:\/\/:\$\{FIRECRAWL_REDIS_PASSWORD:\?[^}]+\}@firecrawl-redis:6379$/u,
+  );
+  assert.equal(environment.REDIS_RATE_LIMIT_URL, environment.REDIS_URL);
+  assert.match(
+    environment.NUQ_RABBITMQ_URL,
+    /^amqp:\/\/firecrawl:\$\{FIRECRAWL_RABBITMQ_PASSWORD:\?[^}]+\}@firecrawl-rabbitmq:5672$/u,
+  );
+  assert.ok(isRequiredVariable(environment.POSTGRES_PASSWORD));
+});
+
+for (const relative of [PROD_SERVICES, DEV_COMPOSE]) {
+  test(`${relative}: no Firecrawl store publishes a port and every one sits on claw-scrapers only`, () => {
+    const compose = parse(fs.readFileSync(repoPath(relative), 'utf8'));
+    for (const name of FIRECRAWL_STORES) {
+      const service = compose.services[name];
+      assert.equal(service.ports, undefined, `${name} must not publish a port`);
+      assert.deepEqual(service.networks, ['claw-scrapers'], `${name} must stay on claw-scrapers`);
+    }
+  });
+}
+
+test('the development Firecrawl stores are password protected too, with a default only for convenience', () => {
+  const compose = parse(fs.readFileSync(repoPath(DEV_COMPOSE), 'utf8'));
+  const redis = compose.services['firecrawl-redis'];
+  assert.ok(redis.command.includes('--requirepass'));
+  assert.match(redis.command.at(-1), /FIRECRAWL_REDIS_PASSWORD/u);
+  const rabbit = environmentOf(compose.services['firecrawl-rabbitmq']);
+  assert.equal(rabbit.RABBITMQ_DEFAULT_USER, 'firecrawl');
+  assert.match(rabbit.RABBITMQ_DEFAULT_PASS, /FIRECRAWL_RABBITMQ_PASSWORD/u);
+});
+
+test('the installers, the rotation script and .env.example know both new Firecrawl passwords', () => {
+  const read = (relative) => fs.readFileSync(repoPath(relative), 'utf8');
+  for (const name of ['FIRECRAWL_REDIS_PASSWORD', 'FIRECRAWL_RABBITMQ_PASSWORD']) {
+    for (const relative of ['scripts/install.sh', 'scripts/install.ps1', '.env.example']) {
+      assert.ok(read(relative).includes(`${name}=`), `${relative} does not write ${name}`);
+    }
+    assert.ok(
+      read('scripts/rotate-db-passwords.sh').includes(
+        `PW_VAR[${name.replace('_PASSWORD', '')}]=${name}`,
+      ),
+    );
+  }
+  assert.match(
+    read('scripts/rotate-db-passwords.sh'),
+    /OTHER_KEYS="[^"]*FIRECRAWL_REDIS FIRECRAWL_RABBITMQ"/u,
+  );
+});

@@ -105,10 +105,12 @@ describe('UsersController', () => {
     expect(usersMock.updatePreferences).toHaveBeenCalledWith('admin-1', dto);
   });
 
-  it('changeMyPassword forwards user.id and body', async () => {
+  // The session id decides which logins survive a password change (every other one is closed), so
+  // the controller passes the caller's own.
+  it('changeMyPassword forwards user.id, body and the caller session', async () => {
     const dto = { currentPassword: 'old-pass', newPassword: 'PWord!1new' };
     await controller.changeMyPassword(adminUser as never, dto as never);
-    expect(usersMock.changePassword).toHaveBeenCalledWith('admin-1', dto);
+    expect(usersMock.changePassword).toHaveBeenCalledWith('admin-1', dto, 'session-1');
   });
 
   // The session id decides which sessions survive a rename, so the controller

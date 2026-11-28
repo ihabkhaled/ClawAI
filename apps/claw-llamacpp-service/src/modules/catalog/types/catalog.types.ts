@@ -61,6 +61,8 @@ export interface RoutingSnapshotEntry {
   modalitiesIn: string[];
   modalitiesOut: string[];
   contextWindowTokens?: number;
+  /** The catalog's own size string ("8B", "671B (37B active)"). routing-service parses it (ADR-234). */
+  parameterCount?: string;
 }
 
 export interface RoutingSnapshotResult {

@@ -388,15 +388,21 @@ services:
       # fetches the HTTP-01 challenge over plain HTTP on the standard port and
       # nowhere else, and a visitor typing the bare domain arrives on :80 and
       # must be redirected rather than refused. 4000 is local-only (security incident 2026-11-27): the
-      # internet reaches nginx on 80/443 only.
-      - '80:80'
+      # internet reaches nginx on 80/443 only. IPv4 only (ADR-232): the domain has no AAAA record, and
+      # Docker's IPv6 proxy hands nginx a 172.x source, which no rate limit or ban can key on.
+      - '0.0.0.0:80:80'
       - '127.0.0.1:4000:80'
-      - '443:443'
+      - '0.0.0.0:443:443'
     volumes:
       - ../infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       # Shared routing table, included by both the mkcert block and every
       # generated public-domain block so the two can never drift apart.
       - ../infra/nginx/locations.conf:/etc/nginx/claw/locations.conf:ro
+      # Crawler IP ranges (ADR-232) are a DIRECTORY mount on purpose: a single-file bind mount keeps the old
+      # inode when the file is replaced (runbook-nginx-stale-config), and the host refresher replaces this
+      # file every night. NGINX_CRAWLER_RANGES_DIR is optional: unset, the committed baseline is used; set it
+      # to a host directory outside the git checkout so a refresh never dirties the tree the deploy checks.
+      - ${NGINX_CRAWLER_RANGES_DIR:-../infra/nginx/verified-crawlers}:/etc/nginx/claw/verified-crawlers:ro
       # Generated Let's Encrypt server blocks (one per domain). Empty on a host
       # that has not issued a public certificate; the wildcard include tolerates
       # that, so this mount is safe unconditionally.
@@ -1054,10 +1060,12 @@ services:
       WORKER_PORT: '3005'
       ENV: local
       USE_DB_AUTHENTICATION: 'false'
-      REDIS_URL: redis://firecrawl-redis:6379
-      REDIS_RATE_LIMIT_URL: redis://firecrawl-redis:6379
+      # Every store has its own credential (rules/68): the headless browsers on claw-scrapers load
+      # untrusted pages, so an open Redis or a default guest RabbitMQ here is a way into the queue.
+      REDIS_URL: redis://:${FIRECRAWL_REDIS_PASSWORD:?FIRECRAWL_REDIS_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}@firecrawl-redis:6379
+      REDIS_RATE_LIMIT_URL: redis://:${FIRECRAWL_REDIS_PASSWORD:?FIRECRAWL_REDIS_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}@firecrawl-redis:6379
       PLAYWRIGHT_MICROSERVICE_URL: http://firecrawl-playwright:3000/scrape
-      NUQ_RABBITMQ_URL: amqp://firecrawl-rabbitmq:5672
+      NUQ_RABBITMQ_URL: amqp://firecrawl:${FIRECRAWL_RABBITMQ_PASSWORD:?FIRECRAWL_RABBITMQ_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}@firecrawl-rabbitmq:5672
       POSTGRES_HOST: firecrawl-postgres
       POSTGRES_PORT: '5432'
       POSTGRES_USER: firecrawl
@@ -1121,9 +1129,25 @@ services:
     image: redis:7-alpine
     container_name: claw-firecrawl-redis
     restart: unless-stopped
-    command: ['redis-server', '--save', '', '--appendonly', 'no']
+    # Password required (security audit 2026-11-28: it answered PONG to anyone on claw-scrapers).
+    command:
+      [
+        'redis-server',
+        '--save',
+        '',
+        '--appendonly',
+        'no',
+        '--requirepass',
+        '${FIRECRAWL_REDIS_PASSWORD:?FIRECRAWL_REDIS_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}',
+      ]
+    environment:
+      REDIS_PASSWORD: ${FIRECRAWL_REDIS_PASSWORD:?FIRECRAWL_REDIS_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
+      test:
+        [
+          'CMD-SHELL',
+          'if [ -n "$$REDIS_PASSWORD" ]; then redis-cli -a "$$REDIS_PASSWORD" --no-auth-warning ping; else redis-cli ping; fi | grep -q PONG',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -1138,6 +1162,13 @@ services:
     image: rabbitmq:3-management-alpine
     container_name: claw-firecrawl-rabbitmq
     restart: unless-stopped
+    # Its own user instead of the default guest (security audit 2026-11-28). RabbitMQ creates this user
+    # only when its data directory is EMPTY, so an existing container needs a fresh anonymous volume
+    # once (runbook-production-host-hardening, section 8); rotating the password later is
+    # scripts/rotate-db-passwords.sh.
+    environment:
+      RABBITMQ_DEFAULT_USER: firecrawl
+      RABBITMQ_DEFAULT_PASS: ${FIRECRAWL_RABBITMQ_PASSWORD:?FIRECRAWL_RABBITMQ_PASSWORD is required - set a unique value with scripts/rotate-db-passwords.sh}
     healthcheck:
       test: ['CMD-SHELL', 'rabbitmq-diagnostics -q check_running']
       interval: 10s

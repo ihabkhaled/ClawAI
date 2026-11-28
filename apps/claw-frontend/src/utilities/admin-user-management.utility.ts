@@ -1,6 +1,7 @@
 import {
   ADMIN_PHONE_PATTERN,
   ADMIN_USER_EMPTY_VALUE,
+  AUTO_SUSPENSION_REASON_PREFIX,
   PRESENCE_ACTIVE_WINDOW_MS,
   PRESENCE_ONLINE_WINDOW_MS,
 } from '@/constants/admin-user-management.constants';
@@ -80,4 +81,15 @@ export function formatAdminTimestamp(value: string | null, locale: string): stri
   }
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? ADMIN_USER_EMPTY_VALUE : parsed.toLocaleString(locale);
+}
+
+/**
+ * Whether the ban on this account is an automatic abuse suspension (ADR-233): written by the system, so
+ * there is no administrator on it, with the reserved reason code. An administrator who types the
+ * prefix into a manual ban still has their own id on the row, so it is never mistaken for one.
+ */
+export function isAutoSuspension(user: Pick<AdminUser, 'banReason' | 'bannedByUserId'>): boolean {
+  return (
+    user.bannedByUserId === null && (user.banReason ?? '').startsWith(AUTO_SUSPENSION_REASON_PREFIX)
+  );
 }

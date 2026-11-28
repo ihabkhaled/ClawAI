@@ -118,33 +118,6 @@ export class UsersRepository {
     return this.prisma.user.delete({ where: { id } });
   }
 
-  async revokeSessionsByUserId(
-    userId: string,
-    reason: SessionTerminationReason,
-    revokedAt = new Date(),
-  ): Promise<number> {
-    const result = await this.prisma.session.updateMany({
-      where: { userId, revokedAt: null },
-      data: buildTerminationData(reason, revokedAt),
-    });
-    return result.count;
-  }
-
-  // Renaming an account is not a credential change, so the device doing the
-  // rename keeps its session. Every other device still holds a token minted
-  // against the old identity and is signed out.
-  async revokeOtherSessionsByUserId(
-    userId: string,
-    keepSessionId: string,
-    revokedAt = new Date(),
-  ): Promise<number> {
-    const result = await this.prisma.session.updateMany({
-      where: { userId, revokedAt: null, id: { not: keepSessionId } },
-      data: buildTerminationData(SessionTerminationReason.ACCOUNT_CHANGED, revokedAt),
-    });
-    return result.count;
-  }
-
   /** Revokes every open session of a user and returns the ids, so the caller can publish them (ADR-112). */
   async revokeSessionsReturningIds(
     userId: string,
@@ -160,6 +133,24 @@ export class UsersRepository {
       where: { userId, revokedAt: null },
       data: buildTerminationData(reason, revokedAt),
     });
+    return open.map((session) => session.id);
+  }
+
+  /**
+   * Revokes every open session of a user EXCEPT one (the device that asked for the change) and returns
+   * the ids, so the caller can publish them: a closed login whose access token lives on for 15 minutes
+   * is not closed (ADR-112).
+   */
+  async revokeOtherSessionsReturningIds(
+    userId: string,
+    keepSessionId: string,
+    reason: SessionTerminationReason,
+    revokedAt = new Date(),
+  ): Promise<string[]> {
+    const where = { userId, revokedAt: null, id: { not: keepSessionId } };
+    const open = await this.prisma.session.findMany({ where, select: { id: true } });
+    if (open.length === 0) return [];
+    await this.prisma.session.updateMany({ where, data: buildTerminationData(reason, revokedAt) });
     return open.map((session) => session.id);
   }
 

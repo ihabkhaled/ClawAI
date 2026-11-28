@@ -11,6 +11,7 @@ import { LIVE_TRANSLATIONS } from './live-translations';
 import { MARKETING_VIDEOS_TRANSLATIONS } from './marketing-videos-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
+import { MODEL_SCALE_TRANSLATIONS } from './model-scale-translations';
 import { MODEL_VISIBILITY_TRANSLATIONS } from './model-visibility-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
@@ -284,6 +285,9 @@ export const ar: TranslationDictionary = {
     loginBannedDescription: 'قام مسؤول بحظر هذا الحساب حتى {date}. لا يمكنك تسجيل الدخول قبل ذلك.',
     loginBannedPermanentDescription: 'قام مسؤول بحظر هذا الحساب بشكل دائم. لا يمكنك تسجيل الدخول.',
     loginBannedGeneric: 'هذا الحساب محظور.',
+    loginSuspendedAutoTitle: 'تم تعليق هذا الحساب مؤقتًا',
+    loginSuspendedAutoDescription:
+      'أوقفنا هذا الحساب مؤقتًا بسبب نشاط غير معتاد. يمكنك تسجيل الدخول مجددًا بعد {date}. إذا كنت تعتقد أن هذا خطأ، فتواصل مع الدعم.',
     loginSuspendedTitle: 'تم تعليق هذا الحساب',
     loginSuspendedDescription:
       'كلمة المرور صحيحة، لكن أحد المسؤولين قام بتعطيل هذا الحساب. يرجى التواصل مع الدعم إذا كنت ترى أنّ ذلك حدث عن طريق الخطأ.',
@@ -2370,6 +2374,8 @@ export const ar: TranslationDictionary = {
     banAction: 'حظر',
     unbanAction: 'إلغاء الحظر',
     bannedBadge: 'محظور',
+    autoSuspendedBadge: 'معلّق تلقائيًا',
+    detailAutoSuspendedUntil: 'معلّق تلقائيًا حتى {date}',
     banDialogTitle: 'حظر {username}',
     banDialogDescription:
       'يتم تسجيل خروج المستخدم من كل مكان فورًا ولا يمكنه تسجيل الدخول حتى ينتهي الحظر.',
@@ -4859,6 +4865,7 @@ export const ar: TranslationDictionary = {
   researchPlatforms: RESEARCH_PLATFORMS_TRANSLATIONS.ar,
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.ar,
   pickedModel: PICKED_MODEL_TRANSLATIONS.ar,
+  modelScale: MODEL_SCALE_TRANSLATIONS.ar,
   creditFallback: CREDIT_FALLBACK_TRANSLATIONS.ar,
   live: LIVE_TRANSLATIONS.ar,
   mediaUi: MEDIA_UI_TRANSLATIONS.ar,

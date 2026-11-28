@@ -692,6 +692,15 @@ model RouterModelRegistry {
   // intelligence shape stay 1:1 with §6.1 of the flagship prompt).
   maxContextTokens         Int?           @map("max_context_tokens")
   maxOutputTokensIntel     Int?           @map("max_output_tokens_intel")
+  // Model size shown beside the model's name in every picker (ADR-234), in
+  // BILLIONS of parameters: 0.5 = 500M, 7.6, 671, 1000 = 1T. Total parameters;
+  // `activeParameterCountBillions` is the per-token share of a mixture-of-experts
+  // model (671 total / 37 active). NULL = the maker publishes no count (every
+  // closed model) — never a guess. Filled by a runtime's own report (Ollama /
+  // llama.cpp), the published-count table, or an admin; an admin value is pinned
+  // against sync like every other override-managed field.
+  parameterCountBillions       Decimal?   @map("parameter_count_billions") @db.Decimal(9, 3)
+  activeParameterCountBillions Decimal?   @map("active_parameter_count_billions") @db.Decimal(9, 3)
   // Domain / role guidance for the planner. String arrays so future
   // taxonomy additions don't require a new migration.
   domainStrengths          String[]       @default([]) @map("domain_strengths")

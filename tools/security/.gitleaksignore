@@ -1,0 +1,80 @@
+# Reviewed gitleaks findings that already sit in git HISTORY (rules/69; tools/security/security-check.mjs --history;
+# .github/workflows/security-scan.yml). Only the whole-history scans read this file (--gitleaks-ignore-path tools/security);
+# the pre-commit, pre-push and CI range scans never do. Each line is a fingerprint commit:file:rule:line, so it silences
+# that exact historical occurrence and nothing else: the same text in a NEW commit is still a finding.
+# History cannot be rewritten in a public repository, so a finding that is not a live secret is recorded here.
+# Never add a line for a real secret: rotate it first. Reviewed 2026-11-28 with gitleaks 8.30.1 (the CI version): 69 findings,
+# none is a live credential. gitleaks older than 8.25 ignores [[allowlists]] in .gitleaks.toml and reports far more: upgrade it.
+
+# The retired default admin password (rule claw-default-admin-password): removed and rotated, it only remains in old commits.
+050f098c9286710649214fda37c1325dbd31e8aa:docs/06-data/environment-variables.md:claw-default-admin-password:179
+17003535245e449b9fbf6160faa4fa9faa5074ef:scripts/setup.sh:claw-default-admin-password:26
+1af0e365817f665a8cc9623e5b41bede2aaac70e:README.md:claw-default-admin-password:63
+1af0e365817f665a8cc9623e5b41bede2aaac70e:docs/00-start-here/onboarding-5-minutes.md:claw-default-admin-password:92
+1b1356fd34b3ac96214512554db1010937d52323:apps/claw-auth-service/prisma/seed.js:claw-default-admin-password:19
+1c5c9d7bf9118cdf9ad102e505e5077fbabc1225:apps/claw-frontend/tests/e2e/provider-management.spec.ts:claw-default-admin-password:8
+2113698abf4c3361a686ec67f9e83481d350c6ce:docker-compose.dev.yml:claw-default-admin-password:260
+23727e23cac7d0345addf996f379ee31b24a05fd:scripts/regression/chat-delivery-regression.mjs:claw-default-admin-password:44
+23727e23cac7d0345addf996f379ee31b24a05fd:scripts/regression/context-memory-regression.mjs:claw-default-admin-password:39
+26124bec9be33a88b5eb1959b50ce21e09f4cc52:docs/16-quality-engineering/evidence/2026-09-24-live-qa-pass/README.md:claw-default-admin-password:281
+26124bec9be33a88b5eb1959b50ce21e09f4cc52:docs/16-quality-engineering/evidence/2026-09-24-live-qa-pass/README.md:claw-default-admin-password:5
+26cdb5f53be4069fbc3200d5086490cb061be162:wiki/Quick-Start.md:claw-default-admin-password:94
+2c2148d982ccfdcc7dd39918c64245c7284d999d:artifacts/qa/auto-router-100/run-auto-router-rounds.mjs:claw-default-admin-password:14
+2c2148d982ccfdcc7dd39918c64245c7284d999d:artifacts/qa/auto-router-100/run-auto-router-ui-rounds.mjs:claw-default-admin-password:22
+2c2148d982ccfdcc7dd39918c64245c7284d999d:artifacts/qa/auto-router-50/run-auto-router-rounds.mjs:claw-default-admin-password:14
+2c2148d982ccfdcc7dd39918c64245c7284d999d:artifacts/qa/auto-router-50/run-auto-router-ui-rounds.mjs:claw-default-admin-password:22
+2c2148d982ccfdcc7dd39918c64245c7284d999d:artifacts/qa/multirole-chat-stress-runner.mjs:claw-default-admin-password:8
+2c2b4797c1bf3e2488931f22643ae9106aa726ef:apps/claw-frontend/tests/e2e/chat-streaming-scroll.spec.ts:claw-default-admin-password:17
+2f59adca7cc165ec325de5b9e3bcca792017e741:apps/claw-auth-service/prisma/seed.ts:claw-default-admin-password:9
+306546c6911a48bcc2e651c23ee13d19e76418fd:wiki/Getting-Started.md:claw-default-admin-password:94
+30654fa4b8cbcb819de5fa3b71dbd25b2632ce1f:docs/16-quality-engineering/feedback-system/evidence/attachment-round-trip.sh:claw-default-admin-password:14
+32df5aee45207e4c9faa3c026bdbe5d2a4ad6ec9:docker-compose.services.yml:claw-default-admin-password:66
+436e6b3a762e5e70c8fe6e19018ac0bf95e370de:apps/claw-frontend/scripts/responsive-audit/observability-check.cjs:claw-default-admin-password:20
+46e9abdb8eae15ef47d342d4b9625fd1d3e42c0c:apps/claw-auth-service/prisma/seed.ts:claw-default-admin-password:10
+4f66d8e0370d405cde59b21adfebc1935d808491:apps/claw-frontend/scripts/responsive-audit/audit.cjs:claw-default-admin-password:11
+4f66d8e0370d405cde59b21adfebc1935d808491:apps/claw-frontend/scripts/responsive-audit/probe-auth.cjs:claw-default-admin-password:15
+610f50c924277b0b8953e296ddabc01ce78150b4:.env.example:claw-default-admin-password:104
+611d38fe41098db3bdebeacf802487e54b4dd3b3:README.md:claw-default-admin-password:59
+611d38fe41098db3bdebeacf802487e54b4dd3b3:apps/claw-auth-service/prisma/seed.ts:claw-default-admin-password:6
+65623a2e6b6a3784cdea16e8add7719ab0c69850:skills/run-coding-agent-release-rounds.md:claw-default-admin-password:52
+65623a2e6b6a3784cdea16e8add7719ab0c69850:skills/run-coding-agent-release-rounds.md:claw-default-admin-password:73
+6c6f254c96b9d39eca1cda7a72fe524f6df3105c:apps/claw-frontend/tests/e2e/chat-share.spec.ts:claw-default-admin-password:19
+74ba14884b3c4fb67b735d802df538749a446910:docs/16-quality-engineering/coding-agent-lab/supervisor-handover.md:claw-default-admin-password:122
+74ba14884b3c4fb67b735d802df538749a446910:docs/16-quality-engineering/coding-agent-lab/supervisor-handover.md:claw-default-admin-password:266
+7fccd448f81713125aad3e5b11c4398d6f12f10d:scripts/setup.sh:claw-default-admin-password:86
+86f2471a1db2d587bbc7f6d55b57539163c26dd2:apps/claw-frontend/tests/e2e/composer-context-menu.spec.ts:claw-default-admin-password:13
+8c1db419d26e2ba1d2fe4e1fcf1d3decbae04472:.claude/catalog-qa-plan.md:claw-default-admin-password:174
+93533060c059a917b4a31fae1d861b709a3a2337:docs/16-quality-engineering/feedback-system/evidence/live-pentest.sh:claw-default-admin-password:36
+93533060c059a917b4a31fae1d861b709a3a2337:docs/16-quality-engineering/feedback-system/evidence/ui-e2e.mjs:claw-default-admin-password:46
+9577b631a366a577382717d3620527f34481fefe:skills/run-coding-agent-release-rounds.md:claw-default-admin-password:52
+9577b631a366a577382717d3620527f34481fefe:skills/run-coding-agent-release-rounds.md:claw-default-admin-password:73
+96ffe89e63a9db03ba9892d3b11e117a378e3ac8:scripts/local-runtime-probes/README.md:claw-default-admin-password:61
+96ffe89e63a9db03ba9892d3b11e117a378e3ac8:scripts/local-runtime-probes/README.md:claw-default-admin-password:76
+96ffe89e63a9db03ba9892d3b11e117a378e3ac8:scripts/local-runtime-probes/probe-llamacpp.mjs:claw-default-admin-password:120
+96ffe89e63a9db03ba9892d3b11e117a378e3ac8:scripts/local-runtime-probes/probe-llamacpp.mjs:claw-default-admin-password:21
+a7661816ceff30d38dd8313204ba43486e58ff1c:docs/06-data/auth-database-schema.md:claw-default-admin-password:116
+a7661816ceff30d38dd8313204ba43486e58ff1c:docs/06-data/environment-variables-complete.md:claw-default-admin-password:103
+a7661816ceff30d38dd8313204ba43486e58ff1c:docs/12-reference/api-reference-auth.md:claw-default-admin-password:16
+a7661816ceff30d38dd8313204ba43486e58ff1c:docs/12-reference/api-reference-auth.md:claw-default-admin-password:46
+af03bf422e70407942a9e5e15901802e81556e57:skills/run-the-qa-team.md:claw-default-admin-password:38
+b86a4ed9711250cc81bbcfa2daa225730804d2c7:docs/06-data/environment-variables-complete.md:claw-default-admin-password:103
+c483ed14e41009b32c28f035a9e7f65f26a8c9ad:apps/claw-frontend/tests/e2e/admin-modules.spec.ts:claw-default-admin-password:5
+d4827fb556b3b89f79a57ded72aad6abe23be25d:docs/16-quality-engineering/feedback-system/evidence/rbac-boundary.sh:claw-default-admin-password:35
+d49282d788bae099d6c1a2e0cfca995de975920f:apps/claw-frontend/tests/e2e/lab-context-parity.spec.ts:claw-default-admin-password:16
+d5d57661c324881d6912ee5f8c141dee779d1900:skills/expose-models-for-local-testing.md:claw-default-admin-password:34
+d70ddaa44e01a0feca237adcd785e90346b72d31:apps/claw-frontend/tests/e2e/orchestration-labs.spec.ts:claw-default-admin-password:15
+d70ddaa44e01a0feca237adcd785e90346b72d31:apps/claw-frontend/tests/e2e/scroll-overflow.spec.ts:claw-default-admin-password:5
+d70ddaa44e01a0feca237adcd785e90346b72d31:apps/claw-frontend/tests/e2e/sidebar-gpu-pill.spec.ts:claw-default-admin-password:15
+dafa628e960b7c2b976a18f196153ca532a3c1c5:skills/pair-and-use-a-mobile-device-token.md:claw-default-admin-password:31
+db056c6de9aacd9401c534f2746a89e89f076345:apps/claw-frontend/tests/e2e/connector-provider-combobox.spec.ts:claw-default-admin-password:5
+f40c4a5a48722d86daa1230a31cb293ec8be160f:apps/claw-frontend/tests/e2e/threads-board.spec.ts:claw-default-admin-password:17
+f40c4a5a48722d86daa1230a31cb293ec8be160f:scripts/qa/threads-board-smoke.mjs:claw-default-admin-password:6
+f5aa3e31dafc543d713dede7b60b50a3ef24e0eb:skills/verify-a-batch-live.md:claw-default-admin-password:70
+f817af3d37366ba9ae0b7e805a1b14edac158098:testing/backend-e2e-standard.md:claw-default-admin-password:16
+fd9d6e146d5e685fdcf874ca14fc3e7785557469:apps/claw-frontend/tests/e2e/compare-model-picker.spec.ts:claw-default-admin-password:18
+
+# Not secrets: the public Twitch web-player client id, an .env.example placeholder, a model id and a CI test value, each at its original commit.
+0810091eec01298869c2897f82c5785f48552b67:apps/claw-live-service/src/modules/sources/constants/server-pull.constants.ts:twitch-api-token:18
+39c342b2a926df5b842b767aa5f71f4af6883192:.github/workflows/ci.yml:generic-api-key:109
+70d2198de45ce9236de11b741d8c934041d59efb:apps/claw-connector-service/src/modules/connectors/managers/adapters/anthropic.adapter.ts:generic-api-key:47
+db93db431634da010b7320f50fbc1b8baf40458f:apps/claw-backend/.env.example:generic-api-key:13

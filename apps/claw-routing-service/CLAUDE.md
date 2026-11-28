@@ -449,3 +449,29 @@ chat-service asks ALL its enabled entries in parallel and merges the votes. Seed
 `AssistantModelService.onModuleInit` (fills an empty role only): `beam`, `deepseek-v4.1-flash`, `mimo-v2.6-flash`,
 `minimax-m3.1-flash` on `OLLAMA_CLOUD`, 10 s, 700 tokens. Same admin routes and permission as the other roles; an empty
 role is refilled on the next boot, so switch members off rather than deleting them all.
+
+## Model size: parameter counts (ADR-234, 2026-11-28)
+
+`RouterModelRegistry.parameterCountBillions` / `activeParameterCountBillions` (migration
+`20261128120000_add_model_parameter_counts`; `Decimal(9,3)`, billions, NULL = the maker publishes none).
+
+- **A count is never invented.** Order: a local runtime's own report (`UpstreamModelSnapshot.parameterCount`, parsed by
+  `parseParameterCountText`), then `PUBLISHED_PARAMETER_COUNT_RULES` (`constants/model-parameter-count.constants.ts`:
+  EXACT normalised keys, each rule names the maker page it was read from, `:latest` is never listed because Ollama's
+  default tag is often a small model), then the count a maker's own model name states for `PARAMETER_NAMING_FAMILIES`.
+  A dated sibling is not assumed to share its base model's size: DeepSeek V3-0324 / V3.1-Terminus / V3.2 / R1-0528,
+  GLM-4.7 and MiniMax-M2.1 were checked against the makers' cards and left NULL. Closed models are absent on purpose.
+- **Adding a rule**: find the number on the maker's own page, add the exact keys and the page URL, add the key to
+  `model-parameter-count.utility.spec.ts`, bump `MODEL_PARAMETER_SEED_VERSION` so `ModelParameterSeedService` applies it to
+  rows that already exist. The sync fills every later row from the same table. No regex in a rule: the security lint
+  rejects nested quantifiers and a pattern matches siblings nobody checked.
+- **Only fills a gap.** The seed and the sync never overwrite an admin value; `parameterCountBillions` and
+  `activeParameterCountBillions` are in `OVERRIDE_MANAGED_FIELDS`, a pinned total stops the sync from writing the active
+  share, and the seed skips local rows (the runtime is the truth for its own file) and pinned rows.
+- **`GET /routing/model-sizes`** (`ModelSizeController`, `MODEL_USE_ALLOWED`, size only, no price) is what the
+  frontend pickers join on `(provider, modelKey)`; the window uses the same precedence as the internal `context-window`
+  route. Keep it free of rates (rules 28, 37).
+- **PATCH is partial again (fixed 2026-11-28)**: zod's `.partial()` keeps `.default(...)` values, so a `PATCH` that named
+  one field also wrote `isLocal: false`, `lifecycle: ACTIVE`, `qualityTier: B` and the other defaults.
+  `updateRouterModelSchema` is now built with `updateSchemaOf` (`src/common/utilities/zod-update-schema.utility.ts`),
+  which strips every default. Use it for any new update DTO derived from a create schema.

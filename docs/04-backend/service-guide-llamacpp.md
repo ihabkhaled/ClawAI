@@ -257,3 +257,24 @@ Dev-class entries exist so contributors with consumer GPUs can validate the full
 - ADR-0014 — `LLAMACPP` is a distinct connector provider type (not OPENAI_COMPATIBLE)
 
 (See [docs/13-adr/](../13-adr/) for full text.)
+
+## Context window and size in the routing snapshot (ADR-234, 2026-11-28)
+
+`GET /internal/llamacpp/loaded-snapshot` forwards, per READY catalog entry, `parameterCount` (the catalog's own string,
+"8B" or "671B (37B active)"; routing-service parses it) and `contextWindowTokens`.
+
+The window is the catalog row's `contextLength`, with one exception. `contextLength` is not nullable, and a HuggingFace
+import whose repo reports no GGUF metadata is stored with a placeholder (`HF_IMPORT_PLACEHOLDER_CONTEXT_LENGTH`,
+32,768), which is not a model's window. So:
+
+- **Imports read the real value.** `HfDiscoveryManager.getDetails` makes one extra call,
+  `GET /api/models/<repo>?expand[]=gguf`, and `parseGgufContextLength` takes `gguf.context_length` (the number stored in
+  the file's own metadata) when it is a positive whole number. `addFromHuggingFace` and the HF auto-sync store it as
+  `contextLength`; any failure (timeout, 401 on a gated repo, no GGUF block) leaves it unknown and the placeholder is
+  stored as before.
+- **The snapshot never forwards a placeholder.** `forwardableContextWindow` omits a row whose license is the import
+  marker (`HF_IMPORT_LICENSE`, "Unknown") and whose window equals the placeholder, and any non-positive window. Curated
+  entries (a real license, a published window) are forwarded unchanged. A real import window that happens to equal
+  32,768 is also dropped: unknown is the safe side.
+- Rows imported before this change keep the placeholder in the table (no migration) and are simply not forwarded.
+  Making `contextLength` nullable would be the clean fix; it is a schema change and was left out.

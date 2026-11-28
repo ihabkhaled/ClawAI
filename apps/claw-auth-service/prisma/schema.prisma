@@ -145,6 +145,8 @@ model User {
   emailChangeRequests     EmailChangeRequest[]
   threadJobBudgets        ThreadJobBudget[]
   devices                 UserDevice[]
+  abuseSignals            AbuseSignal[]
+  abuseSuspensions        AbuseSuspension[]
 
   @@index([email])
   @@index([status])
@@ -179,6 +181,75 @@ model UserDevice {
   @@index([fingerprintHash])
   @@index([deviceIdHash])
   @@map("user_devices")
+}
+
+// One bucket of abuse evidence about an AUTHENTICATED account (ADR-233): a count of
+// one signal code in one minute. Written at most once a minute per (user, code),
+// carrying the Redis window count at that moment, so a flood costs one row a
+// minute, not one per request. `counted = false` marks evidence that is recorded
+// for an administrator but can never suspend the account (a replayed refresh
+// token or a sign-in on a banned device describes a victim or a shared machine).
+// Holds no token, address, fingerprint or credential: ids, a code and a count.
+model AbuseSignal {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  code        String   @db.VarChar(40)
+  source      String   @db.VarChar(40)
+  count       Int      @default(1)
+  counted     Boolean  @default(true)
+  bucketStart DateTime @map("bucket_start")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, code, bucketStart])
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@map("abuse_signals")
+}
+
+// An automatic, reversible suspension (ADR-233). The block itself is the ordinary ban
+// on `users` (banned_at / banned_until / ban_reason = 'AUTO_ABUSE:<code>'), so every
+// sign-in, refresh and admin ban tool already honours it; this row is the audit
+// trail: which rung of the 1 h / 24 h / 7 d ladder, which signal, how many of each
+// (`evidence`, counts only) and whether an administrator lifted it early.
+model AbuseSuspension {
+  id             String    @id @default(cuid())
+  userId         String    @map("user_id")
+  level          Int
+  reasonCode     String    @map("reason_code") @db.VarChar(40)
+  evidence       Json
+  startedAt      DateTime  @map("started_at")
+  endsAt         DateTime  @map("ends_at")
+  liftedAt       DateTime? @map("lifted_at")
+  liftedByUserId String?   @map("lifted_by_user_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, startedAt])
+  @@map("abuse_suspensions")
+}
+
+// A device hash (the same peppered HMACs as user_devices) of a permanently banned
+// account. A NEW sign-up from a marked device is refused; other existing accounts on
+// it keep signing in and are flagged for an administrator (ADR-233). Deliberately
+// NO foreign key on source_user_id: deleting the abusive account must not free the
+// device. Lifted (lifted_at) when an administrator unbans the source account.
+model BannedDeviceMark {
+  id           String    @id @default(cuid())
+  hashKind     String    @map("hash_kind") @db.VarChar(16)
+  hashValue    String    @map("hash_value") @db.VarChar(64)
+  sourceUserId String    @map("source_user_id")
+  reasonCode   String    @map("reason_code") @db.VarChar(40)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  liftedAt     DateTime? @map("lifted_at")
+
+  @@unique([hashKind, hashValue, sourceUserId])
+  @@index([hashValue])
+  @@index([sourceUserId])
+  @@map("banned_device_marks")
 }
 
 enum PlanAssignmentStatus {

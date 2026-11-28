@@ -11,6 +11,7 @@ import { LIVE_TRANSLATIONS } from './live-translations';
 import { MARKETING_VIDEOS_TRANSLATIONS } from './marketing-videos-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
+import { MODEL_SCALE_TRANSLATIONS } from './model-scale-translations';
 import { MODEL_VISIBILITY_TRANSLATIONS } from './model-visibility-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
@@ -290,6 +291,9 @@ export const pt: TranslationDictionary = {
     loginBannedPermanentDescription:
       'Um administrador baniu esta conta permanentemente. Você não pode entrar.',
     loginBannedGeneric: 'Esta conta está banida.',
+    loginSuspendedAutoTitle: 'Esta conta está suspensa temporariamente',
+    loginSuspendedAutoDescription:
+      'Pausamos esta conta por atividade incomum. Você poderá entrar novamente após {date}. Se acha que é um engano, fale com o suporte.',
     loginSuspendedTitle: 'Esta conta foi suspensa',
     loginSuspendedDescription:
       'A palavra-passe estava correta, mas um administrador desativou esta conta. Contacte o apoio ao cliente se considerar que se trata de um engano.',
@@ -2470,6 +2474,8 @@ export const pt: TranslationDictionary = {
     banAction: 'Banir',
     unbanAction: 'Desbanir',
     bannedBadge: 'Banido',
+    autoSuspendedBadge: 'Suspensa automaticamente',
+    detailAutoSuspendedUntil: 'Suspensa automaticamente até {date}',
     banDialogTitle: 'Banir {username}',
     banDialogDescription:
       'O usuário é desconectado de todos os lugares na hora e não pode entrar até o fim do banimento.',
@@ -5018,6 +5024,7 @@ export const pt: TranslationDictionary = {
   researchPlatforms: RESEARCH_PLATFORMS_TRANSLATIONS.pt,
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.pt,
   pickedModel: PICKED_MODEL_TRANSLATIONS.pt,
+  modelScale: MODEL_SCALE_TRANSLATIONS.pt,
   creditFallback: CREDIT_FALLBACK_TRANSLATIONS.pt,
   live: LIVE_TRANSLATIONS.pt,
   mediaUi: MEDIA_UI_TRANSLATIONS.pt,

@@ -20,7 +20,7 @@ The router runs on the hot path of every routed message. It cannot afford three 
 
 ## The snapshot contract
 
-Each upstream service exposes one internal, unauthenticated (`@Public`) endpoint that returns its current model state as a flat list:
+Each upstream service exposes one internal endpoint, guarded by the service token (`@Public()` lifts only the user JWT; `ServiceTokenGuard` is on the class, rules/68), that returns its current model state as a flat list:
 
 | Service           | Endpoint                                          | Returns                                                |
 | ----------------- | ------------------------------------------------- | ------------------------------------------------------ |
@@ -48,13 +48,27 @@ All three return the same envelope:
 }
 ```
 
-Each snapshot is built by a focused `RoutingSnapshotManager` (connector-service uses `ModelsSnapshotManager`) so the upstream service's controller stays thin. The endpoints are `@Public` because they are reachable only on the internal Docker network — nginx never proxies `/api/v1/internal/*`.
+Each snapshot is built by a focused `RoutingSnapshotManager` (connector-service uses `ModelsSnapshotManager`) so the upstream service's controller stays thin. The endpoints carry no user JWT but require `Authorization: Service <INTER_SERVICE_AUTH_TOKEN>` (security audit 2026-11-27, rules/68), and nginx never proxies `/api/v1/internal/*`.
 
 ### Why these filters
 
 - connector-service skips disabled connectors and non-`ACTIVE` models so the router never proposes a provider an operator turned off.
 - ollama-service returns only **installed** models — not the full pull-able catalog — so the router never routes to a model that isn't on disk.
 - llamacpp-service returns only `downloadStatus = READY` entries so the router never routes to a frontier model whose weights are still downloading.
+
+### Size fields in a snapshot entry (ADR-234)
+
+Every snapshot entry may also carry the two sizes the model pickers write beside a model's name:
+
+- `contextWindowTokens`: the connector's window; ollama-service reads it from Ollama's `POST /api/show`
+  (`<arch>.context_length`, one bounded, cached call per installed model); llamacpp-service forwards the catalog's
+  `contextLength` but never an import's placeholder.
+- `parameterCount` (local runtimes only): the runtime's own size string, `"7.6B"` or `"671B (37B active)"`, which
+  routing-service parses into `RouterModelRegistry.parameterCountBillions` / `activeParameterCountBillions`. Cloud
+  connectors send none; routing-service fills those from its table of maker-published counts.
+
+An entry that omits a field leaves it unknown, and the sync writes NULL over a stored `contextWindowTokens` when the
+snapshot omits it, which is why ollama-service keeps a window it read earlier through a failed lookup.
 
 ---
 

@@ -47,6 +47,7 @@ import { validatePasswordStrength } from '../service.utilities/password-policy.u
 import { resolveSuperAdminMutability } from '../service.utilities/super-admin-mutability.utility';
 import { randomBytes } from 'node:crypto';
 import { AuthEmailAdapter } from '../../auth/adapters/auth-email.adapter';
+import { SessionRevocationCacheService } from '../../auth/services/session-revocation-cache.service';
 import { SessionTerminationReason } from '../../sessions/enums/session-termination-reason.enum';
 import { RolesService } from '../../roles/services/roles.service';
 import { PlansRepository } from '../../plans/repositories/plans.repository';
@@ -63,6 +64,7 @@ export class UsersService {
     private readonly plansRepository: PlansRepository,
     @Inject(UserDeletionOutboxRepository)
     private readonly userDeletionOutbox: Pick<UserDeletionOutboxRepository, 'deleteAccount'>,
+    private readonly revocationCache: SessionRevocationCacheService,
   ) {}
 
   async create(dto: CreateUserDto, actorId: string): Promise<AdminUser> {
@@ -253,7 +255,7 @@ export class UsersService {
     // the tab they are editing in made an ordinary rename feel like a lockout.
     const usernameChanged = dto.username !== undefined && dto.username !== user.username;
     if (usernameChanged) {
-      await this.usersRepository.revokeOtherSessionsByUserId(userId, sessionId);
+      await this.closeOtherSessions(userId, sessionId, SessionTerminationReason.ACCOUNT_CHANGED);
     }
     this.logger.log(
       `updateOwnProfile: updated user ${userId}${usernameChanged ? ' and revoked other sessions' : ''}`,
@@ -284,10 +286,7 @@ export class UsersService {
       status: UserStatus.SUSPENDED,
     });
 
-    await this.usersRepository.revokeSessionsByUserId(
-      id,
-      SessionTerminationReason.ACCOUNT_DEACTIVATED,
-    );
+    await this.closeSessions(id, SessionTerminationReason.ACCOUNT_DEACTIVATED);
 
     await this.rabbitMQService.publish(EventPattern.USER_DEACTIVATED, {
       userId: id,
@@ -426,7 +425,12 @@ export class UsersService {
     return toPublicProfile(user);
   }
 
-  async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {
+  /**
+   * Changes the caller's own password. Every OTHER login is closed and its ids published: a session an
+   * intruder holds must not survive the very action meant to shut them out. The device that changed it
+   * keeps its session (the same rule as a rename), so the tab in use is not signed out mid-edit.
+   */
+  async changePassword(userId: string, dto: ChangePasswordDto, sessionId: string): Promise<void> {
     this.logger.log(`changePassword: changing password for user ${userId}`);
     const user = await this.usersRepository.findById(userId);
     if (!user) {
@@ -456,7 +460,26 @@ export class UsersService {
       passwordHash: newHash,
       mustChangePassword: false,
     });
+    await this.closeOtherSessions(userId, sessionId, SessionTerminationReason.PASSWORD_CHANGED);
     this.logger.log(`changePassword: completed for user ${userId}`);
+  }
+
+  /** Close every open login of a user and publish the ids, so access tokens die now, not at expiry (ADR-112). */
+  private async closeSessions(userId: string, reason: SessionTerminationReason): Promise<void> {
+    await this.revocationCache.revoke(
+      await this.usersRepository.revokeSessionsReturningIds(userId, reason),
+    );
+  }
+
+  /** The same for every login but the one in use. */
+  private async closeOtherSessions(
+    userId: string,
+    keepSessionId: string,
+    reason: SessionTerminationReason,
+  ): Promise<void> {
+    await this.revocationCache.revoke(
+      await this.usersRepository.revokeOtherSessionsReturningIds(userId, keepSessionId, reason),
+    );
   }
 
   /**
@@ -522,10 +545,7 @@ export class UsersService {
     // the emailed temporary password will not work, but the user's existing password
     // still works, so they are not locked out.
     await this.usersRepository.updateById(id, { passwordHash, mustChangePassword: true });
-    await this.usersRepository.revokeSessionsByUserId(
-      id,
-      SessionTerminationReason.PASSWORD_CHANGED,
-    );
+    await this.closeSessions(id, SessionTerminationReason.PASSWORD_CHANGED);
     await this.rabbitMQService.publish(EventPattern.USER_TEMPORARY_PASSWORD_ISSUED, {
       userId: id,
       issuedBy: actorId,

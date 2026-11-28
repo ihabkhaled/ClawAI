@@ -7,13 +7,14 @@ Nginx runs as a reverse proxy on port 4000, routing all API requests from the fr
 **Container**: `claw-nginx` (nginx:alpine)
 **Host ports**: 443 (HTTPS), 4000 → 80, and in prod also 80 → 80
 
-The configuration is split across three files, all bind-mounted read-only:
+The configuration is split across these mounts, all read-only:
 
-| File                            | Mounted at                       | Holds                                                                       |
-| ------------------------------- | -------------------------------- | --------------------------------------------------------------------------- |
-| `infra/nginx/nginx.conf`        | `/etc/nginx/nginx.conf`          | `http{}` settings, the port-80 block, the default (mkcert) TLS server block |
-| `infra/nginx/locations.conf`    | `/etc/nginx/claw/locations.conf` | **every** `location` — the routing table below                              |
-| `infra/nginx/public-tls/*.conf` | `/etc/nginx/claw/public-tls/`    | generated Let's Encrypt server blocks (gitignored; empty on a laptop)       |
+| File                                           | Mounted at                           | Holds                                                                       |
+| ---------------------------------------------- | ------------------------------------ | --------------------------------------------------------------------------- |
+| `infra/nginx/nginx.conf`                       | `/etc/nginx/nginx.conf`              | `http{}` settings, the port-80 block, the default (mkcert) TLS server block |
+| `infra/nginx/locations.conf`                   | `/etc/nginx/claw/locations.conf`     | **every** `location` — the routing table below                              |
+| `infra/nginx/public-tls/*.conf`                | `/etc/nginx/claw/public-tls/`        | generated Let's Encrypt server blocks (gitignored; empty on a laptop)       |
+| `infra/nginx/verified-crawlers/` (a DIRECTORY) | `/etc/nginx/claw/verified-crawlers/` | `ranges.conf`: the generated Google/Bing/... IP ranges (ADR-232)            |
 
 The routing table is a separate file because a production server serves the same
 routes under two certificates — mkcert internally, Let's Encrypt for the public
@@ -221,7 +222,7 @@ These apply to all non-SSE routes. SSE endpoints override `proxy_read_timeout` t
 client_max_body_size 75m;
 ```
 
-This allows file uploads up to 75 MB. This limit applies to all routes. If you need larger uploads, increase this value and restart the nginx container.
+This allows file uploads up to 75 MB and is the cap for every route that does not set its own: chat takes 1 MiB, Threads 8 MiB, thread generation 16 MiB, files 75 MiB, so none of those locations lowers it. Only routes whose services take tiny JSON have a smaller cap: login, register and bot-check 64k, `/api/v1/auth` and client logs 256k, the payment and billing routes 256k, feedback 16k. If you need larger uploads, increase the global value and restart the nginx container.
 
 ---
 
@@ -334,6 +335,85 @@ limit_req zone=auth_routes burst=30 nodelay;
 
 ---
 
+## Edge policy: verified crawlers, smart limits, scanner 404s, TLS (ADR-232)
+
+One block in `nginx.conf` (`# BEGIN claw-edge-policy`, the same bytes in `nginx.distributed.conf.template`; a test fails when
+they drift) plus the server-level lines at the top of `locations.conf`. Tune the numbers in that block only.
+
+### Who is a crawler: proof, not claims
+
+A `User-Agent` proves nothing. nginx keeps two facts apart and derives a verdict:
+
+1. `$claw_crawler_claimed`: which crawler the User-Agent CLAIMS, only for operators that publish IP ranges.
+2. `$claw_crawler_ip_owner`: a `geo` lookup of `$remote_addr` in `verified-crawlers/ranges.conf`, generated from the
+   operators' own range files by `node tools/crawlers/update-verified-crawler-ranges.mjs`.
+3. `$claw_crawler_verdict`, the last field of every access-log line:
+
+| Verdict     | Meaning                                                                        | What happens                                                |
+| ----------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------- |
+| `none`      | claims no listed crawler (every person, every unlisted bot)                    | the general budget                                          |
+| `verified`  | claims a crawler and the address is in THAT operator's published ranges        | the `claw_crawler` budget; never banned for days            |
+| `fake`      | claims a listed crawler from an address outside its ranges                     | `403`; fail2ban `claw-nginx-fakebot` bans the address 24 h  |
+| `unchecked` | claims one, but the source is a private or Docker address (IPv6 behind Docker) | treated as an ordinary visitor; never refused, never banned |
+
+Range sources, fetched and parsed on 2026-11-28 (all 15 files worked): Google googlebot, special-crawlers,
+user-triggered-fetchers, user-triggered-fetchers-google; Bing bingbot; Apple applebot; DuckDuckGo duckduckbot; OpenAI gptbot,
+searchbot, chatgpt-user; Perplexity perplexitybot, perplexity-user; Mistral mistralai-user; Common Crawl ccbot; Ahrefs
+crawler-ip-ranges (`tools/crawlers/crawler-sources.mjs` holds the URLs). **Not verified by range, so never refused for
+their claim:** Yandex, Baidu, PetalBot, Seznam, Naver (reverse DNS only), Amazonbot (its list is an HTML page), Meta, Slack,
+X, LinkedIn, Anthropic ClaudeBot (nothing published). Adding an operator is one entry in `crawler-sources.mjs` and one
+User-Agent pattern in the map; `tools/__tests__/nginx-edge-policy.test.mjs` fails if the two lists differ.
+
+`ranges.conf` is mounted as a DIRECTORY (`${NGINX_CRAWLER_RANGES_DIR:-../infra/nginx/verified-crawlers}`) in every compose file that
+runs nginx, because a single-file bind mount keeps the old inode when the file is replaced. The updater refuses an empty file,
+a source that lost more than half of its prefixes, and any malformed, too-broad or private range, and keeps that source's
+previous copy. The nightly refresh is [runbook section 7](../11-runbooks/runbook-production-host-hardening.md).
+
+### Rate-limit zones (audited 2026-11-28)
+
+| Zone                                            | Key                                       | Rate / burst                       | Where                                                  | Why                                                                                   |
+| ----------------------------------------------- | ----------------------------------------- | ---------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| `claw_general` (new)                            | address; none for private/static/verified | 30 r/s, burst 400                  | every location (repeated where a location has its own) | the missing brake on GET floods; a page load is dozens of requests, never 400 at once |
+| `claw_static` (new)                             | address, static assets only               | 100 r/s, burst 1000                | server level                                           | a page of assets never spends the dynamic budget; a missing asset is an expensive 404 |
+| `claw_crawler` (new)                            | address of a VERIFIED crawler             | 15 r/s, burst 150                  | every location                                         | generous, not unlimited; 429 + `Retry-After: 120`                                     |
+| `auth_routes`                                   | address, POST only                        | 60 r/m, burst 30                   | `/api/v1/auth`, `/api/v1/agent/auth/`                  | unchanged (rules/58)                                                                  |
+| `auth_signup` / `auth_login` / `auth_bot_check` | address, POST only                        | 2 r/m b3 / 12 r/m b10 / 20 r/m b10 | register, login, bot-check                             | unchanged (incident 2026-11-27)                                                       |
+| `agent_api`                                     | address                                   | 300 r/m, burst 100                 | `/api/v1/agent`                                        | unchanged (ADR-230)                                                                   |
+| `client_logs`                                   | address, POST only                        | 60 r/m, burst 30                   | `/api/v1/client-logs`                                  | unchanged                                                                             |
+| `payment_writes` / `payment_webhooks`           | address                                   | 20 r/m / 120 r/m                   | billing, payments, webhooks                            | unchanged                                                                             |
+| `display_currency` / `public_feedback`          | address                                   | 120 r/m / 20 r/m                   | display-currency, anonymous feedback                   | unchanged                                                                             |
+| `per_ip_conn`                                   | address                                   | 100 concurrent connections         | every route                                            | unchanged                                                                             |
+
+A private, loopback, CGNAT or unique-local source (including every IPv6 visitor behind Docker's proxy) has an EMPTY key: it is
+never counted per address, because one bucket for all of them would throttle the whole site. Every nginx-made `429`
+(`limit_req`, `limit_conn`) goes through `location @claw_429`: JSON `{"code":"EDGE_RATE_LIMITED"}`, `Retry-After: 10` (120 for a
+verified crawler), `Cache-Control: no-store`. A service's own 429 (`code: RATE_LIMITED`, its own `Retry-After`) is never intercepted
+(only the frontend location replaces error pages, and it names the 429 page itself). `limit_req_log_level warn` keeps the refusals out
+of the error log. SSE routes are one request each and carry no per-chunk limit.
+
+### Scanner probes (`$claw_scanner_probe`)
+
+Dotfiles except `/.well-known/`, path traversal, `*.php`/`asp`/`jsp`, WordPress, Actuator, phpMyAdmin and Vite probes, root-level backup,
+key and config files, `docker-compose*`, `package.json`, lock files, `swagger*`, `openapi.*`: `if ($claw_scanner_probe) { return 404; }` at
+server level, so a cheap request gets a ~150-byte 404 from nginx instead of a ~470 KB Next.js page. The request is still logged and
+`claw-nginx-scan` bans a repeat prober (a verified crawler's lines are ignored). Paths under `/api/` and `/_next/` are data and are never
+matched. nginx itself answers `400` to a path that climbs out of the root.
+
+### Slow clients, TLS
+
+`client_header_timeout 15s`, `client_body_timeout 30s` (120 s on `/api/v1/files`), `send_timeout 30s`, `keepalive_timeout 30s`,
+`reset_timedout_connection on`, `client_header_buffer_size 4k`, `large_client_header_buffers 4 16k`, `worker_processes auto`, 4096
+connections. A stream that is silent for longer than 30 s survives (proven with a 36 s silence). TLS 1.2 is limited to
+`ECDHE-{ECDSA,RSA}-{AES128-GCM-SHA256,AES256-GCM-SHA384,CHACHA20-POLY1305}`: no CBC, no RSA key exchange; TLS 1.3 is unchanged.
+
+### Proving a change
+
+```bash
+# the config parses (the throwaway-container test also drives requests, TLS and a streaming route)
+CLAW_DOCKER_TESTS=1 node --test tools/__tests__/nginx-edge-docker.test.mjs tools/__tests__/fail2ban-docker.test.mjs
+node --test tools/__tests__/nginx-edge-policy.test.mjs tools/__tests__/crawler-ranges.test.mjs   # no Docker needed
+```
+
 ## DNS Resolution
 
 ```nginx
@@ -436,6 +516,8 @@ This means Nginx is the last infrastructure component to start, ensuring all rou
    ```bash
    docker exec claw-nginx nginx -t
    ```
+   Or, before it ever reaches the server, in a throwaway container (`nginx-edge-docker.test.mjs`, see
+   "Proving a change" above).
 3. Apply it. A reload is graceful and drops no connections:
    ```bash
    docker exec claw-nginx nginx -s reload

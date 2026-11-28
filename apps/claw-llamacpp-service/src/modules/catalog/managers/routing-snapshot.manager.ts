@@ -5,6 +5,7 @@ import {
   type RoutingSnapshotResult,
 } from '../types/catalog.types';
 import { CatalogRepository } from '../repositories/catalog.repository';
+import { forwardableContextWindow } from '../utilities/gguf-context-length.utility';
 
 /// Phase 6 — builds the snapshot consumed by the routing-service's
 /// RouterSyncManager. Returns only frontier catalog entries whose
@@ -36,7 +37,8 @@ export class RoutingSnapshotManager {
       isLocal: true,
       modalitiesIn: ['TEXT'],
       modalitiesOut: ['TEXT'],
-      contextWindowTokens: row.contextLength,
+      contextWindowTokens: forwardableContextWindow(row),
+      parameterCount: row.parameterCount,
     };
   }
 }

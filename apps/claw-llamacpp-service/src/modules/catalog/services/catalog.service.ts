@@ -1,24 +1,22 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ModelCategory, QualityTier } from '../../../common/enums';
 import { EntityNotFoundException } from '../../../common/errors';
+import {
+  HF_IMPORT_LICENSE,
+  HF_IMPORT_PLACEHOLDER_CONTEXT_LENGTH,
+} from '../constants/hf-discovery.constants';
 import { CatalogRepository } from '../repositories/catalog.repository';
 import { CatalogRefreshManager } from '../managers/catalog-refresh.manager';
 import { HfAutoSyncManager } from '../managers/hf-auto-sync.manager';
 import { HfDiscoveryManager } from '../managers/hf-discovery.manager';
-import {
-  type HfAddRequestDto,
-  type HfSearchQueryDto,
-} from '../dto/hf-search.dto';
+import { type HfAddRequestDto, type HfSearchQueryDto } from '../dto/hf-search.dto';
 import {
   type CatalogEntry,
   type CatalogListFilters,
   type CatalogListResult,
 } from '../types/catalog.types';
 import { type HfAutoSyncReport } from '../types/hf-auto-sync.types';
-import {
-  type HfModelDetails,
-  type HfModelSummary,
-} from '../types/hf-search.types';
+import { type HfModelDetails, type HfModelSummary } from '../types/hf-search.types';
 
 @Injectable()
 export class CatalogService {
@@ -77,9 +75,9 @@ export class CatalogService {
       parameterCount: paramsHint.label,
       totalParamsB: paramsHint.billions,
       activeParamsB: paramsHint.billions,
-      contextLength: 32_768,
+      contextLength: details.ggufContextLength ?? HF_IMPORT_PLACEHOLDER_CONTEXT_LENGTH,
       capabilities: [],
-      license: 'Unknown',
+      license: HF_IMPORT_LICENSE,
       requiredRamGb: Math.max(8, sizeGb),
       recommendedRamGb: Math.max(16, sizeGb * 2),
       requiredDiskGb: sizeGb,
@@ -89,10 +87,12 @@ export class CatalogService {
 
   private guessParameterCount(tags: string[]): { label: string; billions: number } {
     for (const tag of tags) {
-      const match = /([0-9]+(?:\.[0-9]+)?)\s*[Bb]/.exec(tag);
-      if (match) {
-        const billions = Math.max(1, Math.round(Number(match[1])));
-        return { label: `${match[1]}B`, billions };
+      // Two flat groups (whole part, optional fraction): no nested quantifier, so no ReDoS.
+      const match = /(\d+)\.?(\d*)\s*[Bb]/.exec(tag);
+      if (match?.[1] !== undefined) {
+        const size = match[2] ? `${match[1]}.${match[2]}` : match[1];
+        const billions = Math.max(1, Math.round(Number(size)));
+        return { label: `${size}B`, billions };
       }
     }
     return { label: 'Unknown', billions: 7 };

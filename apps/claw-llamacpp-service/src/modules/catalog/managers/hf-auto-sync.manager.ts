@@ -10,6 +10,8 @@ import {
 import {
   HF_AUTO_SYNC_INITIAL_DELAY_MS,
   HF_AUTO_SYNC_MAX_FILE_BYTES,
+  HF_IMPORT_LICENSE,
+  HF_IMPORT_PLACEHOLDER_CONTEXT_LENGTH,
   HF_TAG_CATEGORY_HINTS,
 } from '../constants/hf-discovery.constants';
 import { CatalogRepository } from '../repositories/catalog.repository';
@@ -118,7 +120,7 @@ export class HfAutoSyncManager implements OnApplicationBootstrap {
 
   private async importOne(summary: HfModelSummary): Promise<HfAutoSyncResult> {
     const details = await this.discovery.getDetails(summary.id);
-    if (!details.recommendedFile || !details.recommendedFile.quantization) {
+    if (!details.recommendedFile?.quantization) {
       return {
         repo: summary.id,
         status: HfAutoSyncOutcomeStatus.SKIPPED,
@@ -158,9 +160,9 @@ export class HfAutoSyncManager implements OnApplicationBootstrap {
       parameterCount: paramsHint.label,
       totalParamsB: paramsHint.billions,
       activeParamsB: paramsHint.billions,
-      contextLength: 32_768,
+      contextLength: details.ggufContextLength ?? HF_IMPORT_PLACEHOLDER_CONTEXT_LENGTH,
       capabilities: [],
-      license: 'Unknown',
+      license: HF_IMPORT_LICENSE,
       requiredRamGb: Math.max(8, sizeGb),
       recommendedRamGb: Math.max(16, sizeGb * 2),
       requiredDiskGb: sizeGb,
@@ -188,10 +190,12 @@ export class HfAutoSyncManager implements OnApplicationBootstrap {
 
   private guessParameterCount(tags: string[]): { label: string; billions: number } {
     for (const tag of tags) {
-      const match = /([0-9]+(?:\.[0-9]+)?)\s*[Bb]/.exec(tag);
-      if (match && match[1] !== undefined) {
-        const billions = Math.max(1, Math.round(Number(match[1])));
-        return { label: `${match[1]}B`, billions };
+      // Two flat groups (whole part, optional fraction): no nested quantifier, so no ReDoS.
+      const match = /(\d+)\.?(\d*)\s*[Bb]/.exec(tag);
+      if (match?.[1] !== undefined) {
+        const size = match[2] ? `${match[1]}.${match[2]}` : match[1];
+        const billions = Math.max(1, Math.round(Number(size)));
+        return { label: `${size}B`, billions };
       }
     }
     return { label: 'Unknown', billions: 7 };

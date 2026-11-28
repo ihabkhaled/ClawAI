@@ -13,4 +13,6 @@ export enum AntiAbuseErrorCode {
   EMAIL_DOMAIN_UNDELIVERABLE = 'EMAIL_DOMAIN_UNDELIVERABLE',
   /** 429 + Retry-After: platform-wide or per-device sign-up velocity exceeded. */
   SIGNUP_TEMPORARILY_LIMITED = 'SIGNUP_TEMPORARILY_LIMITED',
+  /** 403: this device belongs to a permanently banned account (ADR-233). Generic on purpose. */
+  SIGNUP_UNAVAILABLE = 'SIGNUP_UNAVAILABLE',
 }

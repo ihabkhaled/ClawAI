@@ -20,6 +20,9 @@ export interface RuntimeAdapter {
   // for it rather than assume it, so an unsupported runtime fails with a clear
   // message instead of a TypeError.
   chat?(request: ChatRequest): Promise<ChatResponse>;
+  // Optional on purpose: only Ollama has `/api/show`. Returns the raw response
+  // body, which the caller parses defensively (it is a third party's contract).
+  showModel?(name: string, timeoutMs: number): Promise<unknown>;
 }
 
 export interface LocalModelInfo {

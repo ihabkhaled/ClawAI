@@ -30,6 +30,33 @@ describe('OllamaRuntimeAdapter', () => {
     vi.clearAllMocks();
   });
 
+  // ADR-234: the window of an installed model is read from Ollama itself via /api/show.
+  describe('showModel', () => {
+    it('posts the model to /api/show with the timeout it is given and returns the raw body', async () => {
+      const body = {
+        model_info: { 'general.architecture': 'qwen3', 'qwen3.context_length': 40_960 },
+      };
+      mockClient.post.mockResolvedValue({ data: body });
+
+      const result = await new OllamaRuntimeAdapter().showModel('qwen3:8b', 5_000);
+
+      expect(result).toBe(body);
+      expect(mockClient.post).toHaveBeenCalledWith(
+        '/api/show',
+        { model: 'qwen3:8b' },
+        { timeout: 5_000 },
+      );
+    });
+
+    it('lets a failed call reject, so the caller can leave the window unknown', async () => {
+      mockClient.post.mockRejectedValue(new Error('timeout of 5000ms exceeded'));
+
+      await expect(new OllamaRuntimeAdapter().showModel('qwen3:8b', 5_000)).rejects.toThrow(
+        'timeout of 5000ms exceeded',
+      );
+    });
+  });
+
   it('rejects a pull when the runtime emits an error frame', async () => {
     const stream = new PassThrough();
     mockClient.post.mockResolvedValue({ data: stream });

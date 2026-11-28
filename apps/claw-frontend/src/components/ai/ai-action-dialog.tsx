@@ -82,6 +82,16 @@ export function AiActionDialog({
                         className={entry.isLocked === true ? 'opacity-50' : undefined}
                       >
                         {entry.displayName}
+                        {entry.scale === undefined ? null : (
+                          <span
+                            title={entry.scale.title}
+                            data-testid="model-scale"
+                            dir="auto"
+                            className="text-muted-foreground ms-2 text-xs"
+                          >
+                            {entry.scale.label}
+                          </span>
+                        )}
                         {entry.isLocked === true ? ` · ${t('chat.modelSelector.notOnPlan')}` : ''}
                       </SelectItem>
                     ))}

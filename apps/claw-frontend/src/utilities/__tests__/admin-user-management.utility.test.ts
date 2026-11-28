@@ -7,6 +7,7 @@ import {
   formatAdminUserFullName,
   formatCountryLabel,
   formatRegistrationIp,
+  isAutoSuspension,
   isValidAdminPhone,
   resolvePresenceState,
 } from '@/utilities/admin-user-management.utility';
@@ -90,5 +91,21 @@ describe('small formatters', () => {
     expect(formatAdminTimestamp(null, 'en')).toBe('-');
     expect(formatAdminTimestamp('nope', 'en')).toBe('-');
     expect(formatAdminTimestamp('2026-10-31T12:00:00.000Z', 'en')).toMatch(/2026/);
+  });
+});
+
+describe('isAutoSuspension (ADR-233)', () => {
+  it('is true for a system-written ban with the reserved reason code', () => {
+    expect(
+      isAutoSuspension({ banReason: 'AUTO_ABUSE:RATE_LIMIT_TRIPPED', bannedByUserId: null }),
+    ).toBe(true);
+  });
+
+  it('is false for an administrator ban, even when the admin typed the prefix', () => {
+    expect(
+      isAutoSuspension({ banReason: 'AUTO_ABUSE:RATE_LIMIT_TRIPPED', bannedByUserId: 'admin-1' }),
+    ).toBe(false);
+    expect(isAutoSuspension({ banReason: 'spam', bannedByUserId: null })).toBe(false);
+    expect(isAutoSuspension({ banReason: null, bannedByUserId: null })).toBe(false);
   });
 });

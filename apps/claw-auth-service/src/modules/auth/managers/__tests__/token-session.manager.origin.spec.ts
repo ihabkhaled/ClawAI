@@ -6,6 +6,7 @@ import {
 import { UserRole, UserStatus } from '../../../../common/enums';
 import { SessionClientKind } from '../../enums/session-client-kind.enum';
 import { type AuthRepository } from '../../repositories/auth.repository';
+import { type AbuseSignalService } from '../../../abuse-defense/services/abuse-signal.service';
 import { TokenSessionManager } from '../token-session.manager';
 import { type SessionRevocationCacheService } from '../../services/session-revocation-cache.service';
 import { type AccountBanGateService } from '../../services/account-ban-gate.service';
@@ -94,6 +95,7 @@ describe('TokenSessionManager session origin and termination (ADR-204)', () => {
       { revoke: vi.fn().mockResolvedValue(undefined) } as unknown as SessionRevocationCacheService,
       { assertNotBanned: vi.fn().mockResolvedValue(undefined) } as unknown as AccountBanGateService,
       { touch: vi.fn().mockResolvedValue(true) } as unknown as UserPresenceService,
+      { record: vi.fn().mockResolvedValue(undefined) } as unknown as AbuseSignalService,
     );
   });
 

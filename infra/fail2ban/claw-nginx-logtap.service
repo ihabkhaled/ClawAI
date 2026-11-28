@@ -1,0 +1,12 @@
+[Unit]
+Description=Copy claw-nginx container logs to /var/log/claw-nginx for fail2ban
+After=docker.service
+Requires=docker.service
+
+[Service]
+ExecStart=/bin/sh -c "exec docker logs -f --since 1s claw-nginx >> /var/log/claw-nginx/access.log 2>&1"
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -44,3 +44,6 @@ export const PRESENCE_STATE_DOT_CLASSES: Readonly<Record<PresenceState, string>>
   [PresenceState.RECENT]: 'bg-warning',
   [PresenceState.OFFLINE]: 'bg-muted-foreground/40',
 };
+
+/** What the server writes to `banReason` for an automatic abuse suspension (ADR-233): a code, never prose. */
+export const AUTO_SUSPENSION_REASON_PREFIX = 'AUTO_ABUSE:';

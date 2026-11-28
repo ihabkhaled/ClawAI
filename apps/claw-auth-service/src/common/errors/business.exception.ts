@@ -87,10 +87,16 @@ export class AccountSuspendedException extends BusinessException {
  * admin's free-text reason is deliberately NOT on the wire.
  */
 export class AccountBannedException extends BusinessException {
-  constructor(until: Date | null) {
+  /**
+   * `autoSuspended` marks the ban an automatic abuse suspension wrote (ADR-233), so the client can
+   * say "temporarily suspended" instead of "an administrator banned this account". It names no
+   * signal, count or threshold: the reason stays off the wire (rule 43).
+   */
+  constructor(until: Date | null, autoSuspended = false) {
     super('Account is banned', 'ACCOUNT_BANNED', HttpStatus.FORBIDDEN, {
       bannedUntil: until === null ? null : until.toISOString(),
       banPermanent: until === null,
+      ...(autoSuspended ? { autoSuspended: true } : {}),
     });
   }
 }

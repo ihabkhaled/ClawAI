@@ -72,7 +72,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-auth-service",
-      "endpointCount": 167,
+      "endpointCount": 169,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -85,6 +85,9 @@
       "port": 4001,
       "portSource": "shared-constants",
       "prismaModels": [
+        "AbuseSignal",
+        "AbuseSuspension",
+        "BannedDeviceMark",
         "CreditFreeAllowanceUsage",
         "CreditLedgerEntry",
         "CreditPackage",
@@ -122,7 +125,7 @@
         "UserPlanAssignment",
         "WeightedUsageRecord"
       ],
-      "testFiles": 254,
+      "testFiles": 267,
       "testRunner": "vitest"
     },
     {
@@ -357,7 +360,7 @@
         "PullJob",
         "RuntimeConfig"
       ],
-      "testFiles": 22,
+      "testFiles": 24,
       "testRunner": "vitest"
     },
     {
@@ -419,7 +422,7 @@
         "PullJob",
         "RuntimeConfig"
       ],
-      "testFiles": 23,
+      "testFiles": 25,
       "testRunner": "vitest"
     },
     {
@@ -539,7 +542,7 @@
     {
       "database": "postgresql",
       "dir": "apps/claw-routing-service",
-      "endpointCount": 77,
+      "endpointCount": 78,
       "internalDeps": [
         "@claw/shared-auth",
         "@claw/shared-constants",
@@ -579,7 +582,7 @@
         "SeedExecution",
         "TaxonomyRole"
       ],
-      "testFiles": 128,
+      "testFiles": 135,
       "testRunner": "vitest"
     },
     {

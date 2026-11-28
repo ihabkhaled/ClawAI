@@ -20,6 +20,10 @@ export type UpstreamModelSnapshot = {
   cachedInputCostPerMTokMicroUsd?: number;
   qualityTier?: QualityTier;
   privacySupport?: PrivacyClass;
+  // A local runtime's own size string for the file it runs ("7.6B", "671B (37B
+  // active)"), forwarded by ollama-service and llamacpp-service. Cloud
+  // connectors send none; their counts come from the published-count rules.
+  parameterCount?: string;
   // Phase 3: optional richer intelligence block. Sync sources that can
   // provide it (llamacpp catalog, advanced connector controllers) include
   // it directly; otherwise the sync manager falls back to the curated cloud

@@ -5,4 +5,6 @@ export enum SecurityEventAction {
   SIGNUP_VELOCITY_LIMITED = 'signup_velocity_limited',
   TRIAL_DENIED_SHARED_DEVICE = 'trial_denied_shared_device',
   LOGIN_BOT_CHECK_REQUIRED = 'login_bot_check_required',
+  SIGNUP_REFUSED_BANNED_DEVICE = 'signup_refused_banned_device',
+  LOGIN_ON_BANNED_DEVICE = 'login_on_banned_device',
 }

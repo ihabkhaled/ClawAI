@@ -34,6 +34,9 @@
 #                    egress IPs/CIDRs. Left blank, every visitor shares one
 #                    rate-limit bucket keyed on this edge, and a handful of
 #                    failed logins locks the whole site out of sign-in.
+# 7. Edge policy     The verified-crawler verdict, the smart rate limits, the scanner 404s
+#                    and the AEAD-only TLS 1.2 suites (ADR-232) are the same block as in
+#                    nginx.conf (BEGIN claw-edge-policy), kept identical by a test.
 #
 # Everything else — every route, rewrite, timeout and SSE setting — is carried
 # over unchanged, because that behaviour is transport-independent.
@@ -46,10 +49,16 @@
 #     -e NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx \
 #     -v $PWD/infra/nginx/nginx.distributed.conf.template:/etc/nginx/templates/nginx.conf.template:ro \
 #     -v $PWD/certs:/etc/nginx/certs:ro \
+#     -v $PWD/infra/nginx/verified-crawlers:/etc/nginx/claw/verified-crawlers:ro \
 #     -p 443:443 -p 80:80 nginx:1.27-alpine
 #
 # The official image runs envsubst over /etc/nginx/templates/*.template at
 # start-up. NGINX_ENVSUBST_OUTPUT_DIR makes it write /etc/nginx/nginx.conf.
+#
+# The verified-crawlers mount is a DIRECTORY on purpose (ADR-232): it holds ranges.conf, the generated
+# Google / Bing / Apple / ... IP ranges the edge policy block reads, and a directory mount follows a
+# refreshed file where a single-file bind mount keeps serving the old inode. nginx refuses to start
+# without it.
 #
 # Origin variables take a HOST[:PORT] with NO scheme — https is applied here:
 #   CLAW_AUTH_ORIGIN=claw-auth-service.vercel.app
@@ -57,6 +66,8 @@
 #
 # See infra/nginx/.env.distributed.example for the full list.
 ##############################################################################
+
+worker_processes auto;
 
 events {
     worker_connections 4096;
@@ -102,6 +113,159 @@ http {
     limit_conn per_ip_conn 100;
     limit_req_status 429;
 
+    # BEGIN claw-edge-policy
+    # ==========================================================================
+    # Edge policy (ADR-232): slow clients, who a crawler really is, smart rate limits and scanner
+    # probes. THIS BLOCK IS IDENTICAL in nginx.conf and nginx.distributed.conf.template;
+    # tools/__tests__/nginx-edge-policy.test.mjs fails when the two drift. Tune the numbers here.
+    # ==========================================================================
+
+    # --- Slow clients and connection hygiene ---------------------------------
+    # A client that trickles its headers or body holds a connection for nothing (slowloris). These are
+    # generous for a real browser on a bad mobile network. client_max_body_size is deliberately NOT
+    # here: chat, Threads and uploads accept multi-MB bodies, and each route keeps its own cap.
+    client_header_timeout 15s;
+    client_body_timeout 30s;
+    send_timeout 30s;
+    keepalive_timeout 30s;
+    reset_timedout_connection on;
+    client_header_buffer_size 4k;
+    large_client_header_buffers 4 16k;
+    # A 429 is the limiter doing its job, not an error: keep the error log for real errors.
+    limit_req_log_level warn;
+    limit_conn_log_level warn;
+
+    # --- Access log: "combined" plus the crawler verdict --------------------
+    # The leading fields are exactly nginx's "combined" format, so every fail2ban filter written for it
+    # keeps matching (the client address stays first, the request and the status stay in place). The
+    # two trailing fields are the verdict: crawler=<who the User-Agent CLAIMS, or empty> and
+    # verdict=<none|verified|fake|unchecked>. fail2ban anchors on them at the END of the line.
+    log_format claw_edge '$remote_addr - $remote_user [$time_local] "$request" '
+                         '$status $body_bytes_sent "$http_referer" "$http_user_agent" '
+                         'crawler=$claw_crawler_claimed verdict=$claw_crawler_verdict';
+    access_log /var/log/nginx/access.log claw_edge;
+
+    # --- 1. Which crawler does the request CLAIM to be? ----------------------
+    # Only crawlers whose operator publishes an IP range file (tools/crawlers/crawler-sources.mjs).
+    # Yandex, Baidu, PetalBot, Seznam and every other reverse-DNS-only or unpublished crawler is NOT
+    # listed on purpose: a request that claims to be one is an ordinary visitor, never refused for the
+    # claim. The value is the operator name used in ranges.conf. A name must be preceded by the start of
+    # the User-Agent or a non-alphanumeric, so "ccbot" cannot match inside an unrelated word.
+    map $http_user_agent $claw_crawler_claimed {
+        default "";
+        "~*(?:^|[^a-z0-9])(?:googlebot|adsbot-google|mediapartners-google|apis-google|googleother|google-inspectiontool|storebot-google|google-cloudvertexbot|feedfetcher-google|google-read-aloud|google-site-verification)" google;
+        "~*(?:^|[^a-z0-9])bingbot" bing;
+        "~*(?:^|[^a-z0-9])applebot" apple;
+        "~*(?:^|[^a-z0-9])(?:duckduckbot|duckassistbot)" duckduckgo;
+        "~*(?:^|[^a-z0-9])(?:gptbot|oai-searchbot|chatgpt-user)" openai;
+        "~*(?:^|[^a-z0-9])(?:perplexitybot|perplexity-user)" perplexity;
+        "~*(?:^|[^a-z0-9])mistralai-user" mistral;
+        "~*(?:^|[^a-z0-9])ccbot" commoncrawl;
+        "~*(?:^|[^a-z0-9])(?:ahrefsbot|ahrefssiteaudit)" ahrefs;
+    }
+
+    # --- 2. Does the ADDRESS prove it? ---------------------------------------
+    # ranges.conf is generated from the operators' own published files (never edit it by hand). It is in
+    # a DIRECTORY mount so a host refresh is seen by a reload (a single-file bind mount is not).
+    geo $remote_addr $claw_crawler_ip_owner {
+        default "";
+        include /etc/nginx/claw/verified-crawlers/ranges.conf;
+    }
+
+    # Addresses nginx cannot tell clients apart by: loopback, private, link-local, CGNAT, unique-local.
+    # Behind Docker an IPv6 visitor reaches nginx as the bridge gateway (172.x), for example. Such a
+    # source is never judged a fake crawler and never counted per address.
+    map $remote_addr $claw_addr_private {
+        default 0;
+        "~^(?:127\.|10\.|192\.168\.|169\.254\.|172\.(?:1[6-9]|2[0-9]|3[01])\.|100\.(?:6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\.)" 1;
+        "~*^(?:::1$|f[cd][0-9a-f]{2}:|fe80:)" 1;
+    }
+
+    # --- 3. The verdict -------------------------------------------------------
+    #   none       claims no listed crawler: every human and every unlisted bot
+    #   verified   claims a crawler AND the address is in THAT operator's published ranges
+    #   fake       claims a listed crawler from an address outside its ranges  -> 403, fail2ban 24 h
+    #   unchecked  claims a listed crawler but the source address is private/docker: cannot be judged,
+    #              treated as an ordinary visitor
+    # The key is "<claimed>|<owner of the address>|<private 0/1>"; the first matching line wins.
+    map "$claw_crawler_claimed|$claw_crawler_ip_owner|$claw_addr_private" $claw_crawler_verdict {
+        default                          fake;
+        "~^\|"                           none;
+        "~^[a-z0-9]+\|[a-z0-9]*\|1$"     unchecked;
+        "~^([a-z0-9]+)\|\1\|0$"          verified;
+    }
+
+    # --- Smart rate limits -----------------------------------------------------
+    # One address, three budgets; each request is counted in exactly one of them.
+    #   claw_general  every dynamic request (pages, /api/v1/*): 30 req/s sustained, burst 400. A page load
+    #                 plus its API calls is a few dozen requests, a polling client a few per second.
+    #   claw_static   immutable assets (/_next/static, images, fonts): 100 req/s, burst 1000. Separate so
+    #                 a page full of assets never spends the dynamic budget, but not unmetered (a missing
+    #                 asset is an expensive Next 404).
+    #   claw_crawler  a VERIFIED crawler, all requests: 15 req/s, burst 150. Generous, not unlimited; an
+    #                 abusive crawler gets 429 and a one hour ban, never days (SEO).
+    # A private or docker source address has an empty key and is not counted (see above). The existing
+    # per-route zones (auth, payments, feedback, agent, client logs) stay as they are.
+    map $claw_addr_private $claw_addr_key {
+        default $binary_remote_addr;
+        1       "";
+    }
+
+    map $uri $claw_static_asset {
+        default 0;
+        "~^/_next/static/" 1;
+        "~^/(?:marketing|workers|worklets|fonts)/" 1;
+        "~*^/[^/]+\.(?:png|jpe?g|webp|avif|svg|ico|woff2?|css|js)$" 1;
+    }
+
+    map "$claw_static_asset|$claw_crawler_verdict" $claw_general_key {
+        default          $claw_addr_key;
+        "~\|verified$"   "";
+        "~^1\|"          "";
+    }
+
+    map "$claw_static_asset|$claw_crawler_verdict" $claw_static_key {
+        default          "";
+        "~\|verified$"   "";
+        "~^1\|"          $claw_addr_key;
+    }
+
+    map $claw_crawler_verdict $claw_crawler_key {
+        default  "";
+        verified $binary_remote_addr;
+    }
+
+    limit_req_zone $claw_general_key zone=claw_general:20m rate=30r/s;
+    limit_req_zone $claw_static_key  zone=claw_static:10m  rate=100r/s;
+    limit_req_zone $claw_crawler_key zone=claw_crawler:10m rate=15r/s;
+
+    # Every nginx-made 429 (a limit_req zone, the connection cap) answers the same way: JSON, no-store
+    # and a Retry-After. A crawler is told to wait longer than a person.
+    map $claw_crawler_verdict $claw_retry_after {
+        default  10;
+        verified 120;
+    }
+
+    # --- Scanner probes ---------------------------------------------------------
+    # A cheap request must not buy an expensive answer: an unknown path used to be proxied to Next.js,
+    # which rendered a ~470 KB 404 page for /.env. These patterns get a tiny 404 from nginx itself, are
+    # still logged (fail2ban's claw-nginx-scan jail reads them) and never reach a service. The site
+    # serves no PHP, no dotfile (except /.well-known/), no config, backup or lock file.
+    map $request_uri $claw_scanner_probe {
+        default 0;
+        # Path traversal, raw or percent-encoded, in the path or the query.
+        "~*(?:\.\.|%2e%2e|%252e)(?:/|%2f|%5c|%252f)" 1;
+        # Dot files and dot directories (.env, .git, .aws, .ssh, .htaccess, .DS_Store), not /.well-known/.
+        "~*^[^?]*/(?:\.|%2e)(?!well-known(?:/|\?|$))" 1;
+        # Server-side scripts the site does not run, and the CMS / admin / framework probes.
+        "~*^[^?]*(?:\.(?:php[0-9]?|phtml|asp|aspx|jsp|jspx|cgi)(?:/|\?|$)|/(?:wp-admin|wp-login|wp-content|wp-includes|wp-json|xmlrpc|phpmyadmin|actuator|cgi-bin|server-status|server-info|vendor/phpunit|@id/__vite|@fs/|boaform|HNAP1)|/pma(?:/|\?|$))" 1;
+        # Backup, dump, key and config files at the site root (under /api/ and /_next/ a file name is data).
+        "~*^/(?!api/|_next/)[^?]*\.(?:sql|sqlite3?|db|bak|backup|old|orig|swp|save|log|ini|conf|cfg|toml|ya?ml|pem|key|p12|pfx|tar|tgz|zip|rar|7z|tar\.gz|sql\.gz)(?:\?|$)" 1;
+        # Well-known file names that expose source, dependencies or API surface.
+        "~*^/(?!api/|_next/)(?:[^?]*/)?(?:docker-compose[^/?]*|dockerfile|package(?:-lock)?\.json|composer\.(?:json|lock)|yarn\.lock|pnpm-lock\.yaml|tsconfig[^/?]*\.json|appsettings[^/?]*\.json|config\.json|credentials\.json|secrets?\.json|serviceaccount[^/?]*\.json|firebase\.json|web\.config|crossdomain\.xml|swagger[^/?]*\.(?:json|ya?ml)|swagger-ui[^?]*|swagger-resources|openapi\.(?:json|ya?ml)|v2/api-docs|phpinfo[^/?]*)(?:\?|$|/)" 1;
+    }
+    # END claw-edge-policy
+
     # --- Security headers ---------------------------------------------------
     # Services set nosniff themselves for direct access (helmet, download
     # controllers). Drop theirs here so exactly one reaches the client. The same
@@ -120,7 +284,9 @@ http {
 
     # --- Edge TLS (browser -> nginx) ---------------------------------------
     ssl_protocols       TLSv1.2 TLSv1.3;
-    ssl_ciphers         HIGH:!aNULL:!MD5;
+    # TLS 1.2 is limited to forward-secret AEAD suites (ECDHE with AES-GCM or ChaCha20-Poly1305): no CBC,
+    # no RSA key exchange, no static DH. TLS 1.3 suites are AEAD by design and are not set by this line.
+    ssl_ciphers         ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305;
     ssl_prefer_server_ciphers off;
     ssl_session_cache   shared:SSL:10m;
     ssl_session_timeout 1d;
@@ -241,31 +407,76 @@ http {
         # HTTP/1.1 keepalive to the origins; required for SSE to stream.
         proxy_http_version 1.1;
 
+        # --- Edge policy (ADR-232) -------------------------------------------------
+        # The verdicts, zones and maps live in nginx.conf (BEGIN claw-edge-policy).
+        #
+        # A request that CLAIMS to be a crawler whose operator publishes an IP range file, from an address
+        # outside those ranges, is a fake: refused, and logged with verdict=fake for fail2ban (24 h ban).
+        if ($claw_crawler_verdict = fake) { return 403; }
+
+        # Scanner probes (/.env, /.git/config, /docker-compose.yml, traversal, *.php ...) get a tiny 404 from
+        # nginx itself instead of a ~470 KB Next.js 404 page. They are still logged: fail2ban reads them.
+        if ($claw_scanner_probe) { return 404; }
+
+        # Per-address budgets for everything that has no zone of its own. A location with its own limit_req
+        # stops inheriting these, so each of those repeats claw_general and claw_crawler
+        # (tools/__tests__/nginx-edge-policy.test.mjs enforces it).
+        limit_req zone=claw_general burst=400 nodelay;
+        limit_req zone=claw_static burst=1000 nodelay;
+        limit_req zone=claw_crawler burst=150 nodelay;
+
+        # One 429 shape for every nginx-made refusal. The frontend location replaces error pages
+        # (proxy_intercept_errors) and so repeats this line.
+        error_page 429 @claw_429;
+
+        # The answer to every 429 nginx makes itself (limit_req, limit_conn): JSON, never cached, and a
+        # Retry-After (10 s, 120 s for a verified crawler). A service keeps answering its own 429
+        # (code RATE_LIMITED + Retry-After) untouched: nothing here intercepts an upstream error.
+        location @claw_429 {
+            default_type application/json;
+            add_header Retry-After $claw_retry_after always;
+            add_header Cache-Control "no-store" always;
+            add_header X-Content-Type-Options "nosniff" always;
+            return 429 '{"statusCode":429,"code":"EDGE_RATE_LIMITED","message":"Too many requests. Please slow down and try again shortly."}';
+        }
+
         # --- Auth Service ---
         location /api/v1/auth {
             set $backend https://$origin_auth;
             proxy_pass $backend;
+            client_max_body_size 256k;
             limit_req zone=auth_routes burst=30 nodelay;
+            limit_req zone=claw_general burst=400 nodelay;
+            limit_req zone=claw_crawler burst=150 nodelay;
         }
 
         location = /api/v1/auth/register {
             set $backend https://$origin_auth;
             proxy_pass $backend;
+            client_max_body_size 64k;
             limit_req zone=auth_signup burst=3 nodelay;
             limit_req zone=auth_routes burst=30 nodelay;
+            limit_req zone=claw_general burst=400 nodelay;
+            limit_req zone=claw_crawler burst=150 nodelay;
         }
 
         location = /api/v1/auth/login {
             set $backend https://$origin_auth;
             proxy_pass $backend;
+            client_max_body_size 64k;
             limit_req zone=auth_login burst=10 nodelay;
             limit_req zone=auth_routes burst=30 nodelay;
+            limit_req zone=claw_general burst=400 nodelay;
+            limit_req zone=claw_crawler burst=150 nodelay;
         }
 
         location = /api/v1/auth/bot-check/challenge {
             set $backend https://$origin_auth;
             proxy_pass $backend;
+            client_max_body_size 64k;
             limit_req zone=auth_bot_check burst=10 nodelay;
+            limit_req zone=claw_general burst=400 nodelay;
+            limit_req zone=claw_crawler burst=150 nodelay;
         }
 
         location /api/v1/users {
@@ -561,11 +772,12 @@ http {
         location /api/v1/files {
             # An upload waits up to 90 s for a restarting ClamAV (file-service
             # CLAMAV_SCAN_DEADLINE_MS) before failing closed; the default 60 s read
-            # timeout would turn that wait into a 504. Keep this above the deadline.
-            proxy_read_timeout 150s;
+            # timeout would turn that wait into a 504. Keep this above the deadline (300s below).
             set $backend https://$origin_file;
             proxy_pass $backend;
-            # Uploads cross the public internet here; give them room.
+            # Uploads cross the public internet here; give them room. (A second proxy_read_timeout 150s stood
+            # above this one until 2026-11-28 and made `nginx -t` fail with "directive is duplicate".)
+            client_body_timeout 120s;
             proxy_request_buffering off;
             proxy_send_timeout 300s;
             proxy_read_timeout 300s;
@@ -601,6 +813,8 @@ http {
             proxy_pass $backend;
             client_max_body_size 16k;
             limit_req zone=public_feedback burst=10 nodelay;
+            limit_req zone=claw_general burst=400 nodelay;
+            limit_req zone=claw_crawler burst=150 nodelay;
         }
 
         location /api/v1/feedback {
@@ -759,6 +973,8 @@ http {
             set $backend https://$origin_agent;
             proxy_pass $backend;
             limit_req zone=agent_api burst=100 nodelay;
+            limit_req zone=claw_general burst=400 nodelay;
+            limit_req zone=claw_crawler burst=150 nodelay;
         }
 
         # Device sign-in: coarse POST brake (rules/58).
@@ -766,6 +982,8 @@ http {
             set $backend https://$origin_agent;
             proxy_pass $backend;
             limit_req zone=auth_routes burst=30 nodelay;
+            limit_req zone=claw_general burst=400 nodelay;
+            limit_req zone=claw_crawler burst=150 nodelay;
         }
 
         # --- Research Service ---
@@ -832,7 +1050,10 @@ http {
         location /api/v1/client-logs {
             set $backend https://$origin_client_logs;
             proxy_pass $backend;
+            client_max_body_size 256k;
             limit_req zone=client_logs burst=30 nodelay;
+            limit_req zone=claw_general burst=400 nodelay;
+            limit_req zone=claw_crawler burst=150 nodelay;
         }
 
         # --- Ops read channel (read-only ops tokens, ADR-102) -> server-logs ---

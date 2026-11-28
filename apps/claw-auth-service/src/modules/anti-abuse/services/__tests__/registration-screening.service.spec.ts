@@ -7,6 +7,7 @@ import { BotCheckReason } from '../../enums/bot-check-reason.enum';
 import { EmailDomainVerdict } from '../../enums/email-domain-verdict.enum';
 import { SecurityEventAction } from '../../enums/security-event-action.enum';
 import { TrialDecisionReason } from '../../enums/trial-decision-reason.enum';
+import { type BannedDeviceService } from '../../../abuse-defense/services/banned-device.service';
 import { type BotCheckService } from '../bot-check.service';
 import { type DeviceTrustService } from '../device-trust.service';
 import { type EmailDomainPolicyService } from '../email-domain-policy.service';
@@ -32,6 +33,7 @@ describe('RegistrationScreeningService', () => {
   let consume: Mock;
   let deviceTrust: { hash: Mock; decideTrial: Mock; record: Mock };
   let record: Mock;
+  let isMarked: Mock;
   let service: RegistrationScreeningService;
 
   beforeEach(() => {
@@ -45,17 +47,46 @@ describe('RegistrationScreeningService', () => {
       record: vi.fn().mockResolvedValue(undefined),
     };
     record = vi.fn();
+    isMarked = vi.fn().mockResolvedValue(false);
     service = new RegistrationScreeningService(
       { evaluate: evaluateBot } as unknown as BotCheckService,
       { evaluate: evaluateDomain } as unknown as EmailDomainPolicyService,
       { consume } as unknown as SignupVelocityService,
       deviceTrust as unknown as DeviceTrustService,
       { record } as unknown as SecurityEventService,
+      { isMarked } as unknown as BannedDeviceService,
     );
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it('refuses a sign-up from the device of a banned account with a generic 403 and a security event', async () => {
+    isMarked.mockResolvedValue(true);
+    await expect(service.screen(INPUT, ORIGIN)).rejects.toMatchObject({
+      code: 'SIGNUP_UNAVAILABLE',
+      status: 403,
+    });
+    expect(isMarked).toHaveBeenCalledWith(HASHED);
+    expect(record).toHaveBeenCalledWith(
+      SecurityEventAction.SIGNUP_REFUSED_BANNED_DEVICE,
+      expect.objectContaining({ code: 'SIGNUP_UNAVAILABLE' }),
+    );
+    expect(evaluateDomain).not.toHaveBeenCalled();
+    expect(consume).not.toHaveBeenCalled();
+  });
+
+  it('checks the bot challenge BEFORE the device, so a script cannot probe devices for free', async () => {
+    isMarked.mockResolvedValue(true);
+    evaluateBot.mockResolvedValue({
+      outcome: BotCheckOutcome.REQUIRED,
+      reason: BotCheckReason.POW_MISSING,
+    });
+    await expect(service.screen(INPUT, ORIGIN)).rejects.toMatchObject({
+      code: 'BOT_CHECK_REQUIRED',
+    });
+    expect(isMarked).not.toHaveBeenCalled();
   });
 
   it('runs every check and returns the device and the trial decision', async () => {

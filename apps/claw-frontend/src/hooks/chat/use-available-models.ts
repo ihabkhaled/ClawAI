@@ -5,6 +5,7 @@ import { FrontierDownloadStatus } from '@/enums/local-frontier.enum';
 import { ModelCapabilityBadge } from '@/enums/model-capability-badge.enum';
 import { useAvailableConnectorModels } from '@/hooks/chat/use-available-connector-models';
 import { useModelPlanAccess } from '@/hooks/chat/use-model-plan-access';
+import { useModelSizes } from '@/hooks/chat/use-model-sizes';
 import { useFrontierCatalog } from '@/hooks/local-frontier/use-frontier-catalog';
 import { useLocalModels } from '@/hooks/ollama/use-local-models';
 import { useTranslation } from '@/lib/i18n';
@@ -12,6 +13,7 @@ import type { GroupedModels, ModelSelection } from '@/types';
 import { compareModelsByRecency, getLocalModelSpecificationLabels } from '@/utilities';
 import { getConnectorModelCapabilityBadges } from '@/utilities/media-capabilities.utility';
 import { typeModelsByMediaKind } from '@/utilities/model-picker-media-kind.utility';
+import { buildModelScaleText, resolveModelScale } from '@/utilities/model-scale.utility';
 
 const PROVIDER_LABELS: Record<string, string> = {
   'local-ollama': 'Ollama (Local)',
@@ -32,7 +34,8 @@ export function useAvailableModels(): {
   groupedModels: GroupedModels[];
   isLoading: boolean;
 } {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const { lookup: lookupSize } = useModelSizes();
   const { models, isLoading: isLoadingCloud } = useAvailableConnectorModels();
   const { models: localModels, isLoading: isLoadingLocal } = useLocalModels();
   const { isLocked, getCostInfo } = useModelPlanAccess(models);
@@ -55,6 +58,17 @@ export function useAvailableModels(): {
         provider,
         model: fullModelName,
         displayName: `${entry.displayName} (${entry.parameterCount})`,
+        // The catalog's own numbers: a file on this machine, so its size is known exactly.
+        scale: buildModelScaleText(
+          resolveModelScale({
+            contextTokens: entry.contextLength,
+            parameterBillions: entry.totalParamsB,
+            activeParameterBillions:
+              entry.activeParamsB < entry.totalParamsB ? entry.activeParamsB : null,
+          }),
+          t,
+          locale,
+        ),
       });
       groups.set(provider, existing);
     }
@@ -73,6 +87,15 @@ export function useAvailableModels(): {
         model: fullModelName,
         displayName: `${fullModelName} (${model.family ?? 'local'})`,
         specifications: getLocalModelSpecificationLabels(model),
+        // Ollama reports the size of the installed file; the registry fills the window.
+        scale: buildModelScaleText(
+          resolveModelScale({
+            runtimeParameterText: model.parameters,
+            entry: lookupSize(provider, fullModelName, `${model.name}:${model.tag}`),
+          }),
+          t,
+          locale,
+        ),
       });
       localModelNames.add(fullModelName);
       localModelNames.add(`${model.name}:${model.tag}`);
@@ -99,6 +122,15 @@ export function useAvailableModels(): {
         // A hint only: the pickers mark the band and dim a model credit would pay for, never block it.
         costClass: cost.costClass,
         outsideAllowance: cost.coveredByAllowance === false ? true : undefined,
+        // The connector's own window, else the registry's; the parameter count only the registry has.
+        scale: buildModelScaleText(
+          resolveModelScale({
+            contextTokens: model.maxContextTokens,
+            entry: lookupSize(provider, model.modelKey),
+          }),
+          t,
+          locale,
+        ),
       });
       groups.set(provider, existing);
     }
@@ -168,7 +200,7 @@ export function useAvailableModels(): {
     });
 
     return result;
-  }, [models, localModels, frontierEntries, isLocked, getCostInfo, t]);
+  }, [models, localModels, frontierEntries, isLocked, getCostInfo, lookupSize, t, locale]);
 
   return {
     groupedModels,

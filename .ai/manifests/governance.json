@@ -1,11 +1,11 @@
 {
   "aiEntrypoints": [
     {
-      "bytes": 11088,
+      "bytes": 11605,
       "file": "CLAUDE.md"
     },
     {
-      "bytes": 6808,
+      "bytes": 6904,
       "file": "CODEX.md"
     },
     {
@@ -13,7 +13,7 @@
       "file": "cursor.md"
     },
     {
-      "bytes": 5856,
+      "bytes": 5952,
       "file": "AGENTS.md"
     },
     {
@@ -62,7 +62,7 @@
       "file": "rules/00-master-rules.md"
     },
     {
-      "bytes": 8086,
+      "bytes": 8598,
       "file": "rules/00-non-negotiable-rules.md"
     },
     {
@@ -190,7 +190,7 @@
       "file": "rules/22-testing-and-coverage.md"
     },
     {
-      "bytes": 11902,
+      "bytes": 13932,
       "file": "rules/23-git-commits-hooks-and-release-gates.md"
     },
     {
@@ -330,7 +330,7 @@
       "file": "rules/57-memory-and-context-pack-integrity.md"
     },
     {
-      "bytes": 9778,
+      "bytes": 10045,
       "file": "rules/58-auth-route-rate-limits.md"
     },
     {
@@ -370,17 +370,21 @@
       "file": "rules/67-turn-intent-is-semantic-keywords-are-only-the-fallback.md"
     },
     {
-      "bytes": 2628,
+      "bytes": 2694,
       "file": "rules/68-internal-surfaces-stay-internal.md"
     },
     {
-      "bytes": 9841,
+      "bytes": 9304,
+      "file": "rules/69-security-pass-on-every-change.md"
+    },
+    {
+      "bytes": 10278,
       "file": "rules/README.md"
     }
   ],
   "skills": [
     {
-      "bytes": 40620,
+      "bytes": 40942,
       "file": "skills/00-index.md"
     },
     {
@@ -776,12 +780,16 @@
       "file": "skills/run-the-file-model-matrix.md"
     },
     {
-      "bytes": 6426,
+      "bytes": 6571,
       "file": "skills/run-the-qa-team.md"
     },
     {
       "bytes": 4213,
       "file": "skills/run-threads-generation-queue.md"
+    },
+    {
+      "bytes": 11055,
+      "file": "skills/secure-every-change.md"
     },
     {
       "bytes": 4532,

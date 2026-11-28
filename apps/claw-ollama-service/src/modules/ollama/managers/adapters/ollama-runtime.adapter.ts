@@ -6,6 +6,7 @@ import {
   OLLAMA_API_DELETE,
   OLLAMA_API_GENERATE,
   OLLAMA_API_PULL,
+  OLLAMA_API_SHOW,
   OLLAMA_API_TAGS,
 } from '../../ollama.constants';
 import type {
@@ -53,6 +54,17 @@ export class OllamaRuntimeAdapter implements RuntimeAdapter {
   async listModels(): Promise<LocalModelInfo[]> {
     const response = await this.client.get<OllamaTagsResponse>(OLLAMA_API_TAGS);
     return response.data.models.map((m) => this.mapModel(m));
+  }
+
+  // `POST /api/show` for one model. Bounded by the caller's timeout; a failure
+  // propagates so the caller can leave the window unknown rather than guess.
+  async showModel(name: string, timeoutMs: number): Promise<unknown> {
+    const response = await this.client.post<unknown>(
+      OLLAMA_API_SHOW,
+      { model: name },
+      { timeout: timeoutMs },
+    );
+    return response.data;
   }
 
   async pullModel(name: string): Promise<PullJobInfo> {

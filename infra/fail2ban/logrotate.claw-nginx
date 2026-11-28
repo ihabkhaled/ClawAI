@@ -1,0 +1,11 @@
+# Install: /etc/logrotate.d/claw-nginx  (already on the production host; kept here so a new server can be rebuilt)
+# The log tap holds the file open, so it is truncated in place (copytruncate), never moved.
+/var/log/claw-nginx/access.log {
+    daily
+    rotate 14
+    copytruncate
+    compress
+    delaycompress
+    missingok
+    notifempty
+}

@@ -22,7 +22,10 @@ function send(exception: unknown): {
     setHeader: vi.fn((name: string, value: string) => headers.set(name, value)),
   };
   response.status.mockReturnValue(response);
-  new GlobalExceptionFilter().catch(exception, new ExecutionContextHost([{}, response, vi.fn()]));
+  new GlobalExceptionFilter({ record: vi.fn() }).catch(
+    exception,
+    new ExecutionContextHost([{}, response, vi.fn()]),
+  );
   return {
     status: response.status.mock.calls[0]?.[0],
     body: response.json.mock.calls[0]?.[0],

@@ -11,6 +11,7 @@ import { ModelCompareToolbar } from '@/components/connectors/model-compare-toolb
 import { ModelFilterPills } from '@/components/connectors/model-filter-pills';
 import { ModelTable } from '@/components/connectors/model-table';
 import { ModelViewToggle } from '@/components/connectors/model-view-toggle';
+import { ModelScaleLine } from '@/components/models/model-scale-line';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -230,9 +231,11 @@ export default function ModelsPage() {
                 </div>
                 <div className="text-muted-foreground mt-3 space-y-1 text-sm">
                   <p className="break-words">{model.modelKey}</p>
-                  {model.maxContextTokens ? (
-                    <p>{model.maxContextTokens.toLocaleString()} context</p>
-                  ) : null}
+                  <ModelScaleLine
+                    provider={model.provider}
+                    modelKey={model.modelKey}
+                    contextTokens={model.maxContextTokens}
+                  />
                 </div>
               </div>
             ))}

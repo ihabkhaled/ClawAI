@@ -907,7 +907,8 @@ compute_plan() {
         esac
         continue
         ;;
-      infra/nginx/nginx.conf | infra/nginx/locations.conf | infra/nginx/public-tls/maintenance.html)
+      infra/nginx/nginx.conf | infra/nginx/locations.conf | infra/nginx/public-tls/maintenance.html | \
+        infra/nginx/verified-crawlers/*)
         PLAN_NGINX_RELOAD=1
         continue
         ;;

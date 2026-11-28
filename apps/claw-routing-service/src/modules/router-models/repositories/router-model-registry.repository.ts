@@ -3,6 +3,7 @@ import { ModelLifecycle, type Prisma } from '../../../generated/prisma';
 import { MEDIA_MODALITY_KINDS } from '../constants/router-models.constants';
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { type RouterModelCatalogEntry } from '../types/model-cost-catalog.types';
+import { type RouterModelSizeRow } from '../types/model-size.types';
 import {
   type FindExecutionCandidatesFilter,
   type RouterModelRegistryRecord,
@@ -88,6 +89,30 @@ export class RouterModelRegistryRepository {
       orderBy: [{ provider: 'asc' }, { modelKey: 'asc' }],
     });
     this.logger.debug(`listCatalogEntries count=${rows.length}`);
+    return rows;
+  }
+
+  /**
+   * Every live model's size columns, as a narrow projection (ADR-234).
+   *
+   * REMOVED rows are skipped. Unpaginated on purpose: the model pickers join the
+   * WHOLE list, and ~350 rows of five columns is smaller than one page of full
+   * records.
+   */
+  async listSizeRows(): Promise<RouterModelSizeRow[]> {
+    const rows = await this.prisma.routerModelRegistry.findMany({
+      where: { lifecycle: { not: ModelLifecycle.REMOVED } },
+      select: {
+        provider: true,
+        modelKey: true,
+        contextWindowTokens: true,
+        maxContextTokens: true,
+        parameterCountBillions: true,
+        activeParameterCountBillions: true,
+      },
+      orderBy: [{ provider: 'asc' }, { modelKey: 'asc' }],
+    });
+    this.logger.debug(`listSizeRows count=${rows.length}`);
     return rows;
   }
 

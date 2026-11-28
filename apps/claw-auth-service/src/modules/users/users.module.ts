@@ -3,6 +3,7 @@ import { UsersController } from './controllers/users.controller';
 import { UsersInternalController } from './controllers/users-internal.controller';
 import { UsersService } from './services/users.service';
 import { UsersRepository } from './repositories/users.repository';
+import { AbuseDefenseModule } from '../abuse-defense/abuse-defense.module';
 import { AuthModule } from '../auth/auth.module';
 import { RolesModule } from '../roles/roles.module';
 import { PlansModule } from '../plans/plans.module';
@@ -16,7 +17,7 @@ import { UserAdminActionsService } from './services/user-admin-actions.service';
   // grants, instead of being born with neither. PlansRepository is used rather
   // than PlansService because PlansService now depends on UsersService for the
   // super-administrator target check, and the pair would form a cycle.
-  imports: [AuthModule, RolesModule, PlansModule],
+  imports: [AuthModule, RolesModule, PlansModule, AbuseDefenseModule],
   controllers: [UsersController, UsersInternalController],
   providers: [
     UsersService,

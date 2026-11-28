@@ -259,3 +259,77 @@ Change the current user's password.
 ```
 
 **Response**: `204 No Content`
+
+**Side effect (ADR-233)**: every OTHER login of the account is closed and its access tokens stop working at once; the
+session that made the request stays signed in.
+
+---
+
+## GET /admin/users/:userId/abuse
+
+One account's abuse standing (ADR-233): the automatic suspensions, the stored signal buckets and the two evidence flags.
+Lifting a suspension is `POST /users/:id/unban`, which also lifts the account's banned-device marks.
+
+**Auth**: Bearer token, role ADMIN, permission `ADMIN_USERS_MANAGE`
+
+**Response 200**:
+
+```json
+{
+  "autoSuspendEnabled": true,
+  "suspensions": [
+    {
+      "id": "clx...",
+      "level": 2,
+      "reasonCode": "RATE_LIMIT_TRIPPED",
+      "evidence": { "RATE_LIMIT_TRIPPED": 312 },
+      "startedAt": "2026-11-28T09:00:00.000Z",
+      "endsAt": "2026-11-29T09:00:00.000Z",
+      "liftedAt": null,
+      "liftedByUserId": null,
+      "active": true
+    }
+  ],
+  "signals": [
+    {
+      "code": "RATE_LIMIT_TRIPPED",
+      "source": "auth.http",
+      "count": 312,
+      "counted": true,
+      "bucketStart": "2026-11-28T08:59:00.000Z"
+    }
+  ],
+  "bannedDeviceSignins": 0,
+  "tokenReuseEvents": 0
+}
+```
+
+Counts and ids only: no address, hash, token or reason text. `404` for an unknown account.
+
+---
+
+## POST /internal/abuse/signals
+
+A service reports that an account's OWN valid token did something abusive (ADR-233). Service-to-service only: `Authorization:
+Service <INTER_SERVICE_AUTH_TOKEN>`, never proxied by nginx.
+
+**Request Body** (strict, no other field is accepted):
+
+```json
+{ "userId": "clx...", "code": "SSRF_REFUSED", "source": "chat-service" }
+```
+
+`code` is one of `RATE_LIMIT_TRIPPED`, `FORBIDDEN_PROBE`, `SSRF_REFUSED`; `TOKEN_REUSE` and `BANNED_DEVICE_SIGNIN` are
+auth-service's own and are refused with 400. `source` matches `^[a-z0-9][a-z0-9._-]{0,39}$`.
+
+**Response 202**: `{ "accepted": true }`, always the same whatever it led to. Never report an account for what a caller
+did TO it (failed sign-ins, a guessed token): only for what its own token did.
+
+---
+
+## Error codes added by ADR-233
+
+- `403 ACCOUNT_BANNED` on sign-in or refresh now also carries `autoSuspended: true` when the block is an automatic,
+  temporary suspension. `bannedUntil` is always set for one. The reason is never on the wire.
+- `403 SIGNUP_UNAVAILABLE` on `POST /auth/register`: the device belongs to a permanently banned account. Generic on
+  purpose: no reason, no retry hint.

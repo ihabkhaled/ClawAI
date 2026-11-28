@@ -1,0 +1,7 @@
+# Install: /etc/fail2ban/fail2ban.d/claw.local
+#
+# bantime.increment counts earlier bans from fail2ban's database. The default purge age is ONE day, which
+# would make every repeat ban look like a first one after a day. 35 days covers the longest increment
+# (bantime.maxtime 30d) plus a margin; the database stays small (one row per ban).
+[Definition]
+dbpurgeage = 35d

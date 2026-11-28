@@ -43,6 +43,46 @@ describe('AccountBanGateService', () => {
     expect(clearBan).not.toHaveBeenCalled();
   });
 
+  // ADR-233: an automatic suspension is the same ban, flagged so the client says "temporarily
+  // suspended" instead of "an administrator banned this account". Nothing about WHY reaches the wire.
+  it('marks an automatic suspension on the wire, with the end date and no reason', async () => {
+    const until = new Date(Date.now() + 600_000);
+    const error = await gate
+      .assertNotBanned({
+        id: 'u1',
+        bannedAt: hourAgo,
+        bannedUntil: until,
+        banReason: 'AUTO_ABUSE:RATE_LIMIT_TRIPPED',
+        bannedByUserId: null,
+      })
+      .catch((e: unknown) => e);
+    const details = (error as AccountBannedException).getResponse() as { details: object };
+    expect(details.details).toEqual({
+      banPermanent: false,
+      bannedUntil: until.toISOString(),
+      autoSuspended: true,
+    });
+    expect(JSON.stringify(details)).not.toMatch(/RATE_LIMIT|AUTO_ABUSE|abuse/i);
+  });
+
+  it('does not mark an administrator ban, even one whose reason text copies the prefix', async () => {
+    const error = await gate
+      .assertNotBanned({
+        id: 'u1',
+        bannedAt: hourAgo,
+        bannedUntil: null,
+        banReason: 'AUTO_ABUSE:RATE_LIMIT_TRIPPED',
+        bannedByUserId: 'admin-1',
+      })
+      .catch((e: unknown) => e);
+    expect((error as AccountBannedException).getResponse()).toMatchObject({
+      details: { banPermanent: true, bannedUntil: null },
+    });
+    expect(
+      ((error as AccountBannedException).getResponse() as { details: object }).details,
+    ).not.toHaveProperty('autoSuspended');
+  });
+
   it('lets an expired timed ban through and clears the stale columns', async () => {
     await expect(
       gate.assertNotBanned({

@@ -11,6 +11,7 @@ import { LIVE_TRANSLATIONS } from './live-translations';
 import { MARKETING_VIDEOS_TRANSLATIONS } from './marketing-videos-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
+import { MODEL_SCALE_TRANSLATIONS } from './model-scale-translations';
 import { MODEL_VISIBILITY_TRANSLATIONS } from './model-visibility-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
@@ -292,6 +293,9 @@ export const fr: TranslationDictionary = {
     loginBannedPermanentDescription:
       'Un administrateur a banni ce compte définitivement. Vous ne pouvez pas vous connecter.',
     loginBannedGeneric: 'Ce compte est banni.',
+    loginSuspendedAutoTitle: 'Ce compte est suspendu temporairement',
+    loginSuspendedAutoDescription:
+      'Nous avons mis ce compte en pause en raison d’une activité inhabituelle. Vous pourrez vous reconnecter après le {date}. Si vous pensez à une erreur, contactez le support.',
     loginSuspendedTitle: 'Ce compte a été suspendu',
     loginSuspendedDescription:
       "Votre mot de passe est correct, mais un administrateur a désactivé ce compte. Contactez l'assistance si vous pensez qu'il s'agit d'une erreur.",
@@ -2494,6 +2498,8 @@ export const fr: TranslationDictionary = {
     banAction: 'Bannir',
     unbanAction: 'Débannir',
     bannedBadge: 'Banni',
+    autoSuspendedBadge: 'Suspendu automatiquement',
+    detailAutoSuspendedUntil: 'Suspendu automatiquement jusqu’au {date}',
     banDialogTitle: 'Bannir {username}',
     banDialogDescription:
       'L’utilisateur est déconnecté partout immédiatement et ne peut pas se connecter avant la fin du bannissement.',
@@ -5071,6 +5077,7 @@ export const fr: TranslationDictionary = {
   researchPlatforms: RESEARCH_PLATFORMS_TRANSLATIONS.fr,
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.fr,
   pickedModel: PICKED_MODEL_TRANSLATIONS.fr,
+  modelScale: MODEL_SCALE_TRANSLATIONS.fr,
   creditFallback: CREDIT_FALLBACK_TRANSLATIONS.fr,
   live: LIVE_TRANSLATIONS.fr,
   mediaUi: MEDIA_UI_TRANSLATIONS.fr,

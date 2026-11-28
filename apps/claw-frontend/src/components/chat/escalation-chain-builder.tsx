@@ -130,6 +130,16 @@ export function EscalationChainBuilder({
                             }}
                           >
                             <span className="truncate">{model.displayName}</span>
+                            {model.scale !== undefined ? (
+                              <span
+                                title={model.scale.title}
+                                data-testid="model-scale"
+                                dir="auto"
+                                className="text-muted-foreground ms-2 min-w-0 shrink truncate text-[11px] font-normal"
+                              >
+                                {model.scale.label}
+                              </span>
+                            ) : null}
                             {isLocked ? (
                               <span className="border-border bg-muted text-muted-foreground ms-auto shrink-0 rounded border px-1.5 py-0.5 text-[10px] leading-none">
                                 {t('chat.modelSelector.notOnPlan')}

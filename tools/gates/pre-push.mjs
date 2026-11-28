@@ -3,6 +3,11 @@
 // the working tree is exactly HEAD. It validates the tree of EVERY ref being
 // pushed — read from the ref list git writes to stdin — not just HEAD.
 //
+// Before any gate, the security step (tools/security/pre-push-security.mjs,
+// rules/69) judges what is being pushed and is never skipped by a receipt:
+// gitleaks over the outgoing commits, npm audit over every dependency, and
+// SHA-pinned workflow actions.
+//
 // For the checked-out tree it runs, skipping only what a matching receipt
 // proves already ran (rules/34):
 //   1. knowledge integrity  (knowledge:verify + audit:check)
@@ -24,6 +29,7 @@ import {
 } from '../affected/index.mjs';
 import { parsePrePushRefs, resolveDefaultBase, treeOf } from '../lib/git.mjs';
 import { isMain } from '../lib/repo.mjs';
+import { runPrePushSecurity } from '../security/pre-push-security.mjs';
 import { receiptCovers } from './receipt.mjs';
 import { healDependencies, healGenerated, pushRanges, qaEvidenceProblem } from './self-heal.mjs';
 
@@ -98,7 +104,7 @@ function missingReceipts(tree, result) {
     .map(({ gate }) => gate);
 }
 
-export async function prePush(stdinText) {
+export async function prePush(stdinText, { security = runPrePushSecurity } = {}) {
   const refs = parsePrePushRefs(stdinText);
   const targets = refs.length > 0 ? refs : [{ localRef: 'HEAD', localSha: 'HEAD' }];
   const base = resolveDefaultBase();
@@ -121,9 +127,14 @@ export async function prePush(stdinText) {
       return false;
     }
   }
-  const qaProblem = qaEvidenceProblem(pushRanges(targets, base));
+  const ranges = pushRanges(targets, base);
+  const qaProblem = qaEvidenceProblem(ranges);
   if (qaProblem) {
     console.error(`✖ pre-push: ${qaProblem}`);
+    return false;
+  }
+  if (!security(ranges)) {
+    console.error('✖ pre-push security failed (rules/69): fix it, then push again');
     return false;
   }
 

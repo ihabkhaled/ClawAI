@@ -129,6 +129,23 @@ npm run audit                # node tools/audit/index.mjs
 npm run audit:check          # --check mode
 ```
 
+## Security pass (rules/69)
+
+```bash
+npm run security:check                       # npm audit (every dependency), gitleaks, OSV-Scanner, action pins, open GitHub alerts
+npm run security:check -- --level=moderate   # fail on moderate advisories too
+npm run security:check -- --history          # also scan every commit ever made (about 15 s)
+npm run security:check -- --outdated         # also list root dependencies behind their latest release
+npm run security:audit                       # production dependencies only (what CI policy runs)
+npm run security:fix                         # pin the patched release of a production advisory
+npm run security:secrets                     # gitleaks over the staged changes (pre-commit)
+```
+
+Flags, the SKIPPED-is-not-PASS rule and where each scan runs:
+[docs/08-runtime-devops/ci-cd-pipeline.md](../docs/08-runtime-devops/ci-cd-pipeline.md#security-scanning-rules69).
+The runbook is [skills/secure-every-change.md](../skills/secure-every-change.md). gitleaks must be 8.25.1 or newer
+locally (CI pins 8.30.1); optional local tools: `osv-scanner` (`OSV_SCANNER_BIN`), `gh` for the GitHub alerts.
+
 ## Prisma (per PostgreSQL service)
 
 Run inside the service directory (e.g. `apps/claw-chat-service`):

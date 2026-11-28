@@ -72,6 +72,7 @@ Every root `npm run` script, from the root `package.json`:
 | `npm run lint:frontend`            | `npm run lint --workspace=claw-frontend`                                                                                                                  |
 | `npm run lint:ratchet`             | `node tools/lint/ratchet.mjs check`                                                                                                                       |
 | `npm run security:audit`           | `node tools/security/npm-audit.mjs`                                                                                                                       |
+| `npm run security:check`           | `node tools/security/security-check.mjs`                                                                                                                  |
 | `npm run security:secrets`         | `node tools/gates/secret-scan.mjs`                                                                                                                        |
 | `npm run migrate:all`              | `node tools/release/migrate-all.mjs`                                                                                                                      |
 | `npm run prepare`                  | `node .husky/install.mjs \|\| exit 0`                                                                                                                     |

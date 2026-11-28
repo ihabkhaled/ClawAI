@@ -44,3 +44,6 @@ live-service|-|database|claw-pg-live
 live-service|-|cert-san|live-service
 health-service|LIVE_SERVICE_URL|literal|https://live-service:4022
 live-service|LIVE_SERVICE_URL|literal|https://live-service:4022
+# Firecrawl's own stores (ADR-232): no default guest user, no passwordless Redis.
+firecrawl-api|FIRECRAWL_REDIS_PASSWORD|password|
+firecrawl-api|FIRECRAWL_RABBITMQ_PASSWORD|password|

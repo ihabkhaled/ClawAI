@@ -1064,6 +1064,11 @@
         },
         {
           "method": "GET",
+          "route": "/admin/users/:userId/abuse",
+          "source": "apps/claw-auth-service/src/modules/abuse-defense/controllers/admin-abuse.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/admin/users/:userId/linked-accounts",
           "source": "apps/claw-auth-service/src/modules/anti-abuse/controllers/admin-linked-accounts.controller.ts"
         },
@@ -1226,6 +1231,11 @@
           "method": "GET",
           "route": "/health",
           "source": "apps/claw-auth-service/src/modules/health/controllers/health.controller.ts"
+        },
+        {
+          "method": "POST",
+          "route": "/internal/abuse/signals",
+          "source": "apps/claw-auth-service/src/modules/abuse-defense/controllers/abuse-signals-internal.controller.ts"
         },
         {
           "method": "GET",
@@ -4114,6 +4124,11 @@
         },
         {
           "method": "GET",
+          "route": "/routing/model-sizes",
+          "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-size.controller.ts"
+        },
+        {
+          "method": "GET",
           "route": "/routing/models",
           "source": "apps/claw-routing-service/src/modules/router-models/controllers/router-models.controller.ts"
         },
@@ -6071,6 +6086,16 @@
         "confidence": "verified",
         "source": ".env.example",
         "value": "FIRECRAWL_POSTGRES_PASSWORD"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "FIRECRAWL_RABBITMQ_PASSWORD"
+      },
+      {
+        "confidence": "verified",
+        "source": ".env.example",
+        "value": "FIRECRAWL_REDIS_PASSWORD"
       },
       {
         "confidence": "verified",
@@ -9545,11 +9570,11 @@
     "governance": {
       "aiEntrypoints": [
         {
-          "bytes": 11088,
+          "bytes": 11605,
           "file": "CLAUDE.md"
         },
         {
-          "bytes": 6808,
+          "bytes": 6904,
           "file": "CODEX.md"
         },
         {
@@ -9557,7 +9582,7 @@
           "file": "cursor.md"
         },
         {
-          "bytes": 5856,
+          "bytes": 5952,
           "file": "AGENTS.md"
         },
         {
@@ -9605,7 +9630,7 @@
           "file": "rules/00-master-rules.md"
         },
         {
-          "bytes": 8086,
+          "bytes": 8598,
           "file": "rules/00-non-negotiable-rules.md"
         },
         {
@@ -9733,7 +9758,7 @@
           "file": "rules/22-testing-and-coverage.md"
         },
         {
-          "bytes": 11902,
+          "bytes": 13932,
           "file": "rules/23-git-commits-hooks-and-release-gates.md"
         },
         {
@@ -9873,7 +9898,7 @@
           "file": "rules/57-memory-and-context-pack-integrity.md"
         },
         {
-          "bytes": 9778,
+          "bytes": 10045,
           "file": "rules/58-auth-route-rate-limits.md"
         },
         {
@@ -9913,17 +9938,21 @@
           "file": "rules/67-turn-intent-is-semantic-keywords-are-only-the-fallback.md"
         },
         {
-          "bytes": 2628,
+          "bytes": 2694,
           "file": "rules/68-internal-surfaces-stay-internal.md"
         },
         {
-          "bytes": 9841,
+          "bytes": 9304,
+          "file": "rules/69-security-pass-on-every-change.md"
+        },
+        {
+          "bytes": 10278,
           "file": "rules/README.md"
         }
       ],
       "skills": [
         {
-          "bytes": 40620,
+          "bytes": 40942,
           "file": "skills/00-index.md"
         },
         {
@@ -10319,12 +10348,16 @@
           "file": "skills/run-the-file-model-matrix.md"
         },
         {
-          "bytes": 6426,
+          "bytes": 6571,
           "file": "skills/run-the-qa-team.md"
         },
         {
           "bytes": 4213,
           "file": "skills/run-threads-generation-queue.md"
+        },
+        {
+          "bytes": 11055,
+          "file": "skills/secure-every-change.md"
         },
         {
           "bytes": 4532,
@@ -10409,7 +10442,7 @@
         "confidence": "unverified",
         "reason": "line-based key count; nested structure not fully parsed",
         "source": "apps/claw-frontend/src/lib/i18n/locales/en.ts",
-        "value": 6369
+        "value": 6374
       },
       "localeCount": 13,
       "locales": [
@@ -11630,6 +11663,21 @@
       },
       "claw-auth-service": {
         "models": [
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "AbuseSignal"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "AbuseSuspension"
+          },
+          {
+            "confidence": "verified",
+            "source": "apps/claw-auth-service/prisma/schema.prisma",
+            "value": "BannedDeviceMark"
+          },
           {
             "confidence": "verified",
             "source": "apps/claw-auth-service/prisma/schema.prisma",
@@ -12987,7 +13035,7 @@
       },
       "claw-auth-service": {
         "runner": "vitest",
-        "testFiles": 254
+        "testFiles": 267
       },
       "claw-chat-service": {
         "runner": "vitest",
@@ -13011,7 +13059,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 1103
+        "testFiles": 1111
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -13027,7 +13075,7 @@
       },
       "claw-llamacpp-service": {
         "runner": "vitest",
-        "testFiles": 22
+        "testFiles": 24
       },
       "claw-memory-service": {
         "runner": "vitest",
@@ -13035,7 +13083,7 @@
       },
       "claw-ollama-service": {
         "runner": "vitest",
-        "testFiles": 23
+        "testFiles": 25
       },
       "claw-payment-service": {
         "runner": "vitest",
@@ -13051,7 +13099,7 @@
       },
       "claw-routing-service": {
         "runner": "vitest",
-        "testFiles": 128
+        "testFiles": 135
       },
       "claw-server-logs-service": {
         "runner": "vitest",
@@ -13941,8 +13989,8 @@
     "bypassRecommendationCount": 0,
     "contradictionCount": 0,
     "dockerServiceCount": 60,
-    "endpointCount": 1015,
-    "envVarCount": 401,
+    "endpointCount": 1018,
+    "envVarCount": 403,
     "eventCount": 191,
     "frontendRouteCount": 192,
     "localeCount": 13,
@@ -13953,7 +14001,7 @@
     "serviceCount": 22,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 3152,
+    "totalTestFiles": 3184,
     "workspaceCount": 29
   }
 }

@@ -2,9 +2,12 @@ import { useMemo } from 'react';
 
 import { useAvailableConnectorModels } from '@/hooks/chat/use-available-connector-models';
 import { useModelPlanAccess } from '@/hooks/chat/use-model-plan-access';
+import { useModelSizes } from '@/hooks/chat/use-model-sizes';
 import { useLocalModels } from '@/hooks/ollama/use-local-models';
+import { useTranslation } from '@/lib/i18n';
 import type { JudgeModelOption } from '@/types';
 import { compareModelsByRecency } from '@/utilities/model-recency.utility';
+import { buildModelScaleText, resolveModelScale } from '@/utilities/model-scale.utility';
 
 // A judge is a role any text model can perform. Local Ollama models keep their
 // plain name as the value (backend resolves them as local). Cloud connector
@@ -15,6 +18,8 @@ export function useJudgeModelOptions(): {
   options: JudgeModelOption[];
   isLoading: boolean;
 } {
+  const { t, locale } = useTranslation();
+  const { lookup: lookupSize } = useModelSizes();
   const { models: localModels, isLoading: isLoadingLocal } = useLocalModels();
   // Use the USER-facing connector catalog endpoint (MODEL_USE_ALLOWED), NOT
   // the admin connectors list — otherwise normal users get only local models
@@ -28,7 +33,18 @@ export function useJudgeModelOptions(): {
       .map((m) => {
         const fullName = m.tag && m.tag !== 'latest' ? `${m.name}:${m.tag}` : m.name;
         return {
-          option: { value: fullName, label: fullName },
+          option: {
+            value: fullName,
+            label: fullName,
+            scale: buildModelScaleText(
+              resolveModelScale({
+                runtimeParameterText: m.parameters,
+                entry: lookupSize('local-ollama', fullName, `${m.name}:${m.tag}`),
+              }),
+              t,
+              locale,
+            ),
+          },
           sortable: { provider: 'local-ollama', model: fullName, displayName: fullName },
         };
       });
@@ -37,6 +53,14 @@ export function useJudgeModelOptions(): {
       option: {
         value: `${m.provider}:${m.modelKey}`,
         label: `${m.provider} · ${m.displayName || m.modelKey}`,
+        scale: buildModelScaleText(
+          resolveModelScale({
+            contextTokens: m.maxContextTokens,
+            entry: lookupSize(m.provider, m.modelKey),
+          }),
+          t,
+          locale,
+        ),
         // Only a locked model carries the flag; an allowed one keeps its plain shape.
         ...(isLocked(m.provider, m.modelKey) ? { isLocked: true } : {}),
       },
@@ -54,7 +78,7 @@ export function useJudgeModelOptions(): {
     return [...local, ...cloud]
       .sort((a, b) => compareModelsByRecency(a.sortable, b.sortable))
       .map((entry) => entry.option);
-  }, [localModels, cloudModels, isLocked]);
+  }, [localModels, cloudModels, isLocked, lookupSize, t, locale]);
 
   return { options, isLoading: isLoadingLocal || isLoadingCloud };
 }

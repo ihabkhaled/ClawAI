@@ -742,6 +742,11 @@ $githubWebhookSecret = New-SecretHex
 # Kept on a re-run: the Firecrawl Postgres volume was created with it.
 $firecrawlPostgresPassword = Get-EnvValue -Path $envFile -Key 'FIRECRAWL_POSTGRES_PASSWORD'
 if ([string]::IsNullOrWhiteSpace($firecrawlPostgresPassword)) { $firecrawlPostgresPassword = New-SecretHex }
+# Each Firecrawl store has its own password (rules/68). Kept on a re-run: RabbitMQ created its user with it.
+$firecrawlRedisPassword = Get-EnvValue -Path $envFile -Key 'FIRECRAWL_REDIS_PASSWORD'
+if ([string]::IsNullOrWhiteSpace($firecrawlRedisPassword)) { $firecrawlRedisPassword = New-SecretHex }
+$firecrawlRabbitmqPassword = Get-EnvValue -Path $envFile -Key 'FIRECRAWL_RABBITMQ_PASSWORD'
+if ([string]::IsNullOrWhiteSpace($firecrawlRabbitmqPassword)) { $firecrawlRabbitmqPassword = New-SecretHex }
 $firecrawlBullAuthKey = New-SecretHex
 # Crawl4AI sidecar Bearer token (0.9.x binds 0.0.0.0 only when it is set).
 # Reused across re-runs so a running sidecar and research-service stay paired.
@@ -1554,6 +1559,8 @@ RESEARCH_HEADLESS_RENDER_ENABLED=true
 # it - enable the strategy DB-level afterwards. See .env.example.
 CLAW_SCRAPER_PROFILES=
 FIRECRAWL_POSTGRES_PASSWORD=$firecrawlPostgresPassword
+FIRECRAWL_REDIS_PASSWORD=$firecrawlRedisPassword
+FIRECRAWL_RABBITMQ_PASSWORD=$firecrawlRabbitmqPassword
 FIRECRAWL_BULL_AUTH_KEY=$firecrawlBullAuthKey
 # Crawl4AI sidecar Bearer token: makes it bind 0.0.0.0 and require auth.
 # Shared by the crawl4ai container and research-service. Secret.

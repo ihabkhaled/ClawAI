@@ -15,3 +15,4 @@ export { RoutingLabConfigurationVariant } from './routing-lab-configuration-vari
 export { ModelPricingSource } from './model-pricing-source.enum';
 export { ModalityFit } from './modality-fit.enum';
 export { ModelPriceBasis } from './model-price-basis.enum';
+export { ParameterCountOrigin } from './parameter-count-origin.enum';

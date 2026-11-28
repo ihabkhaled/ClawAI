@@ -148,10 +148,31 @@ Models listed in the `AUTO_PULL_MODELS` environment variable (space-separated) a
 
 The service wraps the Ollama HTTP API:
 
-| Ollama Endpoint    | Purpose                    |
-| ------------------ | -------------------------- |
-| GET /api/tags      | List installed models      |
-| POST /api/generate | Generate text completion   |
-| POST /api/pull     | Download model (streaming) |
-| DELETE /api/delete | Remove a model             |
-| GET /api/show      | Get model details          |
+| Ollama Endpoint    | Purpose                                                                                 |
+| ------------------ | --------------------------------------------------------------------------------------- |
+| GET /api/tags      | List installed models                                                                   |
+| POST /api/generate | Generate text completion                                                                |
+| POST /api/pull     | Download model (streaming)                                                              |
+| DELETE /api/delete | Remove a model                                                                          |
+| POST /api/show     | Model details; its `model_info` `<arch>.context_length` is the context window (ADR-234) |
+
+## Context window and size of installed models (ADR-234, 2026-11-28)
+
+The routing snapshot (`GET /internal/ollama/installed-snapshot`) carries two size fields per installed model, which the
+model pickers write beside its name ("40K context · 8.2B params"):
+
+- **`parameterCount`**: Ollama's own `details.parameter_size` string stored on `LocalModel.parameters` ("7.6B"),
+  forwarded as is; routing-service parses it.
+- **`contextWindowTokens`**: read from Ollama itself, once per installed model, by `OllamaContextWindowManager`
+  (`managers/ollama-context-window.manager.ts`). It calls `POST /api/show` (`OllamaRuntimeAdapter.showModel`, the
+  optional `RuntimeAdapter.showModel`) and `parseOllamaContextLength` reads `model_info`: the architecture's own
+  `<general.architecture>.context_length` wins, else the largest `*.context_length`. The parse is a mirror of
+  connector-service's `parseOllamaContextLength`; the two services never import each other.
+
+Bounds (`constants/ollama-show.constants.ts`): 4 lookups in flight, 5 s per lookup, at most 100 lookups and 30 s in
+total per snapshot (a skipped lookup is not cached and is tried next sync). An answer is remembered for a day, a failure
+or a missing key for an hour, and a window read earlier is kept through a later failed lookup (routing-service writes
+NULL over a window the snapshot omits). The cache holds only installed models. Only rows whose runtime is `OLLAMA` are
+asked about. **Never invented**: a model whose window cannot be read is forwarded without one, and the pickers then
+show its size alone. Checked read-only on the dev stack with `ollama show`: all 16 installed models state a context
+length, so one sync fills all 16.

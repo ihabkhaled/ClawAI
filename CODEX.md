@@ -83,7 +83,7 @@ Full list and reasons: [`rules/00-non-negotiable-rules.md`](rules/00-non-negotia
 - **NEVER** declare a type/enum/const inline in a logic file ([rules/12](rules/12-types-enums-constants-and-declaration-ownership.md)).
 - **NEVER** ship code without its docs: every doc the change makes stale is updated in the same commit ([rules/63](rules/63-docs-move-with-code.md)).
 - **NEVER** change normal chat alone — Compare, Consensus, Escalation, the labs and the judge share it ([rules/59](rules/59-chat-surfaces-are-one-pipeline.md)).
-- **NEVER** call a change done on unit tests alone ([rules/60](rules/60-qa-evidence-is-mandatory-and-machine-checked.md)).
+- **NEVER** call a change done on unit tests alone ([rules/60](rules/60-qa-evidence-is-mandatory-and-machine-checked.md)) or with a red or skipped security check ([rules/69](rules/69-security-pass-on-every-change.md)).
 - **NEVER** invent a repository fact — derive it from `.ai/manifests/` or the code.
 - Delegated agents, any tool: smallest fast model only to read, strong model to code and QA, never a flagship; unsure, ask the owner ([rules/64](rules/64-subagent-model-selection.md)).
 

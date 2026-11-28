@@ -11,6 +11,7 @@ import { LIVE_TRANSLATIONS } from './live-translations';
 import { MARKETING_VIDEOS_TRANSLATIONS } from './marketing-videos-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
+import { MODEL_SCALE_TRANSLATIONS } from './model-scale-translations';
 import { MODEL_VISIBILITY_TRANSLATIONS } from './model-visibility-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
@@ -297,6 +298,9 @@ export const de: TranslationDictionary = {
     loginBannedPermanentDescription:
       'Ein Administrator hat dieses Konto dauerhaft gesperrt. Eine Anmeldung ist nicht möglich.',
     loginBannedGeneric: 'Dieses Konto ist gesperrt.',
+    loginSuspendedAutoTitle: 'Dieses Konto ist vorübergehend gesperrt',
+    loginSuspendedAutoDescription:
+      'Wegen ungewöhnlicher Aktivität haben wir dieses Konto pausiert. Nach {date} ist die Anmeldung wieder möglich. Falls das ein Irrtum ist, wenden Sie sich an den Support.',
     loginSuspendedTitle: 'Dieses Konto wurde gesperrt',
     loginSuspendedDescription:
       'Ihr Passwort war richtig, ein Administrator hat dieses Konto jedoch deaktiviert. Bitte wenden Sie sich an den Support, wenn Sie glauben, dass es sich um einen Fehler handelt.',
@@ -2503,6 +2507,8 @@ export const de: TranslationDictionary = {
     banAction: 'Sperren',
     unbanAction: 'Entsperren',
     bannedBadge: 'Gesperrt',
+    autoSuspendedBadge: 'Automatisch gesperrt',
+    detailAutoSuspendedUntil: 'Automatisch gesperrt bis {date}',
     banDialogTitle: '{username} sperren',
     banDialogDescription:
       'Der Benutzer wird sofort überall abgemeldet und kann sich bis zum Ende der Sperre nicht anmelden.',
@@ -5078,6 +5084,7 @@ export const de: TranslationDictionary = {
   researchPlatforms: RESEARCH_PLATFORMS_TRANSLATIONS.de,
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.de,
   pickedModel: PICKED_MODEL_TRANSLATIONS.de,
+  modelScale: MODEL_SCALE_TRANSLATIONS.de,
   creditFallback: CREDIT_FALLBACK_TRANSLATIONS.de,
   live: LIVE_TRANSLATIONS.de,
   mediaUi: MEDIA_UI_TRANSLATIONS.de,

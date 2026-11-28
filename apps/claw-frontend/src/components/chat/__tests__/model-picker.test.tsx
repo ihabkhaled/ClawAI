@@ -121,6 +121,53 @@ describe('ModelPicker', () => {
     });
   });
 
+  // ADR-234: the open list writes how big each model is beside its name.
+  describe('model size', () => {
+    const sizedGroups: ModelPickerGroup[] = [
+      {
+        key: 'OPENROUTER',
+        label: 'OpenRouter',
+        options: [
+          {
+            value: 'OPENROUTER::moonshotai/kimi-k2',
+            label: 'Kimi K2',
+            scale: {
+              label: '256K context · 1T params',
+              title: '256K context · 1T params, 32B active per token',
+            },
+          },
+          {
+            value: 'OPENROUTER::openai/gpt-5.4',
+            label: 'GPT 5.4',
+            scale: { label: '400K context', title: '400K context' },
+          },
+          { value: 'OPENROUTER::mystery', label: 'Mystery' },
+        ],
+      },
+    ];
+
+    it('shows the size on every model that has one and nothing on one that has none', () => {
+      render(<ModelPicker {...baseProps} groups={sizedGroups} />);
+      fireEvent.click(screen.getByRole('combobox'));
+
+      const rowOf = (name: string): HTMLElement =>
+        screen.getByText(name).closest('[role="option"]') as HTMLElement;
+      expect(rowOf('Kimi K2')).toHaveTextContent('256K context · 1T params');
+      expect(rowOf('GPT 5.4')).toHaveTextContent('400K context');
+      expect(rowOf('GPT 5.4')).not.toHaveTextContent('params');
+      expect(rowOf('Mystery').querySelector('[data-testid="model-scale"]')).toBeNull();
+    });
+
+    it('does not put the size on the trigger, which only names the choice', () => {
+      render(
+        <ModelPicker {...baseProps} groups={sizedGroups} value="OPENROUTER::moonshotai/kimi-k2" />,
+      );
+
+      expect(screen.getByRole('combobox')).toHaveTextContent('Kimi K2');
+      expect(screen.getByRole('combobox')).not.toHaveTextContent('context');
+    });
+  });
+
   it('filters options by the search input', () => {
     render(<ModelPicker {...baseProps} />);
     fireEvent.click(screen.getByRole('combobox'));

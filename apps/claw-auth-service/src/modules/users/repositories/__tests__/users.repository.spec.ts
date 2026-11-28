@@ -16,7 +16,7 @@ describe('UsersRepository', () => {
       update: Mock;
       delete: Mock;
     };
-    session: { updateMany: Mock };
+    session: { updateMany: Mock; findMany: Mock };
     $transaction: Mock;
   };
 
@@ -30,7 +30,10 @@ describe('UsersRepository', () => {
         update: vi.fn().mockResolvedValue({ id: 'u1' }),
         delete: vi.fn().mockResolvedValue({ id: 'u1' }),
       },
-      session: { updateMany: vi.fn().mockResolvedValue({ count: 2 }) },
+      session: {
+        updateMany: vi.fn().mockResolvedValue({ count: 2 }),
+        findMany: vi.fn().mockResolvedValue([]),
+      },
       $transaction: vi.fn().mockResolvedValue([[{ id: 'u1' }, { id: 'u2' }], 2]),
     };
 
@@ -137,15 +140,21 @@ describe('UsersRepository', () => {
     expect(prismaMock.user.delete).toHaveBeenCalledWith({ where: { id: 'u1' } });
   });
 
-  it('revokeSessionsByUserId revokes only active sessions for the user', async () => {
+  it('revokeOtherSessionsReturningIds spares the session in use and returns the ids it closed', async () => {
     const revokedAt = new Date('2026-08-09T00:00:00.000Z');
-    await repository.revokeSessionsByUserId(
-      'u1',
-      SessionTerminationReason.PASSWORD_CHANGED,
-      revokedAt,
-    );
+    prismaMock.session.findMany.mockResolvedValue([{ id: 's-old' }, { id: 's-phone' }]);
+    await expect(
+      repository.revokeOtherSessionsReturningIds(
+        'u1',
+        'session-1',
+        SessionTerminationReason.PASSWORD_CHANGED,
+        revokedAt,
+      ),
+    ).resolves.toEqual(['s-old', 's-phone']);
+    const where = { userId: 'u1', revokedAt: null, id: { not: 'session-1' } };
+    expect(prismaMock.session.findMany).toHaveBeenCalledWith({ where, select: { id: true } });
     expect(prismaMock.session.updateMany).toHaveBeenCalledWith({
-      where: { userId: 'u1', revokedAt: null },
+      where,
       data: {
         revokedAt,
         terminatedAt: revokedAt,
@@ -155,18 +164,17 @@ describe('UsersRepository', () => {
     });
   });
 
-  it('revokeOtherSessionsByUserId spares the session that asked for the change', async () => {
-    const revokedAt = new Date('2026-08-09T00:00:00.000Z');
-    await repository.revokeOtherSessionsByUserId('u1', 'session-1', revokedAt);
-    expect(prismaMock.session.updateMany).toHaveBeenCalledWith({
-      where: { userId: 'u1', revokedAt: null, id: { not: 'session-1' } },
-      data: {
-        revokedAt,
-        terminatedAt: revokedAt,
-        terminationReason: 'ACCOUNT_CHANGED',
-        terminatedByUserId: null,
-      },
-    });
+  it('revokeOtherSessionsReturningIds writes nothing when no other session is open', async () => {
+    prismaMock.session.updateMany.mockClear();
+    prismaMock.session.findMany.mockResolvedValue([]);
+    await expect(
+      repository.revokeOtherSessionsReturningIds(
+        'u1',
+        'session-1',
+        SessionTerminationReason.ACCOUNT_CHANGED,
+      ),
+    ).resolves.toEqual([]);
+    expect(prismaMock.session.updateMany).not.toHaveBeenCalled();
   });
 
   it('countAll delegates to prisma count with no filters', async () => {

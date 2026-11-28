@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { RedisModule } from '../../infrastructure/redis/redis.module';
+import { AbuseDefenseModule } from '../abuse-defense/abuse-defense.module';
 import { SystemSettingsModule } from '../system-settings/system-settings.module';
 import { CaptchaHttpAdapter } from './adapters/captcha-http.adapter';
 import { DnsLookupAdapter } from './adapters/dns-lookup.adapter';
@@ -31,7 +32,7 @@ import { SignupVelocityService } from './services/signup-velocity.service';
  * services AuthService calls and the bot-check service that controller uses.
  */
 @Module({
-  imports: [SystemSettingsModule, RedisModule],
+  imports: [SystemSettingsModule, RedisModule, AbuseDefenseModule],
   controllers: [AdminLinkedAccountsController, AdminSignupProtectionController],
   providers: [
     CaptchaHttpAdapter,

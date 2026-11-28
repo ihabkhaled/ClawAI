@@ -491,6 +491,30 @@ jobs:
       - name: Fail on any CodeQL finding
         run: node tools/security/sarif-gate.mjs "$RUNNER_TEMP/codeql-results"
 
+  # OSV-Scanner over the lockfile (development tools included): the OSV
+  # database lists advisories `npm audit` does not. Advisory like `policy`: a
+  # new advisory is external state that no commit caused, so it stays visible
+  # without stopping a release; fix it with `npm run security:fix` or a
+  # reviewed exception (rules/69). `security-scan.yml` runs it weekly as well.
+  osv-scan:
+    name: OSV scan (package-lock.json)
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install OSV-Scanner (pinned release, pinned checksum)
+        env:
+          OSV_VERSION: 2.7.1
+          OSV_SHA256: fb7dab19a8bd9bbe5c3189f09d4b7ee1820c9553a23bac202648a56efd2f6ee8
+        run: |
+          set -euo pipefail
+          curl -sSfL -o "$RUNNER_TEMP/osv-scanner" \
+            "https://github.com/google/osv-scanner/releases/download/v${OSV_VERSION}/osv-scanner_linux_amd64"
+          echo "${OSV_SHA256}  $RUNNER_TEMP/osv-scanner" | sha256sum -c -
+          chmod +x "$RUNNER_TEMP/osv-scanner"
+      - name: Scan the lockfile
+        run: '"$RUNNER_TEMP/osv-scanner" scan source --lockfile package-lock.json'
+
   # Builds each production Dockerfile this change touches and scans the image
   # (HIGH/CRITICAL with a fix available) and the Dockerfile itself.
   image-scan:

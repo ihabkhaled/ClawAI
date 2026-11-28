@@ -2,6 +2,9 @@ import { type Mock } from 'vitest';
 import { EventPattern } from '@claw/shared-types';
 import { BanDurationUnit, UserRole, UserStatus } from '../../../../common/enums';
 import type { SessionRevocationCacheService } from '../../../auth/services/session-revocation-cache.service';
+import { DeviceMarkReason } from '../../../abuse-defense/enums/device-mark-reason.enum';
+import { type AbuseSuspensionService } from '../../../abuse-defense/services/abuse-suspension.service';
+import { type BannedDeviceService } from '../../../abuse-defense/services/banned-device.service';
 import { type UsersRepository } from '../../repositories/users.repository';
 import { validatePasswordStrength } from '../../service.utilities/password-policy.utility';
 import { UserAdminActionsService } from '../user-admin-actions.service';
@@ -56,6 +59,9 @@ describe('UserAdminActionsService', () => {
   };
   let revoke: Mock;
   let publish: Mock;
+  let markForLifetimeBan: Mock;
+  let liftDevices: Mock;
+  let liftSuspension: Mock;
   let service: UserAdminActionsService;
 
   beforeEach(() => {
@@ -81,6 +87,9 @@ describe('UserAdminActionsService', () => {
     };
     revoke = vi.fn().mockResolvedValue(undefined);
     publish = vi.fn().mockResolvedValue(undefined);
+    markForLifetimeBan = vi.fn().mockResolvedValue(2);
+    liftDevices = vi.fn().mockResolvedValue(2);
+    liftSuspension = vi.fn().mockResolvedValue(1);
     const rabbit = { publish };
     const usersService = new UsersService(
       repo as unknown as UsersRepository,
@@ -89,12 +98,15 @@ describe('UserAdminActionsService', () => {
       {} as never,
       {} as never,
       { deleteAccount: vi.fn() },
+      { revoke } as unknown as SessionRevocationCacheService,
     );
     service = new UserAdminActionsService(
       repo as unknown as UsersRepository,
       usersService,
       { revoke } as unknown as SessionRevocationCacheService,
       rabbit as never,
+      { markForLifetimeBan, liftForUser: liftDevices } as unknown as BannedDeviceService,
+      { liftForUser: liftSuspension } as unknown as AbuseSuspensionService,
     );
   });
 
@@ -158,6 +170,35 @@ describe('UserAdminActionsService', () => {
       await expect(
         service.ban('nope', { unit: BanDurationUnit.LIFETIME, reason: 'r' }, ADMIN),
       ).rejects.toMatchObject({ status: 404 });
+    });
+  });
+
+  describe('banned devices and auto-suspensions (ADR-233)', () => {
+    it('marks the devices of an account banned for life', async () => {
+      await service.ban('user-1', { unit: BanDurationUnit.LIFETIME, reason: 'abuse' }, ADMIN);
+      expect(markForLifetimeBan).toHaveBeenCalledWith('user-1');
+    });
+
+    it('marks nothing for a timed ban: a cooling-off is not a verdict on the machine', async () => {
+      await service.ban('user-1', { unit: BanDurationUnit.DAYS, amount: 3, reason: 'spam' }, ADMIN);
+      expect(markForLifetimeBan).not.toHaveBeenCalled();
+    });
+
+    it('lifts the running auto-suspension and the device marks on unban, naming the administrator', async () => {
+      rows['user-1'] = { ...base, bannedAt: new Date(), bannedUntil: null, banReason: 'x' };
+      await service.unban('user-1', ADMIN);
+      expect(liftSuspension).toHaveBeenCalledWith('user-1', ADMIN);
+      expect(liftDevices).toHaveBeenCalledWith('user-1');
+    });
+
+    it('does not lift anything when the account was not banned', async () => {
+      await expect(service.unban('user-1', ADMIN)).rejects.toMatchObject({ status: 409 });
+      expect(liftSuspension).not.toHaveBeenCalled();
+      expect(liftDevices).not.toHaveBeenCalled();
+    });
+
+    it('uses a reason code that names the cause, not the person', () => {
+      expect(DeviceMarkReason.ADMIN_LIFETIME_BAN).toBe('ADMIN_LIFETIME_BAN');
     });
   });
 

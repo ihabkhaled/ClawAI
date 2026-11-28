@@ -16,6 +16,7 @@ import { RolesGuard } from './guards/roles.guard';
 import { GlobalExceptionFilter } from './filters/global-exception.filter';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 
+import { AbuseDefenseModule } from '../modules/abuse-defense/abuse-defense.module';
 import { AuthModule } from '../modules/auth/auth.module';
 import { RolesModule } from '../modules/roles/roles.module';
 import { PlansModule } from '../modules/plans/plans.module';
@@ -81,6 +82,8 @@ import { UsageAttributionModule } from '../modules/usage-attribution/usage-attri
     // Redis lock, so registering one here cannot double-run work if this
     // service is ever scaled past a single replica.
     ScheduleModule.forRoot(),
+    // The global exception filter reports authenticated 429s and 403s to it (ADR-233).
+    AbuseDefenseModule,
     AuthModule,
     RolesModule,
     PlansModule,

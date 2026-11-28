@@ -8,6 +8,9 @@ import { SecurityEventAction } from '../../enums/security-event-action.enum';
 import { type AntiAbuseCounterRepository } from '../../repositories/anti-abuse-counter.repository';
 import { loginFailureEmailKey, loginFailureIpKey } from '../../utilities/anti-abuse-key.utility';
 import { type BotCheckService } from '../bot-check.service';
+import { AbuseSignalCode } from '../../../abuse-defense/enums/abuse-signal-code.enum';
+import { type AbuseSignalService } from '../../../abuse-defense/services/abuse-signal.service';
+import { type BannedDeviceService } from '../../../abuse-defense/services/banned-device.service';
 import { type DeviceTrustService } from '../device-trust.service';
 import { LoginScreeningService } from '../login-screening.service';
 import { type SecurityEventService } from '../security-event.service';
@@ -24,6 +27,8 @@ describe('LoginScreeningService', () => {
   let evaluate: Mock;
   let deviceTrust: { hash: Mock; record: Mock };
   let record: Mock;
+  let isMarked: Mock;
+  let abuseRecord: Mock;
   let service: LoginScreeningService;
 
   beforeEach(() => {
@@ -40,11 +45,15 @@ describe('LoginScreeningService', () => {
     });
     deviceTrust = { hash: vi.fn().mockReturnValue(HASHED), record: vi.fn() };
     record = vi.fn();
+    isMarked = vi.fn().mockResolvedValue(false);
+    abuseRecord = vi.fn().mockResolvedValue(undefined);
     service = new LoginScreeningService(
       { evaluate } as unknown as BotCheckService,
       counters as unknown as AntiAbuseCounterRepository,
       deviceTrust as unknown as DeviceTrustService,
       { record } as unknown as SecurityEventService,
+      { isMarked } as unknown as BannedDeviceService,
+      { record: abuseRecord } as unknown as AbuseSignalService,
     );
   });
 
@@ -119,6 +128,34 @@ describe('LoginScreeningService', () => {
     expect(deviceTrust.record).toHaveBeenCalledWith(
       expect.objectContaining({ userId: 'u1', device: HASHED, origin: ORIGIN }),
     );
+  });
+
+  it('flags, and never blocks, an existing account that signs in on a banned device', async () => {
+    isMarked.mockResolvedValue(true);
+    const device = { fingerprint: 'a'.repeat(64), deviceId: 'device-0001' };
+    await expect(service.recordSuccess('u1', EMAIL, { device }, ORIGIN)).resolves.toBeUndefined();
+    expect(isMarked).toHaveBeenCalledWith(HASHED, 'u1');
+    expect(record).toHaveBeenCalledWith(
+      SecurityEventAction.LOGIN_ON_BANNED_DEVICE,
+      expect.objectContaining({ userId: 'u1', fingerprintHash: HASHED.fingerprintHash }),
+    );
+    expect(abuseRecord).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 'u1', code: AbuseSignalCode.BANNED_DEVICE_SIGNIN }),
+    );
+  });
+
+  it('flags nothing on a device no banned account used', async () => {
+    const device = { fingerprint: 'a'.repeat(64), deviceId: 'device-0001' };
+    await service.recordSuccess('u1', EMAIL, { device }, ORIGIN);
+    expect(abuseRecord).not.toHaveBeenCalled();
+    expect(record).not.toHaveBeenCalled();
+  });
+
+  it('never fails a sign-in because the banned-device lookup failed', async () => {
+    isMarked.mockRejectedValue(new Error('database down'));
+    const device = { fingerprint: 'a'.repeat(64), deviceId: 'device-0001' };
+    await expect(service.recordSuccess('u1', EMAIL, { device }, ORIGIN)).resolves.toBeUndefined();
+    expect(abuseRecord).not.toHaveBeenCalled();
   });
 
   it('records no device on a success without one', async () => {

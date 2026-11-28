@@ -26,6 +26,8 @@ export class ApiClientError extends Error {
   // ACCOUNT_BANNED only (ADR-200): when a timed ban ends (ISO-8601), and whether it never does.
   bannedUntil?: string | null;
   banPermanent?: boolean;
+  // ACCOUNT_BANNED only (ADR-233): true for an automatic, temporary suspension. Never says why.
+  autoSuspended?: boolean;
 
   constructor(params: {
     message: string;
@@ -36,6 +38,7 @@ export class ApiClientError extends Error {
     retryAfterSeconds?: number;
     bannedUntil?: string | null;
     banPermanent?: boolean;
+    autoSuspended?: boolean;
   }) {
     super(params.message);
     this.name = 'ApiClientError';
@@ -46,6 +49,7 @@ export class ApiClientError extends Error {
     this.retryAfterSeconds = params.retryAfterSeconds;
     this.bannedUntil = params.bannedUntil;
     this.banPermanent = params.banPermanent;
+    this.autoSuspended = params.autoSuspended;
   }
 }
 
@@ -178,6 +182,7 @@ function toApiClientError(error: unknown): ApiClientError {
           errors?: Record<string, string[]>;
           bannedUntil?: string | null;
           banPermanent?: boolean;
+          autoSuspended?: boolean;
         };
       };
     };
@@ -204,6 +209,7 @@ function toApiClientError(error: unknown): ApiClientError {
       retryAfterSeconds: parseRetryAfterSeconds(axiosError.response?.headers?.[RETRY_AFTER_HEADER]),
       bannedUntil: isServerError ? undefined : axiosError.response?.data?.bannedUntil,
       banPermanent: isServerError ? undefined : axiosError.response?.data?.banPermanent,
+      autoSuspended: isServerError ? undefined : axiosError.response?.data?.autoSuspended,
     });
   }
   return new ApiClientError({ message: 'Network error', status: 0 });

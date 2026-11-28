@@ -67,6 +67,10 @@ Every workspace — every `apps/claw-*` service, `apps/claw-frontend`, every
 16. **Chat surfaces are one pipeline.** A change to normal chat reaches Compare,
     Consensus, Escalation, the labs and the judge through shared code
     ([rules/59](59-chat-surfaces-are-one-pipeline.md)).
+17. **Every change gets the security pass.** `npm run security:check`, the
+    change's threats tested through the real entry point, and no scanner or
+    GitHub alert left red; a check that could not run is reported as SKIPPED,
+    never as passed ([rules/69](69-security-pass-on-every-change.md)).
 
 ## Prohibited patterns
 
@@ -112,6 +116,9 @@ git push     # hooks: related tests, build; then CI
 - 15 → **commit-msg hook** (`docs:impact`) + **knowledge:verify** (`docs:refs`,
   counts, duplication) in the hooks and CI.
 - 16 → **Unit tests** named in rules/59 + **Review checklist**.
+- 17 → **Git hooks** (gitleaks at pre-commit; audit and gitleaks over the outgoing
+  commits at pre-push) + **CI** (`secrets`, `codeql`, `osv-scan`, the weekly
+  `security-scan` workflow) + **Review checklist**.
 
 ## Related skills
 

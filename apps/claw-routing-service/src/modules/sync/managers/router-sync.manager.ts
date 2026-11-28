@@ -1,3 +1,4 @@
+import { recordGet } from '../../../common/utilities/record-lookup.utility';
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
 import { EventPattern } from '@claw/shared-types';
@@ -22,6 +23,7 @@ import {
   buildCreateInput,
   buildUpdateInput,
   enrichmentEntries,
+  parameterCountColumns,
 } from '../utilities/upsert-input-builder.utility';
 
 @Injectable()
@@ -269,13 +271,14 @@ export class RouterSyncManager {
     update: ReturnType<typeof buildUpdateInput>;
   } {
     const entries = enrichmentEntries(enrichment);
-    const create = buildCreateInput(upstream, entries);
-    const update = buildUpdateInput(upstream, protectedFields, entries);
+    const sizeColumns = parameterCountColumns(upstream);
+    const create = buildCreateInput(upstream, entries, sizeColumns);
+    const update = buildUpdateInput(upstream, protectedFields, entries, sizeColumns);
     return { create, update };
   }
 
   private serviceBaseUrl(envVar: string, fallback: string): string {
-    const value = process.env[envVar];
+    const value = recordGet(process.env, envVar);
     const resolved = value !== undefined && value.length > 0 ? value : fallback;
     // The outbound guard builds its allowlist from the ENVIRONMENT, so a
     // deployment that never set this variable would have its sync refused —

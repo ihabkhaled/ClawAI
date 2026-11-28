@@ -109,7 +109,7 @@ export class UsersController {
     @CurrentUser() user: AuthenticatedUser,
     @Body(new ZodValidationPipe(changePasswordSchema)) dto: ChangePasswordDto,
   ): Promise<void> {
-    return this.usersService.changePassword(user.id, dto);
+    return this.usersService.changePassword(user.id, dto, user.sessionId);
   }
 
   @Patch('me')

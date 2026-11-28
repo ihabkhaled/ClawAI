@@ -21,6 +21,7 @@ import type {
 import type { ModelRecencyTier } from '@/enums/model-recency-tier.enum';
 import type { ResearchMode } from '@/enums/research-mode.enum';
 
+import type { ModelScaleText } from './model-scale.types';
 import type { NarrationEntry } from './narration.types';
 import type { PluginRefPayload } from './plugin-mention.types';
 
@@ -743,6 +744,8 @@ export type JudgeModelOption = {
   label: string;
   /** Not on the user's plan: dimmed and refused in the picker. */
   isLocked?: boolean;
+  /** "1M context · 750B params" beside the name (ADR-234). */
+  scale?: ModelScaleText;
 };
 
 export type MessageRenderItem =

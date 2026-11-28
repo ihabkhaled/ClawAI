@@ -327,3 +327,15 @@ Plan access (cost-class limits, per-model rows) is decided per user afterwards a
 Admins get the walk for any model from the **"Why hidden?"** button on the connector's Model exposure panel
 (`GET /connectors/model-visibility`); a sync that changes a model's kind or unexposes it is recorded in
 `connector_model_events` and shown in the same panel.
+
+## Model size beside every model (ADR-234, 2026-11-28)
+
+The chat picker's cloud list comes from connector-service and carries the context window (`maxContextTokens`) but no
+parameter count. The parameter count lives on the routing registry (`parameter_count_billions`,
+`active_parameter_count_billions`), filled from a local runtime's own report, from a table of maker-published counts,
+or from the maker's own model name, and left NULL for a closed model. The frontend joins the picker list with
+`GET /routing/model-sizes` on `(provider, modelKey)` and writes "1M context · 750B params" beside the name, leaving
+out whichever part is unknown. A local Ollama file reports its own size, a llama.cpp frontier model carries its catalog
+numbers, and the registry fills the window. Local groups are filed under `OLLAMA` / `LLAMACPP` in the registry
+(`local-ollama`, `local-llamacpp` are the picker's names; the Smart Router calls cloud Ollama `OLLAMA_CLOUD`).
+Rules, sources and operations: [ADR-234](../13-adr/adr-234-model-size-in-every-picker.md) and the routing service guide.

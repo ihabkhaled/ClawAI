@@ -62,3 +62,55 @@ describe('banned sign-in (ADR-200)', () => {
     }
   });
 });
+
+describe('automatic suspension sign-in (ADR-233)', () => {
+  const UNTIL = '2026-11-28T11:00:00.000Z';
+
+  it('reads autoSuspended off the error, and omits it for an ordinary ban', () => {
+    expect(
+      readLoginBanInfo(
+        bannedError({ bannedUntil: UNTIL, banPermanent: false, autoSuspended: true }),
+      ),
+    ).toEqual({ permanent: false, until: UNTIL, autoSuspended: true });
+    expect(readLoginBanInfo(bannedError({ bannedUntil: UNTIL, banPermanent: false }))).toEqual({
+      permanent: false,
+      until: UNTIL,
+    });
+  });
+
+  it('says temporarily suspended, with the end date, and never blames an administrator', () => {
+    const copy = resolveLoginFailureCopy(LoginFailureReason.ACCOUNT_BANNED, null, {
+      permanent: false,
+      until: UNTIL,
+      autoSuspended: true,
+    });
+    expect(copy.titleKey).toBe('auth.loginSuspendedAutoTitle');
+    expect(copy.descriptionKey).toBe('auth.loginSuspendedAutoDescription');
+    expect(copy.descriptionParams).toEqual({ date: new Date(UNTIL).toLocaleString() });
+  });
+
+  it('keeps the administrator-ban copy for an ordinary timed ban and a lifetime ban', () => {
+    expect(
+      resolveLoginFailureCopy(LoginFailureReason.ACCOUNT_BANNED, null, {
+        permanent: false,
+        until: UNTIL,
+      }).titleKey,
+    ).toBe('auth.loginBannedTitle');
+    expect(
+      resolveLoginFailureCopy(LoginFailureReason.ACCOUNT_BANNED, null, {
+        permanent: true,
+        until: null,
+      }).descriptionKey,
+    ).toBe('auth.loginBannedPermanentDescription');
+  });
+
+  it('never shows the suspension copy without an end date', () => {
+    expect(
+      resolveLoginFailureCopy(LoginFailureReason.ACCOUNT_BANNED, null, {
+        permanent: true,
+        until: null,
+        autoSuspended: true,
+      }).titleKey,
+    ).toBe('auth.loginBannedTitle');
+  });
+});

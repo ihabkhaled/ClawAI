@@ -7,6 +7,7 @@ import { type AuthRepository } from '../../repositories/auth.repository';
 import { AccountBanGateService } from '../../services/account-ban-gate.service';
 import { type SessionRevocationCacheService } from '../../services/session-revocation-cache.service';
 import { type UserPresenceService } from '../../services/user-presence.service';
+import { type AbuseSignalService } from '../../../abuse-defense/services/abuse-signal.service';
 import { TokenSessionManager } from '../token-session.manager';
 
 vi.mock('@common/utilities', () => ({
@@ -68,6 +69,7 @@ describe('TokenSessionManager with the ban gate (real AccountBanGateService)', (
       revocationCache as unknown as SessionRevocationCacheService,
       new AccountBanGateService({ clearBan } as unknown as UsersRepository),
       presence as unknown as UserPresenceService,
+      { record: vi.fn().mockResolvedValue(undefined) } as unknown as AbuseSignalService,
     );
   });
 

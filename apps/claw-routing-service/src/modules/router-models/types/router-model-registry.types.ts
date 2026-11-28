@@ -59,6 +59,10 @@ export type RouterModelRegistryRecord = {
   supportsLongContext: boolean | null;
   maxContextTokens: number | null;
   maxOutputTokensIntel: number | null;
+  /** Total parameters in billions (0.5 = 500M, 1000 = 1T); null when the maker publishes none. */
+  parameterCountBillions: number | null;
+  /** Per-token share of a mixture-of-experts model, in billions; null for a dense or unknown model. */
+  activeParameterCountBillions: number | null;
   domainStrengths: string[];
   roleStrengths: string[];
   weakDomains: string[];

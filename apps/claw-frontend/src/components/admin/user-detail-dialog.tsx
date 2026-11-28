@@ -24,6 +24,7 @@ import {
   formatAdminUserFullName,
   formatCountryLabel,
   formatRegistrationIp,
+  isAutoSuspension,
   resolvePresenceState,
 } from '@/utilities/admin-user-management.utility';
 
@@ -56,7 +57,9 @@ export function UserDetailDialog({
     banText =
       user.banPermanent || user.bannedUntil === null
         ? t('admin.detailBannedPermanent')
-        : t('admin.detailBannedUntil', { date: formatAdminTimestamp(user.bannedUntil, locale) });
+        : t(isAutoSuspension(user) ? 'admin.detailAutoSuspendedUntil' : 'admin.detailBannedUntil', {
+            date: formatAdminTimestamp(user.bannedUntil, locale),
+          });
   }
 
   return (

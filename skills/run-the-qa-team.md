@@ -100,7 +100,8 @@ Arabic locale per platform for RTL.
 
 - **Regression** — exercise the states you did _not_ change.
 - **Security / pen** — authz bypass, IDOR, injection, leaked secret in the
-  response or the log, unsafe default.
+  response or the log, unsafe default. The full procedure, with `npm run security:check`
+  and the penetration-style trial, is [secure-every-change](secure-every-change.md) (rule 69).
 - **Performance** — two numbers, before and after. Payload size, latency, score.
 - **Stress** — repeat it, run it concurrently, feed it something big, take a
   dependency down and confirm it fails the way you claimed.

@@ -11,6 +11,7 @@ import { LIVE_TRANSLATIONS } from './live-translations';
 import { MARKETING_VIDEOS_TRANSLATIONS } from './marketing-videos-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
+import { MODEL_SCALE_TRANSLATIONS } from './model-scale-translations';
 import { MODEL_VISIBILITY_TRANSLATIONS } from './model-visibility-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
@@ -284,6 +285,9 @@ export const hi: TranslationDictionary = {
     loginBannedPermanentDescription:
       'एक व्यवस्थापक ने इस खाते को स्थायी रूप से प्रतिबंधित किया है। आप साइन इन नहीं कर सकते।',
     loginBannedGeneric: 'यह खाता प्रतिबंधित है।',
+    loginSuspendedAutoTitle: 'यह खाता अस्थायी रूप से निलंबित है',
+    loginSuspendedAutoDescription:
+      'असामान्य गतिविधि के कारण हमने इस खाते को रोक दिया है। {date} के बाद आप फिर से साइन इन कर सकते हैं। यदि आपको लगता है कि यह गलती है, तो सहायता से संपर्क करें।',
     loginSuspendedTitle: 'यह खाता निलंबित कर दिया गया है',
     loginSuspendedDescription:
       'आपका पासवर्ड सही था, लेकिन एक प्रशासक ने इस खाते को निष्क्रिय कर दिया है। यदि आपको लगता है कि यह भूल से हुआ है, तो कृपया सहायता टीम से संपर्क करें।',
@@ -2370,6 +2374,8 @@ export const hi: TranslationDictionary = {
     banAction: 'प्रतिबंधित करें',
     unbanAction: 'प्रतिबंध हटाएँ',
     bannedBadge: 'प्रतिबंधित',
+    autoSuspendedBadge: 'स्वतः निलंबित',
+    detailAutoSuspendedUntil: '{date} तक स्वतः निलंबित',
     banDialogTitle: '{username} को प्रतिबंधित करें',
     banDialogDescription:
       'उपयोगकर्ता तुरंत हर जगह साइन आउट हो जाएगा और प्रतिबंध समाप्त होने तक साइन इन नहीं कर पाएगा।',
@@ -4860,6 +4866,7 @@ export const hi: TranslationDictionary = {
   researchPlatforms: RESEARCH_PLATFORMS_TRANSLATIONS.hi,
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.hi,
   pickedModel: PICKED_MODEL_TRANSLATIONS.hi,
+  modelScale: MODEL_SCALE_TRANSLATIONS.hi,
   creditFallback: CREDIT_FALLBACK_TRANSLATIONS.hi,
   live: LIVE_TRANSLATIONS.hi,
   mediaUi: MEDIA_UI_TRANSLATIONS.hi,

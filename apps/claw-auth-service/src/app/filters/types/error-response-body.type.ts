@@ -13,6 +13,8 @@ export interface ErrorResponseBody {
   // ACCOUNT_BANNED: the end of a timed ban (ISO-8601) or null, and whether it is a lifetime ban.
   bannedUntil?: string | null;
   banPermanent?: boolean;
+  // ACCOUNT_BANNED only: true for an automatic, temporary suspension (ADR-233). Never a reason or a count.
+  autoSuspended?: boolean;
   // Anti-abuse refusals: the request field at fault (DISPOSABLE_EMAIL -> 'email') and,
   // for SIGNUP_TEMPORARILY_LIMITED, the wait that is also sent as Retry-After.
   field?: string;

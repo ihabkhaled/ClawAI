@@ -12,14 +12,22 @@ import { isMain, readJson, repoPath } from '../lib/repo.mjs';
 
 const BLOCKING = new Set(['high', 'critical']);
 
-/** Advisories (GHSA id -> { severity, packages }) reported by `npm audit --json`. */
-export function blockingAdvisories(report) {
+/**
+ * Advisories (GHSA id -> { severity, packages }) reported by `npm audit --json`
+ * at the given severities (high and critical unless a stricter level is asked
+ * for, as `npm run security:check -- --level=moderate` does).
+ */
+export function blockingAdvisories(report, severities = BLOCKING) {
   const advisories = new Map();
   for (const [name, vulnerability] of Object.entries(report.vulnerabilities ?? {})) {
     for (const via of vulnerability.via ?? []) {
-      if (typeof via !== 'object' || !BLOCKING.has(via.severity)) continue;
+      if (typeof via !== 'object' || !severities.has(via.severity)) continue;
       const id = /GHSA-[\w-]+/u.exec(via.url ?? '')?.[0] ?? `${name}:${via.title}`;
-      const entry = advisories.get(id) ?? { severity: via.severity, title: via.title, packages: new Set() };
+      const entry = advisories.get(id) ?? {
+        severity: via.severity,
+        title: via.title,
+        packages: new Set(),
+      };
       entry.packages.add(name);
       advisories.set(id, entry);
     }
@@ -27,14 +35,22 @@ export function blockingAdvisories(report) {
   return advisories;
 }
 
-export function auditViolations(advisories, allowlist, today = new Date().toISOString().slice(0, 10)) {
+export function auditViolations(
+  advisories,
+  allowlist,
+  today = new Date().toISOString().slice(0, 10),
+) {
   const errors = [];
   for (const [id, advisory] of advisories) {
     const allowed = allowlist[id];
     if (!allowed) {
-      errors.push(`${id} (${advisory.severity}) ${advisory.title} in ${[...advisory.packages].join(', ')}`);
+      errors.push(
+        `${id} (${advisory.severity}) ${advisory.title} in ${[...advisory.packages].join(', ')}`,
+      );
     } else if (allowed.expires < today) {
-      errors.push(`${id}: allowlist entry expired on ${allowed.expires} — re-review it or fix the dependency`);
+      errors.push(
+        `${id}: allowlist entry expired on ${allowed.expires} — re-review it or fix the dependency`,
+      );
     }
   }
   for (const [id, allowed] of Object.entries(allowlist)) {
@@ -49,7 +65,11 @@ function main() {
   const [command, args, options] = npmInvocation(['audit', '--omit=dev', '--json']);
   let stdout;
   try {
-    stdout = execFileSync(command, args, { ...options, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+    stdout = execFileSync(command, args, {
+      ...options,
+      encoding: 'utf8',
+      maxBuffer: 64 * 1024 * 1024,
+    });
   } catch (error) {
     // npm audit exits non-zero whenever it finds anything; the JSON is still on stdout.
     if (typeof error.stdout !== 'string' || !error.stdout.trim().startsWith('{')) throw error;
@@ -59,7 +79,9 @@ function main() {
   const advisories = blockingAdvisories(JSON.parse(stdout));
   const errors = auditViolations(advisories, allowlist);
   if (errors.length > 0) {
-    console.error(`npm audit FAILED — ${errors.length} high/critical issue(s) in production dependencies:`);
+    console.error(
+      `npm audit FAILED — ${errors.length} high/critical issue(s) in production dependencies:`,
+    );
     for (const error of errors) console.error(`  ✖ ${error}`);
     process.exit(1);
   }

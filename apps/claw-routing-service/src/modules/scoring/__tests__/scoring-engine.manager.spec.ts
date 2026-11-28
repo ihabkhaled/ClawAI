@@ -72,6 +72,8 @@ function makeProfile(
     supportsLongContext: null,
     maxContextTokens: null,
     maxOutputTokensIntel: null,
+    parameterCountBillions: null,
+    activeParameterCountBillions: null,
     domainStrengths: [],
     roleStrengths: [],
     weakDomains: [],

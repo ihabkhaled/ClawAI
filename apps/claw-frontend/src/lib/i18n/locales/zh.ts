@@ -11,6 +11,7 @@ import { LIVE_TRANSLATIONS } from './live-translations';
 import { MARKETING_VIDEOS_TRANSLATIONS } from './marketing-videos-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
+import { MODEL_SCALE_TRANSLATIONS } from './model-scale-translations';
 import { MODEL_VISIBILITY_TRANSLATIONS } from './model-visibility-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
@@ -275,6 +276,9 @@ export const zh: TranslationDictionary = {
     loginBannedDescription: '管理员已将此账户封禁至 {date}。在此之前无法登录。',
     loginBannedPermanentDescription: '管理员已永久封禁此账户，无法登录。',
     loginBannedGeneric: '此账户已被封禁。',
+    loginSuspendedAutoTitle: '此账户已被临时暂停',
+    loginSuspendedAutoDescription:
+      '由于检测到异常活动，我们已暂停此账户。{date} 之后即可重新登录。如果您认为这是误判，请联系支持团队。',
     loginSuspendedTitle: '该账户已被停用',
     loginSuspendedDescription:
       '您的密码正确，但管理员已停用该账户。如果您认为这是误操作，请联系客服支持。',
@@ -2324,6 +2328,8 @@ export const zh: TranslationDictionary = {
     banAction: '封禁',
     unbanAction: '解除封禁',
     bannedBadge: '已封禁',
+    autoSuspendedBadge: '自动暂停',
+    detailAutoSuspendedUntil: '自动暂停至 {date}',
     banDialogTitle: '封禁 {username}',
     banDialogDescription: '该用户会立即在所有设备上被登出，封禁结束前无法登录。',
     banUnit: '时长单位',
@@ -4753,6 +4759,7 @@ export const zh: TranslationDictionary = {
   researchPlatforms: RESEARCH_PLATFORMS_TRANSLATIONS.zh,
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.zh,
   pickedModel: PICKED_MODEL_TRANSLATIONS.zh,
+  modelScale: MODEL_SCALE_TRANSLATIONS.zh,
   creditFallback: CREDIT_FALLBACK_TRANSLATIONS.zh,
   live: LIVE_TRANSLATIONS.zh,
   mediaUi: MEDIA_UI_TRANSLATIONS.zh,

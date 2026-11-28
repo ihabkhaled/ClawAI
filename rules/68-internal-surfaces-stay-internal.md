@@ -14,7 +14,8 @@ cover containers. An attacker planted an SSH key through the open Redis. Separat
    (`claw-docker-firewall.service`, [runbook](../docs/11-runbooks/runbook-production-host-hardening.md)). A new public
    port goes through nginx, never through a new published port.
 3. **Every data store needs its OWN credential**, even when it is unreachable: one password per Postgres database,
-   MongoDB, RabbitMQ, Redis (`requirepass`) and the Firecrawl Postgres, never shared and never a placeholder. A
+   MongoDB, RabbitMQ, Redis (`requirepass`) and the Firecrawl Postgres, Redis (`requirepass`) and RabbitMQ (its own user, no `guest`),
+   never shared and never a placeholder. A
    production compose file requires each one (`${VAR:?...}`, no default). Change them only with
    `scripts/rotate-db-passwords.sh` (it changes the store, then `.env`, then restarts).
 4. **An internal route proves who is calling.** A controller under `internal/...` (or `*-internal.controller.ts`) has a

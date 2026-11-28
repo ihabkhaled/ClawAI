@@ -11,6 +11,7 @@ import { LIVE_TRANSLATIONS } from './live-translations';
 import { MARKETING_VIDEOS_TRANSLATIONS } from './marketing-videos-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
+import { MODEL_SCALE_TRANSLATIONS } from './model-scale-translations';
 import { MODEL_VISIBILITY_TRANSLATIONS } from './model-visibility-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
@@ -276,6 +277,9 @@ export const th: TranslationDictionary = {
     loginBannedDescription: 'ผู้ดูแลระบบระงับบัญชีนี้จนถึง {date} คุณไม่สามารถเข้าสู่ระบบได้ก่อนหน้านั้น',
     loginBannedPermanentDescription: 'ผู้ดูแลระบบระงับบัญชีนี้ถาวร คุณไม่สามารถเข้าสู่ระบบได้',
     loginBannedGeneric: 'บัญชีนี้ถูกระงับ',
+    loginSuspendedAutoTitle: 'บัญชีนี้ถูกระงับชั่วคราว',
+    loginSuspendedAutoDescription:
+      'เราหยุดบัญชีนี้ชั่วคราวเนื่องจากมีกิจกรรมที่ผิดปกติ คุณสามารถเข้าสู่ระบบได้อีกครั้งหลัง {date} หากคิดว่าเป็นความผิดพลาด โปรดติดต่อฝ่ายสนับสนุน',
     loginSuspendedTitle: 'บัญชีนี้ถูกระงับการใช้งาน',
     loginSuspendedDescription:
       'รหัสผ่านของท่านถูกต้อง แต่ผู้ดูแลระบบได้ปิดการใช้งานบัญชีนี้ไว้ หากท่านเห็นว่าเป็นความผิดพลาด กรุณาติดต่อฝ่ายสนับสนุน',
@@ -2334,6 +2338,8 @@ export const th: TranslationDictionary = {
     banAction: 'ระงับ',
     unbanAction: 'ยกเลิกการระงับ',
     bannedBadge: 'ถูกระงับ',
+    autoSuspendedBadge: 'ระงับอัตโนมัติ',
+    detailAutoSuspendedUntil: 'ระงับอัตโนมัติจนถึง {date}',
     banDialogTitle: 'ระงับ {username}',
     banDialogDescription: 'ผู้ใช้จะถูกออกจากระบบทุกที่ทันที และเข้าสู่ระบบไม่ได้จนกว่าการระงับจะสิ้นสุด',
     banUnit: 'หน่วยระยะเวลา',
@@ -4790,6 +4796,7 @@ export const th: TranslationDictionary = {
   researchPlatforms: RESEARCH_PLATFORMS_TRANSLATIONS.th,
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.th,
   pickedModel: PICKED_MODEL_TRANSLATIONS.th,
+  modelScale: MODEL_SCALE_TRANSLATIONS.th,
   creditFallback: CREDIT_FALLBACK_TRANSLATIONS.th,
   live: LIVE_TRANSLATIONS.th,
   mediaUi: MEDIA_UI_TRANSLATIONS.th,

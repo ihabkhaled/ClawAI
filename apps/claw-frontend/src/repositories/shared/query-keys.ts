@@ -119,6 +119,7 @@ export const queryKeys = {
       detail: (id: string) => [...queryKeys.routing.decisions.all, 'detail', id] as const,
     },
     recovery: (limit: number) => ['routing', 'recovery', limit] as const,
+    modelSizes: () => ['routing', 'model-sizes'] as const,
     playgroundSemantic: ['routing', 'playground', 'semantic'] as const,
   },
   localModels: {

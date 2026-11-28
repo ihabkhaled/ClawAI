@@ -1,0 +1,14 @@
+[Unit]
+Description=Refresh the verified-crawler IP ranges nginx reads (ADR-232)
+Documentation=file:///srv/clawai/docs/11-runbooks/runbook-production-host-hardening.md
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+# Exit 3 = refreshed, but one source is stale (the file header and the journal say which): not a failure.
+SuccessExitStatus=3
+ExecStart=/bin/bash /srv/clawai/infra/host/refresh-crawler-ranges.sh
+TimeoutStartSec=300
+Nice=10

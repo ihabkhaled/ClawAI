@@ -7,17 +7,18 @@ change type, is the gate matrix in
 
 ## Workflows
 
-| Workflow                                                                           | Trigger                                  | Role                                                                                             |
-| ---------------------------------------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| [`ci.yml`](../../.github/workflows/ci.yml)                                         | every pull request; push to main/develop | Required checks feed `CI success`; Policy is advisory.                                           |
-| [`ai-native-os.yml`](../../.github/workflows/ai-native-os.yml)                     | push to main/develop; pull request       | Separate advisory checks for knowledge, docs, QA and tooling                                     |
-| [`release.yml`](../../.github/workflows/release.yml)                               | `CI` completed successfully on main      | Version bump, tag, GitHub release, then deploy                                                   |
-| [`deploy-production.yml`](../../.github/workflows/deploy-production.yml)           | called by `release.yml`                  | Deploys the exact release commit                                                                 |
-| [`dependency-remediation.yml`](../../.github/workflows/dependency-remediation.yml) | daily cron; manual                       | Pins patched releases of new production advisories and pushes one `chore(deps)` commit (ADR-202) |
-| [`lighthouse.yml`](../../.github/workflows/lighthouse.yml)                         | frontend paths                           | Lighthouse CI budgets and accessibility                                                          |
+| Workflow                                                                           | Trigger                                  | Role                                                                                                    |
+| ---------------------------------------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| [`ci.yml`](../../.github/workflows/ci.yml)                                         | every pull request; push to main/develop | Required checks feed `CI success`; Policy is advisory.                                                  |
+| [`ai-native-os.yml`](../../.github/workflows/ai-native-os.yml)                     | push to main/develop; pull request       | Separate advisory checks for knowledge, docs, QA and tooling                                            |
+| [`release.yml`](../../.github/workflows/release.yml)                               | `CI` completed successfully on main      | Version bump, tag, GitHub release, then deploy                                                          |
+| [`deploy-production.yml`](../../.github/workflows/deploy-production.yml)           | called by `release.yml`                  | Deploys the exact release commit                                                                        |
+| [`dependency-remediation.yml`](../../.github/workflows/dependency-remediation.yml) | daily cron; manual                       | Pins patched releases of new production advisories and pushes one `chore(deps)` commit (ADR-202)        |
+| [`security-scan.yml`](../../.github/workflows/security-scan.yml)                   | weekly cron; manual                      | Whole-history gitleaks, `npm audit` over every dependency at moderate and above, OSV-Scanner (rules/69) |
+| [`lighthouse.yml`](../../.github/workflows/lighthouse.yml)                         | frontend paths                           | Lighthouse CI budgets and accessibility                                                                 |
 
 Node comes from [`.nvmrc`](../../.nvmrc) in every workflow. Third-party actions are
-pinned to commit SHAs; downloaded tools (gitleaks, actionlint) are pinned to a
+pinned to commit SHAs; downloaded tools (gitleaks, actionlint, OSV-Scanner) are pinned to a
 version and a SHA-256.
 
 ## How a red job blocks a release
@@ -44,6 +45,7 @@ runs independently, so its failures cannot change the `CI` workflow conclusion.
 | `policy`                                  | always                          | Advisory formatting ratchet; coverage thresholds and lint baseline; production `npm audit`; actionlint (with shellcheck)     |
 | `secrets`                                 | always                          | gitleaks over every commit the push or PR adds, with `.gitleaks.toml`                                                        |
 | `codeql`                                  | always                          | CodeQL default suite for javascript-typescript; any finding not in `tools/security/codeql-accepted.json` fails               |
+| `osv-scan`                                | always                          | OSV-Scanner (pinned release and checksum) over `package-lock.json`, development tools included; advisory like `policy`       |
 | `image-scan`                              | a production Dockerfile changed | The image builds; Trivy finds no fixable HIGH/CRITICAL vulnerability and no HIGH/CRITICAL Dockerfile misconfiguration        |
 | `submodule-integrity`                     | always                          | The coding-agent submodule pointer exists upstream                                                                           |
 | `CI success`                              | always                          | Required gates above; Policy is advisory                                                                                     |
@@ -81,8 +83,32 @@ Deploy paths: `scripts/deploy*`, `tools/release/**`, `tools/__tests__/deploy-pro
 The `policy` job is advisory at its caller in `ci.yml` (`continue-on-error:
 true`) and excluded from `ci-success.needs`. The independent `ai-native-os.yml`
 workflow also runs on pushes and pull requests but cannot affect the `CI`
-workflow conclusion. Failures stay visible; fix them promptly. Workflow-shape
+workflow conclusion. `osv-scan` is advisory the same way. Failures stay visible;
+fix them promptly: no scanner stays red ([rules/69](../../rules/69-security-pass-on-every-change.md)). Workflow-shape
 tests in `tools/__tests__/ai-native-workflow.test.mjs` lock these rules.
+
+## Security scanning (rules/69)
+
+Every change gets the pass in [skills/secure-every-change.md](../../skills/secure-every-change.md). Where each scan runs:
+
+| Scan                                                          | pre-commit | pre-push                 | CI (`ci.yml`)                         | Weekly (`security-scan.yml`) | By hand                              |
+| ------------------------------------------------------------- | ---------- | ------------------------ | ------------------------------------- | ---------------------------- | ------------------------------------ |
+| gitleaks                                                      | staged     | the commits being pushed | `secrets`: the commits of the push/PR | the whole history            | working tree; `--history` for all    |
+| `npm audit`, every dependency incl. dev                       | -          | high and critical        | `policy`: production only (advisory)  | moderate and above           | `security:check`, `--level=moderate` |
+| OSV-Scanner                                                   | -          | -                        | `osv-scan` (advisory)                 | yes                          | when installed                       |
+| CodeQL, Trivy                                                 | -          | -                        | `codeql`, `image-scan`                | -                            | -                                    |
+| Workflow actions pinned to commit SHAs                        | -          | yes                      | the tooling tests                     | yes                          | `security:check`                     |
+| Open GitHub code-scanning, Dependabot, secret-scanning alerts | -          | -                        | -                                     | -                            | `security:check` (needs `gh`)        |
+
+`npm run security:check` prints one `PASS`, `FAIL`, `SKIPPED` or `INFO` line per check and exits 1 on a `FAIL`. A check
+that cannot run here (no gitleaks, no network, no `gh`) is `SKIPPED`, never `PASS`; `--strict` makes it fail. Flags:
+`--level=moderate`, `--history`, `--outdated`, `--offline`, `--only=<steps>`.
+
+gitleaks must be 8.25.1 or newer locally: an older binary ignores the `[[allowlists]]` blocks of `.gitleaks.toml` and
+reports test fixtures as secrets (CI pins 8.30.1). The working-tree scan covers only the files git tracks or would add,
+because `gitleaks dir .` over the directory walks node_modules and caches (over four minutes, 8,489 false findings).
+The whole-history scans read `tools/security/.gitleaksignore`: reviewed historical findings (the retired admin
+password, public identifiers), one commit-specific fingerprint each.
 
 ## Coverage in CI
 
@@ -94,16 +120,18 @@ measured coverage that only rises. Policy and the dated path to 92 %:
 
 ## Fixing a red job
 
-| Red job                   | Usual cause → fix                                                                                                                                                          |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `static` (lint)           | A new warning above the baseline in a file you changed: fix it (lint-staged would have caught it locally)                                                                  |
-| `test` / `coverage-merge` | Coverage under the floor: add tests; never lower the floor or the threshold                                                                                                |
-| `changed-lines-coverage`  | The listed changed lines are not executed by any test: cover them                                                                                                          |
-| `policy`, `ai-native-os`  | Visible advisory only; these findings do not block release                                                                                                                 |
-| `secrets`                 | A leaked secret: rotate it first, then remove it; a false positive needs a reviewed `.gitleaks.toml` entry                                                                 |
-| `codeql`                  | Fix the finding; a reviewed false positive is dismissed in GitHub and listed in `tools/security/codeql-accepted.json`                                                      |
-| `knowledge-freshness`     | `npm run knowledge:build && npm run audit`, commit the result                                                                                                              |
-| `knowledge-integrity`     | The listed stale reference, hand-written count, copied section, missing `Docs:` trailer or contradiction — fix the doc ([rules/63](../../rules/63-docs-move-with-code.md)) |
+| Red job                   | Usual cause → fix                                                                                                                                                                |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `static` (lint)           | A new warning above the baseline in a file you changed: fix it (lint-staged would have caught it locally)                                                                        |
+| `test` / `coverage-merge` | Coverage under the floor: add tests; never lower the floor or the threshold                                                                                                      |
+| `changed-lines-coverage`  | The listed changed lines are not executed by any test: cover them                                                                                                                |
+| `policy`, `ai-native-os`  | Visible advisory only; these findings do not block release                                                                                                                       |
+| `secrets`                 | A leaked secret: rotate it first, then remove it; a false positive needs a reviewed `.gitleaks.toml` entry                                                                       |
+| `codeql`                  | Fix the finding; a reviewed false positive is dismissed in GitHub and listed in `tools/security/codeql-accepted.json`                                                            |
+| `osv-scan`                | A new advisory in the lockfile: `npm run security:fix` pins a patched production release; otherwise a reviewed exception with an expiry in `tools/security/audit-allowlist.json` |
+| `security-scan.yml`       | Weekly: a secret anywhere in history (rotate it first), or an advisory at moderate. A reviewed historical false positive is a fingerprint in `tools/security/.gitleaksignore`    |
+| `knowledge-freshness`     | `npm run knowledge:build && npm run audit`, commit the result                                                                                                                    |
+| `knowledge-integrity`     | The listed stale reference, hand-written count, copied section, missing `Docs:` trailer or contradiction — fix the doc ([rules/63](../../rules/63-docs-move-with-code.md))       |
 
 ## Adding a new workspace
 

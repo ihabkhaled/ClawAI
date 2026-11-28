@@ -13,7 +13,7 @@ const ADMIN_PASSWORD = requirePassword(process.env.ADMIN_PASSWORD);
 async function login(page: Page): Promise<void> {
   await page.goto('/login');
   await page.getByLabel(/email/i).fill(ADMIN_EMAIL);
-  await page.getByLabel(/password/i).fill(ADMIN_PASSWORD);
+  await page.locator('input[type="password"]').fill(ADMIN_PASSWORD);
   await page.getByRole('button', { name: /sign in|login/i }).click();
   // Successful login redirects away from /login.
   await page.waitForURL((url) => !url.pathname.endsWith('/login'), { timeout: 15_000 });

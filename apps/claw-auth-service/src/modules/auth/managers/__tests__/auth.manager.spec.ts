@@ -53,7 +53,6 @@ const mockRepository = (): Record<keyof AuthRepository, Mock> => ({
   revokeSessionFamily: vi.fn(),
   revokeSessionForUser: vi.fn(),
   deleteSession: vi.fn().mockResolvedValue(void 0),
-  deleteSessionsByUserId: vi.fn().mockResolvedValue(void 0),
   deleteExpiredSessions: vi.fn().mockResolvedValue(0),
 });
 
@@ -119,7 +118,6 @@ describe('AuthManager', () => {
     // Re-set defaults after clearAllMocks
     repository.createSession.mockResolvedValue({ id: 'session-1' });
     repository.deleteSession.mockResolvedValue(void 0);
-    repository.deleteSessionsByUserId.mockResolvedValue(void 0);
   });
 
   describe('register', () => {

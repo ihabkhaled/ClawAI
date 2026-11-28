@@ -25,4 +25,7 @@ export interface BannableUser {
   id: string;
   bannedAt?: Date | null;
   bannedUntil?: Date | null;
+  /** Read only to tell an automatic suspension from an administrator's ban (ADR-233); never sent to a client. */
+  banReason?: string | null;
+  bannedByUserId?: string | null;
 }

@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 
+import { BannedDeviceService } from '../../abuse-defense/services/banned-device.service';
 import { BotCheckAction } from '../enums/bot-check-action.enum';
 import { BotCheckOutcome } from '../enums/bot-check-outcome.enum';
 import { EmailDomainVerdict } from '../enums/email-domain-verdict.enum';
@@ -12,6 +13,7 @@ import type {
 } from '../types/device.types';
 import type { SecurityEventInput } from '../types/security-event.types';
 import {
+  bannedDeviceRefusal,
   botCheckRefusal,
   emailDomainRefusal,
   signupLimitedRefusal,
@@ -43,6 +45,7 @@ export class RegistrationScreeningService {
     private readonly velocity: SignupVelocityService,
     private readonly deviceTrust: DeviceTrustService,
     private readonly events: SecurityEventService,
+    private readonly bannedDevices: BannedDeviceService,
   ) {}
 
   async screen(
@@ -55,6 +58,14 @@ export class RegistrationScreeningService {
     if (bot.outcome !== BotCheckOutcome.PASSED) {
       const refusal = botCheckRefusal(bot.outcome);
       this.refuse(SecurityEventAction.SIGNUP_REFUSED_BOT_CHECK, event, refusal.code, bot.reason);
+      throw refusal;
+    }
+    // A device of a permanently banned account cannot open a NEW account (ADR-233). After the bot
+    // check, so a script cannot probe devices cheaply; before everything that costs DNS or a counter.
+    // The answer depends on the device alone, never on the address, so it is no enumeration oracle.
+    if (await this.bannedDevices.isMarked(device)) {
+      const refusal = bannedDeviceRefusal();
+      this.refuse(SecurityEventAction.SIGNUP_REFUSED_BANNED_DEVICE, event, refusal.code);
       throw refusal;
     }
     const domain = await this.emailPolicy.evaluate(input.email);

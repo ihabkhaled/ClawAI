@@ -14,6 +14,10 @@ working in Claude Code, plus a compact index
 > [`QA-WORKFLOW.md`](QA-WORKFLOW.md) and
 > [rules/60](rules/60-qa-evidence-is-mandatory-and-machine-checked.md) first.
 
+> **The security pass runs on every change, with no command ([rule 69](rules/69-security-pass-on-every-change.md)).**
+> `npm run security:check`, the change's threats tested through the real entry point, and no scanner or GitHub alert
+> left red; SKIPPED is never PASS. Runbook: [`skills/secure-every-change.md`](skills/secure-every-change.md).
+
 > **Akinator runs on every change, with no command ([rule 65](rules/65-akinator-runs-on-every-change.md)).** The plugin is optional: the in-repo
 > [`skills/akinator/SKILL.md`](skills/akinator/SKILL.md) is the source. A new flagship or big feature ships its public marketing page in the
 > same change ([rule 66](rules/66-every-flagship-feature-ships-a-public-marketing-page.md)).
@@ -82,7 +86,8 @@ for the workspace you touch.
   [CI pipeline](docs/08-runtime-devops/ci-cd-pipeline.md)
 - **Always-on passes:** [rules/65 Akinator](rules/65-akinator-runs-on-every-change.md) · [skills/akinator](skills/akinator/SKILL.md) ·
   [where it triggers](context/akinator-always-on.md) · [rules/66 marketing page](rules/66-every-flagship-feature-ships-a-public-marketing-page.md) ·
-  [skill](skills/ship-a-feature-marketing-page.md)
+  [skill](skills/ship-a-feature-marketing-page.md) ·
+  [rules/69 security pass](rules/69-security-pass-on-every-change.md) · [skill](skills/secure-every-change.md)
 - **Docs and knowledge:** [rules/63](rules/63-docs-move-with-code.md) ·
   [rules/33](rules/33-knowledge-compounding-and-context-velocity.md) ·
   [rules/24](rules/24-generated-files-and-knowledge-freshness.md) ·
@@ -111,7 +116,8 @@ for the workspace you touch.
 - **Errors, logging, i18n, security:** [rules/18](rules/18-error-handling-and-reliability.md) ·
   [rules/19](rules/19-logging-observability-and-redaction.md) ·
   [rules/20](rules/20-i18n-and-user-facing-messages.md) ·
-  [rules/08](rules/08-security-rules.md) · [rules/21](rules/21-security-and-secrets.md)
+  [rules/08](rules/08-security-rules.md) · [rules/21](rules/21-security-and-secrets.md) ·
+  [rules/69](rules/69-security-pass-on-every-change.md)
 - **Money:** [rules/28](rules/28-billing-integrity-and-api-contracts.md) ·
   [billing threat model](docs/03-architecture/billing-threat-model.md) ·
   [plan numbers](docs/business/README.md) ·

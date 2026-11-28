@@ -1037,6 +1037,11 @@
       },
       {
         "method": "GET",
+        "route": "/admin/users/:userId/abuse",
+        "source": "apps/claw-auth-service/src/modules/abuse-defense/controllers/admin-abuse.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/admin/users/:userId/linked-accounts",
         "source": "apps/claw-auth-service/src/modules/anti-abuse/controllers/admin-linked-accounts.controller.ts"
       },
@@ -1199,6 +1204,11 @@
         "method": "GET",
         "route": "/health",
         "source": "apps/claw-auth-service/src/modules/health/controllers/health.controller.ts"
+      },
+      {
+        "method": "POST",
+        "route": "/internal/abuse/signals",
+        "source": "apps/claw-auth-service/src/modules/abuse-defense/controllers/abuse-signals-internal.controller.ts"
       },
       {
         "method": "GET",
@@ -4087,6 +4097,11 @@
       },
       {
         "method": "GET",
+        "route": "/routing/model-sizes",
+        "source": "apps/claw-routing-service/src/modules/router-models/controllers/model-size.controller.ts"
+      },
+      {
+        "method": "GET",
         "route": "/routing/models",
         "source": "apps/claw-routing-service/src/modules/router-models/controllers/router-models.controller.ts"
       },
@@ -5121,5 +5136,5 @@
     ]
   },
   "generated": true,
-  "total": 1015
+  "total": 1018
 }

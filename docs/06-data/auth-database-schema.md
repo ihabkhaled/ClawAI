@@ -178,7 +178,7 @@ status: ACTIVE
 ## Security Notes
 
 - Passwords hashed with Argon2 (not bcrypt)
-- Refresh tokens stored as unique strings (rotation on each refresh)
+- Refresh tokens are stored only as an HMAC-SHA256 digest (`sessions.refresh_token_hash`), never the token, and rotate on each refresh; a replay after the 30 s grace revokes the whole family (ADR-106)
 - Expired sessions should be cleaned up periodically
 - Password hash is never exposed in API responses (SafeUser type omits it)
 
@@ -219,3 +219,32 @@ One row per admin session action: `actor_user_id`, `action` (SESSION_TERMINATE_O
 SESSION_CLEAR_ONE_LOG, SESSION_CLEAR_USER_LOGS, SESSION_GLOBAL_TERMINATE_ALL, SESSION_GLOBAL_CLEAR_LOGS,
 SESSION_GLOBAL_PASSWORD_FAILED), `target_user_id` (null for system-wide), `family_count`, `row_count`, `created_at`.
 Counts only: never a token, hash, password or address.
+
+### abuse_signals (ADR-233)
+
+Evidence about an AUTHENTICATED account, one row per (account, code, minute): `user_id` (FK users, cascade), `code`
+(VarChar 40: RATE_LIMIT_TRIPPED, FORBIDDEN_PROBE, SSRF_REFUSED, TOKEN_REUSE, BANNED_DEVICE_SIGNIN), `source`
+(VarChar 40, the reporting path), `count` (the Redis window count when the bucket was stored; a snapshot, SET not
+added), `counted` (false = evidence only, can never suspend), `bucket_start`, `created_at`, `updated_at`. Unique
+`(user_id, code, bucket_start)`; indexes `(user_id, created_at)` and `(created_at)`. Written at most once a minute per
+(account, code), plus the exact crossing of a threshold. Holds no token, address, fingerprint or credential. No
+retention job yet.
+
+### abuse_suspensions (ADR-233)
+
+The audit trail of an automatic suspension: `user_id` (FK users, cascade), `level` (1 = 1 h, 2 = 24 h, 3 = 7 d by
+default), `reason_code` (the signal code that crossed), `evidence` (JSONB: counts per counted code, nothing else),
+`started_at`, `ends_at`, `lifted_at` and `lifted_by_user_id` (set when an administrator unbans early), `created_at`.
+Index `(user_id, started_at)`. The block itself is the ordinary ban on `users` (`banned_at`, `banned_until`,
+`ban_reason = 'AUTO_ABUSE:<code>'`, `banned_by_user_id = NULL`), written in the same transaction. A suspension counts
+towards the next rung only while it is un-lifted and inside `security.abuse.escalationWindowDays`.
+
+### banned_device_marks (ADR-233)
+
+The peppered device hashes of a permanently banned account: `hash_kind` (FINGERPRINT or DEVICE_ID), `hash_value`
+(VarChar 64, the same HMACs as `user_devices`), `source_user_id` (**no foreign key**: deleting the account must not free
+its device), `reason_code` (ADMIN_LIFETIME_BAN, BACKFILL_LIFETIME_BAN), `created_at`, `lifted_at`. Unique
+`(hash_kind, hash_value, source_user_id)`; indexes `(hash_value)` and `(source_user_id)`. A mark is active while
+`lifted_at` is null; unbanning the source account lifts its marks. Migration
+`20261128120000_abuse_auto_suspension_and_banned_devices` (additive, idempotent); the `abuse-defense` seeder v1 backfills
+accounts already banned for life.

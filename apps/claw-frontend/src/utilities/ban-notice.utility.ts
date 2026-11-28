@@ -28,9 +28,17 @@ export function takeBanNotice(): LoginBanInfo | null {
     if (parsed === null || typeof parsed !== 'object') {
       return null;
     }
-    const { permanent, until } = parsed as { permanent?: unknown; until?: unknown };
+    const { permanent, until, autoSuspended } = parsed as {
+      permanent?: unknown;
+      until?: unknown;
+      autoSuspended?: unknown;
+    };
     const untilText = typeof until === 'string' && !Number.isNaN(Date.parse(until)) ? until : null;
-    return { permanent: permanent === true || untilText === null, until: untilText };
+    return {
+      permanent: permanent === true || untilText === null,
+      until: untilText,
+      ...(autoSuspended === true ? { autoSuspended: true } : {}),
+    };
   } catch {
     return null;
   }
@@ -46,6 +54,7 @@ export function banNoticeFromResponse(data: unknown): LoginBanInfo | null {
     errorCode?: unknown;
     bannedUntil?: unknown;
     banPermanent?: unknown;
+    autoSuspended?: unknown;
   };
   if ((body.errorCode ?? body.code) !== 'ACCOUNT_BANNED') {
     return null;
@@ -54,5 +63,9 @@ export function banNoticeFromResponse(data: unknown): LoginBanInfo | null {
     typeof body.bannedUntil === 'string' && !Number.isNaN(Date.parse(body.bannedUntil))
       ? body.bannedUntil
       : null;
-  return { permanent: body.banPermanent === true || until === null, until };
+  return {
+    permanent: body.banPermanent === true || until === null,
+    until,
+    ...(body.autoSuspended === true ? { autoSuspended: true } : {}),
+  };
 }

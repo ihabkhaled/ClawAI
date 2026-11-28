@@ -8,16 +8,15 @@ import {
   HF_REQUEST_TIMEOUT_MS,
   HF_TRENDING_FILTER,
 } from '../constants/hf-discovery.constants';
+import { type HfAddRequestDto, type HfSearchQueryDto } from '../dto/hf-search.dto';
 import {
-  type HfAddRequestDto,
-  type HfSearchQueryDto,
-} from '../dto/hf-search.dto';
-import {
+  type HfApiGgufDetail,
   type HfApiModelDetail,
   type HfApiModelListItem,
   type HfApiTreeEntry,
   type HfOnboardingPayload,
 } from '../types/hf-api.types';
+import { parseGgufContextLength } from '../utilities/gguf-context-length.utility';
 import {
   type HfModelDetails,
   type HfModelGgufFile,
@@ -57,9 +56,7 @@ export class HfDiscoveryManager {
     }
     const url = `${config.HUGGINGFACE_API_BASE}/api/models?${params.toString()}`;
     const items = await this.fetchJson<HfApiModelListItem[]>(url);
-    return items
-      .filter((item) => this.isGgufCapable(item))
-      .map((item) => this.toSummary(item));
+    return items.filter((item) => this.isGgufCapable(item)).map((item) => this.toSummary(item));
   }
 
   async getDetails(repo: string): Promise<HfModelDetails> {
@@ -68,36 +65,49 @@ export class HfDiscoveryManager {
     const detailUrl = `${config.HUGGINGFACE_API_BASE}/api/models/${repo}`;
     const detail = await this.fetchJson<HfApiModelDetail>(detailUrl);
     const treeUrl = `${config.HUGGINGFACE_API_BASE}/api/models/${repo}/tree/main?recursive=true`;
-    const tree = await this.fetchJson<HfApiTreeEntry[]>(treeUrl).catch(() => [] as HfApiTreeEntry[]);
+    const tree = await this.fetchJson<HfApiTreeEntry[]>(treeUrl).catch(
+      () => [] as HfApiTreeEntry[],
+    );
+    // The GGUF metadata is a separate, optional call: `expand[]` narrows the response to the
+    // named fields, so it cannot ride on the detail request. Any failure leaves the window unknown.
+    const ggufUrl = `${config.HUGGINGFACE_API_BASE}/api/models/${repo}?expand[]=gguf`;
+    const gguf = await this.fetchJson<HfApiGgufDetail>(ggufUrl).catch(() => null);
     const ggufFiles = this.extractGgufFiles(tree);
     return {
       ...this.toSummary(detail),
       ggufFiles,
       recommendedFile: this.pickRecommendedFile(ggufFiles),
+      ggufContextLength: parseGgufContextLength(gguf),
     };
   }
 
-  buildOnboardingPayload(details: HfModelDetails, request: HfAddRequestDto): HfOnboardingPayload {
+  buildOnboardingPayload(
+    details: HfModelDetails,
+    addRequest: HfAddRequestDto,
+  ): HfOnboardingPayload {
     const match = details.ggufFiles.find((file) =>
-      file.name.toLowerCase().includes(request.quantization.toLowerCase()),
+      file.name.toLowerCase().includes(addRequest.quantization.toLowerCase()),
     );
     if (!match) {
       throw new BusinessException(
-        `No GGUF file matched quantization "${request.quantization}" in repo ${request.repo}`,
+        `No GGUF file matched quantization "${addRequest.quantization}" in repo ${addRequest.repo}`,
         'HF_QUANT_NOT_FOUND',
         HttpStatus.UNPROCESSABLE_ENTITY,
       );
     }
-    const repoSlug = request.repo.split('/').at(-1) ?? request.repo;
-    const name = repoSlug.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+    const repoSlug = addRequest.repo.split('/').at(-1) ?? addRequest.repo;
+    const name = repoSlug
+      .toLowerCase()
+      .replaceAll(/[^a-z0-9-]/g, '-')
+      .replaceAll(/-+/g, '-');
     return {
       name,
-      tag: request.quantization,
-      displayName: `${repoSlug} (${request.quantization})`,
-      huggingfaceRepo: request.repo,
-      filePattern: `*${request.quantization}*.gguf`,
+      tag: addRequest.quantization,
+      displayName: `${repoSlug} (${addRequest.quantization})`,
+      huggingfaceRepo: addRequest.repo,
+      filePattern: `*${addRequest.quantization}*.gguf`,
       fileSizeBytes: BigInt(match.sizeBytes),
-      sourceUrl: `${AppConfig.get().HUGGINGFACE_API_BASE}/${request.repo}`,
+      sourceUrl: `${AppConfig.get().HUGGINGFACE_API_BASE}/${addRequest.repo}`,
       description: `Imported from HuggingFace. ${this.formatTags(details.tags)}`.slice(0, 500),
     };
   }
@@ -134,7 +144,7 @@ export class HfDiscoveryManager {
 
   private extractQuantization(filename: string): string | null {
     const match = /(IQ\d[_A-Za-z0-9]*|Q\d[_A-Za-z0-9]*|BF16|F16|F32)/i.exec(filename);
-    return match && match[1] !== undefined ? match[1] : null;
+    return match?.[1] ?? null;
   }
 
   private pickRecommendedFile(files: HfModelGgufFile[]): HfModelGgufFile | null {

@@ -2,7 +2,7 @@
 # =============================================================================
 # ClawAI — give every data store its own fresh password (rules/68, incident 2026-11-27)
 # =============================================================================
-# Every Postgres (one per service), MongoDB, RabbitMQ, Redis and the Firecrawl Postgres gets a NEW, UNIQUE
+# Every Postgres (one per service), MongoDB, RabbitMQ, Redis and the Firecrawl Postgres, Redis and RabbitMQ get a NEW, UNIQUE
 # password. Installs made before per-database passwords shared ONE password across 14 databases, and Redis had
 # none; a single leaked connection string then opened every database.
 #
@@ -43,7 +43,7 @@ HEALTH_TIMEOUT_SECONDS=600
 
 # Must match PG_DB_KEYS in scripts/install.sh and the pg-* services of docker/docker-compose.*.databases.yml.
 PG_DB_KEYS="AUTH CHAT CONNECTOR ROUTING MEMORY FILES OLLAMA IMAGES FILE_GENERATIONS WORKSPACE AGENT RESEARCH PAYMENTS LLAMACPP THREAD_GENERATION THREADS PLUGIN LIVE"
-OTHER_KEYS="MONGO RABBITMQ REDIS FIRECRAWL"
+OTHER_KEYS="MONGO RABBITMQ REDIS FIRECRAWL FIRECRAWL_REDIS FIRECRAWL_RABBITMQ"
 
 log() { printf '%s\n' "$*"; }
 die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
@@ -89,6 +89,11 @@ USER_NAME[RABBITMQ]="$(env_value RABBITMQ_USER)"; USER_NAME[RABBITMQ]="${USER_NA
 PW_VAR[REDIS]=REDIS_PASSWORD; CONTAINER[REDIS]=claw-redis; HOST[REDIS]=redis; USER_NAME[REDIS]=""; KIND[REDIS]=redis
 PW_VAR[FIRECRAWL]=FIRECRAWL_POSTGRES_PASSWORD; CONTAINER[FIRECRAWL]=claw-firecrawl-postgres; HOST[FIRECRAWL]=firecrawl-postgres
 USER_NAME[FIRECRAWL]=firecrawl; KIND[FIRECRAWL]=postgres
+# The Firecrawl sidecar's own Redis and RabbitMQ (claw-scrapers network). Its RabbitMQ user is `firecrawl`, there is no guest.
+PW_VAR[FIRECRAWL_REDIS]=FIRECRAWL_REDIS_PASSWORD; CONTAINER[FIRECRAWL_REDIS]=claw-firecrawl-redis; HOST[FIRECRAWL_REDIS]=firecrawl-redis
+USER_NAME[FIRECRAWL_REDIS]=""; KIND[FIRECRAWL_REDIS]=redis
+PW_VAR[FIRECRAWL_RABBITMQ]=FIRECRAWL_RABBITMQ_PASSWORD; CONTAINER[FIRECRAWL_RABBITMQ]=claw-firecrawl-rabbitmq; HOST[FIRECRAWL_RABBITMQ]=firecrawl-rabbitmq
+USER_NAME[FIRECRAWL_RABBITMQ]=firecrawl; KIND[FIRECRAWL_RABBITMQ]=rabbitmq
 
 TARGETS=()
 for key in $PG_DB_KEYS $OTHER_KEYS; do

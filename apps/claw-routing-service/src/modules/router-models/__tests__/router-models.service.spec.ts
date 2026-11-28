@@ -50,6 +50,8 @@ describe('RouterModelsService', () => {
         maxContextTokens: null,
         contextWindowTokens: null,
         maxOutputTokensIntel: null,
+        parameterCountBillions: null,
+        activeParameterCountBillions: null,
         maxOutputTokens: null,
       } as never);
 
@@ -63,6 +65,8 @@ describe('RouterModelsService', () => {
         maxContextTokens: null,
         contextWindowTokens: 65_536,
         maxOutputTokensIntel: null,
+        parameterCountBillions: null,
+        activeParameterCountBillions: null,
         maxOutputTokens: null,
       } as never);
 

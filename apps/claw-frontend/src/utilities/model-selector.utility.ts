@@ -3,6 +3,7 @@ import { isPaygBadgedProvider } from '@/utilities/credit.utility';
 
 import type { JudgeModelOption } from '../types/chat.types';
 import type { GroupedModels, ModelPickerGroup } from '../types/component.types';
+import type { ModelScaleText } from '../types/model-scale.types';
 import type { LocalModel } from '../types/routing.types';
 
 const LOCAL_MODEL_CATEGORY_SPEC_LABELS: Record<string, string> = {
@@ -44,6 +45,7 @@ export function groupedModelsToPickerGroups(
       lockedLabel: model.isLocked === true ? lockedLabel : undefined,
       costClass: model.costClass,
       outsideAllowance: model.outsideAllowance,
+      scale: model.scale,
       specifications: buildModelSpecifications(
         model.provider,
         model.specifications,
@@ -82,8 +84,14 @@ export function judgeModelOptionsToPickerGroups(
   lockedLabel?: string,
 ): ModelPickerGroup[] {
   const concreteOptions = options.filter(
-    (option): option is { value: string; label: string; isLocked?: boolean } =>
-      option.value !== null,
+    (
+      option,
+    ): option is {
+      value: string;
+      label: string;
+      isLocked?: boolean;
+      scale?: ModelScaleText;
+    } => option.value !== null,
   );
   if (concreteOptions.length === 0) {
     return [];

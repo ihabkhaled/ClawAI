@@ -25,6 +25,9 @@ export const createRouterModelSchema = z.object({
   modalitiesOut: z.array(z.nativeEnum(ModalityKind)).max(20).default([]),
   contextWindowTokens: z.number().int().min(0).max(100_000_000).optional(),
   maxOutputTokens: z.number().int().min(0).max(10_000_000).optional(),
+  // Billions of parameters (0.5 = 500M, 1000 = 1T); null clears it (ADR-234).
+  parameterCountBillions: z.number().positive().max(100_000).nullable().optional(),
+  activeParameterCountBillions: z.number().positive().max(100_000).nullable().optional(),
   domainTags: z.array(z.nativeEnum(DomainTag)).max(50).default([]),
   notRecommendedFor: z.array(z.nativeEnum(DomainTag)).max(50).default([]),
   inputCostPer1M: z.number().min(0).max(1_000_000).optional(),

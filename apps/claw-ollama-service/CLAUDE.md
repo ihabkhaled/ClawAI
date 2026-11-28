@@ -144,3 +144,15 @@ npm run seed:catalog     # Seed model catalog by hand
 
 The catalog also seeds itself at boot (`CatalogSeedService.onApplicationBootstrap`). The
 `seed:catalog` script calls `tsx`, which is not a repository dependency, so npx fetches it.
+
+## Routing snapshot sizes (ADR-234, 2026-11-28)
+
+`GET /internal/ollama/installed-snapshot` carries `parameterCount` (`LocalModel.parameters`, "7.6B") and
+`contextWindowTokens`. The window is read from Ollama itself: `OllamaContextWindowManager` calls `POST /api/show`
+(`OllamaRuntimeAdapter.showModel`) once per installed `OLLAMA` model and `parseOllamaContextLength` reads
+`model_info` (`<general.architecture>.context_length`, else the largest `*.context_length`). Bounded in
+`constants/ollama-show.constants.ts` (4 in flight, 5 s each, 100 lookups and 30 s per snapshot, cached a day, a failure an
+hour, a window read earlier survives a failed lookup because routing-service writes NULL over an omitted window).
+**Never invent a window**: no key, a timeout or a malformed body leaves it out. The parse mirrors connector-service's;
+do not import across services. A spec that builds `RoutingSnapshotManager` must mock
+`managers/adapters/runtime-adapter-factory` (importing it builds every runtime adapter and needs the full environment).

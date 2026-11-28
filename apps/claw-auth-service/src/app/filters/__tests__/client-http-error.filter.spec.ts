@@ -21,7 +21,7 @@ describe('GlobalExceptionFilter: errors thrown before Nest (TD-032)', () => {
   }
 
   beforeEach(() => {
-    filter = new GlobalExceptionFilter();
+    filter = new GlobalExceptionFilter({ record: vi.fn() });
     logError = vi.spyOn(filter['logger'], 'error').mockImplementation(() => {});
   });
 

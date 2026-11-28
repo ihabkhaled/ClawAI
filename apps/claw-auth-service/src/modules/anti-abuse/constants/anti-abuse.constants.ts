@@ -142,6 +142,8 @@ export const BOT_CHECK_FAILED_MESSAGE = 'The bot check did not pass';
 export const DISPOSABLE_EMAIL_MESSAGE = 'Disposable email addresses cannot be used';
 export const EMAIL_DOMAIN_UNDELIVERABLE_MESSAGE = 'This email domain cannot receive mail';
 export const SIGNUP_LIMITED_MESSAGE = 'Sign-ups are temporarily limited. Please try again later.';
+/** A new sign-up from a device of a permanently banned account (ADR-233). Says nothing about why. */
+export const SIGNUP_UNAVAILABLE_MESSAGE = 'Sign-up is not available from this device';
 export const EMAIL_FIELD = 'email';
 export const SECURITY_EVENT_SERVICE_NAME = 'auth-service';
 

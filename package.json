@@ -69,6 +69,7 @@
     "lint:frontend": "npm run lint --workspace=claw-frontend",
     "lint:ratchet": "node tools/lint/ratchet.mjs check",
     "security:audit": "node tools/security/npm-audit.mjs",
+    "security:check": "node tools/security/security-check.mjs",
     "security:fix": "node tools/security/audit-fix.mjs",
     "security:secrets": "node tools/gates/secret-scan.mjs",
     "migrate:all": "node tools/release/migrate-all.mjs",

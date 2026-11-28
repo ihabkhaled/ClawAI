@@ -5,6 +5,8 @@ import { hashPassword } from '@common/utilities';
 import { BanDurationUnit, UserRole } from '../../../common/enums';
 import { SuperAdminMutationScope } from '../../../common/enums/super-admin-mutation-scope.enum';
 import { BusinessException, EntityNotFoundException } from '../../../common/errors';
+import { AbuseSuspensionService } from '../../abuse-defense/services/abuse-suspension.service';
+import { BannedDeviceService } from '../../abuse-defense/services/banned-device.service';
 import { SessionRevocationCacheService } from '../../auth/services/session-revocation-cache.service';
 import {
   CANNOT_BAN_SELF_CODE,
@@ -40,6 +42,8 @@ export class UserAdminActionsService {
     private readonly usersService: UsersService,
     private readonly revocationCache: SessionRevocationCacheService,
     private readonly rabbitMQService: RabbitMQService,
+    private readonly bannedDevices: BannedDeviceService,
+    private readonly abuseSuspensions: AbuseSuspensionService,
   ) {}
 
   async ban(id: string, dto: BanUserDto, actorId: string): Promise<AdminUser> {
@@ -67,6 +71,11 @@ export class UserAdminActionsService {
       bannedByUserId: actorId,
     });
     await this.closeSessions(id, SessionTerminationReason.ACCOUNT_BANNED);
+    // A lifetime ban also marks the account's devices, so a NEW sign-up from them is refused (ADR-233).
+    // A timed ban is a cooling-off, not a verdict on the machine, so it marks nothing.
+    if (dto.unit === BanDurationUnit.LIFETIME) {
+      await this.bannedDevices.markForLifetimeBan(id);
+    }
     this.logger.log(
       `ban: user ${id} by actor ${actorId} ${dto.unit === BanDurationUnit.LIFETIME ? 'lifetime' : `until ${bannedUntil?.toISOString() ?? 'n/a'}`}`,
     );
@@ -90,6 +99,10 @@ export class UserAdminActionsService {
       );
     }
     const updated = await this.usersRepository.clearBan(id);
+    // The one lift control (ADR-233): an automatic suspension is marked lifted, and the account's
+    // banned-device marks stop refusing sign-ups. Both are best-effort; the unban already happened.
+    await this.abuseSuspensions.liftForUser(id, actorId);
+    await this.bannedDevices.liftForUser(id);
     this.logger.log(`unban: user ${id} by actor ${actorId}`);
     await this.publishUpdated(id, actorId);
     return toAdminUser(updated);

@@ -12,6 +12,7 @@ import { type CreateRouterModelDto } from '../dto/create-router-model.dto';
 import { type UpdateRouterModelDto } from '../dto/update-router-model.dto';
 import { type ListRouterModelsQueryDto } from '../dto/list-router-models-query.dto';
 import { type ModelContextWindowSnapshot } from '../types/model-context-window.types';
+import { type ModelSizeCatalog } from '../types/model-size.types';
 
 @Injectable()
 export class RouterModelsService {
@@ -53,6 +54,31 @@ export class RouterModelsService {
       contextWindowTokens: record.maxContextTokens ?? record.contextWindowTokens ?? known,
       maxOutputTokens: record.maxOutputTokensIntel ?? record.maxOutputTokens ?? null,
       known: true,
+    };
+  }
+
+  /**
+   * Context window and parameter count of every live model, for the pickers.
+   *
+   * The window follows the same precedence as `getContextWindowSnapshot`: the
+   * enrichment value, then the sync value, then the published family window, so a
+   * picker and the prompt budget can never show two different sizes for one
+   * model. A parameter count is the column as stored: a closed model is null.
+   */
+  async listModelSizes(): Promise<ModelSizeCatalog> {
+    const rows = await this.registryRepo.listSizeRows();
+    return {
+      data: rows.map((row) => ({
+        provider: row.provider,
+        modelKey: row.modelKey,
+        contextWindowTokens:
+          row.maxContextTokens ??
+          row.contextWindowTokens ??
+          knownContextWindow(row.provider, row.modelKey) ??
+          null,
+        parameterCountBillions: row.parameterCountBillions?.toNumber() ?? null,
+        activeParameterCountBillions: row.activeParameterCountBillions?.toNumber() ?? null,
+      })),
     };
   }
 

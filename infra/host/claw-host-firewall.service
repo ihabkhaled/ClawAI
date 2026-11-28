@@ -1,0 +1,12 @@
+[Unit]
+Description=Host INPUT firewall on the public interface (22, 80, 443 only)
+After=network-pre.target
+Before=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/claw-host-firewall.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

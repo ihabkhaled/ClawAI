@@ -228,6 +228,10 @@ That forced a second change. Each item's cmdk value is now the option's own
 can ship the same display name. The label moved to `keywords`, which cmdk
 searches alongside the value, so typing a model name still finds it.
 
+**Each row says how big the model is** (ADR-234). `ModelPickerOption.scale` renders "1M context · 750B params" beside the
+name as a muted span (under the name below `sm`, beside it from `sm` up where it clips first: `truncate-fixed min-w-0
+sm:flex-1`, `dir="auto"`, full text in `title`); a model with neither number shows nothing. The text is built in the data hook (`useAvailableModels`), not in the row.
+
 **The trigger always says something.** Compact mode used to render a 36px square
 whose only label was `sr-only`; on a phone, where the header does not repeat it,
 nothing on screen said which model would answer. It now shows

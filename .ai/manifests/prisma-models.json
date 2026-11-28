@@ -26,6 +26,9 @@
       "TerminalCommand"
     ],
     "claw-auth-service": [
+      "AbuseSignal",
+      "AbuseSuspension",
+      "BannedDeviceMark",
       "CreditFreeAllowanceUsage",
       "CreditLedgerEntry",
       "CreditPackage",

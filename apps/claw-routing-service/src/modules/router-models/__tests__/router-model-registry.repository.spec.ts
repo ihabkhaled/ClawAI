@@ -88,6 +88,47 @@ describe('RouterModelRegistryRepository', () => {
     });
   });
 
+  describe('parameter counts (ADR-234)', () => {
+    it('maps the Decimal count columns to numbers', async () => {
+      prisma.routerModelRegistry.findUnique!.mockResolvedValue({
+        ...baseFakeRow,
+        parameterCountBillions: { toNumber: () => 117 },
+        activeParameterCountBillions: { toNumber: () => 5.1 },
+      });
+      const result = await repo.findById('r1');
+      expect(result?.parameterCountBillions).toBe(117);
+      expect(result?.activeParameterCountBillions).toBe(5.1);
+    });
+
+    it('maps an unset count to null', async () => {
+      prisma.routerModelRegistry.findUnique!.mockResolvedValue({
+        ...baseFakeRow,
+        parameterCountBillions: null,
+        activeParameterCountBillions: null,
+      });
+      const result = await repo.findById('r1');
+      expect(result?.parameterCountBillions).toBeNull();
+      expect(result?.activeParameterCountBillions).toBeNull();
+    });
+
+    it('lists the size columns of every live row only', async () => {
+      prisma.routerModelRegistry.findMany!.mockResolvedValue([]);
+      await repo.listSizeRows();
+      expect(prisma.routerModelRegistry.findMany).toHaveBeenCalledWith({
+        where: { lifecycle: { not: ModelLifecycle.REMOVED } },
+        select: {
+          provider: true,
+          modelKey: true,
+          contextWindowTokens: true,
+          maxContextTokens: true,
+          parameterCountBillions: true,
+          activeParameterCountBillions: true,
+        },
+        orderBy: [{ provider: 'asc' }, { modelKey: 'asc' }],
+      });
+    });
+  });
+
   describe('findByProviderAndModelKey', () => {
     it('queries by composite unique', async () => {
       prisma.routerModelRegistry.findUnique!.mockResolvedValue(baseFakeRow);

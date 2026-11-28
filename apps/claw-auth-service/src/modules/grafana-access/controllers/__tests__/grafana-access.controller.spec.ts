@@ -7,6 +7,7 @@ import { vi } from 'vitest';
 
 import { AppConfig } from '../../../../app/config/app.config';
 import { GlobalExceptionFilter } from '../../../../app/filters/global-exception.filter';
+import { AbuseSignalService } from '../../../abuse-defense/services/abuse-signal.service';
 import { AuthGuard } from '../../../../app/guards/auth.guard';
 import { RolesGuard } from '../../../../app/guards/roles.guard';
 import { UserRole } from '../../../../common/enums';
@@ -88,6 +89,7 @@ beforeAll(async () => {
             ROLE_PERMISSIONS[slug] ?? [],
         },
       },
+      { provide: AbuseSignalService, useValue: { record: vi.fn() } },
       { provide: APP_FILTER, useClass: GlobalExceptionFilter },
       { provide: APP_GUARD, useClass: AuthGuard },
       { provide: APP_GUARD, useClass: RolesGuard },

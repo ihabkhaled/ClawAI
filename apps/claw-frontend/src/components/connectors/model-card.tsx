@@ -7,6 +7,7 @@ import { Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { LIFECYCLE_LABELS, providerDisplayName } from '@/constants';
+import { useModelScaleFormatter } from '@/hooks/chat/use-model-scale-formatter';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { ModelCardProps } from '@/types';
@@ -14,6 +15,7 @@ import { formatContextTokens, getLifecycleBadgeVariant } from '@/utilities';
 
 export function ModelCard({ model, selected, onToggleSelect }: ModelCardProps): React.ReactElement {
   const { t } = useTranslation();
+  const { parameterLabel, parametersHeading } = useModelScaleFormatter();
   const isSelectable = onToggleSelect !== undefined;
   const isSelected = selected === true;
 
@@ -94,6 +96,12 @@ export function ModelCard({ model, selected, onToggleSelect }: ModelCardProps): 
         <span>{t('models.context')}</span>
         <span className="text-foreground font-medium">
           {formatContextTokens(model.maxContextTokens)}
+        </span>
+      </div>
+      <div className="text-muted-foreground flex items-center justify-between text-xs">
+        <span>{parametersHeading}</span>
+        <span className="text-foreground font-medium">
+          {parameterLabel(model.provider, model.modelKey) ?? '-'}
         </span>
       </div>
     </>

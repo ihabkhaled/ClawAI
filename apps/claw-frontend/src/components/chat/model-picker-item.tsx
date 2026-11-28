@@ -51,7 +51,25 @@ export function ModelPickerItem({
       )}
     >
       <Check className={cn('h-3.5 w-3.5 shrink-0', isSelected ? 'opacity-100' : 'opacity-0')} />
-      <span className="truncate-fixed min-w-[4rem] flex-1">{option.label}</span>
+      {/* ADR-234. On a phone the size sits UNDER the name, where a 44px row has the room, so the
+          name and the whole size are both readable. From `sm` up they share one line: the name keeps
+          its natural width and the size (flex-1, basis 0) takes what is left and clips with an
+          ellipsis (the tooltip has the rest), so "GPT Oss 120b" never loses its "120b" for it. */}
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-2">
+        <span className={cn('truncate-fixed', option.scale !== undefined && 'sm:min-w-[4rem]')}>
+          {option.label}
+        </span>
+        {option.scale !== undefined ? (
+          <span
+            title={option.scale.title}
+            data-testid="model-scale"
+            dir="auto"
+            className="text-muted-foreground truncate-fixed touch:text-xs min-w-0 text-[11px] leading-none sm:flex-1 sm:text-end"
+          >
+            {option.scale.label}
+          </span>
+        ) : null}
+      </span>
       {isLocked ? (
         <span className="border-border bg-muted text-muted-foreground shrink-0 rounded border px-1.5 py-0.5 text-[10px] leading-none whitespace-nowrap">
           {option.lockedLabel}

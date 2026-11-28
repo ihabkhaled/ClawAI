@@ -53,3 +53,36 @@ describe('ban notice (ADR-200)', () => {
     expect(banNoticeFromResponse('x')).toBeNull();
   });
 });
+
+describe('ban notice for an automatic suspension (ADR-233)', () => {
+  beforeEach(() => {
+    sessionStorage.clear();
+  });
+
+  it('keeps autoSuspended across the redirect to the sign-in page', () => {
+    storeBanNotice({ permanent: false, until: '2026-11-28T11:00:00.000Z', autoSuspended: true });
+    expect(takeBanNotice()).toEqual({
+      permanent: false,
+      until: '2026-11-28T11:00:00.000Z',
+      autoSuspended: true,
+    });
+  });
+
+  it('reads it off an ACCOUNT_BANNED refresh reply, and only when it is exactly true', () => {
+    const body = {
+      code: 'ACCOUNT_BANNED',
+      bannedUntil: '2026-11-28T11:00:00.000Z',
+      banPermanent: false,
+    };
+    expect(banNoticeFromResponse({ ...body, autoSuspended: true })).toEqual({
+      permanent: false,
+      until: '2026-11-28T11:00:00.000Z',
+      autoSuspended: true,
+    });
+    expect(banNoticeFromResponse({ ...body, autoSuspended: 'yes' })).toEqual({
+      permanent: false,
+      until: '2026-11-28T11:00:00.000Z',
+    });
+    expect(banNoticeFromResponse(body)).not.toHaveProperty('autoSuspended');
+  });
+});

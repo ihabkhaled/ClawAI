@@ -1,4 +1,4 @@
-import { vi, type Mocked } from 'vitest';
+import { type Mocked, vi } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { EntityNotFoundException } from '../../../common/errors';
 import { RouterModelRegistryRepository } from '../repositories/router-model-registry.repository';
@@ -54,6 +54,8 @@ function fakeRow(overrides: Record<string, unknown> = {}): Record<string, unknow
     supportsLongContext: null,
     maxContextTokens: null,
     maxOutputTokensIntel: null,
+    parameterCountBillions: null,
+    activeParameterCountBillions: null,
     domainStrengths: [],
     roleStrengths: [],
     weakDomains: [],

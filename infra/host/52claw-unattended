@@ -1,0 +1,3 @@
+// ClawAI 2026-11-28: security updates daily; never reboot or restart Docker on its own.
+Unattended-Upgrade::Automatic-Reboot "false";
+Unattended-Upgrade::Package-Blacklist { "docker-ce"; "docker-ce-cli"; "containerd.io"; "docker-compose-plugin"; };

@@ -1,0 +1,16 @@
+# Repeat offenders (ADR-232). Install: /etc/fail2ban/jail.d/claw-recidive.local
+#
+# An address banned three times in a day, by any jail except claw-nginx-crawler-abuse and recidive itself
+# (filter claw-recidive), is banned for 7 days on EVERY port, both for forwarded traffic (DOCKER-USER, the
+# containers) and for the host itself (INPUT, sshd and anything else). It reads fail2ban's own log.
+[recidive]
+enabled  = true
+filter   = claw-recidive
+logpath  = /var/log/fail2ban.log
+backend  = auto
+maxretry = 3
+findtime = 1d
+bantime  = 7d
+bantime.increment = false
+action   = iptables-allports[name=claw-recidive-docker, chain=DOCKER-USER, protocol=all]
+           iptables-allports[name=claw-recidive-input, chain=INPUT, protocol=all]

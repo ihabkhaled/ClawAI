@@ -213,3 +213,22 @@ When adding a service, add its port and name constants as part of the same chang
 key over silent `undefined`.
 
 **Related.** `CLAUDE.md` → shared-constants rule; [deployment-lessons](deployment-lessons.md).
+
+### A secret scan must read what git knows, with a gitleaks new enough for the config (2026-11-28)
+
+**What happened.** The first working-tree secret scan ran `gitleaks dir .`. It took over four minutes and reported
+8,489 findings, every one in a git-ignored place (build caches, nested worktrees, the coding-agent submodule's test
+profile). Scanning only the files git tracks or would add took 13 seconds. Separately, the locally installed gitleaks
+(8.24.3) silently ignored every `[[allowlists]]` block in `.gitleaks.toml` (added in 8.25.0) and reported 100 test
+fixtures as secrets, while CI's pinned 8.30.1 reported none. The whole-history scan needed a reviewed list of 69
+historical findings (the retired admin password in 43 commits, a public client id), because history cannot be rewritten.
+
+**The durable lesson.** A scan is only as good as what it is pointed at and the version that reads its config. A noisy
+scan gets ignored, and an old binary fails silently, so a green or red result means nothing until both are pinned.
+
+**How to apply.** Scan `git ls-files -co --exclude-standard`, never the directory. Check the scanner's version against
+the config's needs before trusting a result, and say SKIPPED when it is too old. Record reviewed historical findings as
+commit-specific fingerprints (`tools/security/.gitleaksignore`), never as a wider allowlist.
+
+**Related.** [rules/69](../rules/69-security-pass-on-every-change.md),
+[skills/secure-every-change](../skills/secure-every-change.md), `tools/security/scan-lib.mjs`.

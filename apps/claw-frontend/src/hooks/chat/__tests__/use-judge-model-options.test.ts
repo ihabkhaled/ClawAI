@@ -9,6 +9,29 @@ vi.mock('@/hooks/chat/use-available-connector-models', () => ({
   useAvailableConnectorModels: () => ({ models: cloudModels.value, isLoading: false }),
 }));
 
+const sizeEntries = { value: [] as Array<Record<string, unknown>> };
+
+vi.mock('@/lib/i18n', () => ({
+  useTranslation: () => ({
+    locale: 'en',
+    t: (key: string, params?: Record<string, string>) =>
+      `${key.endsWith('parameters') ? '{value} params' : '{value} context'}`.replace(
+        '{value}',
+        params?.['value'] ?? '',
+      ),
+  }),
+}));
+
+vi.mock('@/hooks/chat/use-model-sizes', () => ({
+  useModelSizes: () => ({
+    isLoading: false,
+    lookup: (provider: string, ...keys: string[]) =>
+      sizeEntries.value.find(
+        (entry) => entry['provider'] === provider && keys.includes(String(entry['modelKey'])),
+      ),
+  }),
+}));
+
 vi.mock('@/hooks/chat/use-model-plan-access', () => ({
   useModelPlanAccess: () => ({
     isLocked: (_provider: string, model: string) => model === 'grok-4.7',
@@ -51,6 +74,44 @@ describe('useJudgeModelOptions', () => {
       label: 'ANTHROPIC · Claude Opus 5',
     });
   });
+  // ADR-234: the dropdown shows how big each judge is, from the connector's own window
+  // and the registry's parameter count; a closed model shows the window alone.
+  it('writes the size beside a judge, leaving out what is unknown', () => {
+    cloudModels.value = [
+      {
+        provider: 'OPENROUTER',
+        modelKey: 'openai/gpt-oss-120b',
+        displayName: 'gpt-oss-120b',
+        maxContextTokens: 131_072,
+      },
+      {
+        provider: 'OPENAI',
+        modelKey: 'gpt-5.4',
+        displayName: 'GPT 5.4',
+        maxContextTokens: 400_000,
+      },
+      { provider: 'OPENAI', modelKey: 'gpt-4o', displayName: 'GPT 4o', maxContextTokens: null },
+    ];
+    sizeEntries.value = [
+      {
+        provider: 'OPENROUTER',
+        modelKey: 'openai/gpt-oss-120b',
+        contextWindowTokens: null,
+        parameterCountBillions: 117,
+        activeParameterCountBillions: null,
+      },
+    ];
+
+    const { result } = renderHook(() => useJudgeModelOptions());
+    const labelOf = (value: string): string | undefined =>
+      result.current.options.find((option) => option.value === value)?.scale?.label;
+
+    expect(labelOf('OPENROUTER:openai/gpt-oss-120b')).toBe('128K context · 117B params');
+    expect(labelOf('OPENAI:gpt-5.4')).toBe('400K context');
+    expect(labelOf('OPENAI:gpt-4o')).toBeUndefined();
+    sizeEntries.value = [];
+  });
+
   it('flags only the judge a plan does not include', () => {
     cloudModels.value = [
       { provider: 'GROK', modelKey: 'grok-4.7', displayName: 'Grok 4.7' },

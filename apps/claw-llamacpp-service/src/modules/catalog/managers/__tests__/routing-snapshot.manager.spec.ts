@@ -1,5 +1,6 @@
 import { vi } from 'vitest';
 import { DownloadStatus, LoadStatus, ModelCategory, QualityTier } from '../../../../common/enums';
+import { HF_IMPORT_PLACEHOLDER_CONTEXT_LENGTH } from '../../constants/hf-discovery.constants';
 import { type CatalogRepository } from '../../repositories/catalog.repository';
 import { type CatalogEntry } from '../../types/catalog.types';
 import { RoutingSnapshotManager } from '../routing-snapshot.manager';
@@ -74,5 +75,36 @@ describe('RoutingSnapshotManager (llamacpp)', () => {
   it('propagates contextLength', async () => {
     const result = await buildManager([makeEntry({ contextLength: 256_000 })]).build();
     expect(result.models[0]!.contextWindowTokens).toBe(256_000);
+  });
+
+  // ADR-234: the picker writes the context beside every model, so the snapshot must never carry
+  // a number that is not the model's window.
+  describe('context window honesty', () => {
+    it('forwards the window an import read from the GGUF file', async () => {
+      const result = await buildManager([
+        makeEntry({ license: 'Unknown', contextLength: 131_072 }),
+      ]).build();
+      expect(result.models[0]!.contextWindowTokens).toBe(131_072);
+    });
+
+    it('omits the placeholder of an import whose repo reported no window', async () => {
+      const result = await buildManager([
+        makeEntry({ license: 'Unknown', contextLength: HF_IMPORT_PLACEHOLDER_CONTEXT_LENGTH }),
+      ]).build();
+      expect(result.models[0]!.contextWindowTokens).toBeUndefined();
+    });
+
+    it('omits a window that is not a positive whole number', async () => {
+      const result = await buildManager([makeEntry({ contextLength: 0 })]).build();
+      expect(result.models[0]!.contextWindowTokens).toBeUndefined();
+    });
+  });
+
+  // routing-service parses this string into the registry's parameter count (ADR-234).
+  it('forwards the catalog size string, including a mixture-of-experts one', async () => {
+    const dense = await buildManager([makeEntry({ parameterCount: '8B' })]).build();
+    expect(dense.models[0]!.parameterCount).toBe('8B');
+    const moe = await buildManager([makeEntry({ parameterCount: '671B (37B active)' })]).build();
+    expect(moe.models[0]!.parameterCount).toBe('671B (37B active)');
   });
 });

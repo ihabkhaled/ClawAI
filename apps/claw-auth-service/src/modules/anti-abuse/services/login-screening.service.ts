@@ -4,11 +4,15 @@ import {
   LOGIN_BOT_CHECK_FAILURE_THRESHOLD,
   LOGIN_FAILURE_WINDOW_SECONDS,
 } from '../constants/anti-abuse.constants';
+import { SOURCE_AUTH_SIGNIN } from '../../abuse-defense/constants/abuse-defense.constants';
+import { AbuseSignalCode } from '../../abuse-defense/enums/abuse-signal-code.enum';
+import { AbuseSignalService } from '../../abuse-defense/services/abuse-signal.service';
+import { BannedDeviceService } from '../../abuse-defense/services/banned-device.service';
 import { BotCheckAction } from '../enums/bot-check-action.enum';
 import { BotCheckOutcome } from '../enums/bot-check-outcome.enum';
 import { SecurityEventAction } from '../enums/security-event-action.enum';
 import { AntiAbuseCounterRepository } from '../repositories/anti-abuse-counter.repository';
-import type { LoginScreeningInput, ScreeningOrigin } from '../types/device.types';
+import type { HashedDevice, LoginScreeningInput, ScreeningOrigin } from '../types/device.types';
 import { loginFailureEmailKey, loginFailureIpKey } from '../utilities/anti-abuse-key.utility';
 import { botCheckRefusal } from '../utilities/anti-abuse-refusal.utility';
 import { BotCheckService } from './bot-check.service';
@@ -35,6 +39,8 @@ export class LoginScreeningService {
     private readonly counters: AntiAbuseCounterRepository,
     private readonly deviceTrust: DeviceTrustService,
     private readonly events: SecurityEventService,
+    private readonly bannedDevices: BannedDeviceService,
+    private readonly abuse: AbuseSignalService,
   ) {}
 
   /** Throws BOT_CHECK_REQUIRED / BOT_CHECK_FAILED when checks are due and missing or wrong. */
@@ -84,6 +90,40 @@ export class LoginScreeningService {
     const device = this.deviceTrust.hash(input.device);
     if (device !== null) {
       await this.deviceTrust.record({ userId, device, origin, seenAt: new Date() });
+      await this.flagBannedDevice(userId, email, device, origin);
+    }
+  }
+
+  /**
+   * An EXISTING account signed in on a device a permanently banned account used. Shared family and
+   * office machines are normal, so this never blocks or suspends anyone: it leaves evidence for an
+   * administrator (a security event and an uncounted abuse signal). Never throws into a sign-in.
+   */
+  private async flagBannedDevice(
+    userId: string,
+    email: string,
+    device: HashedDevice,
+    origin: ScreeningOrigin,
+  ): Promise<void> {
+    try {
+      if (!(await this.bannedDevices.isMarked(device, userId))) {
+        return;
+      }
+      this.events.record(SecurityEventAction.LOGIN_ON_BANNED_DEVICE, {
+        origin,
+        email,
+        fingerprintHash: device.fingerprintHash,
+        userId,
+      });
+      await this.abuse.record({
+        userId,
+        code: AbuseSignalCode.BANNED_DEVICE_SIGNIN,
+        source: SOURCE_AUTH_SIGNIN,
+      });
+    } catch (error: unknown) {
+      this.logger.warn(
+        `flagBannedDevice: not flagged: ${error instanceof Error ? error.message : 'unknown error'}`,
+      );
     }
   }
 

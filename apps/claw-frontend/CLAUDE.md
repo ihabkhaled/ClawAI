@@ -1343,3 +1343,30 @@ reload. No new UI string. Test: `use-thread-detail.test.tsx` "keeps waiting whil
 "Read all N parts"; `LONG_OUTPUT` (`part`) renders "The answer is long — writing part N". Keys `narration.longInput*`
 and `narration.longOutputPart` in all 13 locales; test `narration-long-input.utility.test.ts` checks every locale. The
 Threads topic box takes up to 1,000,000 characters (`THREAD_TOPIC_MAX_LENGTH`).
+
+## Model size beside every model name (ADR-234, 2026-11-28)
+
+Every model list writes "1M context · 750B params" beside the name. Rules for keeping it that way:
+
+- **One formatter, one place.** `utilities/model-scale.utility.ts` (`formatTokenCount`, `formatParameterCount`,
+  `resolveModelScale`, `buildModelScaleText`, `buildModelSizeLookup`). 128000 is "128K", 2048 "2K", 1048576 "1M",
+  7.6 "7.6B", 1000 "1T"; the decimal reading wins when clean, else the binary one. Digits and K/M/B/T are Latin in
+  every locale on purpose (an Arabic-Indic digit glued to a Latin letter reorders in a right-to-left row); only the
+  words are translated (`modelScale.*`, `locales/model-scale-translations.ts`, all 13).
+- **The size is data on the row, built in the hook.** `useAvailableModels` (the choke point of every chat-style
+  picker) sets `ModelSelection.scale = { label, title }` from the connector's window, `useModelSizes()`
+  (`GET /routing/model-sizes`, cached ten minutes, `retry: false`) and, for a local file, the runtime's own string.
+  `groupedModelsToPickerGroups` forwards it to `ModelPickerOption.scale`. A NEW picker built from
+  `useAvailableModels` or `useModelSelector` gets it free; a list built from another source (the judge and critic
+  hook, the Smart Router deployments) must call the same utility, as `useJudgeModelOptions` and
+  `useSmartRouterSelectableDeployments` do. Lists that are not pickers use `useModelScaleFormatter`.
+- **Unknown parts are omitted, never a dash or "?"**; both unknown renders nothing. A closed model shows the window
+  alone. `title` carries the active share of a mixture-of-experts model.
+- **The name wins, the size gives way.** In `ModelPickerItem` the size is under the name below `sm` (a 44px phone row has
+  room) and beside it from `sm` up (`sm:flex-1`, basis 0, `truncate-fixed min-w-0`), so "GPT Oss 120b" never loses its
+  "120b". Never give the size `shrink-0` and never `max-md:` (use `sm:` / `touch:`). `dir="auto"` keeps a right-to-left
+  label in order; `data-testid="model-scale"`; `model-picker-item-scale.test.tsx` asserts the classes.
+- **A provider the registry lacks** (HuggingFace, Groq, NVIDIA in development) borrows another provider's parameter count for
+  the same model key (never its window): `buildModelSizeLookup`.
+- **Not yet shown**: the public marketing model pages (`/supported-models`, provider pages; their data is server-side
+  from connector-service) and the plan model-access editor (its `exposedModels` list is never populated by the page).

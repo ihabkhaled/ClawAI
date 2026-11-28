@@ -3,6 +3,8 @@ import { InvalidRefreshTokenException } from '../../../../common/errors';
 import { UserRole, UserStatus } from '../../../../common/enums';
 import { SessionClientKind } from '../../enums/session-client-kind.enum';
 import { type AuthRepository } from '../../repositories/auth.repository';
+import { type AbuseSignalService } from '../../../abuse-defense/services/abuse-signal.service';
+import { AbuseSignalCode } from '../../../abuse-defense/enums/abuse-signal-code.enum';
 import { TokenSessionManager } from '../token-session.manager';
 import { type SessionRevocationCacheService } from '../../services/session-revocation-cache.service';
 import { type AccountBanGateService } from '../../services/account-ban-gate.service';
@@ -64,6 +66,7 @@ describe('TokenSessionManager', () => {
   let revocationCache: { revoke: ReturnType<typeof vi.fn> };
   let banGate: { assertNotBanned: Mock };
   let presence: { touch: Mock };
+  let abuseRecord: Mock;
 
   beforeEach(() => {
     repository = {
@@ -81,11 +84,13 @@ describe('TokenSessionManager', () => {
     revocationCache = { revoke: vi.fn().mockResolvedValue(undefined) };
     banGate = { assertNotBanned: vi.fn().mockResolvedValue(undefined) };
     presence = { touch: vi.fn().mockResolvedValue(true) };
+    abuseRecord = vi.fn().mockResolvedValue(undefined);
     manager = new TokenSessionManager(
       repository as unknown as AuthRepository,
       revocationCache as unknown as SessionRevocationCacheService,
       banGate as unknown as AccountBanGateService,
       presence as unknown as UserPresenceService,
+      { record: abuseRecord } as unknown as AbuseSignalService,
     );
   });
 
@@ -142,6 +147,47 @@ describe('TokenSessionManager', () => {
       sessionFixture.familyId,
       'TOKEN_REUSE',
     );
+  });
+
+  // ADR-233: a replayed token is evidence about a THEFT. It revokes the family and is flagged for an
+  // administrator as an UNCOUNTED signal; it is never reported as something that can suspend the owner.
+  it('flags a replay after the grace window as TOKEN_REUSE for the token owner, and still revokes the family', async () => {
+    repository.findSessionByRefreshTokenHash.mockResolvedValue({
+      ...sessionFixture,
+      usedAt: new Date(Date.now() - 31_000),
+    });
+
+    await expect(manager.rotate('raw-refresh-token')).rejects.toThrow(InvalidRefreshTokenException);
+    expect(repository.revokeSessionFamily).toHaveBeenCalledWith(
+      sessionFixture.familyId,
+      'TOKEN_REUSE',
+    );
+    expect(abuseRecord).toHaveBeenCalledTimes(1);
+    expect(abuseRecord).toHaveBeenCalledWith({
+      userId: sessionFixture.userId,
+      code: AbuseSignalCode.TOKEN_REUSE,
+      source: 'auth.refresh',
+    });
+  });
+
+  it('does not flag a replay inside the grace window (two tabs are not a theft)', async () => {
+    repository.findSessionByRefreshTokenHash.mockResolvedValue({
+      ...sessionFixture,
+      usedAt: new Date(Date.now() - 2_000),
+    });
+
+    await manager.rotate('raw-refresh-token');
+    expect(abuseRecord).not.toHaveBeenCalled();
+  });
+
+  it('does not flag an expired token that is merely presented late', async () => {
+    repository.findSessionByRefreshTokenHash.mockResolvedValue({
+      ...sessionFixture,
+      expiresAt: new Date('2020-01-01T00:00:00.000Z'),
+    });
+
+    await expect(manager.rotate('raw-refresh-token')).rejects.toThrow(InvalidRefreshTokenException);
+    expect(abuseRecord).not.toHaveBeenCalled();
   });
 
   it('revokes the token family when the refresh token is expired', async () => {

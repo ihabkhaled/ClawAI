@@ -186,9 +186,6 @@
     "apps/claw-auth-service/src/modules/auth/managers/email-change.manager.ts": {
       "unicorn/prefer-ternary": 1
     },
-    "apps/claw-auth-service/src/modules/auth/managers/password-reset.manager.ts": {
-      "security/detect-possible-timing-attacks": 1
-    },
     "apps/claw-auth-service/src/modules/auth/repositories/__tests__/device-authorization.repository.spec.ts": {
       "sort-imports": 1
     },
@@ -852,20 +849,6 @@
     "apps/claw-llamacpp-service/src/main.ts": {
       "security/detect-non-literal-fs-filename": 2
     },
-    "apps/claw-llamacpp-service/src/modules/catalog/managers/hf-auto-sync.manager.ts": {
-      "@typescript-eslint/prefer-optional-chain": 2,
-      "security/detect-unsafe-regex": 1,
-      "unicorn/prefer-ternary": 1
-    },
-    "apps/claw-llamacpp-service/src/modules/catalog/managers/hf-discovery.manager.ts": {
-      "@typescript-eslint/no-shadow": 1,
-      "@typescript-eslint/prefer-optional-chain": 1,
-      "unicorn/prefer-string-replace-all": 2,
-      "unicorn/prefer-ternary": 1
-    },
-    "apps/claw-llamacpp-service/src/modules/catalog/services/catalog.service.ts": {
-      "security/detect-unsafe-regex": 1
-    },
     "apps/claw-llamacpp-service/src/modules/hardware/managers/hardware-detector.manager.ts": {
       "unicorn/prefer-ternary": 1
     },
@@ -967,9 +950,6 @@
     },
     "apps/claw-ollama-service/src/modules/ollama/managers/adapters/comfyui-runtime.adapter.ts": {
       "security/detect-non-literal-fs-filename": 4
-    },
-    "apps/claw-ollama-service/src/modules/ollama/managers/adapters/ollama-runtime.adapter.ts": {
-      "unicorn/prefer-ternary": 1
     },
     "apps/claw-ollama-service/src/modules/ollama/ollama.service.ts": {
       "unicorn/prefer-ternary": 3
@@ -1413,17 +1393,11 @@
     "apps/claw-routing-service/src/modules/router-models/__tests__/model-deployment-schema.spec.ts": {
       "security/detect-non-literal-fs-filename": 3
     },
-    "apps/claw-routing-service/src/modules/router-models/__tests__/model-intelligence.service.spec.ts": {
-      "sort-imports": 1
-    },
     "apps/claw-routing-service/src/modules/router-models/__tests__/router-admin-override.repository.spec.ts": {
       "sort-imports": 1
     },
     "apps/claw-routing-service/src/modules/router-models/__tests__/router-model-registry.manager.spec.ts": {
       "sort-imports": 1
-    },
-    "apps/claw-routing-service/src/modules/router-models/managers/router-model-registry.manager.ts": {
-      "security/detect-object-injection": 1
     },
     "apps/claw-routing-service/src/modules/router-models/services/model-intelligence.service.ts": {
       "@typescript-eslint/prefer-optional-chain": 1,
@@ -1432,9 +1406,6 @@
     },
     "apps/claw-routing-service/src/modules/router-models/utilities/deployment-derivation.utility.ts": {
       "unicorn/prefer-ternary": 1
-    },
-    "apps/claw-routing-service/src/modules/router-models/utilities/dto-to-update-input.utility.ts": {
-      "security/detect-object-injection": 2
     },
     "apps/claw-routing-service/src/modules/router-models/utilities/model-intelligence-merge.utility.ts": {
       "security/detect-object-injection": 4
@@ -1535,12 +1506,6 @@
     },
     "apps/claw-routing-service/src/modules/scoring/utilities/policy-weights-resolver.utility.ts": {
       "security/detect-object-injection": 7
-    },
-    "apps/claw-routing-service/src/modules/sync/managers/router-sync.manager.ts": {
-      "security/detect-object-injection": 1
-    },
-    "apps/claw-routing-service/src/modules/sync/utilities/upsert-input-builder.utility.ts": {
-      "security/detect-object-injection": 4
     },
     "apps/claw-routing-service/src/modules/taxonomy/__tests__/taxonomy.service.spec.ts": {
       "sort-imports": 1

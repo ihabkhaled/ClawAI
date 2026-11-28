@@ -8,6 +8,7 @@ import {
   EMAIL_DOMAIN_UNDELIVERABLE_MESSAGE,
   EMAIL_FIELD,
   SIGNUP_LIMITED_MESSAGE,
+  SIGNUP_UNAVAILABLE_MESSAGE,
 } from '../constants/anti-abuse.constants';
 import { AntiAbuseErrorCode } from '../enums/anti-abuse-error-code.enum';
 import { BotCheckOutcome } from '../enums/bot-check-outcome.enum';
@@ -48,5 +49,14 @@ export function signupLimitedRefusal(retryAfterSeconds: number): BusinessExcepti
     AntiAbuseErrorCode.SIGNUP_TEMPORARILY_LIMITED,
     HttpStatus.TOO_MANY_REQUESTS,
     { retryAfterSeconds },
+  );
+}
+
+/** 403 SIGNUP_UNAVAILABLE: the same answer for every banned device, with no reason and no retry hint. */
+export function bannedDeviceRefusal(): BusinessException {
+  return new BusinessException(
+    SIGNUP_UNAVAILABLE_MESSAGE,
+    AntiAbuseErrorCode.SIGNUP_UNAVAILABLE,
+    HttpStatus.FORBIDDEN,
   );
 }

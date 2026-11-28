@@ -34,6 +34,7 @@ import {
   formatAdminTimestamp,
   formatCountryLabel,
   formatRegistrationIp,
+  isAutoSuspension,
   resolvePresenceState,
 } from '@/utilities/admin-user-management.utility';
 import { resolveRoleBadgeVariant, resolveUserInitial } from '@/utilities/admin-user.utility';
@@ -209,12 +210,15 @@ export function UserTable({
                 title={
                   user.banPermanent || user.bannedUntil === null
                     ? t('admin.detailBannedPermanent')
-                    : t('admin.detailBannedUntil', {
-                        date: formatAdminTimestamp(user.bannedUntil, locale),
-                      })
+                    : t(
+                        isAutoSuspension(user)
+                          ? 'admin.detailAutoSuspendedUntil'
+                          : 'admin.detailBannedUntil',
+                        { date: formatAdminTimestamp(user.bannedUntil, locale) },
+                      )
                 }
               >
-                {t('admin.bannedBadge')}
+                {t(isAutoSuspension(user) ? 'admin.autoSuspendedBadge' : 'admin.bannedBadge')}
               </Badge>
             ) : null}
           </div>

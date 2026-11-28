@@ -11,6 +11,7 @@ import { LIVE_TRANSLATIONS } from './live-translations';
 import { MARKETING_VIDEOS_TRANSLATIONS } from './marketing-videos-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
+import { MODEL_SCALE_TRANSLATIONS } from './model-scale-translations';
 import { MODEL_VISIBILITY_TRANSLATIONS } from './model-visibility-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
@@ -294,6 +295,9 @@ export const it: TranslationDictionary = {
     loginBannedPermanentDescription:
       'Un amministratore ha bannato questo account in modo permanente. Non puoi accedere.',
     loginBannedGeneric: 'Questo account è bannato.',
+    loginSuspendedAutoTitle: 'Questo account è sospeso temporaneamente',
+    loginSuspendedAutoDescription:
+      'Abbiamo messo in pausa questo account per attività insolita. Potrai accedere di nuovo dopo il {date}. Se pensi che sia un errore, contatta l’assistenza.',
     loginSuspendedTitle: 'Questo account è stato sospeso',
     loginSuspendedDescription:
       "La password è corretta, ma un amministratore ha disattivato questo account. Contatti l'assistenza se ritiene che si tratti di un errore.",
@@ -2485,6 +2489,8 @@ export const it: TranslationDictionary = {
     banAction: 'Banna',
     unbanAction: 'Rimuovi ban',
     bannedBadge: 'Bannato',
+    autoSuspendedBadge: 'Sospeso automaticamente',
+    detailAutoSuspendedUntil: 'Sospeso automaticamente fino al {date}',
     banDialogTitle: 'Banna {username}',
     banDialogDescription:
       'L’utente viene disconnesso subito ovunque e non può accedere fino alla fine del ban.',
@@ -5046,6 +5052,7 @@ export const it: TranslationDictionary = {
   researchPlatforms: RESEARCH_PLATFORMS_TRANSLATIONS.it,
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.it,
   pickedModel: PICKED_MODEL_TRANSLATIONS.it,
+  modelScale: MODEL_SCALE_TRANSLATIONS.it,
   creditFallback: CREDIT_FALLBACK_TRANSLATIONS.it,
   live: LIVE_TRANSLATIONS.it,
   mediaUi: MEDIA_UI_TRANSLATIONS.it,

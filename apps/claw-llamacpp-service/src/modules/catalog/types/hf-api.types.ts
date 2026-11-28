@@ -19,6 +19,14 @@ export interface HfApiModelDetail extends HfApiModelListItem {
   siblings?: HfApiSibling[];
 }
 
+// `GET /api/models/<repo>?expand[]=gguf`: the GGUF file's own metadata. Every field is a third
+// party's, so each is `unknown` until `parseGgufContextLength` checks it.
+export interface HfApiGgufDetail {
+  gguf?: {
+    context_length?: unknown;
+  };
+}
+
 export type HfApiTreeEntryType = 'file' | 'directory';
 
 export interface HfApiTreeEntry {

@@ -7,4 +7,6 @@ export const OLLAMA_API_GENERATE = '/api/generate';
 export const OLLAMA_API_CHAT = '/api/chat';
 export const OLLAMA_API_PULL = '/api/pull';
 export const OLLAMA_API_DELETE = '/api/delete';
+// Model metadata, including `model_info`'s `<arch>.context_length` (ADR-234).
+export const OLLAMA_API_SHOW = '/api/show';
 export const OLLAMA_API_VERSION = '/api/version';

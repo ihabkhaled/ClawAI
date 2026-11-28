@@ -12,6 +12,7 @@ import { updateUserSchema } from '../dto/update-user.dto';
 import { type AuthEmailAdapter } from '../../auth/adapters/auth-email.adapter';
 import { type RolesService } from '../../roles/services/roles.service';
 import { type PlansRepository } from '../../plans/repositories/plans.repository';
+import { type SessionRevocationCacheService } from '../../auth/services/session-revocation-cache.service';
 
 vi.mock('@common/utilities', () => ({
   hashPassword: vi.fn().mockResolvedValue('hashed-password'),
@@ -64,8 +65,7 @@ const mockRepository = (): Record<keyof UsersRepository, Mock> => ({
   deleteById: vi.fn(),
   countAll: vi.fn(),
   updatePreferences: vi.fn(),
-  revokeSessionsByUserId: vi.fn(),
-  revokeOtherSessionsByUserId: vi.fn(),
+  revokeOtherSessionsReturningIds: vi.fn(),
   revokeSessionsReturningIds: vi.fn(),
   clearBan: vi.fn(),
   touchLastSeen: vi.fn(),
@@ -102,6 +102,7 @@ describe('UsersService', () => {
     assignTrialPlanOnce: Mock;
   };
   let userDeletionOutbox: { deleteAccount: Mock };
+  let revokeCache: Mock;
 
   beforeEach(() => {
     repository = mockRepository();
@@ -114,6 +115,9 @@ describe('UsersService', () => {
       assignTrialPlanOnce: vi.fn(),
     };
     userDeletionOutbox = { deleteAccount: vi.fn() };
+    revokeCache = vi.fn().mockResolvedValue(undefined);
+    repository.revokeSessionsReturningIds.mockResolvedValue(['s1', 's2']);
+    repository.revokeOtherSessionsReturningIds.mockResolvedValue(['s-other']);
     service = new UsersService(
       repository as unknown as UsersRepository,
       rabbitMQ as unknown as RabbitMQService,
@@ -121,6 +125,7 @@ describe('UsersService', () => {
       rolesService as unknown as RolesService,
       plansRepository as unknown as PlansRepository,
       userDeletionOutbox,
+      { revoke: revokeCache } as unknown as SessionRevocationCacheService,
     );
   });
 
@@ -199,9 +204,15 @@ describe('UsersService', () => {
       expect(repository.updateById).toHaveBeenCalledWith('user-1', {
         username: 'renamed',
       });
-      expect(repository.revokeOtherSessionsByUserId).toHaveBeenCalledWith('user-1', 'session-1');
+      expect(repository.revokeOtherSessionsReturningIds).toHaveBeenCalledWith(
+        'user-1',
+        'session-1',
+        'ACCOUNT_CHANGED',
+      );
+      // The closed logins' ids are published so their access tokens die now (ADR-112).
+      expect(revokeCache).toHaveBeenCalledWith(['s-other']);
       // The tab doing the rename stays signed in; a rename is not a credential change.
-      expect(repository.revokeSessionsByUserId).not.toHaveBeenCalled();
+      expect(repository.revokeSessionsReturningIds).not.toHaveBeenCalled();
     });
     it('saves personal details without signing the user out everywhere', async () => {
       repository.findById.mockResolvedValue(mockUser);
@@ -230,7 +241,7 @@ describe('UsersService', () => {
         lastName: 'Lovelace',
         phone: '+14155550123',
       });
-      expect(repository.revokeOtherSessionsByUserId).not.toHaveBeenCalled();
+      expect(repository.revokeOtherSessionsReturningIds).not.toHaveBeenCalled();
     });
 
     it('keeps sessions when the submitted username is unchanged', async () => {
@@ -248,7 +259,7 @@ describe('UsersService', () => {
         'session-1',
       );
 
-      expect(repository.revokeOtherSessionsByUserId).not.toHaveBeenCalled();
+      expect(repository.revokeOtherSessionsReturningIds).not.toHaveBeenCalled();
     });
 
     it('rejects an incorrect current password without changing the profile', async () => {
@@ -297,7 +308,7 @@ describe('UsersService', () => {
         code: 'SUPER_ADMIN_IMMUTABLE',
       });
       expect(repository.updateById).not.toHaveBeenCalled();
-      expect(repository.revokeSessionsByUserId).not.toHaveBeenCalled();
+      expect(repository.revokeSessionsReturningIds).not.toHaveBeenCalled();
     });
 
     it('should deactivate user and publish event', async () => {
@@ -311,10 +322,12 @@ describe('UsersService', () => {
       expect(repository.updateById).toHaveBeenCalledWith('user-1', {
         status: UserStatus.SUSPENDED,
       });
-      expect(repository.revokeSessionsByUserId).toHaveBeenCalledWith(
+      expect(repository.revokeSessionsReturningIds).toHaveBeenCalledWith(
         'user-1',
         'ACCOUNT_DEACTIVATED',
       );
+      // Otherwise a deactivated account's access token keeps working for up to 15 minutes (ADR-112).
+      expect(revokeCache).toHaveBeenCalledWith(['s1', 's2']);
       expect(rabbitMQ.publish).toHaveBeenCalledWith(
         EventPattern.USER_DEACTIVATED,
         expect.objectContaining({
@@ -496,29 +509,30 @@ describe('UsersService', () => {
       await expect(service.issueTemporaryPassword(mockUser.id, 'actor-1')).rejects.toBe(emailError);
 
       expect(repository.updateById).not.toHaveBeenCalled();
-      expect(repository.revokeSessionsByUserId).not.toHaveBeenCalled();
+      expect(repository.revokeSessionsReturningIds).not.toHaveBeenCalled();
       expect(rabbitMQ.publish).not.toHaveBeenCalled();
     });
 
     it('sends email, updates the password, and revokes sessions in order', async () => {
       repository.findById.mockResolvedValue(mockUser);
       repository.updateById.mockResolvedValue(undefined);
-      repository.revokeSessionsByUserId.mockResolvedValue(undefined);
 
       await service.issueTemporaryPassword(mockUser.id, 'actor-2');
 
       expect(authEmailAdapter.sendTemporaryPassword).toHaveBeenCalledTimes(1);
       expect(repository.updateById).toHaveBeenCalledTimes(1);
-      expect(repository.revokeSessionsByUserId).toHaveBeenCalledTimes(1);
+      expect(repository.revokeSessionsReturningIds).toHaveBeenCalledTimes(1);
 
       expect(authEmailAdapter.sendTemporaryPassword.mock.invocationCallOrder[0]).toBeLessThan(
         repository.updateById.mock.invocationCallOrder[0] ?? Number.MAX_SAFE_INTEGER,
       );
       expect(repository.updateById.mock.invocationCallOrder[0]).toBeLessThan(
-        repository.revokeSessionsByUserId.mock.invocationCallOrder[0] ?? Number.MAX_SAFE_INTEGER,
+        repository.revokeSessionsReturningIds.mock.invocationCallOrder[0] ??
+          Number.MAX_SAFE_INTEGER,
       );
+      expect(revokeCache).toHaveBeenCalledWith(['s1', 's2']);
       expect(rabbitMQ.publish).toHaveBeenCalledTimes(1);
-      expect(repository.revokeSessionsByUserId.mock.invocationCallOrder[0]).toBeLessThan(
+      expect(repository.revokeSessionsReturningIds.mock.invocationCallOrder[0]).toBeLessThan(
         rabbitMQ.publish?.mock.invocationCallOrder[0] ?? Number.MAX_SAFE_INTEGER,
       );
       expect(rabbitMQ.publish).toHaveBeenCalledWith(
@@ -849,8 +863,43 @@ describe('UsersService', () => {
     it('throws when user not found', async () => {
       repository.findById.mockResolvedValue(null);
       await expect(
-        service.changePassword('nope', { currentPassword: 'x', newPassword: 'StrongPass1' }),
+        service.changePassword('nope', { currentPassword: 'x', newPassword: 'StrongPass1' }, 's-1'),
       ).rejects.toThrow(EntityNotFoundException);
+    });
+
+    it('closes every OTHER login and publishes the ids, but keeps the device that changed it', async () => {
+      repository.findById.mockResolvedValue(mockUser);
+      repository.updateById.mockResolvedValue(mockUser);
+      vi.mocked(verifyPassword).mockResolvedValue(true);
+
+      await service.changePassword(
+        'user-1',
+        { currentPassword: 'CurrentPass1!', newPassword: 'BrandNewPass9!' },
+        'session-in-use',
+      );
+
+      expect(repository.revokeOtherSessionsReturningIds).toHaveBeenCalledWith(
+        'user-1',
+        'session-in-use',
+        'PASSWORD_CHANGED',
+      );
+      expect(repository.revokeSessionsReturningIds).not.toHaveBeenCalled();
+      expect(revokeCache).toHaveBeenCalledWith(['s-other']);
+    });
+
+    it('closes nothing when the current password is wrong', async () => {
+      repository.findById.mockResolvedValue(mockUser);
+      vi.mocked(verifyPassword).mockResolvedValue(false);
+      await expect(
+        service.changePassword(
+          'user-1',
+          { currentPassword: 'not-it', newPassword: 'BrandNewPass9!' },
+          'session-in-use',
+        ),
+      ).rejects.toMatchObject({ code: 'INVALID_CURRENT_PASSWORD' });
+      expect(repository.updateById).not.toHaveBeenCalled();
+      expect(repository.revokeOtherSessionsReturningIds).not.toHaveBeenCalled();
+      expect(revokeCache).not.toHaveBeenCalled();
     });
 
     it('throws when current password is wrong', async () => {
@@ -859,10 +908,14 @@ describe('UsersService', () => {
         passwordHash: '$argon2id$v=19$m=65536,t=3,p=4$invalid$invalid',
       });
       await expect(
-        service.changePassword('user-1', {
-          currentPassword: 'wrong',
-          newPassword: 'StrongPass1',
-        }),
+        service.changePassword(
+          'user-1',
+          {
+            currentPassword: 'wrong',
+            newPassword: 'StrongPass1',
+          },
+          's-1',
+        ),
       ).rejects.toThrow();
     });
   });

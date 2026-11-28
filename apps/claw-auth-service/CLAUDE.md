@@ -794,3 +794,36 @@ reference: [service guide, "Anti-abuse screening"](../../docs/04-backend/service
   - reason from `EmailDomainPolicyService.explain`, the same rules `evaluate` runs). ADMIN + `ADMIN_SYSTEM_VIEW`.
 - **Local tests:** Windows Smart App Control blocks `@swc/core`, so the suite cannot start on the host; it runs in
   a Linux container from the dev image with `vite` added (vitest 5 has it as a peer and the image lacks it).
+
+## Abuse auto-suspension and banned devices (ADR-233, 2026-11-28)
+
+`modules/abuse-defense/` reacts to an AUTHENTICATED account that hammers, probes or scans. Full reference:
+[service guide, "Abuse defence"](../../docs/04-backend/service-guide-auth.md#abuse-defence-adr-233) (flow, settings,
+admin route, and the token and session audit table).
+
+- **A victim is never punished.** Only a signal from the actor's OWN valid access token counts. The
+  `GlobalExceptionFilter` reports a 429 or a plain `ForbiddenException` only when `request.user` is set, so a failed
+  sign-in, a bad token or a flood on a public route can never be charged to the account it targets. `TOKEN_REUSE` (a
+  replayed refresh token) and `BANNED_DEVICE_SIGNIN` are UNCOUNTED: stored and flagged for an administrator, never
+  suspending. Do not make either count. Do not add a signal that an attacker can cause against someone else.
+- **The suspension IS the ban.** `AbuseSuspensionRepository.apply` writes `users.banned_*` (`ban_reason =
+'AUTO_ABUSE:<code>'`, `banned_by_user_id = NULL`) and the `abuse_suspensions` audit row in ONE transaction. The ladder
+  is 1 h, 24 h, 7 d (settings, never permanent), skips administrators and the super administrator, closes every session
+  and publishes the ids. Lifting is the existing `POST /users/:id/unban`; do not add a second lift control.
+- **`AbuseSignalService.record` never throws.** It runs inside the exception filter and the sign-in paths. Redis down
+  means nothing is counted and nobody is suspended.
+- **Settings are `security.abuse.*` rows** (kill switch `autoSuspendEnabled`, window, three thresholds, three durations,
+  escalation window). Defaults live in `abuse-defense.constants.ts`; the `abuse-defense` seeder writes the same rows; a
+  spec keeps them equal. Change a default in both, never one. No new env var.
+- **Banned devices.** A LIFETIME admin ban marks the account's peppered device hashes (`banned_device_marks`, no foreign
+  key on purpose). A new sign-up on a marked device is `403 SIGNUP_UNAVAILABLE` (after the bot check); other existing
+  accounts are flagged, never banned. Unban lifts the marks.
+- **DI trap:** a constructor parameter typed `Pick<...>` or an interface is emitted as `Object` and Nest cannot resolve
+  it (the dev container crash-looped on `GlobalExceptionFilter`, 2026-11-28). Name the token with `@Inject(Class)`.
+  `app/__tests__/app-module-wiring.spec.ts` compiles the real module graph; keep it green.
+- **Every closer of a session publishes the ids** (`SessionRevocationCacheService.revoke`). Password reset,
+  deactivation, temporary password and rename did not, until now; `UsersRepository.revokeSessionsByUserId` and
+  `AuthRepository.deleteSessionsByUserId` are gone so the mistake cannot be repeated. Changing your own password closes
+  every OTHER login.
+- The `POST /internal/abuse/signals` route exists for other services (SSRF guards, their own 429s and 403s). No service
+  calls it yet.

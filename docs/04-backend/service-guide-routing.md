@@ -137,6 +137,10 @@ The `RoutingDecision` record stores `complexityClass`, a structured `explanation
 | GET    | /education/model-profiles | Learned model profiles                             |
 | GET    | /education/topic-profiles | Learned topic profiles                             |
 
+`GET /routing/model-sizes` (`MODEL_USE_ALLOWED`, 2026-11-28, ADR-234) lists every live model's context window and
+parameter count (`{ provider, modelKey, contextWindowTokens, parameterCountBillions, activeParameterCountBillions }`,
+size only, no price); the model pickers join it on `(provider, modelKey)`.
+
 `GET /internal/router-models/visibility?provider=&model=` (service token, 2026-11-22) answers
 `{ provider, modelKey, inRegistry, lifecycle, isRouterOnly, costClass }` for one model: the registry row (or none),
 its router-only flag and the cost class from `resolveCostClasses` (null = unpriced; a band, never a rate). Its only
@@ -565,3 +569,29 @@ Connector snapshot `modalitiesOut` now comes from the shared id classifier (`IMA
 ## Turn intent classifier (ADR-218, 2026-11-22)
 
 `TurnIntentManager` (`managers/turn-intent.manager.ts`) runs the published router chain through `RouterInferenceCoordinatorManager.runValidated` with its own prompt and Zod schema (`constants/turn-intent.constants.ts`). Input: message head and tail (1,500 + 1,500 characters), `previousTurnKind` from `message.created`, attachment mime types, the picked model's kind. Short deadline; any failure returns null and the keyword detectors decide (`source: HEURISTIC`). PAYG-metered like router calls. Result cached per turn in memory. Not called for privacy-enforced, LOCAL_ONLY/PRIVACY_FIRST or Runtime V2 turns. A generation-only pick with a `TEXT` answer at confidence ≥ 0.7 becomes an AUTO text decision with `pickOverridden`. Reason tags `intent_model_<kind>`, `intent_pick_overridden`. Off whenever the router configuration is disabled. Rule: [67](../../rules/67-turn-intent-is-semantic-keywords-are-only-the-fallback.md).
+
+## Model size: context window and parameter count (ADR-234, 2026-11-28)
+
+Every model list in the product writes "1M context · 750B params" beside the model. The numbers come from
+`router_model_registry`:
+
+- **Columns** (migration `20261128120000_add_model_parameter_counts`): `parameter_count_billions` and
+  `active_parameter_count_billions`, nullable `Decimal(9,3)`, in billions (0.5 = 500M, 1000 = 1T). Total, and the
+  per-token share of a mixture-of-experts model. NULL = the maker publishes none (every closed model); never a guess.
+  The record (`RouterModelRegistryRecord`) returns them as numbers.
+- **Where a count comes from** (`utilities/model-parameter-count.utility.ts`, most trusted first): the local runtime's
+  own report (`UpstreamModelSnapshot.parameterCount`, a string such as `7.6B` or `671B (37B active)`, forwarded by
+  ollama-service and llamacpp-service), then `PUBLISHED_PARAMETER_COUNT_RULES` (exact model keys, each rule naming the
+  maker page), then the count the maker's own model name states for an allow-listed family. Rules and the checked-and-left-out
+  list: `constants/model-parameter-count.constants.ts`.
+- **Fill paths**: `RouterSyncManager` on every sync (create and update; an update never writes NULL), and
+  `ModelParameterSeedService` once per `(name, version)` (`model-parameter-counts-2026` v1, lock `740_040_005`, skips
+  local rows). Both only fill: an admin value is pinned by `OVERRIDE_MANAGED_FIELDS`, and a pinned total also stops the
+  sync from writing the active share. Add or correct a rule, then bump `MODEL_PARAMETER_SEED_VERSION`.
+- **Admin**: `PATCH /routing/models/:id` with `parameterCountBillions` / `activeParameterCountBillions` (`null` clears).
+  There is no edit form for router models yet; the detail drawer shows the Parameters row.
+- **Read**: `GET /routing/model-sizes` (`MODEL_USE_ALLOWED`) lists `{ provider, modelKey, contextWindowTokens,
+parameterCountBillions, activeParameterCountBillions }` for every live row, nothing else (no price). The window is
+  `maxContextTokens ?? contextWindowTokens ?? knownContextWindow(...)`, the same order as the internal
+  `context-window` route. The chat picker's own list comes from connector-service, so the frontend joins the two on
+  `(provider, modelKey)`.

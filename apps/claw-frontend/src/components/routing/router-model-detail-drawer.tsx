@@ -8,16 +8,19 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRouterModelDetail } from '@/hooks/routing/use-router-model-detail';
 import { useRouterModelOverrides } from '@/hooks/routing/use-router-model-overrides';
+import { useTranslation } from '@/lib/i18n';
 import type {
   RouterModelDetailDrawerProps,
   RouterModelDetailRowProps,
 } from '@/types/router-model-components.types';
 import type { RouterAdminOverride } from '@/types/router-models.types';
+import { formatParameterCountDetail } from '@/utilities/model-scale.utility';
 
 export function RouterModelDetailDrawer({
   modelId,
   onClose,
 }: RouterModelDetailDrawerProps): ReactElement | null {
+  const { t, locale } = useTranslation();
   const detail = useRouterModelDetail(modelId);
   const overrides = useRouterModelOverrides(modelId);
 
@@ -28,8 +31,8 @@ export function RouterModelDetailDrawer({
   const model = detail.data;
 
   return (
-    <div className="fixed inset-y-0 right-0 z-40 w-full max-w-[480px] overflow-y-auto border-l border-border bg-background shadow-xl">
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+    <div className="border-border bg-background fixed inset-y-0 right-0 z-40 w-full max-w-[480px] overflow-y-auto border-l shadow-xl">
+      <div className="border-border flex items-center justify-between border-b px-4 py-3">
         <h2 className="text-lg font-semibold">{model?.displayName ?? 'Loading…'}</h2>
         <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close">
           <X className="h-4 w-4" />
@@ -101,6 +104,17 @@ export function RouterModelDetailDrawer({
                       : '—'
                   }
                 />
+                <Row
+                  label={t('modelScale.parametersLabel')}
+                  value={
+                    formatParameterCountDetail(
+                      model.parameterCountBillions,
+                      model.activeParameterCountBillions,
+                      t,
+                      locale,
+                    ) ?? '—'
+                  }
+                />
                 <Row label="Modalities in" value={model.modalitiesIn.join(', ') || '—'} />
                 <Row label="Modalities out" value={model.modalitiesOut.join(', ') || '—'} />
                 <Row label="Domain tags" value={model.domainTags.join(', ') || 'GENERAL'} />
@@ -141,10 +155,10 @@ function DrawerBody({
   hasModel: boolean;
 }): ReactElement | null {
   if (isLoading) {
-    return <p className="text-sm text-muted-foreground">Loading…</p>;
+    return <p className="text-muted-foreground text-sm">Loading…</p>;
   }
   if (isError || !hasModel) {
-    return <p className="text-sm text-destructive">Failed to load model detail.</p>;
+    return <p className="text-destructive text-sm">Failed to load model detail.</p>;
   }
   return null;
 }
@@ -171,10 +185,10 @@ function OverridesPanel({
       {data.map((o) => (
         <li
           key={o.id}
-          className="flex items-center justify-between rounded border border-border px-2 py-1"
+          className="border-border flex items-center justify-between rounded border px-2 py-1"
         >
           <span className="font-mono text-xs">{o.fieldName}</span>
-          <span className="text-xs text-muted-foreground">set by {o.setBy}</span>
+          <span className="text-muted-foreground text-xs">set by {o.setBy}</span>
         </li>
       ))}
     </ul>
@@ -184,7 +198,7 @@ function OverridesPanel({
 function Row({ label, value }: RouterModelDetailRowProps): ReactElement {
   return (
     <div className="flex items-start justify-between gap-3">
-      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-muted-foreground text-xs">{label}</span>
       <span className="text-right font-medium">{value}</span>
     </div>
   );

@@ -236,6 +236,8 @@ export type PasswordRuleState = {
 export type LoginBanInfo = {
   permanent: boolean;
   until: string | null;
+  /** An automatic, temporary suspension (ADR-233), not an administrator's ban. Absent otherwise. */
+  autoSuspended?: boolean;
 };
 
 export type LoginFailureCopy = {

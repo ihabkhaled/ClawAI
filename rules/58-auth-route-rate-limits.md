@@ -97,7 +97,9 @@ refusing policy=<policy>`; policy only, never a key, address or IP). This
    (burst 3), `login` 12/min (burst 10) and `bot-check/challenge` 20/min per address, caps 100 concurrent
    connections per address, and fail2ban bans repeat offenders at the host (rule 68, ADR-222). Per-address limits
    do not stop a farm on rotating residential addresses: the bot checks, the disposable-email block and the
-   platform-wide sign-up velocity limit in auth-service do (ADR-222).
+   platform-wide sign-up velocity limit in auth-service do (ADR-222). Since ADR-232 every other dynamic request also has a per-address
+   budget (`claw_general`, 30 r/s, burst 400), a VERIFIED crawler has its own (`claw_crawler`), and every nginx-made 429 is JSON with
+   `Retry-After`; none of this changes a budget in the table above.
 8. **The window is atomic.** One Lua call does INCR + EXPIRE + TTL
    (`REDIS_FIXED_WINDOW_SCRIPT`). Never split it back into INCR then EXPIRE: a
    crash between the two leaves a key with no TTL and refuses that caller forever.

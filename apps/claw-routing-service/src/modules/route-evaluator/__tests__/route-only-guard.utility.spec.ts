@@ -52,6 +52,8 @@ function fake(overrides: Partial<RouterModelRegistryRecord> = {}): RouterModelRe
     supportsLongContext: null,
     maxContextTokens: null,
     maxOutputTokensIntel: null,
+    parameterCountBillions: null,
+    activeParameterCountBillions: null,
     domainStrengths: [],
     roleStrengths: [],
     weakDomains: [],
@@ -73,7 +75,10 @@ function fake(overrides: Partial<RouterModelRegistryRecord> = {}): RouterModelRe
 
 describe('applyRouteOnlyContract', () => {
   it('excludes isRouterOnly=true', () => {
-    const result = applyRouteOnlyContract([fake({ id: 'a', isRouterOnly: true }), fake({ id: 'b' })]);
+    const result = applyRouteOnlyContract([
+      fake({ id: 'a', isRouterOnly: true }),
+      fake({ id: 'b' }),
+    ]);
     expect(result.map((r) => r.id)).toEqual(['b']);
   });
 

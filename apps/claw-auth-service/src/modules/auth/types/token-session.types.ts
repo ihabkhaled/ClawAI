@@ -27,6 +27,9 @@ export interface TokenSessionUser {
   /** Admin ban columns (ADR-200); absent or null = not banned. */
   bannedAt?: Date | null;
   bannedUntil?: Date | null;
+  /** With `bannedByUserId`, tells an automatic suspension from an administrator's ban (ADR-233). */
+  banReason?: string | null;
+  bannedByUserId?: string | null;
 }
 
 export interface TokenPair {

@@ -11,6 +11,7 @@ import { LIVE_TRANSLATIONS } from './live-translations';
 import { MARKETING_VIDEOS_TRANSLATIONS } from './marketing-videos-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
+import { MODEL_SCALE_TRANSLATIONS } from './model-scale-translations';
 import { MODEL_VISIBILITY_TRANSLATIONS } from './model-visibility-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
@@ -290,6 +291,9 @@ export const ru: TranslationDictionary = {
     loginBannedPermanentDescription:
       'Администратор заблокировал этот аккаунт навсегда. Войти нельзя.',
     loginBannedGeneric: 'Этот аккаунт заблокирован.',
+    loginSuspendedAutoTitle: 'Этот аккаунт временно приостановлен',
+    loginSuspendedAutoDescription:
+      'Мы приостановили этот аккаунт из-за необычной активности. Войти снова можно после {date}. Если вы считаете, что это ошибка, обратитесь в поддержку.',
     loginSuspendedTitle: 'Учётная запись заблокирована',
     loginSuspendedDescription:
       'Пароль верный, но администратор отключил эту учётную запись. Если вы считаете это ошибкой, обратитесь в службу поддержки.',
@@ -2461,6 +2465,8 @@ export const ru: TranslationDictionary = {
     banAction: 'Заблокировать',
     unbanAction: 'Разблокировать',
     bannedBadge: 'Заблокирован',
+    autoSuspendedBadge: 'Приостановлен автоматически',
+    detailAutoSuspendedUntil: 'Автоматически приостановлен до {date}',
     banDialogTitle: 'Заблокировать {username}',
     banDialogDescription:
       'Пользователь сразу выйдет из аккаунта на всех устройствах и не сможет войти до конца блокировки.',
@@ -5016,6 +5022,7 @@ export const ru: TranslationDictionary = {
   researchPlatforms: RESEARCH_PLATFORMS_TRANSLATIONS.ru,
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.ru,
   pickedModel: PICKED_MODEL_TRANSLATIONS.ru,
+  modelScale: MODEL_SCALE_TRANSLATIONS.ru,
   creditFallback: CREDIT_FALLBACK_TRANSLATIONS.ru,
   live: LIVE_TRANSLATIONS.ru,
   mediaUi: MEDIA_UI_TRANSLATIONS.ru,

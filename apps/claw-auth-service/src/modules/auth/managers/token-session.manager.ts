@@ -5,6 +5,9 @@ import { hashBearerToken } from '@claw/shared-utilities';
 import { signAccessToken, signRefreshToken } from '@common/utilities';
 import { AppConfig } from '../../../app/config/app.config';
 import { InvalidRefreshTokenException, SessionTerminatedException } from '../../../common/errors';
+import { SOURCE_AUTH_REFRESH } from '../../abuse-defense/constants/abuse-defense.constants';
+import { AbuseSignalCode } from '../../abuse-defense/enums/abuse-signal-code.enum';
+import { AbuseSignalService } from '../../abuse-defense/services/abuse-signal.service';
 import { SessionTerminationReason } from '../../sessions/enums/session-termination-reason.enum';
 import { UserRole, UserStatus } from '../../../common/enums';
 import {
@@ -39,6 +42,7 @@ export class TokenSessionManager {
     private readonly revocationCache: SessionRevocationCacheService,
     private readonly banGate: AccountBanGateService,
     private readonly presence: UserPresenceService,
+    private readonly abuse: AbuseSignalService,
   ) {}
 
   /**
@@ -95,6 +99,7 @@ export class TokenSessionManager {
     // A replay after the grace window is treated as theft.
     if (currentSession.usedAt && !isWithinReuseGrace(currentSession.usedAt, now)) {
       await this.revokeFamily(currentSession.familyId, SessionTerminationReason.TOKEN_REUSE);
+      await this.flagTokenReuse(currentSession.userId);
       throw new InvalidRefreshTokenException();
     }
 
@@ -177,7 +182,22 @@ export class TokenSessionManager {
       return this.issueSibling(user, latest);
     }
     await this.revokeFamily(familyId, SessionTerminationReason.TOKEN_REUSE);
+    await this.flagTokenReuse(user.id);
     throw new InvalidRefreshTokenException();
+  }
+
+  /**
+   * A refresh token was replayed after rotation: the family is already revoked, so a thief holding
+   * the old token is shut out. The account is flagged for an administrator and NEVER counted
+   * towards a suspension: whoever replays a token is not the account's authenticated self, and
+   * punishing the owner for a theft would punish the victim (ADR-233).
+   */
+  private async flagTokenReuse(userId: string): Promise<void> {
+    await this.abuse.record({
+      userId,
+      code: AbuseSignalCode.TOKEN_REUSE,
+      source: SOURCE_AUTH_REFRESH,
+    });
   }
 
   /** A new token in the same family; whoever holds the first replacement keeps it. */

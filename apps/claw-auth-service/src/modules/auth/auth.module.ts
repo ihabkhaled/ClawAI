@@ -3,6 +3,7 @@ import { RedisModule } from '../../infrastructure/redis/redis.module';
 import { AuthController } from './controllers/auth.controller';
 import { VscodeAuthorizationController } from './controllers/vscode-authorization.controller';
 import { BotCheckController } from './controllers/bot-check.controller';
+import { AbuseDefenseModule } from '../abuse-defense/abuse-defense.module';
 import { AntiAbuseModule } from '../anti-abuse/anti-abuse.module';
 import { AuthService } from './services/auth.service';
 import { VscodeAuthorizationService } from './services/vscode-authorization.service';
@@ -32,7 +33,7 @@ import { AuthRateLimitGuard } from './guards/auth-rate-limit.guard';
 import { AuthRateLimitSuccessInterceptor } from './interceptors/auth-rate-limit-success.interceptor';
 
 @Module({
-  imports: [RolesModule, PlansModule, RedisModule, AntiAbuseModule],
+  imports: [RolesModule, PlansModule, RedisModule, AntiAbuseModule, AbuseDefenseModule],
   controllers: [AuthController, VscodeAuthorizationController, BotCheckController],
   providers: [
     AuthService,

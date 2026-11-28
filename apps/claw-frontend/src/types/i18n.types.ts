@@ -8,6 +8,7 @@ import type {
 } from '@/types/anti-abuse-i18n.types';
 import type { FeedbackTranslation } from '@/types/i18n-feedback.types';
 import type { LiveLocaleTranslation } from '@/types/live-i18n.types';
+import type { ModelScaleLocaleTranslation } from '@/types/model-scale.types';
 import type { PluginImportLocaleTranslation } from '@/types/plugin-import-i18n.types';
 import type {
   PluginQaFixesLocaleTranslation,
@@ -257,6 +258,8 @@ export type TranslationDictionary = {
     loginBannedDescription: string;
     loginBannedPermanentDescription: string;
     loginBannedGeneric: string;
+    loginSuspendedAutoTitle: string;
+    loginSuspendedAutoDescription: string;
     loginSuspendedTitle: string;
     loginSuspendedDescription: string;
     loginUnknownDescription: string;
@@ -2288,6 +2291,8 @@ export type TranslationDictionary = {
     banAction: string;
     unbanAction: string;
     bannedBadge: string;
+    autoSuspendedBadge: string;
+    detailAutoSuspendedUntil: string;
     banDialogTitle: string;
     banDialogDescription: string;
     banUnit: string;
@@ -4701,6 +4706,8 @@ export type TranslationDictionary = {
   narration: NarrationLocaleTranslation;
   researchPlatforms: ResearchPlatformsLocaleTranslation;
   pickedModel: PickedModelLocaleTranslation;
+  /** The words beside a model's name in every model list: "1M context · 750B params" (ADR-234). */
+  modelScale: ModelScaleLocaleTranslation;
   creditFallback: CreditFallbackLocaleTranslation;
   live: LiveLocaleTranslation;
   mediaUi: MediaUiLocaleTranslation;

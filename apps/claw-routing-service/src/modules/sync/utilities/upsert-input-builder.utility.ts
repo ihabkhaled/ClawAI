@@ -1,13 +1,33 @@
 import { ModelLifecycle, type Prisma } from '../../../generated/prisma';
+import { resolveParameterCount } from '../../router-models/utilities/model-parameter-count.utility';
 import { type ModelIntelligenceEnrichment } from '../../router-models/types/model-intelligence.types';
 import { SYNC_BASE_FIELDS, SYNC_OPTIONAL_TYPED_FIELDS } from '../constants/sync.constants';
 import { type UpstreamModelSnapshot } from '../types/sync.types';
+
+/// The size columns this snapshot can fill (ADR-234): the local runtime's own
+/// report, else a maker-published count, else the count the maker's own name
+/// states. Empty when none applies, so an UPDATE never writes NULL over a count
+/// an earlier sync or an admin set.
+export function parameterCountColumns(
+  upstream: UpstreamModelSnapshot,
+): Record<string, number | null> {
+  const count = resolveParameterCount({
+    modelKey: upstream.modelKey,
+    runtimeText: upstream.parameterCount,
+  });
+  if (count === null) return {};
+  return {
+    parameterCountBillions: count.totalBillions,
+    activeParameterCountBillions: count.activeBillions,
+  };
+}
 
 /// Builds the `create` half of the upsert input — everything we know about
 /// the upstream model plus the enrichment block.
 export function buildCreateInput(
   upstream: UpstreamModelSnapshot,
   enrichmentEntriesMap: Record<string, unknown>,
+  sizeColumns: Record<string, number | null> = {},
 ): Prisma.RouterModelRegistryCreateInput {
   return {
     provider: upstream.provider,
@@ -24,6 +44,7 @@ export function buildCreateInput(
     outputCostPer1M: upstream.outputCostPer1M ?? null,
     ...(upstream.qualityTier !== undefined ? { qualityTier: upstream.qualityTier } : {}),
     ...(upstream.privacySupport !== undefined ? { privacySupport: upstream.privacySupport } : {}),
+    ...sizeColumns,
     ...enrichmentEntriesMap,
   };
 }
@@ -36,6 +57,7 @@ export function buildUpdateInput(
   upstream: UpstreamModelSnapshot,
   protectedFields: ReadonlySet<string>,
   enrichmentEntriesMap: Record<string, unknown>,
+  sizeColumns: Record<string, number | null> = {},
 ): Prisma.RouterModelRegistryUpdateInput {
   const upstreamMap = upstream as unknown as Record<string, unknown>;
   const update: Record<string, unknown> = {};
@@ -43,13 +65,21 @@ export function buildUpdateInput(
     if (protectedFields.has(spec.key)) continue;
     update[spec.key] = applyFallback(spec.key, upstreamMap[spec.key], spec.nullable);
   }
-  for (const key of SYNC_OPTIONAL_TYPED_FIELDS) {
-    const value = upstreamMap[key];
-    if (value === undefined) continue;
-    if (protectedFields.has(key)) continue;
-    update[key] = value;
-  }
-  Object.assign(update, enrichmentEntriesMap);
+  const optionalKeys = new Set<string>(SYNC_OPTIONAL_TYPED_FIELDS);
+  Object.assign(
+    update,
+    Object.fromEntries(
+      Object.entries(upstreamMap).filter(
+        ([key, value]) => optionalKeys.has(key) && value !== undefined && !protectedFields.has(key),
+      ),
+    ),
+  );
+  // An admin who pinned the total owns the whole size: a table's active share beside an
+  // admin's total would be two sources in one label.
+  const sizeUpdate = protectedFields.has('parameterCountBillions')
+    ? {}
+    : Object.fromEntries(Object.entries(sizeColumns).filter(([key]) => !protectedFields.has(key)));
+  Object.assign(update, sizeUpdate, enrichmentEntriesMap);
   if (Object.keys(enrichmentEntriesMap).length > 0) update.lastEnrichedAt = new Date();
   return update as Prisma.RouterModelRegistryUpdateInput;
 }
@@ -61,12 +91,9 @@ export function enrichmentEntries(
   enrichment: ModelIntelligenceEnrichment,
 ): Record<string, unknown> {
   const map = enrichment as Record<string, unknown>;
-  const out: Record<string, unknown> = {};
-  for (const key of Object.keys(map)) {
-    const value = map[key];
-    if (value === undefined) continue;
-    out[key] = value;
-  }
+  const out: Record<string, unknown> = Object.fromEntries(
+    Object.entries(map).filter(([, value]) => value !== undefined),
+  );
   return out;
 }
 

@@ -14,7 +14,17 @@ const mockGetCostInfo = vi.fn(
 );
 
 vi.mock('@/lib/i18n', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({
+    locale: 'en',
+    t: (key: string, params?: Record<string, string>) =>
+      params === undefined ? key : `${key}=${params['value'] ?? ''}`,
+  }),
+}));
+
+const mockSizes = vi.fn((_provider: string, ..._keys: string[]): unknown => undefined);
+
+vi.mock('@/hooks/chat/use-model-sizes', () => ({
+  useModelSizes: () => ({ lookup: mockSizes, isLoading: false }),
 }));
 
 vi.mock('@/hooks/chat/use-model-plan-access', () => ({
@@ -375,5 +385,129 @@ describe('useAvailableModels capability badges', () => {
     expect(gpt?.outsideAllowance).toBe(true);
     expect(all.find((model) => model.model === 'flash')?.outsideAllowance).toBeUndefined();
     expect(all.find((model) => model.model === 'g')?.costClass).toBeUndefined();
+  });
+
+  // ADR-234: every model carries "<context> · <params>" beside its name.
+  describe('model size', () => {
+    const sizeOf = (
+      provider: string,
+      model: string,
+    ): { label: string; title: string } | undefined =>
+      renderHook(() => useAvailableModels())
+        .result.current.groupedModels.flatMap((group) => group.models)
+        .find((entry) => entry.provider === provider && entry.model === model)?.scale;
+
+    it('writes the connector window and the registry parameter count on a cloud model', () => {
+      mockUseAllModels.mockReturnValue({
+        models: [
+          {
+            provider: 'OPENROUTER',
+            modelKey: 'moonshotai/kimi-k2',
+            displayName: 'Kimi K2',
+            maxContextTokens: 262_144,
+          },
+        ],
+        isLoading: false,
+      });
+      mockSizes.mockImplementation((provider, ...keys) =>
+        provider === 'OPENROUTER' && keys.includes('moonshotai/kimi-k2')
+          ? {
+              contextWindowTokens: 8_192,
+              parameterCountBillions: 1000,
+              activeParameterCountBillions: 32,
+            }
+          : undefined,
+      );
+
+      const scale = sizeOf('OPENROUTER', 'moonshotai/kimi-k2');
+
+      expect(scale?.label).toBe('modelScale.context=256K · modelScale.parameters=1T');
+      expect(scale?.title).toContain('modelScale.activeNote=32B');
+    });
+
+    it('shows the window alone for a closed model the registry has no count for', () => {
+      mockUseAllModels.mockReturnValue({
+        models: [
+          {
+            provider: 'OPENAI',
+            modelKey: 'gpt-5.4',
+            displayName: 'GPT 5.4',
+            maxContextTokens: 400_000,
+          },
+        ],
+        isLoading: false,
+      });
+      mockSizes.mockReturnValue({
+        contextWindowTokens: 400_000,
+        parameterCountBillions: null,
+        activeParameterCountBillions: null,
+      });
+
+      expect(sizeOf('OPENAI', 'gpt-5.4')?.label).toBe('modelScale.context=400K');
+    });
+
+    it('shows no label at all when nothing about the size is known', () => {
+      mockUseAllModels.mockReturnValue({
+        models: [{ provider: 'OPENAI', modelKey: 'mystery', displayName: 'Mystery' }],
+        isLoading: false,
+      });
+      mockSizes.mockReturnValue(undefined);
+
+      expect(sizeOf('OPENAI', 'mystery')).toBeUndefined();
+    });
+
+    it("reads a local Ollama model's size from the file Ollama reports", () => {
+      mockUseAllModels.mockReturnValue({ models: [], isLoading: false });
+      mockUseLocalModels.mockReturnValue({
+        models: [
+          {
+            name: 'qwen3',
+            tag: '8b',
+            family: 'qwen',
+            parameters: '8.2B',
+            isInstalled: true,
+            roles: [],
+            category: null,
+          },
+        ],
+        isLoading: false,
+      });
+      mockSizes.mockReturnValue({
+        contextWindowTokens: 40_960,
+        parameterCountBillions: 7,
+        activeParameterCountBillions: null,
+      });
+
+      // 40,960 tokens is 40 x 1024: written "40K", not "41K".
+      expect(sizeOf('local-ollama', 'qwen3:8b')?.label).toBe(
+        'modelScale.context=40K · modelScale.parameters=8.2B',
+      );
+    });
+
+    it("uses the llama.cpp catalog's own numbers for a downloaded frontier model", () => {
+      mockUseAllModels.mockReturnValue({ models: [], isLoading: false });
+      mockUseFrontierCatalog.mockReturnValue({
+        data: {
+          data: [
+            {
+              name: 'glm-4.5-air',
+              tag: 'q4',
+              displayName: 'GLM 4.5 Air',
+              parameterCount: '106B (12B active)',
+              totalParamsB: 106,
+              activeParamsB: 12,
+              contextLength: 131_072,
+              downloadStatus: 'READY',
+            },
+          ],
+        },
+        isLoading: false,
+      });
+
+      const scale = sizeOf('local-llamacpp', 'glm-4.5-air:q4');
+
+      expect(scale?.label).toBe('modelScale.context=128K · modelScale.parameters=106B');
+      expect(scale?.title).toContain('modelScale.activeNote=12B');
+    });
   });
 });

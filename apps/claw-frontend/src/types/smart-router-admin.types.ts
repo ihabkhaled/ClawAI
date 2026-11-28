@@ -13,6 +13,7 @@ import type {
 
 import type { FormFieldErrors } from './component.types';
 import type { TranslateFunction } from './i18n.types';
+import type { ModelScaleText } from './model-scale.types';
 
 // ─── Backend DTO mirrors (claw-routing-service router-configuration-admin) ───
 
@@ -374,6 +375,8 @@ export type SelectableDeployment = {
   providerModelId: string;
   /** False for a model that exists but has not passed a validation yet. */
   isValidated: boolean;
+  /** "1M context · 750B params" beside the model id (ADR-234). Absent when its size is unknown. */
+  scale?: ModelScaleText;
 };
 
 export type UseSmartRouterSelectableDeploymentsResult = {

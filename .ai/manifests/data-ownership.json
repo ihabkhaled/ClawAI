@@ -45,6 +45,9 @@
       "database": "postgresql",
       "mongooseModels": [],
       "prismaModels": [
+        "AbuseSignal",
+        "AbuseSuspension",
+        "BannedDeviceMark",
         "CreditFreeAllowanceUsage",
         "CreditLedgerEntry",
         "CreditPackage",

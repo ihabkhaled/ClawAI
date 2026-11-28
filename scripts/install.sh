@@ -794,6 +794,9 @@ ADMIN_PASS=$(gen_password)
 INTER_SERVICE_AUTH_TOKEN=$(gen_secret_hex)
 GITHUB_WEBHOOK_SECRET=$(gen_secret_hex)
 FIRECRAWL_POSTGRES_PASSWORD=$(gen_secret_hex)
+# Each Firecrawl store has its own password (rules/68): its Redis and RabbitMQ answered with none / guest.
+FIRECRAWL_REDIS_PASSWORD=$(gen_secret_hex)
+FIRECRAWL_RABBITMQ_PASSWORD=$(gen_secret_hex)
 FIRECRAWL_BULL_AUTH_KEY=$(gen_secret_hex)
 CRAWL4AI_API_TOKEN=$(gen_secret_hex)
 GITLAB_WEBHOOK_SECRET=$(gen_secret_hex)
@@ -847,6 +850,8 @@ if [ -f "$ENV_FILE" ]; then
   PREV_REDIS_PASS="$(get_env_value "REDIS_PASSWORD" "$ENV_FILE")"
   PREV_RABBIT_PASS="$(get_env_value "RABBITMQ_PASSWORD" "$ENV_FILE")"
   PREV_FIRECRAWL_POSTGRES_PASSWORD="$(get_env_value "FIRECRAWL_POSTGRES_PASSWORD" "$ENV_FILE")"
+  PREV_FIRECRAWL_REDIS_PASSWORD="$(get_env_value "FIRECRAWL_REDIS_PASSWORD" "$ENV_FILE")"
+  PREV_FIRECRAWL_RABBITMQ_PASSWORD="$(get_env_value "FIRECRAWL_RABBITMQ_PASSWORD" "$ENV_FILE")"
   PREV_JWT_SECRET="$(get_env_value "JWT_SECRET" "$ENV_FILE")"
   PREV_ENCRYPTION_KEY="$(get_env_value "ENCRYPTION_KEY" "$ENV_FILE")"
   PREV_PAYMENT_TOKEN_KEY="$(get_env_value "PAYMENT_TOKEN_ENCRYPTION_KEY" "$ENV_FILE")"
@@ -883,6 +888,15 @@ if [ -f "$ENV_FILE" ]; then
     # Its volume was created with this value; a fresh one would lock Firecrawl out of its own database.
     FIRECRAWL_POSTGRES_PASSWORD="$PREV_FIRECRAWL_POSTGRES_PASSWORD"
     ok "Preserved FIRECRAWL_POSTGRES_PASSWORD from existing .env"
+  fi
+  if [ -n "$PREV_FIRECRAWL_REDIS_PASSWORD" ]; then
+    FIRECRAWL_REDIS_PASSWORD="$PREV_FIRECRAWL_REDIS_PASSWORD"
+    ok "Preserved FIRECRAWL_REDIS_PASSWORD from existing .env"
+  fi
+  if [ -n "$PREV_FIRECRAWL_RABBITMQ_PASSWORD" ]; then
+    # RabbitMQ created its firecrawl user with this value on first start (its volume keeps it).
+    FIRECRAWL_RABBITMQ_PASSWORD="$PREV_FIRECRAWL_RABBITMQ_PASSWORD"
+    ok "Preserved FIRECRAWL_RABBITMQ_PASSWORD from existing .env"
   fi
   if [ -n "$PREV_RABBIT_PASS" ]; then
     RABBIT_PASS="$PREV_RABBIT_PASS"
@@ -1729,6 +1743,8 @@ RESEARCH_HEADLESS_RENDER_ENABLED=true
 # it ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â enable the strategy DB-level afterwards. See .env.example.
 CLAW_SCRAPER_PROFILES=
 FIRECRAWL_POSTGRES_PASSWORD=${FIRECRAWL_POSTGRES_PASSWORD}
+FIRECRAWL_REDIS_PASSWORD=${FIRECRAWL_REDIS_PASSWORD}
+FIRECRAWL_RABBITMQ_PASSWORD=${FIRECRAWL_RABBITMQ_PASSWORD}
 FIRECRAWL_BULL_AUTH_KEY=${FIRECRAWL_BULL_AUTH_KEY}
 # Crawl4AI sidecar Bearer token: makes it bind 0.0.0.0 and require auth.
 # Shared by the crawl4ai container and research-service. Secret.

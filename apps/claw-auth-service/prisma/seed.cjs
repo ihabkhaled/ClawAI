@@ -25,6 +25,7 @@ const planCallLimitsSeeder = require('./seeders/plan-call-limits.seeder.cjs');
 const creditPackageRepricingSeeder = require('./seeders/credit-package-repricing.seeder.cjs');
 const planQuarterlySemiannualPricingSeeder = require('./seeders/plan-quarterly-semiannual-pricing.seeder.cjs');
 const planIntervalDiscountsSeeder = require('./seeders/plan-interval-discounts.seeder.cjs');
+const abuseDefenseSeeder = require('./seeders/abuse-defense.seeder.cjs');
 
 const { assertAdminPassword } = require('./admin-password.cjs');
 
@@ -457,6 +458,10 @@ async function seed() {
   await runVersionedSeeder(prisma, planPaygPercentSeeder);
   await runVersionedSeeder(prisma, planCallLimitsSeeder);
   await runVersionedSeeder(prisma, creditPackageRepricingSeeder);
+
+  // 3e. Abuse auto-suspension settings (visible, editable rows) and the device marks of accounts
+  //     already banned for life (ADR-233). Creates only what is missing; edited values survive.
+  await runVersionedSeeder(prisma, abuseDefenseSeeder);
 
   const freePlanId = planBySlug['free'].id;
   const planless = await prisma.user.findMany({

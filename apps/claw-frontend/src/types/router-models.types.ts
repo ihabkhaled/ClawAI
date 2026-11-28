@@ -25,6 +25,10 @@ export type RouterModel = {
   modalitiesOut: ModalityKind[];
   contextWindowTokens: number | null;
   maxOutputTokens: number | null;
+  /** Total parameters in billions (0.5 = 500M, 1000 = 1T); null when the maker publishes none (ADR-234). */
+  parameterCountBillions: number | null;
+  /** Per-token share of a mixture-of-experts model, in billions. */
+  activeParameterCountBillions: number | null;
   domainTags: DomainTag[];
   notRecommendedFor: DomainTag[];
   inputCostPer1M: string | null;

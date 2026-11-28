@@ -1,0 +1,12 @@
+[Unit]
+Description=Refresh the verified-crawler IP ranges every night
+
+[Timer]
+# Every night, not weekly: a real crawler that moves to a new address range is refused (and its address banned
+# for a day) until the ranges catch up, and the refresh is one small download per source.
+OnCalendar=*-*-* 03:17:00
+RandomizedDelaySec=30min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

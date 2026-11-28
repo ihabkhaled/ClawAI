@@ -154,6 +154,7 @@ import type {
   MemorySuggestion,
   RejectSuggestionRequest,
 } from './memory.types';
+import type { ModelScaleText } from './model-scale.types';
 import type { NarrationEntry } from './narration.types';
 import type {
   ParallelModelResponse,
@@ -813,6 +814,8 @@ export type ModelSelection = {
   costClass?: CostClass;
   /** The free allowance does not cover it (it spends credit). A hint only: still selectable. */
   outsideAllowance?: boolean;
+  /** "1M context · 750B params" beside the name (ADR-234). Absent when nothing about its size is known. */
+  scale?: ModelScaleText;
 };
 
 // Normalized shape the shared searchable ModelPicker renders — every one of
@@ -836,6 +839,8 @@ export type ModelPickerOption = {
   costClass?: CostClass;
   /** Dimmed as a hint (spends credit); unlike isLocked it stays selectable. */
   outsideAllowance?: boolean;
+  /** "1M context · 750B params" beside the name (ADR-234). */
+  scale?: ModelScaleText;
 };
 
 export type ModelCostMarkProps = {

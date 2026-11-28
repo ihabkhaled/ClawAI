@@ -4,6 +4,7 @@ import { OllamaDiscoveryController } from './ollama-discovery.controller';
 import { OllamaInternalController } from './ollama-internal.controller';
 import { OllamaService } from './ollama.service';
 import { OllamaManager } from './managers/ollama.manager';
+import { OllamaContextWindowManager } from './managers/ollama-context-window.manager';
 import { CandidateImportManager } from './managers/candidate-import.manager';
 import { DiscoveryManager } from './managers/discovery.manager';
 import { ModelEnrichmentManager } from './managers/model-enrichment.manager';
@@ -37,6 +38,7 @@ import { HardwarePackService } from './services/hardware-pack.service';
     OllamaLibraryDiscoveryManager,
     PullJobResumeManager,
     RoutingSnapshotManager,
+    OllamaContextWindowManager,
     LocalModelsRepository,
     RoleAssignmentsRepository,
     PullJobsRepository,

@@ -2,6 +2,14 @@ export const HF_DEFAULT_SEARCH_LIMIT = 20;
 export const HF_REQUEST_TIMEOUT_MS = 15_000;
 export const HF_TRENDING_FILTER = 'gguf';
 
+// A HuggingFace import whose repo reports no GGUF context length is stored with this value,
+// because `contextLength` is not nullable. It is a placeholder, never a model's window: the
+// routing snapshot does not forward it (ADR-234).
+export const HF_IMPORT_PLACEHOLDER_CONTEXT_LENGTH = 32_768;
+
+// The license `createImported` writes on every HuggingFace import, whatever the repo says.
+export const HF_IMPORT_LICENSE = 'Unknown';
+
 // Quantizations we prefer when picking a recommended download file for a repo.
 // Q4_K_M strikes the canonical quality/size balance most workstations want.
 export const HF_QUANT_PRIORITY: readonly string[] = [

@@ -1,6 +1,14 @@
 import { type RouterModelRegistry as PrismaRouterModelRegistry } from '../../../generated/prisma';
 import { type RouterModelRegistryRecord } from '../types/router-model-registry.types';
 
+/// A Decimal(9,3) column as a plain number. Parameter counts are in billions
+/// with three decimals, so a double holds them exactly; unlike the cost columns
+/// the picker does arithmetic on them (scale, rank), so they cross the wire as
+/// numbers, not strings.
+function decimalToNumber(value: { toNumber: () => number } | null): number | null {
+  return value?.toNumber() ?? null;
+}
+
 export function mapPrismaToRecord(row: PrismaRouterModelRegistry): RouterModelRegistryRecord {
   return {
     id: row.id,
@@ -52,6 +60,8 @@ export function mapPrismaToRecord(row: PrismaRouterModelRegistry): RouterModelRe
     supportsLongContext: row.supportsLongContext,
     maxContextTokens: row.maxContextTokens,
     maxOutputTokensIntel: row.maxOutputTokensIntel,
+    parameterCountBillions: decimalToNumber(row.parameterCountBillions),
+    activeParameterCountBillions: decimalToNumber(row.activeParameterCountBillions),
     domainStrengths: row.domainStrengths,
     roleStrengths: row.roleStrengths,
     weakDomains: row.weakDomains,

@@ -1,0 +1,80 @@
+# ClawAI edge jails (rules/68, ADR-222, ADR-232). Install: /etc/fail2ban/jail.d/claw-nginx.local
+#
+# Web traffic reaches containers through FORWARD, so every ban goes into DOCKER-USER (an INPUT ban would not
+# stop it). The log is /var/log/claw-nginx/access.log, fed by claw-nginx-logtap.service (docker logs -f
+# claw-nginx); its lines are nginx's "combined" format plus ` crawler=<claimed> verdict=<verdict>`.
+#
+# bantime.increment: every repeat ban of the same address in the SAME jail is longer (multipliers below, capped
+# by bantime.maxtime). It needs fail2ban to remember bans for longer than a day: fail2ban.d/claw.local sets
+# dbpurgeage.
+[DEFAULT]
+ignoreip = 127.0.0.1/8 ::1 172.16.0.0/12
+
+# --- the three production jails (incident 2026-11-27) ---------------------------------------------------
+[claw-nginx-scan]
+enabled   = true
+filter    = claw-nginx-scan
+logpath   = /var/log/claw-nginx/access.log
+banaction = iptables-allports
+chain     = DOCKER-USER
+maxretry  = 2
+findtime  = 1h
+bantime   = 7d
+bantime.increment   = true
+bantime.multipliers = 1 2 4
+bantime.maxtime     = 30d
+
+[claw-nginx-flood]
+enabled   = true
+filter    = claw-nginx-flood
+logpath   = /var/log/claw-nginx/access.log
+banaction = iptables-allports
+chain     = DOCKER-USER
+maxretry  = 40
+findtime  = 5m
+bantime   = 1h
+bantime.increment   = true
+bantime.multipliers = 1 2 4 8 16
+bantime.maxtime     = 7d
+
+[claw-nginx-auth]
+enabled   = true
+filter    = claw-nginx-auth
+logpath   = /var/log/claw-nginx/access.log
+banaction = iptables-allports
+chain     = DOCKER-USER
+maxretry  = 25
+findtime  = 10m
+bantime   = 6h
+bantime.increment   = true
+bantime.multipliers = 1 2 4 8
+bantime.maxtime     = 7d
+
+# --- ADR-232: crawlers --------------------------------------------------------------------------------
+# A request that claims to be Googlebot, Bingbot, ... from an address outside that operator's published
+# ranges. nginx answered 403; one such request bans the address for a day (then 2 and 4 days).
+[claw-nginx-fakebot]
+enabled   = true
+filter    = claw-nginx-fakebot
+logpath   = /var/log/claw-nginx/access.log
+banaction = iptables-allports
+chain     = DOCKER-USER
+maxretry  = 1
+findtime  = 1h
+bantime   = 24h
+bantime.increment   = true
+bantime.multipliers = 1 2 4
+bantime.maxtime     = 7d
+
+# A VERIFIED crawler that ignores 429 and keeps going: a SHORT ban, never days (search traffic matters), and
+# deliberately no increment. The recidive jail does not count these bans either (filter claw-recidive).
+[claw-nginx-crawler-abuse]
+enabled   = true
+filter    = claw-nginx-crawler-abuse
+logpath   = /var/log/claw-nginx/access.log
+banaction = iptables-allports
+chain     = DOCKER-USER
+maxretry  = 60
+findtime  = 10m
+bantime   = 1h
+bantime.increment = false

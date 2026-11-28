@@ -11,6 +11,7 @@ import { LIVE_TRANSLATIONS } from './live-translations';
 import { MARKETING_VIDEOS_TRANSLATIONS } from './marketing-videos-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
+import { MODEL_SCALE_TRANSLATIONS } from './model-scale-translations';
 import { MODEL_VISIBILITY_TRANSLATIONS } from './model-visibility-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
@@ -291,6 +292,9 @@ export const fa: TranslationDictionary = {
     loginBannedPermanentDescription:
       'یک مدیر این حساب را برای همیشه مسدود کرده است. نمی‌توانید وارد شوید.',
     loginBannedGeneric: 'این حساب مسدود شده است.',
+    loginSuspendedAutoTitle: 'این حساب به‌طور موقت تعلیق شده است',
+    loginSuspendedAutoDescription:
+      'به دلیل فعالیت غیرعادی، این حساب را متوقف کردیم. پس از {date} می‌توانید دوباره وارد شوید. اگر فکر می‌کنید اشتباهی رخ داده است، با پشتیبانی تماس بگیرید.',
     loginSuspendedTitle: 'این حساب تعلیق شده است',
     loginSuspendedDescription:
       'گذرواژه شما درست بود، اما یکی از مدیران این حساب را غیرفعال کرده است. اگر فکر می‌کنید اشتباهی رخ داده، لطفاً با پشتیبانی تماس بگیرید.',
@@ -2428,6 +2432,8 @@ export const fa: TranslationDictionary = {
     banAction: 'مسدود کردن',
     unbanAction: 'رفع مسدودیت',
     bannedBadge: 'مسدود',
+    autoSuspendedBadge: 'تعلیق خودکار',
+    detailAutoSuspendedUntil: 'تعلیق خودکار تا {date}',
     banDialogTitle: 'مسدود کردن {username}',
     banDialogDescription: 'کاربر فوراً از همه‌جا خارج می‌شود و تا پایان مسدودیت نمی‌تواند وارد شود.',
     banUnit: 'واحد مدت',
@@ -4964,6 +4970,7 @@ export const fa: TranslationDictionary = {
   researchPlatforms: RESEARCH_PLATFORMS_TRANSLATIONS.fa,
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.fa,
   pickedModel: PICKED_MODEL_TRANSLATIONS.fa,
+  modelScale: MODEL_SCALE_TRANSLATIONS.fa,
   creditFallback: CREDIT_FALLBACK_TRANSLATIONS.fa,
   live: LIVE_TRANSLATIONS.fa,
   mediaUi: MEDIA_UI_TRANSLATIONS.fa,

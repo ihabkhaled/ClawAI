@@ -196,11 +196,6 @@ describe('AuthRepository', () => {
     expect(prismaMock.session.delete).toHaveBeenCalledWith({ where: { id: 's1' } });
   });
 
-  it('deleteSessionsByUserId uses prisma deleteMany by userId', async () => {
-    await repository.deleteSessionsByUserId('u1');
-    expect(prismaMock.session.deleteMany).toHaveBeenCalledWith({ where: { userId: 'u1' } });
-  });
-
   it('deleteExpiredSessions deletes by expiresAt < now and returns count', async () => {
     const result = await repository.deleteExpiredSessions();
     expect(result).toBe(3);

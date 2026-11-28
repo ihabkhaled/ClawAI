@@ -46,9 +46,25 @@ export function ParallelModelRowView({
         >
           {isChecked ? <Check className="h-3 w-3" /> : null}
         </span>
-        <span className="truncate-fixed min-w-[4rem] flex-1 text-start">
+        <span
+          className={cn(
+            'truncate-fixed min-w-[4rem] text-start',
+            row.model.scale === undefined && 'flex-1',
+          )}
+        >
           {row.model.displayName}
         </span>
+        {/* The desktop Compare column is ~260px: the size is the part that clips first. */}
+        {row.model.scale !== undefined ? (
+          <span
+            title={row.model.scale.title}
+            data-testid="model-scale"
+            dir="auto"
+            className="text-muted-foreground truncate-fixed touch:text-xs min-w-0 flex-1 text-end text-[11px] leading-none"
+          >
+            {row.model.scale.label}
+          </span>
+        ) : null}
         {row.model.costClass !== undefined ? (
           <ModelCostMark
             costClass={row.model.costClass}

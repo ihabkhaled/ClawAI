@@ -2,6 +2,7 @@ import { DataTable } from '@/components/common/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { LIFECYCLE_LABELS, providerDisplayName } from '@/constants';
+import { useModelScaleFormatter } from '@/hooks/chat/use-model-scale-formatter';
 import { useTranslation } from '@/lib/i18n';
 import type { ConnectorModel, DataTableColumn, ModelTableProps } from '@/types';
 import { formatContextTokens, getLifecycleBadgeVariant } from '@/utilities';
@@ -14,6 +15,7 @@ export function ModelTable({
   onToggleCompare,
 }: ModelTableProps) {
   const { t } = useTranslation();
+  const { parameterLabel, parametersHeading } = useModelScaleFormatter();
   const isCompareMode = compareSelection !== undefined && onToggleCompare !== undefined;
   const columns: DataTableColumn<ConnectorModel>[] = [];
 
@@ -95,6 +97,16 @@ export function ModelTable({
       render: (model) => (
         <span className="text-muted-foreground text-sm">
           {formatContextTokens(model.maxContextTokens)}
+        </span>
+      ),
+    },
+    {
+      key: 'parameters',
+      header: parametersHeading,
+      className: 'text-end',
+      render: (model) => (
+        <span className="text-muted-foreground text-sm">
+          {parameterLabel(model.provider, model.modelKey) ?? '-'}
         </span>
       ),
     },

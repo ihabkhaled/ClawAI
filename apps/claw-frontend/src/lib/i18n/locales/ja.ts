@@ -11,6 +11,7 @@ import { LIVE_TRANSLATIONS } from './live-translations';
 import { MARKETING_VIDEOS_TRANSLATIONS } from './marketing-videos-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
+import { MODEL_SCALE_TRANSLATIONS } from './model-scale-translations';
 import { MODEL_VISIBILITY_TRANSLATIONS } from './model-visibility-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
@@ -291,6 +292,9 @@ export const ja: TranslationDictionary = {
     loginBannedPermanentDescription:
       '管理者がこのアカウントを無期限で利用停止にしました。ログインできません。',
     loginBannedGeneric: 'このアカウントは利用停止されています。',
+    loginSuspendedAutoTitle: 'このアカウントは一時的に停止されています',
+    loginSuspendedAutoDescription:
+      '通常と異なる動きが見られたため、このアカウントを一時停止しました。{date} 以降に再度ログインできます。誤りだと思われる場合はサポートまでご連絡ください。',
     loginSuspendedTitle: 'このアカウントは停止されています',
     loginSuspendedDescription:
       'パスワードは正しく入力されていますが、管理者によってこのアカウントは無効化されております。お心当たりがない場合は、サポートまでご連絡ください。',
@@ -2428,6 +2432,8 @@ export const ja: TranslationDictionary = {
     banAction: '利用停止',
     unbanAction: '停止を解除',
     bannedBadge: '停止中',
+    autoSuspendedBadge: '自動停止中',
+    detailAutoSuspendedUntil: '{date} まで自動停止',
     banDialogTitle: '{username} を利用停止にする',
     banDialogDescription:
       'ユーザーはすべての場所で直ちにログアウトされ、停止期間が終わるまでログインできません。',
@@ -4971,6 +4977,7 @@ export const ja: TranslationDictionary = {
   researchPlatforms: RESEARCH_PLATFORMS_TRANSLATIONS.ja,
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.ja,
   pickedModel: PICKED_MODEL_TRANSLATIONS.ja,
+  modelScale: MODEL_SCALE_TRANSLATIONS.ja,
   creditFallback: CREDIT_FALLBACK_TRANSLATIONS.ja,
   live: LIVE_TRANSLATIONS.ja,
   mediaUi: MEDIA_UI_TRANSLATIONS.ja,

@@ -196,6 +196,48 @@ export const GATES = [
     human: 'a secret must be rotated and removed by a person; it is never auto-redacted',
   },
   {
+    id: 'pre-push-security',
+    what: 'gitleaks over the commits being pushed, npm audit over every dependency (high/critical, reviewed allowlist) and workflow actions pinned to commit SHAs; never skipped by a receipt (rules/69)',
+    ci: [],
+    local: { point: 'pre-push', via: 'tools/gates/pre-push.mjs', invokes: 'runPrePushSecurity' },
+    failable: 'external-state',
+    autofix: { kind: 'none', how: '' },
+    human:
+      'a leaked secret is rotated and removed by a person, an advisory is patched (npm run security:fix) or reviewed into the allowlist with an expiry; nothing is auto-redacted',
+  },
+  {
+    id: 'osv-scan',
+    what: 'OSV-Scanner over package-lock.json (pinned release, pinned checksum): known vulnerabilities from the OSV database, development tools included',
+    ci: [{ workflow: CI, job: 'osv-scan' }],
+    advisory: true,
+    local: {
+      point: 'ci-only',
+      reason:
+        'osv-scanner is a Go binary that developer machines do not carry; npm run security:check runs it when it is installed (OSV_SCANNER_BIN)',
+    },
+    failable: 'external-state',
+    autofix: { kind: 'none', how: '' },
+    human:
+      'a new advisory needs a patched release (npm run security:fix for production) or a reviewed exception with an expiry',
+  },
+  {
+    id: 'security-scan-weekly',
+    what: 'weekly and on-demand whole-history gitleaks scan, npm audit over every dependency at moderate and above, and OSV-Scanner: what a push-triggered run cannot see',
+    ci: [
+      { workflow: 'security-scan.yml', job: 'gitleaks-history' },
+      { workflow: 'security-scan.yml', job: 'dependencies' },
+    ],
+    local: {
+      point: 'ci-only',
+      reason:
+        'the history and the advisory databases change without a commit; npm run security:check -- --history --level=moderate runs the same scans on demand',
+    },
+    failable: 'external-state',
+    autofix: { kind: 'none', how: '' },
+    human:
+      'a finding is a security decision: rotate and remove a secret, patch or review an advisory (rules/69)',
+  },
+  {
     id: 'codeql',
     what: 'CodeQL javascript-typescript, fail on any finding not accepted in codeql-accepted.json',
     ci: [{ workflow: CI, job: 'codeql' }],

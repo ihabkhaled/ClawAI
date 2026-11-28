@@ -1,3 +1,4 @@
+import { recordGet } from '../../../common/utilities/record-lookup.utility';
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import { EventPattern } from '@claw/shared-types';
 import { RabbitMQService } from '@claw/shared-rabbitmq';
@@ -11,7 +12,10 @@ import {
   type RouterAdminOverrideRecord,
   type RouterModelRegistryRecord,
 } from '../types/router-model-registry.types';
-import { dtoToUpdateInput } from '../utilities/dto-to-update-input.utility';
+import {
+  dtoToParameterCountColumns,
+  dtoToUpdateInput,
+} from '../utilities/dto-to-update-input.utility';
 
 @Injectable()
 export class RouterModelRegistryManager {
@@ -59,7 +63,7 @@ export class RouterModelRegistryManager {
   ): Promise<void> {
     const dtoMap = dto as Record<string, unknown>;
     for (const fieldName of OVERRIDE_MANAGED_FIELDS) {
-      const value = dtoMap[fieldName];
+      const value = recordGet(dtoMap, fieldName);
       if (value === undefined) continue;
       await this.overrideRepo.upsertOverride({
         profileId,
@@ -126,6 +130,7 @@ export class RouterModelRegistryManager {
       modalitiesOut: dto.modalitiesOut,
       contextWindowTokens: dto.contextWindowTokens ?? null,
       maxOutputTokens: dto.maxOutputTokens ?? null,
+      ...dtoToParameterCountColumns(dto),
       domainTags: dto.domainTags,
       notRecommendedFor: dto.notRecommendedFor,
       inputCostPer1M: dto.inputCostPer1M ?? null,

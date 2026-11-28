@@ -11,6 +11,7 @@ import { LIVE_TRANSLATIONS } from './live-translations';
 import { MARKETING_VIDEOS_TRANSLATIONS } from './marketing-videos-translations';
 import { MEDIA_UI_TRANSLATIONS } from './media-ui-translations';
 import { MODEL_EXPOSURE_UI_TRANSLATIONS } from './model-exposure-ui-translations';
+import { MODEL_SCALE_TRANSLATIONS } from './model-scale-translations';
 import { MODEL_VISIBILITY_TRANSLATIONS } from './model-visibility-translations';
 import { NARRATION_TRANSLATIONS } from './narration-translations';
 import { NOTIFICATIONS_TRANSLATIONS } from './notifications-translations';
@@ -291,6 +292,9 @@ export const en: TranslationDictionary = {
     loginBannedPermanentDescription:
       'An administrator banned this account permanently. You cannot sign in.',
     loginBannedGeneric: 'This account is banned.',
+    loginSuspendedAutoTitle: 'This account is temporarily suspended',
+    loginSuspendedAutoDescription:
+      'We paused this account because of unusual activity. You can sign in again after {date}. If you think this is a mistake, contact support.',
     loginSuspendedTitle: 'This account has been suspended',
     loginSuspendedDescription:
       'Your password was correct, but an administrator has disabled this account. Please contact support if you believe this is a mistake.',
@@ -2417,6 +2421,8 @@ export const en: TranslationDictionary = {
     banAction: 'Ban',
     unbanAction: 'Unban',
     bannedBadge: 'Banned',
+    autoSuspendedBadge: 'Auto-suspended',
+    detailAutoSuspendedUntil: 'Suspended automatically until {date}',
     banDialogTitle: 'Ban {username}',
     banDialogDescription:
       'The user is signed out everywhere at once and cannot sign in until the ban ends.',
@@ -4931,6 +4937,7 @@ export const en: TranslationDictionary = {
   researchPlatforms: RESEARCH_PLATFORMS_TRANSLATIONS.en,
   threadTranslation: THREAD_TRANSLATION_TRANSLATIONS.en,
   pickedModel: PICKED_MODEL_TRANSLATIONS.en,
+  modelScale: MODEL_SCALE_TRANSLATIONS.en,
   creditFallback: CREDIT_FALLBACK_TRANSLATIONS.en,
   live: LIVE_TRANSLATIONS.en,
   mediaUi: MEDIA_UI_TRANSLATIONS.en,

@@ -1376,3 +1376,16 @@ export type {
   ModelAccessRequestEntry,
   ModelCostInfo,
 } from './model-access.types';
+export type {
+  ModelScale,
+  ModelScaleLineProps,
+  ModelScaleLocaleTranslation,
+  ModelScaleSources,
+  ModelScaleText,
+  ModelSizeCatalogResponse,
+  ModelSizeEntry,
+  ModelSizeLookup,
+  ParsedParameterCount,
+  UseModelScaleFormatterResult,
+  UseModelSizesResult,
+} from './model-scale.types';

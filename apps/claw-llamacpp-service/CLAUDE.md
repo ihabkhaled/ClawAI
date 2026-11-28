@@ -159,3 +159,13 @@ Full architecture:
 `import packageJson from '../../../../package.json' with { type: 'json' }`. Node's ESM loader refuses a JSON module
 without the attribute (`ERR_IMPORT_ATTRIBUTE_MISSING`), which crash-looped this service on Node 26 while the dev
 container still reported "starting". Never go back to a named import from `package.json`.
+
+## Routing snapshot sizes (ADR-234, 2026-11-28)
+
+`GET /internal/llamacpp/loaded-snapshot` forwards `parameterCount` (the catalog string) and `contextWindowTokens`.
+`CatalogEntry.contextLength` is NOT nullable, so a HuggingFace import with no GGUF metadata stores
+`HF_IMPORT_PLACEHOLDER_CONTEXT_LENGTH` (32,768), which is not a window. Imports now read the real one
+(`HfDiscoveryManager.getDetails` -> `GET /api/models/<repo>?expand[]=gguf` -> `gguf.context_length`, `parseGgufContextLength`),
+and `forwardableContextWindow` never lets the snapshot carry a placeholder (license `HF_IMPORT_LICENSE` + the placeholder
+value) or a non-positive window. Keep both import sites (`CatalogService.addFromHuggingFace`, `HfAutoSyncManager`) on
+`details.ggufContextLength ?? HF_IMPORT_PLACEHOLDER_CONTEXT_LENGTH`.

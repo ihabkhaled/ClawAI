@@ -78,6 +78,8 @@ export type RoutingSnapshotEntry = {
   modalitiesIn: string[];
   modalitiesOut: string[];
   contextWindowTokens?: number;
+  /// The size Ollama reports for the installed file ("7.6B"). routing-service parses it (ADR-234).
+  parameterCount?: string;
 };
 
 export type RoutingSnapshotResponse = {

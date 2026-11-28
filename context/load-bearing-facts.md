@@ -57,6 +57,10 @@ home; this page only collects them. Routed from [`AGENTS.md`](../AGENTS.md).
   the compose files and is dropped in `DOCKER-USER` by `claw-docker-firewall.service`; fail2ban bans also go into
   `DOCKER-USER` (`chain = DOCKER-USER`), or they would not stop web traffic
   ([rules/68](../rules/68-internal-surfaces-stay-internal.md), incident 2026-11-27).
+- **A crawler is proven by its address, never by its User-Agent.** nginx logs `crawler=<claimed> verdict=<none|verified|fake|unchecked>` on
+  every request from the operators' published IP ranges (`infra/nginx/verified-crawlers/ranges.conf`, generated); a fake gets 403 and a
+  one-day fail2ban ban, a verified crawler is only ever banned for an hour, and Yandex/Baidu (reverse DNS only) are ordinary visitors
+  ([ADR-232](../docs/13-adr/adr-232-verified-crawlers-and-edge-rate-limits.md)).
 - **Per-address limits do not stop a sign-up farm on rotating residential addresses.** The proof-of-work /
   Turnstile / reCAPTCHA checks, the disposable-email block, the device-fingerprint trial rule and the platform-wide
   velocity limit do ([ADR-222](../docs/13-adr/adr-222-sign-up-abuse-defences-and-internal-surfaces.md)).
@@ -67,3 +71,7 @@ home; this page only collects them. Routed from [`AGENTS.md`](../AGENTS.md).
 - **Never split context text on `[^a-z0-9]`.** It deletes every non-Latin word: memories, older turns and other chats
   written in Arabic silently never matched. Use `context-tokens.utility.ts` (chat and memory services). And no filter
   stands between a saved memory and the model ([ADR-226](../docs/13-adr/adr-226-every-turn-sees-the-users-whole-context.md)).
+- **A local gitleaks older than 8.25.1 reports test fixtures as secrets, and `gitleaks dir .` scans caches.** Older
+  binaries ignore the `[[allowlists]]` blocks of `.gitleaks.toml` (CI pins 8.30.1), and a scan of the directory walks
+  node_modules and nested worktrees. `npm run security:check` scans only the files git knows and marks an old gitleaks
+  SKIPPED, never PASS ([rules/69](../rules/69-security-pass-on-every-change.md)).
