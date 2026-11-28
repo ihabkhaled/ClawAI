@@ -807,7 +807,9 @@ admin route, and the token and session audit table).
   replayed refresh token) and `BANNED_DEVICE_SIGNIN` are UNCOUNTED: stored and flagged for an administrator, never
   suspending. Do not make either count. Do not add a signal that an attacker can cause against someone else.
 - **The suspension IS the ban.** `AbuseSuspensionRepository.apply` writes `users.banned_*` (`ban_reason =
-'AUTO_ABUSE:<code>'`, `banned_by_user_id = NULL`) and the `abuse_suspensions` audit row in ONE transaction. The ladder
+'AUTO_ABUSE:<code>'`, `banned_by_user_id = NULL`) and the `abuse_suspensions` audit row in ONE transaction, and only
+  while the account has no live ban (`updateMany` with that condition): an admin ban set after the check is never
+  downgraded, and `apply` returns null (`ALREADY_BLOCKED`). The ladder
   is 1 h, 24 h, 7 d (settings, never permanent), skips administrators and the super administrator, closes every session
   and publishes the ids. Lifting is the existing `POST /users/:id/unban`; do not add a second lift control.
 - **`AbuseSignalService.record` never throws.** It runs inside the exception filter and the sign-in paths. Redis down

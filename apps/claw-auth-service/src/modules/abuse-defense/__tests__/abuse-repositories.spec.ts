@@ -11,32 +11,39 @@ import { BannedDeviceRepository } from '../repositories/banned-device.repository
 const NOW = new Date('2026-11-28T10:00:00.000Z');
 
 describe('AbuseSuspensionRepository', () => {
-  it('writes the ban columns and the audit row in ONE transaction, with no admin actor', async () => {
-    const userUpdate = vi.fn().mockReturnValue('user-op');
-    const create = vi.fn().mockReturnValue('audit-op');
-    const transaction = vi.fn().mockResolvedValue([{}, { id: 'suspension-1' }]);
+  const endsAt = new Date(NOW.getTime() + 3_600_000);
+  const applyInput = {
+    userId: 'user-1',
+    level: 1,
+    reasonCode: AbuseSignalCode.RATE_LIMIT_TRIPPED,
+    evidence: { [AbuseSignalCode.RATE_LIMIT_TRIPPED]: 312 },
+    startedAt: NOW,
+    endsAt,
+    banReason: 'AUTO_ABUSE:RATE_LIMIT_TRIPPED',
+  };
+
+  /** A repository whose interactive transaction runs the callback against `tx`. */
+  function repositoryWith(updatedCount: number): {
+    repository: AbuseSuspensionRepository;
+    updateMany: ReturnType<typeof vi.fn>;
+    create: ReturnType<typeof vi.fn>;
+  } {
+    const updateMany = vi.fn().mockResolvedValue({ count: updatedCount });
+    const create = vi.fn().mockResolvedValue({ id: 'suspension-1' });
+    const tx = { user: { updateMany }, abuseSuspension: { create } };
     const repository = new AbuseSuspensionRepository({
-      user: { update: userUpdate },
-      abuseSuspension: { create },
-      $transaction: transaction,
+      $transaction: vi.fn((work: (client: typeof tx) => Promise<unknown>) => work(tx)),
     } as unknown as PrismaService);
-    const endsAt = new Date(NOW.getTime() + 3_600_000);
+    return { repository, updateMany, create };
+  }
 
-    await expect(
-      repository.apply({
-        userId: 'user-1',
-        level: 1,
-        reasonCode: AbuseSignalCode.RATE_LIMIT_TRIPPED,
-        evidence: { [AbuseSignalCode.RATE_LIMIT_TRIPPED]: 312 },
-        startedAt: NOW,
-        endsAt,
-        banReason: 'AUTO_ABUSE:RATE_LIMIT_TRIPPED',
-      }),
-    ).resolves.toEqual({ id: 'suspension-1' });
+  it('writes the ban columns and the audit row in ONE transaction, with no admin actor', async () => {
+    const { repository, updateMany, create } = repositoryWith(1);
 
-    expect(transaction).toHaveBeenCalledWith(['user-op', 'audit-op']);
-    expect(userUpdate).toHaveBeenCalledWith({
-      where: { id: 'user-1' },
+    await expect(repository.apply(applyInput)).resolves.toEqual({ id: 'suspension-1' });
+
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { id: 'user-1', OR: [{ bannedAt: null }, { bannedUntil: { lte: NOW } }] },
       data: {
         bannedAt: NOW,
         bannedUntil: endsAt,
@@ -47,6 +54,13 @@ describe('AbuseSuspensionRepository', () => {
     expect(create).toHaveBeenCalledWith({
       data: expect.objectContaining({ userId: 'user-1', level: 1, startedAt: NOW, endsAt }),
     });
+  });
+
+  it('never downgrades a ban set after the caller checked (lifetime or longer admin ban)', async () => {
+    const { repository, create } = repositoryWith(0);
+
+    await expect(repository.apply(applyInput)).resolves.toBeNull();
+    expect(create).not.toHaveBeenCalled();
   });
 
   it('counts only suspensions inside the window that nobody lifted', async () => {

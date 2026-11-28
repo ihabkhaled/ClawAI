@@ -15,18 +15,29 @@ export class AbuseSuspensionRepository {
    * stays null: the system acted, and that null is how the ban gate and the admin list tell an
    * automatic suspension from an administrator's ban.
    */
-  async apply(input: ApplySuspensionInput): Promise<AbuseSuspensionRow> {
-    const [, suspension] = await this.prisma.$transaction([
-      this.prisma.user.update({
-        where: { id: input.userId },
+  /**
+   * Suspends the account ONLY while it carries no live ban, in one transaction. The condition is
+   * part of the write, so a ban an admin set after the caller's check (lifetime, or longer) is never
+   * downgraded to this timed one. Returns null when the account was already banned.
+   */
+  async apply(input: ApplySuspensionInput): Promise<AbuseSuspensionRow | null> {
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.user.updateMany({
+        where: {
+          id: input.userId,
+          OR: [{ bannedAt: null }, { bannedUntil: { lte: input.startedAt } }],
+        },
         data: {
           bannedAt: input.startedAt,
           bannedUntil: input.endsAt,
           banReason: input.banReason,
           bannedByUserId: null,
         },
-      }),
-      this.prisma.abuseSuspension.create({
+      });
+      if (updated.count !== 1) {
+        return null;
+      }
+      return tx.abuseSuspension.create({
         data: {
           userId: input.userId,
           level: input.level,
@@ -35,9 +46,8 @@ export class AbuseSuspensionRepository {
           startedAt: input.startedAt,
           endsAt: input.endsAt,
         },
-      }),
-    ]);
-    return suspension;
+      });
+    });
   }
 
   /** Suspensions that still count towards the next rung: started inside the window and not lifted. */

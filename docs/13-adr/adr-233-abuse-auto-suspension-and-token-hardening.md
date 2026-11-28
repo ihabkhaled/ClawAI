@@ -138,6 +138,9 @@ address only).
 - A user whose own token trips a threshold is signed out of every device and refused for the rung's duration, with a
   clear message. At the defaults a normal heavy user never gets near it. A stolen access token used to flood would
   suspend its owner for rung 1 and close that session, which is the right containment; the administrator can lift it.
+- The ban write is conditional (security review, 2026-11-28): it applies only while the account has no live ban, in the
+  same transaction as the audit row. An admin ban (lifetime, or longer) set between the check and the write is kept, the
+  suspension is reported `ALREADY_BLOCKED`, and nothing is downgraded.
 - Detection needs Redis (counters fail open: no counting, no suspension, the request is unaffected). Signals are
   stored at most once a minute per (account, code), so a flood costs a row a minute, not a row a request.
 - `abuse_signals` has no retention job yet (bounded growth: one row a minute per active flood).

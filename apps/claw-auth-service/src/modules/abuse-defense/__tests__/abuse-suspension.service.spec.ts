@@ -183,6 +183,14 @@ describe('AbuseSuspensionService', () => {
       });
     });
 
+    it('an account banned between the check and the write keeps that ban and its sessions', async () => {
+      apply.mockResolvedValue(null);
+      await expect(service.suspend(REQUEST, SETTINGS, NOW)).resolves.toEqual({
+        outcome: AbuseSignalOutcome.ALREADY_BLOCKED,
+      });
+      expect(revokeSessionsReturningIds).not.toHaveBeenCalled();
+    });
+
     it('an account that is already banned or suspended (one block at a time)', async () => {
       user = { ...ACTIVE_USER, bannedAt: new Date(NOW.getTime() - HOUR), bannedUntil: null };
       await expect(service.suspend(REQUEST, SETTINGS, NOW)).resolves.toEqual({

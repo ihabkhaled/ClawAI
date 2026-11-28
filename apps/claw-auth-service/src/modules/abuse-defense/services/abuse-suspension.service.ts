@@ -66,7 +66,7 @@ export class AbuseSuspensionService {
     const level = suspensionLevelFor(await this.suspensions.countLiveSince(user.id, since));
     const endsAt = new Date(now.getTime() + suspensionDurationMs(level, settings));
 
-    await this.suspensions.apply({
+    const applied = await this.suspensions.apply({
       userId: user.id,
       level,
       reasonCode: request.code,
@@ -75,15 +75,11 @@ export class AbuseSuspensionService {
       endsAt,
       banReason: autoSuspensionReason(request.code),
     });
-    // The block alone is not enough: every open login is closed, and the ids are published so each
-    // service refuses the still-unexpired access tokens now, not at their expiry (ADR-112).
-    const closed = await this.users.revokeSessionsReturningIds(
-      user.id,
-      SessionTerminationReason.ACCOUNT_BANNED,
-      now,
-    );
-    await this.revocationCache.revoke(closed);
-
+    if (applied === null) {
+      // Banned between the check above and the write (an admin, or a parallel replica): keep that ban.
+      return { outcome: AbuseSignalOutcome.ALREADY_BLOCKED };
+    }
+    await this.closeAccess(user.id, now);
     this.audit.suspended({
       userId: user.id,
       level,
@@ -96,6 +92,19 @@ export class AbuseSuspensionService {
       `suspend: user ${user.id} suspended level=${String(level)} until ${endsAt.toISOString()}`,
     );
     return { outcome: AbuseSignalOutcome.SUSPENDED, level, endsAt };
+  }
+
+  /**
+   * The block alone is not enough: every open login is closed, and the ids are published so each
+   * service refuses the still-unexpired access tokens now, not at their expiry (ADR-112).
+   */
+  private async closeAccess(userId: string, now: Date): Promise<void> {
+    const closed = await this.users.revokeSessionsReturningIds(
+      userId,
+      SessionTerminationReason.ACCOUNT_BANNED,
+      now,
+    );
+    await this.revocationCache.revoke(closed);
   }
 
   /**
