@@ -6,6 +6,7 @@ import { BusinessException } from '../../../../common/errors';
 import { AuthRateLimitPolicy } from '../../enums/auth-rate-limit-policy.enum';
 import type { AuthRateLimitService } from '../../services/auth-rate-limit.service';
 import type { AuthRateLimitDecision } from '../../types/auth-rate-limit.types';
+import { AuthRateLimitUnavailableError } from '../../errors/auth-rate-limit-unavailable.error';
 import { AuthRateLimitGuard } from '../auth-rate-limit.guard';
 import { AuthRateLimit } from '../../decorators/auth-rate-limit.decorator';
 
@@ -16,13 +17,16 @@ class Routes {
   open(): void {}
 }
 
-function build(decision: AuthRateLimitDecision): {
+function build(decision: AuthRateLimitDecision | Error): {
   guard: AuthRateLimitGuard;
   consume: ReturnType<typeof vi.fn>;
   setHeader: ReturnType<typeof vi.fn>;
   context: (handler: () => void) => ExecutionContext;
 } {
-  const consume = vi.fn().mockResolvedValue(decision);
+  const consume =
+    decision instanceof Error
+      ? vi.fn().mockRejectedValue(decision)
+      : vi.fn().mockResolvedValue(decision);
   const setHeader = vi.fn();
   const service: Pick<AuthRateLimitService, 'consume'> = { consume };
   const guard = new AuthRateLimitGuard(new Reflector(), service as AuthRateLimitService);
@@ -85,5 +89,25 @@ describe('AuthRateLimitGuard', () => {
       .catch((e: unknown) => e)) as BusinessException;
 
     expect(JSON.stringify(error.getResponse())).not.toMatch(/ada|203\.0\.113\.7/iu);
+  });
+
+  it('refuses with 503, AUTH_RATE_LIMITER_UNAVAILABLE and Retry-After 30 when the limiter is unavailable', async () => {
+    const { guard, setHeader, context } = build(new AuthRateLimitUnavailableError());
+
+    const error = (await guard
+      .canActivate(context(routes.login))
+      .catch((e: unknown) => e)) as BusinessException;
+
+    expect(error).toBeInstanceOf(BusinessException);
+    expect(error.getStatus()).toBe(HttpStatus.SERVICE_UNAVAILABLE);
+    expect(error.code).toBe('AUTH_RATE_LIMITER_UNAVAILABLE');
+    expect(setHeader).toHaveBeenCalledWith('Retry-After', '30');
+    expect(JSON.stringify(error.getResponse())).not.toMatch(/ada|203\.0\.113\.7/iu);
+  });
+
+  it('does not turn an unrelated failure into a 503', async () => {
+    const { guard, context } = build(new Error('boom'));
+
+    await expect(guard.canActivate(context(routes.login))).rejects.toThrow('boom');
   });
 });

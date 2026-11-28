@@ -57,6 +57,28 @@ export class RedisService implements OnModuleDestroy {
     return { count: 1, ttlSeconds };
   }
 
+  /**
+   * Same window as {@link incrWithTtl}, for the security limiters that fail
+   * CLOSED (rules/58 item 7): a malformed reply throws instead of becoming a
+   * fresh window, so the caller can refuse the request.
+   */
+  async incrWithTtlStrict(key: string, ttlSeconds: number): Promise<FixedWindowHit> {
+    const reply: unknown = await this.client.eval(
+      REDIS_FIXED_WINDOW_SCRIPT,
+      1,
+      key,
+      String(ttlSeconds),
+    );
+    if (Array.isArray(reply)) {
+      const values: unknown[] = reply;
+      const [count, ttl] = values;
+      if (typeof count === 'number' && typeof ttl === 'number') {
+        return { count, ttlSeconds: ttl > 0 ? ttl : ttlSeconds };
+      }
+    }
+    throw new Error('malformed fixed-window reply');
+  }
+
   async rpush(key: string, ...values: string[]): Promise<number> {
     return this.client.rpush(key, ...values);
   }

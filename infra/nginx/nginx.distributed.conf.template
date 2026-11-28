@@ -94,6 +94,9 @@ http {
     limit_req_zone $auth_post_key zone=auth_login:10m rate=12r/m;
     limit_req_zone $auth_post_key zone=auth_bot_check:10m rate=20r/m;
     limit_req_zone $auth_post_key zone=client_logs:10m rate=60r/m;
+    # Per-address brake for the whole /api/v1/agent surface (owner decision 2026-11-28, ADR-230).
+    # Generous on purpose: signed-in extensions poll; it only stops a flood from one address.
+    limit_req_zone $binary_remote_addr zone=agent_api:10m rate=300r/m;
     limit_conn_zone $binary_remote_addr zone=per_ip_conn:10m;
     limit_conn_status 429;
     limit_conn per_ip_conn 100;
@@ -755,6 +758,7 @@ http {
         location /api/v1/agent {
             set $backend https://$origin_agent;
             proxy_pass $backend;
+            limit_req zone=agent_api burst=100 nodelay;
         }
 
         # Device sign-in: coarse POST brake (rules/58).

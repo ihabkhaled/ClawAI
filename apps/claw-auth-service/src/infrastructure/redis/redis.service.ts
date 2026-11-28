@@ -130,6 +130,28 @@ export class RedisService implements OnModuleDestroy {
     return { count: 1, ttlSeconds: windowSeconds };
   }
 
+  /**
+   * Same window as {@link incrementWindow}, for the security limiters that fail
+   * CLOSED (rules/58 item 7): a malformed reply throws instead of becoming a
+   * fresh window, so the caller can refuse the request.
+   */
+  async incrementWindowStrict(key: string, windowSeconds: number): Promise<FixedWindowHit> {
+    const reply: unknown = await this.client.eval(
+      REDIS_FIXED_WINDOW_SCRIPT,
+      1,
+      key,
+      String(windowSeconds),
+    );
+    if (Array.isArray(reply)) {
+      const values: unknown[] = reply;
+      const [count, ttl] = values;
+      if (typeof count === 'number' && typeof ttl === 'number') {
+        return { count, ttlSeconds: ttl > 0 ? ttl : windowSeconds };
+      }
+    }
+    throw new Error('malformed fixed-window reply');
+  }
+
   /** Takes one hit back off a fixed-window counter, never below zero. */
   async refundWindow(key: string): Promise<number> {
     const reply: unknown = await this.client.eval(REDIS_REFUND_WINDOW_SCRIPT, 1, key);

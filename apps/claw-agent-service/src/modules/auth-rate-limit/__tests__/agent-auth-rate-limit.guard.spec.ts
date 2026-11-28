@@ -9,6 +9,7 @@ import { SamlController } from '../../fleet/controllers/saml.controller';
 import { AGENT_AUTH_RATE_LIMIT_METADATA_KEY } from '../constants/agent-auth-rate-limit.constants';
 import { AgentAuthRateLimit } from '../decorators/agent-auth-rate-limit.decorator';
 import { AgentAuthRateLimitPolicy } from '../enums/agent-auth-rate-limit-policy.enum';
+import { AgentAuthRateLimitUnavailableError } from '../errors/agent-auth-rate-limit-unavailable.error';
 import { AgentAuthRateLimitGuard } from '../guards/agent-auth-rate-limit.guard';
 import type { AgentAuthRateLimitService } from '../services/agent-auth-rate-limit.service';
 import type { AgentAuthRateLimitDecision } from '../types/agent-auth-rate-limit.types';
@@ -20,13 +21,16 @@ class Routes {
   open(): void {}
 }
 
-function build(decision: AgentAuthRateLimitDecision): {
+function build(decision: AgentAuthRateLimitDecision | Error): {
   guard: AgentAuthRateLimitGuard;
   consume: ReturnType<typeof vi.fn>;
   setHeader: ReturnType<typeof vi.fn>;
   context: (handler: () => void) => ExecutionContext;
 } {
-  const consume = vi.fn().mockResolvedValue(decision);
+  const consume =
+    decision instanceof Error
+      ? vi.fn().mockRejectedValue(decision)
+      : vi.fn().mockResolvedValue(decision);
   const setHeader = vi.fn();
   const service: Pick<AgentAuthRateLimitService, 'consume'> = { consume };
   const guard = new AgentAuthRateLimitGuard(new Reflector(), service as AgentAuthRateLimitService);
@@ -77,6 +81,26 @@ describe('AgentAuthRateLimitGuard', () => {
     expect(error.getStatus()).toBe(HttpStatus.TOO_MANY_REQUESTS);
     expect(error.code).toBe('RATE_LIMITED');
     expect(setHeader).toHaveBeenCalledWith('Retry-After', '1');
+  });
+
+  it('refuses with 503, AUTH_RATE_LIMITER_UNAVAILABLE and Retry-After 30 when the limiter is unavailable', async () => {
+    const { guard, setHeader, context } = build(new AgentAuthRateLimitUnavailableError());
+
+    const error = (await guard
+      .canActivate(context(routes.poll))
+      .catch((e: unknown) => e)) as BusinessException;
+
+    expect(error).toBeInstanceOf(BusinessException);
+    expect(error.getStatus()).toBe(HttpStatus.SERVICE_UNAVAILABLE);
+    expect(error.code).toBe('AUTH_RATE_LIMITER_UNAVAILABLE');
+    expect(setHeader).toHaveBeenCalledWith('Retry-After', '30');
+    expect(JSON.stringify(error.getResponse())).not.toMatch(/code-a|203\.0\.113\.7/u);
+  });
+
+  it('does not turn an unrelated failure into a 503', async () => {
+    const { guard, context } = build(new Error('boom'));
+
+    await expect(guard.canActivate(context(routes.poll))).rejects.toThrow('boom');
   });
 
   it('attaches the guard through the decorator', () => {

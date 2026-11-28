@@ -17,8 +17,9 @@ Decision: [ADR-147](../13-adr/adr-147-auth-route-rate-limits.md)
    addresses: with nginx on another host (distributed template),
    `TRUSTED_PROXY_ADDRESSES` must list nginx's egress IPs, or all visitors share
    one bucket (rules/58 item 3).
-3. A 429 with **no** `code` in the body and no service log line came from nginx
-   (`auth_routes` zone, 60 POST/min per IP). `docker logs claw-nginx | grep "limiting requests"`.
+3. A 503 with `AUTH_RATE_LIMITER_UNAVAILABLE` is the limiter itself failing: see "Redis down" below.
+4. A 429 with **no** `code` in the body and no service log line came from nginx
+   (`auth_routes` zone, 60 POST/min per IP, or `agent_api` on `/api/v1/agent`, 300/min per IP). `docker logs claw-nginx | grep "limiting requests"`.
 
 ## Raise a limit
 
@@ -46,6 +47,14 @@ Redis holds sessions, quotas and credit holds.
 
 ## Redis down
 
-The limiter fails OPEN: requests pass and each logs
-`auth rate limiter unavailable` or `timed out`. Only nginx's zone limits these
-routes until Redis is back. Fix Redis; nothing to reset afterwards.
+The limiters fail CLOSED ([ADR-230](../13-adr/adr-230-security-rate-limits-fail-closed.md)): when Redis errors, does not
+answer within 250 ms, or returns a malformed reply, sign-in, sign-up, refresh, password reset, email confirm, VS Code
+authorize, agent pairing, device code, agent refresh and the SSO callback answer **503**
+`AUTH_RATE_LIMITER_UNAVAILABLE` with `Retry-After: 30`. This is by design, not a bug in auth-service.
+
+1. Confirm: `docker logs --since 10m claw-auth-service 2>&1 | grep "rate limiter"` shows
+   `auth rate limiter unavailable, refusing policy=...` (and the agent-service equivalent).
+2. Fix Redis (`docker logs claw-redis`, memory, disk, network). Nothing to reset afterwards: the next request counts
+   normally and users retry.
+3. Already-signed-in users keep working until their access token expires; refresh also needs Redis.
+4. nginx's `auth_routes` and `agent_api` zones keep bounding floods at the edge during the outage.

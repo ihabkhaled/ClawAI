@@ -167,8 +167,10 @@ Import `AuthRateLimitModule` into any module whose controller uses the decorator
   `PAIR_POLL_MIN_INTERVAL_MS` per pairing code (429 + `Retry-After: 1`; the extension
   polls every 2 s). device-code/create 10 / min, refresh 60 / min, SSO callback
   30 / min per IP. device-code/token keeps its own `slow_down`.
-- Keys `agent:auth:rl:<policy>:<ip|pairing-code>:<hash>` (SHA-256). Fails open on a
-  Redis error or a 250 ms timeout, with a warning. 429 body code `RATE_LIMITED`.
+- Keys `agent:auth:rl:<policy>:<ip|pairing-code>:<hash>` (SHA-256). Fails CLOSED on a
+  Redis error, a 250 ms timeout or a malformed reply (`incrWithTtlStrict`): 503
+  `AUTH_RATE_LIMITER_UNAVAILABLE` + `Retry-After: 30` (ADR-230). 429 body code `RATE_LIMITED`.
+- nginx: `location /api/v1/agent` has the `agent_api` zone (300/min per address, burst 100).
 - IP = `resolveClientAddress` from `@claw/shared-auth` (via `resolveClientIp`): X-Real-IP
   only when the peer IS nginx, never because the peer is private (rules/58 item 3).
 

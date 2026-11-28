@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { AGENT_AUTH_RATE_LIMIT_POLICIES } from '../constants/agent-auth-rate-limit.constants';
 import type { AgentAuthRateLimitPolicy } from '../enums/agent-auth-rate-limit-policy.enum';
+import { AgentAuthRateLimitUnavailableError } from '../errors/agent-auth-rate-limit-unavailable.error';
 import { AgentAuthRateLimitRepository } from '../repositories/agent-auth-rate-limit.repository';
 import type {
   AgentAuthRateLimitDecision,
@@ -27,7 +28,10 @@ export class AgentAuthRateLimitService {
           return 0;
         }
         const hit = await this.repository.hit(key, rule.windowSeconds);
-        return hit !== null && hit.count > rule.limit ? Math.max(1, hit.ttlSeconds) : 0;
+        if (hit === null) {
+          throw new AgentAuthRateLimitUnavailableError();
+        }
+        return hit.count > rule.limit ? Math.max(1, hit.ttlSeconds) : 0;
       }),
     );
     const retryAfterSeconds = Math.max(0, ...hits);

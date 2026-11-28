@@ -137,6 +137,13 @@ minimumPermissionMode?, createdAt, updatedAt)` — one row per organization,
 
 Consumer: audit-service.
 
+## Auth route rate limiter
+
+`@AgentAuthRateLimit(policy)` (pair init/poll, device-code create, refresh, SSO callback; rules/58) counts in Redis
+before validation under `agent:auth:rl:*`. It **fails closed** (ADR-230): a Redis error, no answer within 250 ms or a
+malformed reply gives 503 `AUTH_RATE_LIMITER_UNAVAILABLE` with `Retry-After: 30`. `RedisService.incrWithTtlStrict`
+throws on a malformed reply; `incrWithTtl` is unchanged. nginx adds a per-address `agent_api` zone on `/api/v1/agent`.
+
 ## Redis keys
 
 - `agent:revocation:device:<id>` — access-token short-circuit.

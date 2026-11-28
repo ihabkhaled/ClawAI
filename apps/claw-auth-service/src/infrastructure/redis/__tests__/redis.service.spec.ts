@@ -36,6 +36,21 @@ describe('RedisService.incrementWindow', () => {
     await expect(service.incrementWindow('k', 60)).resolves.toEqual({ count: 1, ttlSeconds: 60 });
   });
 
+  it('strict variant returns count and ttl like the lenient one', async () => {
+    const { service } = build([4, 812]);
+
+    await expect(service.incrementWindowStrict('k', 900)).resolves.toEqual({
+      count: 4,
+      ttlSeconds: 812,
+    });
+  });
+
+  it('strict variant throws on a malformed reply instead of allowing', async () => {
+    await expect(build('OK').service.incrementWindowStrict('k', 60)).rejects.toThrow(/malformed/);
+    await expect(build(null).service.incrementWindowStrict('k', 60)).rejects.toThrow(/malformed/);
+    await expect(build([1]).service.incrementWindowStrict('k', 60)).rejects.toThrow(/malformed/);
+  });
+
   it('sets the expiry inside the script so a counter never outlives its window', () => {
     expect(REDIS_FIXED_WINDOW_SCRIPT).toContain("redis.call('INCR', KEYS[1])");
     expect(REDIS_FIXED_WINDOW_SCRIPT).toContain("redis.call('EXPIRE', KEYS[1], ARGV[1])");

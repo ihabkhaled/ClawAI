@@ -13,11 +13,20 @@ export const AGENT_AUTH_RATE_LIMIT_KEY_PREFIX = 'agent:auth:rl:';
 export const AGENT_AUTH_RATE_LIMIT_METADATA_KEY = 'claw:agent-auth-rate-limit-policy';
 
 /**
- * How long one Redis hit may take before the limiter lets the request through.
+ * How long one Redis hit may take before the limiter refuses the request with a 503 (fail closed).
  * The client is built with `maxRetriesPerRequest: null`, so during an outage a
  * command would otherwise wait forever and take device sign-in down with it.
  */
 export const AGENT_AUTH_RATE_LIMIT_REDIS_TIMEOUT_MS = 250;
+
+/** Code of the 503 returned when the limiter cannot count (rules/58 item 7, ADR-230). */
+export const AGENT_AUTH_RATE_LIMIT_UNAVAILABLE_ERROR_CODE = 'AUTH_RATE_LIMITER_UNAVAILABLE';
+
+/** Message key of that 503. */
+export const AGENT_AUTH_RATE_LIMIT_UNAVAILABLE_MESSAGE_KEY = 'agent.auth.rate_limiter_unavailable';
+
+/** Seconds a client is told to wait after that 503. */
+export const AGENT_AUTH_RATE_LIMIT_UNAVAILABLE_RETRY_AFTER_SECONDS = 30;
 
 /** Same code auth-service and the frontend use for a 429. */
 export const AGENT_AUTH_RATE_LIMIT_ERROR_CODE = 'RATE_LIMITED';

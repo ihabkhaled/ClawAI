@@ -7,9 +7,9 @@ import { AGENT_AUTH_RATE_LIMIT_REDIS_TIMEOUT_MS } from '../constants/agent-auth-
 /**
  * Fixed-window counters for the public device sign-in routes.
  *
- * **Fails OPEN**: a Redis error or a hit slower than the timeout returns null
- * and the request goes through, with a warning. nginx's `limit_req` on
- * /api/v1/agent/auth/ still bounds a flood while Redis is down (rules/58).
+ * **Fails CLOSED** (owner decision 2026-11-28, rules/58 item 7, ADR-230): a
+ * Redis error, a hit slower than the timeout or a malformed reply returns
+ * null; the service then throws AgentAuthRateLimitUnavailableError and the guard turns it into a 503.
  */
 @Injectable()
 export class AgentAuthRateLimitRepository {
@@ -23,15 +23,19 @@ export class AgentAuthRateLimitRepository {
       timer = setTimeout(() => resolve(null), AGENT_AUTH_RATE_LIMIT_REDIS_TIMEOUT_MS);
     });
     try {
-      const result = await Promise.race([this.redis.incrWithTtl(key, windowSeconds), timeout]);
+      const result = await Promise.race([
+        this.redis.incrWithTtlStrict(key, windowSeconds),
+        timeout,
+      ]);
       if (result === null) {
-        this.logger.warn('agent auth rate limiter timed out, allowing the request');
+        this.logger.error('agent auth rate limiter timed out, refusing the request');
+        return null;
       }
       return result;
     } catch (error: unknown) {
       // Never logs the key: it is derived from the IP or the pairing code.
-      this.logger.warn(
-        `agent auth rate limiter unavailable, allowing the request: ${
+      this.logger.error(
+        `agent auth rate limiter unavailable, refusing the request: ${
           error instanceof Error ? error.message : 'unknown error'
         }`,
       );

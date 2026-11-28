@@ -17,6 +17,16 @@ export const AUTH_RATE_LIMIT_METADATA_KEY = 'claw:auth-rate-limit-policy';
  */
 export const AUTH_RATE_LIMIT_REDIS_TIMEOUT_MS = 250;
 
+/** Code of the 503 returned when the limiter cannot count (rules/58 item 7, ADR-230). */
+export const AUTH_RATE_LIMIT_UNAVAILABLE_ERROR_CODE = 'AUTH_RATE_LIMITER_UNAVAILABLE';
+
+/** For a log reader only; the frontend renders its own translated copy. */
+export const AUTH_RATE_LIMIT_UNAVAILABLE_ERROR_MESSAGE =
+  'Sign-in is temporarily unavailable. Please try again shortly.';
+
+/** Seconds a client is told to wait after the 503 above. */
+export const AUTH_RATE_LIMIT_UNAVAILABLE_RETRY_AFTER_SECONDS = 30;
+
 /** The code the frontend already maps for a 429 (ApiErrorCode.RATE_LIMITED). */
 export const AUTH_RATE_LIMIT_ERROR_CODE = 'RATE_LIMITED';
 

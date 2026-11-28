@@ -7,11 +7,11 @@ import { AUTH_RATE_LIMIT_REDIS_TIMEOUT_MS } from '../constants/auth-rate-limit.c
 /**
  * Fixed-window counters for the sign-in / sign-up routes.
  *
- * **Fails OPEN.** When Redis errors or does not answer within
- * AUTH_RATE_LIMIT_REDIS_TIMEOUT_MS the hit returns `null` and the request goes
- * through, with a warning. A Redis outage must never lock every user out of
- * sign-in; nginx's coarse `limit_req` on /api/v1/auth/ still bounds a flood
- * while Redis is down (owner decision 2026-10-02, rules/58).
+ * `hit` **fails CLOSED** (owner decision 2026-11-28, rules/58 item 7, ADR-230):
+ * a Redis error, no answer within AUTH_RATE_LIMIT_REDIS_TIMEOUT_MS or a
+ * malformed reply returns null; the service then throws
+ * AuthRateLimitUnavailableError and the guard turns it into a 503. `reset` and `refund` run AFTER a success and stay lenient: a
+ * failure there only leaves the window counted.
  */
 @Injectable()
 export class AuthRateLimitRepository {
@@ -20,7 +20,31 @@ export class AuthRateLimitRepository {
   constructor(private readonly redis: RedisService) {}
 
   async hit(key: string, windowSeconds: number): Promise<FixedWindowHit | null> {
-    return this.bounded('hit', () => this.redis.incrementWindow(key, windowSeconds));
+    let timer: NodeJS.Timeout | undefined;
+    const timeout = new Promise<null>((resolve) => {
+      timer = setTimeout(() => resolve(null), AUTH_RATE_LIMIT_REDIS_TIMEOUT_MS);
+    });
+    try {
+      const result = await Promise.race([
+        this.redis.incrementWindowStrict(key, windowSeconds),
+        timeout,
+      ]);
+      if (result === null) {
+        // Never logs the key: it is derived from the address and the IP.
+        this.logger.error('auth rate limiter hit timed out, refusing the request');
+        return null;
+      }
+      return result;
+    } catch (error: unknown) {
+      this.logger.error(
+        `auth rate limiter hit unavailable, refusing the request: ${
+          error instanceof Error ? error.message : 'unknown error'
+        }`,
+      );
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   /** Deletes a window after a success. A failure only means it stays counted. */
@@ -34,8 +58,8 @@ export class AuthRateLimitRepository {
   }
 
   /**
-   * Runs one Redis command with the limiter's time budget; on timeout or
-   * error it warns and resolves `null`, so the request always goes through.
+   * Runs one post-success Redis command with the limiter's time budget; on
+   * timeout or error it warns and resolves `null` (never fails a success).
    */
   private async bounded<T>(operation: string, command: () => Promise<T>): Promise<T | null> {
     let timer: NodeJS.Timeout | undefined;
@@ -45,13 +69,13 @@ export class AuthRateLimitRepository {
     try {
       const result = await Promise.race([command(), timeout]);
       if (result === null) {
-        this.logger.warn(`auth rate limiter ${operation} timed out, allowing the request`);
+        this.logger.warn(`auth rate limiter ${operation} timed out`);
       }
       return result;
     } catch (error: unknown) {
       // Never logs the key: it is derived from the address and the IP.
       this.logger.warn(
-        `auth rate limiter ${operation} unavailable, allowing the request: ${
+        `auth rate limiter ${operation} unavailable: ${
           error instanceof Error ? error.message : 'unknown error'
         }`,
       );

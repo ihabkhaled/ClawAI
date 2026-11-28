@@ -3,6 +3,7 @@ import { vi } from 'vitest';
 import type { FixedWindowHit } from '../../../../infrastructure/redis/types/redis-window.types';
 import { AUTH_RATE_LIMIT_POLICIES } from '../../constants/auth-rate-limit.constants';
 import { AuthRateLimitPolicy } from '../../enums/auth-rate-limit-policy.enum';
+import { AuthRateLimitUnavailableError } from '../../errors/auth-rate-limit-unavailable.error';
 import type { AuthRateLimitRepository } from '../../repositories/auth-rate-limit.repository';
 import { AuthRateLimitService } from '../auth-rate-limit.service';
 
@@ -139,7 +140,7 @@ describe('AuthRateLimitService', () => {
     ).resolves.toEqual({ allowed: false, retryAfterSeconds: 1 });
   });
 
-  it('allows the request when Redis is down (every hit null)', async () => {
+  it('throws the outage error when the limiter cannot count, so the guard can refuse (fail closed)', async () => {
     const repository: Pick<AuthRateLimitRepository, 'hit'> = {
       hit: vi.fn().mockResolvedValue(null),
     };
@@ -150,7 +151,9 @@ describe('AuthRateLimitService', () => {
       AuthRateLimitPolicy.REFRESH,
       AuthRateLimitPolicy.REGISTER,
     ]) {
-      await expect(service.consume(policy, ATTACKER)).resolves.toEqual({ allowed: true });
+      await expect(service.consume(policy, ATTACKER)).rejects.toBeInstanceOf(
+        AuthRateLimitUnavailableError,
+      );
     }
   });
 });

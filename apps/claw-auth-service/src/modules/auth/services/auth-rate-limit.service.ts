@@ -3,6 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { AUTH_RATE_LIMIT_POLICIES } from '../constants/auth-rate-limit.constants';
 import type { AuthRateLimitPolicy } from '../enums/auth-rate-limit-policy.enum';
 import { AuthRateLimitSuccessAction } from '../enums/auth-rate-limit-success-action.enum';
+import { AuthRateLimitUnavailableError } from '../errors/auth-rate-limit-unavailable.error';
 import { AuthRateLimitRepository } from '../repositories/auth-rate-limit.repository';
 import type { AuthRateLimitDecision, AuthRateLimitSubject } from '../types/auth-rate-limit.types';
 import { buildAuthRateLimitKey } from '../utilities/auth-rate-limit-key.utility';
@@ -35,7 +36,10 @@ export class AuthRateLimitService {
           return 0;
         }
         const hit = await this.repository.hit(key, rule.windowSeconds);
-        return hit !== null && hit.count > rule.limit ? Math.max(1, hit.ttlSeconds) : 0;
+        if (hit === null) {
+          throw new AuthRateLimitUnavailableError();
+        }
+        return hit.count > rule.limit ? Math.max(1, hit.ttlSeconds) : 0;
       }),
     );
     const retryAfterSeconds = Math.max(0, ...hits);

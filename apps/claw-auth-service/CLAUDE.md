@@ -584,6 +584,9 @@ Every public route in `AuthController` and `VscodeAuthorizationController` carri
 counts Redis fixed windows (`RedisService.incrementWindow`, one Lua call) BEFORE the
 Zod pipe and before any account lookup, then answers 429 + `Retry-After` +
 `RATE_LIMITED`. Budgets: `constants/auth-rate-limit.constants.ts` — the only place.
+If the limiter cannot count (Redis error, 250 ms timeout, malformed reply via
+`incrementWindowStrict`) the route fails CLOSED: 503 `AUTH_RATE_LIMITER_UNAVAILABLE` +
+`Retry-After: 30` (ADR-230, rules/58 item 7). Anti-abuse checks below still fail open.
 
 - Login: 10 / 15 min per IP + address, 30 / 15 min per IP. Register: 5 / h per IP,
   3 / h per address. Confirms: 10 / 15 min per IP. Reset request and resend keep

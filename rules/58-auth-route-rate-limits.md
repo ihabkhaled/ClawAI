@@ -7,6 +7,7 @@
 `auth_routes` zone in `infra/nginx`, and the 429 copy in `apps/claw-frontend`.
 
 **Related**: [ADR-147](../docs/13-adr/adr-147-auth-route-rate-limits.md) ·
+[ADR-230](../docs/13-adr/adr-230-security-rate-limits-fail-closed.md) (fail closed) ·
 [rules/43](43-account-state-disclosure-and-transactional-email.md) (no account
 enumeration) · [ADR-096](../docs/13-adr/adr-096-login-failure-taxonomy-without-account-enumeration.md) ·
 [rules/08](08-security-rules.md) (global throttler) ·
@@ -73,11 +74,26 @@ counted in Redis before validation and before any account lookup.
    address. The per-IP login budget (30) is deliberately well above the
    per-address one (10) so one locked throwaway does not lock the real account
    on the same IP.
-7. **Fail open, with a warning.** A Redis error, or no answer within 250 ms, lets
-   the request through and logs `auth rate limiter unavailable`. The Redis client
-   uses `maxRetriesPerRequest: null`, so without the timeout an outage would hang
-   sign-in. nginx's `auth_routes` zone (60 POST/min per IP, burst 30) is the
-   backstop while Redis is down. Since the 2026-11-27 sign-up farm, nginx also gives `register` 2/min
+7. **Fail closed, with a 503** (owner decision 2026-11-28,
+   [ADR-230](../docs/13-adr/adr-230-security-rate-limits-fail-closed.md)). A Redis
+   error, no answer within 250 ms, or a malformed reply to the window script
+   refuses the request: HTTP `503`, `code: AUTH_RATE_LIMITER_UNAVAILABLE`,
+   `Retry-After: 30`, and an error-level log (`auth rate limiter unavailable,
+refusing policy=<policy>`; policy only, never a key, address or IP). This
+   covers every route in item 2. The repository returns `null` when it cannot
+   count and the service throws `AuthRateLimitUnavailableError` /
+   `AgentAuthRateLimitUnavailableError`; the guard maps it to the 503. The strict
+   Redis methods (`incrementWindowStrict`, `incrWithTtlStrict`) throw on a
+   malformed reply; the lenient `incrementWindow` / `incrWithTtl` keep their old
+   behaviour for the other callers (quota, sessions, anti-abuse counters). The
+   success-side `reset` / `refund` (item 10) stay lenient: they never turn a
+   success into an error. Plain feedback limiters (audit-service) stay lenient
+   and are out of scope. The Redis client uses `maxRetriesPerRequest: null`, so
+   the 250 ms timeout is what turns an outage into the 503 instead of a hang.
+   Redis health is therefore on the sign-in path: a Redis outage blocks sign-in
+   by design (runbook: "Redis down"). nginx's `auth_routes` zone (60 POST/min
+   per IP, burst 30) and the per-IP `agent_api` zone on `/api/v1/agent` (300/min,
+   burst 100) bound a flood at the edge. Since the 2026-11-27 sign-up farm, nginx also gives `register` 2/min
    (burst 3), `login` 12/min (burst 10) and `bot-check/challenge` 20/min per address, caps 100 concurrent
    connections per address, and fail2ban bans repeat offenders at the host (rule 68, ADR-222). Per-address limits
    do not stop a farm on rotating residential addresses: the bot checks, the disposable-email block and the

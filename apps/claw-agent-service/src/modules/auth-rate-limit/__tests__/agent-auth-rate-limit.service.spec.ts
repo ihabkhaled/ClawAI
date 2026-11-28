@@ -8,6 +8,7 @@ import {
   AGENT_AUTH_RATE_LIMIT_REDIS_TIMEOUT_MS,
 } from '../constants/agent-auth-rate-limit.constants';
 import { AgentAuthRateLimitPolicy } from '../enums/agent-auth-rate-limit-policy.enum';
+import { AgentAuthRateLimitUnavailableError } from '../errors/agent-auth-rate-limit-unavailable.error';
 import { AgentAuthRateLimitRepository } from '../repositories/agent-auth-rate-limit.repository';
 import { AgentAuthRateLimitService } from '../services/agent-auth-rate-limit.service';
 
@@ -91,12 +92,14 @@ describe('AgentAuthRateLimitService', () => {
     await expect(service.consume(policy, DEVICE)).resolves.toMatchObject({ allowed: false });
   });
 
-  it('allows everything when Redis is down', async () => {
-    const service = build({ hit: vi.fn().mockResolvedValue(null) });
-
-    await expect(service.consume(AgentAuthRateLimitPolicy.REFRESH, DEVICE)).resolves.toEqual({
-      allowed: true,
+  it('throws the outage error when the limiter cannot count, so the guard can refuse (fail closed)', async () => {
+    const service = build({
+      hit: vi.fn().mockResolvedValue(null),
     });
+
+    await expect(service.consume(AgentAuthRateLimitPolicy.REFRESH, DEVICE)).rejects.toBeInstanceOf(
+      AgentAuthRateLimitUnavailableError,
+    );
   });
 });
 
@@ -105,8 +108,10 @@ describe('AgentAuthRateLimitRepository', () => {
     vi.useRealTimers();
   });
 
-  function repository(incrWithTtl: RedisService['incrWithTtl']): AgentAuthRateLimitRepository {
-    const redis: Pick<RedisService, 'incrWithTtl'> = { incrWithTtl };
+  function repository(
+    incrWithTtlStrict: RedisService['incrWithTtlStrict'],
+  ): AgentAuthRateLimitRepository {
+    const redis: Pick<RedisService, 'incrWithTtlStrict'> = { incrWithTtlStrict };
     return new AgentAuthRateLimitRepository(redis as RedisService);
   }
 
@@ -117,13 +122,19 @@ describe('AgentAuthRateLimitRepository', () => {
     expect(incr).toHaveBeenCalledWith('k', 60);
   });
 
-  it('fails open on a Redis error', async () => {
+  it('returns null (limiter unavailable) on a Redis error', async () => {
     await expect(
       repository(vi.fn().mockRejectedValue(new Error('down'))).hit('k', 60),
     ).resolves.toBeNull();
   });
 
-  it('fails open when Redis does not answer in time', async () => {
+  it('returns null on a malformed reply (the strict method throws)', async () => {
+    await expect(
+      repository(vi.fn().mockRejectedValue(new Error('malformed fixed-window reply'))).hit('k', 60),
+    ).resolves.toBeNull();
+  });
+
+  it('returns null when Redis does not answer in time', async () => {
     vi.useFakeTimers();
     const pending = repository(vi.fn().mockReturnValue(new Promise(vi.fn()))).hit('k', 60);
     await vi.advanceTimersByTimeAsync(AGENT_AUTH_RATE_LIMIT_REDIS_TIMEOUT_MS + 1);

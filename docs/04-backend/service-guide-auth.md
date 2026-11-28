@@ -748,6 +748,13 @@ posting straight to `/auth/register`, and every account got the free trial. Deci
 (the two public bot-check routes live on `AuthModule`'s `BotCheckController`, because they use the auth route
 rate limiter).
 
+### Route rate limiter (fails closed)
+
+`@AuthRateLimit(policy)` budgets (rules/58) are counted in Redis before validation. When Redis errors, is silent for
+250 ms or returns a malformed reply, the guard answers 503 `AUTH_RATE_LIMITER_UNAVAILABLE` with `Retry-After: 30`
+(ADR-230): a Redis outage blocks sign-in by design. The repository returns `null`, the service throws
+`AuthRateLimitUnavailableError`, and `RedisService.incrementWindowStrict` is what throws on a malformed reply.
+
 ### Public routes
 
 - `GET /auth/bot-check/config[?action=register|login]` -> `{ pow: { enabled: true, difficulty }, turnstile:

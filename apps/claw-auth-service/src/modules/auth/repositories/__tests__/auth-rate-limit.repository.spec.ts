@@ -5,12 +5,12 @@ import { AUTH_RATE_LIMIT_REDIS_TIMEOUT_MS } from '../../constants/auth-rate-limi
 import { AuthRateLimitRepository } from '../auth-rate-limit.repository';
 
 function build(
-  incrementWindow: RedisService['incrementWindow'],
+  incrementWindowStrict: RedisService['incrementWindowStrict'],
   del: RedisService['del'] = vi.fn().mockResolvedValue(undefined),
   refundWindow: RedisService['refundWindow'] = vi.fn().mockResolvedValue(0),
 ): AuthRateLimitRepository {
-  const redis: Pick<RedisService, 'incrementWindow' | 'del' | 'refundWindow'> = {
-    incrementWindow,
+  const redis: Pick<RedisService, 'incrementWindowStrict' | 'del' | 'refundWindow'> = {
+    incrementWindowStrict,
     del,
     refundWindow,
   };
@@ -23,23 +23,23 @@ describe('AuthRateLimitRepository', () => {
   });
 
   it('returns the window hit from Redis', async () => {
-    const incrementWindow = vi.fn().mockResolvedValue({ count: 3, ttlSeconds: 840 });
-    const repository = build(incrementWindow);
+    const incrementWindowStrict = vi.fn().mockResolvedValue({ count: 3, ttlSeconds: 840 });
+    const repository = build(incrementWindowStrict);
 
     await expect(repository.hit('auth:rl:login:ip:abc', 900)).resolves.toEqual({
       count: 3,
       ttlSeconds: 840,
     });
-    expect(incrementWindow).toHaveBeenCalledWith('auth:rl:login:ip:abc', 900);
+    expect(incrementWindowStrict).toHaveBeenCalledWith('auth:rl:login:ip:abc', 900);
   });
 
-  it('fails open with null when Redis errors', async () => {
+  it('returns null (limiter unavailable) when Redis errors', async () => {
     const repository = build(vi.fn().mockRejectedValue(new Error('ECONNREFUSED')));
 
     await expect(repository.hit('k', 60)).resolves.toBeNull();
   });
 
-  it('fails open with null when Redis never answers', async () => {
+  it('returns null when Redis never answers', async () => {
     vi.useFakeTimers();
     const repository = build(vi.fn().mockReturnValue(new Promise(vi.fn())));
 
@@ -47,6 +47,12 @@ describe('AuthRateLimitRepository', () => {
     await vi.advanceTimersByTimeAsync(AUTH_RATE_LIMIT_REDIS_TIMEOUT_MS + 1);
 
     await expect(pending).resolves.toBeNull();
+  });
+
+  it('returns null on a malformed reply (the strict method throws)', async () => {
+    const repository = build(vi.fn().mockRejectedValue(new Error('malformed fixed-window reply')));
+
+    await expect(repository.hit('k', 60)).resolves.toBeNull();
   });
 
   it('reset deletes the window key', async () => {

@@ -32,3 +32,17 @@ describe('RedisService.incrWithTtl', () => {
     });
   });
 });
+
+describe('RedisService.incrWithTtlStrict', () => {
+  it('returns count and ttl', async () => {
+    await expect(build([3, 42]).service.incrWithTtlStrict('k', 60)).resolves.toEqual({
+      count: 3,
+      ttlSeconds: 42,
+    });
+  });
+
+  it('throws on a malformed reply instead of allowing', async () => {
+    await expect(build(null).service.incrWithTtlStrict('k', 60)).rejects.toThrow(/malformed/);
+    await expect(build('OK').service.incrWithTtlStrict('k', 60)).rejects.toThrow(/malformed/);
+  });
+});
