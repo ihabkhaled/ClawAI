@@ -12,7 +12,13 @@ test.use({
 });
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? 'admin@claw.local';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'ClawAdmin123!';
+function requirePassword(value: string | undefined): string {
+  if (value === undefined || value === '') {
+    throw new Error('Set ADMIN_PASSWORD to run this spec');
+  }
+  return value;
+}
+const ADMIN_PASSWORD = requirePassword(process.env.ADMIN_PASSWORD);
 const SCREENSHOT_DIR = path.resolve(__dirname, '../../../../qa');
 // Orchestration pipelines fan out across multiple LLM calls; even on
 // small local models a full Consensus / Best-of-N / Pipeline run can

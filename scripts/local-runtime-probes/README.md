@@ -58,7 +58,7 @@ milliseconds (`modelLoadMs`, `promptEvalMs`, `generationMs`,
 
 ```bash
 # Default: via claw-llamacpp-service (nginx-fronted, requires admin JWT)
-QA_ADMIN_EMAIL=admin@claw.local QA_ADMIN_PASS=ClawAdmin123! \
+QA_ADMIN_EMAIL=admin@claw.local QA_ADMIN_PASS="$ADMIN_PASSWORD" \
   node scripts/local-runtime-probes/probe-llamacpp.mjs \
        --service-url https://localhost \
        --prompt "Solve 14*23. Show your reasoning."
@@ -73,7 +73,7 @@ node scripts/local-runtime-probes/probe-llamacpp.mjs \
 Env (only needed for the default service-mode run):
 
 - `QA_ADMIN_EMAIL` — default `admin@claw.local`
-- `QA_ADMIN_PASS` — default `ClawAdmin123!`
+- `QA_ADMIN_PASS` — required (your local `ADMIN_PASSWORD`), no default
 
 Service mode pulls
 `GET /api/v1/llamacpp/runtime-progress/probe` first (capability report,

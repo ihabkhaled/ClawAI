@@ -13,7 +13,7 @@ completion — and that logs are clean.
 ## Setup
 
 1. Obtain a valid JWT via `POST /api/v1/auth/login` (admin seed:
-   `admin@claw.local` / `ClawAdmin123!`).
+   `admin@claw.local` / `$ADMIN_PASSWORD (from your local .env)`).
 2. Prefer testing **through nginx** (port 443 / `https://claw.local`) to catch routing
    and SSE-buffering issues; test **direct to the service port** (e.g. 4002) only to
    isolate a service bug from an nginx bug.

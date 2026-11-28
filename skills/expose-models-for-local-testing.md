@@ -31,7 +31,7 @@ docker exec claw-pg-connector psql -U claw -d claw_connectors -c \
 
 # 2. let routing see them (admin token; both endpoints are admin-only)
 T=$(curl -sk -X POST https://claw.local/api/v1/auth/login -H 'content-type: application/json' \
-  -d '{"email":"admin@claw.local","password":"ClawAdmin123!"}' | node -pe 'JSON.parse(require("fs").readFileSync(0)).tokens.accessToken')
+  -d '{"email":"admin@claw.local","password":"$ADMIN_PASSWORD"}' | node -pe 'JSON.parse(require("fs").readFileSync(0)).tokens.accessToken')
 curl -sk -X POST https://claw.local/api/v1/routing/models/sync          -H "authorization: Bearer $T"
 curl -sk -X POST https://claw.local/api/v1/routing/models/discovery/run -H "authorization: Bearer $T"
 

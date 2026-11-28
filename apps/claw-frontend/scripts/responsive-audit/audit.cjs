@@ -8,7 +8,14 @@ const fs = require('node:fs');
 const LOCAL = process.env.AUDIT_LOCAL ?? 'http://127.0.0.1:3999';
 const BACKEND = process.env.AUDIT_BACKEND ?? 'https://claw.local';
 const OUT = 'D:/Freelance/Claw/apps/claw-frontend/scripts/responsive-audit/out';
-const ADMIN = { email: 'admin@claw.local', password: 'ClawAdmin123!' };
+const ADMIN = {
+  email: 'admin@claw.local',
+  password:
+    process.env.ADMIN_PASSWORD ??
+    (() => {
+      throw new Error('Set ADMIN_PASSWORD to run this script');
+    })(),
+};
 
 const VIEWPORTS = [
   { name: 'm320', width: 320, height: 568 },

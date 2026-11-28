@@ -5,7 +5,13 @@ import { expect, test } from '@playwright/test';
 
 const BASE = process.env['PROVIDER_E2E_BASE_URL'] ?? 'http://localhost:3001';
 const EMAIL = process.env['ADMIN_EMAIL'] ?? 'admin@claw.local';
-const PASSWORD = process.env['ADMIN_PASSWORD'] ?? 'ClawAdmin123!';
+function requirePassword(value: string | undefined): string {
+  if (value === undefined || value === '') {
+    throw new Error('Set ADMIN_PASSWORD to run this spec');
+  }
+  return value;
+}
+const PASSWORD = requirePassword(process.env['ADMIN_PASSWORD']);
 const SCREENSHOTS = path.resolve(
   process.cwd(),
   '../../docs/qa-evidence/screenshots/runtime-managed-connector-providers',
@@ -32,7 +38,7 @@ test('admin manages a runtime provider and the page fits common viewports', asyn
   await page.getByRole('button', { name: 'Save provider' }).click();
 
   const providerCard = () =>
-    page.getByRole('heading', { name: new RegExp(providerKey) }).locator('xpath=../..');
+    page.getByRole('heading', { name: providerKey, exact: false }).locator('xpath=../..');
   await expect(providerCard()).toContainText(providerName);
   await fs.mkdir(SCREENSHOTS, { recursive: true });
 

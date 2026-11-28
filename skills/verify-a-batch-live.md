@@ -72,7 +72,7 @@ Log in for authenticated routes — the token is at `tokens.accessToken`, **not*
 ```bash
 TOKEN=$(curl -sk -X POST https://claw.local/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@claw.local","password":"ClawAdmin123!"}' | jq -r '.tokens.accessToken')
+  -d '{"email":"admin@claw.local","password":"$ADMIN_PASSWORD"}' | jq -r '.tokens.accessToken')
 ```
 
 ## 2. Browser lane

@@ -89,7 +89,7 @@ Default admin credentials (set in `.env`):
 
 ```text
 Email:    admin@claw.local
-Password: ClawAdmin123!
+Password: $ADMIN_PASSWORD (from your local .env)
 ```
 
 ---

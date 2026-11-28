@@ -119,7 +119,7 @@ finds a tool object embedded in prose.
   frontend. Docker behind nginx at `https://claw.local`.
 - Start the stack ONLY via `./scripts/claw.sh up`. Health:
   `curl -sk https://claw.local/api/v1/health`.
-- Credentials: admin@claw.local / ClawAdmin123! (documented local dev account).
+- Credentials: admin@claw.local / $ADMIN_PASSWORD (from your local .env) (documented local dev account).
 - Connectors configured and HEALTHY: OPENAI, GEMINI, OLLAMA (19 cloud models
   incl. glm-5.2, kimi-k2.6, kimi-k2.7-code, qwen3.5:397b).
 - Use CLOUD models only. Local model runtimes are off in this environment.
@@ -263,7 +263,7 @@ Backend already passes these; re-run them after any change, and add the UI ones:
 13. gates green in each touched workspace only:
     npx tsgo --noEmit && npm run lint && npm test && npm run build
 Report each as EXECUTED_AND_PASSED / EXECUTED_AND_FAILED / NOT_EXECUTED / BLOCKED.
-Restore admin@claw.local to ClawAdmin123! afterwards and delete test token rows.
+Restore admin@claw.local to $ADMIN_PASSWORD (from your local .env) afterwards and delete test token rows.
 
 ## 9. NON-NEGOTIABLE REPO RULES
 

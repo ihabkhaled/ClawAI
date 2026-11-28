@@ -96,11 +96,11 @@ Generate with: `openssl rand -hex 32`
 
 ## Admin Seed
 
-| Variable         | Default            | Services | Description            |
-| ---------------- | ------------------ | -------- | ---------------------- |
-| `ADMIN_EMAIL`    | `admin@claw.local` | auth     | Default admin email    |
-| `ADMIN_USERNAME` | `claw-admin`       | auth     | Default admin username |
-| `ADMIN_PASSWORD` | `ClawAdmin123!`    | auth     | Default admin password |
+| Variable         | Default            | Services | Description                                                                    |
+| ---------------- | ------------------ | -------- | ------------------------------------------------------------------------------ |
+| `ADMIN_EMAIL`    | `admin@claw.local` | auth     | Default admin email                                                            |
+| `ADMIN_USERNAME` | `claw-admin`       | auth     | Default admin username                                                         |
+| `ADMIN_PASSWORD` | (none, required)   | auth     | Admin password; the seed refuses an unset, default or under-12-character value |
 
 ---
 

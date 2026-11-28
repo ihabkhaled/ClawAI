@@ -2,13 +2,20 @@
 const { chromium } = require('@playwright/test');
 const LOCAL = 'http://127.0.0.1:3999';
 const BACKEND = 'https://claw.local';
-const SIZES = [[1440, 900], [2540, 1250], [390, 844]];
+const SIZES = [
+  [1440, 900],
+  [2540, 1250],
+  [390, 844],
+];
 
 async function main() {
   const browser = await chromium.launch();
   let bad = 0;
   for (const [width, height] of SIZES) {
-    const context = await browser.newContext({ viewport: { width, height }, ignoreHTTPSErrors: true });
+    const context = await browser.newContext({
+      viewport: { width, height },
+      ignoreHTTPSErrors: true,
+    });
     await context.route('**/api/v1/**', async (route) => {
       const url = new URL(route.request().url());
       const response = await route.fetch({ url: `${BACKEND}${url.pathname}${url.search}` });
@@ -17,7 +24,12 @@ async function main() {
     const page = await context.newPage();
     await page.goto(`${LOCAL}/en/login`, { waitUntil: 'domcontentloaded' });
     await page.getByLabel('Email').fill('admin@claw.local');
-    await page.getByLabel('Password', { exact: true }).fill('ClawAdmin123!');
+    await page.getByLabel('Password', { exact: true }).fill(
+      process.env.ADMIN_PASSWORD ??
+        (() => {
+          throw new Error('Set ADMIN_PASSWORD to run this script');
+        })(),
+    );
     await page.getByRole('button', { name: 'Sign In' }).click();
     await page.waitForURL(/\/en\/(dashboard|chat)/, { timeout: 60000 });
     await page.goto(`${LOCAL}/en/observability`, { waitUntil: 'domcontentloaded' });
@@ -39,7 +51,9 @@ async function main() {
       if (!ok) bad += 1;
       console.log(ok ? 'ok  ' : 'FAIL', `${width}x${height} tab#${i}`, JSON.stringify(m));
     }
-    await page.screenshot({ path: `D:/Freelance/Claw/apps/claw-frontend/scripts/responsive-audit/out/observability-${width}.png` });
+    await page.screenshot({
+      path: `D:/Freelance/Claw/apps/claw-frontend/scripts/responsive-audit/out/observability-${width}.png`,
+    });
     await context.close();
   }
   await browser.close();

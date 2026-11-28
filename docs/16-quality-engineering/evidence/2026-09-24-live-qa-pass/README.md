@@ -2,7 +2,7 @@
 
 Verifies items shipped through commit `32bb14a12` (frontend was rebuilt at that
 SHA) that had never been checked live/in-browser. Stack: `https://claw.local`
-(main checkout dev containers). Login admin@claw.local / ClawAdmin123!; a fresh
+(main checkout dev containers). Login admin@claw.local / $ADMIN_PASSWORD (from your local .env); a fresh
 free-trial user `qafree20260924@claw.local` / `QaFree123!` was registered and
 activated for the RBAC/plan-gate lanes.
 
@@ -278,7 +278,7 @@ evidence=0 warnings=1 requested=false tools=[] block=true`. `block=true`
 ```bash
 # Login
 curl -sk -X POST https://claw.local/api/v1/auth/login -H 'Content-Type: application/json' \
-  -d '{"email":"admin@claw.local","password":"ClawAdmin123!"}'
+  -d '{"email":"admin@claw.local","password":"$ADMIN_PASSWORD"}'
 
 # Free user creation + activation
 curl -sk -X POST https://claw.local/api/v1/auth/register -H 'Content-Type: application/json' \

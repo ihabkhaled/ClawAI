@@ -41,7 +41,7 @@ Before release: `npm run release:preflight` runs the all-workspace gate.
    lint-staged runs separate globs concurrently and a late `eslint --fix` once
    re-wrote a formatted file (CI's formatting ratchet then failed). The CI
    `Policy` job is advisory: it never blocks Release.
-2. Secret scan — `gitleaks git --staged` with `.gitleaks.toml`. Without gitleaks
+2. Secret scan — `gitleaks git --staged` with `.gitleaks.toml`. Besides the default rules it carries custom rules for project-specific secrets, such as `claw-default-admin-password` (2026-11-28): the retired default admin password must never return to any file. Without gitleaks
    installed it warns loudly and continues; CI scans every commit.
 3. Auto-sync (`tools/gates/autosync.mjs`, [ADR-202](../docs/13-adr/adr-202-every-gate-is-satisfied-by-plain-git-commit-and-push.md)) —
    prunes format/lint baseline entries that can no longer apply, records declared

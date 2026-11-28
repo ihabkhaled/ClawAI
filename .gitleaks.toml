@@ -12,6 +12,12 @@ title = "ClawAI secret scanning"
 [extend]
 useDefault = true
 
+[[rules]]
+id = "claw-default-admin-password"
+description = "The retired public default admin password. It was committed to this public repository once; it must never appear again. The regex is split so this file does not hold the full string."
+regex = '''Claw[A]dmin123!'''
+keywords = ["admin123"]
+
 [[allowlists]]
 description = "Build output, dependencies and generated files — never hand-authored"
 paths = [

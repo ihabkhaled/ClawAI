@@ -12,7 +12,13 @@ import { expect, test, type Page } from '@playwright/test';
 test.use({ baseURL: 'https://claw.local', ignoreHTTPSErrors: true });
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? 'admin@claw.local';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'ClawAdmin123!';
+function requirePassword(value: string | undefined): string {
+  if (value === undefined || value === '') {
+    throw new Error('Set ADMIN_PASSWORD to run this spec');
+  }
+  return value;
+}
+const ADMIN_PASSWORD = requirePassword(process.env.ADMIN_PASSWORD);
 const USER_EMAIL = process.env.E2E_USER_EMAIL ?? 'ihab.khaled94@gmail.com';
 const USER_PASSWORD = process.env.E2E_USER_PASSWORD ?? 'Ehab1234';
 

@@ -24,7 +24,7 @@ repo works. Use a throwaway container with the checkout mounted read-only and it
 `node_modules`, so the Windows binaries are never loaded. Copy **only tracked files**: a plain
 `cp -a` or `tar .` of the checkout also copies `.claude/` session worktrees, `.worktrees/` and
 other local folders (several GB, over 25 minutes, and tar aborts with "file changed as we read
-it" on `.ai/local`). The submodule (`apps/claw-coding-agent`, mode 160000) is skipped:
+it" on the local knowledge cache folder). The submodule (`apps/claw-coding-agent`, mode 160000) is skipped:
 
 ```sh
 MSYS_NO_PATHCONV=1 docker run --rm -v "$PWD":/src:ro -w /work node:24-bookworm sh -c \

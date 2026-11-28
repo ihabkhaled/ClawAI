@@ -47,6 +47,14 @@ if [ ! -f "$ENV_FILE" ]; then
     exit 1
   fi
   cp "$ENV_EXAMPLE" "$ENV_FILE"
+  # The admin password has no default: generate one and keep it only in the local .env.
+  if ! command -v openssl >/dev/null 2>&1; then
+    echo "  ERROR: openssl is required to generate the admin password." >&2
+    exit 1
+  fi
+  GENERATED_ADMIN_PASSWORD="$(openssl rand -base64 24 | tr -d '/+=\n')"
+  sed -i.bak "s|^ADMIN_PASSWORD=.*|ADMIN_PASSWORD=${GENERATED_ADMIN_PASSWORD}|" "$ENV_FILE" && rm -f "$ENV_FILE.bak"
+  echo "  Generated a random admin password and stored it in $ENV_FILE (ADMIN_PASSWORD)."
   echo "  Created $ENV_FILE from .env.example (placeholder secrets — fine for local dev)."
   # Every database gets its own password instead of the shared claw_secret placeholder (rules/68). Skipped when
   # database volumes from an earlier install exist: those already use the placeholder, and changing them in
@@ -93,7 +101,7 @@ else
   echo "    2. Wait ~60 seconds for services to start"
   echo "    3. Open https://${CLAW_HOSTNAME}"
 fi
-echo "    Login with: admin@claw.local / ClawAdmin123!"
+echo "    Login with: admin@claw.local and the ADMIN_PASSWORD value in $ENV_FILE"
 echo "    Change your password on first login."
 echo ""
 echo "  AI mode: API-only by default (no local model downloads). Add a provider"

@@ -35,7 +35,7 @@ was taken.
 ```bash
 TOK=$(curl -sk -X POST https://claw.local/api/v1/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"email":"admin@claw.local","password":"ClawAdmin123!"}' \
+  -d '{"email":"admin@claw.local","password":"$ADMIN_PASSWORD"}' \
   | python -c "import sys,json;print(json.load(sys.stdin)['tokens']['accessToken'])")
 
 curl -sk -o /tmp/r.out -w "HTTP %{http_code}\n" \

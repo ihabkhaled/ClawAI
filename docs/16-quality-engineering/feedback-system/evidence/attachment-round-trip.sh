@@ -11,7 +11,7 @@ check() {
 }
 
 ADMIN=$(curl -sk --max-time 20 -X POST -H 'Content-Type: application/json' \
-  -d '{"email":"admin@claw.local","password":"ClawAdmin123!"}' "$BASE/auth/login" |
+  -d '{"email":"admin@claw.local","password":"'"${ADMIN_PASSWORD:?set ADMIN_PASSWORD}"'"}' "$BASE/auth/login" |
   python -c "import sys,json;print(json.load(sys.stdin)['tokens']['accessToken'])")
 
 # A genuine 1x1 PNG, so file-service's magic-byte check sees real image bytes.

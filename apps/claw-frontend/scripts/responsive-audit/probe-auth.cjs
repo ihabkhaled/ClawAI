@@ -3,7 +3,10 @@ const { chromium } = require('@playwright/test');
 (async () => {
   const [path, w = '768'] = process.argv.slice(2);
   const b = await chromium.launch();
-  const ctx = await b.newContext({ viewport: { width: +w, height: 1000 }, ignoreHTTPSErrors: true });
+  const ctx = await b.newContext({
+    viewport: { width: +w, height: 1000 },
+    ignoreHTTPSErrors: true,
+  });
   await ctx.route('**/api/v1/**', async (route) => {
     const u = new URL(route.request().url());
     const response = await route.fetch({ url: `https://claw.local${u.pathname}${u.search}` });
@@ -12,7 +15,15 @@ const { chromium } = require('@playwright/test');
   const p = await ctx.newPage();
   await p.goto('http://127.0.0.1:3999/en/login');
   await p.locator('input[type=email]').first().fill('admin@claw.local');
-  await p.locator('input[type=password]').first().fill('ClawAdmin123!');
+  await p
+    .locator('input[type=password]')
+    .first()
+    .fill(
+      process.env.ADMIN_PASSWORD ??
+        (() => {
+          throw new Error('Set ADMIN_PASSWORD to run this script');
+        })(),
+    );
   await p.locator('button[type=submit]').first().click();
   await p.waitForURL(/\/(dashboard|chat)/, { timeout: 60000 });
   await p.goto(`http://127.0.0.1:3999${path}`, { waitUntil: 'networkidle' });
@@ -23,7 +34,9 @@ const { chromium } = require('@playwright/test');
       const r = el.getBoundingClientRect();
       if (r.width && r.right > vw + 1) {
         if (!Array.from(el.children).some((c) => c.getBoundingClientRect().right > vw + 1)) {
-          res.push(`${el.tagName}.${String(el.className).slice(0, 90)} r=${Math.round(r.right)} w=${Math.round(r.width)} :: ${(el.textContent || '').trim().slice(0, 30)}`);
+          res.push(
+            `${el.tagName}.${String(el.className).slice(0, 90)} r=${Math.round(r.right)} w=${Math.round(r.width)} :: ${(el.textContent || '').trim().slice(0, 30)}`,
+          );
         }
       }
     }

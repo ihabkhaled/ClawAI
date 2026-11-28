@@ -2,7 +2,13 @@ import { expect, test, type Page } from '@playwright/test';
 
 // Admin credentials from .env. Required for these tests to run.
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? 'admin@claw.local';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'ClawAdmin123!';
+function requirePassword(value: string | undefined): string {
+  if (value === undefined || value === '') {
+    throw new Error('Set ADMIN_PASSWORD to run this spec');
+  }
+  return value;
+}
+const ADMIN_PASSWORD = requirePassword(process.env.ADMIN_PASSWORD);
 
 async function login(page: Page): Promise<void> {
   await page.goto('/login');

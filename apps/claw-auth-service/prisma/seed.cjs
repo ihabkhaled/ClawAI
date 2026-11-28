@@ -26,12 +26,14 @@ const creditPackageRepricingSeeder = require('./seeders/credit-package-repricing
 const planQuarterlySemiannualPricingSeeder = require('./seeders/plan-quarterly-semiannual-pricing.seeder.cjs');
 const planIntervalDiscountsSeeder = require('./seeders/plan-interval-discounts.seeder.cjs');
 
+const { assertAdminPassword } = require('./admin-password.cjs');
+
 const distPrismaPath = path.resolve(__dirname, '..', 'dist', 'generated', 'prisma');
 const { PrismaClient } = require(distPrismaPath);
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@claw.local';
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'ClawAdmin123!';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 const ARGON2_MEMORY_COST = 65536;
 const ARGON2_TIME_COST = 3;
@@ -485,6 +487,9 @@ async function seed() {
     console.warn('Reconciled immutable super administrator.');
     return;
   }
+
+  // No fallback: refuse to create an admin without an explicit, non-default, 12+ character password.
+  assertAdminPassword(ADMIN_PASSWORD);
 
   const passwordHash = await argon2.hash(ADMIN_PASSWORD, {
     type: argon2.argon2id,

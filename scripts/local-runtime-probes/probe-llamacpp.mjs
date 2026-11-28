@@ -18,7 +18,7 @@
 //        --prompt "Solve 14*23." \
 //        --mode completion
 //
-// Env: QA_ADMIN_EMAIL, QA_ADMIN_PASS (defaults admin@claw.local / ClawAdmin123!)
+// Env: QA_ADMIN_EMAIL, QA_ADMIN_PASS (QA_ADMIN_PASS is required, no default)
 
 import { randomUUID } from 'node:crypto';
 import { mkdir, open, readFile } from 'node:fs/promises';
@@ -139,16 +139,18 @@ async function login(serviceUrl, email, password) {
 async function runViaService(args) {
   const serviceUrl = args['service-url'].replace(/\/$/, '');
   const email = process.env.QA_ADMIN_EMAIL ?? 'admin@claw.local';
-  const password = process.env.QA_ADMIN_PASS ?? 'ClawAdmin123!';
+  const password =
+    process.env.QA_ADMIN_PASS ??
+    (() => {
+      throw new Error('Set QA_ADMIN_PASS to run this probe');
+    })();
   const runId = randomUUID();
   const startedAtMs = Date.now();
   const nextSeq = createSequenceCounter();
 
   const { raw, norm, rawPath, normPath } = await openOutputFiles('llamacpp');
 
-  process.stdout.write(
-    `probe-llamacpp: runId=${runId} mode=service service=${serviceUrl}\n`,
-  );
+  process.stdout.write(`probe-llamacpp: runId=${runId} mode=service service=${serviceUrl}\n`);
 
   await writeJsonl(
     norm,
@@ -193,10 +195,9 @@ async function runViaService(args) {
 
   // Step 1: probe report.
   try {
-    const probeRes = await fetchLocal(
-      `${serviceUrl}/api/v1/llamacpp/runtime-progress/probe`,
-      { headers: { Authorization: `Bearer ${token}` } },
-    );
+    const probeRes = await fetchLocal(`${serviceUrl}/api/v1/llamacpp/runtime-progress/probe`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     const probeJson = await probeRes.json().catch(() => ({}));
     await writeJsonl(raw, {
       timestampMs: Date.now(),
@@ -298,11 +299,9 @@ async function runViaService(args) {
   });
 
   process.stdout.write(
-    [
-      'probe-llamacpp: SUMMARY (service mode)',
-      `  raw=${rawPath}`,
-      `  normalized=${normPath}`,
-    ].join('\n') + '\n',
+    ['probe-llamacpp: SUMMARY (service mode)', `  raw=${rawPath}`, `  normalized=${normPath}`].join(
+      '\n',
+    ) + '\n',
   );
 
   await raw.close();
@@ -318,9 +317,7 @@ async function runDirect(args) {
 
   const { raw, norm, rawPath, normPath } = await openOutputFiles('llamacpp');
 
-  process.stdout.write(
-    `probe-llamacpp: runId=${runId} mode=direct url=${directUrl}\n`,
-  );
+  process.stdout.write(`probe-llamacpp: runId=${runId} mode=direct url=${directUrl}\n`);
 
   await writeJsonl(
     norm,
@@ -396,11 +393,9 @@ async function runDirect(args) {
   });
 
   process.stdout.write(
-    [
-      'probe-llamacpp: SUMMARY (direct mode)',
-      `  raw=${rawPath}`,
-      `  normalized=${normPath}`,
-    ].join('\n') + '\n',
+    ['probe-llamacpp: SUMMARY (direct mode)', `  raw=${rawPath}`, `  normalized=${normPath}`].join(
+      '\n',
+    ) + '\n',
   );
 
   await raw.close();
@@ -454,10 +449,7 @@ async function consumeSseStream({
           state: { firstTokenAt, firstThinkingAt, tokenCount },
         });
         // Update state.
-        if (
-          parsed?.prompt_progress &&
-          typeof parsed.prompt_progress.total === 'number'
-        ) {
+        if (parsed?.prompt_progress && typeof parsed.prompt_progress.total === 'number') {
           // tracked in handler
         }
         if (typeof parsed?.content === 'string' && parsed.content.length > 0) {

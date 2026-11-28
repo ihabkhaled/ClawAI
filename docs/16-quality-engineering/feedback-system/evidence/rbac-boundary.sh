@@ -43,7 +43,7 @@ code() {
   fi
 }
 
-ADMIN=$(login 'admin@claw.local' 'ClawAdmin123!')
+ADMIN=$(login 'admin@claw.local' "${ADMIN_PASSWORD:?set ADMIN_PASSWORD}")
 USER=$(login "$USER_EMAIL" "$USER_PASSWORD")
 echo "admin token ${#ADMIN} chars · user token ${#USER} chars"
 echo

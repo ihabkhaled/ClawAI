@@ -190,7 +190,7 @@
       "file": "rules/22-testing-and-coverage.md"
     },
     {
-      "bytes": 11704,
+      "bytes": 11902,
       "file": "rules/23-git-commits-hooks-and-release-gates.md"
     },
     {
@@ -660,7 +660,7 @@
       "file": "skills/execute-prompt-pack.md"
     },
     {
-      "bytes": 3517,
+      "bytes": 3519,
       "file": "skills/expose-models-for-local-testing.md"
     },
     {
@@ -720,7 +720,7 @@
       "file": "skills/navigate-codebase.md"
     },
     {
-      "bytes": 6151,
+      "bytes": 6153,
       "file": "skills/pair-and-use-a-mobile-device-token.md"
     },
     {
@@ -760,7 +760,7 @@
       "file": "skills/reuse-before-creating.md"
     },
     {
-      "bytes": 8268,
+      "bytes": 8272,
       "file": "skills/run-coding-agent-release-rounds.md"
     },
     {
@@ -776,7 +776,7 @@
       "file": "skills/run-the-file-model-matrix.md"
     },
     {
-      "bytes": 6424,
+      "bytes": 6426,
       "file": "skills/run-the-qa-team.md"
     },
     {
@@ -804,7 +804,7 @@
       "file": "skills/trace-request-end-to-end.md"
     },
     {
-      "bytes": 5122,
+      "bytes": 5124,
       "file": "skills/verify-a-batch-live.md"
     },
     {

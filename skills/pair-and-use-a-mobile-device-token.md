@@ -28,7 +28,7 @@ curl contract a client will implement.
 H=https://claw.local/api/v1
 # 1. Owner signs in (user JWT)
 OWNER=$(curl -sk $H/auth/login -H 'content-type: application/json' \
-  -d '{"email":"admin@claw.local","password":"ClawAdmin123!"}' | jq -r '.data.accessToken // .accessToken')
+  -d '{"email":"admin@claw.local","password":"$ADMIN_PASSWORD"}' | jq -r '.data.accessToken // .accessToken')
 
 # 2. Phone asks to pair (public)
 CODE=$(curl -sk $H/agent/auth/pair/init -H 'content-type: application/json' \

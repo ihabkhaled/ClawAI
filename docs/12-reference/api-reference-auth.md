@@ -10,14 +10,16 @@ Authenticate a user and receive JWT tokens.
 
 **Auth**: Public
 **Request Body**:
+
 ```json
 {
   "email": "admin@claw.local",
-  "password": "ClawAdmin123!"
+  "password": "<your ADMIN_PASSWORD>"
 }
 ```
 
 **Response 200**:
+
 ```json
 {
   "accessToken": "eyJhbGciOiJIUzI1NiIs...",
@@ -35,15 +37,17 @@ Authenticate a user and receive JWT tokens.
 ```
 
 **Errors**:
+
 - `401 INVALID_CREDENTIALS` — wrong email or password
 - `403 ACCOUNT_SUSPENDED` — account is suspended
 - `400 Validation failed` — missing/invalid fields
 
 **curl**:
+
 ```bash
 curl -X POST http://localhost:4000/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@claw.local","password":"ClawAdmin123!"}'
+  -d '{"email":"admin@claw.local","password":"$ADMIN_PASSWORD"}'
 ```
 
 ---
@@ -54,6 +58,7 @@ Refresh an expired access token using a valid refresh token.
 
 **Auth**: Public
 **Request Body**:
+
 ```json
 {
   "refreshToken": "clxyz123..."
@@ -61,6 +66,7 @@ Refresh an expired access token using a valid refresh token.
 ```
 
 **Response 200**:
+
 ```json
 {
   "accessToken": "eyJhbGciOiJIUzI1NiIs...",
@@ -69,6 +75,7 @@ Refresh an expired access token using a valid refresh token.
 ```
 
 **Errors**:
+
 - `401 INVALID_REFRESH_TOKEN` — token expired or revoked
 
 **Note**: Refresh tokens are rotated on each use. The old token is invalidated.
@@ -84,6 +91,7 @@ Invalidate all sessions for the current user.
 **Response**: `204 No Content`
 
 **curl**:
+
 ```bash
 curl -X POST http://localhost:4000/api/v1/auth/logout \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."
@@ -97,6 +105,7 @@ Get the current authenticated user's profile.
 
 **Auth**: Bearer token
 **Response 200**:
+
 ```json
 {
   "id": "clxyz...",
@@ -120,6 +129,7 @@ Create a new user account. Admin only.
 
 **Auth**: Bearer token (ADMIN role required)
 **Request Body**:
+
 ```json
 {
   "email": "user@example.com",
@@ -132,6 +142,7 @@ Create a new user account. Admin only.
 **Response 201**: SafeUser object (no passwordHash)
 
 **Errors**:
+
 - `409 DUPLICATE_ENTITY` — email or username already exists
 - `403 Forbidden` — not admin role
 
@@ -143,6 +154,7 @@ List all users with pagination. Admin only.
 
 **Auth**: Bearer token (ADMIN role required)
 **Query Parameters**:
+
 - `page` (int, default: 1)
 - `limit` (int, default: 20, max: 100)
 - `search` (string) — search by email or username
@@ -150,6 +162,7 @@ List all users with pagination. Admin only.
 - `status` (enum) — filter by UserStatus
 
 **Response 200**:
+
 ```json
 {
   "data": [{ "id": "...", "email": "...", "username": "...", "role": "VIEWER", ... }],
@@ -204,9 +217,11 @@ Change a user's role. Admin only.
 
 **Auth**: Bearer token (ADMIN role required)
 **Request Body**:
+
 ```json
 { "role": "OPERATOR" }
 ```
+
 **Response 200**: Updated SafeUser
 
 ---
@@ -217,12 +232,14 @@ Update the current user's preferences.
 
 **Auth**: Bearer token
 **Request Body**:
+
 ```json
 {
   "languagePreference": "FR",
   "appearancePreference": "DARK"
 }
 ```
+
 **Response 200**: Updated SafeUser
 
 ---
@@ -233,10 +250,12 @@ Change the current user's password.
 
 **Auth**: Bearer token
 **Request Body**:
+
 ```json
 {
   "currentPassword": "OldPass123!",
   "newPassword": "NewPass456!"
 }
 ```
+
 **Response**: `204 No Content`

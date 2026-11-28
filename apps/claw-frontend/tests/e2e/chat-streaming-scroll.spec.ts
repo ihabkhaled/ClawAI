@@ -14,7 +14,13 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 
 const BASE = process.env['E2E_BASE_URL'] ?? 'https://claw.local';
 const EMAIL = process.env['E2E_ADMIN_EMAIL'] ?? 'admin@claw.local';
-const PASSWORD = process.env['E2E_ADMIN_PASSWORD'] ?? 'ClawAdmin123!';
+function requirePassword(value: string | undefined): string {
+  if (value === undefined || value === '') {
+    throw new Error('Set ADMIN_PASSWORD to run this spec');
+  }
+  return value;
+}
+const PASSWORD = requirePassword(process.env['E2E_ADMIN_PASSWORD']);
 
 const LONG_PROMPT =
   'Write a detailed 1500-word guide to home gardening with 12 numbered sections, each section several full paragraphs. Do not stop early.';

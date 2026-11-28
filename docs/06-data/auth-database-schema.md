@@ -168,7 +168,7 @@ The auth service seeds a default admin user on first startup:
 ```
 email: ${ADMIN_EMAIL}        (default: admin@claw.local)
 username: ${ADMIN_USERNAME}  (default: claw-admin)
-password: ${ADMIN_PASSWORD}  (default: ClawAdmin123!)
+password: ${ADMIN_PASSWORD}  (required, no default; 12+ characters)
 role: ADMIN
 status: ACTIVE
 ```

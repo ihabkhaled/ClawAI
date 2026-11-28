@@ -49,7 +49,7 @@ The connector catalogue is `/connectors/available-models`, **not** `/models`
 
 ```bash
 T=$(curl -sk -X POST https://claw.local/api/v1/auth/login -H 'Content-Type: application/json' \
-  -d '{"email":"admin@claw.local","password":"ClawAdmin123!"}' \
+  -d '{"email":"admin@claw.local","password":"$ADMIN_PASSWORD"}' \
   | python -c "import sys,json;print(json.load(sys.stdin)['tokens']['accessToken'])")
 curl -sk "https://claw.local/api/v1/connectors/available-models" -H "Authorization: Bearer $T" \
   | python -c "
@@ -70,7 +70,7 @@ politely and touch nothing, which looks like an agent defect and is not one.
 ```bash
 # from the ClawAI repository root (the script lives in the coding-agent submodule)
 NODE_OPTIONS=--use-system-ca \
-CLAW_LIVE_EMAIL=admin@claw.local CLAW_LIVE_PASSWORD='ClawAdmin123!' \
+CLAW_LIVE_EMAIL=admin@claw.local CLAW_LIVE_PASSWORD="$ADMIN_PASSWORD" \
 node apps/claw-coding-agent/scripts/live-rounds.mjs --models=kimi-k3,glm-5.2,... --repeat=3 --json=rounds.json
 ```
 

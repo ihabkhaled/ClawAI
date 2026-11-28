@@ -287,11 +287,11 @@ That blocked the 2026-11-27 release until two hand-edited production values were
 
 ## Admin Seed
 
-| Variable         | Required | Default                    | Description                           |
-| ---------------- | -------- | -------------------------- | ------------------------------------- |
-| `ADMIN_EMAIL`    | No       | `admin@claw.local`         | Email for the seeded admin account    |
-| `ADMIN_USERNAME` | No       | `claw-admin`               | Username for the seeded admin account |
-| `ADMIN_PASSWORD` | Yes      | `change-me-on-first-login` | Password for the seeded admin account |
+| Variable         | Required | Default            | Description                                                                    |
+| ---------------- | -------- | ------------------ | ------------------------------------------------------------------------------ |
+| `ADMIN_EMAIL`    | No       | `admin@claw.local` | Email for the seeded admin account                                             |
+| `ADMIN_USERNAME` | No       | `claw-admin`       | Username for the seeded admin account                                          |
+| `ADMIN_PASSWORD` | Yes      | (none)             | Password for the seeded admin account; 12+ characters, seed refuses without it |
 
 ---
 

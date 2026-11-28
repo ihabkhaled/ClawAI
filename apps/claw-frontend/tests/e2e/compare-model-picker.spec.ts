@@ -15,7 +15,13 @@ import { expect, test, type Page, type Route } from '@playwright/test';
 
 const BASE = process.env['E2E_BASE_URL'] ?? 'https://claw.local';
 const EMAIL = process.env['E2E_ADMIN_EMAIL'] ?? 'admin@claw.local';
-const PASSWORD = process.env['E2E_ADMIN_PASSWORD'] ?? 'ClawAdmin123!';
+function requirePassword(value: string | undefined): string {
+  if (value === undefined || value === '') {
+    throw new Error('Set ADMIN_PASSWORD to run this spec');
+  }
+  return value;
+}
+const PASSWORD = requirePassword(process.env['E2E_ADMIN_PASSWORD']);
 const STATE_FILE = path.join(os.tmpdir(), 'claw-compare-model-picker-state.json');
 
 const LOCKED_SEARCH = 'GPT 4o';

@@ -7,7 +7,8 @@ import path from 'node:path';
 const require_ = createRequire(import.meta.url);
 const { chromium } = require_('D:/Freelance/Claw/apps/claw-coding-agent/node_modules/playwright');
 
-const OUT = 'D:/Freelance/Claw-feedback-system/docs/16-quality-engineering/feedback-system/evidence';
+const OUT =
+  'D:/Freelance/Claw-feedback-system/docs/16-quality-engineering/feedback-system/evidence';
 fs.mkdirSync(OUT, { recursive: true });
 
 const results = [];
@@ -43,7 +44,13 @@ try {
   // ---- sign in -------------------------------------------------------
   await page.goto('https://claw.local/en/login', { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.fill('input[type=email], input[name=email]', 'admin@claw.local');
-  await page.fill('input[type=password]', 'ClawAdmin123!');
+  await page.fill(
+    'input[type=password]',
+    process.env.ADMIN_PASSWORD ??
+      (() => {
+        throw new Error('Set ADMIN_PASSWORD to run this script');
+      })(),
+  );
   await page.click('button[type=submit]');
   await page.waitForURL((u) => !u.pathname.includes('/login'), { timeout: 60000 });
   check('admin can sign in', true, page.url());
@@ -60,7 +67,10 @@ try {
   if (launcherVisible) {
     await launcher.click();
     await page.waitForTimeout(1500);
-    const dialogOpen = await page.locator('[role=dialog]').isVisible().catch(() => false);
+    const dialogOpen = await page
+      .locator('[role=dialog]')
+      .isVisible()
+      .catch(() => false);
     check('feedback dialog opens', dialogOpen);
     await shot('02-feedback-dialog');
 
@@ -68,7 +78,10 @@ try {
       const dialog = page.locator('[role=dialog]');
       const controls = await dialog.locator('select, [role=combobox], button').count();
       check('dialog exposes its controls', controls > 0, `${controls} controls`);
-      const hasTitleField = await dialog.locator('#feedback-title').isVisible().catch(() => false);
+      const hasTitleField = await dialog
+        .locator('#feedback-title')
+        .isVisible()
+        .catch(() => false);
       check('dialog exposes the title field', hasTitleField);
       const hasToolbar = (await dialog.getByText('Link', { exact: true }).count()) > 0;
       check('markdown toolbar is rendered', hasToolbar);
@@ -83,7 +96,10 @@ try {
       await dialog.locator('textarea').first().fill('Filed from the **browser** during E2E.');
       await dialog.getByRole('button', { name: /submit feedback/i }).click();
       await page.waitForTimeout(4000);
-      const closed = !(await page.locator('[role=dialog]').isVisible().catch(() => false));
+      const closed = !(await page
+        .locator('[role=dialog]')
+        .isVisible()
+        .catch(() => false));
       check('dialog closes after a successful submission', closed);
       await shot('06-after-submit');
       globalThis.__submittedTitle = `UI submitted ticket ${stamp}`;
@@ -99,22 +115,31 @@ try {
   const bodyText = await page.locator('body').innerText();
   check('admin list shows a seeded ticket number', /FDB-0000\d\d/.test(bodyText));
   if (globalThis.__submittedTitle) {
-    check('the ticket filed through the UI appears in the admin list',
-      bodyText.includes(globalThis.__submittedTitle), globalThis.__submittedTitle);
+    check(
+      'the ticket filed through the UI appears in the admin list',
+      bodyText.includes(globalThis.__submittedTitle),
+      globalThis.__submittedTitle,
+    );
   }
   check('type labels are translated, not raw keys', !bodyText.includes('feedback.type.'));
   check('status labels are translated, not raw keys', !bodyText.includes('feedback.admin.status.'));
   await shot('03-admin-list');
 
   // ---- stored XSS must not execute -----------------------------------
-  check('no javascript dialog was raised by stored content', alerts.length === 0,
-    alerts.length ? alerts.join(' | ') : 'no alert()');
+  check(
+    'no javascript dialog was raised by stored content',
+    alerts.length === 0,
+    alerts.length ? alerts.join(' | ') : 'no alert()',
+  );
   const rawScriptInDom = await page.evaluate(
     () => document.querySelectorAll('script[data-feedback], iframe[src*="evil.test"]').length,
   );
   check('no injected script or iframe element in the DOM', rawScriptInDom === 0);
-  check('escaped markup is shown as text, not parsed', bodyText.includes('<script>') || bodyText.includes('&lt;script') || true,
-    'title rendered as literal text');
+  check(
+    'escaped markup is shown as text, not parsed',
+    bodyText.includes('<script>') || bodyText.includes('&lt;script') || true,
+    'title rendered as literal text',
+  );
 
   // ---- mobile layout --------------------------------------------------
   await page.setViewportSize({ width: 390, height: 844 });
@@ -128,15 +153,21 @@ try {
 
   await page.goto('https://claw.local/en/chat', { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForTimeout(3000);
-  const mobileLauncher = await page.locator('button[aria-label="Send feedback"]').isVisible().catch(() => false);
+  const mobileLauncher = await page
+    .locator('button[aria-label="Send feedback"]')
+    .isVisible()
+    .catch(() => false);
   check('launcher is reachable on a phone viewport', mobileLauncher);
   await shot('05-launcher-mobile');
 
   // Third-party ad/analytics scripts on the shell trip the site CSP; they are
   // not part of this feature. Only errors naming a feedback surface count.
   const feedbackErrors = consoleErrors.filter((e) => /feedback/i.test(e));
-  check('no console errors from the feedback surfaces', feedbackErrors.length === 0,
-    feedbackErrors.slice(0, 2).join(' | '));
+  check(
+    'no console errors from the feedback surfaces',
+    feedbackErrors.length === 0,
+    feedbackErrors.slice(0, 2).join(' | '),
+  );
 } catch (error) {
   check('run completed without throwing', false, String(error).slice(0, 300));
 } finally {
