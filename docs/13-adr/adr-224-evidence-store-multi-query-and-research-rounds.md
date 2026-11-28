@@ -32,7 +32,7 @@ content was already fenced as untrusted.
    verdict searches at depth 1, which reads as many pages as before.
 5. **Query expansion without new spend.** The first round's primary query keeps ADR-210's all-provider search. The
    council's other sub-questions, and every query of rounds 2+, run in parallel on expansion providers only
-   (`OLLAMA_WEB`, `SEARXNG` by default; `publicConfig.expansion` overrides), so a paid provider sees one call per turn. Hits merge by canonical URL with reciprocal-rank fusion; each item keeps the
+   (`OLLAMA_WEB`, `SEARXNG` by default; `publicConfig.expansion` overrides), so a paid provider sees one call per turn. **Amended by [ADR-228](adr-228-google-in-every-research.md):** Google (SerpAPI) also takes expansion queries, result pages and each round's primary, within a per-depth budget. Hits merge by canonical URL with reciprocal-rank fusion; each item keeps the
    query that found it. Identical page text (syndicated copies) is dropped by content hash.
 6. **Search cache.** Merged all-provider and expansion results are cached in Redis for 10 minutes (key = hash of
    normalised query, providers and size). A hit calls no provider and records no `WEB_SEARCH` unit.

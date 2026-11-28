@@ -1,6 +1,7 @@
 import { type ChatMessage } from '../../../generated/prisma';
 import { ROLE_ENVELOPE_TOKENS } from '../constants/context-composer.constants';
 import { type ConversationTurn } from '../types/context-composer.types';
+import { withQuotedContext } from './quoted-turn.utility';
 import { estimateTokensFromText } from './token-estimator.utility';
 
 /**
@@ -47,7 +48,11 @@ export function groupIntoTurns(messages: readonly ChatMessage[]): ConversationTu
  * thread is an entire turn's worth of budget the composer thought it had.
  */
 export function estimateMessageTokens(message: ChatMessage): number {
-  return estimateTokensFromText(message.content ?? '') + ROLE_ENVELOPE_TOKENS;
+  // Measured as the prompt shows it: an earlier answer carries its sources list (quoted-turn.utility).
+  return (
+    estimateTokensFromText(withQuotedContext(message.content ?? '', message.metadata)) +
+    ROLE_ENVELOPE_TOKENS
+  );
 }
 
 /** Every message in the given turns, chronological, deduplicated by id. */

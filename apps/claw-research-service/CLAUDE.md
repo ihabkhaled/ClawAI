@@ -116,7 +116,8 @@ Plan: `docs/implementation/autonomous-research-engine-plan.md` §4 B1/B2.
   adapter call still records one `WEB_SEARCH` unit. `MultiQuerySearchManager` →
   `SearchExecutionService.executeCached` / `executeExpansion`. From `round` 2 on the PRIMARY also
   runs on expansion providers only (`RESEARCH_PRIMARY_EXPANSION_ONLY_FROM_ROUND`), so a paid
-  provider answers once per chat turn, not once per round; none enabled → the primary is skipped
+  provider answers once per chat turn, not once per round (Google, kind `SERPAPI`, is the one
+  exception: ADR-228 below); none enabled → the primary is skipped
   with one warning, trace `search skipped`, `providerSelection` NONE.
 - **Fusion weights (ADR-226).** The primary query's hits count double (`RESEARCH_RRF_PRIMARY_WEIGHT`), platform API
   rows 0.6: five encyclopedia rows used to outrank the page that held a lyric.
@@ -151,6 +152,43 @@ Plan: `docs/implementation/autonomous-research-engine-plan.md` §4 B1/B2.
   `cachedSearches`. Items gain `query`, `round`, `contentHash`, `reusedFromRunId`. Engine mode
   only. Log: one `research.run: queries= cached= results= pages= dupes= reused= round= depth=
 platforms= ms=` line per search run (counts only, never a URL or query text).
+
+## Google in every research run (ADR-228, 2026-11-28)
+
+Owner order: Google is in every search, and read deeper than page 1. Google reaches the pipeline ONLY through the
+SERPAPI provider (`engine=google`). Never scrape google.com. Never feed Gemini grounding into the pipeline: grounded
+results may only be shown unchanged to the asking user and may not be cached, analysed or used to crawl.
+
+- **Budget by depth** `RESEARCH_GOOGLE_BUDGETS` (`research-engine.constants.ts`, beside the depth budgets), depth 0-5:
+  Google queries per run 1/1/2/3/4/6, result pages of the PRIMARY query 1/1/1/2/3/5. Depth absent = depth 0. Each query and
+  each page is one paid SerpAPI search (one `WEB_SEARCH` unit): a round-1 run costs `queries + pages - 1` of them
+  (1/1/2/4/6/10), a follow-up round 1.
+- **Admin override** on the SERPAPI provider's `publicConfig` (DB, no env var): `googleMaxQueriesPerRun` (integer 0-20) and
+  `googleMaxPages` (integer 1-10). A valid value REPLACES the table value from depth 3 and only caps it below depth 3 (a
+  shallow turn never gets dearer). Invalid values are ignored at run time and refused by the provider DTO
+  (`searchProviderPublicConfigSchema`). `0` queries = Google off for engine runs (an explicit pick of the Google provider
+  still runs its primary). `publicConfig.expansion` no longer applies to SERPAPI in research runs: the budget is its one control.
+  Set it with `PATCH /research/search-providers/:id` (the admin UI has no field for it); a PATCH replaces `publicConfig` whole,
+  so send the keys it already has too.
+- **Round 1:** the primary on every provider (ADR-210; SerpAPI answers page 1), the best expansion queries up to the budget
+  (a query in another script than the primary first, then the order given: `pickGoogleExpansions`; script = Unicode letters,
+  two languages in one script are not told apart) and primary pages 2..N (SerpAPI `start` 10, 20, ...) in parallel.
+  A Google query runs on the expansion providers plus Google (`executeExpansion` with a `GoogleRoute`); a query outside the
+  budget, and every site search, runs on expansion providers only.
+- **Round >= 2:** Google answers the round's primary, ONE call; no expansions, no pages. Every other paid provider keeps the
+  cost rule exactly (the round-1 primary only).
+- **Pages** (`SearchExecutionService.executeGooglePage`): Google alone, `maxResults` 10, `start` from `PagedSearchDto` (the
+  public `ExecuteSearchDto` has no `start`). A failed page is one warning (`Google results page N could not be read: ...`); a
+  skipped (breaker open) or empty page says nothing; no page ever fails the run. Fusion: the primary and its pages share one
+  `group` (a URL counts once, at its first rank) and a page's ranks are offset by `start` (`QueryResultSet.group`, `rankOffset`).
+- **`hl`:** `filters.language` matching `/^[a-z]{2,3}$/` is sent as SerpAPI `hl` (`zh` becomes `zh-cn`, `he` becomes `iw`:
+  `SERPAPI_HL_ALIASES`). The cache key already carries the language (`|lang=`) and now the page (`|start=<n>`), so pages
+  and languages never collide; a real call records one unit, a cache hit none.
+- **Breaker:** the all-provider primary is unchanged. A budget-added Google call (expansion, follow-up primary, page) is not
+  made while Google's breaker is open and nothing else would be asked ("never skip everyone" is for the primary).
+- **Log:** one `google: queries=<n> pages=<n> results=<n> depth=<d|none> round=<r>` line per search run (old-shape runs
+  too), counts only, never a query. `POST /research/search` and old-shape runs still call every enabled provider once.
+- `fetchTopN` stays 16/20 at depth 4/5: the fetch phase is capped at 30 s for 6 pages at a time and chat clamps depth to 3.
 
 ## Platform registry (research engine B3, 2026-11-28)
 

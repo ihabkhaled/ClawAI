@@ -67,7 +67,8 @@ overruled. The single-model gate is the fallback, never removed.
 8c. **Depth sizes the run; rounds fill the gaps** ([ADR-224](../docs/13-adr/adr-224-evidence-store-multi-query-and-research-rounds.md)).
 The council's depth (clamped to `RESEARCH_MAX_DEPTH`, 3) picks research-service's budget: queries 1/2/4/6 and pages
 8/8/8/12 for depth 0-3; its other sub-questions, and every query of rounds 2+, run on expansion providers only, so a
-paid search provider still sees one call per turn. At depth ≥ 2 a gap check (the gate's model chain, evidence fenced as data) may start another round
+paid search provider still sees one call per turn, except Google (SerpAPI), which runs every research run within its
+per-depth budget ([ADR-228](../docs/13-adr/adr-228-google-in-every-research.md)). At depth ≥ 2 a gap check (the gate's model chain, evidence fenced as data) may start another round
 with new queries, never re-reading a URL of this turn: at most `depth` rounds, and a round starts only while 20 s of
 the 60 s research budget remain. Done, no new query, a round that read nothing new, or the user's Stop ends research;
 a Stop during research also stops the answer that follows (`StreamCancellationService.carryStop`, through Redis
@@ -78,6 +79,11 @@ only a round that will run gets a round number. The gap check writes its text in
 The planner and the council read the conversation and the user's memories (fenced as data); every query is
 self-contained ("search again" is never a query). A text lookup (lyrics, a quote, an error message) searches the exact
 words first, always researches (models invent lyrics), and a near-identical line in the evidence is a match.
+
+8f. **A promised search is finished** ([ADR-227](../docs/13-adr/adr-227-a-promised-search-is-finished-not-stored.md)).
+A reply that only says it will search, or asks for a web tool normal chat did not offer, is never stored as the
+answer: the promise becomes its own message, the search runs once when the user and the plan allow it, and the model
+answers again. The page keeps waiting until that answer. Pinned by `search-continuation-turn.spec.ts`.
 
 8d. **Platforms are searched through the registry, never by a new fetch path** ([ADR-225](../docs/13-adr/adr-225-research-platform-registry.md)).
 Official free APIs on a host allow-list, or `site:` through expansion providers: public pages only, no login, CAPTCHA or

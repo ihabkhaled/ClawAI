@@ -27,6 +27,18 @@ export const BRAVE_SEARCH_PATH = '/res/v1/web/search';
 /** SerpApi Google Search API. */
 export const SERPAPI_DEFAULT_BASE = 'https://serpapi.com';
 export const SERPAPI_SEARCH_PATH = '/search.json';
+/** Organic results one SerpApi Google page holds (Google no longer honours `num` above this). */
+export const SERPAPI_RESULTS_PER_PAGE = 10;
+/**
+ * ISO 639 base codes SerpApi's `hl` does not list under that name. Google's own codes: Chinese needs a variant,
+ * Hebrew is `iw`. Every other code is passed as given.
+ */
+export const SERPAPI_HL_ALIASES: ReadonlyMap<string, string> = new Map<string, string>([
+  ['zh', 'zh-cn'],
+  ['he', 'iw'],
+]);
+/** The provider kind Google reaches research through (a string, so it compares with the Prisma row kind). */
+export const GOOGLE_PROVIDER_KIND: string = SearchProviderKind.SERPAPI;
 
 /**
  * Provider-kind → score lookups consumed by SearchExecutionService.scoreProvider.

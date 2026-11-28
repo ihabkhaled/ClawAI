@@ -108,6 +108,8 @@ import {
   toOpenAiToolSpecs,
   translateToolCatalog,
 } from '../utilities/provider-tool-translation.utility';
+import { isSearchToolName, requestedToolsOf } from '../utilities/pending-search.utility';
+import type { RequestedTool } from '../types/search-continuation.types';
 import {
   ANTHROPIC_TOOL_DEFAULT_MAX_TOKENS,
   OPENAI_TOOL_CALLS_FINISH_REASON,
@@ -1815,13 +1817,25 @@ export class ChatExecutionManager implements OnModuleInit {
       // The stream's protocol determines the tool dialect: an OpenAI-SSE run
       // fragments `arguments` as a JSON string, an Ollama-NDJSON run delivers
       // it as an object. The reader emits whichever its protocol produced.
+      const dialect = this.toolDialectForProtocol(base.protocol);
       const toolCalls = this.extractNativeToolCalls(
         result.toolCalls,
         base.provider,
-        this.toolDialectForProtocol(base.protocol),
+        dialect,
         executionOptions,
       );
-      return this.buildExecutorResponse(base, result, toolCalls, usedFallback, executionOptions);
+      // With no catalog offered, a tool the model asked for anyway is kept so a promised search can be run.
+      const requestedTools =
+        this.resolveNativeToolCatalog(base.provider, dialect, executionOptions) === undefined
+          ? requestedToolsOf(result.toolCalls)
+          : [];
+      return this.buildExecutorResponse(
+        base,
+        result,
+        { toolCalls, requestedTools },
+        usedFallback,
+        executionOptions,
+      );
     } catch (error: unknown) {
       // Stop aborts the transport, which surfaces as an ordinary provider error
       // ("connect failed - This operation was aborted"). Left as-is the chain
@@ -1869,10 +1883,27 @@ export class ChatExecutionManager implements OnModuleInit {
     }
   }
 
+  /** No text, not stopped, and no tool to run or web search to continue with. */
+  private isEmptyReply(
+    result: StreamExecutionResult,
+    toolCalls: readonly NormalizedToolCall[],
+    requestedTools: readonly RequestedTool[],
+  ): boolean {
+    return (
+      result.content.trim().length === 0 &&
+      !result.cancelled &&
+      toolCalls.length === 0 &&
+      !requestedTools.some((tool) => isSearchToolName(tool.name))
+    );
+  }
+
   private buildExecutorResponse(
     base: Omit<StreamExecutionInput, 'abortSignal'>,
     result: StreamExecutionResult,
-    toolCalls: readonly NormalizedToolCall[],
+    {
+      toolCalls,
+      requestedTools,
+    }: { toolCalls: readonly NormalizedToolCall[]; requestedTools: readonly RequestedTool[] },
     usedFallback: boolean,
     executionOptions: ExecutionOptions | undefined,
   ): LlmResponse {
@@ -1880,8 +1911,9 @@ export class ChatExecutionManager implements OnModuleInit {
     // not answering. This is the streaming twin of the buffered
     // CLOUD_PROVIDER_EMPTY_RESPONSE trap: without the tool-call check, every
     // successful streamed tool call would terminate the run as an empty
-    // response.
-    if (result.content.trim().length === 0 && !result.cancelled && toolCalls.length === 0) {
+    // response. A web tool asked for with no catalog is the same: the turn
+    // continues with that search (ADR-227), it is not a failed model.
+    if (this.isEmptyReply(result, toolCalls, requestedTools)) {
       throw new BusinessException(
         `Provider ${base.provider} returned no content`,
         'STREAM_EMPTY_RESPONSE',
@@ -1922,6 +1954,7 @@ export class ChatExecutionManager implements OnModuleInit {
             finishedForTools: finishReason === OPENAI_TOOL_CALLS_FINISH_REASON,
           }
         : {}),
+      ...(requestedTools.length > 0 ? { requestedTools } : {}),
       ...this.buildSpeedReport(base, result, executionOptions),
     };
   }

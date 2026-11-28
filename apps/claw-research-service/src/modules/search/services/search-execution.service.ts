@@ -7,6 +7,7 @@ import {
   SEARCH_AUTO_CEILING_MS,
   SEARCH_DEFAULT_MAX_RESULTS,
   SEARCH_DEFAULT_TIMEOUT_MS,
+  SERPAPI_RESULTS_PER_PAGE,
 } from '../../../common/constants/search.constants';
 import { ProviderSelectionMode } from '../../../common/enums/provider-selection-mode.enum';
 import { ResearchErrorCode } from '../../../common/enums/research-error-code.enum';
@@ -26,11 +27,16 @@ import { SearchProviderHealthService } from './search-provider-health.service';
 import { SearchProviderService } from './search-provider.service';
 import { SearchResultCacheService } from './search-result-cache.service';
 import { classifySearchError } from '../utilities/classify-search-error.utility';
-import { narrowToExpansionProviders } from '../utilities/expansion-provider.utility';
+import {
+  isGoogleProvider,
+  narrowToExpansionProviders,
+  withoutGoogleProviders,
+} from '../utilities/expansion-provider.utility';
 import { languageFilterOf, searchCacheKey } from '../utilities/search-cache-key.utility';
 import type { ExecuteSearchDto } from '../dto/execute-search.dto';
 import type { Prisma, SearchProvider, SearchRun } from '../../../generated/prisma';
 import type {
+  GoogleRoute,
   ProviderCallEntry,
   ProviderSelection,
 } from '../types/search-provider-selection.types';
@@ -38,7 +44,7 @@ import type {
   SearchExecutionResult,
   SearchProviderOutcome,
 } from '../types/search-execution-result.types';
-import type { SearchAdapterContext, SearchResult } from '../types/search.types';
+import type { PagedSearchDto, SearchAdapterContext, SearchResult } from '../types/search.types';
 
 /** Raised when a provider outlives its bound; classified as TIMEOUT. */
 class SearchProviderTimeoutError extends Error {
@@ -69,16 +75,39 @@ export class SearchExecutionService {
   }
 
   /**
+   * The Google (SERPAPI) provider a research run's Google budget governs (ADR-228): the explicit pick when it is
+   * an enabled, active SERPAPI provider, else the first enabled SERPAPI provider in rank order; null when none.
+   * Never throws for a missing provider (the search itself reports "no provider").
+   */
+  async findGoogleProvider(providerId?: string): Promise<SearchProvider | null> {
+    const enabled =
+      providerId === undefined
+        ? await this.providerRepository.findEnabled()
+        : await this.enabledPick(providerId);
+    return enabled.find((provider) => isGoogleProvider(provider)) ?? null;
+  }
+
+  /** The explicitly picked provider as a one-row list, or none when it is missing, disabled or not ACTIVE. */
+  private async enabledPick(providerId: string): Promise<SearchProvider[]> {
+    const picked = await this.providerRepository.findById(providerId);
+    return picked?.enabled === true && picked.status === 'ACTIVE' ? [picked] : [];
+  }
+
+  /**
    * Research engine (B2): the PRIMARY query, on every enabled provider exactly
    * like `execute` (ADR-210), optionally served from the Redis cache. An
-   * explicit `providerId` always bypasses the cache.
+   * explicit `providerId` always bypasses the cache. A Google route to nobody
+   * (a Google budget of 0, ADR-228) leaves SERPAPI out of an AUTO run; an
+   * explicit pick is never narrowed.
    */
   async executeCached(
     userId: string,
     dto: ExecuteSearchDto,
     useCache: boolean,
+    google?: GoogleRoute,
   ): Promise<SearchExecutionResult> {
-    const selection = await this.resolveProviders(dto.providerId, dto.filters);
+    const resolved = await this.resolveProviders(dto.providerId, dto.filters);
+    const selection = this.routePrimary(resolved, dto.providerId, google);
     return this.executeSelectionCached(userId, dto, selection, useCache);
   }
 
@@ -86,24 +115,97 @@ export class SearchExecutionService {
    * Research engine (B2): an EXPANSION query, run only on expansion providers
    * (cost rule: `isExpansionProvider`). Null when no enabled provider qualifies;
    * the caller skips expansion with one warning. Each adapter call still
-   * records its `WEB_SEARCH` unit; a cache hit records none.
+   * records its `WEB_SEARCH` unit; a cache hit records none. With a Google
+   * route (ADR-228) SERPAPI is decided by the route alone, and a Google that
+   * is the only provider asked is not asked at all while its breaker is open.
    */
   async executeExpansion(
     userId: string,
     dto: ExecuteSearchDto,
     useCache: boolean,
+    google?: GoogleRoute,
   ): Promise<SearchExecutionResult | null> {
     const selection = narrowToExpansionProviders(
       await this.resolveProviders(dto.providerId, dto.filters),
+      google,
     );
-    return selection === null
-      ? null
-      : this.executeSelectionCached(userId, dto, selection, useCache);
+    return selection !== null && !(await this.googleAloneIsOpen(selection, google?.providerId))
+      ? this.executeSelectionCached(userId, dto, selection, useCache)
+      : null;
+  }
+
+  /**
+   * One deeper Google results page of the primary query (ADR-228): the Google
+   * provider alone, SerpApi `start` from `dto.start`, a full page of results,
+   * its own cache entry. Null when the provider is gone or its breaker is open
+   * (an open breaker skips Google like any provider). A failed page rejects;
+   * the caller reports it and the run goes on.
+   */
+  async executeGooglePage(
+    userId: string,
+    dto: PagedSearchDto,
+    providerId: string,
+    useCache: boolean,
+  ): Promise<SearchExecutionResult | null> {
+    const resolved = await this.resolveProviders(dto.providerId, dto.filters);
+    const candidates = resolved.candidates.filter(
+      (provider) => provider.id === providerId && isGoogleProvider(provider),
+    );
+    const google = candidates[0];
+    if (google === undefined) {
+      return null;
+    }
+    const selection: ProviderSelection = { ...resolved, primary: google, candidates };
+    if (await this.googleAloneIsOpen(selection, providerId)) {
+      return null;
+    }
+    const page = { ...dto, maxResults: SERPAPI_RESULTS_PER_PAGE };
+    return this.executeSelectionCached(userId, page, selection, useCache);
+  }
+
+  /** The primary keeps ADR-210's every-provider rule; only a Google route to nobody narrows an AUTO run. */
+  private routePrimary(
+    selection: ProviderSelection,
+    explicit: string | undefined,
+    google: GoogleRoute | undefined,
+  ): ProviderSelection {
+    if (google?.providerId !== null || explicit !== undefined) {
+      return selection;
+    }
+    const narrowed = withoutGoogleProviders(selection);
+    if (narrowed === null) {
+      throw new BusinessException(
+        'research.search.no_enabled_provider',
+        ResearchErrorCode.NO_ENABLED_PROVIDER,
+        HttpStatus.FAILED_DEPENDENCY,
+      );
+    }
+    return narrowed;
+  }
+
+  /**
+   * True when Google is the only provider this AUTO selection would ask and its breaker is open. The "never skip
+   * everyone" guard exists so the primary search still tries a lone dead provider; a budget-added Google call
+   * has no such claim and must not hammer a failing paid API (one call per page).
+   */
+  private async googleAloneIsOpen(
+    selection: ProviderSelection,
+    googleId: string | null | undefined,
+  ): Promise<boolean> {
+    const only = selection.candidates.length === 1 && selection.candidates[0]?.id === googleId;
+    if (googleId === null || googleId === undefined || !only) {
+      return false;
+    }
+    if (selection.executionMode !== SearchExecutionMode.AUTO_ALL) {
+      return false;
+    }
+    await this.health.hydrate([googleId]);
+    return this.health.isOpen(googleId);
   }
 
   private async executeSelectionCached(
     userId: string,
-    dto: ExecuteSearchDto,
+    dto: PagedSearchDto,
     selection: ProviderSelection,
     useCache: boolean,
   ): Promise<SearchExecutionResult> {
@@ -115,6 +217,7 @@ export class SearchExecutionService {
             selection.candidates.map((provider) => provider.id),
             maxResults,
             languageFilterOf(dto.filters),
+            dto.start ?? 0,
           )
         : null;
     const cached = key === null ? null : await this.cache.read(key);
@@ -130,7 +233,7 @@ export class SearchExecutionService {
 
   private async runSelection(
     userId: string,
-    dto: ExecuteSearchDto,
+    dto: PagedSearchDto,
     selection: ProviderSelection,
     maxResults: number,
   ): Promise<SearchExecutionResult> {
@@ -251,7 +354,7 @@ export class SearchExecutionService {
   private async runProviders(
     selection: ProviderSelection,
     run: SearchRun,
-    dto: ExecuteSearchDto,
+    dto: PagedSearchDto,
     maxResults: number,
     attemptedProviders: string[],
     warnings: string[],
@@ -311,7 +414,7 @@ export class SearchExecutionService {
   private async callProvider(
     provider: SearchProvider,
     run: SearchRun,
-    dto: ExecuteSearchDto,
+    dto: PagedSearchDto,
     maxResults: number,
     selection: ProviderSelection,
     networkCallIds: string[],
@@ -326,7 +429,15 @@ export class SearchExecutionService {
       if (bounded) {
         context.timeoutMs = boundMs;
       }
-      const call = adapter.search({ query: dto.query, maxResults, filters: dto.filters }, context);
+      const call = adapter.search(
+        {
+          query: dto.query,
+          maxResults,
+          filters: dto.filters,
+          ...(dto.start === undefined ? {} : { start: dto.start }),
+        },
+        context,
+      );
       const response = await this.awaitBounded(call, bounded, boundMs);
       const results = this.applyDomainPolicy(response.results, provider);
       this.health.recordSuccess(provider.id);

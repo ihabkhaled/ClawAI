@@ -39,7 +39,7 @@ import type {
 } from '../types/research-gate.types';
 import { RESEARCH_GAP_CHECK_FAILED_CLOSED } from '../constants/research-gap-check.constants';
 import { parseResearchGateVerdict } from '../utilities/research-gate.utility';
-import { applyCouncilToPlan } from '../utilities/harness-council.utility';
+import { applyCouncilToPlan, currentDateLine } from '../utilities/harness-council.utility';
 import {
   buildGapCheckPrompt,
   parseResearchGapCheck,
@@ -319,7 +319,9 @@ export class ResearchGateService {
     for (const candidate of candidates) {
       const raw = await this.generate(
         candidate,
-        `${RESEARCH_PLANNER_SYSTEM_PROMPT}${historyBlock}
+        `${RESEARCH_PLANNER_SYSTEM_PROMPT}
+
+${currentDateLine()}${historyBlock}
 
 User message:
 ${message}${digestBlock}`,
@@ -377,6 +379,8 @@ ${message}${digestBlock}`,
       const raw = await this.generate(
         candidate,
         `${RESEARCH_REPLAN_SYSTEM_PROMPT}
+
+${currentDateLine()}
 
 User message:
 ${message}

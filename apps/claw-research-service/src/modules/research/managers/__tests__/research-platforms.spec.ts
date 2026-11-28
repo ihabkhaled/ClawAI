@@ -132,7 +132,7 @@ const apiOutcome = (
 
 type Harness = {
   manager: ResearchManager;
-  search: { execute: Mock; executeCached: Mock; executeExpansion: Mock };
+  search: { execute: Mock; executeCached: Mock; executeExpansion: Mock; findGoogleProvider: Mock };
   platforms: { loadEnabled: Mock; runApiPlatforms: Mock };
   fetchPage: Mock;
   runs: { create: Mock; update: Mock };
@@ -144,6 +144,7 @@ const harness = (): Harness => {
     update: vi.fn(async (id: string, data: object) => ({ id, ...data })),
   };
   const search = {
+    findGoogleProvider: vi.fn(async () => null),
     execute: vi.fn(async () => answer(['https://a.example/1'])),
     executeCached: vi.fn(async () =>
       answer(['https://a.example/1', 'https://old.reddit.com/r/ml/x']),
@@ -495,7 +496,7 @@ describe('cost rule: round >= 2 runs the PRIMARY on expansion providers only', (
     expect(bundle.stats?.queriesRun).toBe(0);
   });
 
-  it('end to end through SearchExecutionService: round 2 never calls a non-expansion provider', async () => {
+  it('end to end through SearchExecutionService: round 2 asks the expansion providers and Google once, never another paid provider', async () => {
     const providers = [
       SearchProviderKind.EXA,
       SearchProviderKind.OLLAMA_WEB,
@@ -548,6 +549,7 @@ describe('cost rule: round >= 2 runs the PRIMARY on expansion providers only', (
       expansionCap: 0,
       excludes: () => false,
       recordSearch: vi.fn(),
+      recordGoogle: vi.fn(),
     };
 
     await manager.run(
@@ -558,7 +560,7 @@ describe('cost rule: round >= 2 runs the PRIMARY on expansion providers only', (
       [],
       [],
     );
-    expect(calledKinds).toEqual(['OLLAMA_WEB']);
+    expect(calledKinds.sort()).toEqual(['OLLAMA_WEB', 'SERPAPI']);
 
     calledKinds.length = 0;
     await manager.run(

@@ -4,7 +4,7 @@ import { FileText } from 'lucide-react';
 // anything that is not an image.
 export function AttachmentPlaceholder(): React.ReactElement {
   return (
-    <div className="border-border bg-muted flex h-20 w-20 items-center justify-center rounded-lg border">
+    <div className="border-border bg-muted text-foreground flex h-20 w-20 items-center justify-center rounded-lg border">
       <FileText className="text-muted-foreground h-6 w-6" aria-hidden="true" />
     </div>
   );

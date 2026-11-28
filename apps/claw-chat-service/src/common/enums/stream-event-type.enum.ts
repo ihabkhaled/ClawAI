@@ -33,6 +33,9 @@ export enum StreamEventType {
   // reload re-reads it from there. RESOLVED follows when the user answered or it timed out.
   PLUGIN_CONSENT_REQUESTED = 'plugin_consent_requested',
   PLUGIN_CONSENT_RESOLVED = 'plugin_consent_resolved',
+  // The model only promised a search (ADR-227). Its promise is stored; the client shows it, clears the live
+  // text and keeps waiting while the search runs and the answer streams. Never a terminal frame.
+  SEARCH_CONTINUATION = 'search_continuation',
   DONE = 'done',
   ERROR = 'error',
   FALLBACK_ATTEMPT = 'fallback_attempt',

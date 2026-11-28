@@ -10,6 +10,7 @@ import {
   RESEARCH_ROUNDS_BUDGET_MS,
 } from '../../../common/constants/research-gate.constants';
 import { SELF_CRAWL_NARRATION } from '../constants/platform-identity.constants';
+import { SEARCH_CONTINUATION_DEPTH } from '../constants/search-continuation.constants';
 import { NarrationService } from '../services/narration.service';
 import { ResearchGateService } from '../services/research-gate.service';
 import { StreamCancellationService } from '../services/stream-cancellation.service';
@@ -88,18 +89,47 @@ export class ResearchOrchestratorManager {
   }
 
   async run(input: ResearchOrchestrationInput): Promise<ResearchRunResponse | null> {
-    const stop = this.claimStop(input.threadId);
+    return this.withStop(input.threadId, (turn) => this.runTurn(input, turn));
+  }
+
+  /**
+   * The search a model only promised (ADR-227): one engine search of its query, narrated and stoppable like any
+   * research turn. No planner: the model already decided that a search is needed.
+   */
+  async searchPromised(
+    input: ResearchOrchestrationInput,
+    query: string | null,
+  ): Promise<ResearchRunResponse | null> {
+    return this.withStop(input.threadId, (turn) =>
+      this.search(input, turn, {
+        round: 1,
+        query,
+        queries: [],
+        languages: [],
+        platforms: [],
+        depth: SEARCH_CONTINUATION_DEPTH,
+        excludeUrls: [],
+      }),
+    );
+  }
+
+  /** Holds the thread's Stop key for one research step, and carries a user Stop to the answer after it. */
+  private async withStop<T>(
+    threadId: string,
+    work: (turn: ResearchTurnState) => Promise<T>,
+  ): Promise<T> {
+    const stop = this.claimStop(threadId);
     const turn: ResearchTurnState = {
       startedAt: Date.now(),
       queriesRun: [],
       ...(stop.controller === undefined ? {} : { signal: stop.controller.signal }),
     };
     try {
-      return await this.runTurn(input, turn);
+      return await work(turn);
     } finally {
       if (stop.owned) {
-        this.cancellation?.release(input.threadId);
-        this.carryUserStop(input.threadId, turn);
+        this.cancellation?.release(threadId);
+        this.carryUserStop(threadId, turn);
       }
     }
   }

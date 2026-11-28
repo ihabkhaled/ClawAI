@@ -3,6 +3,7 @@ import { CircleStop, Paintbrush, X } from 'lucide-react';
 import { AttachmentMediaPreview } from '@/components/chat/attachment-media-preview';
 import { AttachmentPlaceholder } from '@/components/chat/attachment-placeholder';
 import { AttachmentThumbnail } from '@/components/chat/attachment-thumbnail';
+import { FileNameLabel } from '@/components/chat/file-name-label';
 import { Button } from '@/components/ui/button';
 import { useComposerAttachmentTile } from '@/hooks/chat/use-composer-attachment-tile';
 import type { ComposerAttachmentTileProps } from '@/types/composer-attachment.types';
@@ -48,8 +49,8 @@ export function ComposerAttachmentTile({
               <tile.descriptor.Icon className="h-4 w-4" aria-hidden="true" />
             </span>
           )}
-          <span className="flex min-w-0 flex-col">
-            <span className="truncate text-sm font-medium">{tile.file.filename}</span>
+          <span className="flex min-w-0 flex-1 flex-col">
+            <FileNameLabel filename={tile.file.filename} className="text-sm font-medium" />
             <span className="text-muted-foreground text-xs">{tile.sizeLabel}</span>
           </span>
         </div>

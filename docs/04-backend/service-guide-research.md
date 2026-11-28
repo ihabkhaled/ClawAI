@@ -512,8 +512,8 @@ Decision: [ADR-211](../13-adr/adr-211-research-fetches-and-crawls-in-parallel-ba
   of them (threads-service) runs the old pipeline unchanged.
 - `RESEARCH_DEPTH_BUDGETS`: total queries 1/2/4/6/10/14 and pages 8/8/8/12/16/20 for depth 0-5. Round 1's primary query
   runs on every provider (ADR-210); expansion queries and every query of rounds 2+ run on expansion providers only
-  (`OLLAMA_WEB`, `SEARXNG`, or `publicConfig.expansion: true`). Hits merge by reciprocal-rank fusion; identical page
-  text is dropped by content hash.
+  (`OLLAMA_WEB`, `SEARXNG`, or `publicConfig.expansion: true`); Google (`SERPAPI`) has its own budget, see ADR-228 below.
+  Hits merge by reciprocal-rank fusion; identical page text is dropped by content hash.
 - Redis search cache (10 min, engine requests only, complete answers only; a hit records no `WEB_SEARCH` unit) and the
   open-breaker mirror in Redis (`research:breaker:<id>`).
 - Evidence store `research_sources` (one row per bundle item, written after the run, 30-day retention swept hourly);
@@ -532,3 +532,25 @@ Decision: [ADR-211](../13-adr/adr-211-research-fetches-and-crawls-in-parallel-ba
 - Official APIs go only to the fixed host allow-list, with the platform row's timeout; GitHub and Stack Overflow get a
   4-keyword query. Log: `research.platform slug= ok= count= ms= code=` (debug, never the query).
 - Fixed on the old path too: a search hit whose page was read is no longer kept in place of that page.
+
+## Update 2026-11-28 - Google in every research run (ADR-228)
+
+- Google is asked in every search and read deeper than page 1, but only through the `SERPAPI` provider (`engine=google`):
+  never google.com itself, never Gemini grounding (its results may not be cached, analysed or crawled from, so they stay
+  out of the pipeline). The SerpApi adapter now sends `start` (10, 20, ...) for deeper pages and `hl` from
+  `filters.language` (`^[a-z]{2,3}$`; `zh` goes as `zh-cn`, `he` as `iw`).
+- Budget by depth (`RESEARCH_GOOGLE_BUDGETS`), depth 0-5: Google queries per run 1/1/2/3/4/6, result pages of the primary
+  query 1/1/1/2/3/5; no depth = depth 0. Each query and page is one paid SerpApi search and one `WEB_SEARCH` unit; a
+  cache hit records none. A round-1 run costs `queries + pages - 1` searches (1/1/2/4/6/10); a follow-up round costs 1.
+- Round 1: the primary runs on every provider as before (SerpApi page 1 included), the best expansion queries (another
+  script than the primary first, then the order given) run on the expansion providers plus Google, and the primary's
+  pages 2..N run in parallel on Google alone. Round >= 2: Google answers the round's primary, one call. Other paid
+  providers keep the cost rule: the round-1 primary only.
+- Admin override on the SERPAPI provider's `publicConfig` (no env var): `googleMaxQueriesPerRun` (0-20, 0 = Google off for
+  research runs) and `googleMaxPages` (1-10). From depth 3 a valid value replaces the table value; below it, it only caps.
+  The provider create/update DTOs refuse out-of-range values; the run ignores them. Set it with
+  `PATCH /research/search-providers/:id` (a PATCH replaces `publicConfig` whole: send the keys it already has too).
+  `publicConfig.expansion` no longer applies to SERPAPI in research runs.
+- A page that fails is one bundle warning, a skipped or empty page is silent, and none fails the run. A URL on several
+  pages counts once in the fusion. An open breaker skips Google like any provider.
+- Log: `google: queries= pages= results= depth= round=` once per search run (counts only).

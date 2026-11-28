@@ -1,9 +1,10 @@
 import {
+  GOOGLE_PROVIDER_KIND,
   SEARCH_EXPANSION_CONFIG_KEY,
   SEARCH_EXPANSION_PROVIDER_KINDS,
 } from '../../../common/constants/search.constants';
 import type { SearchProvider } from '../../../generated/prisma';
-import type { ProviderSelection } from '../types/search-provider-selection.types';
+import type { GoogleRoute, ProviderSelection } from '../types/search-provider-selection.types';
 
 /**
  * May this provider run an EXPANSION query (research engine B2 cost rule)?
@@ -24,9 +25,34 @@ export function isExpansionProvider(
   return SEARCH_EXPANSION_PROVIDER_KINDS.has(provider.kind);
 }
 
-/** The selection narrowed to expansion providers, rank order kept; null when none qualifies. */
-export function narrowToExpansionProviders(selection: ProviderSelection): ProviderSelection | null {
-  const candidates = selection.candidates.filter((provider) => isExpansionProvider(provider));
+/** Is this the Google provider (SERPAPI, engine=google)? */
+export function isGoogleProvider(provider: Pick<SearchProvider, 'kind'>): boolean {
+  return provider.kind === GOOGLE_PROVIDER_KIND;
+}
+
+/**
+ * The selection narrowed to expansion providers, rank order kept; null when none qualifies.
+ *
+ * With a Google route (research engine, ADR-228) the route alone decides SERPAPI: only the routed provider joins
+ * (`providerId`), or none does (`null`); `publicConfig.expansion` no longer applies to it, because the Google
+ * budget is the one control of what Google is asked. No other paid provider ever joins.
+ */
+export function narrowToExpansionProviders(
+  selection: ProviderSelection,
+  google?: GoogleRoute,
+): ProviderSelection | null {
+  const candidates = selection.candidates.filter((provider) =>
+    google !== undefined && isGoogleProvider(provider)
+      ? provider.id === google.providerId
+      : isExpansionProvider(provider),
+  );
+  const primary = candidates[0];
+  return primary === undefined ? null : { ...selection, primary, candidates };
+}
+
+/** The selection with every SERPAPI provider left out (a Google budget of 0); null when nothing is left. */
+export function withoutGoogleProviders(selection: ProviderSelection): ProviderSelection | null {
+  const candidates = selection.candidates.filter((provider) => !isGoogleProvider(provider));
   const primary = candidates[0];
   return primary === undefined ? null : { ...selection, primary, candidates };
 }

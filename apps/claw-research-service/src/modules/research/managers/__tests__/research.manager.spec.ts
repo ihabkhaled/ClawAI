@@ -60,6 +60,7 @@ describe('ResearchManager', () => {
         providerKind: SearchProviderKind.OLLAMA_WEB,
         selectionMode: ProviderSelectionMode.AUTO,
         fallbackUsed: false,
+        providers: [],
         attemptedProviders: ['Ollama Web Search'],
         results: [
           {
@@ -252,6 +253,7 @@ describe('ResearchManager', () => {
         providerKind: SearchProviderKind.OLLAMA_WEB,
         selectionMode: ProviderSelectionMode.AUTO,
         fallbackUsed: false,
+        providers: [],
         attemptedProviders: ['Ollama Web Search'],
         results: [
           {
@@ -530,6 +532,7 @@ describe('ResearchManager', () => {
         providerKind: SearchProviderKind.OLLAMA_WEB,
         selectionMode: ProviderSelectionMode.AUTO,
         fallbackUsed: false,
+        providers: [],
         attemptedProviders: ['P'],
         results: hits(count),
       }));
@@ -578,6 +581,7 @@ describe('ResearchManager', () => {
         providerKind: SearchProviderKind.OLLAMA_WEB,
         selectionMode: ProviderSelectionMode.AUTO,
         fallbackUsed: false,
+        providers: [],
         attemptedProviders: ['P'],
         results: [
           ...hits(1),
@@ -616,6 +620,7 @@ describe('ResearchManager', () => {
           providerKind: SearchProviderKind.OLLAMA_WEB,
           selectionMode: ProviderSelectionMode.AUTO,
           fallbackUsed: false,
+          providers: [],
           attemptedProviders: ['P'],
           results: [],
         };
@@ -709,6 +714,7 @@ describe('ResearchManager', () => {
         providerKind: SearchProviderKind.OLLAMA_WEB,
         selectionMode: ProviderSelectionMode.AUTO,
         fallbackUsed: false,
+        providers: [],
         attemptedProviders: ['P'],
         results: [
           ...hits(1),
@@ -751,6 +757,7 @@ describe('ResearchManager', () => {
         providerKind: SearchProviderKind.OLLAMA_WEB,
         selectionMode: ProviderSelectionMode.AUTO,
         fallbackUsed: false,
+        providers: [],
         attemptedProviders: ['P'],
         results: [
           ...hits(1),

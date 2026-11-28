@@ -1,6 +1,7 @@
 import { describe, expect, it, type Mock, vi } from 'vitest';
 
 import { HttpStatus } from '@nestjs/common';
+import { NO_GOOGLE_ROUTE } from '../../../../common/constants/research-engine.constants';
 import { ProviderSelectionMode } from '../../../../common/enums/provider-selection-mode.enum';
 import { ResearchErrorCode } from '../../../../common/enums/research-error-code.enum';
 import { ResearchRunStatus } from '../../../../common/enums/research-run-status.enum';
@@ -105,7 +106,7 @@ const storedRow = (overrides: Partial<ResearchSource> = {}): ResearchSource => (
 
 type Harness = {
   manager: ResearchManager;
-  search: { execute: Mock; executeCached: Mock; executeExpansion: Mock };
+  search: { execute: Mock; executeCached: Mock; executeExpansion: Mock; findGoogleProvider: Mock };
   fetchPage: Mock;
   runs: { create: Mock; update: Mock };
   sources: { createMany: Mock; findRecentByThread: Mock };
@@ -117,6 +118,7 @@ const harness = (): Harness => {
     update: vi.fn(async (id: string, data: object) => ({ id, ...data })),
   };
   const search = {
+    findGoogleProvider: vi.fn(async () => null),
     execute: vi.fn(async () => answer(['https://a.example/1'])),
     executeCached: vi.fn(async () => answer(['https://a.example/1', 'https://b.example/2'])),
     executeExpansion: vi.fn(async (_u: string, dto: { query: string }) =>
@@ -255,6 +257,7 @@ describe('ResearchManager — engine run (B1+B2)', () => {
       'u1',
       expect.objectContaining({ query: 'a one' }),
       true,
+      NO_GOOGLE_ROUTE,
     );
   });
 
@@ -489,7 +492,10 @@ describe('MultiQuerySearchManager', () => {
     dto: ExecuteResearchDto,
   ) => {
     const manager = new MultiQuerySearchManager(
-      search as unknown as SearchExecutionService,
+      {
+        findGoogleProvider: vi.fn(async () => null),
+        ...search,
+      } as unknown as SearchExecutionService,
       noPlatforms,
     );
     const state = new ResearchRunState(dto, 0);

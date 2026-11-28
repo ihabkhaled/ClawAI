@@ -1,8 +1,11 @@
 import { Injectable } from '@nestjs/common';
 
 import {
+  GOOGLE_RESULTS_PER_PAGE,
   LANGUAGE_AWARE_PROVIDER_KINDS,
+  NO_GOOGLE_ROUTE,
   RESEARCH_PRIMARY_EXPANSION_ONLY_FROM_ROUND,
+  RESEARCH_PRIMARY_FUSION_GROUP,
   RESEARCH_RRF_PLATFORM_WEIGHT,
   RESEARCH_RRF_PRIMARY_WEIGHT,
 } from '../../../common/constants/research-engine.constants';
@@ -17,6 +20,7 @@ import {
 } from '../../platforms/utilities/platform-matching.utility';
 import { SearchExecutionService } from '../../search/services/search-execution.service';
 import { searchResultToEvidence, traceEntry } from '../utilities/evidence-builder.utility';
+import { googleCountsOf, planGoogleRun } from '../utilities/google-budget.utility';
 import {
   isPlatformRun,
   planPlatformRun,
@@ -27,8 +31,10 @@ import { planExpansionQueries } from '../utilities/query-expansion.utility';
 import { fuseQueryResults } from '../utilities/query-fusion.utility';
 import type { ExecuteResearchDto } from '../dto/execute-research.dto';
 import type { ExecuteSearchDto } from '../../search/dto/execute-search.dto';
+import type { SearchProvider } from '../../../generated/prisma';
 import type { PlatformApiOutcome } from '../../platforms/types/platform.types';
 import type { SearchExecutionResult } from '../../search/types/search-execution-result.types';
+import type { GoogleRoute } from '../../search/types/search-provider-selection.types';
 import type {
   EvidenceBundle,
   EvidenceItem,
@@ -36,6 +42,8 @@ import type {
 } from '../types/evidence-bundle.types';
 import type {
   ExpansionOutcome,
+  GooglePageOutcome,
+  GooglePageRequest,
   PlatformRunPlan,
   QueryResultSet,
   SearchPhaseAnswers,
@@ -58,6 +66,13 @@ import type { ResearchRunState } from '../utilities/research-run-state.utility';
  * reciprocal rank, deduped by canonical URL, keeping the first query that
  * found each page. The Redis cache serves a repeat query with no provider
  * call; an explicit provider or caller filters bypass it.
+ *
+ * Google (ADR-228) reaches the run only through the SERPAPI provider, inside
+ * a per-run budget by depth: in round 1 it answers the primary (every provider,
+ * as above), the best expansion queries and the primary's extra result pages
+ * (SerpApi `start` 10, 20, ...), in parallel; in a follow-up round (>= 2) it
+ * answers the round's primary, one call. Every other paid provider keeps the
+ * cost rule. A page that fails or comes back empty never fails the run.
  */
 @Injectable()
 export class MultiQuerySearchManager {
@@ -82,8 +97,11 @@ export class MultiQuerySearchManager {
           `your full message was still used for everything else.`,
       );
     }
-    const plan = isPlatformRun(dto, state.depth) ? await this.loadPlan(dto) : null;
-    const phase = this.phasePlan(dto, state, clamped.query, plan, trace);
+    const [plan, google] = await Promise.all([
+      isPlatformRun(dto, state.depth) ? this.loadPlan(dto) : Promise.resolve(null),
+      this.searchService.findGoogleProvider(dto.searchProviderId),
+    ]);
+    const phase = this.phasePlan(dto, state, clamped.query, plan, google, trace);
     const answers = await this.executeAll(userId, phase);
     const searchOutcomes = [...answers.outcomes, ...answers.sites.map((site) => site.outcome)];
     if (answers.primary === null) {
@@ -91,36 +109,33 @@ export class MultiQuerySearchManager {
         'The main search query was skipped in this follow-up round: no search provider is enabled for query expansion.',
       );
     }
-    warnings.push(...(answers.primary?.warnings ?? []), ...this.expansionWarnings(searchOutcomes));
+    warnings.push(
+      ...(answers.primary?.warnings ?? []),
+      ...this.expansionWarnings(searchOutcomes),
+      ...this.pageWarnings(answers.pages),
+    );
     const all = [
       ...(answers.primary === null ? [] : [{ query: clamped.query, result: answers.primary }]),
       ...this.answered(searchOutcomes),
     ];
     const results = all.map(({ result }) => result);
-    const fused = fuseQueryResults([
-      ...all.map(({ query, result }): QueryResultSet => ({
-        query,
-        results: result.results,
-        ...(result === answers.primary ? { weight: RESEARCH_RRF_PRIMARY_WEIGHT } : {}),
-      })),
-      ...answers.apis.map((api): QueryResultSet => ({
-        query: clamped.query,
-        results: api.results,
-        weight: RESEARCH_RRF_PLATFORM_WEIGHT,
-      })),
-    ])
+    const pageResults = answers.pages.flatMap((page) =>
+      page.result === null ? [] : [page.result],
+    );
+    const fused = fuseQueryResults(this.resultSets(clamped.query, all, answers))
       .map((result) => (plan === null ? result : tagResultByHost(result, plan.all)))
       .filter((result) => !state.excludes(result.url));
     state.recordSearch({
       queries: all.map(({ query }) => query),
       cachedSearches: results.filter((result) => result.cached === true).length,
-      providersUsed: this.providersThatAnswered(results),
+      providersUsed: this.providersThatAnswered([...results, ...pageResults]),
       resultsFound: fused.length,
     });
+    state.recordGoogle(googleCountsOf(results, pageResults));
     if (plan !== null) {
       this.finishPlatformRun(plan, answers, results, state, trace, warnings);
     }
-    this.markTools(toolsUsed, results);
+    this.markTools(toolsUsed, [...results, ...pageResults]);
     const answeredExtras = all.length - (answers.primary === null ? 0 : 1);
     this.traceSearch(
       trace,
@@ -141,6 +156,7 @@ export class MultiQuerySearchManager {
     state: ResearchRunState,
     primaryQuery: string,
     plan: PlatformRunPlan | null,
+    googleProvider: SearchProvider | null,
     trace: ResearchTraceEntry[],
   ): SearchPhasePlan {
     const { expansions, siteRows } = this.planQueries(dto, state, primaryQuery, plan, trace);
@@ -150,6 +166,13 @@ export class MultiQuerySearchManager {
       expansions,
       siteRows,
       plan,
+      google: planGoogleRun({
+        google: googleProvider,
+        depth: state.depth,
+        round: state.round,
+        primary: primaryQuery,
+        expansions,
+      }),
       round: state.round,
       useCache: dto.searchProviderId === undefined && Object.keys(dto.filters ?? {}).length === 0,
       base: {
@@ -168,17 +191,31 @@ export class MultiQuerySearchManager {
   /** Primary, expansions, site searches and official APIs, all at once; resolves when all settled. */
   private async executeAll(userId: string, phase: SearchPhasePlan): Promise<SearchPhaseAnswers> {
     const { base, useCache, plan } = phase;
-    const [primary, outcomes, sites, apis] = await Promise.all([
-      this.runPrimary(userId, { ...base, query: phase.primaryQuery }, useCache, phase.round),
+    const { google } = phase;
+    const [primary, outcomes, sites, apis, pages] = await Promise.all([
+      this.runPrimary(
+        userId,
+        { ...base, query: phase.primaryQuery },
+        useCache,
+        phase.round,
+        google.primary,
+      ),
       Promise.all(
-        phase.expansions.map((query) => this.runExpansion(userId, { ...base, query }, useCache)),
+        phase.expansions.map((query) =>
+          this.runExpansion(
+            userId,
+            { ...base, query },
+            useCache,
+            google.expansions.has(query) ? google.primary : NO_GOOGLE_ROUTE,
+          ),
+        ),
       ),
       Promise.all(
         phase.siteRows.map(async (platform): Promise<SiteSearchOutcome> => {
           const query = siteQueryOf(platform, phase.primaryQuery);
           return {
             platform,
-            outcome: await this.runExpansion(userId, { ...base, query }, useCache),
+            outcome: await this.runExpansion(userId, { ...base, query }, useCache, NO_GOOGLE_ROUTE),
           };
         }),
       ),
@@ -190,24 +227,31 @@ export class MultiQuerySearchManager {
             phase.primaryQuery,
             plan.wikipediaLanguages,
           ),
+      Promise.all(
+        google.pages.map((page) =>
+          this.runGooglePage(userId, { ...base, query: phase.primaryQuery }, page, useCache),
+        ),
+      ),
     ]);
-    return { primary, outcomes, sites, apis };
+    return { primary, outcomes, sites, apis, pages };
   }
 
   /**
    * The primary query. Round 1 (or no round): every enabled provider, exactly
-   * B2. Round >= 2: expansion providers only (cost rule); null when none is
-   * enabled, which the caller reports as one warning, never silence.
+   * B2. Round >= 2: expansion providers plus Google (ADR-228, one call); null
+   * when neither is enabled, which the caller reports as one warning, never
+   * silence. `google` is the run's Google route for this query.
    */
   async runPrimary(
     userId: string,
     dto: ExecuteSearchDto,
     useCache: boolean,
     round: number,
+    google: GoogleRoute,
   ): Promise<SearchExecutionResult | null> {
     return round < RESEARCH_PRIMARY_EXPANSION_ONLY_FROM_ROUND
-      ? this.searchService.executeCached(userId, dto, useCache)
-      : this.searchService.executeExpansion(userId, dto, useCache);
+      ? this.searchService.executeCached(userId, dto, useCache, google)
+      : this.searchService.executeExpansion(userId, dto, useCache, google);
   }
 
   /** One expansion (or site) query; never rejects (a failure becomes the outcome's error). */
@@ -215,13 +259,85 @@ export class MultiQuerySearchManager {
     userId: string,
     dto: ExecuteSearchDto,
     useCache: boolean,
+    google: GoogleRoute,
   ): Promise<ExpansionOutcome> {
     try {
-      const result = await this.searchService.executeExpansion(userId, dto, useCache);
+      const result = await this.searchService.executeExpansion(userId, dto, useCache, google);
       return { query: dto.query, result, error: null };
     } catch (error) {
       return { query: dto.query, result: null, error: describeFetchFailure(error) };
     }
+  }
+
+  /** One extra Google results page of the primary query; never rejects, a null result is a skipped page. */
+  async runGooglePage(
+    userId: string,
+    dto: ExecuteSearchDto,
+    page: GooglePageRequest,
+    useCache: boolean,
+  ): Promise<GooglePageOutcome> {
+    try {
+      const paged = { ...dto, start: page.start };
+      const result = await this.searchService.executeGooglePage(
+        userId,
+        paged,
+        page.providerId,
+        useCache,
+      );
+      return { start: page.start, result, error: null };
+    } catch (error) {
+      return { start: page.start, result: null, error: describeFetchFailure(error) };
+    }
+  }
+
+  /** One warning per Google page that failed (a skipped or empty page says nothing: the primary already did). */
+  pageWarnings(pages: readonly GooglePageOutcome[]): string[] {
+    return pages.flatMap((page) =>
+      page.error === null
+        ? []
+        : [
+            `Google results page ${String(page.start / GOOGLE_RESULTS_PER_PAGE + 1)} could not be read: ${page.error}`,
+          ],
+    );
+  }
+
+  /**
+   * Every ranked list the fusion folds: each answered query, the primary's deeper Google pages (same group as
+   * the primary, so a page the primary already ranked counts once, and offset by the ranks above them) and the
+   * official APIs of a platform run.
+   */
+  private resultSets(
+    primaryQuery: string,
+    all: ReadonlyArray<{ query: string; result: SearchExecutionResult }>,
+    answers: SearchPhaseAnswers,
+  ): QueryResultSet[] {
+    const primaryFields = {
+      weight: RESEARCH_RRF_PRIMARY_WEIGHT,
+      group: RESEARCH_PRIMARY_FUSION_GROUP,
+    };
+    const answered = all.map(({ query, result }): QueryResultSet => ({
+      query,
+      results: result.results,
+      ...(result === answers.primary ? primaryFields : {}),
+    }));
+    const pages = answers.pages.flatMap((page): QueryResultSet[] =>
+      page.result === null
+        ? []
+        : [
+            {
+              query: primaryQuery,
+              results: page.result.results,
+              rankOffset: page.start,
+              group: RESEARCH_PRIMARY_FUSION_GROUP,
+            },
+          ],
+    );
+    const apis = answers.apis.map((api): QueryResultSet => ({
+      query: primaryQuery,
+      results: api.results,
+      weight: RESEARCH_RRF_PLATFORM_WEIGHT,
+    }));
+    return [...answered, ...pages, ...apis];
   }
 
   /** One warning when no expansion provider exists, one per failed expansion query. */

@@ -1,5 +1,6 @@
 import { EVIDENCE_FETCH_TOP_N, EVIDENCE_MAX_ITEMS } from './evidence.constants';
-import type { DepthBudget } from '../../modules/research/types/research-engine.types';
+import type { DepthBudget, GoogleBudget } from '../../modules/research/types/research-engine.types';
+import type { GoogleRoute } from '../../modules/search/types/search-provider-selection.types';
 
 /**
  * Research depth budgets (research engine B2), indexed by depth 0-5.
@@ -16,6 +17,59 @@ export const RESEARCH_DEPTH_BUDGETS: readonly DepthBudget[] = [
   { queries: 6, fetchTopN: 12 },
   { queries: 10, fetchTopN: 16 },
   { queries: 14, fetchTopN: 20 },
+];
+
+/**
+ * Google budgets (ADR-228), indexed by depth 0-5 like `RESEARCH_DEPTH_BUDGETS`; an absent depth is depth 0.
+ * Google reaches research only through the SERPAPI provider (engine=google). `queries` = Google queries of one
+ * run, the primary included; `primaryPages` = result pages read for the primary query (10 results per page).
+ * Every query and every page is one paid SerpAPI search, so a round-1 run costs `queries + primaryPages - 1`
+ * of them and a follow-up round (>= 2) costs one.
+ */
+export const RESEARCH_GOOGLE_BUDGETS: readonly GoogleBudget[] = [
+  { queries: 1, primaryPages: 1 },
+  { queries: 1, primaryPages: 1 },
+  { queries: 2, primaryPages: 1 },
+  { queries: 3, primaryPages: 2 },
+  { queries: 4, primaryPages: 3 },
+  { queries: 6, primaryPages: 5 },
+];
+
+/** SERPAPI `publicConfig` keys (DB-level, admin-set) that override the two Google budget numbers. */
+export const GOOGLE_MAX_QUERIES_CONFIG_KEY = 'googleMaxQueriesPerRun';
+export const GOOGLE_MAX_PAGES_CONFIG_KEY = 'googleMaxPages';
+/** Accepted override ranges. 0 queries switches Google off for research runs; at least one page is read. */
+export const GOOGLE_MAX_QUERIES_MIN = 0;
+export const GOOGLE_MAX_QUERIES_MAX = 20;
+export const GOOGLE_MAX_PAGES_MIN = 1;
+export const GOOGLE_MAX_PAGES_MAX = 10;
+/** From this depth a valid override REPLACES the table value; below it, it can only lower it. */
+export const GOOGLE_OVERRIDE_REPLACES_FROM_DEPTH = 3;
+/** SerpAPI `start` step: Google serves 10 organic results a page. */
+export const GOOGLE_RESULTS_PER_PAGE = 10;
+/** The fusion group of the primary query and its deeper Google pages: one query, each page counted once. */
+export const RESEARCH_PRIMARY_FUSION_GROUP = 'primary';
+/** The route of a query that must reach no SERPAPI provider (a plain expansion, a site search, a budget of 0). */
+export const NO_GOOGLE_ROUTE: GoogleRoute = { providerId: null };
+
+/**
+ * Scripts a query is told apart by, to prefer queries in another language than the primary for Google
+ * (ADR-228). Kana first: any kana makes a query Japanese, whatever Han characters it also has. Same-script
+ * languages (English / German) cannot be told apart without a language model, so they are not.
+ */
+export const QUERY_KANA_PATTERN = /[\p{Script=Hiragana}\p{Script=Katakana}]/gu;
+export const QUERY_SCRIPT_PATTERNS: readonly RegExp[] = [
+  /\p{Script=Latin}/gu,
+  /\p{Script=Cyrillic}/gu,
+  /\p{Script=Greek}/gu,
+  /\p{Script=Arabic}/gu,
+  /\p{Script=Hebrew}/gu,
+  /\p{Script=Devanagari}/gu,
+  /\p{Script=Bengali}/gu,
+  /\p{Script=Tamil}/gu,
+  /\p{Script=Thai}/gu,
+  /\p{Script=Han}/gu,
+  /\p{Script=Hangul}/gu,
 ];
 
 /** Wire bounds of the engine fields on the research DTO (contract B1+B2). */

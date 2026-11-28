@@ -27,12 +27,15 @@ export function ArchiveAttachmentCard({
 
   return (
     <div
-      className="bg-card w-full min-w-0 rounded-lg border p-2 sm:w-80"
+      className="bg-card text-card-foreground w-full min-w-0 rounded-lg border p-2 sm:w-80"
       data-testid="archive-attachment-card"
     >
       <div className="flex min-w-0 items-center gap-2">
         <Archive className="text-muted-foreground h-4 w-4 shrink-0" aria-hidden="true" />
-        <span className="min-w-0 flex-1 truncate text-sm font-medium" title={listing.filename}>
+        <span
+          className="truncate-fixed min-w-0 flex-1 text-sm font-medium"
+          title={listing.filename}
+        >
           {listing.filename}
         </span>
         <span className="text-muted-foreground shrink-0 text-xs">

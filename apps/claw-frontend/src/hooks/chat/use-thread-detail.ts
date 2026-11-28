@@ -8,6 +8,7 @@ import { useVirtualizedMessages } from '@/hooks/chat/use-virtualized-messages';
 import { chatRepository } from '@/repositories/chat/chat.repository';
 import { queryKeys } from '@/repositories/shared/query-keys';
 import { invalidateThreadMessages, logger } from '@/utilities';
+import { isPendingSearchPromise } from '@/utilities/search-continuation.utility';
 import { buildTranscriptSignature } from '@/utilities/transcript-signature.utility';
 
 export function useThreadDetail(threadId: string) {
@@ -58,6 +59,7 @@ export function useThreadDetail(threadId: string) {
   const {
     fallbackAttempts,
     streamCompletedAt,
+    searchContinuationAt,
     streamError,
     streamErrorCode,
     judgeEvaluating,
@@ -176,9 +178,11 @@ export function useThreadDetail(threadId: string) {
       return;
     }
 
-    // Check if we got a new ASSISTANT message since we started waiting
+    // Check if we got a new ASSISTANT message since we started waiting. A reply that only promised a search is not
+    // the answer: the search and the answer are still on their way (ADR-227).
     const hasNewAssistantMessage =
       lastMessage?.role === MessageRole.ASSISTANT &&
+      !isPendingSearchPromise(lastMessage) &&
       messagesList.length > messageCountBeforeSend.current;
 
     if (hasNewAssistantMessage) {
@@ -194,7 +198,14 @@ export function useThreadDetail(threadId: string) {
         queryKey: queryKeys.threads.detail(threadId),
       });
     }
-  }, [isWaitingForResponse, lastMessage?.role, messagesList.length, threadId, queryClient]);
+  }, [isWaitingForResponse, lastMessage, messagesList.length, threadId, queryClient]);
+
+  // The promise was stored: show it now, while the answer keeps streaming below it.
+  useEffect(() => {
+    if (searchContinuationAt !== null) {
+      invalidateThreadMessages(queryClient, threadId);
+    }
+  }, [searchContinuationAt, queryClient, threadId]);
 
   /**
    * Recovery: a transcript ending in a USER message means a run was started and
@@ -210,7 +221,7 @@ export function useThreadDetail(threadId: string) {
       !isWaitingForResponse &&
       armedSignatureRef.current !== signature &&
       messagesList.length > 0 &&
-      lastMessage?.role === MessageRole.USER &&
+      (lastMessage?.role === MessageRole.USER || isPendingSearchPromise(lastMessage)) &&
       !virtualizedMessages.isLoading &&
       // Never decide from a transcript that is being replaced. Immediately
       // after a run completes, the list is invalidated and still ends with the
@@ -227,8 +238,7 @@ export function useThreadDetail(threadId: string) {
     }
   }, [
     messagesList.length,
-    lastMessage?.role,
-    lastMessage?.id,
+    lastMessage,
     virtualizedMessages.isLoading,
     virtualizedMessages.isFetching,
     isWaitingForResponse,

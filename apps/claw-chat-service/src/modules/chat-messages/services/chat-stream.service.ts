@@ -288,6 +288,19 @@ export class ChatStreamService implements OnModuleInit {
     return status === OrchestrationStageStatus.ERROR ? 'error' : 'active';
   }
 
+  emitSearchContinuation(threadId: string): void {
+    this.emit({
+      threadId,
+      type: StreamEventType.SEARCH_CONTINUATION,
+      label: 'Searching',
+      description: 'The model asked to search; the answer follows.',
+      actorType: ProgressActorType.SYSTEM,
+      actorName: 'Research',
+      stageId: 'research:continuation',
+      status: 'active',
+    });
+  }
+
   emitCompletion(threadId: string, provider: string, model: string): void {
     this.emit({
       threadId,

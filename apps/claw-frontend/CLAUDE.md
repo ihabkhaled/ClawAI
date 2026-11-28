@@ -1320,3 +1320,19 @@ Doc: `docs/05-frontend/sign-up-abuse-defences.md`. Traps:
   API kind names are product names in `RESEARCH_PLATFORM_API_KIND_LABELS`, not in the dictionaries (the ja/th/zh
   completeness tests reject values equal to English). Copy: `researchPlatforms.*` in
   `locales/research-platforms-translations.ts` (13 locales). Coded against the B3 contract before the backend landed.
+
+## A promised search keeps the page waiting (ADR-227, 2026-11-28)
+
+`StreamEventType.SEARCH_CONTINUATION` clears the live text (`use-chat-stream.ts`) and stamps `searchContinuationAt`,
+which refetches the messages so the stored promise shows while the answer streams. `isPendingSearchPromise`
+(`utilities/search-continuation.utility.ts`) makes `use-thread-detail.ts` keep waiting past a promise and re-arm after a
+reload. No new UI string. Test: `use-thread-detail.test.tsx` "keeps waiting while the last answer only promised a search".
+
+## File names and file cards (owner report 2026-11-28)
+
+- A file name in a tile or card uses `FileNameLabel` (`components/chat/file-name-label.tsx`): one line, clipped with
+  `truncate-fixed`. Plain `truncate` wraps anywhere on touch screens (globals.css) and broke a long name into one
+  syllable per line inside a fixed-height tile, overflowing the composer tray.
+- A card with its own surface inside the user bubble sets its own text colour (`bg-card text-card-foreground`,
+  `bg-muted text-foreground`): the bubble is `text-primary-foreground`, which in dark mode is dark, so the name and the
+  Open / Download buttons were dark on a dark card. Checked in a phone browser in both themes.

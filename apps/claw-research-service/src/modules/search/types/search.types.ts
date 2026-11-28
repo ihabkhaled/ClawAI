@@ -1,4 +1,5 @@
 import type { SearchProviderKind } from '../../../common/enums/search-provider-kind.enum';
+import type { ExecuteSearchDto } from '../dto/execute-search.dto';
 
 /** Single normalized search result. Every adapter must produce this shape. */
 export type SearchResult = {
@@ -27,7 +28,15 @@ export type SearchRequest = {
   maxResults: number;
   /** Provider-specific filters — domain, lang, freshness, etc. */
   filters?: Record<string, unknown>;
+  /** Results to skip: SerpApi's `start` for a deeper Google page (10, 20, ...). Absent = the first page. */
+  start?: number;
 };
+
+/**
+ * A search the service itself sends (never the public route's body): `start` is the SerpApi offset of a deeper
+ * Google page (ADR-228). The public `ExecuteSearchDto` has no such field, so a caller cannot page.
+ */
+export type PagedSearchDto = ExecuteSearchDto & { start?: number };
 
 export type SearchResponse = {
   results: SearchResult[];

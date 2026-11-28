@@ -1195,6 +1195,12 @@ overruling a user link or a plain order to search. No council or no answer → t
   `StreamCancellationService.carryStop` leaves a 20 s Redis marker so the answer that follows, on any replica, starts
   stopped. A run replaced by a newer one (`STREAM_RUN_REPLACED_MESSAGE`) is never carried.
 
+## A promised search is finished (ADR-227, 2026-11-28)
+
+A reply that only promises a search (or asks for an unoffered web tool) is stored as its own message, the search runs
+once when research is on and in the plan, and the model answers in a second message. Earlier files (12, videos as
+transcripts) and earlier answers' sources stay in later prompts; planning prompts state today's date.
+
 ## Whole-context awareness (ADR-226, 2026-11-28)
 
 Memory is never filtered (up to 50 memories per turn, ordered by relevance), the fast path keeps memory and history,

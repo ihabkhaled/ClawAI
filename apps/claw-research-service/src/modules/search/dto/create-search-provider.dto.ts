@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { SearchProviderKind } from '../../../common/enums/search-provider-kind.enum';
+import { searchProviderPublicConfigSchema } from './search-provider-public-config.dto';
 
 export const createSearchProviderSchema = z.object({
   kind: z.nativeEnum(SearchProviderKind),
@@ -9,7 +10,7 @@ export const createSearchProviderSchema = z.object({
   baseUrl: z.string().url().max(500),
   /** Secret config blob. Typically `{ apiKey: "..." }` or `{ username, password }`. */
   secretConfig: z.record(z.string(), z.string().max(4096)).optional(),
-  publicConfig: z.record(z.string(), z.unknown()).optional(),
+  publicConfig: searchProviderPublicConfigSchema.optional(),
   enabled: z.boolean().optional(),
   priority: z.number().int().min(0).max(1000).optional(),
   allowlistDomains: z.array(z.string().max(256)).max(50).optional(),

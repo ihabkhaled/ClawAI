@@ -152,7 +152,7 @@
         "MessageAttachment",
         "PromptTemplate"
       ],
-      "testFiles": 380,
+      "testFiles": 386,
       "testRunner": "vitest"
     },
     {
@@ -533,7 +533,7 @@
         "SearchProvider",
         "SearchRun"
       ],
-      "testFiles": 89,
+      "testFiles": 95,
       "testRunner": "vitest"
     },
     {

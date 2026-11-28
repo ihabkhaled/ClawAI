@@ -9841,7 +9841,7 @@
           "file": "rules/49-qa-team-discipline-and-test-evidence.md"
         },
         {
-          "bytes": 12656,
+          "bytes": 13256,
           "file": "rules/50-agentic-research-loop-and-narration.md"
         },
         {
@@ -12991,7 +12991,7 @@
       },
       "claw-chat-service": {
         "runner": "vitest",
-        "testFiles": 380
+        "testFiles": 386
       },
       "claw-client-logs-service": {
         "runner": "vitest",
@@ -13011,7 +13011,7 @@
       },
       "claw-frontend": {
         "runner": "vitest",
-        "testFiles": 1100
+        "testFiles": 1102
       },
       "claw-health-service": {
         "runner": "vitest",
@@ -13047,7 +13047,7 @@
       },
       "claw-research-service": {
         "runner": "vitest",
-        "testFiles": 89
+        "testFiles": 95
       },
       "claw-routing-service": {
         "runner": "vitest",
@@ -13953,7 +13953,7 @@
     "serviceCount": 22,
     "sharedPackageCount": 6,
     "staleClaimCount": 0,
-    "totalTestFiles": 3130,
+    "totalTestFiles": 3144,
     "workspaceCount": 29
   }
 }

@@ -120,6 +120,22 @@ import { type ContextSaveDecision, type ContextSaveRecord } from '../types/conte
 import { ContextSaveOrchestratorManager } from '../managers/context-save-orchestrator.manager';
 import { hasContextSave, withContextSaveNote } from '../utilities/context-save-note.utility';
 import {
+  SEARCH_CONTINUATION_NOTE_EMPTY,
+  SEARCH_CONTINUATION_NOTE_FOUND,
+  SEARCH_CONTINUATION_NOTE_OFF,
+  SEARCH_NOT_AVAILABLE_NOTE,
+} from '../constants/search-continuation.constants';
+import { SearchContinuationManager } from '../managers/search-continuation.manager';
+import type {
+  AnswerContext,
+  ContinuedAnswer,
+  PendingSearch,
+  PromisedSearchTurn,
+  SearchContinuationRecord,
+} from '../types/search-continuation.types';
+import { userAllowedWeb, withPromisedSearch } from '../utilities/search-continuation.utility';
+import { latestUserTurnText } from '../utilities/quoted-turn.utility';
+import {
   asksAboutThisPlatform,
   buildSelfInspectIntent,
 } from '../utilities/platform-identity.utility';
@@ -279,6 +295,8 @@ export class ChatMessagesService implements OnModuleInit {
     // Optional for the same reason. Absent → the planner's attachment digest
     // has no vision-helper descriptions (ADR-152), only OCR and extracted text.
     @Optional() private readonly derivedDescriptions?: DerivedImageDescriptionStore,
+    // Optional for the same reason. Absent → a reply that only promises a search is kept as the answer.
+    @Optional() private readonly searchContinuation?: SearchContinuationManager,
   ) {
     this.structuredLogger = new StructuredLogger(
       this.rabbitMQService,
@@ -1590,12 +1608,16 @@ export class ChatMessagesService implements OnModuleInit {
     const fileIds = this.extractFileIdsFromMessages(routedMessages);
     const latestUserMetadata = this.extractLatestUserMetadata(routedMessages);
     const effectivePayload = await this.applyFollowUpOverrides(payload, thread, routedMessages);
-    const namedContext = await this.assembleRoutedContext(
-      payload,
+    const namedContext = await this.withNoWebNote(
+      await this.assembleRoutedContext(
+        payload,
+        thread,
+        routedMessages,
+        threadSettings,
+        fileIds,
+        latestUserMetadata,
+      ),
       thread,
-      routedMessages,
-      threadSettings,
-      fileIds,
       latestUserMetadata,
     );
     await this.runLlmAndStore(
@@ -1821,15 +1843,53 @@ export class ChatMessagesService implements OnModuleInit {
       threadSettings,
       this.extractCrawlRetrieval(latestUserMetadata),
     );
-    const llmResponse = this.withLinkableCitations(executed, context);
+    const answer = await this.finishPromisedSearch({
+      executed,
+      effectivePayload,
+      originalPayload,
+      context,
+      threadSettings,
+      fileIds,
+      thread,
+      chronologicalMessages,
+      latestUserMetadata,
+    });
+    await this.storeAndCompleteAnswer(answer, {
+      originalPayload,
+      fileIds,
+      thread,
+      chronologicalMessages,
+      contextSave,
+    });
+  }
+
+  /** Stores the answer, writes its receipt, ends the stream and publishes the completion. */
+  private async storeAndCompleteAnswer(
+    answer: ContinuedAnswer,
+    turn: {
+      originalPayload: MessageRoutedData;
+      fileIds: string[] | undefined;
+      thread: ChatThread | null;
+      chronologicalMessages: ChatMessage[];
+      contextSave: ContextSaveRecord | undefined;
+    },
+  ): Promise<void> {
+    const { originalPayload, thread } = turn;
+    const llmResponse = this.withLinkableCitations(answer.response, answer.context);
     const assistantMessage = await this.storeAssistantResponse(
       originalPayload,
       llmResponse,
-      this.buildStoredContextMetadata(context, llmResponse, fileIds),
-      latestUserMetadata,
-      contextSave,
+      this.buildStoredContextMetadata(answer.context, llmResponse, turn.fileIds),
+      answer.userMetadata,
+      turn.contextSave,
     );
-    this.writeContextReceipt(originalPayload, assistantMessage, thread, context, llmResponse);
+    this.writeContextReceipt(
+      originalPayload,
+      assistantMessage,
+      thread,
+      answer.context,
+      llmResponse,
+    );
     await this.updateThreadAfterResponse(originalPayload.threadId, llmResponse);
     this.chatStreamService.emitCompletion(
       originalPayload.threadId,
@@ -1842,8 +1902,177 @@ export class ChatMessagesService implements OnModuleInit {
       assistantMessage,
       llmResponse,
       thread,
-      chronologicalMessages,
+      turn.chronologicalMessages,
     );
+  }
+
+  /**
+   * A model that only promised a search is not done (ADR-227): its promise is stored as its own message, the search
+   * runs when the user and the plan allow the web, and the model answers again. At most one such round per turn.
+   */
+  private async finishPromisedSearch(turn: PromisedSearchTurn): Promise<ContinuedAnswer> {
+    const kept: ContinuedAnswer = {
+      response: turn.executed,
+      context: turn.context,
+      userMetadata: turn.latestUserMetadata,
+    };
+    const userId = turn.thread?.userId;
+    if (this.searchContinuation === undefined || userId === undefined) {
+      return kept;
+    }
+    const intent = latestUserTurnText(turn.chronologicalMessages) ?? '';
+    const pending = await this.searchContinuation.inspect(turn.executed, intent);
+    if (pending === null) {
+      return kept;
+    }
+    const promise = await this.storeSearchPromise(turn, pending);
+    this.chatStreamService.emitSearchContinuation(turn.originalPayload.threadId);
+    try {
+      const followUp = await this.contextForPromisedSearch(turn, userId, intent, pending);
+      const response = await this.chatExecutionManager.execute(
+        turn.effectivePayload,
+        followUp.context,
+        turn.threadSettings,
+        undefined,
+      );
+      return { ...followUp, response };
+    } finally {
+      if (promise !== null) {
+        await this.closeSearchPromise(promise, pending);
+      }
+    }
+  }
+
+  /** The promise stays visible while the search runs. Bare tool markup says nothing to a reader, so it is dropped. */
+  private async storeSearchPromise(
+    turn: PromisedSearchTurn,
+    pending: PendingSearch,
+  ): Promise<ChatMessage | null> {
+    if (pending.signal === 'markup' || turn.executed.content.trim().length === 0) {
+      return null;
+    }
+    const record: SearchContinuationRecord = { status: 'pending', query: pending.query };
+    const promise = await this.storeAssistantResponse(
+      turn.originalPayload,
+      this.withLinkableCitations(turn.executed, turn.context),
+      { memoryCount: 0, fileIds: [] },
+      turn.latestUserMetadata,
+      undefined,
+      { searchContinuation: record },
+    );
+    // The work log so far belongs to the promise; the answer gets the search that follows.
+    await this.narration.reset(turn.originalPayload.threadId);
+    return promise;
+  }
+
+  private async closeSearchPromise(promise: ChatMessage, pending: PendingSearch): Promise<void> {
+    const record: SearchContinuationRecord = { status: 'done', query: pending.query };
+    await this.chatMessagesRepository.updateMetadata(promise.id, {
+      ...(promise.metadata as Record<string, unknown> | null),
+      searchContinuation: record,
+    });
+  }
+
+  /** The second call's context: the search results when allowed and found, else an honest instruction. */
+  private async contextForPromisedSearch(
+    turn: PromisedSearchTurn,
+    userId: string,
+    intent: string,
+    pending: PendingSearch,
+  ): Promise<AnswerContext> {
+    const withoutSearch = (note: string): AnswerContext => ({
+      context: withContextSaveNote(turn.context, note),
+      userMetadata: turn.latestUserMetadata,
+    });
+    const allowed =
+      userAllowedWeb(turn.latestUserMetadata) &&
+      (await this.accessControlService.hasResearchAccess(userId));
+    if (!allowed) {
+      return withoutSearch(SEARCH_CONTINUATION_NOTE_OFF);
+    }
+    const run = await this.runPromisedSearch(turn, userId, intent, pending);
+    if (run === null) {
+      return withoutSearch(SEARCH_CONTINUATION_NOTE_EMPTY);
+    }
+    const messages = withPromisedSearch(turn.chronologicalMessages, run);
+    const userMetadata = this.extractLatestUserMetadata(messages);
+    await this.persistUserResearch(messages, userMetadata);
+    const assembled = await this.assembleRoutedContext(
+      turn.originalPayload,
+      turn.thread,
+      messages,
+      turn.threadSettings,
+      turn.fileIds,
+      userMetadata,
+    );
+    const saveNote = turn.context.saveTurnNote;
+    const withSaveNote =
+      saveNote === undefined ? assembled : withContextSaveNote(assembled, saveNote);
+    return {
+      context: withContextSaveNote(withSaveNote, SEARCH_CONTINUATION_NOTE_FOUND),
+      userMetadata,
+    };
+  }
+
+  private async runPromisedSearch(
+    turn: PromisedSearchTurn,
+    userId: string,
+    intent: string,
+    pending: PendingSearch,
+  ): Promise<ResearchRunResponse | null> {
+    const threadId = turn.originalPayload.threadId;
+    const query =
+      pending.query ??
+      (await this.standaloneSearchQuery(
+        userId,
+        threadId,
+        intent,
+        ResearchWorkflow.SEARCH_THEN_FETCH,
+      )) ??
+      null;
+    this.chatStreamService.emitResearchStarted(threadId, ResearchWorkflow.SEARCH_THEN_FETCH);
+    const run = await this.researchOrchestrator.searchPromised(
+      { userId, userToken: '', threadId, intent },
+      query,
+    );
+    if (run !== null) {
+      const bundle = this.extractResearchBundle(run);
+      this.chatStreamService.emitResearchCompleted(
+        threadId,
+        bundle.itemCount,
+        bundle.toolsUsed,
+        bundle.fetchStrategies,
+      );
+    }
+    return run;
+  }
+
+  /** The sources are stored on the user message, where the research panel reads them. */
+  private async persistUserResearch(
+    messages: readonly ChatMessage[],
+    userMetadata: Record<string, unknown> | null,
+  ): Promise<void> {
+    const user = [...messages].reverse().find((message) => message.role === 'USER');
+    if (user !== undefined && userMetadata !== null) {
+      await this.chatMessagesRepository.updateMetadata(
+        user.id,
+        userMetadata as Prisma.InputJsonValue,
+      );
+    }
+  }
+
+  /** A turn that asked for research on a plan without it: the model must not invent "latest" facts. */
+  private async withNoWebNote(
+    context: AssembledContext,
+    thread: ChatThread | null,
+    userMetadata: Record<string, unknown> | null,
+  ): Promise<AssembledContext> {
+    if (thread === null || !userAllowedWeb(userMetadata)) {
+      return context;
+    }
+    return (await this.accessControlService.hasResearchAccess(thread.userId))
+      ? context
+      : withContextSaveNote(context, SEARCH_NOT_AVAILABLE_NOTE);
   }
 
   /** A researched answer's `【n】` marks become `[n]`, the only form the UI can link to its source. */
@@ -2152,6 +2381,7 @@ export class ChatMessagesService implements OnModuleInit {
     contextMetadata?: StoredContextMetadata,
     latestUserMetadata?: Record<string, unknown> | null,
     contextSave?: ContextSaveRecord,
+    extraMetadata?: Record<string, unknown>,
   ): Promise<ChatMessage> {
     const hasVisibleContent = llmResponse.content.trim().length > 0;
     const storedContent = hasVisibleContent
@@ -2178,6 +2408,7 @@ export class ChatMessagesService implements OnModuleInit {
     if (narration.length > 0) {
       metadata['narration'] = narration;
     }
+    Object.assign(metadata, extraMetadata ?? {});
     const stored = await this.chatMessagesRepository.create({
       threadId: payload.threadId,
       role: 'ASSISTANT',

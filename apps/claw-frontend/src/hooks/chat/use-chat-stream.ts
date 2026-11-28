@@ -66,6 +66,8 @@ export function useChatStream(threadId: string, isActive: boolean, replayPastEve
   // could sit invisible until the user refreshed. DONE now stamps a value the
   // page can react to immediately, exactly as the error path already did.
   const [streamCompletedAt, setStreamCompletedAt] = useState<number | null>(null);
+  // When the model's "I will search" reply was stored and the real answer started (ADR-227).
+  const [searchContinuationAt, setSearchContinuationAt] = useState<number | null>(null);
   const [currentStageLabel, setCurrentStageLabel] = useState<string | null>(null);
   /**
    * What the client believes about the connection, shown to the user.
@@ -115,6 +117,7 @@ export function useChatStream(threadId: string, isActive: boolean, replayPastEve
   const resetStream = useCallback((): void => {
     setFallbackAttempts([]);
     setStreamCompletedAt(null);
+    setSearchContinuationAt(null);
     setStreamError(null);
     setStreamErrorCode(null);
     setJudgeEvaluating(false);
@@ -381,6 +384,15 @@ export function useChatStream(threadId: string, isActive: boolean, replayPastEve
             upsertStage(parsed, VisibleProgressStageStatus.ACTIVE);
           }
 
+          if (parsed.type === StreamEventType.SEARCH_CONTINUATION) {
+            // The promise is now a stored message; the answer streams fresh after the search.
+            cancelScheduledFlush();
+            contentRef.current = '';
+            reasoningRef.current = '';
+            flushLive(null, true);
+            setSearchContinuationAt(Date.now());
+          }
+
           if (parsed.type === StreamEventType.DONE) {
             sawTerminalEventRef.current = true;
             cancelScheduledFlush();
@@ -453,6 +465,7 @@ export function useChatStream(threadId: string, isActive: boolean, replayPastEve
   return {
     fallbackAttempts,
     streamCompletedAt,
+    searchContinuationAt,
     streamError,
     streamErrorCode,
     judgeEvaluating,

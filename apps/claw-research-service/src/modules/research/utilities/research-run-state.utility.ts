@@ -16,6 +16,7 @@ import type { ExecuteResearchDto } from '../dto/execute-research.dto';
 import type { EvidenceItem } from '../types/evidence-bundle.types';
 import type {
   EngineSearchCounters,
+  GoogleRunCounters,
   PlatformRunCounters,
   ResearchRunStats,
   ThreadMemory,
@@ -47,6 +48,8 @@ export class ResearchRunState {
     providersUsed: [],
     resultsFound: 0,
   };
+  /** What Google answered in this run (ADR-228); log line only, never on the wire. */
+  private google: GoogleRunCounters = { queries: 0, pages: 0, results: 0 };
   /** Research engine B3: set only on a platform run (depth >= 2 + `platforms`). */
   private platformRows: readonly ResearchPlatform[] = [];
   private platformCounters: PlatformRunCounters | null = null;
@@ -76,6 +79,10 @@ export class ResearchRunState {
 
   recordSearch(counters: EngineSearchCounters): void {
     this.search = counters;
+  }
+
+  recordGoogle(counters: GoogleRunCounters): void {
+    this.google = counters;
   }
 
   /**
@@ -206,6 +213,15 @@ export class ResearchRunState {
   /** Additive bundle fields: `{ stats }` in engine mode, nothing otherwise. */
   bundleFields(items: readonly EvidenceItem[]): { stats?: ResearchRunStats } {
     return this.engine ? { stats: this.stats(items) } : {};
+  }
+
+  /** The one `google:` log line of a search run (ADR-228): counts only, never a query or user text. */
+  googleLogLine(): string {
+    return (
+      `google: queries=${String(this.google.queries)} pages=${String(this.google.pages)} ` +
+      `results=${String(this.google.results)} depth=${this.depth === null ? 'none' : String(this.depth)} ` +
+      `round=${String(this.round)}`
+    );
   }
 
   /** The one `research.run:` log line: counts only, never a URL, query or user text. */

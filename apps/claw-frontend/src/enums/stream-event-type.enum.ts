@@ -12,6 +12,9 @@ export enum StreamEventType {
   TOOL_COMPLETED = 'tool_completed',
   RESEARCH_STARTED = 'research_started',
   RESEARCH_COMPLETED = 'research_completed',
+  // The model only promised a search (ADR-227): its promise is stored, the live text is cleared and the page
+  // keeps waiting while the search runs and the answer streams. Never a terminal frame.
+  SEARCH_CONTINUATION = 'search_continuation',
   DONE = 'done',
   ERROR = 'error',
   FALLBACK_ATTEMPT = 'fallback_attempt',

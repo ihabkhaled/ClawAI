@@ -1,5 +1,6 @@
 import { Loader2, X } from 'lucide-react';
 
+import { FileNameLabel } from '@/components/chat/file-name-label';
 import { Button } from '@/components/ui/button';
 import { useFilePreviewUrl } from '@/hooks/files/use-file-preview-url';
 import { cn } from '@/lib/utils';
@@ -73,8 +74,8 @@ export function ComposerPendingAttachmentTile({
           </span>
         </span>
       )}
-      <span className="flex min-w-0 flex-col">
-        <span className="truncate text-sm font-medium">{upload.filename}</span>
+      <span className="flex min-w-0 flex-1 flex-col">
+        <FileNameLabel filename={upload.filename} className="text-sm font-medium" />
         <span className="text-muted-foreground text-xs tabular-nums">
           {percent === null
             ? formatFileSize(upload.sizeBytes)

@@ -1,3 +1,4 @@
+import { ResearchMode } from '../../../common/enums/research-mode.enum';
 import type { CreateMessageDto } from '../dto/create-message.dto';
 import type { MessageQuote } from '../types/message-quote.types';
 import type { ResearchRunResponse } from '../types/research.types';
@@ -32,6 +33,9 @@ function presentationFields(dto: CreateMessageDto): UserMessageMetadata {
     ...(dto.pluginRefs !== undefined && dto.pluginRefs.length > 0
       ? { pluginRefs: dto.pluginRefs }
       : {}),
+    ...(dto.researchMode === undefined || dto.researchMode === ResearchMode.NONE
+      ? {}
+      : { researchMode: dto.researchMode }),
   };
 }
 

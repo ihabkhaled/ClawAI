@@ -132,6 +132,7 @@ import {
   resolveContextTurnText,
 } from '../utilities/attachment-only-turn.utility';
 import { type AttachmentUserTurnContext } from '../types/attachment-only-turn.types';
+import { isSearchPromiseMessage } from '../utilities/search-continuation.utility';
 import {
   EARLIER_ATTACHMENT_HEADER_SUFFIX,
   EARLIER_ATTACHMENTS_MAX_FILES,
@@ -139,6 +140,7 @@ import {
 } from '../constants/attachment-awareness.constants';
 import {
   collectEarlierAttachmentIds,
+  earlierVideoAsTranscript,
   isUnreadableScannedDocument,
   limitEarlierFile,
   withAttachmentPointer,
@@ -168,7 +170,8 @@ export class ContextAssemblyManager {
   ): Promise<AssembledContext> {
     return this.prepareContextAssembly({
       userId,
-      threadMessages,
+      // A reply that only promised a search says nothing; its answer follows it (ADR-227).
+      threadMessages: threadMessages.filter((message) => !isSearchPromiseMessage(message)),
       threadSettings,
       contextPackIds,
       fileIds,
@@ -588,8 +591,9 @@ ${citation.snippet ?? ''}`);
   /**
    * Files attached in earlier turns, fetched on their own so one of them
    * failing can never cost the current turn its files (ADR-152). A video is
-   * not carried: its frames and per-frame helper calls are too heavy for a
-   * follow-up. Each file's text is shortened to leave room for the conversation.
+   * carried as its transcript only: frames and per-frame helper calls are too
+   * heavy for a follow-up. Each file's text is shortened to leave room for the
+   * conversation.
    */
   private async fetchEarlierFileContents(
     earlierFileIds: string[],
@@ -599,7 +603,12 @@ ${citation.snippet ?? ''}`);
       return [];
     }
     const files = await this.fetchFileContents(earlierFileIds, userId);
-    return files.filter((file) => !this.isVideoFile(file)).map((file) => limitEarlierFile(file));
+    return files.flatMap((file) => {
+      const carried = this.isVideoFile(file)
+        ? earlierVideoAsTranscript(file)
+        : limitEarlierFile(file);
+      return carried === null ? [] : [carried];
+    });
   }
 
   /**

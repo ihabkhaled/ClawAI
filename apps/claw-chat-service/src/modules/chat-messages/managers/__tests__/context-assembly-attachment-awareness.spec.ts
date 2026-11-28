@@ -10,6 +10,7 @@ import {
   EARLIER_ATTACHMENT_HEADER_SUFFIX,
   EARLIER_ATTACHMENT_TEXT_MAX_CHARS,
   EARLIER_ATTACHMENTS_MAX_FILES,
+  EARLIER_VIDEO_TRANSCRIPT_LEAD,
 } from '../../constants/attachment-awareness.constants';
 import { ATTACHMENT_ONLY_TURN_MARKER } from '../../constants/attachment-only-turn.constants';
 import { FileDeliveryMode } from '../../../../common/enums/file-delivery-mode.enum';
@@ -287,47 +288,63 @@ describe('assemble() carries earlier attachments', () => {
   }
 
   it('fetches earlier files separately, newest first, bounded, and marks them', async () => {
-    const files: Record<string, FileContentResponse> = {
-      'f-1': { ...pdf, id: 'f-1', filename: 'one.pdf' },
-      'f-2': { ...pdf, id: 'f-2', filename: 'two.pdf' },
-      'f-3': { ...pdf, id: 'f-3', filename: 'three.pdf' },
-      'f-4': { ...pdf, id: 'f-4', filename: 'four.pdf' },
-      'f-now': { ...pdf, id: 'f-now', filename: 'now.pdf' },
-    };
+    const ids = (from: number, to: number): string[] =>
+      Array.from({ length: to - from + 1 }, (_value, index) => `f-${String(from + index)}`);
+    const files: Record<string, FileContentResponse> = Object.fromEntries(
+      [...ids(1, 14), 'f-now'].map((id) => [id, { ...pdf, id, filename: `${id}.pdf` }]),
+    );
     const { manager, fetched } = managerWith(files);
     const messages = [
-      row('m1', 'USER', 'a', ['f-1', 'f-2']),
+      row('m1', 'USER', 'a', ids(1, 7)),
       row('m2', 'ASSISTANT', 'ok'),
-      row('m3', 'USER', 'b', ['f-3', 'f-4']),
+      row('m3', 'USER', 'b', ids(8, 14)),
       row('m4', 'ASSISTANT', 'ok'),
       row('m5', 'USER', 'and the new one?', ['f-now']),
     ];
 
     const context = await manager.assemble('u1', messages, undefined, undefined, ['f-now']);
 
-    expect(fetched).toEqual([['f-now'], ['f-3', 'f-4', 'f-1']]);
+    const expected = [...ids(8, 14), ...ids(1, 5)];
+    expect(fetched).toEqual([['f-now'], expected]);
     expect(fetched[1]).toHaveLength(EARLIER_ATTACHMENTS_MAX_FILES);
-    expect(context.fileContents.map((file) => file.id)).toEqual(['f-now', 'f-3', 'f-4', 'f-1']);
-    expect(context.earlierFileIds).toEqual(['f-3', 'f-4', 'f-1']);
+    expect(context.fileContents.map((file) => file.id)).toEqual(['f-now', ...expected]);
+    expect(context.earlierFileIds).toEqual(expected);
     expect(context.requestedAttachmentCount).toBe(1);
   });
 
-  it('keeps earlier text bounded and never carries an earlier video', async () => {
+  it('keeps earlier text bounded and carries an earlier video as its transcript only', async () => {
     const long = 'x'.repeat(EARLIER_ATTACHMENT_TEXT_MAX_CHARS * 3);
     const { manager } = managerWith({
       'f-long': { ...pdf, id: 'f-long', extractedText: long },
-      'f-vid': { ...pdf, id: 'f-vid', mimeType: 'video/mp4', filename: 'clip.mp4' },
+      'f-vid': {
+        ...pdf,
+        id: 'f-vid',
+        mimeType: 'video/mp4',
+        filename: 'clip.mp4',
+        extractedText: 'TRANSCRIPT (timestamped):\n00:01 the blue car turns left',
+      },
+      'f-pending': {
+        ...pdf,
+        id: 'f-pending',
+        mimeType: 'video/mp4',
+        filename: 'later.mp4',
+        extractedText: '[Video file: later.mp4]',
+      },
     });
     const messages = [
-      row('m1', 'USER', 'a', ['f-long', 'f-vid']),
+      row('m1', 'USER', 'a', ['f-long', 'f-vid', 'f-pending']),
       row('m2', 'ASSISTANT', 'ok'),
       row('m3', 'USER', 'and then?'),
     ];
 
     const context = await manager.assemble('u1', messages);
 
-    expect(context.fileContents.map((file) => file.id)).toEqual(['f-long']);
+    expect(context.fileContents.map((file) => file.id)).toEqual(['f-long', 'f-vid']);
     expect(context.fileContents[0]?.extractedText?.length).toBeLessThan(long.length);
+    const video = context.fileContents[1];
+    expect(video?.mimeType).toBe('text/plain');
+    expect(video?.extractedText).toContain('the blue car turns left');
+    expect(video?.extractedText).toContain(EARLIER_VIDEO_TRANSCRIPT_LEAD);
     expect(context.requestedAttachmentCount).toBeUndefined();
   });
 

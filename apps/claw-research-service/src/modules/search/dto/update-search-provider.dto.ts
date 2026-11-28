@@ -1,13 +1,14 @@
 import { z } from 'zod';
 
 import { SearchProviderStatus } from '../../../common/enums/search-provider-status.enum';
+import { searchProviderPublicConfigSchema } from './search-provider-public-config.dto';
 
 export const updateSearchProviderSchema = z.object({
   name: z.string().min(2).max(80).optional(),
   description: z.string().max(500).optional(),
   baseUrl: z.string().url().max(500).optional(),
   secretConfig: z.record(z.string(), z.string().max(4096)).optional(),
-  publicConfig: z.record(z.string(), z.unknown()).optional(),
+  publicConfig: searchProviderPublicConfigSchema.optional(),
   enabled: z.boolean().optional(),
   priority: z.number().int().min(0).max(1000).optional(),
   status: z.nativeEnum(SearchProviderStatus).optional(),

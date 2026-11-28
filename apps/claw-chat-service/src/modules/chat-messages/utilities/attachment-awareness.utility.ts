@@ -9,8 +9,12 @@ import {
   CANNOT_VIEW_ATTACHMENT_PATTERN,
   EARLIER_ATTACHMENT_TEXT_MAX_CHARS,
   EARLIER_ATTACHMENT_TRUNCATION_NOTE,
+  EARLIER_VIDEO_TRANSCRIPT_LEAD,
 } from '../constants/attachment-awareness.constants';
-import { IMAGE_FILE_PLACEHOLDER_PREFIX } from '../constants/media-placeholder.constants';
+import {
+  IMAGE_FILE_PLACEHOLDER_PREFIX,
+  VIDEO_FILE_PLACEHOLDER_PREFIX,
+} from '../constants/media-placeholder.constants';
 import type {
   AttachmentDescriptor,
   AttachmentPointerContext,
@@ -69,6 +73,22 @@ export function limitEarlierFile(file: FileContentResponse): FileContentResponse
         extractedText: `${text.slice(0, EARLIER_ATTACHMENT_TEXT_MAX_CHARS)}${EARLIER_ATTACHMENT_TRUNCATION_NOTE}`,
       }
     : file;
+}
+
+/**
+ * An earlier turn's video as plain text: its transcript document only, so a follow-up knows what was said and shown
+ * without re-sending frames. Null when there is nothing readable (still processing, failed, placeholder).
+ */
+export function earlierVideoAsTranscript(file: FileContentResponse): FileContentResponse | null {
+  const text = (file.extractedText ?? '').trim();
+  if (text.length === 0 || text.startsWith(VIDEO_FILE_PLACEHOLDER_PREFIX)) {
+    return null;
+  }
+  return limitEarlierFile({
+    ...file,
+    mimeType: 'text/plain',
+    extractedText: `${EARLIER_VIDEO_TRANSCRIPT_LEAD}\n${text}`,
+  });
 }
 
 /**

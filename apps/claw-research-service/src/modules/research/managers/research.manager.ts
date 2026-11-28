@@ -32,6 +32,7 @@ import {
 import { hostLaneKey, runFetchBatch } from '../utilities/fetch-batch.utility';
 import { canonicalUrlKey, selectFetchTargets } from '../utilities/fetch-targets.utility';
 import { FetchPhaseState } from '../utilities/fetch-phase-state.utility';
+import { googleCountsOf } from '../utilities/google-budget.utility';
 import { ResearchRunState } from '../utilities/research-run-state.utility';
 import { MultiQuerySearchManager } from './multi-query-search.manager';
 import { SiteAuditManager } from './site-audit.manager';
@@ -195,6 +196,7 @@ export class ResearchManager {
       trace,
     );
     this.logger.log(state.logLine(items));
+    this.logger.log(state.googleLogLine());
     this.persistSources(userId, dto, runId, bundle.items, state.directKeys);
     return completed;
   }
@@ -393,6 +395,7 @@ export class ResearchManager {
       providersUsed: searchResult.attemptedProviders,
       resultsFound: searchResult.results.length,
     });
+    state.recordGoogle(googleCountsOf([searchResult], []));
     return {
       items: searchResult.results.map((result) => searchResultToEvidence(result)),
       providerSelection: {

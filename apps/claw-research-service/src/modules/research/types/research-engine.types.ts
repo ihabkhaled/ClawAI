@@ -1,10 +1,11 @@
-import type { ResearchPlatform, ResearchSource } from '../../../generated/prisma';
+import type { ResearchPlatform, ResearchSource, SearchProvider } from '../../../generated/prisma';
 import type { ResearchWorkflowKind } from '../../../common/enums/research-workflow-kind.enum';
 import type {
   PlatformApiOutcome,
   PlatformTaggedResult,
 } from '../../platforms/types/platform.types';
 import type { ExecuteSearchDto } from '../../search/dto/execute-search.dto';
+import type { GoogleRoute } from '../../search/types/search-provider-selection.types';
 import type { SearchExecutionResult } from '../../search/types/search-execution-result.types';
 import type { EvidenceItem } from './evidence-bundle.types';
 
@@ -14,6 +15,60 @@ export type DepthBudget = {
   queries: number;
   /** Search hits opened (top N, max 2 per host). */
   fetchTopN: number;
+};
+
+/** One row of `RESEARCH_GOOGLE_BUDGETS` (ADR-228): the Google (SERPAPI) spend of one run. */
+export type GoogleBudget = {
+  /** Google queries of the run, the primary included. */
+  queries: number;
+  /** Result pages read for the primary query (page 1 is the primary call itself). */
+  primaryPages: number;
+};
+
+/** What `planGoogleRun` needs to size one run's Google spend (ADR-228). */
+export type GooglePlanInput = {
+  /** The SERPAPI provider that governs the run's Google calls; null = none is enabled. */
+  google: Pick<SearchProvider, 'id' | 'publicConfig'> | null;
+  depth: number | null;
+  round: number;
+  primary: string;
+  /** The run's planned expansion queries (already deduped and inside the depth budget). */
+  expansions: readonly string[];
+};
+
+/** One extra Google results page of the primary query. */
+export type GooglePageRequest = {
+  providerId: string;
+  /** SerpApi `start` offset: 10, 20, ... */
+  start: number;
+};
+
+/** What a run sends to Google (ADR-228), planned once before the search phase. */
+export type GooglePlan = {
+  /** Where the primary query goes: `providerId` null = SERPAPI left out of it. */
+  primary: GoogleRoute;
+  /** Expansion queries Google also runs (round 1 only), chosen inside the budget. */
+  expansions: ReadonlySet<string>;
+  /** Extra result pages of the primary query (round 1 only). */
+  pages: readonly GooglePageRequest[];
+};
+
+/** How one extra Google page ended: answered, skipped (breaker open or provider gone) or failed. */
+export type GooglePageOutcome = {
+  start: number;
+  result: SearchExecutionResult | null;
+  /** Why it failed; null when it answered or was skipped. */
+  error: string | null;
+};
+
+/** What Google really answered in a run: the numbers of the `google:` log line. */
+export type GoogleRunCounters = {
+  /** Queries (primary + expansions) with at least one Google answer. */
+  queries: number;
+  /** Google answers, one per result page. */
+  pages: number;
+  /** Results Google returned, before any merge. */
+  results: number;
 };
 
 /** `bundle.stats` (research engine B1+B2). Additive; only on runs that sent an engine field. */
@@ -49,6 +104,10 @@ export type QueryResultSet = {
   results: readonly PlatformTaggedResult[];
   /** How much one rank in this set counts; 1 when absent. */
   weight?: number;
+  /** Ranks already used above this set (a deeper results page starts at 10); 0 when absent. */
+  rankOffset?: number;
+  /** Sets sharing a group count a page once (the primary query and its deeper pages); none when absent. */
+  group?: string;
 };
 
 /** A search hit after reciprocal-rank fusion across queries. */
@@ -89,6 +148,7 @@ export type SearchPhasePlan = {
   expansions: string[];
   siteRows: ResearchPlatform[];
   plan: PlatformRunPlan | null;
+  google: GooglePlan;
   base: Omit<ExecuteSearchDto, 'query'>;
   useCache: boolean;
   round: number;
@@ -100,6 +160,7 @@ export type SearchPhaseAnswers = {
   outcomes: ExpansionOutcome[];
   sites: SiteSearchOutcome[];
   apis: PlatformApiOutcome[];
+  pages: GooglePageOutcome[];
 };
 
 /** What a platform run adds to `stats` (replaces `languages` with what was really searched). */

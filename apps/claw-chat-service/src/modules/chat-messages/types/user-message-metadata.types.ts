@@ -1,4 +1,5 @@
 import type { ContextSaveMode } from '@claw/shared-types';
+import type { ResearchMode } from '../../../common/enums/research-mode.enum';
 import type { ResearchEvidenceBundle } from './research.types';
 import type { ResearchTranscript } from './research-transcript.types';
 import type { MessageQuote } from './message-quote.types';
@@ -21,6 +22,8 @@ export type UserMessageMetadata = {
   quotes?: MessageQuote[];
   /** Plugins the user @mentioned (chips). Read back by `readPluginRefs`. */
   pluginRefs?: PluginRef[];
+  /** The research mode the user sent; a promised search runs only when it is not NONE (ADR-227). */
+  researchMode?: ResearchMode;
   research?: {
     runId: string;
     mode: string;

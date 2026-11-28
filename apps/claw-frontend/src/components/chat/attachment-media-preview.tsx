@@ -79,7 +79,7 @@ export function AttachmentMediaPreview({
   if (kind === AttachmentPreviewKind.Video && posterSrc !== null) {
     return (
       <div
-        className="border-border bg-muted relative flex w-56 max-w-full flex-col overflow-hidden rounded-lg border"
+        className="border-border bg-muted text-foreground relative flex w-56 max-w-full flex-col overflow-hidden rounded-lg border"
         data-testid="attachment-video-thumbnail"
       >
         <img
@@ -125,7 +125,7 @@ export function AttachmentMediaPreview({
 
   return (
     <div
-      className="border-border bg-muted flex h-20 w-40 flex-col items-center justify-center gap-1 rounded-lg border"
+      className="border-border bg-muted text-foreground flex h-20 w-40 flex-col items-center justify-center gap-1 rounded-lg border"
       data-testid="attachment-media-preview"
     >
       <Button

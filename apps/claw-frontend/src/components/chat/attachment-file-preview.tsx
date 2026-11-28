@@ -1,5 +1,6 @@
 import { Download, Eye, Loader2 } from 'lucide-react';
 
+import { FileNameLabel } from '@/components/chat/file-name-label';
 import { Button } from '@/components/ui/button';
 import { AttachmentPreviewKind } from '@/enums/attachment-preview-kind.enum';
 import { useAttachmentFilePreview } from '@/hooks/chat/use-attachment-file-preview';
@@ -26,16 +27,14 @@ export function AttachmentFilePreview({
 
   return (
     <div
-      className="bg-card w-full min-w-0 rounded-lg border p-2 sm:w-64"
+      className="bg-card text-card-foreground w-full min-w-0 rounded-lg border p-2 sm:w-64"
       data-testid="attachment-file-preview"
     >
       <div className="flex min-w-0 items-center gap-2">
         <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded ${tone}`}>
           <Icon className="h-4 w-4" aria-hidden="true" />
         </span>
-        <span className="min-w-0 flex-1 truncate text-sm font-medium" title={filename}>
-          {filename}
-        </span>
+        <FileNameLabel filename={filename} className="flex-1 text-sm font-medium" />
       </div>
 
       {previewText === null ? null : (

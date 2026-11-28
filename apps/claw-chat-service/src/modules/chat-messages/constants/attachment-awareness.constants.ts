@@ -5,8 +5,12 @@
  * follows the user.
  */
 
-/** Earlier turns' files kept in a follow-up's context, newest first. */
-export const EARLIER_ATTACHMENTS_MAX_FILES = 3;
+/**
+ * Earlier turns' files kept in a follow-up's context, newest first. Was 3 until ADR-226 follow-up (2026-11-28): the
+ * owner asked that every file sent earlier in the chat stay known. The window fit still decides how much of each the
+ * model sees (relevance first), so this only bounds the fetch.
+ */
+export const EARLIER_ATTACHMENTS_MAX_FILES = 12;
 
 /** One earlier file's text is cut to this many characters (the current turn's files keep the full per-file limit). */
 export const EARLIER_ATTACHMENT_TEXT_MAX_CHARS = 6_000;
@@ -14,6 +18,10 @@ export const EARLIER_ATTACHMENT_TEXT_MAX_CHARS = 6_000;
 /** Appended to a cut earlier file. */
 export const EARLIER_ATTACHMENT_TRUNCATION_NOTE =
   '\n\n[...earlier attachment shortened to keep room for the conversation...]';
+
+/** Heads an earlier video carried as its transcript only (no frames, no helper calls). */
+export const EARLIER_VIDEO_TRANSCRIPT_LEAD =
+  'Transcript of a video the user sent earlier in this conversation (its frames are not shown again):';
 
 /** Names the earlier attachments in the block header. */
 export const EARLIER_ATTACHMENT_HEADER_SUFFIX = ' — attached earlier in this conversation';

@@ -134,6 +134,31 @@ describe('useThreadDetail', () => {
     expect(streamState.lastReplayArg).toBe(true);
   });
 
+  it('keeps waiting while the last answer only promised a search (ADR-227)', async () => {
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const promise = {
+      ...buildMessage('assistant-promise', MessageRole.ASSISTANT),
+      metadata: { searchContinuation: { status: 'pending', query: 'song' } },
+    };
+    virtualizedState.messages = [buildUserMessage(), promise];
+    const { result, rerender } = renderHook(() => useThreadDetail('thread-race'), { wrapper });
+
+    // A reload during the search re-arms, exactly as for an unanswered question.
+    await waitFor(() => expect(result.current.isWaitingForResponse).toBe(true));
+    expect(streamState.lastReplayArg).toBe(true);
+
+    // The promise is not the answer; the answer that follows it is.
+    virtualizedState.messages = [
+      buildUserMessage(),
+      { ...promise, metadata: { searchContinuation: { status: 'done', query: 'song' } } },
+      buildMessage('assistant-answer', MessageRole.ASSISTANT),
+    ];
+    rerender();
+    await waitFor(() => expect(result.current.isWaitingForResponse).toBe(false));
+  });
+
   it('does NOT ask for replay for a run this page just started', async () => {
     // The race that produced "200 then net::ERR_ABORTED, repeatedly": the
     // stream opens before the POST clears the server's replay buffer, so a

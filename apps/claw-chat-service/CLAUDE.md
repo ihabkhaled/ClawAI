@@ -2028,3 +2028,31 @@ blind to the chat. Invariants:
 - Specs: `context-tokens.utility.spec.ts`, `salient-terms-languages.utility.spec.ts`, `harness-council.spec.ts` (text
   lookup), `research-conversation.utility.spec.ts`, `context-assembly.manager.spec.ts` (memory selection),
   `stored-citations.utility.spec.ts`. Live: scratch scripts described in the QA record of 2026-11-28.
+
+## A promised search is finished, not stored (ADR-227, 2026-11-28)
+
+A reply that only says it will search ("I will search for that now", a `web_search` call with no catalog, or tool
+markup as text) is not the answer. `SearchContinuationManager.inspect` decides (structural signal first; else one judge
+call through `ResearchGateService.askPlanner`, only for a short uncited reply, `PROMISE_JUDGE_BUDGET_MS` 8 s), then
+`ChatMessagesService.finishPromisedSearch`:
+
+- stores the promise as its own message (`metadata.searchContinuation {status:'pending'|'done', query}`; bare markup is
+  not stored), emits `StreamEventType.SEARCH_CONTINUATION` (never terminal), resets the work log;
+- searches once (`ResearchOrchestratorManager.searchPromised`, depth 2, holds the Stop key) only when the turn was sent
+  with research on (`metadata.researchMode`, stored since this change) AND `hasResearchAccess`; merges the run into the
+  user message's `metadata.research` (`withPromisedSearch`, then `updateMetadata`) so fitting, numbering and stored
+  citations are the normal path;
+- answers again with `SEARCH_CONTINUATION_NOTE_FOUND | _EMPTY | _OFF`, at most once per turn (a second promise stays).
+
+Also: `ContextAssemblyManager.assemble` drops promise messages from every prompt; a plan without research gets
+`SEARCH_NOT_AVAILABLE_NOTE` when the user asked for research (`withNoWebNote`); `buildExecutorResponse` no longer fails
+a turn whose only output is an unoffered web-tool call (`requestedTools`).
+
+**Earlier context (same change):** `EARLIER_ATTACHMENTS_MAX_FILES` 12 (was 3); an earlier video is carried as its
+transcript only (`earlierVideoAsTranscript`); `withQuotedContext` appends an earlier answer's stored sources
+(`earlierSourcesBlock`, ≤ 8 lines) and `estimateMessageTokens` counts them. Every planning prompt states today's date
+(`currentDateLine`).
+
+Not yet: Compare, Consensus, Escalation, labs (rule 59 gap). Specs: `search-continuation-turn.spec.ts`,
+`search-continuation.manager.spec.ts`, `pending-search.utility.spec.ts`, `search-continuation.utility.spec.ts`,
+`earlier-sources.utility.spec.ts`, `planner-date.utility.spec.ts`, `context-assembly-attachment-awareness.spec.ts`.

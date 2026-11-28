@@ -38,10 +38,11 @@ describe('collectEarlierAttachmentIds', () => {
     const ids = collectEarlierAttachmentIds(
       [row('USER', ['a', 'b']), row('USER', ['b', 'c', 'd']), row('USER', ['e'])],
       [],
-      EARLIER_ATTACHMENTS_MAX_FILES,
+      3,
     );
 
     expect(ids).toEqual(['b', 'c', 'd']);
+    expect(EARLIER_ATTACHMENTS_MAX_FILES).toBeGreaterThanOrEqual(12);
   });
 
   it('never counts the latest user row as earlier, and ignores junk metadata', () => {

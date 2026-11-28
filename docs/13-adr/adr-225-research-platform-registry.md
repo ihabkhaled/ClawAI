@@ -23,7 +23,7 @@ Stack Overflow. The owner asked for "every relevant platform" without new paid s
 3. **The council chooses the source kinds.** Each member names up to four categories; they are ranked by how many
    winning members named them. A run uses them only from depth 2: at most 6 official APIs and 4 site searches, in
    priority order. Hits merge into the same rank fusion; items carry `platform` and `platformCategory`.
-4. **Cost.** Official APIs are free. Site searches run only on expansion providers and share the depth query budget.
+4. **Cost.** Official APIs are free. (Google's budget since [ADR-228](adr-228-google-in-every-research.md) is separate; site searches never go to Google.) Site searches run only on expansion providers and share the depth query budget.
    Every call records one `WEB_SEARCH` unit, as before. Rounds 2+ also send the primary query to expansion providers
    only (ADR-224).
 5. **Keyword queries where an API needs every word** (GitHub, Stack Overflow): the query is cut to its first four

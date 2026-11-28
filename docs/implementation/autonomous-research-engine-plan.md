@@ -177,10 +177,10 @@ flag with a measured before/after.
 
 ## Open items after the 2026-11-28 batch
 
-- Continue a turn when a model only announces a search (store the announcement, search, answer in a second message).
-- Carry earlier attachments, voice and video transcripts and earlier search results into later turns.
-- On a plan without research, tell the model it cannot browse, so it never presents remembered text as recent news.
-- Put today's date in the planner and council prompts; do not let a planner invent a link to crawl.
+- Done (ADR-227): continue a turn when a model only announces a search; carry earlier files, video transcripts and
+  earlier sources; tell a plan without research it cannot browse; today's date in every planning prompt.
+- Do not let a planner invent a link to crawl (the user's own links only, unless the user names a site).
+- Compare, Consensus, Escalation and the labs do not continue a promised search yet.
 - Run the large multilingual decision set (2,415 cases built on 2026-11-28) and fix what it finds.
 - Compare, Consensus and the labs still plan research from markers.
 - Owner action: add an API key to the Ollama Web Search provider (local and production).

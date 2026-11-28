@@ -17,6 +17,7 @@ import type {
 } from './picked-model-fallback.types';
 import type { CreditFallbackNotice } from './credit-fallback.types';
 import type { JudgeRefereeMetadata } from './judge-referee.types';
+import type { RequestedTool } from './search-continuation.types';
 import type {
   AnthropicCacheControl,
   AnthropicMessage,
@@ -248,6 +249,9 @@ export type LlmResponse = {
   // compiling untouched; absent means "this call carried no tool catalog".
   toolCalls?: readonly NormalizedToolCall[];
   finishedForTools?: boolean;
+  // Tools the model asked for although this call offered no catalog (normal chat). A web search among them is
+  // a promised search the turn still has to run (ADR-227).
+  requestedTools?: readonly RequestedTool[];
   // Plugin tools the answer used (`metadata.pluginCalls`, shown above the answer) and the
   // notices explaining a mentioned plugin that did not run (`metadata.pluginNotices`).
   pluginCalls?: readonly PluginCallRecord[];
